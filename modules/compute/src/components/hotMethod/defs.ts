@@ -44,3 +44,12 @@ export interface InstrsColumnType {
     maxCycles: number;
     cycles: number;
 };
+
+export enum FieldType {
+    SKIP = 0,
+    INT = 1,
+    FLOAT = 2,
+    STRING = 3,
+}
+
+export const NOT_APPLICABLE = 'NA';

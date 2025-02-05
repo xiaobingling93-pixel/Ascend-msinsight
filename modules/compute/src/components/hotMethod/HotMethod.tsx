@@ -25,6 +25,7 @@ import { Layout } from 'ascend-layout';
 import { getInstrColumns } from './InstructionTable';
 import { getCodeColumns } from './CodeAttrTable';
 import TableHead, { type Col } from './TableHead';
+import { FieldType } from './defs';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -57,12 +58,12 @@ const Index = observer(({ session }: { session: Session }) => {
     const [code, setCode] = useState('');
     const [codeLines, setCodeLines] = useState<Ilinetable[]>([]);
     const [loggedCodeLines, setLoggedCodeLines] = useState<Ilinetable[]>([]);
-    const [dynamicCodeCols, setDynamicCodeCols] = useState<string[]>([]);
-    const codeColumns = useMemo(() => getCodeColumns(t, dynamicCodeCols), [dynamicCodeCols, t]);
+    const [dynamicCodeFields, setDynamicCodeFields] = useState<Record<string, FieldType>>({});
+    const codeColumns = useMemo(() => getCodeColumns(t, dynamicCodeFields), [dynamicCodeFields, t]);
     // 选中代码行
     const [selectedline, setSelectedline] = useState<number>(-1);
     // 指令表
-    const [dynamicInstrCols, setDynamicInstrCols] = useState<string[]>([]);
+    const [dynamicInstrFields, setDynamicInstrFields] = useState<Record<string, FieldType>>({});
     const [allInstrData, setAllInstrData] = useState<InstrsColumnType[]>([]);
     // 是否关联指令
     const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => {
@@ -76,7 +77,7 @@ const Index = observer(({ session }: { session: Session }) => {
     }, [allInstrData, isRelatedInstr]);
     // 指令表当前显示数据
     const curInstrData = useMemo(() => condition.onlyRelated ? getRelatedInstrs() : allInstrData, [allInstrData, condition.onlyRelated, getRelatedInstrs]);
-    const instrColumns = useMemo(() => getInstrColumns(dynamicInstrCols, t, curInstrData), [dynamicInstrCols, t, curInstrData]);
+    const instrColumns = useMemo(() => getInstrColumns(dynamicInstrFields, t, curInstrData), [dynamicInstrFields, t, curInstrData]);
     const [lineClickListener, setLineClickListener] = useState<number>(0);
     const [tableHeight, setTableHeight] = useState<number>(1000);
     const [instrLimit, setInstrLimit] = useState({ maxSize: MAX_INSTRUCTION, overlimit: false, current: 0 });
@@ -140,13 +141,14 @@ const Index = observer(({ session }: { session: Session }) => {
         return str;
     }
 
-    async function getInstrs(coreName: string): Promise<{instructions: InstrsColumnType[] ;cols: string[]}> {
+    async function getInstrs(coreName: string): Promise<{instructions: InstrsColumnType[] ;fields: Record<string, FieldType>}> {
         if (coreName === '') {
-            return { instructions: [], cols: [] };
+            return { instructions: [], fields: {} };
         }
         const res = await queryDynamicInstr({ coreName });
         // 动态列
-        const cols = Object.keys(res?.['Instructions Dtype']?.Instructions ?? {});
+        const fields = res?.['Instructions Dtype']?.Instructions ?? {};
+        // 指令记录
         const records = res?.Instructions ?? [];
         setInstrLimit({ ...instrLimit, overlimit: records.length > instrLimit.maxSize });
         const list: InstrsColumnType[] = records.map((item: JsonInstructionType, index: number) => {
@@ -165,16 +167,16 @@ const Index = observer(({ session }: { session: Session }) => {
         list.forEach(item => {
             item.maxCycles = maxCycles;
         });
-        return { instructions: list, cols };
+        return { instructions: list, fields };
     };
-    async function getLines(source: string, core: string): Promise<{ lines: Ilinetable[];cols: string[] }> {
+    async function getLines(source: string, core: string): Promise<{ lines: Ilinetable[];fields: Record<string, FieldType> }> {
         if (source === '' || core === '') {
-            return { lines: [], cols: [] };
+            return { lines: [], fields: {} };
         }
         const res = await queryDynamicLine({ sourceName: source, coreName: core });
-        const cols = Object.keys(res?.['Files Dtype']?.Lines ?? {});
+        const fields = res?.['Files Dtype']?.Lines ?? {};
         const list: Iline[] = res?.Lines ?? [];
-        return { lines: list.reverse(), cols };
+        return { lines: list.reverse(), fields };
     };
 
     function clear(): void {
@@ -182,23 +184,23 @@ const Index = observer(({ session }: { session: Session }) => {
         setCode('');
         // 代码行记录
         setLoggedCodeLines([]);
-        setDynamicCodeCols([]);
+        setDynamicCodeFields({});
         // 选中行
         setCodeLines([]);
         // 指令记录
         setAllInstrData([]);
-        setDynamicCodeCols([]);
+        setDynamicInstrFields({});
     }
 
     async function updateData(): Promise<void> {
         Promise.all([
             getCode(condition.source),
             getLines(condition.source, condition.core),
-        ]).then(([newCode, { lines: newLoggedCodeLines, cols }]) => {
+        ]).then(([newCode, { lines: newLoggedCodeLines, fields }]) => {
             // 文件源码
             setCode(newCode);
             // 代码行动态列
-            setDynamicCodeCols(cols);
+            setDynamicCodeFields(fields);
             // 代码行记录
             setLoggedCodeLines(newLoggedCodeLines);
             // 全部代码行
@@ -211,8 +213,8 @@ const Index = observer(({ session }: { session: Session }) => {
             setCodeLines(sourceCodeLines);
         });
         // 指令记录
-        getInstrs(condition.core).then(({ instructions: newInstrlist, cols }) => {
-            setDynamicInstrCols(cols);
+        getInstrs(condition.core).then(({ instructions: newInstrlist, fields }) => {
+            setDynamicInstrFields(fields);
             setAllInstrData(newInstrlist);
         });
     }

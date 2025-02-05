@@ -9,6 +9,7 @@ import type { InstrsColumnType } from './defs';
 import { Tooltip } from 'ascend-components';
 import Bar, { StallBar } from './Bar';
 import { limitInput } from 'ascend-utils';
+import { FieldType, NOT_APPLICABLE } from './defs';
 
 const onFilterDropdownOpenChange = (open: boolean): void => {
     if (open) {
@@ -16,8 +17,8 @@ const onFilterDropdownOpenChange = (open: boolean): void => {
     }
 };
 // 更新指令表的显示列
-export const getInstrColumns = (dynamicCols: string[], t: TFunction, curInstrData: InstrsColumnType[]): ColumnsType<InstrsColumnType> => {
-    const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicCols);
+export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[]): ColumnsType<InstrsColumnType> => {
+    const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields);
     // 没有有筛选功能的列
     const unfilterableCols = ['index', 'RealStallCycles'];
     columns.forEach((col: ColumnType<InstrsColumnType>) => {
@@ -52,7 +53,6 @@ const instrsColsConfig = [
             </Tooltip>
         ),
     },
-    { title: 'Instructions Executed', dataIndex: 'Instructions Executed', ellipsis: true, sorter: true },
     {
         title: 'Cycles',
         dataIndex: 'Cycles',
@@ -75,7 +75,6 @@ const instrsColsConfig = [
             <StallBar real={record.RealStallCycles as number} theoretical={record.TheoreticalStallCycles as number}/>,
         className: 'height20',
     },
-    { title: 'RegisterNum', dataIndex: 'RegisterNum', ellipsis: true },
 ];
 
 // 固定显示列
@@ -87,7 +86,8 @@ const endCols = ['Cycles', 'StallCycles'];
 // 不显示的列
 const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles'];
 
-export const getDynamicInstrColumns = (t: TFunction, fields: string[] = []): ColumnsType<InstrsColumnType> => {
+export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}): ColumnsType<InstrsColumnType> => {
+    const fields = Object.keys(dynamicFields);
     const allCols = ['#', ...fields];
     if (allCols.includes('RealStallCycles')) {
         allCols.push('StallCycles');
@@ -102,6 +102,14 @@ export const getDynamicInstrColumns = (t: TFunction, fields: string[] = []): Col
         const col = instrsColsConfig.find(colConfig => colConfig.title === colName);
         return col
             ? { ...col, title: t(colName) }
-            : { title: t(colName), dataIndex: colName, ellipsis: true, sorter: true };
+            : {
+                title: t(colName),
+                dataIndex: colName,
+                ellipsis: true,
+                sorter: true,
+                // 数据是int或者float时，数值为-1显示为NA
+                render: (value: React.Key): React.ReactNode =>
+                    [FieldType.INT, FieldType.FLOAT].includes(dynamicFields[colName]) && typeof value === 'number' && value < 0 ? NOT_APPLICABLE : value,
+            };
     });
 };
