@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import { expect, type FrameLocator, type Page } from '@playwright/test';
+import { expect, type FrameLocator, type Page, WebSocket } from '@playwright/test';
 import { FrameworkPage, FileExploreDialogPage } from '../page-object';
-import { FilePath } from './constants';
+import { FilePath, WEBSOCKET_URL } from './constants';
 
 let iterationNum: number = 0;
 // 导入数据
@@ -70,6 +70,10 @@ export async function clearAllData(page: Page): Promise<void> {
 export async function waitForWebSocketEvent<T>(page: Page, matchCondition: (payload: any) => boolean): Promise<T> {
     return new Promise((resolve, reject) => {
         page.on('websocket', (ws) => {
+            const url = ws.url();
+            if (url !== WEBSOCKET_URL) {
+                return;
+            }
             ws.on('framereceived', (event) => {
                 if (typeof event.payload !== 'string') {
                     return;
@@ -87,19 +91,59 @@ export async function waitForWebSocketEvent<T>(page: Page, matchCondition: (payl
     });
 }
 
-export async function setCompare(page: Page, frame: FrameLocator, {baseline, comparison}: {
-    baseline: string;
-    comparison: string;
-} = {baseline: FilePath.TEXT_RANK_0, comparison: FilePath.TEXT_RANK_1}): Promise<void> {
+// 监听 websocket 连接，返回 ws 实例
+export function setupWebSocketListener(page: Page): Promise<WebSocket> {
+    return new Promise((resolve, reject) => {
+        page.on('websocket', (ws) => {
+            const url = ws.url();
+            if (url === WEBSOCKET_URL) {
+                resolve(ws);
+            }
+        });
+    });
+}
+
+// 使用 ws 实例监听特定接口返回
+export function waitForResponse(ws: WebSocket, matchCondition: (payload: any) => boolean): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const frameHandler = (event: any): void => {
+            if (typeof event.payload !== 'string') {
+                return;
+            }
+            try {
+                const res = JSON.parse(event.payload);
+                if (matchCondition(res)) {
+                    resolve(res);
+                }
+            } catch (error) {
+                reject(new Error(`WebSocket 消息解析失败: ${error}`));
+            }
+        };
+
+        ws.on('framereceived', frameHandler);
+    });
+}
+
+export async function setCompare(
+    page: Page,
+    frame: FrameLocator,
+    {
+        baseline,
+        comparison,
+    }: {
+        baseline: string;
+        comparison: string;
+    } = { baseline: FilePath.TEXT_RANK_0, comparison: FilePath.TEXT_RANK_1 },
+): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
     const rank1 = frameworkPage.projectList.locator('span.content-node-text').getByText(baseline);
-    await rank1.click({button: 'right'});
+    await rank1.click({ button: 'right' });
     const setBaselineBtn = frameworkPage.page.getByText('Set as Baseline Data');
     await setBaselineBtn.click();
     const rank2 = frameworkPage.projectList.locator('span.content-node-text').getByText(comparison);
-    await rank2.click({button: 'right'});
+    await rank2.click({ button: 'right' });
     const setComparisonBtn = frameworkPage.page.getByText('Set as Comparison Data');
     await setComparisonBtn.click();
-    await frame.getByText('loading').waitFor({state: 'hidden'});
+    await frame.getByText('loading').waitFor({ state: 'hidden' });
     await frameworkPage.mouseOut();
 }

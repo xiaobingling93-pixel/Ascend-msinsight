@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import { test as baseTest, expect } from '@playwright/test';
+import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { CommunicationPage, FrameworkPage, TimelinePage } from './page-object';
-import { clearAllData, importData, waitForWebSocketEvent } from './utils';
+import { clearAllData, importData, setupWebSocketListener, waitForResponse, waitForWebSocketEvent } from './utils';
 import { SelectHelpers, CheckboxHelpers, TableHelpers } from './components';
 
 interface TestFixtures {
@@ -18,9 +18,11 @@ const test = baseTest.extend<TestFixtures>({
 });
 let requestDurationListResp: Promise<unknown>;
 let requestTableDataResp: Promise<unknown>;
+let ws: Promise<WebSocket>;
 
 test.describe('Communication', () => {
     test.beforeEach(async ({ page, communicationPage }) => {
+        ws = setupWebSocketListener(page);
         requestDurationListResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/duration/list');
         requestTableDataResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/operatorDetails');
 
@@ -156,7 +158,7 @@ test.describe('Communication', () => {
         // 再次点击icon 收起子表格
         await expandIcon.click();
         // 定位并点击查看详情按钮 再次验证子表格是否可见
-        const expandButton = (await dataAnalysisTable.getCell(1, 13)).locator('button');
+        const expandButton = (await dataAnalysisTable.getCell(1, 12)).locator('button');
         await expandButton.click();
         await expect(expandTable).toBeVisible();
     });
@@ -177,7 +179,7 @@ test.describe('Communication', () => {
         const expandTableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container').locator('.ant-table-container');
         const expandTable = new TableHelpers(page, expandTableLocator, communicationFrame);
         // 表格滚动到可视区域并点击表头排序
-        await expandTable.sortTableHead('Start Time(ms)');
+        await expandTable.sortTableHead('Elapse Time(ms)');
         await page.mouse.move(0, 0);
         await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 500 });
         // 定位子表格分页器组件
@@ -188,14 +190,14 @@ test.describe('Communication', () => {
         // 点击分页按钮
         const pageLink = pagination.locator('.ant-pagination-item.ant-pagination-item-3 a'); // 第三页
         await pageLink.click();
-        await requestTableDataResp;
-        expect(await expandTable.getCell(1, 2)).toHaveText('331.2512');
+        await waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
+        expect(await expandTable.getCell(1, 2)).toHaveText('1.518');
         // 验证分页器输入框
         const paginationInput = pagination.locator('.ant-pagination-options .ant-pagination-options-quick-jumper input');
         await paginationInput.focus();
         await paginationInput.fill('1');
         await paginationInput.press('Enter');
-        expect(await expandTable.getCell(1, 2)).toHaveText('118.5898');
+        expect(await expandTable.getCell(1, 2)).toHaveText('0.0421');
     });
 
     // 【case】点击“带宽分析”列的查看更多可以跳转至所选rank的对应算子带宽分析页

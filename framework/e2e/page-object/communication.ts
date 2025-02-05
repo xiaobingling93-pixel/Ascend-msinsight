@@ -56,7 +56,7 @@ export class CommunicationPage {
     async toOperatorpage(page: Page, communicationFrame: FrameLocator): Promise<void> {
         const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table').first();
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
-        const td = await dataAnalysisTable.getCell(1, 12);
+        const td = await dataAnalysisTable.getCell(1, 11);
         const linkBtn = td.locator('button');
         await linkBtn.click();
     }
