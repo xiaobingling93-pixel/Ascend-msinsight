@@ -4,6 +4,7 @@
 
 #include "TraceDatabaseHelper.h"
 #include <algorithm>
+#include "NpuInfoRepo.h"
 
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
@@ -80,7 +81,7 @@ std::optional<std::string> TraceDatabaseHelper::QueryConnectionId(std::unique_pt
     return resultSet->GetString("connectionId");
 }
 
-std::string TraceDatabaseHelper::GetSystemViewSqlByLayer(const std::string &layer)
+std::string TraceDatabaseHelper::GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId)
 {
     std::string mainSql;
     if (layer == "Ascend Hardware") {
@@ -94,16 +95,24 @@ std::string TraceDatabaseHelper::GetSystemViewSqlByLayer(const std::string &laye
                   "  left join nameIds c on schedule.name = c.id"
                   "  where deviceId = ?),";
     } else if (layer == "HCCL") {
+        std::string comSql;
+        if (IsDeviceIdUnique(rankId)) {
+            comSql = " select realName as name, op.endNs - op.startNs as duration "
+                    "  from COMMUNICATION_OP op join nameIds on op.opName = id join rankId"
+                    "  group by opId";
+        } else {
+            comSql = "select realName as name, op.endNs - op.startNs as duration "
+                     "  from COMMUNICATION_OP op join nameIds on op.opName = id join rankId"
+                     "  join TASK task on task.connectionId = op.connectionId"
+                     "  where task.deviceId = rankId.deviceId group by opId";
+        }
         mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
                   "     rankId as (select ? as deviceId),\n"
                   "  main as (select realName as name, endNs - startNs as duration from TASK task join rankId "
                   "  join COMMUNICATION_TASK_INFO info on info.globalTaskId = task.globalTaskId "
                   "  join nameIds on info.taskType = id "
                   "  where task.deviceId = rankId.deviceId "
-                  "  UNION ALL select realName as name, op.endNs - op.startNs as duration "
-                  "  from COMMUNICATION_OP op join nameIds on op.opName = id join rankId\n"
-                  "  join TASK task on task.connectionId = op.connectionId"
-                  "  where task.deviceId = rankId.deviceId group by opId),";
+                  "  UNION ALL " + comSql + "),";
     } else if (layer == "CANN") {
         mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
                   "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "
@@ -145,7 +154,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
      "sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, round(avg(duration) / 1000.0, 2) as avg, "
      "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max, total.num from main join total group by name ";
     auto limitSql = " limit ? offset ?";
-    std::string mainSql = GetSystemViewSqlByLayer(requestParams.layer);
+    std::string mainSql = GetSystemViewSqlByLayer(requestParams.layer, requestParams.rankId);
     return ExecuteQuery(stmt, mainSql + sql + orderBy + limitSql, searchName, rankId,
                         requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
 }
@@ -200,13 +209,17 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     const std::string& rankId, uint64_t minTimestamp, const std::string& orderBy)
 {
     auto processType = GetProcessType(requestParams.metaType);
+    std::string comSql;
     std::string sql;
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
             Prepare(stmt, ASCEND_SAME_NAME_DETAIL_SQL + orderBy)->BindParams(requestParams.name, minTimestamp);
             return Execute(stmt, rankId, requestParams.tid, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
-            Prepare(stmt, HCCL_SAME_NAME_DETAIL_SQL + orderBy)->BindParams(minTimestamp, rankId);
+            comSql = IsDeviceIdUnique(requestParams.rankId) ? COM_OP_SAME_NAME_DETAIL_SQL_UNIQUE_DEVICE :
+                COM_OP_SAME_NAME_DETAIL_SQL_NOT_UNIQUE_DEVICE;
+            sql = TASK_INFO_SAME_NAME_DETAIL_SQL + comSql + orderBy;
+            Prepare(stmt, sql)->BindParams(minTimestamp, rankId);
             return Execute(stmt, requestParams.startTime, requestParams.endTime, requestParams.tid, requestParams.name);
         case PROCESS_TYPE::CANN_API:
             sql = "with nameIds as (select id from STRING_IDS where value = ?)\n"
@@ -240,6 +253,17 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     }
 }
 
+std::vector<uint64_t> TraceDatabaseHelper::GetDeviceIdList(const std::string &fileId)
+{
+    return npuInfoRepo->QueryDeviceIdByFileId(fileId);
+}
+
+bool TraceDatabaseHelper::IsDeviceIdUnique(const std::string &fileId)
+{
+    std::vector<uint64_t> deviceIdList = GetDeviceIdList(fileId);
+    return deviceIdList.size() == 1;
+}
+
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
     const std::string& rankId, uint64_t minTimestamp)
@@ -254,12 +278,19 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
             return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
-            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                  "FROM " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO + " info "
-                  " on main.globalTaskId = info.globalTaskId"
-                  " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
-                                requestParams.startTime, requestParams.endTime);
+            if (!IsDeviceIdUnique(requestParams.cardId)) {
+                sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                      "FROM " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO + " info "
+                      " on main.globalTaskId = info.globalTaskId"
+                      " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
+                return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
+                                    requestParams.startTime, requestParams.endTime);
+            } else {
+                sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                      "FROM " + TABLE_COMMUNICATION_OP + " where start_time >= ? AND start_time <= ? ORDER BY startNs;";
+                return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.startTime,
+                                    requestParams.endTime);
+            }
         case PROCESS_TYPE::CANN_API:
             sql = "with constValue as (select ? as minTime, ? as pid, ? as startTime, ? as endTime) "
                   "SELECT startNs - minTime as start_time, endNs - startNs as duration, endNs - minTime as end_time "
@@ -411,30 +442,53 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
 std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
-    std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
-        "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-        "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name, groupName "
-        "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
-        "where opId in (select opId from tmp group by opId)) "
-        "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
-        "groupName||'group' as threadId, "
-        "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName, "
-        "? AS rankId from sub ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, rankId);
+    if (!TraceDatabaseHelper::IsDeviceIdUnique(params.rankId)) {
+        std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
+                          "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+                          "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
+                          "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
+                          "where opId in (select opId from tmp group by opId)) "
+                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+                          "groupName||'group' as threadId, "
+                          "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName, "
+                          "? AS rankId from sub ";
+        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, rankId);
+    } else {
+        std::string sql = "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
+                          "si.value as name, groupName from COMMUNICATION_OP "
+                          "LEFT JOIN STRING_IDS AS si ON si.id = opName) "
+                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+                          "groupName||'group' as threadId, "
+                          "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName, "
+                          "? AS rankId from sub ";
+        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId);
+    }
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
-    std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
-        "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-        "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name, groupName "
-        "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
-        "where opId in (select opId from tmp group by opId)) "
-        "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
-        "groupName||'group' as threadId, ? AS threadName, ? AS rankId from sub WHERE groupName||'group' = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
-        rankId, params.threadName, rankId, params.tid);
+    if (!TraceDatabaseHelper::IsDeviceIdUnique(params.rankId)) {
+        std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
+                          "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+                          "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
+                          "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
+                          "where opId in (select opId from tmp group by opId)) "
+                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+                          "groupName||'group' as threadId, ? AS threadName, ? AS rankId from sub "
+                          "WHERE groupName||'group' = ? ";
+        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
+                                                 rankId, params.threadName, rankId, params.tid);
+    } else {
+        std::string sql = "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
+                          "si.value as name, groupName "
+                          "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName) "
+                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+                          "groupName||'group' as threadId, ? AS threadName, ? AS rankId from sub "
+                          "WHERE groupName||'group' = ? ";
+        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.threadName,
+                                                 rankId, params.tid);
+    }
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -1033,6 +1087,13 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             responseBody.data[index].avgWallDuration =
                     responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
         }
+    }
+}
+
+void TraceDatabaseHelper::SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr)
+{
+    if (npuInfoRepoPtr != nullptr) {
+        npuInfoRepo = std::move(npuInfoRepoPtr);
     }
 }
 }

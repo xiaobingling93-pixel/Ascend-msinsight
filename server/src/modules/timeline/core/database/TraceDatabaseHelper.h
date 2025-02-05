@@ -14,6 +14,7 @@
 #include "DbSqlDefs.h"
 #include "JsonUtil.h"
 #include "ServerLog.h"
+#include "NpuInfoRepo.h"
 #include "DataBaseManager.h"
 
 namespace Dic::Module::Timeline {
@@ -93,7 +94,8 @@ static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<Sqli
 
 static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
         const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
-
+static std::vector<uint64_t> GetDeviceIdList(const std::string &fileId);
+static bool IsDeviceIdUnique(const std::string &fileId);
 static void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
     std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime);
 
@@ -102,6 +104,7 @@ const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBo
 
 static void ReduceThread(const std::vector<CompeteSliceDomain> &rows,
     const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
+static void SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr);
 
 static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(
         const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
@@ -185,6 +188,7 @@ static inline bool IsValidHCCLGroupNameValue(const std::string &groupNameValue)
 }
 private:
 /* Functions for BbTraceDataBase */
+    static inline std::unique_ptr<NpuInfoRepo> npuInfoRepo = std::make_unique<NpuInfoRepo>();
     static inline void DealLastData(std::vector<Protocol::SimpleSlice> &rows,
                                     std::map<std::string, uint64_t> &selfTimeKeyValue,
                                     uint64_t startTime, uint64_t endTime, uint64_t index)
@@ -209,7 +213,7 @@ private:
     static std::string GetOrderByCondition(const EventsViewParams &params);
     static inline void CalculateFwdBwdDataByFlow(const FlowStartAndEndTime &start, const FlowStartAndEndTime &end,
         uint8_t index, const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData);
-    static std::string GetSystemViewSqlByLayer(const std::string &layer);
+    static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId);
 };
 };
 

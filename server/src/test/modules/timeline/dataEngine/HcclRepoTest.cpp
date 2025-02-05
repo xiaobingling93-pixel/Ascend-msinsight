@@ -285,6 +285,76 @@ TEST_F(HcclRepoTest, test_QuerySimpleSliceWithOutNameByTrackId_group_track_with_
     TrackInfoManager::Instance().Reset();
 }
 
+HcclRepo GetHcclRepoMock()
+{
+    class TaskMock : public Dic::Module::Timeline::TaskTable {
+    public:
+        void ExcuteQuery(const std::string &fileId, std::vector<TaskPO> &result) override
+        {
+            QueryGlobalTaskIdsByRankWithTaskTableMock(fileId, result);
+            ClearThreadLocal();
+        }
+    };
+    class CommucationTaskInfoTableMock : public Dic::Module::Timeline::CommucationTaskInfoTable {
+    public:
+        void ExcuteQuery(const std::string &fileId, std::vector<CommucationTaskInfoPO> &result) override
+        {
+            QueryOpIdsByGlabalTaskIdsForCommucationTaskInfoTable(fileId, result);
+            ClearThreadLocal();
+        }
+    };
+    class CommucationOpTableMock : public Dic::Module::Timeline::CommucationOpTable {
+    public:
+        void ExcuteQuery(const std::string &fileId, std::vector<CommucationTaskOpPO> &result) override
+        {
+            QuerySimpleSliceByIdsGroupTrackForCommucationOpTable(fileId, result);
+            ClearThreadLocal();
+        }
+    };
+    class NpuInfoTableMock : public Dic::Module::Timeline::NpuInfoTable {
+    public:
+        void ExcuteQuery(const std::string &fileId, std::vector<NpuInfoPo> &result) override
+        {
+            QueryUniqueDeviceIdForNpuInfoTableMock(fileId, result);
+            ClearThreadLocal();
+        }
+    };
+    std::unique_ptr<Dic::Module::Timeline::TaskTable> tPtr = std::make_unique<TaskMock>();
+    std::unique_ptr<Dic::Module::Timeline::CommucationTaskInfoTable> cmPtr =
+            std::make_unique<CommucationTaskInfoTableMock>();
+    std::unique_ptr<Dic::Module::Timeline::CommucationOpTable> copPtr = std::make_unique<CommucationOpTableMock>();
+    std::unique_ptr<Dic::Module::Timeline::NpuInfoTable> niPtr = std::make_unique<NpuInfoTableMock>();
+    HcclRepo hcclRepo;
+    hcclRepo.SetTaskTable(std::move(tPtr));
+    hcclRepo.SetCommucationTaskInfoTable(std::move(cmPtr));
+    hcclRepo.SetCommucationOpTable(std::move(copPtr));
+    std::unique_ptr<NpuInfoRepo> npr = std::make_unique<NpuInfoRepo>();
+    npr->SetNpuInfoTable(std::move(niPtr));
+    hcclRepo.SetNpuInfoRepo(std::move(npr));
+    return hcclRepo;
+}
+/**
+ * 测试全量DB的hccl的group泳道的根据trackId查询所有简单算子,正常情况
+ */
+TEST_F(HcclRepoTest, test_QuerySimpleSliceWithOutNameByTrackId_group_track_with_unique_key)
+{
+    TrackInfoManager::Instance().Reset();
+    HcclRepo hcclRepo = GetHcclRepoMock();
+    SliceQuery sliceQuery;
+    sliceQuery.trackId = TrackInfoManager::Instance().GetTrackId("999", "yyy", "999group");
+    std::vector<SliceDomain> sliceVec;
+    hcclRepo.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
+    const uint64_t expectSize = 2;
+    EXPECT_EQ(sliceVec.size(), expectSize);
+    auto it = sliceVec.begin();
+    const uint64_t firstTimestamp = 22;
+    EXPECT_EQ(it->timestamp, firstTimestamp);
+    it++;
+    const uint64_t lastTimestamp = 23;
+    EXPECT_EQ(it->timestamp, lastTimestamp);
+    TrackInfoManager::Instance().Reset();
+}
+
 /**
  * 测试全量DB的hccl的plane泳道的根据trackId查询所有简单算子,正常情况
  */

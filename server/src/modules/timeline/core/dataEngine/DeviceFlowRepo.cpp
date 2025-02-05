@@ -6,7 +6,9 @@
 namespace Dic::Module::Timeline {
 void DeviceFlowRepo::AddDeviceFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
+    // task_info表中opId和globalTaskId的映射
     std::unordered_map<uint64_t, uint64_t> opIdMap = QueryOpIdMap(flowQuery);
+    // task表中globalTaskId和deviceId的映射
     std::unordered_map<uint64_t, uint64_t> deviceMap = QueryDeviceMap(flowQuery);
     std::string host = hostInfoTable->GetHost(flowQuery.fileId);
     std::unordered_set<uint64_t> hcclConnectionIdSet =
@@ -48,12 +50,18 @@ std::unordered_set<uint64_t> DeviceFlowRepo::AddGroupHcclFlowPoint(const FlowQue
         .ExcuteQuery(flowQuery.fileId, commucationTaskOpPOs);
     std::unordered_set<uint64_t> hcclConnectionIdSet;
     auto &instance = TrackInfoManager::Instance();
+    std::vector<uint64_t> deviceIdList = npuInfoRepo->QueryDeviceIdByFileId(flowQuery.fileId);
+    bool isUniqueDeviceId = deviceIdList.size() == 1;
     for (const auto &item : commucationTaskOpPOs) {
         FlowPoint endPoint;
-        if (opIdMap.count(item.opId) == 0 || deviceMap.count(opIdMap.at(item.opId)) == 0) {
+        // 如果deviceId不唯一，则判断opId和device是否满足
+        bool isContinue = !isUniqueDeviceId &&
+            (opIdMap.count(item.opId) == 0 || deviceMap.count(opIdMap.at(item.opId)) == 0);
+        if (isContinue) {
             continue;
         }
-        endPoint.rankId = host + instance.GetRankId(host, std::to_string(deviceMap.at(opIdMap.at(item.opId))));
+        uint64_t deviceId = isUniqueDeviceId ? deviceIdList[0] : deviceMap.at(opIdMap.at(item.opId));
+        endPoint.rankId = host + instance.GetRankId(host, std::to_string(deviceId));
         uint64_t realConnectionId = item.connectionId;
         std::string flowId = std::to_string(realConnectionId);
         hcclConnectionIdSet.emplace(realConnectionId);
@@ -114,6 +122,27 @@ void DeviceFlowRepo::AddHardWareFlowPoint(const FlowQuery &flowQuery, std::vecto
         endPoint.rankId = host + instance.GetRankId(host, std::to_string(item.deviceId));
         endPoint.trackId = instance.GetTrackId(endPoint.rankId, hardWarePid, std::to_string(item.streamId));
         flowPointVec.emplace_back(endPoint);
+    }
+}
+
+void DeviceFlowRepo::SetTaskTable(std::unique_ptr<TaskTable> taskTablePtr)
+{
+    if (taskTablePtr != nullptr) {
+        taskTable = std::move(taskTablePtr);
+    }
+}
+
+void DeviceFlowRepo::SetCommucationOpTable(std::unique_ptr<CommucationOpTable> commucationOpTablePtr)
+{
+    if (commucationOpTablePtr != nullptr) {
+        commucationOpTable = std::move(commucationOpTablePtr);
+    }
+}
+
+void DeviceFlowRepo::SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr)
+{
+    if (npuInfoRepoPtr != nullptr) {
+        npuInfoRepo = std::move(npuInfoRepoPtr);
     }
 }
 }

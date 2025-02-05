@@ -7,6 +7,7 @@
 #include "CommucationOpTable.h"
 #include "TaskTable.h"
 #include "HostInfoTable.h"
+#include "NpuInfoRepo.h"
 #include "CommucationTaskInfoTable.h"
 namespace Dic::Module::Timeline {
 class DeviceFlowRepo {
@@ -14,6 +15,9 @@ public:
     void AddDeviceFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec);
     void AddHardWareMstxFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec,
         const std::vector<uint64_t> &connectionIds);
+    void SetTaskTable(std::unique_ptr<TaskTable> taskTablePtr);
+    void SetCommucationOpTable(std::unique_ptr<CommucationOpTable> commucationOpTablePtr);
+    void SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr);
 
 private:
     const std::string hcclPid = "HCCL";
@@ -22,6 +26,7 @@ private:
     std::unique_ptr<TaskTable> taskTable = std::make_unique<TaskTable>();
     std::unique_ptr<HostInfoTable> hostInfoTable = std::make_unique<HostInfoTable>();
     std::unique_ptr<CommucationTaskInfoTable> commucationTaskInfoTable = std::make_unique<CommucationTaskInfoTable>();
+    std::unique_ptr<NpuInfoRepo> npuInfoRepo = std::make_unique<NpuInfoRepo>();
     std::unordered_map<uint64_t, uint64_t> QueryOpIdMap(const FlowQuery &flowQuery);
     std::unordered_map<uint64_t, uint64_t> QueryDeviceMap(const FlowQuery &flowQuery);
     std::unordered_set<uint64_t> AddGroupHcclFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec,

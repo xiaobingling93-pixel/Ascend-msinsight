@@ -54,15 +54,20 @@ void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec
 void HcclRepo::QuerySimpleSliceFromGroupTrack(std::vector<SliceDomain> &sliceVec, const TrackInfo &trackInfo,
     const std::string &suffix)
 {
-    std::vector<uint64_t> globalIds = QueryGlobalTaskIdsByRank(trackInfo);
-    std::vector<uint64_t> opIds = QueryOpIdsByGlabalTaskIds(trackInfo, globalIds);
-    std::string tid = trackInfo.threadId.substr(0, trackInfo.threadId.size() - suffix.size());
+    // 获取设备id列表
+    std::vector<uint64_t> deviceIdList = npuInfoRepo->QueryDeviceIdByFileId(trackInfo.cardId);
     std::vector<CommucationTaskOpPO> commucationTaskOpPOVec;
+    std::string tid = trackInfo.threadId.substr(0, trackInfo.threadId.size() - suffix.size());
     commucationOpTable->Select(CommucationTaskOpColumn::TIMESTAMP, CommucationTaskOpColumn::ENDTIME)
-        .Select(CommucationTaskOpColumn::OP_ID)
-        .Eq(CommucationTaskOpColumn::GROUPNAME, tid)
-        .In(CommucationTaskOpColumn::OP_ID, opIds)
-        .ExcuteQuery(trackInfo.cardId, commucationTaskOpPOVec);
+            .Select(CommucationTaskOpColumn::OP_ID)
+            .Eq(CommucationTaskOpColumn::GROUPNAME, tid);
+    if (deviceIdList.size() != 1) {
+        // 设备id不唯一，走老逻辑，通过communication_task_info作为中间表查询对应deviceId下大算子数据
+        std::vector<uint64_t> globalIds = QueryGlobalTaskIdsByRank(trackInfo);
+        std::vector<uint64_t> opIds = QueryOpIdsByGlabalTaskIds(trackInfo, globalIds);
+        commucationOpTable->In(CommucationTaskOpColumn::OP_ID, opIds);
+    }
+    commucationOpTable->ExcuteQuery(trackInfo.cardId, commucationTaskOpPOVec);
     for (const auto &item : commucationTaskOpPOVec) {
         SliceDomain sliceDomain;
         sliceDomain.id = item.opId;
@@ -192,6 +197,13 @@ void HcclRepo::SetCommucationOpTable(std::unique_ptr<CommucationOpTable> commuca
 {
     if (commucationOpTablePtr != nullptr) {
         commucationOpTable = std::move(commucationOpTablePtr);
+    }
+}
+
+void HcclRepo::SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr)
+{
+    if (npuInfoRepoPtr != nullptr) {
+        npuInfoRepo = std::move(npuInfoRepoPtr);
     }
 }
 

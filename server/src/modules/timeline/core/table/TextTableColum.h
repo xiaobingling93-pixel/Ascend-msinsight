@@ -142,6 +142,13 @@ constexpr std::string_view ID = "id";
 constexpr std::string_view CONNECTIONID = "connectionId";
 }
 
+namespace NpuInfoColumn {
+// deviceId
+constexpr std::string_view ID = "id";
+// 芯片型号
+constexpr std::string_view NAME = "name";
+}
+
 namespace PytorchApiColumn {
 constexpr std::string_view ID = "rowid";
 // op api开始时间

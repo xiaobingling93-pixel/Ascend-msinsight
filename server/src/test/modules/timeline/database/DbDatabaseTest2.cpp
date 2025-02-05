@@ -4,9 +4,9 @@
 #include <gtest/gtest.h>
 #include "DatabaseTest.cpp"
 #include "DbTraceDataBase.h"
-#include "DataBaseManager.h"
 #include "CollectionTimeService.h"
 #include "TraceDatabaseHelper.h"
+#include "NpuInfoRepoMock.h"
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 using namespace Dic::Global::PROFILER::MockUtil;
 class DbDatabaseTest2 : public ::testing::Test {
@@ -160,6 +160,44 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExist)
     EXPECT_EQ(metaData[second]->children[second]->metaData.threadName, expectPlaneName);
 }
 
+/**
+ * 查询hccl的plane泳道(deviceId唯一)
+ */
+TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenDeviceUnique)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string taskTableInsert =
+        "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1729733883833924932, 1729733883833924952, 0, 4294967295, 21412, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0);";
+    std::string commucationOpInsertSql =
+        "INSERT INTO \"COMMUNICATION_OP\" (\"opName\", \"startNs\", \"endNs\", \"connectionId\", "
+        "\"groupName\", \"opId\", \"relay\", \"retry\", \"dataType\", \"algType\", \"count\", \"opType\", \"waitNs\") "
+        "VALUES (6, 1729773871230644118, 1729773871230661178, 144529, 8, 1, 0, 0, 4, 9, 1, 10, 726280);";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, commucationOpInsertSql);
+    MockNpuInfoRepoFunc();
+    std::string fileId = "0";
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    const uint8_t expectProcessCount = 3;
+    const uint8_t zero = 0;
+    const uint8_t one = 1;
+    const std::string expectGroupName = "Group 0 Communication";
+    database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(metaData.size(), expectProcessCount);
+    EXPECT_EQ(metaData[one]->children.size(), one);
+    EXPECT_EQ(metaData[one]->children[zero]->metaData.threadName, expectGroupName);
+    RestoreRepoFunc();
+}
 
 /**
  * 过滤plane为4294967295的泳道
@@ -597,6 +635,45 @@ TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbOpen)
     Dic::Protocol::CommunicationKernelBody body;
     bool result = database.QueryCommunicationKernelInfo(name, rankId, body);
     EXPECT_EQ(result, true);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenUniqueDevice)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string opData =
+        "INSERT INTO \"main\".\"COMMUNICATION_OP\" (\"opName\", \"startNs\", \"endNs\", \"connectionId\", "
+        "\"groupName\", \"opId\", \"relay\", \"retry\", \"dataType\", \"algType\", \"count\", \"opType\", \"waitNs\") "
+        "VALUES (1, 1723510445656562660, 1723510445656625680, 149336, 324, 1, 0, 0, 5, 325, 8192, 326, 1412060);";
+    std::string taskData = "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", "
+        "\"globalTaskId\", \"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", "
+        "\"modelId\", \"depth\") VALUES (1723510445634242160, 1723510445634242160, 0, 4294967295, "
+        "6901, 4130085, 293, 4294967295, 0, 39, 4294967295, 0);";
+    std::string strData = "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (1, 'device');";
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (0, 0);";
+    DatabaseTestCaseMockUtil::InsertData(db, opData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, strData);
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+    const std::string name = "device";
+    const std::string rankId = "0";
+    MockNpuInfoRepoFunc();
+    Dic::Protocol::CommunicationKernelBody body;
+    bool result = database.QueryCommunicationKernelInfo(name, rankId, body);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(body.depth, 0);
+    EXPECT_EQ(body.pid, "HCCL");
+    EXPECT_EQ(body.threadId, "324group");
+    RestoreRepoFunc();
 }
 
 TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbNotOpen)

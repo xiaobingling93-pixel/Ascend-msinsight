@@ -40,7 +40,8 @@ const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
                               " , stackDepth INTEGER );"},
     {TABLE_COMMUNICATION_SCHEDULE_TASK, "create TEMPORARY table if not exists COMMUNICATION_SCHEDULE_TASK_INFO("
                                         "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, "
-                                        "opType INTEGER);"}
+                                        "opType INTEGER);"},
+    {TABLE_NPU_INFO, "create TEMPORARY table if not exists NPU_INFO(id INTEGER primary key, name TEXT);"}
 };
 
     // sql of metadata counter
@@ -140,17 +141,24 @@ const static std::string ASCEND_SAME_NAME_DETAIL_SQL =
     "     join nameIds on coalesce(c.name, main.taskType) = id  where deviceId = ? and streamId = ? "
     " and timestamp + duration >= ? AND timestamp <= ? ";
 
-const static std::string HCCL_SAME_NAME_DETAIL_SQL =
+const static std::string TASK_INFO_SAME_NAME_DETAIL_SQL =
     "with nameIds as (select id, ? as minTime, ? as rankId, ? as startTime, ? as endTime,"
     "                  ? as tid from STRING_IDS where value = ?) "
     "select startNs-minTime as timestamp,endNs-startNs as duration,0 as depth,c.ROWID as id from  TASK main "
     "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.taskType = id "
     " where deviceId=rankId and groupName || '_' || planeId=tid "
-    " and timestamp+duration >= startTime AND timestamp <= endTime "
-    " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
+    " and timestamp+duration >= startTime AND timestamp <= endTime ";
+
+const static std::string COM_OP_SAME_NAME_DETAIL_SQL_NOT_UNIQUE_DEVICE =
+    " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth,"
     " op.ROWID as id from COMMUNICATION_OP op join TASK CA on op.connectionId = CA.connectionId "
-    " join  nameIds on op.opName = id where deviceId = rankId and op.groupName||'group' = tid "
+    " join  nameIds on op.opName = id where CA.deviceId = rankId and op.groupName||'group' = tid "
     " and timestamp + duration >= startTime AND timestamp <= endTime group by opId ";
+
+const static std::string COM_OP_SAME_NAME_DETAIL_SQL_UNIQUE_DEVICE =
+        " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth,"
+        " op.ROWID as id from COMMUNICATION_OP op  join  nameIds on op.opName = id where op.groupName||'group' = tid "
+        " and timestamp + duration >= startTime AND timestamp <= endTime group by opId ";
 
 // sql of singleUnitFlow
 const static std::string PYTORCH_UNIT_FLOW_SQL =
@@ -178,12 +186,17 @@ const static std::string TASK_UNIT_FLOW_SQL =
       " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, taskType, "
       "         deviceId from TASK task join constValue join MSTX_EVENTS CTI "
       "         on task.connectionId = CTI.connectionId where task.connectionId = constValue.connectionId  "
-      " and task.connectionId != " + WRONG_DATA + " "
-      "union all select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
+      " and task.connectionId != " + WRONG_DATA;
+const static std::string COM_OP_UNIT_FLOW_SQL =
+      " select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
       "     op.endNs - op.startNs as duration, 'HCCL' as pid, 'HCCL' as metaType, opName as name, "
       "     deviceId from COMMUNICATION_OP op join constValue join TASK task on task.connectionId = op.connectionId "
       "     where op.connectionId = constValue.connectionId group by opId ";
-
+const static std::string COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE =
+      " select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
+      "     op.endNs - op.startNs as duration, 'HCCL' as pid, 'HCCL' as metaType, opName as name, "
+      "     ? as deviceId from COMMUNICATION_OP op join constValue "
+      "     where op.connectionId = constValue.connectionId group by opId ";
 
 // full_db_update_wait_time
 const static std::string FULL_DB_UPDATE_TIME =

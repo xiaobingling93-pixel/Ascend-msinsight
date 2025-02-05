@@ -83,20 +83,8 @@ bool DbTraceDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     return false;
 }
 
-bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
-    Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
+std::vector<FlowLocation> DbTraceDataBase::ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet)
 {
-    auto stmt = CreatPreparedStatement();
-    auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
-    if (!connectionId.has_value()) {
-        return false;
-    }
-    std::string sql = "with constValue as (select ? as minTime, ? as connectionId)\n";
-    sql += PYTORCH_UNIT_FLOW_SQL + " union all ";
-    sql += CANN_UNIT_FLOW_SQL + " union all ";
-    sql += TASK_UNIT_FLOW_SQL + " union all " + MSTX_UNIT_FLOW_SQL;
-    sql += " order by startTime ";
-    auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId.value());
     std::vector<FlowLocation> flowLocations;
     while (resultSet->Next()) {
         auto metaType = resultSet->GetString("metaType");
@@ -108,14 +96,39 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
         }
         rankId = rankId.empty() ? path : QueryHostInfo() + rankId;
         FlowLocation location {
-            .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-            .metaType = metaType, .rankId = rankId,
-            .depth = resultSet->GetUint32("depth"), .timestamp = resultSet->GetUint64("startTime"),
-            .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
-            .name = stringsCache.at(path)[resultSet->GetString("name")]
+                .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
+                .metaType = metaType, .rankId = rankId,
+                .depth = resultSet->GetUint32("depth"), .timestamp = resultSet->GetUint64("startTime"),
+                .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
+                .name = stringsCache.at(path)[resultSet->GetString("name")]
         };
         flowLocations.push_back(location);
     }
+    return flowLocations;
+}
+
+bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
+    Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
+{
+    auto stmt = CreatPreparedStatement();
+    auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
+    if (!connectionId.has_value()) {
+        return false;
+    }
+    std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(requestParams.rankId);
+    std::string comSql = deviceIdList.size() == 1 ? COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE : COM_OP_UNIT_FLOW_SQL;
+    std::string sql = "with constValue as (select ? as minTime, ? as connectionId)\n";
+    sql += PYTORCH_UNIT_FLOW_SQL + " union all ";
+    sql += CANN_UNIT_FLOW_SQL + " union all ";
+    sql += TASK_UNIT_FLOW_SQL + " union all " + comSql + " union all " + MSTX_UNIT_FLOW_SQL;
+    sql += " order by startTime ";
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (deviceIdList.size() == 1) {
+        resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId.value(), deviceIdList[0]);
+    } else {
+        resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId.value());
+    }
+    std::vector<FlowLocation> flowLocations = ConvertResultToFlowLocation(std::move(resultSet));
     if (flowLocations.size() < 2) { // 小于2表示没有连线
         return false;
     }
@@ -480,17 +493,24 @@ bool DbTraceDataBase::QueryCommunicationKernelInfo(const std::string &name, cons
                                                    CommunicationKernelBody &body)
 {
     std::string sql = "SELECT info.ROWID as id, info.groupName||'group' as tid, info.opName as name, 'HCCL' as pid, "
-                      "0 as depth, info.startNs from COMMUNICATION_OP info "
-                      "LEFT JOIN COMMUNICATION_TASK_INFO taskInfo ON info.opId = taskInfo.opId "
-                      "LEFT JOIN TASK ON TASK.globalTaskId = taskInfo.globalTaskId "
-                      " where name = (select id from STRING_IDS where value = ?) and TASK.deviceId = ?";
+                      "0 as depth, info.startNs from COMMUNICATION_OP info ";
+    auto getDeviceStmt = CreatPreparedStatement();
+    bool isDeviceIdUnique = TraceDatabaseHelper::IsDeviceIdUnique(rankId);
+    if (!isDeviceIdUnique) {
+        sql += "LEFT JOIN COMMUNICATION_TASK_INFO taskInfo ON info.opId = taskInfo.opId "
+               "LEFT JOIN TASK ON TASK.globalTaskId = taskInfo.globalTaskId "
+               " where opName = (select id from STRING_IDS where value = ?) and TASK.deviceId = ?";
+    } else {
+        sql += "where opName = (select id from STRING_IDS where value = ?)";
+    }
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql to query kernel depth and thread.");
         return false;
     }
     std::string deviceId = GetDeviceId(rankId);
-    std::unique_ptr<SqliteResultSet> resultSet = stmt->ExecuteQuery(name, deviceId);
+    std::unique_ptr<SqliteResultSet> resultSet = isDeviceIdUnique ? stmt->ExecuteQuery(name) :
+        stmt->ExecuteQuery(name, deviceId);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
         return false;
@@ -1312,6 +1332,29 @@ std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(cons
     return unitTrack;
 }
 
+std::string DbTraceDataBase::GetHcclOperateMetaData(const std::string &fileId)
+{
+    std::string sql = "with main as (select planeId, op.groupName, sids.value as groupNameValue from " +
+        TABLE_COMMUNICATION_TASK_INFO + " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
+       " join COMMUNICATION_OP op on op.opId = info.opId "
+       " left join STRING_IDS sids on op.groupName = sids.id where task.deviceId = ?) "
+       " select 'Plane ' || planeId as name, groupName || '_' || planeId as tid, 0 as maxDepth, "
+       " groupName, groupNameValue, planeId from main group by planeId, groupName union ";
+    if (!TraceDatabaseHelper::IsDeviceIdUnique(fileId)) {
+        // deviceId不唯一，走老逻辑
+        sql += "select 'Group ' || ((row_number() over ()) -1) || ' Communication' as name, "
+           " groupName || 'group' as tid, 0 as maxDepth, groupName, groupNameValue, -1 as planeId from main "
+           " group by groupName order by groupName ASC, planeId ASC";
+    } else {
+        // deviceId唯一，走新逻辑
+        sql += "SELECT 'Group ' || ( ( row_number() OVER () ) - 1 ) || ' Communication' AS name, "
+           "groupName || 'group' AS tid, 0 AS maxDepth, groupName, sids.value as groupNameValue, - 1 AS planeId FROM " +
+           TABLE_COMMUNICATION_OP + " op left join STRING_IDS sids on op.groupName = sids.id GROUP BY groupName "
+           "order by groupName ASC, planeId ASC";
+    }
+    return sql;
+}
+
 bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
                                            std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
@@ -1324,16 +1367,7 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
                       " where deviceId = ? group by streamId";
                 break;
             case PROCESS_TYPE::HCCL:
-                sql = "with main as (select planeId, op.groupName, sids.value as groupNameValue from " +
-                    TABLE_COMMUNICATION_TASK_INFO +
-                    " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
-                    " join COMMUNICATION_OP op on op.opId = info.opId "
-                    " left join STRING_IDS sids on op.groupName = sids.id where deviceId = ?) "
-                    " select 'Plane ' || planeId as name, groupName || '_' || planeId as tid, 0 as maxDepth, "
-                    " groupName, groupNameValue, planeId  from main group by planeId, groupName "
-                    " union select 'Group ' || ((row_number() over ()) -1) || ' Communication' as name, "
-                    " groupName || 'group' as tid, 0 as maxDepth, groupName, groupNameValue, -1 as planeId from main "
-                    " group by groupName order by groupName ASC, planeId ASC";
+                sql = GetHcclOperateMetaData(fileId);
                 break;
             default:
                 break;
@@ -1585,24 +1619,30 @@ std::string DbTraceDataBase::GetSearchSliceNameCountSql(bool isMatchExact, bool 
             ") SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API +
             " union all select message from  " + TABLE_MSTX_EVENTS +
             " union all select name from  " + TABLE_API + ") api join ids on id = api.name";
-    } else {
-        sql = "with ids as (" + nameMatch + "), "
-            "     tasks as (select globalTaskId, taskType, connectionId from TASK where deviceId = ?), "
-            "     com as (select opId, info.globalTaskId,info.taskType as name from COMMUNICATION_TASK_INFO info "
-            " join tasks on  info.globalTaskId = tasks.globalTaskId), "
-            "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
-            " on  info.globalTaskId = tasks.globalTaskId), "
-            " schedule as (select info.globalTaskId, name from COMMUNICATION_SCHEDULE_TASK_INFO info left join tasks "
-            " on info.globalTaskId = tasks.globalTaskId)"
-            "select count(1) from ( "
-            "    select coalesce(compute.name, schedule.name, main.taskType) as name from tasks main "
-            "         left join compute on compute.globalTaskId = main.globalTaskId "
-            " left join schedule ON main.globalTaskId = schedule.globalTaskId"
-            "    union ALL select name from com "
-            "    union ALL select opName as name from COMMUNICATION_OP op "
-            " join tasks on op.connectionId = tasks.connectionId group by opId"
-            ") allNames join ids on id = allNames.name;";
+        return sql;
     }
+    std::string communicationOpSql;
+    if (!TraceDatabaseHelper::IsDeviceIdUnique(rankId)) {
+        communicationOpSql = "select opName as name from COMMUNICATION_OP op "
+                             " join tasks on op.connectionId = tasks.connectionId group by opId";
+    } else {
+        communicationOpSql = "select opName as name from COMMUNICATION_OP op";
+    }
+    sql = "with ids as (" + nameMatch + "), "
+        "     tasks as (select globalTaskId, taskType, connectionId from TASK where deviceId = ?), "
+        "     com as (select opId, info.globalTaskId,info.taskType as name from COMMUNICATION_TASK_INFO info "
+        " join tasks on  info.globalTaskId = tasks.globalTaskId), "
+        "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
+        " on  info.globalTaskId = tasks.globalTaskId), "
+        " schedule as (select info.globalTaskId, name from COMMUNICATION_SCHEDULE_TASK_INFO info left join tasks "
+        " on info.globalTaskId = tasks.globalTaskId)"
+        "select count(1) from ( "
+        "    select coalesce(compute.name, schedule.name, main.taskType) as name from tasks main "
+        "         left join compute on compute.globalTaskId = main.globalTaskId "
+        " left join schedule ON main.globalTaskId = schedule.globalTaskId"
+        "    union ALL select name from com "
+        "    union ALL " + communicationOpSql +
+        ") allNames join ids on id = allNames.name;";
     return sql;
 }
 
@@ -1612,7 +1652,7 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     uint64_t count = 0;
     uint64_t offset = (params.current - 1) * params.pageSize;
     const std::string &sql = GetSearchAllSlicesDetailsSql(params.isMatchExact, params.isMatchCase,
-                                                          params.order, params.orderBy);
+                                                          params.order, params.orderBy, params.rankId);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query slice name failed!.");
@@ -1652,8 +1692,27 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     return true;
 }
 
-std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
-                                                          const std::string &order, const std::string &orderByField)
+std::string DbTraceDataBase::GetComOpSliceDetailsSql(const std::string &rankId)
+{
+    auto stmt = CreatPreparedStatement();
+    std::string communicationOpSql = "";
+    std::vector<uint64_t> deviceId = TraceDatabaseHelper::GetDeviceIdList(rankId);
+    if (deviceId.size() == 1) {
+        communicationOpSql = " select " + std::to_string(deviceId[0]) + " as deviceId,opName as name,'HCCL' as pid,"
+                             "'HCCL' as metaType, groupName||'group' as tid, op.startNs - minTime.value as startTime, "
+                             "op.endNs - op.startNs as duration, 0 as depth, op.ROWID as id "
+                             " from COMMUNICATION_OP op join minTime";
+    } else {
+        communicationOpSql = " select tasks.deviceId,opName as name,'HCCL' as pid, 'HCCL' as metaType, "
+                             " groupName||'group' as tid, op.startNs - minTime.value as startTime, "
+                             " op.endNs - op.startNs as duration, 0 as depth, op.ROWID as id from COMMUNICATION_OP op "
+                             " join minTime join tasks on op.connectionId = tasks.connectionId group by opId";
+    }
+    return communicationOpSql;
+}
+
+std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase, const std::string &order,
+                                                          const std::string &orderByField, const std::string &rankId)
 {
     std::string sql;
     std::string nameMatch;
@@ -1673,6 +1732,7 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
     } else {
         nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
+    std::string communicationOpSql = GetComOpSliceDetailsSql(rankId);
     sql = "with ids as (" + nameMatch + "), minTime as (select ? as value),\n"
           " tasks as (select deviceId, TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
           " startNs - minTime.value as startTime,endNs - startNs as duration,depth,connectionId from TASK join minTime "
@@ -1686,11 +1746,8 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
           " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
           " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId "
           " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId union ALL"
-          " select deviceId,name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
-          " union ALL select deviceId,opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
-          " startNs - minTime.value as startTime, endNs - startNs as duration, 0 as depth, op.ROWID as id "
-          " from COMMUNICATION_OP op join minTime join tasks on op.connectionId = tasks.connectionId group by opId \n"
-          " UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
+          " select deviceId,name, pid, pid as meatType, tid, startTime, duration, depth, id from com union ALL " +
+          communicationOpSql + " UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
           " type as tid, "
           "startNs - minTime.value AS startTime, endNs - startNs AS duration, depth, CANN_API.ROWID as id from "
           "CANN_API JOIN minTime UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"

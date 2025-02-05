@@ -11,6 +11,7 @@
 #include "TraceDatabaseDef.h"
 #include "map"
 #include "TimelineProtocolRequest.h"
+#include "TimelineProtocolResponse.h"
 #include "DomainObject.h"
 
 namespace Dic::Module::FullDb {
@@ -154,6 +155,7 @@ private:
 
     void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);
     bool UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
+    std::string GetHcclOperateMetaData(const std::string &fileId);
     bool QueryOperateMetadata(const std::string &fileId,
                               std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool GenerateOverlapAnalysisMetadata(const std::string &fileId,
@@ -177,8 +179,8 @@ private:
     bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);
     void GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector<std::string> &units,
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
-    std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
-                                             const std::string& order, const std::string& orderByField);
+    std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase, const std::string& order,
+                                             const std::string& orderByField, const std::string &rankId);
     std::vector<Protocol::SimpleSlice>
     QueryThreadByPid(const Protocol::Metadata &metaData, uint64_t startTime, uint64_t endTime,
                      const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue);
@@ -191,6 +193,8 @@ private:
         uint64_t minTimestamp);
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
+    std::string GetComOpSliceDetailsSql(const std::string &rankId);
+    std::vector<Protocol::FlowLocation> ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet);
 };
 }
 

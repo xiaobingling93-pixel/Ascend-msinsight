@@ -8,6 +8,7 @@
 #include "CommucationOpTable.h"
 #include "TaskTable.h"
 #include "CommucationTaskInfoTable.h"
+#include "NpuInfoTable.h"
 using namespace Dic::Module::Timeline;
 namespace Dic::TimeLine::HcclRepo::Mock {
 void QueryCompeteSliceByIdsGroupTrackWithNormalExcuteQuery(const std::string &fileId,
@@ -68,6 +69,12 @@ void QueryAllPlaneSliceForTaskTableMock(const std::string &fileId, std::vector<T
     TaskPO taskPO2 = { 2, 29, 56, 0, 0, 34, 0, 0, 0, 0, 0, 0 };
     result.emplace_back(taskPO1);
     result.emplace_back(taskPO2);
+}
+
+void QueryUniqueDeviceIdForNpuInfoTableMock(const std::string &fileId, std::vector<NpuInfoPo> &result)
+{
+    NpuInfoPo po = {"device1", 0};
+    result.push_back(po);
 }
 }
 #endif // PROFILER_SERVER_HCCLREPO_MOCK_DATA_H

@@ -13,6 +13,7 @@
 #include "EnumHcclLinkTypeTable.h"
 #include "EnumHcclTransportTypeTable.h"
 #include "EnumHcclRdmaTypeTable.h"
+#include "NpuInfoRepo.h"
 #include "SliceRepoInterface.h"
 namespace Dic::Module::Timeline {
 class HcclRepo : public SliceRepoInterface {
@@ -30,11 +31,13 @@ public:
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain);
     void SetTaskTable(std::unique_ptr<TaskTable>);
     void SetCommucationOpTable(std::unique_ptr<CommucationOpTable>);
+    void SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr);
     void SetCommucationTaskInfoTable(std::unique_ptr<CommucationTaskInfoTable>);
 
 protected:
     std::unique_ptr<TaskTable> taskTable = std::make_unique<TaskTable>();
     std::unique_ptr<CommucationOpTable> commucationOpTable = std::make_unique<CommucationOpTable>();
+    std::unique_ptr<NpuInfoRepo> npuInfoRepo = std::make_unique<NpuInfoRepo>();
     std::unique_ptr<CommucationTaskInfoTable> commucationTaskInfoTable = std::make_unique<CommucationTaskInfoTable>();
     std::unique_ptr<StringIdsTable> stringIdsTable = std::make_unique<StringIdsTable>();
     std::unique_ptr<EnumHcclDataTypeTable> enumHcclDataTypeTable = std::make_unique<EnumHcclDataTypeTable>();
