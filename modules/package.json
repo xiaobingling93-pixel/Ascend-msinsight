@@ -54,6 +54,7 @@
         "ascend-components": "./lib/src/components",
         "ascend-collapsible-panel": "./lib/src/CollapsiblePanel",
         "ascend-shared-config-provider": "./lib/src/SharedConfigProvider",
+        "ascend-local-storage": "./lib/src/LocalStorage",
         "@craco/craco": "7.1.0",
         "@playwright/test": "1.36.0",
         "@testing-library/jest-dom": "5.17.0",

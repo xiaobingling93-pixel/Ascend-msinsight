@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Tooltip } from 'ascend-components';
-import { localStorageService, LocalStorageKey } from 'ascend-utils';
+import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import i18n from 'ascend-i18n';
 import { sendLanguage } from '@/connection/sendNotification';
 import { LangEnIcon, LangZhIcon } from 'ascend-icon';

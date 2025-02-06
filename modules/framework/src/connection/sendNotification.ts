@@ -4,7 +4,7 @@
 import connector from '@/connection/index';
 import { themeInstance } from 'ascend-theme';
 import { store } from '@/store';
-import { localStorageService, LocalStorageKey } from 'ascend-utils';
+import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import { ThemeName, Language } from '@/utils/enum';
 
 export function sendTheme(): void {

@@ -2,7 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { runInAction } from 'mobx';
-import { customConsole as console, LocalStorageKey, localStorageService } from 'ascend-utils';
+import { customConsole as console } from 'ascend-utils';
+import { LocalStorageKey, localStorageService } from 'ascend-local-storage';
 import connector from '@/connection';
 import { store } from '@/store';
 import { ProjectAction } from '@/utils/enum';
