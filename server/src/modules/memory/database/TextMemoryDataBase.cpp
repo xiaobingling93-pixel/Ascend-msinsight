@@ -773,7 +773,7 @@ bool TextMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizePar
                                                  double &min, double &max)
 {
     std::string sql =
-        "SELECT ROUND(min(size) / 1024.0, 2) as minSize, ROUND(max(size) / 1024.0, 2) as maxSize FROM "
+        "SELECT min(size) as minSize, max(size) as maxSize FROM "
         + staticOpTable + " WHERE op_name <> 'TOTAL'";
     if (!requestParams.graphId.empty()) {
         sql += " AND graph_id = ?" ;

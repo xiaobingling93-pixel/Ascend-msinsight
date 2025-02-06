@@ -398,8 +398,8 @@ TEST_F(TestSuit, QueryStaticOperatorSizeDataWithoutGraphId)
     double min;
     double max;
     bool result = database->QueryStaticOperatorSize(requestParams, min, max);
-    double expectMin = 0.0;
-    double expectMax = 2.29;
+    double expectMin = 0.21191406300000001;
+    double expectMax = 2343.78125;
     EXPECT_TRUE(result);
     EXPECT_EQ(min, expectMin);
     EXPECT_EQ(max, expectMax);
@@ -413,8 +413,8 @@ TEST_F(TestSuit, QueryStaticOperatorSizeDataWithGraphId)
     double min;
     double max;
     bool result = database->QueryStaticOperatorSize(requestParams, min, max);
-    double expectMin = 0.0;
-    double expectMax = 2.29;
+    double expectMin = 0.21191406300000001;
+    double expectMax = 2343.78125;
     EXPECT_TRUE(result);
     EXPECT_EQ(min, expectMin);
     EXPECT_EQ(max, expectMax);
