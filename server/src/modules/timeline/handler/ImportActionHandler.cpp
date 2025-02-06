@@ -9,6 +9,7 @@
 #include "SourceFileParser.h"
 #include "JupyterServerManager.h"
 #include "TimeUtil.h"
+#include "ClusterFileParser.h"
 #include "ImportActionHandler.h"
 
 namespace Dic {
@@ -106,7 +107,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
     for (const auto &item : request.params.path) {
         std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(item, projectType, warnMsg);
         if (!warnMsg.empty() && parseFileList.size() == 1 &&
-            !StringUtil::EndWith(parseFileList[0], CLUSTER_ANALYSIS_OUTPUT)) {
+            !ClusterFileParser::CheckIsCluster(parseFileList[0])) {
             std::string message =
                 "The nesting depth of the imported sub-file exceeds 5 or the sub-file path length exceeds ";
             message += std::to_string(FileUtil::GetFilePathLengthLimit());
