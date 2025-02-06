@@ -6,10 +6,10 @@ import type { TFunction } from 'i18next';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { AlignType } from 'rc-table/lib/interface';
 import type { InstrsColumnType } from './defs';
+import { FieldType, NOT_APPLICABLE } from './defs';
 import { Tooltip } from 'ascend-components';
 import Bar, { StallBar } from './Bar';
 import { limitInput } from 'ascend-utils';
-import { FieldType, NOT_APPLICABLE } from './defs';
 
 const onFilterDropdownOpenChange = (open: boolean): void => {
     if (open) {
@@ -87,12 +87,12 @@ const endCols = ['Cycles', 'StallCycles'];
 const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles'];
 
 export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}): ColumnsType<InstrsColumnType> => {
-    const fields = Object.keys(dynamicFields);
-    const allCols = ['#', ...fields];
+    const dynamicCols = Object.keys(dynamicFields).filter(col => dynamicFields[col] !== FieldType.SKIP);
+    const allCols = ['#', ...dynamicCols];
     if (allCols.includes('RealStallCycles')) {
         allCols.push('StallCycles');
     }
-    const cols = fields.length === 0
+    const cols = dynamicCols.length === 0
         ? fixedCols
         : [...headerCols.filter(colName => allCols.includes(colName)),
             ...allCols.filter(colName => !headerCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),

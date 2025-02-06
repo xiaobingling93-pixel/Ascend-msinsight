@@ -16,7 +16,7 @@ const fixedCols = ['Instructions Executed', 'Cycles'];
 const notDisplayedCols = ['Address Range', 'Line'];
 
 export const getCodeColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}): ColumnsType<Ilinetable> => {
-    const dynamicCols = Object.keys(dynamicFields);
+    const dynamicCols = Object.keys(dynamicFields).filter(col => dynamicFields[col] !== FieldType.SKIP);
     const cols = dynamicCols.length === 0
         ? fixedCols
         : [...fixedCols.filter(colName => dynamicCols.includes(colName)),
