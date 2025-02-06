@@ -251,12 +251,11 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         }).catch((err: any) => {
             console.error(err);
         });
-    }, [memorySession.rankIdCondition.value, memorySession.groupId, memorySession.memoryGraphId, isCompare]);
+    }, [memorySession.rankIdCondition.value, memorySession.groupId, memorySession.memoryGraphId, isCompare, memoryType]);
 
     useEffect(() => {
         setDetailTableData();
-    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
-        order, orderBy, t, memoryType]);
+    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize, order, orderBy, t]);
 
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
