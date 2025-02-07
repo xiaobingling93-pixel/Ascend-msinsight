@@ -7,7 +7,7 @@ import type { TreeDataNode } from 'antd';
 import { checkProjectValid, getFiles } from '@/utils/Request';
 import { DataSource } from '@/centralServer/websocket/defs';
 import { ProjectError } from '@/utils/enum';
-import { localStorageService, LocalStorageKey } from 'ascend-utils';
+import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import { store } from '@/store';
 import { message as Message } from 'antd';
 import { runInAction } from 'mobx';
