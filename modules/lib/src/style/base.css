@@ -67,6 +67,7 @@
     --mi-bg-color-light: #F4F6FA;
     --mi-bg-color-lighter: #ffffff;
     --mi-bg-color-overlay: #ffffff;
+    --mi-bg-color-common: #EBEFF6;
     --mi-text-color: #4E5865;
     --mi-text-color-primary: #000000;
     --mi-text-color-secondary: #4E5865;
@@ -134,6 +135,7 @@ body.theme_dark {
     --mi-bg-color-light: #2a2f37;
     --mi-bg-color-lighter: #343a43;
     --mi-bg-color-grey: #343a43;
+    --mi-bg-color-common: #2A2F37;
     --mi-text-color: #D2DCE9;
     --mi-text-color-primary: #ffffff;
     --mi-text-color-secondary: #d3dce9;

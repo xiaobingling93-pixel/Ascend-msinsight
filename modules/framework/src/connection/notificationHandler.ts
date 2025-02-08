@@ -6,7 +6,7 @@ import { store } from '@/store';
 import type { Session } from '@/entity/session';
 import connector from '@/connection';
 import { firstLetterUpper, getModuleIndex } from '@/utils';
-import { sendLanguage, sendReset, sendStatus, sendTheme } from './sendNotification';
+import { sendLanguage, sendModuleReset, sendStatus, sendTheme } from './sendNotification';
 import { NotificationMessage } from './notification';
 import { SessionAction } from '@/utils/enum';
 import { customConsole as console } from 'ascend-utils';
@@ -64,7 +64,7 @@ export const updateSessionHandler = (e: NotificationMessage): void => {
 export const getParseStatusHandler = (e: NotificationMessage): void => {
     const session = store.sessionStore.activeSession;
     if (session.isIpynb) {
-        sendReset();
+        sendModuleReset();
     }
     // 请求特定数据
     const receiver = e.data.body;

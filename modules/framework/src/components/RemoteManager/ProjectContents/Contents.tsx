@@ -21,9 +21,11 @@ import { useTranslation } from 'react-i18next';
 import EditableText from './EditableText';
 
 const ContentsContainer = styled.div`
-    padding: 0.5rem 0.8rem;
     margin-right: 10px;
+    height: calc(100vh - 84px);
+    overflow-y: auto;
     .ant-tree {
+        padding: 0.4rem 0.8rem;
         background: none;
     }
     // 目录名
@@ -50,6 +52,10 @@ const ContentsContainer = styled.div`
     .content-body {
         display: flex;
         align-items: center;
+    }
+    .content-name {
+        display:block;
+        width: 100%;
     }
     .content-text {
         overflow: hidden;
@@ -81,6 +87,9 @@ const ContentsContainer = styled.div`
 
         .btn-box {
             display: flex;
+        }
+        .content-name {
+            width: calc(100% - 50px);
         }
     }
     // 比对数据
@@ -118,34 +127,43 @@ function ImportDataBtn({ projectName, session }: {projectName: string;session: S
     </Tooltip>;
 };
 
-// 目录
-const Contents = observer(({ session }: {session: Session}) => {
-    const contents = useMemo<TreeDataNode[]>(() => session.dataSources.map((dataSource, dataSourceIndex) => ({
+// 目录树数据
+const getTreeData = (session: Session): TreeDataNode[] => {
+    return session.dataSources.map((dataSource, dataSourceIndex) => ({
         key: dataSource.projectName,
         isLeaf: false,
         icon: <LocalImportIcon/>,
-        title: <span className={'content-body'}>
-            <span className={'content-text'}><EditableText text={dataSource.projectName}/></span>
-            <div className={'btn-box'} onClick={(e): void => e.stopPropagation()}>
-                <ImportDataBtn projectName={dataSource.projectName} session={session}/>
-                <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} />
-            </div>
-        </span>,
+        title: <Tooltip placement="bottom" title={dataSource.projectName}>
+            <span className="content-body">
+                <span className="content-name"><EditableText text={dataSource.projectName}/></span>
+                <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
+                    <ImportDataBtn projectName={dataSource.projectName} session={session}/>
+                    <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} />
+                </div>
+            </span>
+        </Tooltip>,
         children: dataSource.dataPath?.map((path, dataPathIndex) => ({
             key: `${dataSource.projectName}-${path}`,
             isLeaf: true,
-            title: <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: path })}`}>
-                <span className={'content-text can-right-click'}
-                    onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: path })}>{path}</span>
-                <div className={'btn-box'} onClick={(e): void => e.stopPropagation()}>
-                    <DeleteConfirm isProject={false} projectIndex={dataSourceIndex} dataPathIndex={dataPathIndex}/>
-                </div>
-            </span>,
+            title: <Tooltip placement="bottom" title={path}>
+                <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: path })}`}>
+                    <span className="content-text can-right-click"
+                        onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: path })}>{path}</span>
+                    <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
+                        <DeleteConfirm isProject={false} projectIndex={dataSourceIndex} dataPathIndex={dataPathIndex}/>
+                    </div>
+                </span>
+            </Tooltip>,
         })),
-    })), [session.dataSources, JSON.stringify(session.compareSet)]);
+    }));
+};
+
+// 目录
+const Contents = observer(({ session }: {session: Session}) => {
+    const treeData = useMemo<TreeDataNode[]>(() => getTreeData(session), [session.dataSources, JSON.stringify(session.compareSet)]);
 
     // 展开情况: 默认展开所有工程，新导入工程默认展开
-    const allProjectKeys = contents.map(item => item.key);
+    const allProjectKeys = treeData.map(item => item.key);
     const [collapsedKeys, setCollapsedKeys] = useState(new Set());
     const expandedKeys = useMemo(() => allProjectKeys.filter(item => !collapsedKeys.has(item)), [collapsedKeys, allProjectKeys]);
 
@@ -212,7 +230,7 @@ const Contents = observer(({ session }: {session: Session}) => {
         <Tree
             blockNode={true}
             showIcon={true}
-            treeData={contents}
+            treeData={treeData}
             selectedKeys={selectedKeys}
             multiple={true}
             expandedKeys={expandedKeys}

@@ -6,3 +6,15 @@
   text-align: center;
   padding: 0px 16px 24px;
 }
+
+/*目录树*/
+.ant-tree-checkbox-inner , .ant-tree-checkbox-indeterminate .ant-tree-checkbox-inner{
+  background-color: var(--mi-bg-color);
+  border-color: var(--mi-border-color-lighter);
+}
+
+/*设置二级目录勾选框不可见、不可点击*/
+.ant-tree-treenode:not(.ant-tree-treenode-switcher-open) .ant-tree-checkbox {
+  pointer-events:none;
+  display:none;
+}

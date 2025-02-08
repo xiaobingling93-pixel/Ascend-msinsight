@@ -14,7 +14,7 @@ export function sendTheme(): void {
     });
 }
 
-export function sendReset(): void {
+export function sendModuleReset(): void {
     connector.send({
         event: 'module.reset',
         body: {},
@@ -62,4 +62,8 @@ export function sendUpdateProjectName(oldProjectName: string, newProjectName: st
         event: 'updateProjectName',
         body: { oldProjectName, newProjectName },
     });
+}
+
+export function sendReset(): void {
+    connector.send({ event: 'remote/reset', body: {}, target: 'plugin' });
 }
