@@ -50,8 +50,8 @@ export const updateProjectName = async (oldProjectName: string, newProjectName: 
 /**
  * 清理Timeline
  */
-export const resetTimeline = async (dataSource: DataSource): Promise<unknown> => {
-    return request(dataSource, 'timeline', { command: 'remote/reset' });
+export const resetTimeline = async (): Promise<unknown> => {
+    return request(GLOBAL_HOST, 'timeline', { command: 'remote/reset' });
 };
 
 /**
@@ -62,6 +62,13 @@ export const deleteProject = async (dataSource: DataSource): Promise<unknown> =>
     return request(dataSource, 'global', {
         command: 'files/deleteProjectExplorer',
         params: { projectName: dataSource.projectName, dataPath: [] },
+    });
+};
+
+export const clearProjects = async (projectNameList: React.Key[] = []): Promise<unknown> => {
+    return request(GLOBAL_HOST, 'global', {
+        command: 'files/clearProjectExplorer',
+        params: { projectNameList },
     });
 };
 /**

@@ -57,7 +57,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 
 /*弹窗确认框*/
-.ant-popover-inner, .ant-popover-arrow {
+.ant-popover-inner {
     background: var(--mi-bg-color-common);
     color: var(--mi-text-color-primary);
     border-color: var(--mi-border-color-light);
@@ -73,5 +73,8 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     color: var(--mi-text-color-primary);
     border: 0 solid transparent;
     background-color: transparent;
+}
+.ant-popover-arrow-content:before {
+    background: var(--mi-bg-color-common);
 }
 

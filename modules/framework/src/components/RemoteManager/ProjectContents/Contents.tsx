@@ -19,6 +19,7 @@ import DeleteConfirm from './DeleteConfirm';
 import { isSameFile } from './ContextMenu';
 import { useTranslation } from 'react-i18next';
 import EditableText from './EditableText';
+import CheckMenu from './CheckMenu';
 
 const ContentsContainer = styled.div`
     margin-right: 10px;
@@ -88,8 +89,13 @@ const ContentsContainer = styled.div`
         .btn-box {
             display: flex;
         }
+    }
+    .ant-tree-treenode:hover {
         .content-name {
             width: calc(100% - 50px);
+        }
+        .ant-tree-checkbox + span .content-name {
+            width: calc(100% - 70px);
         }
     }
     // 比对数据
@@ -176,6 +182,16 @@ const Contents = observer(({ session }: {session: Session}) => {
         return [];
     }, [session.activeDataSource]);
 
+    // 勾选目录
+    const [checkedKeys, setCheckedKeys] = useState<React.Key[]>([]);
+    const onCheck = (keys: any): void => { setCheckedKeys(keys); };
+    const checkedProjectKeys = useMemo<React.Key[]>(() => checkedKeys.filter(key => allProjectKeys.includes(key)), [allProjectKeys, checkedKeys]);
+    const isAllProjectChecked = checkedProjectKeys.length === allProjectKeys.length;
+    // 全选、取消全选
+    const toggleCheckAll = (checked: boolean): void => {
+        setCheckedKeys(checked ? allProjectKeys : []);
+    };
+
     // 点击目录
     const handleNodeClick = (keys: React.Key[], { node }: {node: EventDataNode<TreeDataNode>}): void => {
         const { activeDataSource, dataSources } = session;
@@ -226,8 +242,19 @@ const Contents = observer(({ session }: {session: Session}) => {
             loadHistoryProject();
         }
     }, [session.defaultConnected]);
+
+    useEffect(() => {
+        // 进入编辑模式，选中全部
+        if (session.projectContentEditStatus) {
+            setCheckedKeys(allProjectKeys);
+        }
+    }, [session.projectContentEditStatus]);
     return <ContentsContainer>
+        <CheckMenu editStatus={session.projectContentEditStatus} isAll={isAllProjectChecked} toggleCheckAll={toggleCheckAll} checkedKeys={checkedProjectKeys}/>
         <Tree
+            checkable={session.projectContentEditStatus}
+            checkedKeys={checkedKeys}
+            onCheck={onCheck}
             blockNode={true}
             showIcon={true}
             treeData={treeData}

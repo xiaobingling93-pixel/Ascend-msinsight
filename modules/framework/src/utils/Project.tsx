@@ -8,11 +8,14 @@ import { store } from '@/store';
 import { ProjectAction } from '@/utils/enum';
 import { DataSource, LOCAL_HOST, PORT, ProjectDirectory } from '@/centralServer/websocket/defs';
 import { addDataPath, connectRemote, isExistedRemote } from '@/centralServer/server';
-import { deleteDataPath, deleteProject, resetTimeline, getHistoryProject, updateProjectName as requestUpdateProjectName } from '@/utils/Request';
+import {
+    deleteDataPath, deleteProject, resetTimeline, getHistoryProject, updateProjectName as requestUpdateProjectName,
+    clearProjects,
+} from '@/utils/Request';
 import i18n from 'ascend-i18n';
 import { message as Message } from 'antd';
 import { isProjectNameExisted, updateDataSourceName } from '@/utils/Resource';
-import { sendUpdateProjectName } from '@/connection/sendNotification';
+import { sendReset, sendUpdateProjectName } from '@/connection/sendNotification';
 import { updateProjectNameHandler } from '@/utils/Compare';
 
 export interface UpdateProjectParam {
@@ -131,7 +134,7 @@ export const removeProject = (projectIndex: number): void => {
                 // 通知各页签
                 connector.send({ event: 'remote/remove', body: { dataSource } });
                 // 通知后台，清理Timeline
-                await resetTimeline(dataSource);
+                await resetTimeline();
                 // 重置frame页面
                 session.reset(true);
                 // 设置当前打开（选中）项目空
@@ -141,6 +144,32 @@ export const removeProject = (projectIndex: number): void => {
             await deleteProject(dataSource);
             // 目录更新
             session.deleteDataSource(projectIndex);
+        } catch {
+            console.error('remove error');
+        }
+    });
+};
+
+// 移除多个项目
+export const removeProjects = async (projectNameList: React.Key[] = []): Promise<void> => {
+    const session = store.sessionStore.activeSession;
+    runInAction(async() => {
+        try {
+            // 通知后台
+            await clearProjects(projectNameList);
+            // 目录更新
+            session.dataSources = session.dataSources.filter(dataSource => !projectNameList.includes(dataSource.projectName));
+            // 如果删除项目包含当前打开项目或者全部删除
+            if (projectNameList.length === 0 || projectNameList.includes(session.activeDataSource.projectName)) {
+                // 通知页签
+                sendReset();
+                // 通知后台，清理Timeline
+                await resetTimeline();
+                // framework重置
+                session.reset(true);
+                // 当前选中置空
+                session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+            }
         } catch {
             console.error('remove error');
         }
