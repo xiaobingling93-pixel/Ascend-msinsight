@@ -9,6 +9,11 @@ import { updateProjectName } from '@/utils/Project';
 import { HandleSingleDoubleClick } from 'ascend-utils';
 
 const Container = styled.div`
+  .show {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
   .hide {
     display: none;
   }

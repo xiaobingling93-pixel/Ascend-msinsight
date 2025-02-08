@@ -55,3 +55,23 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     width: auto;
     max-width: none!important;
 }
+
+/*弹窗确认框*/
+.ant-popover-inner, .ant-popover-arrow {
+    background: var(--mi-bg-color-common);
+    color: var(--mi-text-color-primary);
+    border-color: var(--mi-border-color-light);
+}
+.ant-popover-message{
+    color: var(--mi-text-color-primary);
+}
+.ant-popover-buttons button{
+    font-size: 12px;
+    color: var(--mi-text-color-fourth);
+}
+.ant-popover-buttons button.ant-btn-default{
+    color: var(--mi-text-color-primary);
+    border: 0 solid transparent;
+    background-color: transparent;
+}
+
