@@ -62,6 +62,9 @@ export class Session {
     // 需要下发给插件的url
     toIframeUrl: string = '';
 
+    // 资源目录的编辑状态
+    projectContentEditStatus: boolean = false;
+
     // 数据源/项目管理
     private _dataSources: DataSource[] = [];
 
