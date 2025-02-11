@@ -49,7 +49,7 @@ OPEN_SOURCE = [
     ],
     [
         'sqlite3_src',
-        '3.40.1',
+        '3.46.1',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/www.sqlite.org/sqlite.git'
     ],
     [
