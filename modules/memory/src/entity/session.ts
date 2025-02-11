@@ -16,7 +16,6 @@ export class Session {
     isCluster: boolean = false;
     shouldRefresh: boolean = true;
     isClusterMemoryCompletedSwitch: boolean = false;
-    curRankIdsCount = 0;
     compareRank: ICompareRankInfo = { rankId: '', isCompare: false };
 
     constructor() {

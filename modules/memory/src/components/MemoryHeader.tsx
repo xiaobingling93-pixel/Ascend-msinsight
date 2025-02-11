@@ -13,6 +13,7 @@ import { Label, useHit } from './Common';
 import { Select } from 'ascend-components';
 import { GroupRankIdsByHost } from 'ascend-utils';
 import { useTranslation } from 'react-i18next';
+import _ from 'lodash';
 
 const groupByOptions = (isCompare: boolean): Array<{ label: string; value: string }> => {
     const options = [
@@ -36,9 +37,17 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         label: t(`searchCriteria.${item.label}`),
     }));
 
+    const getRankIdOptions = (value: string, ranks?: Map<string, string[]>): string[] => {
+        const tempRanks = _.cloneDeep(ranks);
+        // 将db格式中rankId内的host名称剔除，只对RankId为数字做排序，不能转为数字的字符串则不排序
+        return (tempRanks?.get(value) ?? []).sort((a: any, b: any) => Number(a.replace(`${value} `, '')) - Number(b.replace(`${value} `, '')));
+    };
+
     const onHostChanged = (value: string): void => {
+        const rankIdOptions = getRankIdOptions(value, memorySession.hostCondition.ranks);
         runInAction(() => {
             memorySession.hostCondition = { ...memorySession.hostCondition, value };
+            memorySession.rankIdCondition = { options: rankIdOptions, value: rankIdOptions[0] ?? '' };
         });
     };
 
@@ -56,32 +65,16 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
+        const rankIdOptions = getRankIdOptions(memorySession.hostCondition.value, ranks);
         runInAction(() => {
-            memorySession.hostCondition = { options: hosts, value: hosts[0] ?? '', ranks };
+            memorySession.hostCondition = { options: hosts, value: memorySession.hostCondition.value ?? '', ranks };
+            memorySession.rankIdCondition = { options: rankIdOptions, value: session.compareRank.rankId ?? '' };
         });
     }, [session.memoryRankIds.join('')]);
 
     useEffect(() => {
-        // 只对RankId为数字做排序，不能转为数字的字符串则不排序
-        const rankIdOptions: string[] = JSON.parse(JSON.stringify(memorySession.hostCondition.ranks?.get(memorySession.hostCondition.value) ?? []))
-            .sort((a: any, b: any) => Number(a) - Number(b));
-        if (rankIdOptions.length === 0) {
-            runInAction(() => {
-                memorySession.rankIdCondition = { options: [], value: '' };
-            });
-            return;
-        }
-        const rankIdValue = (memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '')
-            ? rankIdOptions[0]
-            : memorySession.rankIdCondition.value;
         runInAction(() => {
-            memorySession.rankIdCondition = { options: rankIdOptions, value: rankIdValue };
-        });
-    }, [memorySession.hostCondition.options, memorySession.hostCondition.value, memorySession.hostCondition.ranks]);
-
-    useEffect(() => {
-        runInAction(() => {
-            memorySession.rankIdCondition = { options: memorySession.rankIdCondition.options, value: memorySession.rankIdCondition.options[0] };
+            memorySession.rankIdCondition = { options: memorySession.rankIdCondition.options, value: session.compareRank.rankId };
         });
     }, [session.isClusterMemoryCompletedSwitch]);
 
@@ -89,10 +82,18 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         if (session.compareRank.rankId === memorySession.rankIdCondition.value) {
             return;
         }
+        const list = session.compareRank.rankId.split(' ');
+        if (list.length > 1) {
+            const rankIdOptions = getRankIdOptions(list[0], memorySession.hostCondition.ranks);
+            runInAction(() => {
+                memorySession.hostCondition = { ...memorySession.hostCondition, value: list[0] };
+                memorySession.rankIdCondition = { options: rankIdOptions, value: session.compareRank.rankId ?? '' };
+            });
+        }
         if (session.memoryRankIds.includes(session.compareRank.rankId)) {
             onRankIdChanged(session.compareRank.rankId);
         }
-    }, [session.compareRank.rankId, session.memoryRankIds.join('')]);
+    }, [session.compareRank.rankId]);
 
     useEffect(() => {
         if (isCompare && memorySession.groupId === GroupBy.STREAM) {

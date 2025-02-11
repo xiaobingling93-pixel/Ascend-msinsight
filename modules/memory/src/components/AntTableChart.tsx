@@ -172,7 +172,8 @@ async function redirectToTimeline(record: OperatorDetail, rankId: string): Promi
 
 // eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
-    const defaultDataSource = [{}] as OperatorDetail[]; // 防止antd4 table组件报ResizeObserver loop错误
+    // 开发环境防止antd4 table组件报ResizeObserver loop错误，但会在没有数据时也显示有1条，生产环境不会报错也会正常显示
+    const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []) as OperatorDetail[];
     const { t } = useTranslation('memory');
     const {
         tableData, onRowSelected, current, pageSize,

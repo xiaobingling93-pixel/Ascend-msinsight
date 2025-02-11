@@ -39,7 +39,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             }
             session.memoryRankIds = [];
             session.isCluster = false;
-            session.curRankIdsCount = 0;
+            session.compareRank.rankId = '';
             memorySession.rankIdCondition = { options: [], value: '' };
         });
     } catch (error) {

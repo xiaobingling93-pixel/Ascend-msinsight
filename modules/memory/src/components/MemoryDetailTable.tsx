@@ -171,6 +171,8 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                 memorySession.isBtnDisabled = true;
                 memorySession.current = 1;
                 memorySession.pageSize = 10;
+                memorySession.minSize = 0;
+                memorySession.maxSize = 0;
             });
             return false;
         };
@@ -235,9 +237,9 @@ const MemoryDetailTable = observer(({ session, memorySession }:
 
     useEffect(() => {
         if (memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '') {
+            setDetailTableData();
             return;
         }
-        setMemoryTableData([]);
         const fetchSizeApi = getFetchSizeApi(memorySession.memoryType);
         const params = buildSearchSizeParam(memorySession, isCompare);
         fetchSizeApi(params).then((res: { minSize: number; maxSize: number }) => {

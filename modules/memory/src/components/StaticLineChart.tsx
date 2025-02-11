@@ -79,7 +79,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
         }).finally(() => {
             setStaticCurveSping(false);
         });
-    }, [memorySession.rankIdCondition.value, session.isClusterMemoryCompletedSwitch, memorySession.memoryGraphId, t]);
+    }, [memorySession.rankIdCondition.value, session.isClusterMemoryCompletedSwitch, memorySession.memoryGraphId, t, isCompare]);
 
     return (
         <div className="mb-30">
