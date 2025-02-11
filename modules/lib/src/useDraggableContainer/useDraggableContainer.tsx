@@ -86,7 +86,6 @@ const ContainerBase = styled.div<CssProps>`
 `;
 const ContainerLeft = styled(ContainerBase)`
     flex-direction: row-reverse;
-    border-bottom: ${(p): string => p.theme.dividerColor} 1px solid;
     height: 100%;
     & > .topC {
         flex: 1;

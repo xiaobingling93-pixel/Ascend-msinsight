@@ -7,6 +7,7 @@ import { store } from '@/store';
 import connector from '@/connection';
 import ContextMenu from './ContextMenu';
 import Contents from './Contents';
+import { getRankId } from '@/utils/Rank';
 
 const Index = observer(() => {
     const session = store.sessionStore.activeSession;
@@ -20,7 +21,7 @@ const Index = observer(() => {
         } else {
             // 切换目录
             if (projectName !== '' && dataPath.length > 0) {
-                rankId = session.getRankId({ projectName, filePath: dataPath[0] });
+                rankId = getRankId({ projectName, filePath: dataPath[0] });
             }
         }
         // 通知页签

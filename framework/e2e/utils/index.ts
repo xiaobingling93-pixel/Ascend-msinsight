@@ -61,9 +61,10 @@ export async function clearAllData(page: Page): Promise<void> {
     await expect(deleteAllDialog).toBeVisible();
     await deleteAllConfirmBtn.click();
 
-    const noData = projectList.getByText('No Data');
-    await noData.waitFor({ state: 'visible' });
-    await expect(noData).toBeVisible();
+    const checkbtn = page.locator('.dragContainer').first().getByText('All');
+    await checkbtn.waitFor({ state: 'hidden' });
+    const elementText = await projectList.textContent();
+    await expect(elementText.trim()).toBe('');
 }
 
 // 等待ws返回指定数据
@@ -136,14 +137,14 @@ export async function setCompare(
     } = { baseline: FilePath.TEXT_RANK_0, comparison: FilePath.TEXT_RANK_1 },
 ): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
-    const rank1 = frameworkPage.projectList.locator('span.content-node-text').getByText(baseline);
+    const rank1 = frameworkPage.getRankLocator(baseline);
     await rank1.click({ button: 'right' });
     const setBaselineBtn = frameworkPage.page.getByText('Set as Baseline Data');
     await setBaselineBtn.click();
-    const rank2 = frameworkPage.projectList.locator('span.content-node-text').getByText(comparison);
+    const rank2 = frameworkPage.getRankLocator(comparison);
     await rank2.click({ button: 'right' });
     const setComparisonBtn = frameworkPage.page.getByText('Set as Comparison Data');
     await setComparisonBtn.click();
-    await frame.getByText('loading').waitFor({ state: 'hidden' });
+    await frame.getByText('loading').first().waitFor({ state: 'hidden' });
     await frameworkPage.mouseOut();
 }

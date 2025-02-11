@@ -29,7 +29,7 @@ function SwitchTheme(): JSX.Element {
     };
 
     return <Tooltip placement={'bottom'} title={t('Switch Theme')}>
-        <Switch checked={isDarkTheme} onChange={onChange} size={'small'}/>
+        <Switch checked={isDarkTheme} onChange={onChange} size={'small'} className="switch-theme"/>
     </Tooltip>;
 }
 

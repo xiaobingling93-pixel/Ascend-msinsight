@@ -18,12 +18,11 @@ export interface File {
     rankId?: string;
 }
 
-export interface Rank {
-    cardId: string;
+export interface Rank extends File {
+    rankId: string;
     cardName: string;
     cardPath: string;
     host?: string;
-    dataSource: DataSource;
 }
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
@@ -31,6 +30,7 @@ export class Session {
     actionListener: {type: SessionAction;value: string} = { type: SessionAction.NO_ACTION, value: '' };
     // 数据源/项目管理
     rankList: Rank[] = [];
+    rankMap: Map<string, Rank> = new Map();
     // 场景
     isCluster: boolean | null = false;
     isBinary: boolean | null = false;
@@ -127,14 +127,5 @@ export class Session {
         const dataSources = JSON.parse(JSON.stringify(this._dataSources));
         dataSources[projectIndex].dataPath.splice(dataPahtIndex, 1);
         this._dataSources = dataSources;
-    }
-
-    // Timeline解析卡信息
-    getRank({ projectName, filePath }: File): Rank | undefined {
-        return this.rankList.find(rank => rank.dataSource.projectName === projectName && rank.dataSource.dataPath[0] === filePath);
-    }
-
-    getRankId(file: File): string {
-        return this.getRank(file)?.cardId ?? '';
     }
 }

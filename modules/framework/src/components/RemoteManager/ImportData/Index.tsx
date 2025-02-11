@@ -19,6 +19,9 @@ const ImportContainer = styled.div`
         margin-right: 8px;
         flex: 1;
     }
+    .btn-import > div:first-child{
+        margin-right: 8px;
+    }
 `;
 
 export const BtnItem = styled.div`

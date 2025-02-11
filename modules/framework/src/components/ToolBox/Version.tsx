@@ -25,7 +25,7 @@ function Version(): JSX.Element {
     };
 
     return <>
-        <HelpIcon onClick={showVersion}/>
+        <HelpIcon onClick={showVersion} data-testid="help-icon"/>
         <Modal title={`${t('About')} MindStudio Insight`} open={isModalOpen} onCancel={closeVersion} destroyOnClose={true} footer={null}>
             <ul className="help-ul">
                 <li>{t('buildVersion', { version, modifyTime })}</li>

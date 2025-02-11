@@ -52,10 +52,10 @@ export class FrameworkPage {
         this.communicationTab = page.getByRole('menuitem', { name: 'Communication' });
         this.sourceTab = page.getByRole('menuitem', { name: 'Source' });
         this.detailsTab = page.getByRole('menuitem', { name: 'Details' });
-        this.deleteAllDialog = page.getByLabel('Delete Item');
-        this.deleteAllConfirmBtn = page.getByRole('button', { name: 'Confirm' });
-        this.deleteAllCancelBtn = page.getByRole('button', { name: 'Cancel' });
-        this.projectList = page.locator('.menu-tree .el-tree');
+        this.deleteAllDialog = page.getByText('Are you sure to delete');
+        this.deleteAllConfirmBtn = page.getByRole('button', { name: 'Yes' });
+        this.deleteAllCancelBtn = page.getByRole('button', { name: 'No' });
+        this.projectList = page.getByRole('tree');
         this.helpInfoDialog = page.getByLabel('About MindStudio Insight');
         this.loadingDialog = page.locator('.el-loading-mask');
     }
@@ -72,6 +72,10 @@ export class FrameworkPage {
 
     async mouseOut(): Promise<void> {
         await this.page.mouse.move(0, 0);
+    }
+
+    getRankLocator(rankName: string): Locator {
+        return this.projectList.locator('span.content-text').getByText(rankName);
     }
 }
 

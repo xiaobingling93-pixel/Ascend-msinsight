@@ -18,6 +18,7 @@ import { message as Message } from 'antd';
 import { isProjectNameExisted, updateDataSourceName } from '@/utils/Resource';
 import { sendReset, sendUpdateProjectName } from '@/connection/sendNotification';
 import { updateProjectNameHandler } from '@/utils/Compare';
+import { updateRankMapByProjectName } from '@/utils/Rank';
 
 export interface UpdateProjectParam {
     projectAction: ProjectAction;
@@ -215,6 +216,8 @@ export const updateProjectName = async (oldProjectName: string, newProjectName: 
             Message.warning(i18n.t('Duplicate Project', { ns: 'framework' }));
             return false;
         }
+        // 更新卡信息
+        updateRankMapByProjectName(oldProjectName, newProjectName);
         // 通知后端
         await requestUpdateProjectName(oldProjectName, newProjectName);
         // 通知模块

@@ -11,6 +11,7 @@ import { store } from '@/store';
 import { cancelBaseline, setBaseline } from '@/utils/Request';
 import { sendClusterBaselineStatus } from '@/connection/sendNotification';
 import { notNull } from 'ascend-utils';
+import { getRankInfo } from '@/utils/Rank';
 
 export interface CompareData {
     projectName: string;
@@ -140,11 +141,11 @@ export const setCompareData = ({ projectName, filePath }: File): void => {
     const session = store.sessionStore.activeSession;
     // 选中对比文件
     runInAction(() => {
-        const rank = session.getRank({ projectName, filePath });
+        const rank = getRankInfo({ projectName, filePath });
         session.compareSet.comparison = {
             projectName,
             filePath,
-            rankId: rank?.cardId ?? '',
+            rankId: rank?.rankId ?? '',
             host: rank?.host ?? '',
             cardName: rank?.cardName ?? '',
         };
