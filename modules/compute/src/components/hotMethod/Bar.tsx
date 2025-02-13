@@ -137,7 +137,7 @@ function Bar({ value = 0, max = 1, type }: IProps): JSX.Element {
 };
 export default Bar;
 
-interface IBaseBarProps{
+interface IBaseBarProps {
     value: number;
     percent: number;
     label: React.ReactNode;
