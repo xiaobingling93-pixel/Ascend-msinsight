@@ -8,7 +8,7 @@ import type { AlignType } from 'rc-table/lib/interface';
 import type { InstrsColumnType } from './defs';
 import { FieldType, NOT_APPLICABLE } from './defs';
 import { Tooltip } from 'ascend-components';
-import Bar, { StallBar } from './Bar';
+import Bar, { BarType, StallBar } from './Bar';
 import { limitInput } from 'ascend-utils';
 
 const onFilterDropdownOpenChange = (open: boolean): void => {
@@ -73,6 +73,17 @@ const instrsColsConfig = [
         width: 115,
         render: (realStallCycles: number | string, record: InstrsColumnType): string | React.ReactElement =>
             <StallBar real={record.RealStallCycles as number} theoretical={record.TheoreticalStallCycles as number}/>,
+        className: 'height20',
+    },
+    {
+        title: 'L2Cache Hit Rate',
+        dataIndex: 'L2Cache Hit Rate',
+        width: 120,
+        ellipsis: true,
+        sorter: true,
+        render: (percent: number): React.ReactNode => {
+            return <Bar value={percent} type={BarType.PERCENT}/>;
+        },
         className: 'height20',
     },
 ];
