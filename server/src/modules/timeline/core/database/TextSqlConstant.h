@@ -89,7 +89,7 @@ const std::string QUERY_UNIT_COUNTER_SQL = "SELECT timestamp - ? as startTime, a
 const std::string QUERY_LAYER_DATA_SQL = "SELECT sum(case when name != 'Communication' then duration else 0 end) "
     "AS totalTime, count(distinct name) FROM slice "
     "WHERE lower(name) LIKE lower(?) and slice.track_id IN "
-    "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid WHERE process_name = ? ) ";
+    "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid WHERE process_name = ? COLLATE NOCASE) ";
 const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
@@ -194,7 +194,7 @@ public:
             "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
             "FROM slice WHERE lower(name) LIKE lower(?) AND slice.track_id IN ( SELECT track_id "
             "FROM process JOIN thread t ON process.pid = t.pid "
-            "WHERE process_name = ? ) GROUP BY name " +
+            "WHERE process_name = ? COLLATE NOCASE) GROUP BY name " +
             orderBy + " limit ? offset ?";
         return sql;
     }
