@@ -103,27 +103,53 @@ const BarContainer = styled.div`
     }
 `;
 
-// Cycles 时钟周期百分比色条，当前值/最大值百分比
-const Bar = ({ value = 0, max = 1 }: {value: number;max: number}): JSX.Element => {
-    const num = Number(value);
+export enum BarType {
+    PERCENT = 0,
+}
+interface IProps {
+    value: number;
+    max?: number;
+    type?: BarType;
+}
+// 百分比色条，2种
+// 默认：使用当前值/最大值 计算百分比
+// BarType。PERCENT：直接使用value作为百分比
+function Bar({ value = 0, max = 1, type }: IProps): JSX.Element {
+    const valueNum = Number(value);
     const maxNum = Number(max);
-    const isWrongNumber = isNaN(num) || isNaN(maxNum) || maxNum <= 0 || num < 0;
-    let bar;
+    const isWrongNumber = type === BarType.PERCENT
+        ? isNaN(valueNum) || valueNum < 0
+        : isNaN(valueNum) || valueNum < 0 || isNaN(maxNum) || maxNum <= 0;
+    let percent = 0;
+    let label;
     if (!isWrongNumber) {
-        let percent = Number(((value / max) * 100).toFixed(0));
+        percent = type === BarType.PERCENT
+            ? valueNum
+            : Number(((value / max) * 100).toFixed(0));
         percent = Math.min(100, percent);
-        // 百分比小于50，数字放在色条右侧，否则放在色条里面
-        bar = percent < 50
-            ? <>
-                <div className={`bar width${num.toFixed(0)}`} style={{ width: `${percent}%` }}></div>
-                <span className={'outside-label'}>{value}</span>
-            </>
-            : <div className={'bar'} style={{ width: `${percent}%` }}>
-                <span className={'inside-label'}>{value}</span>
-            </div>;
+        label = type === BarType.PERCENT
+            ? `${valueNum}%`
+            : value;
     }
     return isWrongNumber
         ? <></>
-        : (<BarContainer title={`${num}`}>{bar}</BarContainer>);
+        : (<BarContainer title={`${valueNum}`}><BaseBar value={valueNum} percent={percent} label={label}/></BarContainer>);
 };
 export default Bar;
+
+interface IBaseBarProps{
+    value: number;
+    percent: number;
+    label: React.ReactNode;
+}
+function BaseBar({ value, percent, label }: IBaseBarProps): JSX.Element {
+    // 百分比小于等于50，数字放在色条右侧，否则放在色条里面
+    return percent <= 50
+        ? <>
+            <div className={`bar width${value}`} style={{ width: `${percent}%` }}></div>
+            <span className={'outside-label'}>{label}</span>
+        </>
+        : <div className={'bar'} style={{ width: `${percent}%` }}>
+            <span className={'inside-label'}>{label}</span>
+        </div>;
+}
