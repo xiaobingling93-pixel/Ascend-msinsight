@@ -18,11 +18,11 @@
     "copyLinux": "git rev-parse HEAD > ./dist/build.info && cp -rf ./plugins ./dist"
   },
   "dependencies": {
-    "element-plus": "2.6.0",
-    "i18next": "23.10.0",
-    "pinia": "2.1.6",
+    "element-plus": "2.8.2",
+    "i18next": "23.12.2",
+    "pinia": "2.2.2",
     "vue": "3.4.21",
-    "vue-router": "4.3.0"
+    "vue-router": "4.4.3"
   },
   "devDependencies": {
     "@element-plus/icons-vue": "^2.1.0",
