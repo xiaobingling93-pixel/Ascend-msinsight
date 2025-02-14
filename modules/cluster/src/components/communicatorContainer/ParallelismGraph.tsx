@@ -98,7 +98,8 @@ interface ParallelismGraphProps {
 }
 export const ParallelismGraph = observer(({ session, generateConditions }: ParallelismGraphProps): JSX.Element => {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const mainCanvasRef = useRef<HTMLCanvasElement>(null);
+    const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasDrawer, setCanvasDrawer] = useState<CanvasDrawer | null>(null);
     const [mousePos, setMousePos] = useState<{x: number;y: number}>({ x: 0, y: 0 });
     const [lastRect, setLastRect] = useState<Rectangle>();
@@ -239,8 +240,8 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     };
 
     useEffect(() => {
-        if (canvasRef.current && data !== undefined) {
-            const drawer = new CanvasDrawer(canvasRef);
+        if (mainCanvasRef.current && data !== undefined) {
+            const drawer = new CanvasDrawer(mainCanvasRef, hoverCanvasRef);
             setCanvasDrawer(drawer);
             addRectangles(drawer);
             addFrames(drawer);
@@ -345,16 +346,23 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         setActiveRectIndex(null);
     };
 
-    const onMouseMove: React.MouseEventHandler<HTMLDivElement> = useCallback(throttle((event): void => {
-        const { offsetX, offsetY } = event.nativeEvent;
-        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef?.current ?? {};
-        const x = offsetX - scrollLeft;
-        const y = offsetY - scrollTop;
+    // 鼠标移入卡时，选中当前卡
+    const setRectActive = useCallback(throttle((x, y): void => {
         const activeRect = canvasDrawer?.rectangleList.find(rect => rect.isInside(x, y));
 
         setMousePos({ x, y });
         setHoveredRectIndex(activeRect === undefined ? null : activeRect.index);
     }, 100), [canvasDrawer]);
+
+    const onMouseMove: React.MouseEventHandler<HTMLDivElement> = (event) => {
+        const { offsetX, offsetY } = event.nativeEvent;
+        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef?.current ?? {};
+        const x = offsetX - scrollLeft;
+        const y = offsetY - scrollTop;
+
+        setRectActive(x, y);
+        canvasDrawer?.renderHoverCanvas(x, y);
+    };
 
     const onMouseOut: React.MouseEventHandler<HTMLDivElement> = (): void => {
         setHoveredRectIndex(null);
@@ -375,7 +383,12 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 ({ width, height }): React.ReactNode => {
                     return <CanvasContainer ref={canvasContainerRef} onScroll={onScroll}>
                         <Canvas
-                            ref={canvasRef}
+                            ref={mainCanvasRef}
+                            width={width * devicePixelRatio}
+                            height={height * devicePixelRatio}
+                        ></Canvas>
+                        <Canvas
+                            ref={hoverCanvasRef}
                             width={width * devicePixelRatio}
                             height={height * devicePixelRatio}
                         ></Canvas>

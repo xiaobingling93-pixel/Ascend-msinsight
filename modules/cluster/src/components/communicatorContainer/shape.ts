@@ -237,12 +237,13 @@ export class Line extends Shape {
         this.getLineDetails();
     }
 
-    drawLine(ctx: CanvasRenderingContext2D, color: string, [startX, startY, endX, endY]: LinePosition): void {
+    drawLine(ctx: CanvasRenderingContext2D, color: string, [startX, startY, endX, endY]: LinePosition, bold?: boolean): void {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = bold ? Line.CLICK_TOLERANCE : 2;
+
         ctx.beginPath();
         ctx.moveTo(startX - this.scrollLeft, startY - this.scrollTop);
         ctx.lineTo(endX - this.scrollLeft, endY - this.scrollTop);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
         ctx.stroke();
     }
 
@@ -295,7 +296,7 @@ export class Line extends Shape {
         });
     }
 
-    draw(ctx: CanvasRenderingContext2D | null, scrollLeft: number = 0, scrollTop: number = 0): void {
+    draw(ctx: CanvasRenderingContext2D | null, scrollLeft: number = 0, scrollTop: number = 0, bold?: boolean): void {
         if (ctx === null) {
             return;
         }
@@ -304,7 +305,7 @@ export class Line extends Shape {
         this.scrollTop = scrollTop;
 
         this.lineList.forEach(lines => {
-            this.drawLine(ctx, colorsMap[this.type], lines);
+            this.drawLine(ctx, colorsMap[this.type], lines, bold);
         });
     }
 
@@ -332,7 +333,7 @@ export class Line extends Shape {
 
 // 框（并行组）(domain)
 export class Frame extends Shape {
-    static FRAME_TOLERANCE = 3; // 点击框的容错范围
+    static FRAME_TOLERANCE = 4; // 点击框的容错范围
     type: ParallelismType;
     rectList: FrameGroupItem['list'];
     parallelismSize: ParallelismSize;
@@ -350,13 +351,13 @@ export class Frame extends Shape {
         this.parallelismSize = parallelismSize;
     }
 
-    draw(ctx: CanvasRenderingContext2D | null, scrollLeft: number = 0, scrollTop: number = 0): void {
+    draw(ctx: CanvasRenderingContext2D | null, scrollLeft: number = 0, scrollTop: number = 0, bold?: boolean): void {
         if (ctx === null) {
             return;
         }
 
         ctx.strokeStyle = colorsMap[this.type];
-        ctx.lineWidth = 2;
+        ctx.lineWidth = bold ? Frame.FRAME_TOLERANCE : 2;
 
         const { index: firstRankIndex, position: firstRankPosition, attribute: firstRankAttribute } = this.rectList[0];
         const { index: lastRankIndex, position: lastRankPosition, attribute: lastRankAttribute } = this.rectList[this.rectList.length - 1];
@@ -427,16 +428,22 @@ export class CanvasDrawer {
     private readonly rectangles: Rectangle[] = [];
     private readonly lines: Line[] = [];
     private readonly frames: Frame[] = [];
-    private readonly ctx: CanvasRenderingContext2D | null = null;
-    private readonly canvasRef: RefObject<HTMLCanvasElement>;
+    private readonly mainCtx: CanvasRenderingContext2D | null = null;
+    private readonly hoverCtx: CanvasRenderingContext2D | null = null;
+    private readonly mainCanvasRef: RefObject<HTMLCanvasElement>;
     private scrollLeft: number = 0;
     private scrollTop: number = 0;
 
-    constructor(canvasRef: RefObject<HTMLCanvasElement>) {
-        const ctx = canvasRef.current?.getContext('2d');
-        this.canvasRef = canvasRef;
-        if (ctx !== null && ctx !== undefined) {
-            this.ctx = ctx;
+    constructor(mainCanvasRef: RefObject<HTMLCanvasElement>, hoverCanvasRef: RefObject<HTMLCanvasElement>) {
+        const mainCtx = mainCanvasRef.current?.getContext('2d');
+        const hoverCtx = hoverCanvasRef.current?.getContext('2d');
+        this.mainCanvasRef = mainCanvasRef;
+        if (mainCtx !== null && mainCtx !== undefined) {
+            this.mainCtx = mainCtx;
+        }
+
+        if (hoverCtx !== null && hoverCtx !== undefined) {
+            this.hoverCtx = hoverCtx;
         }
     }
 
@@ -453,7 +460,7 @@ export class CanvasDrawer {
     }
 
     get visibleRectangleList(): Rectangle[] {
-        const viewportWidth = this.canvasRef.current?.width ?? 0;
+        const viewportWidth = this.mainCanvasRef.current?.width ?? 0;
         return this.rectangles.filter(rect =>
             rect.originalX + rect.width > this.scrollLeft &&
             rect.originalX < this.scrollLeft + viewportWidth,
@@ -487,17 +494,59 @@ export class CanvasDrawer {
     render(scrollLeft: number = 0, scrollTop: number = 0): void {
         this.scrollLeft = scrollLeft;
         this.scrollTop = scrollTop;
-        this.ctx?.resetTransform();
-        this.ctx?.scale(devicePixelRatio, devicePixelRatio);
+        this.mainCtx?.resetTransform();
+        this.mainCtx?.scale(devicePixelRatio, devicePixelRatio);
         this.clearCanvas();
-        this.visibleRectangleList.forEach(rect => rect.draw(this.ctx, scrollLeft, scrollTop));
-        this.lines.forEach(line => line.draw(this.ctx, scrollLeft, scrollTop));
-        this.frames.forEach(frame => frame.draw(this.ctx, scrollLeft, scrollTop));
+        this.visibleRectangleList.forEach(rect => rect.draw(this.mainCtx, scrollLeft, scrollTop));
+        this.lines.forEach(line => line.draw(this.mainCtx, scrollLeft, scrollTop));
+        this.frames.forEach(frame => frame.draw(this.mainCtx, scrollLeft, scrollTop));
+    }
+
+    /**
+     * 渲染 hover 画布（主要绘制连线、框）
+     * @param x 鼠标 x 坐标
+     * @param y 鼠标 y 坐标
+     */
+    renderHoverCanvas(x: number, y: number): void {
+        if (this.hoverCtx === null) {
+            return;
+        }
+
+        this.clearHoverCanvas();
+
+        let isLineActive = false;
+        for (const line of this.lines) {
+            if (line.isInside(x, y)) {
+                line.draw(this.hoverCtx, this.scrollLeft, this.scrollTop, true);
+                isLineActive = true;
+                break;
+            }
+        }
+        if (isLineActive) {
+            return;
+        }
+
+        for (const frame of this.frames) {
+            if (frame.isInside(x, y)) {
+                frame.draw(this.hoverCtx, this.scrollLeft, this.scrollTop, true);
+                break;
+            }
+        }
     }
 
     clearCanvas(): void {
-        const { width = 1000, height = 1000 } = this.canvasRef.current ?? {};
-        this.ctx?.clearRect(0, 0, width, height);
+        this.clearMainCanvas();
+        this.clearHoverCanvas();
+    }
+
+    clearMainCanvas(): void {
+        const { width = 1000, height = 1000 } = this.mainCanvasRef.current ?? {};
+        this.mainCtx?.clearRect(0, 0, width, height);
+    }
+
+    clearHoverCanvas(): void {
+        const { width = 1000, height = 1000 } = this.mainCanvasRef.current ?? {};
+        this.hoverCtx?.clearRect(0, 0, width, height);
     }
 
     clearShapesData(): void {
