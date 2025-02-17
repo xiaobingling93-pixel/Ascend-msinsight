@@ -38,6 +38,9 @@ const defaultOptions: EChartsOption = {
     textStyle: {
         fontFamily: '\'Inter\', -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Fira Sans\', \'Droid Sans\', sans-serif',
     },
+    legend: {
+        pageIconColor: '#0077FF',
+    },
     tooltip: {
         borderWidth: 0,
         padding: 16,
@@ -88,6 +91,9 @@ const lightChartOptions: EChartsOption = merge({}, defaultOptions, {
         textStyle: {
             color: '#4E5865',
         },
+        pageTextStyle: {
+            color: '#4E5865',
+        },
     },
     tooltip: {
         backgroundColor: '#EBEFF6',
@@ -108,7 +114,7 @@ const lightChartOptions: EChartsOption = merge({}, defaultOptions, {
     xAxis: {
         axisLine: {
             lineStyle: {
-                color: '#DFE5EF',
+                color: '#8D98AA',
             },
         },
         splitLine: {
@@ -120,7 +126,7 @@ const lightChartOptions: EChartsOption = merge({}, defaultOptions, {
     yAxis: {
         axisLine: {
             lineStyle: {
-                color: '#DFE5EF',
+                color: '#8D98AA',
             },
         },
         splitLine: {
@@ -136,6 +142,9 @@ const darkChartOptions: EChartsOption = merge({}, defaultOptions, {
     },
     legend: {
         textStyle: {
+            color: '#D2DCE9',
+        },
+        pageTextStyle: {
             color: '#D2DCE9',
         },
     },
@@ -186,17 +195,11 @@ const getOptionsWithAxisConfig = (themeMode: string, options: EChartsOption): EC
     let xAxis;
     let yAxis;
     if (isArray(options.xAxis)) {
-        xAxis = options.xAxis.map((item) => ({
-            ...themeOptions.xAxis,
-            ...item,
-        }));
+        xAxis = options.xAxis.map((item) => merge({}, themeOptions.xAxis, item));
     }
 
     if (isArray(options.yAxis)) {
-        yAxis = options.yAxis.map((item) => ({
-            ...themeOptions.yAxis,
-            ...item,
-        }));
+        yAxis = options.yAxis.map((item) => merge({}, themeOptions.yAxis, item));
     }
 
     const newOptions = { ...options };

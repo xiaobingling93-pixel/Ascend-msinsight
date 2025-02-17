@@ -90,9 +90,9 @@ const getSeries = (session: Session, datasource: PerformanceDataItem[], t: TFunc
     });
 };
 
-const getLegend = (session: Session, t: TFunction): EChartsOption['legend'] => {
+const getLegend = (session: Session, t: TFunction, legendSelected: null | Record<string, boolean>): EChartsOption['legend'] => {
     const legendData: string[] = [];
-    const legendSelected: Record<string, boolean> = {};
+    const defaultLegendSelected: Record<string, boolean> = {};
 
     session.performanceChartsIndicators.forEach(indicator => {
         const { name, visible } = indicator;
@@ -104,12 +104,12 @@ const getLegend = (session: Session, t: TFunction): EChartsOption['legend'] => {
             legendData.push(tName);
         }
 
-        legendSelected[tName] = visible;
+        defaultLegendSelected[tName] = visible;
     });
 
     return {
         data: legendData,
-        selected: legendSelected,
+        selected: { ...defaultLegendSelected, ...legendSelected },
     };
 };
 
@@ -147,6 +147,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
     const canvasEl = chartRef.current?.getChartDom()?.querySelector('canvas');
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
     const [datasource, setDatasource] = useState<PerformanceDataItem[]>([]);
+    const [legendSelected, setLegendSelected] = useState<Record<string, boolean> | null>(null);
     const { t } = useTranslation('summary');
 
     // 图表的默认宽为100，此处是fix图表初始化时宽度未撑开的问题
@@ -194,7 +195,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
     };
 
     useEffect(() => {
-        const legend = getLegend(session, t);
+        const legend = getLegend(session, t, legendSelected);
         const series = getSeries(session, datasource, t);
 
         const options = merge({}, baseOptions, {
@@ -206,7 +207,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
             tooltip: getTooltip(session.isCompare),
         });
         setChartOptions(options);
-    }, [datasource, session.indicatorList, t, session.isCompare]);
+    }, [datasource, t, session.isCompare]);
 
     useEffect(() => {
         const filteredData = filterData(session.performanceData, session.performanceDataMap);
@@ -228,6 +229,9 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
                 {
                     click: (e): void => {
                         setActiveRankId(e.name);
+                    },
+                    legendselectchanged(e): void {
+                        setLegendSelected((prevState) => ({ ...prevState, ...e.selected }));
                     },
                 }
             }
