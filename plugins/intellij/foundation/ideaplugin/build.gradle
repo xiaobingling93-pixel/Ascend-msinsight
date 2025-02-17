@@ -93,7 +93,7 @@ dependencies {
 
 task copyFrontendBuild(type: Copy) {
     copy {
-        from "../../../../framework/dist"
+        from "../../../../modules/framework/build"
         into "src/main/resources/profiler"
     }
 }

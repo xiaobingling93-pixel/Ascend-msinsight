@@ -9,6 +9,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <vector>
+#include <string>
 
 namespace Dic {
 namespace Module {

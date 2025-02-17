@@ -16,7 +16,7 @@ import sys
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 MODULES_DIR = os.path.dirname(BUILD_DIR)
-PLUGIN_DIR = os.path.join(os.path.dirname(MODULES_DIR), 'framework', 'plugins')
+PLUGIN_DIR = os.path.join(os.path.dirname(MODULES_DIR), MODULES_DIR, 'framework', 'plugins')
 
 MODULES_MAP = {
     'cluster': 'Cluster',

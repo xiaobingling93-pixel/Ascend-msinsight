@@ -84,7 +84,7 @@ def clean():
     ascend_insight = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR)
     if os.path.exists(ascend_insight):
         shutil.rmtree(ascend_insight)
-    framework_dist = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist')
+    framework_dist = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build')
     if os.path.exists(framework_dist):
         shutil.rmtree(framework_dist)
     modules = ['cluster', 'memory', 'timeline', 'compute', 'jupyter', 'operator', 'lib']
@@ -146,7 +146,7 @@ def build_frontend():
     if result != 0:
         return 1
 
-    framework_path = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR)
+    framework_path = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR)
     result = exec_command([Const.NPM, 'install', '--force'], framework_path, module_name)
     if result != 0:
         return 1
@@ -155,7 +155,7 @@ def build_frontend():
     if result != 0:
         return 1
 
-    shutil.copytree(os.path.join(framework_path, 'plugins'), os.path.join(framework_path, 'dist', 'plugins'))
+    shutil.copytree(os.path.join(framework_path, 'plugins'), os.path.join(framework_path, 'build', 'plugins'))
     return 0
 
 
@@ -297,7 +297,7 @@ def build_jupyterlab(jupyterlab_version, os_name):
     resources_path = os.path.join(plugin_path, jupyterlab_path, resources_dir)
     if not os.path.exists(resources_path):
         os.makedirs(resources_path, 0o750)
-    shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'),
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build'),
                     os.path.join(resources_path, 'frontend'))
     shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
                     os.path.join(resources_path, 'server'))
@@ -366,7 +366,8 @@ def build_light_package(version, os_name, is_huaweicloud):
                     os.path.join(Const.PLATFORM_PREVIEW_DIR, resource_dir))
     profiler_path = os.path.join(Const.PLATFORM_PREVIEW_DIR, resource_dir, 'profiler')
     os.mkdir(profiler_path, 0o750)
-    shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'), os.path.join(profiler_path, 'frontend'))
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build'),
+                    os.path.join(profiler_path, 'frontend'))
     shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
                     os.path.join(profiler_path, 'server'))
     # 华为云构建将插件一并打包
@@ -485,7 +486,7 @@ def load_version_info(default_version):
 
 # 创建、修改版本信息文件，文件目录在framework/src/下，文件名为version_info.json
 def create_version_info_file(version, modify_time):
-    output_path = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, Const.SRC_DIR, 'version_info.json')
+    output_path = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, Const.SRC_DIR, 'version_info.json')
     # os.O_WRONLY表示只写入，os.O_CREAT在文件不存在时会创建文件，os.O_TRUNC会清空原文件内容
     flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
     mode = stat.S_IWUSR
