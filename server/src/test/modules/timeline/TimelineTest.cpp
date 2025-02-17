@@ -361,7 +361,7 @@ TEST_F(TestSuit, QueryThreadDetailWithShape)
     request.id = std::to_string(id);
     request.startTime = STARTTIME;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 41;
+    int64_t traceId = 65;
     // expected data
     uint64_t selfTime = 469541;
     uint64_t duration = 496851;
@@ -486,7 +486,7 @@ TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
     requestParam.pageSize = PAGE_SIZE;
     Protocol::UnitThreadsOperatorsBody responseBody;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 41;
+    int64_t traceId = 65;
 
     // response data
     uint64_t TIMESTAMP1 = 1695115378714082800;

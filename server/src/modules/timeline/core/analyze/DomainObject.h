@@ -69,6 +69,21 @@ struct CompeteSliceDomain {
     }
 };
 
+struct Thread {
+    uint64_t trackId = 0;
+    std::string tid;
+    std::string pid;
+    std::string threadName;
+    uint32_t sortIndex = 0;
+};
+
+struct Process {
+    std::string pid;
+    std::string name;
+    std::string label;
+    uint32_t sortIndex = 0;
+};
+
 struct FlowPoint {
     uint64_t id = 0;
     std::string flowId;

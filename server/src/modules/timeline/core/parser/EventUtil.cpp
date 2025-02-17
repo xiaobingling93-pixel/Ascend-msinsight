@@ -23,6 +23,7 @@ void EventUtil::Register()
 {
     jsonToEventFactory.emplace("M", ToMetaDataEvent);
     jsonToEventFactory.emplace("X", ToSliceEvent);
+    jsonToEventFactory.emplace("I", ToSliceEvent);
     jsonToEventFactory.emplace("SX", ToSimulationSliceEvent);
     jsonToEventFactory.emplace("SB", ToSimulationBeginSliceEvent);
     jsonToEventFactory.emplace("SE", ToSimulationEndSliceEvent);
@@ -158,6 +159,7 @@ std::unique_ptr<Event> EventUtil::ToCounterEvent(const json_t &json)
         event->name = JsonUtil::GetString(json, "name");
     }
     event->pid = JsonUtil::GetDumpString(json, "pid");
+    event->tid = JsonUtil::GetDumpString(json, "name");
     event->ts = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "ts"));
     event->cat = JsonUtil::GetOptionalString(json, "cat");
     event->args = JsonUtil::GetDumpString(json, "args");

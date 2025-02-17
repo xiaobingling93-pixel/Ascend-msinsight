@@ -28,6 +28,7 @@ void EventParser::InitEventHandle()
 {
     eventHandleMap.emplace("M", std::bind(&EventParser::MetaDataHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("X", std::bind(&EventParser::CompleteEventsHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("I", std::bind(&EventParser::CompleteEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("C", std::bind(&EventParser::CounterEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("s", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("t", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
@@ -296,6 +297,17 @@ void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     if (event.ts == 0) {
         return;
     }
+    event.trackId = GetTrackId(event.pid, event.tid);
+    ThreadEvent threadEvent;
+    threadEvent.trackId = event.trackId;
+    threadEvent.tid = event.tid;
+    threadEvent.pid = event.pid;
+    threadEvent.threadName = event.tid;
+    ProcessEvent processEvent;
+    processEvent.pid = event.pid;
+    processEvent.processName = event.pid;
+    database->AddSimulationProcessCache(processEvent);
+    database->AddSimulationThreadCache(threadEvent);
     database->InsertCounter(event);
 }
 

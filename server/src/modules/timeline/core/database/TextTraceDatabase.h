@@ -159,8 +159,6 @@ private:
     std::unique_ptr<SqlitePreparedStatement> GetSliceStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetFlowStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetCounterStmt(uint64_t paramLen);
-    void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
-        std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     std::vector<std::string> GetCounterDataType(const std::string &args);
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByFlagAndTrackId(const std::string &flagId, uint64_t trackId);
 
@@ -173,6 +171,15 @@ private:
     static void AssembleUnitFlowsBody(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
              std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap) ;
     static std::string ExtractGroupNameValue(const std::string &str);
+
+    std::vector<Process> QueryAllProcess();
+
+    std::map<std::string, std::vector<Thread>> QueryAllThreadInfo();
+
+    std::map<std::pair<std::string, std::string>, std::string> QueryAllCounterInfo();
+
+    void AddThreadTrack(const std::string &fileId, std::map<std::pair<std::string, std::string>, std::string> &counters,
+        std::unique_ptr<Protocol::UnitTrack> &process, const Thread &tThread);
 };
 } // end of namespace Timeline
 // end of namespace Module

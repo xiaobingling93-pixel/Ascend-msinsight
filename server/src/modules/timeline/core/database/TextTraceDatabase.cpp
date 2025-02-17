@@ -698,44 +698,134 @@ std::vector<SimpleSlice> TextTraceDatabase::QuerySimpleSliceByFlagAndTrackId(con
 bool TextTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::string sql = QUERY_UNITS_META_SQL;
+    std::vector<Process> processes = QueryAllProcess();
+    std::map<std::string, std::vector<Thread>> threads = QueryAllThreadInfo();
+    std::map<std::pair<std::string, std::string>, std::string> counters = QueryAllCounterInfo();
+    for (const auto &item: processes) {
+        std::unique_ptr<Protocol::UnitTrack> process = std::make_unique<Protocol::UnitTrack>();
+        process->type = "process";
+        process->metaData.processName = item.name;
+        process->metaData.label = item.label;
+        process->metaData.cardId = fileId;
+        process->metaData.processId = item.pid;
+        std::vector<Thread> pthreads= threads[item.pid];
+        for (const auto &tThread: pthreads) {
+            AddThreadTrack(fileId, counters, process, tThread);
+        }
+        metaData.emplace_back(std::move(process));
+    }
+    return true;
+}
+
+void TextTraceDatabase::AddThreadTrack(const std::string &fileId,
+    std::map<std::pair<std::string, std::string>, std::string> &counters, std::unique_ptr<Protocol::UnitTrack> &process,
+    const Thread &tThread)
+{
+    std::unique_ptr<UnitTrack> thread = std::make_unique<UnitTrack>();
+    thread->metaData.metaType = "TEXT";
+    auto it = counters.find({ tThread.pid, tThread.threadName });
+    if (it == counters.end()) { // thread
+        thread->type = "thread";
+        thread->metaData.cardId = fileId;
+        thread->metaData.processId = tThread.pid;
+        thread->metaData.threadId = tThread.tid;
+        thread->metaData.threadName = tThread.threadName;
+        // 解开 threadName = "Group {groupNameValue} Communication" 的形式，获取 {groupNameValue}
+        if (StringUtil::StartWith(tThread.threadName, "Group") &&
+            StringUtil::EndWith(tThread.threadName, "Communication")) {
+            const std::string groupNameValue = ExtractGroupNameValue(tThread.threadName);
+            if (TraceDatabaseHelper::IsValidHCCLGroupNameValue(groupNameValue)) {
+                thread->metaData.groupNameValue = groupNameValue;
+            }
+        }
+    } else { // counter
+        thread->type = "counter";
+        thread->metaData.cardId = fileId;
+        thread->metaData.processId = tThread.pid;
+        thread->metaData.threadName = tThread.threadName;
+        thread->metaData.dataType = GetCounterDataType(it->second);
+    }
+    process->children.emplace_back(std::move(thread));
+}
+
+std::vector<Process> TextTraceDatabase::QueryAllProcess()
+{
+    std::vector<Process> res;
+    std::string sql =
+        "SELECT pid, process_name, label, process_sort_index FROM process ORDER BY process_sort_index, process_name";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Query units metadata failed!.");
-        return false;
+        ServerLog::Error("Query all process failed!.");
+        return res;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("Query units metadata failed to get result set.", stmt->GetErrorMessage());
-        return false;
+        ServerLog::Error("Query all process failed to get result set.", stmt->GetErrorMessage());
+        return res;
     }
-    std::vector<MetaDataDto> metaDataVec;
     while (resultSet->Next()) {
-        MetaDataDto metaDataDto;
-        metaDataDto.pid = resultSet->GetString("pid");
+        Process process;
+        process.pid = resultSet->GetString("pid");
         if (TraceTime::Instance().GetIsSimulation()) {
-            metaDataDto.processName = resultSet->GetString("processName");
+            process.name = resultSet->GetString("process_name");
         } else {
-            metaDataDto.processName = resultSet->GetString("processName") + " (" + metaDataDto.pid + ")";
+            process.name = resultSet->GetString("process_name") + " (" + process.pid + ")";
         }
-        metaDataDto.label = resultSet->GetString("label");
-        metaDataDto.threadId = resultSet->GetString("tid");
-        metaDataDto.threadName = resultSet->GetString("threadName");
-        // 解开 threadName = "Group {groupNameValue} Communication" 的形式，获取 {groupNameValue}
-        if (StringUtil::StartWith(metaDataDto.threadName, "Group") &&
-            StringUtil::EndWith(metaDataDto.threadName, "Communication")) {
-            const std::string groupNameValue = TextTraceDatabase::ExtractGroupNameValue(metaDataDto.threadName);
-            if (TraceDatabaseHelper::IsValidHCCLGroupNameValue(groupNameValue)) {
-                metaDataDto.groupNameValue = groupNameValue;
-            }
-        }
-        metaDataDto.name = resultSet->GetString("name");
-        metaDataDto.args = resultSet->GetString("args");
-        metaDataVec.emplace_back(metaDataDto);
+        process.label = resultSet->GetString("label");
+        process.sortIndex = resultSet->GetUint32("process_sort_index");
+        res.emplace_back(process);
     }
-    ServerLog::Info("Query units meta data. size:", metaDataVec.size());
-    MetaDataToResponse(metaDataVec, fileId, metaData);
-    return true;
+    return res;
+}
+
+std::map<std::string, std::vector<Thread>> TextTraceDatabase::QueryAllThreadInfo()
+{
+    std::map<std::string, std::vector<Thread>> res;
+    std::string sql = "select track_id,tid, pid, thread_name, thread_sort_index FROM thread where pid is not null "
+                      "ORDER BY pid, thread_sort_index, thread_name";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query all thread failed!.");
+        return res;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query all thread failed to get result set.", stmt->GetErrorMessage());
+        return res;
+    }
+    while (resultSet->Next()) {
+        Thread thread;
+        thread.trackId = resultSet->GetUint64("track_id");
+        thread.tid = resultSet->GetString("tid");
+        thread.pid = resultSet->GetString("pid");
+        thread.threadName = resultSet->GetString("thread_name");
+        thread.sortIndex = resultSet->GetUint32("thread_sort_index");
+        res[thread.pid].emplace_back(thread);
+    }
+    return res;
+}
+
+std::map<std::pair<std::string, std::string>, std::string> TextTraceDatabase::QueryAllCounterInfo()
+{
+    std::map<std::pair<std::string, std::string>, std::string> res;
+    std::string sql = "SELECT pid,name, args FROM counter group by name";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query all counter info failed!.");
+        return res;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query all counter info failed to get result set.", stmt->GetErrorMessage());
+        return res;
+    }
+    while (resultSet->Next()) {
+        std::string pid = resultSet->GetString("pid");
+        std::string name = resultSet->GetString("name");
+        std::string args = resultSet->GetString("args");
+        res[{pid, name}] = args;
+    }
+    return res;
 }
 
 std::string TextTraceDatabase::ExtractGroupNameValue(const std::string& str)
@@ -750,45 +840,6 @@ std::string TextTraceDatabase::ExtractGroupNameValue(const std::string& str)
     }
 
     return "";
-}
-
-void TextTraceDatabase::MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
-    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
-{
-    std::optional<std::string> curPid;
-    for (const auto &metaDataDto : metaDataVec) {
-        if ((!curPid.has_value()) || metaDataDto.pid != curPid) {
-            std::unique_ptr<Protocol::UnitTrack> process = std::make_unique<Protocol::UnitTrack>();
-            process->type = "process";
-            process->metaData.processName = metaDataDto.processName;
-            process->metaData.label = metaDataDto.label;
-            process->metaData.cardId = fileId;
-            process->metaData.processId = metaDataDto.pid;
-            metaData.emplace_back(std::move(process));
-            curPid = metaDataDto.pid;
-        }
-        if (metaData.empty()) {
-            continue;
-        }
-        std::unique_ptr<Protocol::UnitTrack> thread = std::make_unique<Protocol::UnitTrack>();
-        thread->metaData.metaType = "TEXT";
-        if (metaDataDto.name.empty()) { // thread
-            thread->type = "thread";
-            thread->metaData.cardId = fileId;
-            thread->metaData.processId = metaDataDto.pid;
-            thread->metaData.threadId = metaDataDto.threadId;
-            thread->metaData.threadName = metaDataDto.threadName;
-            thread->metaData.groupNameValue = metaDataDto.groupNameValue;
-            thread->metaData.maxDepth = metaDataDto.maxDepth;
-        } else { // counter
-            thread->type = "counter";
-            thread->metaData.cardId = fileId;
-            thread->metaData.processId = metaDataDto.pid;
-            thread->metaData.threadName = metaDataDto.name;
-            thread->metaData.dataType = GetCounterDataType(metaDataDto.args);
-        }
-        metaData.back()->children.emplace_back(std::move(thread));
-    }
 }
 
 std::vector<std::string> TextTraceDatabase::GetCounterDataType(const std::string &args)
@@ -1664,7 +1715,7 @@ bool TextTraceDatabase::DeleteEmptyThread()
     std::string sql = "DELETE FROM thread "
         " WHERE NOT EXISTS ("
         "    SELECT 1 FROM slice WHERE slice.track_id = thread.track_id"
-        ");";
+        ") AND NOT EXISTS (SELECT 1 FROM counter WHERE counter.name = thread.tid);";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     ExecSql(sql);
     return true;

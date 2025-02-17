@@ -27,13 +27,14 @@ TEST_F(TestSuit, QueryAffinityApiAdvisorSuccessInText)
     std::map<uint64_t, std::vector<Protocol::FlowLocation>> dataMap{};
     std::map<uint64_t, std::vector<uint32_t>> indexMap{};
     auto result = db->QueryAffinityAPIData(params, {"aten::reshape"}, startTime, dataMap, indexMap);
+    const uint64_t expectTrackId = 65;
     EXPECT_TRUE(result);
     EXPECT_EQ(dataMap.size(), 1); // 符合结果的包含1个泳道
-    EXPECT_EQ(dataMap.begin()->first, 41); // 符合结果的包含1个泳道，且track_id = 41
-    EXPECT_GT(dataMap.at(41).size(), 1); // 符合条件的结果为1条
+    EXPECT_EQ(dataMap.begin()->first, expectTrackId); // 符合结果的包含1个泳道，且track_id = 41
+    EXPECT_GT(dataMap.at(expectTrackId).size(), 1); // 符合条件的结果为1条
     EXPECT_EQ(indexMap.size(), 1);
-    EXPECT_EQ(indexMap.begin()->first, 41); // 符合结果的包含1个泳道，且track_id = 41
-    EXPECT_EQ(indexMap.at(41).size(), 24); // 符合结果的包含1个泳道，且track_id = 41，符合条件的结果为24条
+    EXPECT_EQ(indexMap.begin()->first, expectTrackId); // 符合结果的包含1个泳道，且track_id = 41
+    EXPECT_EQ(indexMap.at(expectTrackId).size(), 24); // 符合结果的包含1个泳道，且track_id = 41，符合条件的结果为24条
 }
 
 TEST_F(TestSuit, QueryAffinityOptimizerAdvisorSuccessText)

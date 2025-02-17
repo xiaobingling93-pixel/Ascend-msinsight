@@ -1320,7 +1320,7 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadatanWhenDbNotOpen)
     const std::string fileId = "9";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     bool result = database.QueryUnitsMetadata(fileId, metaData);
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }
 
 TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadatanWhenDbOpen)
@@ -1371,7 +1371,8 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithGroupNameValueWhenDb
     const std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
         "\"thread_sort_index\") VALUES (23, '3', '42506507', 'Stream 3', 3);\n"
         "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
-        "VALUES (39, '1', '42506731', 'Group " + groupNameValue + " Communication', 1);";
+        "VALUES (39, '1', '42506731', 'Group " +
+        groupNameValue + " Communication', 1);";
     const std::string counterData =
         "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (6, 'AI "
         "Core Freq', '42506539', 1726830775547610426, NULL, '{\"MHz\":\"1800\"}');";
@@ -1389,6 +1390,53 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithGroupNameValueWhenDb
     EXPECT_EQ(metaData.size(), expectProcessCount);
     EXPECT_EQ(metaData[third]->children.size(), second);
     EXPECT_EQ(metaData[third]->children[first]->metaData.groupNameValue, groupNameValue);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithCounter)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    const std::string processData = "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", "
+        "\"process_sort_index\") VALUES ('1', '1', NULL, NULL);\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\") VALUES "
+        "('319667', '319667', NULL, NULL);";
+    const std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (1, 'http', '319667', 'http', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (16, 'CPU Usage', '1', 'CPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (17, 'NPU Usage', '1', 'NPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (18, 'KVCache', '319667', 'KVCache', 0);";
+    const std::string counterData =
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (3749, "
+        "'KVCache', '319667', 1735124813464727800, NULL, '{\"Device Block\":\"1969.0\"}');"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (749, "
+        "'NPU Usage', '1', 1735124807612323800, NULL, '{\"Usage\":\"0.0\"}');"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (1, "
+        "'CPU Usage', '1', 1735124784269897500, NULL, '{\"CPU Usage\":\"0.520833\"}');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, processData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, counterData);
+    const std::string fileId = "9";
+    const uint8_t expectProcessCount = 2;
+    const uint8_t first = 0;
+    const uint8_t second = 1;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(metaData.size(), expectProcessCount);
+    EXPECT_EQ(metaData[first]->type, "process");
+    EXPECT_EQ(metaData[second]->type, "process");
+    EXPECT_EQ(metaData[first]->children.size(), expectProcessCount);
+    EXPECT_EQ(metaData[first]->children[first]->type, "counter");
+    EXPECT_EQ(metaData[first]->children[second]->type, "counter");
+    EXPECT_EQ(metaData[second]->children[first]->type, "counter");
+    EXPECT_EQ(metaData[second]->children[second]->type, "thread");
 }
 
 TEST_F(TextTraceDatabaseMockTest, TestQuerySimulationUintFlows)

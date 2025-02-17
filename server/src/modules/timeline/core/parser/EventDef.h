@@ -99,6 +99,8 @@ struct Counter : public Event {
     int64_t ts = 0;
     std::optional<std::string> cat;
     std::string args;
+    std::string tid;
+    int64_t trackId = 0;
 };
 } // end of namespace Trace
 } // end of namespace Timeline
