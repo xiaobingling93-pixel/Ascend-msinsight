@@ -21,13 +21,16 @@ class ParserAlloc {
 public:
     ParserAlloc() = default;
     virtual ~ParserAlloc() = default;
-    virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) = 0;
+    virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) {};
     virtual void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         Global::BaselineInfo &baselineInfo)
     {
         return;
     }
-    virtual ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) = 0;
+    virtual ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath)
+    {
+        return  ProjectTypeEnum::OTHER;
+    };
     virtual std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
         ProjectTypeEnum projectTypeEnum, std::string &error)
     {

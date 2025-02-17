@@ -35,8 +35,10 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::vecto
     std::pair<std::string, ParserType> result;
     if (FileUtil::FindIfDbTypeByRegex(pathList[0], std::regex(traceViewReg), std::regex(DB_REG))) {
         result = std::make_pair(pathList[0], ParserType::DB);
-    } else {
+    } else if (ParserJson::ExistJsonFormatFile(pathList[0])) {
         result = std::make_pair(pathList[0], ParserType::JSON);
+    } else {
+        result = std::make_pair(pathList[0], ParserType::OTHER);
     }
     return result;
 }
@@ -58,7 +60,7 @@ std::shared_ptr<ParserAlloc> ParserFactory::ParserImport(ParserType allocType)
             alloc = std::make_shared<ParserIpynb>();
             break;
         default:
-            alloc = std::make_shared<ParserJson>();
+            alloc = std::make_shared<ParserAlloc>();
             break;
     }
     return alloc;

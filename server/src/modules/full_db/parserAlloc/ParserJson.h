@@ -23,15 +23,18 @@ public:
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, ProjectTypeEnum projectTypeEnum,
         std::string &error) final;
+    static bool ExistJsonFormatFile(const std::string &file);
 protected:
     bool CheckParseFileInfoSize(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles) const;
 
 private:
     std::vector<std::string> FindAllTraceFile(const std::string &path, std::string &error);
-    std::vector<std::string> FindTraceFile(const std::string &path, std::string &error);
-    void FindTraceFiles(const std::string &path, int depth, std::string &error, std::vector<std::string> &traceFiles);
-    void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
-    bool IsJsonValid(const std::string &fileName);
+    static std::vector<std::string> FindTraceFile(const std::string &path, std::string &error, std::string &curScene);
+    static void FindTraceFiles(const std::string &path, int depth, std::string &error,
+            std::vector<std::string> &traceFiles,
+            std::string &curScene);
+    static void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
+    static bool IsJsonValid(const std::string &fileName);
     static void ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType, bool isShowCluster,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
     static void ClusterProcessAsyncStep(Timeline::ClusterFileParser clusterFileParser);

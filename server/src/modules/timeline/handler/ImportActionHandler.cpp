@@ -113,7 +113,6 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
                 "The nesting depth of the imported sub-file exceeds 5 or the sub-file path length exceeds ";
             message += std::to_string(FileUtil::GetFilePathLengthLimit());
             SendParseFailEvent(message);
-            return false;
         }
         Global::ProjectExplorerInfo projectExplorerInfo;
         projectExplorerInfo.fileName = item;

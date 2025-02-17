@@ -35,6 +35,7 @@ enum class ProjectTypeEnum {
     SIMULATION = 4,
     TRACE = 5,
     DB_CLUSTER = 6,
+    OTHER = 7
 };
 
 inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {

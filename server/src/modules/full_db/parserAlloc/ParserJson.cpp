@@ -278,9 +278,9 @@ std::vector<std::string> ParserJson::FindAllTraceFile(const std::string &path, s
 {
     std::vector<std::string> traceFiles;
     if (path == "browser") {
-        return FindTraceFile(ExecUtil::SelectFolder(), error);
+        return FindTraceFile(ExecUtil::SelectFolder(), error, curScene);
     }
-    auto files = FindTraceFile(path, error);
+    auto files = FindTraceFile(path, error, curScene);
     if (files.empty()) {
         ServerLog::Warn("Can't find trace file");
     }
@@ -288,7 +288,7 @@ std::vector<std::string> ParserJson::FindAllTraceFile(const std::string &path, s
     return traceFiles;
 }
 
-std::vector<std::string> ParserJson::FindTraceFile(const std::string &path, std::string &error)
+std::vector<std::string> ParserJson::FindTraceFile(const std::string &path, std::string &error, std::string &curScene)
 {
     std::vector<std::string> traceFiles = {};
     if (!FileUtil::CheckFilePathLength(path)) {
@@ -303,12 +303,13 @@ std::vector<std::string> ParserJson::FindTraceFile(const std::string &path, std:
         }
         return traceFiles;
     }
-    FindTraceFiles(path, 0, error, traceFiles);
+    FindTraceFiles(path, 0, error, traceFiles, curScene);
     return traceFiles;
 }
 
 void ParserJson::FindTraceFiles(const std::string &path, int depth, std::string &error,
-    std::vector<std::string> &traceFiles)
+                                std::vector<std::string> &traceFiles,
+                                std::string &curScene)
 {
     if (!std::empty(error)) {
         return;
@@ -330,14 +331,14 @@ void ParserJson::FindTraceFiles(const std::string &path, int depth, std::string 
         std::string tmpPath = FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT);
         if (FileUtil::IsFolder(tmpPath)) {
             curScene = "infer";
-            FindTraceFiles(tmpPath, depth + 1, error, traceFiles);
+            FindTraceFiles(tmpPath, depth + 1, error, traceFiles, curScene);
             return;
         }
     }
 
     for (const auto &folder : folders) {
         std::string tmpPath = FileUtil::SplicePath(path, folder);
-        FindTraceFiles(tmpPath, depth + 1, error, traceFiles);
+        FindTraceFiles(tmpPath, depth + 1, error, traceFiles, curScene);
     }
     for (const auto &file : files) {
         if (IsJsonValid(file)) {
@@ -363,7 +364,7 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
         return;
     }
     std::string error;
-    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles, &error](const std::string &path,
+    std::function<void(const std::string &, int)> find = [&find, &traceFiles, &error](const std::string &path,
         int depth) {
         if (!std::empty(error)) {
             return;
@@ -535,6 +536,25 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
     } else {
         ParserSingleCardBaseline(projectInfos, baselineInfo);
     }
+}
+
+bool ParserJson::ExistJsonFormatFile(const std::string &file)
+{
+    if (file.empty()) {
+        return false;
+    }
+    std::string error;
+    std::string select = (file == "browser") ? ExecUtil::SelectFolder() : file;
+    std::string scene;
+    auto traceFiles = FindTraceFile(file, error, scene);
+    auto opFiles = FileUtil::FindFilesWithFilter(file, std::regex(KERNEL_DETAIL_REG));
+    auto memoryFiles = FileUtil::FindFilesWithFilter(file, std::regex(memoryRecordReg));
+    if (traceFiles.empty() && opFiles.empty() && memoryFiles.empty()) {
+        error = "Not find valid json text dir!";
+        ServerLog::Info(error);
+        return false;
+    }
+    return true;
 }
 } // Module
 } // Dic
