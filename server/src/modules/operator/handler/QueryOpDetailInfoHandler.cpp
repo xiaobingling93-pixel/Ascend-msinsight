@@ -237,7 +237,7 @@ namespace Dic::Module::Operator {
             }
             while (cmpIter != cmpDbData.end() && cmpIter->name < baseIter->name) {
                 OperatorDetailCmpInfoRes tmp;
-                tmp.baseline = *cmpIter;
+                tmp.compare = *cmpIter;
                 datailData.emplace_back(tmp);
                 cmpIter++;
             }
@@ -250,7 +250,7 @@ namespace Dic::Module::Operator {
         }
         while (cmpIter != cmpDbData.end()) {
             OperatorDetailCmpInfoRes tmp;
-            tmp.baseline = *cmpIter;
+            tmp.compare = *cmpIter;
             datailData.emplace_back(tmp);
             cmpIter++;
         }
