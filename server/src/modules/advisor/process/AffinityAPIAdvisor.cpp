@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
+#include "NumberSafeUtil.h"
 #include "AdvisorProcessUtil.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
@@ -157,7 +158,7 @@ bool AffinityAPIAdvisor::CheckApiSeqWithRule(const std::vector<std::string> &rul
     if (std::find(list0.begin(), list0.end(), name) == list0.end()) {
         return false; // 匹配rule中第一个API，不匹配规则时跳过
     }
-    if (index >= dataList.size() - rule.size()) {
+    if (index >= NumberSafe::Sub(dataList.size(), rule.size())) {
         return false;  // 真实数据长度 < 预期数据长度，无法匹配
     }
 
