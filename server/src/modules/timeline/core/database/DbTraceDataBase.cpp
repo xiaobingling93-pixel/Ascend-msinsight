@@ -1396,7 +1396,9 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
         }
         auto stmt = CreatPreparedStatement();
         auto metaType = ENUM_TO_STR(type).value_or("");
-        auto process = GenerateBaseUnitTrack("process", fileId, metaType, metaType, metaType);
+        // 临时增加对 HCCL 的特殊处理，之后将 PROCESS_TYPE::HCCL 换成 COMMUNICATION
+        auto processName = type == PROCESS_TYPE::HCCL ? "COMMUNICATION" : metaType;
+        auto process = GenerateBaseUnitTrack("process", fileId, metaType, processName, metaType);
         try {
             auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, GetDeviceId(fileId));
             while (resultSet->Next()) {
