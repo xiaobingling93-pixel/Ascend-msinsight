@@ -149,7 +149,7 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
         sql = "SELECT t4.name AS componentColumn, ROUND(t3.size / (1024.0 * 1024.0), 2) AS totalReservedColumn,"
             " t3.timestamp_maxsize AS timestampColumn FROM "
             "(SELECT t1.moduleId AS id, t1.totalReserved AS size, MIN(ROUND((t1.timestampNs - " +
-            std::to_string(startTime + offsetTime) +
+            std::to_string(NumberSafe::Add(startTime, offsetTime)) +
             ") / (1000.0 * 1000.0), 3)) AS timestamp_maxsize FROM " + TABLE_NPU_MODULE_MEM + " AS t1 JOIN " +
             "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
             " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdByte) +
@@ -180,7 +180,7 @@ bool DbMemoryDataBase::QueryEntireComponentTable(std::vector<Protocol::MemoryCom
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
         sql = "SELECT t4.name, ROUND(t3.size / (1024.0 * 1024.0), 2), t3.timestamp_maxsize FROM "
               "(SELECT t1.moduleId AS id, t1.totalReserved AS size, MIN(ROUND((t1.timestampNs - " +
-              std::to_string(startTime + offsetTime) +
+              std::to_string(NumberSafe::Add(startTime, offsetTime)) +
               ") / (1000.0 * 1000.0), 3)) AS timestamp_maxsize FROM " + TABLE_NPU_MODULE_MEM + " AS t1 JOIN " +
               "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
               " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdByte) +

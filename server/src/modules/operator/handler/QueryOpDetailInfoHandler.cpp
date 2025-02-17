@@ -159,8 +159,7 @@ namespace Dic::Module::Operator {
         std::vector<Protocol::OperatorDetailCmpInfoRes> fullCmpData;
         fullCmpData = GetCmpDataVec(baselineRes, cmpRes);
         constexpr int64_t MAX_INT64 = std::numeric_limits<int64_t>::max();
-        int64_t safeSize = (fullCmpData.size() > static_cast<size_t>(MAX_INT64)) ?
-                            MAX_INT64 : static_cast<int64_t>(fullCmpData.size());
+        const int64_t safeSize = std::min(static_cast<int64_t>(fullCmpData.size()), MAX_INT64);
         if (request.params.topK > 0) {
             response.total = std::min(request.params.topK, safeSize);
         } else {

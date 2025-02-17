@@ -154,7 +154,7 @@ void QueryMemoryComponentHandler::SelectResult(Dic::Protocol::MemoryComponentReq
             response.componentDiffDetails.push_back(fullDiffResult[i]);
         }
     }
-    response.totalNum = fullDiffResult.size();
+    response.totalNum = std::min(static_cast<int64_t>(fullDiffResult.size()), std::numeric_limits<int64_t>::max());
     for (const auto& column : tableColumnAttr) {
         response.columnAttr.emplace_back(column);
         if (column.name == "Component") {
