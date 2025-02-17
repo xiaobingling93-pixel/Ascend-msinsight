@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_DOMAINOBJECT_H
 #define PROFILER_SERVER_DOMAINOBJECT_H
 #include <string>
+#include <vector>
 namespace Dic::Module::Timeline {
 struct SliceDomain {
     uint64_t id = 0;
@@ -137,6 +138,12 @@ enum class PROCESS_TYPE {
     TEXT,
     NONE,
     DB,
+};
+
+struct ParallelGroupInfo {
+    std::string group;
+    std::string groupName;
+    std::vector<std::string> globalRanks;
 };
 }
 #endif // PROFILER_SERVER_DOMAINOBJECT_H
