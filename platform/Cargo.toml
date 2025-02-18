@@ -11,7 +11,6 @@ opt-level = 1
 [profile.release]
 opt-level = 3
 strip = "symbols"
-relocation_model = "pic/pie"
 
 [dependencies]
 wry = {registry = "openSources", version="0.24.3", features = ["file-drop"], optional = true}

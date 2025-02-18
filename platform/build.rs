@@ -2,14 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 fn main() {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(debug_assertions)))]
     if let Ok(arch) = std::env::var("CARGO_CFG_TARGET_ARCH") {
         gen_rc();
         static_vcruntime::build(&arch);
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(debug_assertions)))]
 fn gen_rc() {
     use std::{path::PathBuf, process::Command};
 
@@ -32,7 +32,7 @@ fn gen_rc() {
 /// By default, Rust requires programs to deploy vcruntime140.dll (or equivalent)
 ///
 /// Statically links the library instead
-#[cfg(windows)]
+#[cfg(all(windows, not(debug_assertions)))]
 mod static_vcruntime {
     use std::{env, fs::OpenOptions, io::Write, path::Path};
 
