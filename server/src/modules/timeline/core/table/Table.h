@@ -120,21 +120,6 @@ public:
         return *this;
     }
 
-    /* *
-     * 调用此函数需要先校验inputs不为空
-     * @param str
-     * @param inputs
-     * @return
-     */
-    Table &NotIn(std::string_view str, const std::vector<std::string> &inputs)
-    {
-        ConditionStr() += " AND " + std::string(str) + " NOT IN ( ";
-        std::string inputStr = StringUtil::Join4SqlGroup(inputs);
-        ConditionStr() += inputStr;
-        ConditionStr() += " ) ";
-        return *this;
-    }
-
     Table &OrderBy(std::string_view columnName, TableOrder order)
     {
         if (std::empty(OrderByStr())) {
