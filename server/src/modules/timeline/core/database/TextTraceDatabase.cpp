@@ -1143,7 +1143,7 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
         return false;
     }
     const std::vector<std::string> layers = (requestParams.layer == "HCCL" || requestParams.layer == "COMMUNICATION")
-        ? std::vector<std::string>{"hccl","communication"} : std::vector{StringUtil::ToLower(requestParams.layer)};
+        ? std::vector<std::string>{"hccl", "communication"} : std::vector{StringUtil::ToLower(requestParams.layer)};
     std::string sql = TextSqlConstant::GetQueryPythonViewDataSql(requestParams.order, requestParams.orderBy, layers);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
@@ -1179,7 +1179,7 @@ LayerStatData TextTraceDatabase::QueryLayerData(const std::string &layer, const 
 {
     LayerStatData layerStatData;
     std::vector<std::string> layerList = (layer == "HCCL" || layer == "COMMUNICATION")
-        ? std::vector<std::string>{"hccl","communication"} : std::vector<std::string>{StringUtil::ToLower(layer)};
+        ? std::vector<std::string>{"hccl", "communication"} : std::vector<std::string>{StringUtil::ToLower(layer)};
     std::string sql = TextSqlConstant::GetQueryLayerDataSql(layerList);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
