@@ -338,18 +338,32 @@ interface EmptyMetaData {
     dataSource: DataSource;
 };
 
+function unpinUnitIfPinned(session: Session, insightUnit: InsightUnit): void {
+    if (isPinned(insightUnit)) {
+        runInAction(() => {
+            session.pinnedUnits = session.pinnedUnits.filter((item) =>
+                item.metadata !== insightUnit.metadata);
+            switchPinned(insightUnit);
+        });
+    }
+}
+
 const hideUnits = (session: Session, selectUnits: InsightUnit[]): void => {
-    const hideEveryUnit = (insightUnit: InsightUnit): void => {
+    const hideEveryUnit = (insightUnit: InsightUnit, ancestorsIsVisible: boolean = true): void => {
         /**
          * 对于有父子Unit被选中的情况
          * 由于代码是从顶向下找的，当发现第一个父Unit是选中的，就直接 hideSelectUnit，然后退出程序
          * 这样可以避免再次选中子Unit导致子Unit又创建一个Hidden Unit这种不希望的情形出现
          */
         if (selectUnits.some((item): boolean => item.metadata === insightUnit.metadata)) {
-            hideSelectUnit(insightUnit);
+            unpinUnitIfPinned(session, insightUnit);
+            if (ancestorsIsVisible) { // 只有祖先都是可见的情况下，才需要隐藏，否则不需要处理
+                hideSelectUnit(insightUnit);
+            }
         } else if (insightUnit.children) {
             for (const child of insightUnit.children) {
-                hideEveryUnit(child);
+                // 如果当前泳道已经是不可见（隐藏）的，设为 false, 否则用本次传入的
+                hideEveryUnit(child, insightUnit.isUnitVisible ? ancestorsIsVisible : false);
             }
         }
     };
