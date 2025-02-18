@@ -209,7 +209,7 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
         "bw.sdma_bw as sdmaBw, bw.rdma_bw as rdmaBw "
         "FROM " + TABLE_COMM_ANALYZER_TIME + " t "
         "LEFT JOIN " + TABLE_COMM_GROUP + " m ON t.group_name = m.group_name "
-        "JOIN ( "
+        "LEFT JOIN ( "
         "    SELECT hccl_op_name, "
         "    MAX(CASE WHEN band_type = 'SDMA' THEN bandwidth ELSE 0 END) AS sdma_bw, "
         "    MAX(CASE WHEN band_type = 'RDMA' THEN bandwidth ELSE 0 END) AS rdma_bw "

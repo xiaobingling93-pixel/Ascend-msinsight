@@ -124,14 +124,14 @@ struct MatrixSortOpNamesResponse : public Response {
 };
 
 struct DurationData {
-    double startTime;
-    double elapseTime;
-    double transitTime;
-    double synchronizationTime;
-    double waitTime;
-    double idleTime;
-    double synchronizationTimeRatio;
-    double waitTimeRatio;
+    double startTime{};
+    double elapseTime{};
+    double transitTime{};
+    double synchronizationTime{};
+    double waitTime{};
+    double idleTime{};
+    double synchronizationTimeRatio{};
+    double waitTimeRatio{};
     double sdmaBw{};
     double rdmaBw{};
     double sdmaTime{};
