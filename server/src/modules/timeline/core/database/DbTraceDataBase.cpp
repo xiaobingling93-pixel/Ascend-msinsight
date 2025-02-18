@@ -1589,6 +1589,14 @@ std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMat
             " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, ROWID as id, name "
             " from " + TABLE_API + " api join ids on ids.id = api.name) api " + orderBy + " LIMIT 1 OFFSET ?";
     } else {
+        std::string associationTaskSql;
+        if (!TraceDatabaseHelper::IsDeviceIdUnique(path)) {
+            associationTaskSql = "join tasks on op.connectionId = tasks.connectionId";
+        }
+        std::string comSql = "select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
+                             " startNs - minTime.value as startTime, endNs - startNs as duration, 0 as depth, op.ROWID"
+                             " as id from COMMUNICATION_OP op join minTime " + associationTaskSql +
+                             " join ids on ids.id = opName group by opId";
         sql = "with ids as (" + nameMatch +
             "), minTime as (select ? as value), "
             " tasks as (select ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, connectionId, "
@@ -1604,10 +1612,7 @@ std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMat
             " join ids on ids.id = coalesce(compute.name, schedule.name, main.taskType) "
             " union ALL select name, pid, pid as meatType, tid, startTime, duration, depth, com.id from com "
             " join ids on ids.id = com.name "
-            " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
-            " startNs - minTime.value as startTime, endNs - startNs as duration, 0 as depth, op.ROWID as id "
-            " from COMMUNICATION_OP op join minTime join tasks on op.connectionId = tasks.connectionId "
-            " join ids on ids.id = opName group by opId ) allNames " + orderBy + " LIMIT 1 OFFSET ?";
+            " union ALL " + comSql + " ) allNames " + orderBy + " LIMIT 1 OFFSET ?";
     }
     return sql;
 }
