@@ -1439,6 +1439,94 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithCounter)
     EXPECT_EQ(metaData[second]->children[second]->type, "thread");
 }
 
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithPidAndProcessNameIsSame)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    const std::string processData = "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", "
+        "\"process_sort_index\") VALUES ('1', '1', NULL, NULL);\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\") VALUES "
+        "('319667', '319667', NULL, NULL);";
+    const std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (1, 'http', '319667', 'http', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (16, 'CPU Usage', '1', 'CPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (17, 'NPU Usage', '1', 'NPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (18, 'KVCache', '319667', 'KVCache', 0);";
+    const std::string counterData =
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (3749, "
+        "'KVCache', '319667', 1735124813464727800, NULL, '{\"Device Block\":\"1969.0\"}');"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (749, "
+        "'NPU Usage', '1', 1735124807612323800, NULL, '{\"Usage\":\"0.0\"}');"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (1, "
+        "'CPU Usage', '1', 1735124784269897500, NULL, '{\"CPU Usage\":\"0.520833\"}');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, processData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, counterData);
+    const std::string fileId = "9";
+    const uint8_t expectProcessCount = 2;
+    const uint8_t first = 0;
+    const uint8_t second = 1;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(metaData.size(), expectProcessCount);
+    EXPECT_EQ(metaData[first]->type, "process");
+    EXPECT_EQ(metaData[first]->metaData.processName, "Process 1");
+    EXPECT_EQ(metaData[second]->type, "process");
+    EXPECT_EQ(metaData[second]->metaData.processName, "Process 319667");
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithPidAndProcessNameIsNotSame)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    const std::string processData = "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", "
+        "\"process_sort_index\") VALUES ('1', 'wwf', NULL, NULL);\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\") VALUES "
+        "('319667', 'nnm', NULL, NULL);";
+    const std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (1, 'http', '319667', 'http', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (16, 'CPU Usage', '1', 'CPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (17, 'NPU Usage', '1', 'NPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (18, 'KVCache', '319667', 'KVCache', 0);";
+    const std::string counterData =
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (3749, "
+        "'KVCache', '319667', 1735124813464727800, NULL, '{\"Device Block\":\"1969.0\"}');"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (749, "
+        "'NPU Usage', '1', 1735124807612323800, NULL, '{\"Usage\":\"0.0\"}');"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (1, "
+        "'CPU Usage', '1', 1735124784269897500, NULL, '{\"CPU Usage\":\"0.520833\"}');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, processData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, counterData);
+    const std::string fileId = "9";
+    const uint8_t expectProcessCount = 2;
+    const uint8_t first = 0;
+    const uint8_t second = 1;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(metaData.size(), expectProcessCount);
+    EXPECT_EQ(metaData[first]->type, "process");
+    EXPECT_EQ(metaData[first]->metaData.processName, "nnm (319667)");
+    EXPECT_EQ(metaData[second]->type, "process");
+    EXPECT_EQ(metaData[second]->metaData.processName, "wwf (1)");
+}
+
 TEST_F(TextTraceDatabaseMockTest, TestQuerySimulationUintFlows)
 {
     std::recursive_mutex sqlMutex;

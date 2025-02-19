@@ -506,7 +506,7 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     if (processIsCol.get(`${targetCardId}-${to.pid}`) && processIsCol.get(`${sourceCardId}-${from.pid}`)) {
         return;
     }
-    if ((sourceY === undefined || targetY === undefined || sourceY === targetY)) {
+    if ((sourceY === undefined || targetY === undefined)) {
         return;
     }
     if (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT) {

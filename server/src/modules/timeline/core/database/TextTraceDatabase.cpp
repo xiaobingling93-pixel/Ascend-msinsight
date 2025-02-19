@@ -757,7 +757,12 @@ std::vector<Process> TextTraceDatabase::QueryAllProcess()
         if (TraceTime::Instance().GetIsSimulation()) {
             process.name = resultSet->GetString("process_name");
         } else {
-            process.name = resultSet->GetString("process_name") + " (" + process.pid + ")";
+            std::string processName = resultSet->GetString("process_name");
+            if (processName != process.pid) {
+                process.name = resultSet->GetString("process_name") + " (" + process.pid + ")";
+            } else {
+                process.name = "Process " + process.pid;
+            }
         }
         process.label = resultSet->GetString("label");
         process.sortIndex = resultSet->GetUint32("process_sort_index");
