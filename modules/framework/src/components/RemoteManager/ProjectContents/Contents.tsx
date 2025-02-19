@@ -20,6 +20,7 @@ import { isSameFile } from './ContextMenu';
 import { useTranslation } from 'react-i18next';
 import EditableText from './EditableText';
 import CheckMenu from './CheckMenu';
+import { getRankId } from '@/utils/Rank';
 
 const ContentsContainer = styled.div`
     margin-right: 10px;
@@ -157,7 +158,9 @@ const getTreeData = (session: Session): TreeDataNode[] => {
             title: <Tooltip placement="bottom" title={path}>
                 <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: path })}`}>
                     <span className="content-text can-right-click"
-                        onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: path })}>{path}</span>
+                        onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: path })}>
+                        {getFilePathName({ projectName: dataSource.projectName, filePath: path })}
+                    </span>
                     <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
                         <DeleteConfirm isProject={false} projectIndex={dataSourceIndex} dataPathIndex={dataPathIndex}/>
                     </div>
@@ -167,9 +170,15 @@ const getTreeData = (session: Session): TreeDataNode[] => {
     }));
 };
 
+// 文件名
+const getFilePathName = (file: File): string => {
+    const rankId = getRankId(file);
+    return `${rankId}${rankId === '' ? '' : ' : '}${file.filePath}`;
+};
+
 // 目录
 const Contents = observer(({ session }: {session: Session}) => {
-    const treeData = useMemo<TreeDataNode[]>(() => getTreeData(session), [session.dataSources, JSON.stringify(session.compareSet)]);
+    const treeData = useMemo<TreeDataNode[]>(() => getTreeData(session), [session.dataSources, JSON.stringify(session.compareSet), session.rankMap]);
 
     // 展开情况: 默认展开所有工程，新导入工程默认展开
     const allProjectKeys = treeData.map(item => item.key);
