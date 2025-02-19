@@ -62,6 +62,7 @@ private:
     std::string GenSortSql(std::string orderBy, std::string order);
     std::string GenComputeSql(Protocol::ComputeDetailParams request);
     std::string GetCommSql(Protocol::CommunicationDetailParams request);
+    std::string GetAcceleratorCoreSql(const bool isCommunication);
 
     std::string GenerateQueryCategoryDurationSql(OperatorDurationReqParams &reqParams);
 
@@ -90,7 +91,7 @@ private:
     bool IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup);
     std::set<std::string> FetchPmuColumnNames();
     std::string GetQueryDetailBaseSql(Protocol::OperatorStatisticReqParams &reqParams, bool isLimit);
-    std::string GetQuerySqlNofilter(Protocol::OperatorStatisticReqParams &reqParams, const bool isHccl,
+    std::string GetQuerySqlNofilter(Protocol::OperatorStatisticReqParams &reqParams, const bool isCommunication,
                                     const std::string &group, const std::string &name);
     bool ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                               std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);

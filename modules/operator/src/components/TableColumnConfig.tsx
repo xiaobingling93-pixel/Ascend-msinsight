@@ -11,8 +11,8 @@ export const enum OperatorGroup {
     OPERATOR = 'Operator',
     OPERATOR_TYPE = 'Operator Type',
     INPUT_SHAPE = 'Input Shape',
-    HCCL_OPERATOR = 'HCCL Operator',
-    HCCL_OPERATOR_TYPE = 'HCCL Operator Type',
+    HCCL_OPERATOR = 'Communication Operator',
+    HCCL_OPERATOR_TYPE = 'Communication Operator Type',
 };
 
 export const useCompareSourceColumn = (): ColumnsType<any> => {

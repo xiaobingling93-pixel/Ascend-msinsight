@@ -377,14 +377,14 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             ServerLog::Error("Category duration sql generate failed, unknown operator group.");
             return "";
         }
-        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+        bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
 
         std::string sql;
         if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_NAME_GROUP ||
-            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_NAME_GROUP) {
+            operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_NAME_GROUP) {
             std::string name = "name";
             sql = " SELECT " + name + " as name , ROUND(duration, 2) as duration FROM " + TABLE_KERNEL +
-                " WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'" +
+                " WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 " ORDER BY duration DESC LIMIT ?";
         } else {
             std::string name;
@@ -397,7 +397,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
             }
             sql = " SELECT " + name + " as name, ROUND(sum(duration), 2) as duration FROM " + TABLE_KERNEL +
-                " WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL' GROUP by " + group +
+                " WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                " GROUP by " + group +
                 " ORDER BY duration DESC LIMIT ?";
         }
         return sql;
@@ -420,8 +421,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     SELECT " + group + ", accelerator_core," + (reqParams.group == Protocol::OPERATOR_GROUP ?
                 "     ROUND(duration, 2) as duration" : " ROUND(SUM(duration), 2) as duration") +
                 "     FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'" + (reqParams.group == Protocol::OPERATOR_GROUP ?
-                "     " : (" GROUP BY " + group)) +
+                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(false) +
+                (reqParams.group == Protocol::OPERATOR_GROUP ? "     " : (" GROUP BY " + group)) +
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery" +
                 " GROUP by accelerator_core"
@@ -475,7 +476,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     bool TextSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+        bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
 
         std::string group;
         if (IsOperatorGroupInType(operatorGroup)) {
@@ -488,11 +489,10 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 "     ORDER by ROUND(SUM(duration), 2) DESC LIMIT ?"
                 " ) subquery";
-
         if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
             return false;
         }
@@ -535,7 +535,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     std::string TextSummaryDataBase::GetQueryBaseStaticSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+        bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
 
         std::string name;
         std::string group;
@@ -546,15 +546,24 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             group = R"(name || input_shapes || accelerator_core)";
             name = "name";
         }
-        std::string sql = GetQuerySqlNofilter(reqParams, isHccl, group, name);
+        std::string sql = GetQuerySqlNofilter(reqParams, isCommunication, group, name);
         if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
             return "";
         }
         return sql;
     }
 
+    std::string TextSummaryDataBase::GetAcceleratorCoreSql(const bool isCommunication)
+    {
+        if (isCommunication) {
+            return " IN ('HCCL', 'COMMUNICATION') ";
+        } else {
+            return " NOT IN ('HCCL', 'COMMUNICATION') ";
+        }
+    }
+
     std::string TextSummaryDataBase::GetQuerySqlNofilter(Protocol::OperatorStatisticReqParams &reqParams,
-                                                         const bool isHccl,
+                                                         const bool isCommunication,
                                                          const std::string &group, const std::string &name)
     {
         std::string limitSql =
@@ -565,7 +574,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT ?"
                 " ) subquery ";
@@ -578,7 +587,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + TABLE_KERNEL +
-                "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 " ) subquery";
 
@@ -590,7 +599,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 " ) subquery";
 
@@ -681,16 +690,15 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
 
     bool TextSummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
-        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+        bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
         sqlite3_stmt *stmt = nullptr;
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
-
         if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
             return false;
         }
@@ -749,10 +757,10 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     std::string TextSummaryDataBase::GetQueryDetailBaseSql(Protocol::OperatorStatisticReqParams &reqParams,
                                                            bool isLimit)
     {
-        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+        bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
         // 获取pmu数据的列用来做查询，如果pmuColumnNames为空，就表示没有pmu列需要查找
         std::string pmuColumnNames;
-        if (!isHccl) {
+        if (!isCommunication) {
             std::set<std::string> pmuClos = FetchPmuColumnNames();
             pmuColumnNames = JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end()));
         }
@@ -766,19 +774,19 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string conditionalQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER by duration DESC LIMIT ?"
                 " ) subquery ";
         std::string allQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER by start_time DESC"
                 "     ) subquery ";
         std::string baseAllQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     WHERE accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER by start_time DESC"
                 "     ) subquery ";
 
@@ -1126,7 +1134,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     bool TextSummaryDataBase::IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup)
     {
         return operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-               operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP;
+               operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP;
     }
 
 } // end of namespace Summary

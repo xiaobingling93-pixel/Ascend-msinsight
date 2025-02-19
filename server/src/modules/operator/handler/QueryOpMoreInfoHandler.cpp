@@ -52,7 +52,7 @@ namespace Dic::Module::Operator {
         }
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(params.group);
         if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
-            operatorGroup != OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP &&
+            operatorGroup != OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP &&
             operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
             ServerLog::Error("[Operator]Wrong group type in query op more info.");
             return false;

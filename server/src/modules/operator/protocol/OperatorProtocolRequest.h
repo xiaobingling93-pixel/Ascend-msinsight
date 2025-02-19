@@ -66,7 +66,7 @@ namespace Dic::Protocol {
         {
             OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(this->group);
             if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
-                operatorGroup != OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP &&
                 operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
                 errorMsg = "[Operator]Wrong group type in Query Op Statistic Info.";
                 return false;

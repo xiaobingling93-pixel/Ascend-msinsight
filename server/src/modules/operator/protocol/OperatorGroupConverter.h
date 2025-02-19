@@ -14,8 +14,8 @@ public:
         OP_TYPE_GROUP,
         OP_NAME_GROUP,
         OP_INPUT_SHAPE_GROUP,
-        HCCL_TYPE_GROUP,
-        HCCL_NAME_GROUP,
+        COMMUNICATION_TYPE_GROUP,
+        COMMUNICATION_NAME_GROUP,
         UNKNOWN
     };
 
@@ -40,7 +40,7 @@ public:
         return OperatorGroup::UNKNOWN;
     }
 
-    static bool IsHccl(const std::string &type)
+    static bool IsCommunication(const std::string &type)
     {
         InitTypeMap();
         std::map<std::string, OperatorGroupInfo>::const_iterator it = typeMap.find(type);
@@ -59,8 +59,8 @@ private:
         typeMap = { { "Operator Type", OperatorGroupInfo(OperatorGroup::OP_TYPE_GROUP, false) },
                     { "Operator", OperatorGroupInfo(OperatorGroup::OP_NAME_GROUP, false) },
                     { "Input Shape", OperatorGroupInfo(OperatorGroup::OP_INPUT_SHAPE_GROUP, false) },
-                    { "HCCL Operator Type", OperatorGroupInfo(OperatorGroup::HCCL_TYPE_GROUP, true) },
-                    { "HCCL Operator", OperatorGroupInfo(OperatorGroup::HCCL_NAME_GROUP, true) } };
+                    { "Communication Operator Type", OperatorGroupInfo(OperatorGroup::COMMUNICATION_TYPE_GROUP, true) },
+                    { "Communication Operator", OperatorGroupInfo(OperatorGroup::COMMUNICATION_NAME_GROUP, true) } };
     }
 };
 }

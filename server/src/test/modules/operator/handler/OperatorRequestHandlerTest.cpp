@@ -257,7 +257,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessWhenBaselin
     Dic::Module::Operator::QueryOpStatisticInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorStatisticInfoRequest>();
     requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "HCCL Operator Type";
+    requestPtr.get()->params.group = "Communication Operator Type";
     // topK给一个极大值
     requestPtr.get()->params.topK = 10000000; // 10000000表示topK是一个极大值
     requestPtr.get()->params.isCompare = true;
@@ -278,7 +278,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessGroupByHCCL
     Dic::Module::Operator::QueryOpStatisticInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorStatisticInfoRequest>();
     requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "HCCL Operator Type";
+    requestPtr.get()->params.group = "Communication Operator Type";
     // topK给一个极大值
     requestPtr.get()->params.topK = 10000000; // 10000000表示topK是一个极大值
     requestPtr.get()->params.isCompare = true;

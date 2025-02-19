@@ -133,7 +133,7 @@ const DetailChart = observer(({ condition, session }: {condition: ConditionType;
         updateComputeData();
     };
     const isHideRight = (): boolean => {
-        return condition.group === 'HCCL Operator Type' || condition.group === 'HCCL Operator';
+        return condition.group === 'Communication Operator Type' || condition.group === 'Communication Operator';
     };
     const updateOpTypeData = async (): Promise<void> => {
         const res = await queryOperatorCategory(condition);

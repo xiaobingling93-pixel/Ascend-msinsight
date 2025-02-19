@@ -52,8 +52,8 @@ const defaultOptionMap = {
         { label: 'Computing Operator', value: 'Operator' },
         { label: 'Computing Operator Type', value: 'Operator Type' },
         { label: 'Computing Operator Name and Input Shape', value: 'Input Shape' },
-        { label: 'HCCL Operator', value: 'HCCL Operator' },
-        { label: 'HCCL Operator Type', value: 'HCCL Operator Type' },
+        { label: 'Communication Operator', value: 'Communication Operator' },
+        { label: 'Communication Operator Type', value: 'Communication Operator Type' },
     ],
     topKOptions: [
         { label: '15', value: 15 },

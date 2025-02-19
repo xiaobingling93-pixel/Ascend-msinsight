@@ -229,9 +229,9 @@ bool DbSummaryDataBase::QueryAllOperatorStatisticInfo(Protocol::OperatorStatisti
 std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams)
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
     std::string sql;
-    if (isHccl) {
+    if (isCommunication) {
         sql = " SELECT * FROM (SELECT SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type, NAME.value as name,"
             " NULL AS input_shapes,NULL as accelerator_core,"
             " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
@@ -258,7 +258,6 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-            "     WHERE accelerator_core <> 'HCCL'"
             "     GROUP BY " + group + " ORDER by total_time DESC LIMIT ? "
             "     ) subquery ";
     }
@@ -280,9 +279,9 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
 bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
     std::string sql;
-    if (isHccl) {
+    if (isCommunication) {
         sql = "SELECT COUNT(*) as nums "
             "FROM ("
             " SELECT SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as opType,"
@@ -305,7 +304,6 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-            "     WHERE accelerator_core <> 'HCCL' "
             "     GROUP by " + group +
             "     ORDER by ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) DESC LIMIT ?"
             " ) subquery";
@@ -424,10 +422,10 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
 bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total)
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
     std::string sql;
-    if (isHccl) {
-        std::string name = (operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) ?
+    if (isCommunication) {
+        std::string name = (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) ?
             " SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) " : " NAME.value ";
         sql = "SELECT COUNT(*) as nums FROM ( SELECT " + name + " as name FROM COMMUNICATION_OP"
             "   JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName WHERE " + name + " = ? ) subquery";
@@ -445,11 +443,11 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
         return false;
     }
     int index = bindStartIndex;
-    if (!isHccl) {
+    if (!isCommunication) {
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
     }
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-        operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) {
         sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
     } else {
         sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
@@ -469,15 +467,15 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
 std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParams &reqParams)
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
     std::string sql;
-    if (isHccl) {
+    if (isCommunication) {
         sql = GenerateQueryMoreInfoSqlForHCCL(sql);
     } else {
         sql = GenerateQueryMoreInfoSqlForOther(sql);
     }
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-        operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) {
         sql += " WHERE op_type = ?";
     } else {
         sql += " WHERE name = ? ";
@@ -554,12 +552,12 @@ void DbSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMo
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
-    if (!isHccl) {
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
+    if (!isCommunication) {
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
     }
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-        operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) {
         sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
     } else {
         sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
@@ -640,8 +638,8 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::Operat
         ServerLog::Error("Generate query category duration sql failed, unknown operator group.");
         return "";
     }
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
-    if (isHccl) {
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
+    if (isCommunication) {
         return GenerateQueryCategoryDurationSqlForHCCL(operatorGroup);
     } else {
         std::string group;
@@ -670,8 +668,7 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::Operat
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            " WHERE task_type <> 'HCCL'" +
+            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType " +
             group +
             " ORDER BY duration DESC LIMIT ?"
             " ) subquery";
@@ -712,9 +709,9 @@ std::string DbSummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::Ope
 
 bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParams, int64_t &total)
 {
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
     std::string sql;
-    if (isHccl) {
+    if (isCommunication) {
         sql = " SELECT COUNT(*) as nums FROM ("
             " SELECT *  FROM " +
             TABLE_COMMUNICATION_OP +
@@ -731,7 +728,6 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-            "     WHERE accelerator_core <> 'HCCL'"
             "     ORDER BY duration DESC LIMIT ?"
             " ) subquery";
     }
@@ -856,15 +852,15 @@ std::string DbSummaryDataBase::GenerateQueryDetailSqlForOperator()
         "     JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
         "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats " +
               CreatPMUTmpTableSql(pmuClos) +
-        "     WHERE accelerator_core <> 'HCCL' ORDER by duration DESC LIMIT ? ) subquery ";
+        "     ORDER by duration DESC LIMIT ? ) subquery ";
     return sql;
 }
 
 std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqParams &reqParams)
 {
-    bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+    bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
     std::string sql;
-    if (isHccl) {
+    if (isCommunication) {
         sql = GenerateQueryDetailSqlForHCCL(sql);
     } else {
         sql = GenerateQueryDetailSqlForOperator();
@@ -898,11 +894,11 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSqlForHCCL(
     std::string group;
     std::string name;
     std::string duration;
-    if (operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+    if (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) {
         name = "SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as name ";
         group = " GROUP by SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) ";
         duration = " ROUND(sum(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 2) as duration";
-    } else if (operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_NAME_GROUP) {
+    } else if (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_NAME_GROUP) {
         name = "NAME.value as name";
         group = "";
         duration = " ROUND((COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 2) as duration";

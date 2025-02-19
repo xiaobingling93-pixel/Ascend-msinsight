@@ -8,8 +8,8 @@
       "Operator": "算子",
       "Operator Type": "算子类型",
       "Input Shape": "输入Shape",
-      "HCCL Operator": "通信算子",
-      "HCCL Operator Type": "通信算子类型",
+      "Communication Operator": "通信算子",
+      "Communication Operator Type": "通信算子类型",
       "Accelerator Core": "加速器核",
       "OperatorDetails": "算子详情"
     },
@@ -21,8 +21,8 @@
       "Computing Operator": "计算算子",
       "Computing Operator Type": "计算算子类型",
       "Computing Operator Name and Input Shape": "计算算子名称和输入shape",
-      "HCCL Operator": "通信算子",
-      "HCCL Operator Type": "通信算子类型",
+      "Communication Operator": "通信算子",
+      "Communication Operator Type": "通信算子类型",
       "All": "全部",
       "Custom": "自定义",
       "15": "15"

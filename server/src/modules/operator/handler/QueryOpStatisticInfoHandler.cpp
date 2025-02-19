@@ -159,7 +159,7 @@ namespace Dic::Module::Operator {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(paramsGroup);
         switch (operatorGroup) {
             case OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP:
-            case OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP:
+            case OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP:
                 return data.opType + data.accCore;
             case OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP:
                 return data.opName + data.inputShape + data.accCore;
@@ -235,7 +235,7 @@ namespace Dic::Module::Operator {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(paramsGroup);
         switch (operatorGroup) {
             case OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP:
-            case OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP:
+            case OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP:
                 SetOpOrHcclTypeGroupData(data);
                 break;
             case OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP:

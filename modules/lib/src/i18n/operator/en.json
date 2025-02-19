@@ -8,8 +8,8 @@
       "Operator": "Operator",
       "Operator Type": "Operator Type",
       "Input Shape": "Input Shape",
-      "HCCL Operator": "HCCL Operator",
-      "HCCL Operator Type": "HCCL Operator Type",
+      "Communication Operator": "Communication Operator",
+      "Communication Operator Type": "Communication Operator Type",
       "Accelerator Core": "Accelerator Core",
       "OperatorDetails": "Operator Details"
     },
@@ -21,8 +21,8 @@
       "Computing Operator": "Computing Operator",
       "Computing Operator Type": "Computing Operator Type",
       "Computing Operator Name and Input Shape": "Computing Operator Name and Input Shape",
-      "HCCL Operator": "HCCL Operator",
-      "HCCL Operator Type": "HCCL Operator Type",
+      "Communication Operator": "Communication Operator",
+      "Communication Operator Type": "Communication Operator Type",
       "All": "All",
       "Custom": "Custom",
       "15": "15"
