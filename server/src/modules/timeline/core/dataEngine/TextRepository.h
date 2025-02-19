@@ -78,7 +78,7 @@ public:
     bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
 
 private:
-    const std::string hccl = "HCCL";
+    const std::vector<std::string> COMMUNICATION_LIST = {"HCCL", "COMMUNICATION"};
 
     /* *
      * 根据算子信息查询算子的shape信息

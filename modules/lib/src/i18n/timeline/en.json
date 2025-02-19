@@ -84,7 +84,7 @@
       "Python API Summary": "Python API Summary",
       "CANN API Summary": "CANN API Summary",
       "Ascend HardWare Task Summary": "Ascend HardWare Task Summary",
-      "HCCL Summary": "HCCL Summary",
+      "Communication Summary": "Communication Summary",
       "Overlap Analysis": "Overlap Analysis",
       "Kernel Details": "Kernel Details",
       "Affinity API": "Affinity API",

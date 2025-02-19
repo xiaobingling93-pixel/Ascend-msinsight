@@ -64,7 +64,7 @@ const std::string QUERY_P2P_COMMUNICATION_OP_TEXT_SQL =
     "SELECT t.pid as pid, t.tid as tid, s.timestamp - ? as startTime, s.duration as duration, s.name as name "
     "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id WHERE s.track_id in ( "
     "    SELECT t.track_id FROM " + THREAD_TABLE + " t JOIN " + PROCESS_TABLE + " p ON t.pid = p.pid "
-    "    WHERE p.process_name = 'HCCL' and t.thread_name like 'Group%' "
+    "    WHERE p.process_name in ('HCCL', 'COMMUNICATION') and t.thread_name like 'Group%' "
     ") AND ( "
     "LOWER(s.name) like 'hcom_send%' or LOWER(s.name) like 'hcom_receive%' or LOWER(s.name) like 'hcom_batchsendrecv%' "
     ") AND s.timestamp >= ? AND s.end_time <= ? ORDER BY s.timestamp ASC";

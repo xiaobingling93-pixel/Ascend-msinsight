@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_TEXTSQLCONSTANT_H
 #define PROFILER_SERVER_TEXTSQLCONSTANT_H
 #include <string>
+#include <utility>
 #include "StringUtil.h"
 #include "ServerLog.h"
 #include "TimelineProtocolRequest.h"
@@ -86,10 +87,6 @@ const std::string QUERY_UNIT_COUNTER_SQL = "SELECT timestamp - ? as startTime, a
     COUNTER_TABLE +
     " WHERE pid = ? AND name = ?"
     " AND startTime >= ? AND startTime <= ? ORDER BY timestamp ASC";
-const std::string QUERY_LAYER_DATA_SQL = "SELECT sum(case when name != 'Communication' then duration else 0 end) "
-    "AS totalTime, count(distinct name) FROM slice "
-    "WHERE lower(name) LIKE lower(?) and slice.track_id IN "
-    "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid WHERE process_name = ? COLLATE NOCASE) ";
 const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
@@ -180,7 +177,17 @@ public:
             timestampCondition + " group by track_id) s left join thread t on s.track_id=t.track_id";
         return sql;
     }
-    static std::string GetQueryPythonViewDataSql(const std::string &order, const std::string &orderByField)
+    static std::string GetQueryLayerDataSql(std::vector<std::string> layers)
+    {
+        const auto layerStr = StringUtil::Join4SqlGroup(std::move(layers));
+        return "SELECT sum(case when name != 'Communication' then duration else 0 end) "
+                "AS totalTime, count(distinct name) FROM slice "
+                "WHERE lower(name) LIKE lower(?) and slice.track_id IN "
+                "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
+                " WHERE lower(process_name) in ("+ layerStr +") ) ";
+    }
+    static std::string GetQueryPythonViewDataSql(const std::string &order, const std::string &orderByField,
+        std::vector<std::string> layers)
     {
         std::string orderBy;
         if (order == "descend") {
@@ -188,13 +195,14 @@ public:
         } else {
             orderBy = " ORDER BY " + orderByField + " ASC";
         }
+        const auto layerStr = StringUtil::Join4SqlGroup(std::move(layers));
         std::string sql = "SELECT name, ROUND(cast(sum(duration) as double) * 100 / ?, 2) as "
             "time, sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, "
             "ROUND(avg(duration) / 1000.0, 4) as avg, "
             "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
             "FROM slice WHERE lower(name) LIKE lower(?) AND slice.track_id IN ( SELECT track_id "
             "FROM process JOIN thread t ON process.pid = t.pid "
-            "WHERE process_name = ? COLLATE NOCASE) GROUP BY name " +
+            "WHERE lower(process_name) in (" + layerStr + ")) GROUP BY name " +
             orderBy + " limit ? offset ?";
         return sql;
     }
@@ -403,7 +411,7 @@ public:
             "JOIN " +
             THREAD_TABLE +
             " t ON s.track_id = t.track_id "
-            "WHERE kd.accelerator_core != 'HCCL' ) "
+            "WHERE kd.accelerator_core NOT IN ('HCCL', 'COMMUNICATION') ) "
             "SELECT d0.* FROM data d0 ";
         for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
             std::string table = "d" + std::to_string(i);

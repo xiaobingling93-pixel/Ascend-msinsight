@@ -14,6 +14,7 @@ std::map<std::string, PROCESS_TYPE> metaTypeMap = {
     {"CANN", PROCESS_TYPE::CANN_API},
     {"Ascend Hardware", PROCESS_TYPE::ASCEND_HARDWARE},
     {"HCCL", PROCESS_TYPE::HCCL},
+    {"COMMUNICATION", PROCESS_TYPE::HCCL},
     {"Overlap Analysis", PROCESS_TYPE::OVERLAP_ANALYSIS},
 };
 
@@ -96,7 +97,7 @@ std::string TraceDatabaseHelper::GetSystemViewSqlByLayer(const std::string &laye
                   "  left join nameIds b on task.taskType = b.id"
                   "  left join nameIds c on schedule.name = c.id"
                   "  where deviceId = ?),";
-    } else if (layer == "HCCL") {
+    } else if (layer == "HCCL" || layer == "COMMUNICATION") {
         std::string comSql;
         if (IsDeviceIdUnique(rankId)) {
             comSql = " select realName as name, op.endNs - op.startNs as duration "
@@ -543,7 +544,7 @@ std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <S
     } else if (StringUtil::StartWith(processName, "Thread")) {
         if (params.threadName.empty()) {
             return QueryEventsView4Thread(stmt, orderByCondition, params);
-        } else if (params.threadName == "hccl") {
+        } else if (params.threadName == "hccl") { // 存疑，"Thread*" 下面是否有 "hccl" 的情况
             return QueryEventsView4HostHccl(stmt, orderByCondition, params);
         }
     } else if (StringUtil::StartWith(processName, "CANN")) {

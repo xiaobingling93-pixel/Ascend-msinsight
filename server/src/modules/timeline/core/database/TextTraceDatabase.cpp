@@ -1142,7 +1142,9 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
         ServerLog::Error("Query system view data an SQL injection attack.");
         return false;
     }
-    std::string sql = TextSqlConstant::GetQueryPythonViewDataSql(requestParams.order, requestParams.orderBy);
+    const std::vector<std::string> layers = (requestParams.layer == "HCCL" || requestParams.layer == "COMMUNICATION")
+        ? std::vector<std::string>{"hccl", "communication"} : std::vector{StringUtil::ToLower(requestParams.layer)};
+    std::string sql = TextSqlConstant::GetQueryPythonViewDataSql(requestParams.order, requestParams.orderBy, layers);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -1150,7 +1152,7 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
         return false;
     }
     auto resultSet =
-        stmt->ExecuteQuery(layerOperatorTime, searchName, requestParams.layer, requestParams.pageSize, offset);
+        stmt->ExecuteQuery(layerOperatorTime, searchName, requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("Query system view data. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1176,13 +1178,15 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
 LayerStatData TextTraceDatabase::QueryLayerData(const std::string &layer, const std::string &name)
 {
     LayerStatData layerStatData;
-    std::string sql = QUERY_LAYER_DATA_SQL;
+    std::vector<std::string> layerList = (layer == "HCCL" || layer == "COMMUNICATION")
+        ? std::vector<std::string>{"hccl", "communication"} : std::vector<std::string>{StringUtil::ToLower(layer)};
+    std::string sql = TextSqlConstant::GetQueryLayerDataSql(layerList);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query layer operator time, fail to prepare sql.");
         return layerStatData;
     }
-    auto resultSet = stmt->ExecuteQuery(name, layer);
+    auto resultSet = stmt->ExecuteQuery(name);
     if (resultSet == nullptr) {
         ServerLog::Error("Query layer operator time. Failed to get result set.", stmt->GetErrorMessage());
         return layerStatData;
