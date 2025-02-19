@@ -4,11 +4,10 @@
 import React, { useEffect, useState } from 'react';
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
-import { GlobalStyles } from 'ascend-theme';
+import { GlobalStyles, themeInstance } from 'ascend-theme';
 import { SharedConfigProvider } from 'ascend-shared-config-provider';
 import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
 import { useRootStore } from './context/context';
-import { themeInstance } from './theme/theme';
 import RemoteManager from './components/RemoteManager/Index';
 import Main from './components/Main';
 import { Session } from '@/entity/session';
