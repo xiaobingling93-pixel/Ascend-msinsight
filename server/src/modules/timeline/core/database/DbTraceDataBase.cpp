@@ -1396,8 +1396,8 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
         }
         auto stmt = CreatPreparedStatement();
         auto metaType = ENUM_TO_STR(type).value_or("");
-        // 临时增加对 HCCL 的特殊处理，之后将 PROCESS_TYPE::HCCL 换成 COMMUNICATION
-        auto processName = type == PROCESS_TYPE::HCCL ? "COMMUNICATION" : metaType;
+        // 临时增加对 HCCL 的特殊处理，之后将 PROCESS_TYPE::HCCL 换成 Communication
+        auto processName = type == PROCESS_TYPE::HCCL ? "Communication" : metaType;
         auto process = GenerateBaseUnitTrack("process", fileId, metaType, processName, metaType);
         try {
             auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, GetDeviceId(fileId));
@@ -1423,8 +1423,7 @@ void DbTraceDataBase::UpdataCommucationThreadName(const PROCESS_TYPE &type,
     std::unique_ptr<Protocol::UnitTrack> &process) const
 {
     const std::string suffix = "group";
-    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0")
-        && (type == PROCESS_TYPE::HCCL || type == PROCESS_TYPE::COMMUNICATION)) {
+    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0") && type == PROCESS_TYPE::HCCL) {
         for (auto &item : process->children) {
             if (StringUtil::StartWith(item->metaData.threadName, "Group") &&
                 StringUtil::EndWith(item->metaData.threadName, "Communication")) {
@@ -1449,8 +1448,7 @@ void DbTraceDataBase::ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &pr
         return;
     }
     // 在 metaVersion 版本高于 '1.0' 的情况下，type == PROCESS_TYPE::HCCL 时
-    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0")
-        && (type == PROCESS_TYPE::HCCL || type == PROCESS_TYPE::COMMUNICATION)) {
+    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0") && type == PROCESS_TYPE::HCCL) {
         const std::string groupNameValue = resultSet->GetString("groupNameValue");
         const std::string threadName = resultSet->GetString("name");
         if (!StringUtil::StartWith(threadName, "Plane") &&

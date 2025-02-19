@@ -18,7 +18,6 @@ using namespace Module::Timeline;
 template <typename ENUM> using EnumStrMap = std::map<ENUM, std::string>;
 const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWARE, "Ascend Hardware" },
                                                    { PROCESS_TYPE::HCCL, "HCCL" },
-                                                   { PROCESS_TYPE::COMMUNICATION, "COMMUNICATION" },
                                                    { PROCESS_TYPE::OVERLAP_ANALYSIS, "OVERLAP_ANALYSIS"},
                                                    { PROCESS_TYPE::CANN_API, "CANN_API" },
                                                    { PROCESS_TYPE::API, "PYTORCH_API" },

@@ -14,7 +14,7 @@ std::map<std::string, PROCESS_TYPE> metaTypeMap = {
     {"CANN", PROCESS_TYPE::CANN_API},
     {"Ascend Hardware", PROCESS_TYPE::ASCEND_HARDWARE},
     {"HCCL", PROCESS_TYPE::HCCL},
-    {"COMMUNICATION", PROCESS_TYPE::COMMUNICATION},
+    {"COMMUNICATION", PROCESS_TYPE::HCCL},
     {"Overlap Analysis", PROCESS_TYPE::OVERLAP_ANALYSIS},
 };
 
@@ -42,7 +42,6 @@ std::map<PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewCo
     {PROCESS_TYPE::ASCEND_HARDWARE,
         {columnName, columnStart, columnDuration, columnStreamName, columnRankId}},
     {PROCESS_TYPE::HCCL, {columnName, columnStart, columnDuration, columnGroupName, columnRankId}},
-    {PROCESS_TYPE::COMMUNICATION, {columnName, columnStart, columnDuration, columnGroupName, columnRankId}},
     {PROCESS_TYPE::OVERLAP_ANALYSIS,
         {columnName, columnStart, columnDuration, columnAnalysisType, columnRankId}},
 };
@@ -60,7 +59,6 @@ std::optional<std::string> TraceDatabaseHelper::QueryConnectionId(std::unique_pt
             resultSet = ExecuteQuery(stmt, sql, requestParams.id);
             break;
         case PROCESS_TYPE::HCCL:
-        case PROCESS_TYPE::COMMUNICATION:
             sql = "select connectionId from COMMUNICATION_OP where ROWID = ? and groupName||'group' = ?";
             resultSet = ExecuteQuery(stmt, sql, requestParams.id, requestParams.tid);
             break;
@@ -221,7 +219,6 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
             Prepare(stmt, ASCEND_SAME_NAME_DETAIL_SQL + orderBy)->BindParams(requestParams.name, minTimestamp);
             return Execute(stmt, rankId, requestParams.tid, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
-        case PROCESS_TYPE::COMMUNICATION:
             comSql = IsDeviceIdUnique(requestParams.rankId) ? COM_OP_SAME_NAME_DETAIL_SQL_UNIQUE_DEVICE :
                 COM_OP_SAME_NAME_DETAIL_SQL_NOT_UNIQUE_DEVICE;
             sql = TASK_INFO_SAME_NAME_DETAIL_SQL + comSql + orderBy;
@@ -284,7 +281,6 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
             return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
-        case PROCESS_TYPE::COMMUNICATION:
             if (!IsDeviceIdUnique(requestParams.cardId)) {
                 sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
                       "FROM " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO + " info "
@@ -326,7 +322,6 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
             return ExecuteQuery(stmt, ASCEND_THREADS_BY_PID, rankId, metaData.tid,
                                 startTime, endTime);
         case PROCESS_TYPE::HCCL:
-        case PROCESS_TYPE::COMMUNICATION:
             return ExecuteQuery(stmt, HCCL_THREADS_BY_PID, rankId, metaData.tid, metaData.tid,
                                 startTime, endTime);
         case PROCESS_TYPE::CANN_API:
@@ -654,7 +649,6 @@ std::unique_ptr<SqliteResultSet> QueryEventsViewResultSet(std::unique_ptr <Sqlit
                 return QueryEventsView4Stream(stmt, orderByCondition, params, rankId);
             }
         case Protocol::PROCESS_TYPE::HCCL:
-        case Protocol::PROCESS_TYPE::COMMUNICATION:
             if (params.tid.empty() && params.threadName.empty()) {
                 return QueryEventsView4DeviceHCCL(stmt, orderByCondition, params, rankId);
             } else {
@@ -719,7 +713,6 @@ std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams
                       "pid AS processId FROM slice AS s LEFT JOIN thread AS t ON s.track_id = t.track_id ";
             break;
         case PROCESS_TYPE::HCCL:
-        case PROCESS_TYPE::COMMUNICATION: // 增加 COMMUNICATION 的逻辑
             baseSql = "SELECT id, name, timestamp AS start, duration, thread_name AS threadName, s.track_id, "
                       "tid AS threadId, pid AS processId FROM slice AS s "
                       "LEFT JOIN thread AS t ON s.track_id = t.track_id AND threadName NOT LIKE 'Plane%' ";

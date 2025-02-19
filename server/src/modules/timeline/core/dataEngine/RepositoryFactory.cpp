@@ -14,7 +14,6 @@ RepositoryFactory::RepositoryFactory()
 {
     sliceRespoMap.emplace(PROCESS_TYPE::ASCEND_HARDWARE, std::make_unique<HardWareRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::HCCL, std::make_unique<HcclRepo>());
-    sliceRespoMap.emplace(PROCESS_TYPE::COMMUNICATION, std::make_unique<HcclRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::OVERLAP_ANALYSIS, std::make_unique<OverlapAnsRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::CANN_API, std::make_unique<CannApiRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::API, std::make_unique<PythonApiRepo>());
