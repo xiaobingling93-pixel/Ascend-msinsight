@@ -31,7 +31,7 @@ HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 SRC_DIR = os.path.join(HOME_DIR, 'src')
 CLUSTER_ANALYSE = 'cluster_analyse'
-CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', CLUSTER_ANALYSE)
+CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'msprof_analyze', CLUSTER_ANALYSE)
 PROTO_DIR = os.path.join(SRC_DIR, 'protos')
 
 OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
