@@ -17,7 +17,7 @@ import i18n from 'ascend-i18n';
 import { message as Message } from 'antd';
 import { isProjectNameExisted, updateDataSourceName } from '@/utils/Resource';
 import { sendReset, sendUpdateProjectName } from '@/connection/sendNotification';
-import { updateProjectNameHandler } from '@/utils/Compare';
+import { cancelBaselineData, updateProjectNameHandler } from '@/utils/Compare';
 import { updateRankMapByProjectName } from '@/utils/Rank';
 import { openLoading, closeLoading } from '@/utils/useLoading';
 
@@ -76,6 +76,7 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         const path = dataSource.dataPath[0].includes(dataSource.projectName) ? dataSource.projectName : dataSource.dataPath[0];
         localStorageService.setItem(LocalStorageKey.LAST_FILE_PATH, path);
     });
+    cancelBaselineData();
     closeLoading();
 }
 // 允许2个数组值重复或乱序

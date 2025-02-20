@@ -20,6 +20,7 @@ import { registerDragAndDropFile } from '@/utils';
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import i18n from 'ascend-i18n';
+import { runInAction } from 'mobx';
 
 const init = async(session: Session): Promise<void> => {
     // 注册文件拖拽
@@ -30,7 +31,9 @@ const init = async(session: Session): Promise<void> => {
     // 连接ws（启动后第一次）
     const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     if (isSuccess) {
-        session.defaultConnected = true;
+        runInAction(() => {
+            session.defaultConnected = true;
+        });
     }
 };
 

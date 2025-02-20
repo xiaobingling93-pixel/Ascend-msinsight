@@ -15,11 +15,11 @@ const ImportContainer = styled.div`
     display: flex;
     align-items: center;
     padding: 8px;
-    & > div:first-child {
+    & > div:first-of-type {
         margin-right: 8px;
         flex: 1;
     }
-    .btn-import > div:first-child{
+    .btn-import > div:first-of-type{
         margin-right: 8px;
     }
 `;

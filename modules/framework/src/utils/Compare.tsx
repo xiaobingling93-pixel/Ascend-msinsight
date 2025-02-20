@@ -139,6 +139,11 @@ export const cancelBaselineData = async (): Promise<void> => {
  */
 export const setCompareData = ({ projectName, filePath }: File): void => {
     const session = store.sessionStore.activeSession;
+    const { activeDataSource } = session;
+    if (projectName !== activeDataSource.projectName) {
+        Message.warning(i18n.t('Set Comparsion Data Out Of Range', { ns: 'framework' }));
+        return;
+    };
     // 选中对比文件
     runInAction(() => {
         const rank = getRankInfo({ projectName, filePath });

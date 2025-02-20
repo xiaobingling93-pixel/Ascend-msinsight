@@ -43,15 +43,16 @@ export const isSameFile = (one: File, anotherOne: File): boolean => {
 // 右键菜单
 const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element => {
     const { selectedFile, compareSet: { baseline, comparison } } = session;
-    const { projectName: selectedProjectName, filePath: selectedFileName } = selectedFile;
+    const { projectName: selectedProjectName, filePath: selectedFilePath } = selectedFile;
     const { projectName: baselineProjectName, filePath: baselineFilePath } = baseline;
     const { projectName: compareProjectName, filePath: compareFilePath } = comparison;
     // 右击的是项目名还是文件名
-    const isProject = selectedProjectName !== '' && selectedFileName === '';
+    const isProject = selectedProjectName !== '' && selectedFilePath === '';
     // 是否基线文件
-    const isBaseline = selectedProjectName === baselineProjectName && selectedFileName === baselineFilePath;
+    const isBaseline = selectedProjectName === baselineProjectName && selectedFilePath === baselineFilePath;
     const isBaselineSetted = baselineProjectName !== '';
-    const isComparison = selectedProjectName === compareProjectName && selectedFileName === compareFilePath;
+    const isBaselineProject = isBaselineSetted && baselineProjectName !== '' && baselineFilePath === '';
+    const isComparison = selectedProjectName === compareProjectName && selectedFilePath === compareFilePath;
 
     const allMenuItems: MenuItemModel[] = [
         {
@@ -73,7 +74,7 @@ const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element => {
             key: 'setAsComparisonData',
             action: (): void => { setCompareData(selectedFile); },
             // 不是项目名、不是基线数据、不是对比数据，且基线文件已设置
-            visible: !isProject && !isBaseline && !isComparison && isBaselineSetted,
+            visible: !isProject && !isBaseline && !isComparison && isBaselineSetted && !isBaselineProject,
         },
         {
             label: t('Unset as Comparison Data'),

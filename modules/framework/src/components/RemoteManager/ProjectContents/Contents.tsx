@@ -21,6 +21,8 @@ import { useTranslation } from 'react-i18next';
 import EditableText from './EditableText';
 import CheckMenu from './CheckMenu';
 import { getRankId } from '@/utils/Rank';
+import { cancelCompareData } from '@/utils/Compare';
+import { closeLoading, openLoading } from '@/utils/useLoading';
 
 const ContentsContainer = styled.div`
     margin-right: 10px;
@@ -215,6 +217,7 @@ const Contents = observer(({ session }: {session: Session}) => {
         }
         // 如果点击的是文件
         if (node.isLeaf) {
+            openLoading();
             runInAction(() => {
                 session.activeDataSource = {
                     remote: LOCAL_HOST,
@@ -223,7 +226,9 @@ const Contents = observer(({ session }: {session: Session}) => {
                     dataPath: [dataSource.dataPath[dataPathIndex]],
                 };
             });
-        }
+            cancelCompareData();
+            closeLoading();
+        };
     };
 
     const handleSingleClick = (keys: React.Key[], nodeEvent: {node: EventDataNode<TreeDataNode>}): void => {

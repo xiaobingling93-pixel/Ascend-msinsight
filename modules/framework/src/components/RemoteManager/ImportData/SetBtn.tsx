@@ -20,8 +20,10 @@ const SetBtn = observer(({ session }: {session: Session}) => {
     useEffect(() => {
         // 没有数据时
         if (session.dataSources.length === 0) {
-            session.projectContentEditStatus = false;
-        }
+            runInAction(() => {
+                session.projectContentEditStatus = false;
+            });
+        };
     }, [session.dataSources.length]);
     return <BtnItem className={`btn-set ${session.dataSources.length > 0 ? '' : 'disabled'}`} onClick={switchEditStatus}>
         { session.projectContentEditStatus ? t('Cancel') : <SetIcon/> }
