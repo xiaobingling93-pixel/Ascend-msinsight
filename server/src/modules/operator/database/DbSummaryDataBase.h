@@ -64,7 +64,9 @@ private:
     void GenerateMoreInfoTotalNumForOther(std::string &sql,
                                           OperatorGroupConverter::OperatorGroup opGroup) const;
     template <typename T>
-    bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
+    void GenerateQueryFiltersSql(T &reqParams, std::string &sql);
+    template <typename T>
+    void BindQueryFilters(T &reqParams, sqlite3_stmt *stmt, int &index);
     bool GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &reqParams, std::string &sql);
     bool ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                               std::vector<Protocol::OperatorDetailInfoRes> &res);

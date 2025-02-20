@@ -493,10 +493,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     GROUP by " + group +
                 "     ORDER by ROUND(SUM(duration), 2) DESC LIMIT ?"
                 " ) subquery";
-        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
-            return false;
-        }
-
+        GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql);
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
@@ -507,6 +504,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         int index = bindStartIndex;
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.topK);
+        BindQueryFilters(reqParams, stmt, index);
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             total = sqlite3_column_int64(stmt, resultStartIndex);
@@ -547,9 +545,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             name = "name";
         }
         std::string sql = GetQuerySqlNofilter(reqParams, isCommunication, group, name);
-        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
-            return "";
-        }
+        GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql);
         return sql;
     }
 
@@ -618,6 +614,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     bool TextSummaryDataBase::QueryAllOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                             std::vector<Protocol::OperatorStatisticInfoRes> &res)
     {
+        // 比对场景全量查询
         std::string sql = GetQueryBaseStaticSql(reqParams);
         return ExecSqlGetStaticInfo(sql, reqParams, res);
     }
@@ -625,6 +622,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     bool TextSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                          Protocol::OperatorStatisticInfoResponse &response)
     {
+        // 非比对场景条件查询
         if (!QueryStatisticTotalNum(reqParams, response.total)) {
             ServerLog::Error("[Operator]Failed to query total num of statistic info.");
             return false;
@@ -664,10 +662,15 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         if (!reqParams.rankId.empty()) {
             sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         }
+
         if (!reqParams.isCompare) {
+            // 非比对场景条件查询
             sqlite3_bind_int64(stmt, index++, reqParams.topK);
+            BindQueryFilters(reqParams, stmt, index);
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
+        } else {
+            BindQueryFilters(reqParams, stmt, index);
         }
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -699,10 +702,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
-        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
-            return false;
-        }
-
+        GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql);
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Detail Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
@@ -712,6 +712,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         int index = bindStartIndex;
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.topK);
+        BindQueryFilters(reqParams, stmt, index);
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             total = sqlite3_column_int64(stmt, resultStartIndex);
@@ -780,7 +781,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string allQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER by start_time DESC"
                 "     ) subquery ";
         std::string baseAllQuerySql =
@@ -799,9 +800,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 sql = sqlTab + allQuerySql;
             }
         }
-        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
-            return "";
-        }
+        GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql);
         return sql;
     }
 
@@ -846,8 +845,11 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
         if (!reqParams.isCompare) {
             sqlite3_bind_int64(stmt, index++, reqParams.topK);
+            BindQueryFilters(reqParams, stmt, index);
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
             sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+        } else {
+            BindQueryFilters(reqParams, stmt, index);
         }
         ExecSqlGetRes(stmt, res);
         level = OperatorGetLevel(res);
@@ -933,9 +935,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     WHERE rank_id = ? AND accelerator_core = ? AND" + condition +
                 " ) subquery";
 
-        if (!GenerateQueryFiltersSql<Protocol::OperatorMoreInfoReqParams>(reqParams, sql)) {
-            return false;
-        }
+        GenerateQueryFiltersSql<Protocol::OperatorMoreInfoReqParams>(reqParams, sql);
 
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -953,6 +953,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), reqParams.opName.length(), SQLITE_TRANSIENT);
             sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), reqParams.shape.length(), SQLITE_TRANSIENT);
         }
+        BindQueryFilters(reqParams, stmt, index);
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             total = sqlite3_column_int64(stmt, resultStartIndex);
@@ -986,12 +987,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
 
         for (const auto &filter: reqParams.filters) {
-            if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-                ServerLog::Error("There is an SQL injection attack on the parameter of filter"
-                                 "to generate query more info sql.");
-                return "";
-            }
-            sql += " AND " + filter.first + " LIKE '%" + filter.second + "%' ";
+            sql += " AND " + filter.first + " LIKE ? ";
         }
 
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
@@ -1084,30 +1080,38 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), reqParams.opName.length(), SQLITE_TRANSIENT);
             sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), reqParams.shape.length(), SQLITE_TRANSIENT);
         }
+        BindQueryFilters(reqParams, stmt, index);
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
     }
 
     template <typename T>
-    bool TextSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
+    void TextSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
     {
         if (reqParams.filters.empty()) {
-            return true;
+            return;
         }
         sql += " WHERE ";
         for (uint64_t index = 0; index < reqParams.filters.size(); index++) {
             std::pair<std::string, std::string> filter = reqParams.filters[index];
-            if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-                ServerLog::Error("There is an SQL injection attack on the parameter of filter"
-                                 "to generate query filters sql.");
-                return false;
-            }
             if (index != 0) {
                 sql += " AND ";
             }
-            sql += filter.first + " LIKE '%" + filter.second + "%' ";
+            sql += filter.first + " LIKE ? ";
         }
-        return true;
+    }
+
+    template <typename T>
+    void TextSummaryDataBase::BindQueryFilters(T &reqParams, sqlite3_stmt *stmt, int &index)
+    {
+        if (reqParams.filters.empty()) {
+            return;
+        }
+        for (uint64_t i = 0; i < reqParams.filters.size(); i++) {
+            std::pair<std::string, std::string> filter = reqParams.filters[i];
+            std::string filterParam = "%" + filter.second + "%";
+            sqlite3_bind_text(stmt, index++, filterParam.c_str(), filterParam.length(), SQLITE_TRANSIENT);
+        }
     }
 
     std::set<std::string> TextSummaryDataBase::QueryRankIds()

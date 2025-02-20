@@ -86,7 +86,9 @@ private:
     void BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams);
 
     template <typename T>
-    bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
+    void GenerateQueryFiltersSql(T &reqParams, std::string &sql);
+    template <typename T>
+    void BindQueryFilters(T &reqParams, sqlite3_stmt *stmt, int &index);
 
     bool IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup);
     std::set<std::string> FetchPmuColumnNames();

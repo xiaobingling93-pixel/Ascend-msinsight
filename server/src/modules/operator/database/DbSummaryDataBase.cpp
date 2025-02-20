@@ -165,30 +165,33 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
                                                 Protocol::OperatorStatisticReqParams &reqParams,
                                                 std::vector<Protocol::OperatorStatisticInfoRes> &res)
 {
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql to query operator statistic info.", sqlite3_errmsg(db));
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to get Duration Info. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
-    auto resultSet =
-        stmt->ExecuteQuery(reqParams.topK, reqParams.pageSize, reqParams.pageSize * (reqParams.current - 1));
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to exec sql to query operator statistic info.");
-        return false;
-    }
-    while (resultSet->Next()) {
+    int index = bindStartIndex;
+    sqlite3_bind_int64(stmt, index++, reqParams.topK);
+    BindQueryFilters(reqParams, stmt, index);
+    sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+    sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         Protocol::OperatorStatisticInfoRes one{};
-        one.opType = resultSet->GetString("op_type");
-        one.opName = resultSet->GetString("name");
-        one.inputShape = resultSet->GetString("input_shapes");
-        one.accCore = resultSet->GetString("accelerator_core");
-        one.totalTime = resultSet->GetDouble("total_time");
-        one.count = resultSet->GetInt64("cnt");
-        one.avgTime = resultSet->GetDouble("avg_time");
-        one.maxTime = resultSet->GetDouble("max_time");
-        one.minTime = resultSet->GetDouble("min_time");
+        int col = 0;
+        one.opType = sqlite3_column_string(stmt, col++);
+        one.opName = sqlite3_column_string(stmt, col++);
+        one.inputShape = sqlite3_column_string(stmt, col++);
+        one.accCore = sqlite3_column_string(stmt, col++);
+        one.totalTime = sqlite3_column_double(stmt, col++);
+        one.count = sqlite3_column_int64(stmt, col++);
+        one.avgTime = sqlite3_column_double(stmt, col++);
+        one.maxTime = sqlite3_column_double(stmt, col++);
+        one.minTime = sqlite3_column_double(stmt, col++);
         res.emplace_back(one);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -261,9 +264,7 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             "     GROUP BY " + group + " ORDER by total_time DESC LIMIT ? "
             "     ) subquery ";
     }
-    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
-        return "";
-    }
+    GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
@@ -308,22 +309,20 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
             "     ORDER by ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) DESC LIMIT ?"
             " ) subquery";
     }
-    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
+    GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to get Duration Info. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql to query statistic total num.", sqlite3_errmsg(db));
-        return false;
+    int index = bindStartIndex;
+    sqlite3_bind_int64(stmt, index++, reqParams.topK);
+    BindQueryFilters(reqParams, stmt, index);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        total = sqlite3_column_int64(stmt, resultStartIndex);
     }
-    auto resultSet = stmt->ExecuteQuery(reqParams.topK);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to exec query statistic total sql.");
-        return false;
-    }
-    while (resultSet->Next()) {
-        total = resultSet->GetInt64("nums");
-    }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -385,6 +384,7 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
 
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
+    BindQueryFilters(reqParams, stmt, index);
     if (!reqParams.isCompare) {
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
@@ -432,9 +432,7 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
     } else {
         GenerateMoreInfoTotalNumForOther(sql, operatorGroup);
     }
-    if (!GenerateQueryFiltersSql<OperatorMoreInfoReqParams>(reqParams, sql)) {
-        return false;
-    }
+    GenerateQueryFiltersSql<OperatorMoreInfoReqParams>(reqParams, sql);
 
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -456,7 +454,7 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
         operatorGroup == OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
         sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), -1, SQLITE_TRANSIENT);
     }
-
+    BindQueryFilters(reqParams, stmt, index);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         total = sqlite3_column_int64(stmt, resultStartIndex);
     }
@@ -731,9 +729,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
             "     ORDER BY duration DESC LIMIT ?"
             " ) subquery";
     }
-    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
-        return false;
-    }
+    GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -742,6 +738,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     }
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
+    BindQueryFilters(reqParams, stmt, index);
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         total = sqlite3_column_int64(stmt, resultStartIndex);
@@ -865,9 +862,7 @@ std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqPar
     } else {
         sql = GenerateQueryDetailSqlForOperator();
     }
-    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
-        return "";
-    }
+    GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
                          "to generate all query detail sql.");
@@ -1000,25 +995,32 @@ void DbSummaryDataBase::GenerateMoreInfoTotalNumForOther(std::string &sql,
 }
 
 template <typename T>
-bool DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
+void DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
 {
     if (reqParams.filters.empty()) {
-        return true;
+        return;
     }
     sql += " WHERE ";
     for (size_t index = 0; index < reqParams.filters.size(); index++) {
         std::pair<std::string, std::string> filter = reqParams.filters[index];
-        if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-            ServerLog::Error("There is an SQL injection attack on the parameter of filter"
-                             "to generate query filter sql.");
-            return false;
-        }
         if (index != 0) {
             sql += " AND ";
         }
-        sql += filter.first + " LIKE '%" + filter.second + "%' ";
+        sql += filter.first + " LIKE ?";
     }
-    return true;
+}
+
+template <typename T>
+void DbSummaryDataBase::BindQueryFilters(T &reqParams, sqlite3_stmt *stmt, int &index)
+{
+    if (reqParams.filters.empty()) {
+        return;
+    }
+    for (uint64_t i = 0; i < reqParams.filters.size(); i++) {
+        std::pair<std::string, std::string> filter = reqParams.filters[i];
+        std::string filterParam = "%" + filter.second + "%";
+        sqlite3_bind_text(stmt, index++, filterParam.c_str(), filterParam.length(), SQLITE_TRANSIENT);
+    }
 }
 
 bool DbSummaryDataBase::GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &reqParams, std::string &sql)
