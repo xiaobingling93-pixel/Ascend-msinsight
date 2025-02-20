@@ -24,6 +24,8 @@
       "Unpin All": "Unpin All",
       "Pin by Group Communication Unit Name": "Pin (Same Group {{name}})",
       "Unpin by Group Communication Unit Name": "Unpin (Same Group {{name}})",
+      "Parse Cards of Related Group": "Parse Cards of Related Group ({{ranks}})",
+      "Parsed Cards of Related Group": "Parsed All Cards of Related Group",
       "Hide": "Hide",
       "Show All Hidden": "Show All Hidden",
       "Show in events view": "Show in events view",

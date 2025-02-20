@@ -230,12 +230,15 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
             {...props}
         />;
     }
-    const [loading, setLoading] = React.useState<boolean>(!session.isPending);
     React.useEffect(() => {
         if (session.isParserLoading) {
-            setLoading(true);
+            runInAction((): void => {
+                unit.isParseLoading = true;
+            });
         } else {
-            setLoading(false);
+            runInAction((): void => {
+                unit.isParseLoading = false;
+            });
         }
     }, [session.isParserLoading]);
     const handleStartClick = (): void => {
@@ -244,7 +247,9 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
             param.cards.push(unit.metadata.cardId);
         };
         parseCards(param).then(() => {
-            setLoading(true);
+            runInAction((): void => {
+                unit.isParseLoading = true;
+            });
         }).catch(err => {
             message.error(err);
         });
@@ -256,14 +261,14 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
             unit={unit}
             {...props}
         />}
-        { (getProgressVisiable(unit) && loading)
+        { (getProgressVisiable(unit) && unit.isParseLoading)
             ? <div><UnitProgress unit={unit} realProgress={unit.progress} showProgress={unit.showProgress}/></div>
             : <></> }
         { getParserVisiable(unit)
             ? <div>
                 <StyledButton transparent
                     icon={<StartIcon height={14} width={14}/>}
-                    loading={loading} onClick={(): void => handleStartClick()}/>
+                    loading={unit.isParseLoading} onClick={(): void => handleStartClick()}/>
             </div>
             : <></> }
     </InsightLaneInfoContainer>;

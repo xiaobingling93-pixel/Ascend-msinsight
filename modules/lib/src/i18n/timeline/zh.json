@@ -24,6 +24,8 @@
       "Unpin All": "取消置顶 (全部)",
       "Pin by Group Communication Unit Name": "置顶 (按相同组 {{name}})",
       "Unpin by Group Communication Unit Name": "取消置顶 (按相同组 {{name}})",
+      "Parse Cards of Related Group": "解析相关通信域的卡 ({{ranks}})",
+      "Parsed Cards of Related Group": "已解析全部相关通信域的卡",
       "Hide": "隐藏",
       "Show All Hidden": "显示全部已隐藏泳道",
       "Show in events view": "在事件视图中显示",

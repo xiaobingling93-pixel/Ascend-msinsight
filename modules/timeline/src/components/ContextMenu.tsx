@@ -21,6 +21,9 @@ import { getTimeOffsetKey } from '../insight/units/utils';
 import { isPinned, switchPinned } from './ChartContainer/unitPin';
 import { getRootUnit } from '../utils';
 import { getAutoKey } from '../utils/dataAutoKey';
+import { parseCards } from '../api/Request';
+import { CardUnit } from '../insight/units/AscendUnit';
+import { message } from 'antd';
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
     left: string;
@@ -422,6 +425,15 @@ const setChildrenUnitHide = (units: InsightUnit[]): void => {
     }
 };
 
+function getUnparsedCards(session: Session, rankIds: string[]): InsightUnit[] {
+    return preOrderFlatten(getRootUnit(session.units), 0, {
+        when: (node) => !(node instanceof CardUnit && node.metadata?.cardName !== 'Host'),
+    })
+        .filter((item) => item instanceof CardUnit && item.metadata?.cardName !== 'Host' && item.shouldParse)
+        // rankId === cardId，可以比较
+        .filter((item) => rankIds.includes((item.metadata as CardMetaData).cardId));
+}
+
 const isShowHideText = (session: Session): boolean => {
     // 必须只选中一个才能显示“显示全部已隐藏泳道”菜单项
     if (session.selectedUnits.length !== 1) {
@@ -784,6 +796,51 @@ function buildPinAndUnpinByGroupCommunicationUnitNameMenuItem(
     ];
 }
 
+function buildParseCardsOfRelatedGroupMenuItem(
+    session: Session,
+    t: TFunction): MenuItemModel[] {
+    let name = '';
+    let disabled = true;
+    let visible = false;
+    let unparsedCards: InsightUnit[] = [];
+
+    // 必须只选中一个
+    if (session.selectedUnits.length === 1) {
+        const rankList = session.selectedUnits.map((item) => (item.metadata as ThreadMetaData).rankList ?? []).flat();
+        if (Array.isArray(rankList) && rankList.length !== 0) {
+            visible = true;
+            unparsedCards = getUnparsedCards(session, rankList);
+        }
+    }
+    const unparsedCardIds = unparsedCards.map((item) => (item.metadata as CardMetaData).cardId);
+    if (unparsedCardIds.length === 0) {
+        name = t('Parsed Cards of Related Group');
+        disabled = true;
+    } else {
+        name = t('Parse Cards of Related Group', { ranks: unparsedCardIds.join(',') });
+        disabled = false;
+    }
+
+    return [{
+        name,
+        key: 'parseCardsOfRelatedGroup',
+        event: (): void => {
+            parseCards({ cards: unparsedCardIds }).then((): void => {
+                runInAction((): void => {
+                    unparsedCards.forEach((item): void => {
+                        item.isParseLoading = true;
+                    });
+                });
+            }).catch(err => {
+                message.error(err);
+            });
+            closeMenu(session);
+        },
+        disabled,
+        visible,
+    }];
+}
+
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
     const { session, session: { contextMenu: { zoomHistory } } } = props;
     if (!Array.isArray(session.selectedUnits) || session.selectedUnits.length === 0) {
@@ -803,6 +860,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Reset Zoom'), key: 'resetZoom', event: resetZoom, disabled: zoomHistory.length === 0, visible: true },
         { name: t('Unpin All'), key: 'unpinAll', event: unpinAll, disabled: !selectedUnitListStatus.isAllPinned, visible: selectedUnitListStatus.isAllPinned },
         ...buildPinAndUnpinByGroupCommunicationUnitNameMenuItem(selectedUnitListStatus, t),
+        ...buildParseCardsOfRelatedGroupMenuItem(session, t),
         { name: t('Hide'), key: 'hide', event: hideUnit, disabled: false, visible: isHideText(session) },
         { name: t('Show All Hidden'), key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
         { name: t('Show in events view'), key: 'showInEventsView', event: showInEventsView, disabled: false, visible: isShowEventMenu(session) },

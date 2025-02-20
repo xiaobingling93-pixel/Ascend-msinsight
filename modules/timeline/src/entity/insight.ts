@@ -233,6 +233,7 @@ export interface InsightUnit extends InsightUnitParams<unknown, Record<string, u
     phase: string;
     isUnitVisible: boolean;
     parent?: InsightUnit;
+    isParseLoading: boolean;
     shouldParse: boolean; // 判断timeline卡是否需要解析
     progress: number; // 解析进度：实际解析进度
     showProgress: boolean; // 解析进度：是否显示进度条
@@ -317,6 +318,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         phase: UnitPhase = 'configuring';
         searchConfig = params.searchConfig;
         collapsible = params.collapsible ?? true;
+        isParseLoading: boolean = false; // 是否正在解析
         shouldParse: boolean = false; // 是否需要解析
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条
@@ -362,6 +364,7 @@ export const transparentUnit = <T extends { dataSource: DataSource } = { dataSou
 Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
     const transparentUnitClass = class implements InsightUnit {
         isUnitVisible = true;
+        isParseLoading = false; // 是否正在解析
         shouldParse: boolean = false; // 是否需要解析
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条

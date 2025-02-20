@@ -133,13 +133,7 @@ const getRootUnit = (session: Session, host: string, dataSource: DataSource): In
     return insightUnit !== undefined ? insightUnit : new ROOT_UNIT({ dataSource, host });
 };
 
-const initUnitInfo = (session: Session | undefined, result: any, dataSource: DataSource): void => {
-    if (!session) {
-        return;
-    }
-    if (result.reset as boolean) {
-        resetPage({ dataSource });
-    }
+const initUnitSessionInfo = (session: Session, result: any, dataSource: DataSource): void => {
     session.projectName = dataSource.projectName;
     session.phase = 'download';
     session.endTimeAll = undefined;
@@ -148,6 +142,16 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
     session.isSimulation = result.isSimulation;
     session.isIpynb = result.isIpynb;
     session.isCluster = result.isCluster;
+};
+
+const initUnitInfo = (session: Session | undefined, result: any, dataSource: DataSource): void => {
+    if (!session) {
+        return;
+    }
+    if (result.reset as boolean) {
+        resetPage({ dataSource });
+    }
+    initUnitSessionInfo(session, result, dataSource);
     const hostInfo = groupBy(result.result, (item: CardInfo) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {
         const unit = getRootUnit(session, host, dataSource);
@@ -164,6 +168,7 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
             curDataSource.dataPath = item.dataPathList;
             const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
             if (item.result as boolean) {
+                cardUnit.isParseLoading = !(result.isPending as boolean);
                 cardUnit.shouldParse = item.cardName !== 'Host';
                 cardUnit.phase = 'analyzing';
                 cardUnit.progress = 0;
