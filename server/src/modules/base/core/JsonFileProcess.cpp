@@ -73,7 +73,7 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::
         } else {
             file.seekg(blockSize, std::ifstream::cur);
         }
-        if (!SeekPhEndPosition(file, endFlag)) {
+        if (!SeekPhEndPosition(file, endFlag, endBufferLength)) {
             Dic::Server::ServerLog::Error("Failed to find ph json format.");
             break;
         }
@@ -101,7 +101,8 @@ void JsonFileProcess::ComputeSmallFilePosition(std::ifstream &file, std::vector<
         } else {
             file.seekg(contentEnd - endBufferLength, std::ifstream ::beg);
         }
-        if (SeekPhEndPosition(file, true)) {
+        const int bufferLength = contentSize < endBufferLength ? contentSize : endBufferLength;
+        if (SeekPhEndPosition(file, true, bufferLength)) {
             int64_t end = file.tellg();
             if (start > INT64_MAX - 1 || start + 1 > end) {
                 Server::ServerLog::Warn("Failed to find legal end position of json object format.");
@@ -160,12 +161,12 @@ bool JsonFileProcess::SeekRegexPosition(std::ifstream &file, const std::string &
     return true;
 }
 
-bool JsonFileProcess::SeekPhEndPosition(std::ifstream &file, bool endFlag)
+bool JsonFileProcess::SeekPhEndPosition(std::ifstream &file, bool endFlag, int bufferLength)
 {
     file.clear();
     auto cur = file.tellg();
-    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(endBufferLength);
-    file.read(buffer.get(), endBufferLength);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
+    file.read(buffer.get(), bufferLength);
     int64_t readCount = file.gcount();
     if (readCount <= 0) {
         Dic::Server::ServerLog::Error("Seek ph end position. Failed to read file.");

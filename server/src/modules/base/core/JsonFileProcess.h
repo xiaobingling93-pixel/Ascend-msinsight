@@ -25,7 +25,7 @@ private:
     static void ComputeSmallFilePosition(std::ifstream &file, std::vector<std::pair<int64_t, int64_t>> &result,
         const JsonFormat &json, std::pair<int64_t, int64_t> position);
 
-    static bool SeekPhEndPosition(std::ifstream &file, bool endFlag);
+    static bool SeekPhEndPosition(std::ifstream &file, bool endFlag, int bufferLength);
 };
 } // end of namespace Module
 } // end of namespace Dic

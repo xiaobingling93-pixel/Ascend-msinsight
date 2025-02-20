@@ -13,9 +13,10 @@ class JsonFileProcessTest : public ::testing::Test {
 protected:
     class JsonFileProcessMock : protected Dic::Module::JsonFileProcess {
     public:
-        static std::vector<std::pair<int64_t, int64_t>> SplitFileMock(const std::string &filePath)
+        static std::vector<std::pair<int64_t, int64_t>> SplitFileMock(const std::string &filePath,
+            std::optional<std::pair<int64_t, int64_t>> position = std::nullopt)
         {
-            return SplitFile(filePath);
+            return SplitFile(filePath, position);
         }
     };
     const std::string tempFileName = "temp_test_file.json";
@@ -219,8 +220,37 @@ TEST_F(JsonFileProcessTest, TestSplitFileWhenJsonObjectFileIs9KBThenReturnReturn
     EXPECT_EQ(res[first].second, expectEnd);
 }
 
-
 /**
+ * 文件内有两块9kb的数据
+ */
+TEST_F(JsonFileProcessTest, TestSplitFileWhenTwoBlock9kbInFile)
+{
+    size_t sizeInBytes = 1024 * 9;
+    const std::string buffer = "llllllllll";
+    std::string json = GenerateLargeJsonDocument(sizeInBytes);
+    const std::string content = buffer + json + buffer + json + buffer;
+    WriteTempJsonFile(content);
+    std::pair<int64_t, int64_t> pos = { buffer.size(), sizeInBytes + buffer.size() };
+    std::vector<std::pair<int64_t, int64_t>> res = JsonFileProcessMock::SplitFileMock(tempFileName, pos);
+    const uint64_t expectSize = 1;
+    const uint64_t expectStart = 26;
+    const uint64_t expectEnd = 9202;
+    const uint64_t first = 0;
+    EXPECT_EQ(res.size(), expectSize);
+    EXPECT_EQ(res[first].first, expectStart);
+    EXPECT_EQ(res[first].second, expectEnd);
+    const int offset = 2;
+    pos = { expectEnd + buffer.size() + offset, content.size() - buffer.size() };
+    res = JsonFileProcessMock::SplitFileMock(tempFileName, pos);
+    const uint64_t secondExpectStart = 9231;
+    const uint64_t secondExpectEnd = 18407;
+    EXPECT_EQ(res.size(), expectSize);
+    EXPECT_EQ(res[first].first, secondExpectStart);
+    EXPECT_EQ(res[first].second, secondExpectEnd);
+}
+
+
+/* *
  * 测试52MB的json对象
  */
 TEST_F(JsonFileProcessTest, TestSplitFileWhenJsonObjectFileIs52MBThenReturnReturnTwoSplit)
