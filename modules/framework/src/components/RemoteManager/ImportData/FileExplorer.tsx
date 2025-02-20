@@ -8,13 +8,14 @@ import { Modal, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Tooltip } from 'ascend-components';
 import { RefreshIcon } from 'ascend-icon';
-import { checkPathValid, getLastFilePath, getTrimedPath, getSearchDir } from '@/utils/Resource';
+import { checkPathValid, getLastFilePath, getSearchDir, getTrimedPath } from '@/utils/Resource';
 import { ProjectAction, ProjectError } from '@/utils/enum';
 import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import type { CatalogActionListener, SearchResult } from './ResourceCatalog';
 import ResourceCatalog, { CatalogAction } from './ResourceCatalog';
-import { customConsole as console } from 'ascend-utils';
 import { handleProjectAction } from '@/utils/Project';
+import FileConflictDialog from './FileConflictDialog';
+
 const { Text } = Typography;
 
 const FileExplorerContainer = styled.div`
@@ -69,6 +70,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
     const [actionListener, setActionListener] = useState<CatalogActionListener>({ type: CatalogAction.NO_ACTION });
     const [hit, setHit] = useState<{alert: boolean;message: string;options?: Record<string, string | number>}>({ alert: false, message: 'FileSearchDescribe' });
     const [conflictModalVis, setConflictModalVis] = useState<boolean>(false);
+    const [checkResult, setCheckResult] = useState<ProjectError>(ProjectError.NO_ERRORS);
 
     // 点击确认
     const handleConfirm = async(): Promise<void> => {
@@ -80,19 +82,21 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
 
         // 校验
         const validRes: ProjectError = await checkPathValid({ path, dataSource });
-        if (validRes === ProjectError.PROJECT_NAME_CONFLICT) {
-            setConflictModalVis(true);
-            return;
-        }
         // 校验通过
         if ([ProjectError.NO_ERRORS, ProjectError.IMPORTED].includes(validRes)) {
             const action = validRes === ProjectError.NO_ERRORS ? ProjectAction.ADD_FILE : ProjectAction.SWITCH_PROJECT;
             handleProjectAction({ action, dataSource, isConflict: false });
+            closeDialog();
             // 校验告警
         } else {
-            console.error(validRes);
+            if (validRes === ProjectError.FILE_NOT_EXIST) {
+                setHit({ alert: true, message: 'FileNotFundDescribe' });
+            }
+            if (validRes > ProjectError.OTHER) {
+                setCheckResult(validRes);
+                setConflictModalVis(true);
+            }
         }
-        closeDialog();
     };
 
     // 查询目录树
@@ -128,7 +132,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         }
     }, [dialogOpen]);
 
-    return <StyledModal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
+    return <><StyledModal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
         footer={<div>
             <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} >{t('Confirm')}</Button>
             <Button onClick={closeDialog}>{t('Cancel')}</Button>
@@ -151,16 +155,9 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
                 onSearchReturnChange={handleSearchReturn}
             />
         </FileExplorerContainer>
-        <StyledModal
-            maskClosable={false} title={t('FileConflict')} width={320} open={conflictModalVis} onCancel={closeConflictModal}
-            footer={<div>
-                <Button onClick={onContinue} type="primary" size="small" style={{ marginRight: 8 }} >{t('Confirm')}</Button>
-                <Button onClick={closeConflictModal} size="small">{t('Cancel')}</Button>
-            </div>}
-        >
-            {t('FileConflictContent')}
-        </StyledModal>
-    </StyledModal>;
+    </StyledModal>
+    <FileConflictDialog open={conflictModalVis} error={checkResult} onCancel={closeConflictModal} onConfrim={onContinue}/>
+    </>;
 });
 
 export default FileExplorer;
