@@ -31,12 +31,13 @@ abstract class BaseConnector {
         this._getTargetWindows = getTargetWindow;
 
         window.onmessage = (event: MessageEvent): void => {
-            if (!(typeof event.data === 'string' && event.data.includes('{'))) {
-                return;
-            }
             const res = { ...event };
             try {
-                res.data = JSON.parse(event.data);
+                if (typeof event.data === 'string') {
+                    res.data = JSON.parse(event.data);
+                } else {
+                    res.data = event.data;
+                }
                 const listener = this._listeners.get(res.data.event);
                 if (res.data.event === 'request') {
                     this.awaitFetch(res);

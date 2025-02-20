@@ -100,3 +100,13 @@ export const cancelBaseline = async (): Promise<unknown> => {
         params: {},
     });
 };
+
+/**
+ * 获取插件配置
+ */
+export const getModuleConfig = async (): Promise<unknown> => {
+    return request(GLOBAL_HOST, 'global', {
+        command: 'moduleConfig/get',
+        params: {},
+    });
+};

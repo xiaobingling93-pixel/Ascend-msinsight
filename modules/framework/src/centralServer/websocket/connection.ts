@@ -8,6 +8,7 @@ import { message as Message, Modal } from 'antd';
 import { customConsole as console } from 'ascend-utils';
 import { connectRemote } from '../server';
 import { store } from '../../store';
+import { runInAction } from 'mobx';
 
 const createRequestHead = function (
     id: number,
@@ -42,10 +43,14 @@ export class Connection {
         }
         this._msgId = 0;
 
+        const session = store.sessionStore.activeSession;
         const protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (!window.location.pathname.includes('/proxy/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
             this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}${window.location.search}`);
+            runInAction(() => {
+                session.toIframeUrl = `${protocol}${hostname}:${dataSource.port}`;
+            });
         } else {
             const { location } = window;
             const { host } = location;
@@ -54,6 +59,9 @@ export class Connection {
             const uri = protocol + host + path + search;
 
             this._ws = new WebSocket(uri);
+            runInAction(() => {
+                session.toIframeUrl = `${protocol}${host}${path.replace(/\/index.html/, '')}`;
+            });
         }
         this._dataSource = dataSource;
     }
@@ -165,8 +173,8 @@ export class Connection {
                     throw new Error('malformed response');
                 }
                 const { code, message } = res.error;
-                console.error('[connector]', 'errorCode:', code, 'msg:', message);
-                resolve({ error: res.error ?? {} });
+                console.error('[connector]', 'errorCode:', code, 'msg:', message || res.message);
+                resolve({ error: { code, message: message || res.message } });
             }
         };
     }

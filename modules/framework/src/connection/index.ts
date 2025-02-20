@@ -10,7 +10,7 @@ import { GLOBAL_HOST } from '@/centralServer/websocket/defs';
 
 type TargetWindow = Window;
 
-const pluginEvents = ['remote/import', 'remote/reset', 'remote/remove', 'setTheme', 'wakeupPlugin', 'language'];
+const pluginEvents = ['remote/import', 'remote/reset', 'remote/remove', 'setTheme', 'wakeupPlugin', 'language', 'switchLanguage'];
 
 const connector = new ServerConnector({
     getTargetWindow: (): TargetWindow[] => {

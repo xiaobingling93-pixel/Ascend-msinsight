@@ -118,6 +118,7 @@ export class Session {
         this.isIpynb = false;
         this.isCluster = remove ? false : null;
         this.isBinary = remove ? false : null;
+        this.toIframeUrl = '';
     }
 
     // 数据源管理

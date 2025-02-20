@@ -4,12 +4,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
 import type { Scene, Session } from '@/entity/session';
-import type { MenuProps } from 'antd';
-import { Menu } from 'antd';
+import { type MenuProps, message, Menu } from 'antd';
+import { safeJSONParse } from 'ascend-utils';
+
 import { type ModuleConfig, modulesConfig } from '../../moduleConfig';
 import styled from '@emotion/styled';
 import { SessionAction } from '@/utils/enum';
 import { useTranslation } from 'react-i18next';
+import { getModuleConfig } from '@/utils/Request';
 
 const Container = styled.div`
     width: 100%;
@@ -64,13 +66,41 @@ const Index = observer(({ session }: {session: Session}) => {
     const { t } = useTranslation('framework', { keyPrefix: 'tabs' });
     const [scene, setScene] = useState<Scene>('Default');
     const [activeModule, setActiveModule] = useState('Timeline');
+    const [mergedModulesConfig, setMergedModulesConfig] = useState(modulesConfig);
 
-    const availableModules = useMemo(() => modulesConfig.filter(config => isAvailable(config, scene)), [scene]);
-    const items: MenuProps['items'] = useMemo(() => availableModules.map(config => ({ label: t(config.name), key: config.name }))
+    const availableModules = useMemo(() => mergedModulesConfig.filter(config => isAvailable(config, scene)), [scene, mergedModulesConfig]);
+    const items: MenuProps['items'] = useMemo(() => availableModules.map(config => ({ label: t(config.name, { defaultValue: config.name }), key: config.name }))
         , [availableModules, t]);
     const onClick: MenuProps['onClick'] = e => {
         setActiveModule(e.key);
     };
+
+    useEffect(() => {
+        const fetchModuleConfigData = async (): Promise<void> => {
+            try {
+                const { configs }: any = await getModuleConfig();
+                const pluginModulesConfig: ModuleConfig[] = [];
+                (configs as string[]).forEach(item => {
+                    const config: ModuleConfig = { name: '', requestName: '', attributes: {} };
+                    Object.assign(config, safeJSONParse(item));
+                    if ((config.attributes.src != null) && config.attributes.src !== '' && !config.attributes.src.startsWith('http')) {
+                        pluginModulesConfig.push(config);
+                    }
+                });
+
+                setMergedModulesConfig(prevConfig => ([
+                    ...prevConfig,
+                    ...pluginModulesConfig,
+                ]));
+            } catch (error) {
+                message.error('Plugin load error');
+            }
+        };
+
+        if (session.defaultConnected) {
+            fetchModuleConfigData();
+        }
+    }, [session.defaultConnected]);
 
     useEffect(() => {
         if (session.isBinary === null && session.isCluster === null) {
@@ -84,7 +114,7 @@ const Index = observer(({ session }: {session: Session}) => {
     }, [scene]);
     useEffect(() => {
         const { type, value } = session.actionListener;
-        const allModuleName = modulesConfig.map(module => module.name);
+        const allModuleName = mergedModulesConfig.map(module => module.name);
         if (type === SessionAction.SWITCH_ACTIVE_MODULE && allModuleName.includes(value)) {
             setActiveModule(value);
         }

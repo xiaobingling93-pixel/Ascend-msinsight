@@ -48,6 +48,7 @@ export interface Response<T = Record<string, unknown>> {
     result?: boolean;
     body?: T;
     command?: string;
+    message?: string;
     error?: {
         code: number;
         message: string;

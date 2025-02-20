@@ -22,6 +22,7 @@ bool PluginsManager::RegisterPlugin(std::unique_ptr<BasePlugin> plugin)
     if (pluginsMap_.count(plugin->GetPluginName()) != 0) {
         return false;
     }
+    Server::ServerLog::Info("Load plugin:", plugin->GetPluginName());
     pluginsMap_.emplace(plugin->GetPluginName(), std::move(plugin));
     return true;
 }
@@ -41,6 +42,7 @@ void PluginsManager::LoadPlugins()
 #ifdef _WIN32
                 LoadLibraryA(file.path().string().c_str());
 #else
+                Server::ServerLog::Info("Load plugin so:", file.path().string());
                 dlopen(file.path().string().c_str(), RTLD_LAZY);
 #endif
             }
