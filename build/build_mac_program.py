@@ -41,6 +41,7 @@ MANIFEST_DIR = 'manifest'
 DEPENDENCY_DIR = 'dependency'
 CONFIG_INI = 'config.ini'
 VERSION_CONFIG_FILE = os.path.join(MANIFEST_DIR, DEPENDENCY_DIR, CONFIG_INI)
+SENSITIVE_CMD_PLACEHOLDER = "{***}"
 
 
 class SshConfig:
@@ -116,25 +117,40 @@ def destroy_ssh_connect(ssh_client):
     ssh_client.close()
 
 
-def execute_cmd(ssh_client, cmd):
+def execute_cmd(ssh_client, cmd, sensitive: bool = False, *args):
     """
     通过ssh通道，在远端执行命令，并实时打印日志
 
     :param ssh_client: ssh
     :param cmd: cmd
+    :param sensitive: bool 是否包含敏感指令(包含敏感字符串，占位符{***})
+    :param *args: 需要填充到敏感字符串占位符的值，按顺序填充
     :return:
     """
-    logging.info('Start to execute cmd: %s', cmd)
+    log_cmd: str = cmd
+    if sensitive:
+        try:
+            log_cmd = cmd.replace(SENSITIVE_CMD_PLACEHOLDER, '***')
+            cmd = cmd.replace(SENSITIVE_CMD_PLACEHOLDER, "%s")
+            cmd = cmd % args
+        except TypeError as e:
+            logging.error("[Sensitive Cmd] Usage error: %s" % e)
+            return
+
+    logging.info('Start to execute cmd: %s', log_cmd)
+
     stdin, stdout, stderr = ssh_client.exec_command(cmd)
-    for line in iter(stdout.readline, ""):
-        logging.info(line)
+    for line in stdout:
+        logging.info(line.strip())
+
     exit_status = stdout.channel.recv_exit_status()
 
     if exit_status != 0:
-        logging.error('Failed to execute cmd: %s, and exit: %s', cmd, exit_status)
+        stderr_output = stderr.read().decode('utf-8')
+        logging.error('Failed to execute cmd: %s, and exit: %s, detail: %s', log_cmd, exit_status, stderr_output)
         raise SSHException
     else:
-        logging.info('Finish to execute cmd: %s', cmd)
+        logging.info('Finish to execute cmd: %s', log_cmd)
 
 
 def transfer_remote_and_unzip(ssh_client, workspace):
@@ -183,7 +199,8 @@ def build_project(ssh_client, workspace):
     在执行机上构建MindStudio-Insight
     """
     build_dir = workspace + SLASH + MINDSTUDIO_INSIGHT + SLASH + 'build'
-    cmd = 'cd ' + build_dir + '&& source ~/.bash_profile && python3 build.py'
+    log_file = build_dir + SLASH + 'daily_build_mac.log'
+    cmd = 'cd ' + build_dir + '&& source ~/.bash_profile && python3 -u build.py'
     execute_cmd(ssh_client, cmd)
 
 
@@ -200,6 +217,14 @@ def copy_file_back(ssh_client, workspace):
         sftp.get(remote_path, local_path)
         logging.info('Copy remote file %s to local %s', remote_path, local_path)
     sftp.close()
+
+
+def unlock_signature_keychain(ssh_client, ssh_config):
+    """
+    远程ssh链接需要解锁签名钥匙串，以供后续签名使用
+    """
+    cmd = "security unlock-keychain -p %s ~/Library/Keychains/login.keychain-db" % SENSITIVE_CMD_PLACEHOLDER
+    execute_cmd(ssh_client, cmd, True, ssh_config.passwd)
 
 
 def init_local_workspace():
@@ -247,6 +272,7 @@ def build_mac(arch, ssh_config, result_queue):
     try:
         init_remote_workspace(ssh, ssh_config.workspace)
         transfer_remote_and_unzip(ssh, ssh_config.workspace)
+        unlock_signature_keychain(ssh, ssh_config)
         build_project(ssh, ssh_config.workspace)
         copy_file_back(ssh, ssh_config.workspace)
         clean_remote_workspace(ssh, ssh_config.workspace)

@@ -64,6 +64,9 @@ class Const:
     JUPYTER = 'jupyter'
     PIP = 'pip' if platform.system() == WINDOWS_OS else 'pip3'
     PLUGINS_VERSION_PLACEHOLDER = '{plugins_version}'
+    MAC_ARM_SIGNATURE_CERTIFICATE_ID = "0CC4E29F544EE91874A89DE9C61421E3D3722A79"
+    MAC_X86_SIGNATURE_CERTIFICATE_ID = "0B361EE30477593A3766B67157B94FB942EAF20F"
+    MAC_SIGNATURE_CERTIFICATE_ID = ""
 
 
 class ExecError(Exception):
@@ -346,7 +349,6 @@ def build_light_package(version, os_name, is_huaweicloud):
     if is_huaweicloud and os_name != "linux-aarch64" and os_name != "linux-x86_64":
         logging.warning('Only build huaweicloud package for arm and x86_64, Not for windows!')
         return 0
-
     os.putenv('RUSTUP_UPDATE_ROOT', 'http://rust.inhuawei.com/rustup-static/rustup')
     os.putenv('RUSTUP_DIST_SERVER', 'http://rust.inhuawei.com/rustup-static')
     os.putenv('CARGO_REGISTRY', 'https://mirrors.tools.huawei.com/rust/crates.io-index/')
@@ -376,7 +378,11 @@ def build_light_package(version, os_name, is_huaweicloud):
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
     # 在macos下使用cargo bundle --release直接构建为app
-    cmd_list = [cargo_cmd, 'build' if platform.system() != Const.MAC_OS else 'bundle', '--release']
+    if platform.system() == Const.MAC_OS:
+        cmd_list = [cargo_cmd, 'bundle', '--release']
+        set_mac_app_signature_certificate_id(os_name)
+    else:
+        cmd_list = [cargo_cmd, 'build', '--release']
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
     if is_huaweicloud:
         shutil.copyfile(os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py"),
@@ -432,16 +438,60 @@ def zip_package(profiler_path, package_name):
         # [AR] 新增额外的macOS场景下打包为app->dmg的流程
         app_dir = os.path.join(Const.PLATFORM_TARGET_DIR, 'release', 'bundle', 'osx', Const.MAC_OS_APPNAME)
         app_bin_file_dir = os.path.join(app_dir, 'Contents', 'MacOS')
+        preview_app = os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR, Const.MAC_OS_APPNAME)
         os.chmod(os.path.join(app_bin_file_dir, bin_file), 0o550)  # 4、app内二进制文件 ascend_insight 550
         shutil.copytree(os.path.join(Const.PLATFORM_PREVIEW_DIR, 'resources'),
                             os.path.join(app_bin_file_dir, 'resources'))
-        shutil.copytree(app_dir, os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR, Const.MAC_OS_APPNAME))
-        # 通过dmgbuild打包
-        cmd_list = ["dmgbuild", "-s", "macos_dmg_settings.json", '\"MindStudio Installer\"', dst_file]
-        result = exec_command(cmd_list, os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle'), 'bin_package')
-        if result != 0:
+        shutil.move(app_dir, preview_app)
+
+        # 签名app
+        # 清除旧bundle临时签名
+        if not clear_mac_app_signature(preview_app):
             return 1
+        # 重签
+        if not sign_mac_app(preview_app, Const.MAC_SIGNATURE_CERTIFICATE_ID):
+            return 1
+        logging.info('[%s] %s', 'bin_package', 'MacOS application resigned successfully, start to build dmg')
+        # 通过dmgbuild打包
+        if not build_dmg_for_mac_app(dst_file):
+            logging.info('[%s] %s', 'bin_package', 'Build dmg for application failed.')
     return 0
+
+
+def clear_mac_app_signature(app_path: str) -> bool:
+    if not os.path.exists(app_path):
+        return False
+    # 清除现有的bundle签名
+    logging.info('[%s] %s', 'bin_package', 'MacOS application old signature removing.')
+    remove_sign_cmd_list = ["codesign", "--remove-signature", app_path]
+    result = exec_command(remove_sign_cmd_list,
+                          os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR), 'bin_package')
+    if result != 0:
+        logging.error('[%s] %s', 'bin_package', 'MacOS application old signature removed failed.')
+        return False
+    return True
+
+
+def sign_mac_app(app_path: str, certificate_id: str = Const.MAC_SIGNATURE_CERTIFICATE_ID) -> bool:
+    if not os.path.exists(app_path):
+        return False
+    logging.info('[%s] %s', 'bin_package',
+                 'Start to sign/resign MacOS application, using certificate %s' % certificate_id)
+    sign_cmd_list = ["codesign", "--force", "-s", certificate_id,
+                     "--deep", "--timestamp=none", app_path]
+    result = exec_command(sign_cmd_list, os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR), 'bin_package')
+    if result != 0:
+        logging.error('[%s] %s', 'bin_package', 'MacOS application signed failed.')
+        return False
+    return True
+
+
+def build_dmg_for_mac_app(dst_file) -> bool:
+    cmd_list = ["dmgbuild", "-s", "macos_dmg_settings.json", '\"MindStudio Installer\"', dst_file]
+    result = exec_command(cmd_list, os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle'), 'bin_package')
+    if result != 0:
+        return False
+    return True
 
 
 def exec_command(command, path, module_name):
@@ -611,6 +661,11 @@ def plugin_install_backend(profiler_path, plugin_name, config):
         return False
     shutil.copyfile(os.path.join(PLUGIN_INSTALL_TMP_PATH, backend_so), backend_dist)
     return True
+
+
+def set_mac_app_signature_certificate_id(framework: str):
+    Const.MAC_SIGNATURE_CERTIFICATE_ID = Const.MAC_ARM_SIGNATURE_CERTIFICATE_ID \
+        if 'aarch64' in framework else Const.MAC_X86_SIGNATURE_CERTIFICATE_ID
 
 
 def main():
