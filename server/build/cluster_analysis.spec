@@ -3,22 +3,21 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 #
 # 构建cluster_analysis.exe
-from PyInstaller.utils.hooks import collect_submodules
 import os
 
 hiddenimports = []
-hiddenimports += collect_submodules('cluster_analyse')
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__name__))
 HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
+PROFILER_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler')
 CLUSTER_ANALYSE = 'cluster_analyse'
-CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', CLUSTER_ANALYSE)
+CLUSTER_ANALYSE_DIR = os.path.join(PROFILER_DIR, 'msprof_analyze', CLUSTER_ANALYSE)
 att_main_path = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
 
 a = Analysis(
     [att_main_path],
-    pathex=[CLUSTER_ANALYSE_DIR],
+    pathex=[PROFILER_DIR],
     binaries=[],
     datas=[],
     hiddenimports=hiddenimports,

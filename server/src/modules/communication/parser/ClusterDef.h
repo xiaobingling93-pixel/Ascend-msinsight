@@ -322,6 +322,15 @@ const std::string TIME_STACK = "time";
 const std::string TIME_AXIS = "time";
 const std::string RATIO_AXIS = "ratio";
 
+// 当初始状态的数据库有ClusterBaseInfo表时，存储distributed_args列的信息
+struct DistributedArgs {
+    ParallelStrategyConfig config{MEGATRON_LM_TP_DP_PP_ALG, 1, 1, 1, 1, 1};
+    int64_t worldSize = 1;
+    bool sequenceParallel = false;
+};
+const std::vector<std::string> DISTRIBUTED_ARGS_INT_KEY{"tensor_model_parallel_size", "pipeline_model_parallel_size",
+    "data_parallel_size", "context_parallel_size", "expert_model_parallel_size", "world_size"};
+const std::vector<std::string> DISTRIBUTED_ARGS_BOOL_KEY{"sequence_parallel"};
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

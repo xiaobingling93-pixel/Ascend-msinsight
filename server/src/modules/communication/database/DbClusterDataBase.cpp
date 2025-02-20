@@ -541,6 +541,63 @@ bool DbClusterDataBase::QueryAllPerformanceDataByStep(const std::string &step,
 
     return ExecuteQueryAllPerformanceDataByStep(sql, step, data);
 }
+
+bool DbClusterDataBase::HasClusterBaseInfoTable()
+{
+    return hasClusterBaseInfoTable;
+}
+
+void DbClusterDataBase::SetHasClusterBaseInfoTable()
+{
+    hasClusterBaseInfoTable = CheckTableExist(TABLE_CLUSTER_BASE_INFO);
+}
+
+bool DbClusterDataBase::QueryDistributedArgs(ParallelStrategyConfig &config, std::string &level)
+{
+    std::string sql = "SELECT distributed_args FROM " + TABLE_CLUSTER_BASE_INFO;
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        Server::ServerLog::Error("Failed to prepare a statement to query distributed args. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    std::string argsString;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        argsString = sqlite3_column_string(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    DistributedArgs args;
+    Dic::document_t json;
+    json.Parse(argsString.c_str());
+    if (!json.IsObject()) {
+        ServerLog::Error(TABLE_CLUSTER_BASE_INFO, " table distributed_args column is not valid json format.");
+        return false;
+    }
+    for (const auto &item : DISTRIBUTED_ARGS_INT_KEY) {
+        if (!json.HasMember(item.c_str()) || !json[item.c_str()].IsInt64()) {
+            ServerLog::Error(TABLE_CLUSTER_BASE_INFO, " table distributed_args column lacks ", item, " key or "
+                "value of this key is not of int type.");
+            return false;
+        }
+    }
+    for (const auto &item : DISTRIBUTED_ARGS_BOOL_KEY) {
+        if (!json.HasMember(item.c_str()) || !json[item.c_str()].IsBool()) {
+            ServerLog::Error(TABLE_CLUSTER_BASE_INFO, " table distributed_args column lacks ", item, " key or "
+                "value of this key is not of bool type.");
+            return false;
+        }
+    }
+    args.config.tpSize = json["tensor_model_parallel_size"].GetInt64();
+    args.config.ppSize = json["pipeline_model_parallel_size"].GetInt64();
+    args.config.dpSize = json["data_parallel_size"].GetInt64();
+    args.config.cpSize = json["context_parallel_size"].GetInt64();
+    args.config.epSize = json["expert_model_parallel_size"].GetInt64();
+    args.worldSize = json["world_size"].GetInt64();
+    args.sequenceParallel = json["sequence_parallel"].GetBool();
+    config = args.config;
+    level = PARALLEL_CONFIG_LEVEL_COLLECTED;
+    return true;
+}
 }
 }
 }

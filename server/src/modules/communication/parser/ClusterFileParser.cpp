@@ -22,6 +22,7 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 using namespace rapidjson;
+using namespace Dic::Module::FullDb;
 bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = FileUtil::PathPreprocess(filePathList[0].c_str());
@@ -490,8 +491,7 @@ bool ClusterFileParser::ParserClusterOfDb()
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
-    std::shared_ptr<FullDb::DbClusterDataBase> clusterDatabase =
-            std::dynamic_pointer_cast<FullDb::DbClusterDataBase>(database);
+    std::shared_ptr<FullDb::DbClusterDataBase> clusterDatabase = std::dynamic_pointer_cast<DbClusterDataBase>(database);
     if (clusterDatabase == nullptr) {
         ServerLog::Error("Failed to get Cluster connection.");
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
@@ -510,14 +510,23 @@ bool ClusterFileParser::ParserClusterOfDb()
         return true;
     }
 
+    // 如果数据库中初始就有ClusterBaseInfo表，将其中的并行策略信息保存到baseInfo结构体中
+    // 将并行策略信息保存到baseInfo结构体后，删除ClusterBaseInfo表，然后新建同名表，按照指定格式存储信息
+    // 如果数据库中初始无ClusterBaseInfo表，从ClusterStepTraceTime表获取并行策略信息
+    clusterDatabase->SetHasClusterBaseInfoTable();
+    ClusterBaseInfo baseInfo;
+    if (clusterDatabase->HasClusterBaseInfoTable()) {
+        clusterDatabase->QueryDistributedArgs(baseInfo.config, baseInfo.level);
+    } else {
+        clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
+    }
+
     if (!clusterDatabase->DropTable() or !clusterDatabase->CreateTable() or !clusterDatabase->SetDataBaseVersion() or
         !clusterDatabase->UpdatesClusterParseStatus(NOT_FINISH_STATUS)) {
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
 
-    ClusterBaseInfo baseInfo;
-    clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
     clusterDatabase->InsertClusterBaseInfo(baseInfo);
 
     clusterDatabase->UpdatesClusterParseStatus(FINISH_STATUS);

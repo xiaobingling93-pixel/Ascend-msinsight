@@ -60,8 +60,14 @@ public:
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
 
     void InsertClusterBaseInfo(ClusterBaseInfo &baseInfo);
+
+    bool HasClusterBaseInfoTable();
+    void SetHasClusterBaseInfoTable();
+    bool QueryDistributedArgs(ParallelStrategyConfig &config, std::string &level);
 private:
     std::string parseStatus = "UN_FINISH";
+    // 标记初始状态的数据库是否有ClusterBaseInfo表
+    bool hasClusterBaseInfoTable = false;
 };
 }
 }
