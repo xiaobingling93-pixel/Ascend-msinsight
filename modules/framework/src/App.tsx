@@ -6,7 +6,7 @@ import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
 import { GlobalStyles, themeInstance } from 'ascend-theme';
 import { SharedConfigProvider } from 'ascend-shared-config-provider';
-import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
+import { DragDirection, SizeMethod, useDraggableContainer } from 'ascend-use-draggable-container';
 import { useRootStore } from './context/context';
 import RemoteManager from './components/RemoteManager/Index';
 import Main from './components/Main';
@@ -43,9 +43,10 @@ const App = observer(() => {
 
     const [view] = useDraggableContainer({
         draggableWH: LEFT_WIDTH,
-        minWH: 0,
+        foldWH: 0,
         dragDirection: DragDirection.LEFT,
         open: true,
+        sizeMethod: SizeMethod.NUMBER,
     });
 
     useEffect(() => {

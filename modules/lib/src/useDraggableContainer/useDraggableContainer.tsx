@@ -39,6 +39,12 @@ export interface DraggableContext {
     draggable: React.RefObject<HTMLDivElement>;
     dragTranslate: number;
     setDragTranslate: React.Dispatch<React.SetStateAction<number>>;
+    sizeMethod?: SizeMethod;
+}
+
+export enum SizeMethod {
+    NUMBER = 'number',
+    PERCENT = 'percent',
 }
 
 /**
@@ -51,6 +57,8 @@ interface DCProps {
     draggableWH: number;
     open?: boolean;
     minWH?: number;
+    foldWH?: number;
+    sizeMethod?: SizeMethod;
 }
 
 const MIN_HORIZONTAL_WH = 24;
@@ -384,8 +392,14 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
     e.preventDefault();
 };
 
-const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>, movingState: React.MutableRefObject<MovingState>,
-    dragDirection: DragDirection, minDragWh: number) => (e: MouseEvent): void => {
+const handleMouseUp = ({ container, draggable, movingState, dragDirection, minDragWh, sizeMethod }: {
+    container: React.RefObject<HTMLDivElement>;
+    draggable: React.RefObject<HTMLDivElement>;
+    movingState: React.MutableRefObject<MovingState>;
+    dragDirection: DragDirection;
+    minDragWh: number;
+    sizeMethod?: SizeMethod;
+}) => (e: MouseEvent): void => {
     recoverIframePointerEvent();
     const dom = container.current;
     const domDrag = draggable.current;
@@ -399,22 +413,22 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
     switch (dragDirection) {
         case DragDirection.TOP:
             dragWHTmp = clamp(e.y, minDragWh, dom.clientHeight - minDragWh);
-            domDrag.style.height = `${dragWHTmp / dom.clientHeight * 100}%`;
+            domDrag.style.height = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('topResize'));
             break;
         case DragDirection.BOTTOM:
             dragWHTmp = clamp(dom.clientHeight - e.y, minDragWh, dom.clientHeight - minDragWh);
-            domDrag.style.height = `${dragWHTmp / dom.clientHeight * 100}%`;
+            domDrag.style.height = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('bottomResize'));
             break;
         case DragDirection.LEFT:
             dragWHTmp = clamp(e.clientX, 245, dom.clientHeight - minDragWh);
-            domDrag.style.width = `${dragWHTmp / dom.clientWidth * 100}%`;
+            domDrag.style.width = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('leftResize'));
             break;
         case DragDirection.RIGHT:
             dragWHTmp = clamp(moving.startX - e.clientX, minDragWh, dom.clientWidth * RIGHT_PERCENT);
-            domDrag.style.width = `${dragWHTmp / dom.clientWidth * 100}%`;
+            domDrag.style.width = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('rightResize'));
             break;
         default:
@@ -431,9 +445,9 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
 };
 
 // 主容器宽高未确定时,初始化为设定的px值,主容器挂载结束后,后续宽高设置为百分比
-const pxConvert = (px: number, container: [number, number], dragDirection: DragDirection): string => {
+const pxConvert = (px: number, container: [number, number], dragDirection: DragDirection, sizeMethod?: SizeMethod): string => {
     let tempPx = px;
-    if (container[0] === 0 || container[1] === 0) { return `${tempPx}px`; }
+    if (container[0] === 0 || container[1] === 0 || sizeMethod === SizeMethod.NUMBER) { return `${tempPx}px`; }
     if (dragDirection <= 1) {
         if (dragDirection === 1) { tempPx += 4; } // bottom面板需要加上分割线的宽度
         return `${tempPx / container[1] * 100}%`;
@@ -450,7 +464,7 @@ const handleDraggableShow = (draggableProps: DraggableContext) => (): void => {
             draggableProps.setDragTranslate(domDrag.clientHeight);
             domDrag.style.height = `${draggableProps.minDragWh}px`;
         } else { // close -> open
-            domDrag.style.height = `${pxConvert(draggableProps.dragTranslate, draggableProps.container, draggableProps.dragDirection)}`;
+            domDrag.style.height = `${pxConvert(draggableProps.dragTranslate, draggableProps.container, draggableProps.dragDirection, draggableProps.sizeMethod)}`;
             draggableProps.setDragTranslate(0);
         }
     } else {
@@ -461,7 +475,7 @@ const handleDraggableShow = (draggableProps: DraggableContext) => (): void => {
                 domDrag.classList.add('width0');
             }
         } else { // close -> open
-            domDrag.style.width = `${pxConvert(draggableProps.dragTranslate, draggableProps.container, draggableProps.dragDirection)}`;
+            domDrag.style.width = `${pxConvert(draggableProps.dragTranslate, draggableProps.container, draggableProps.dragDirection, draggableProps.sizeMethod)}`;
             draggableProps.setDragTranslate(0);
             domDrag.classList.remove('width0');
         }
@@ -477,9 +491,9 @@ const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
     [DragDirection.RIGHT, ContainerRight],
 ]);
 
-const getMinDragWidth = (dragDirection: DragDirection, minWH?: number): number => {
-    if (minWH !== undefined && typeof minWH === 'number') {
-        return minWH;
+const getMinDragWidth = (dragDirection: DragDirection, foldWH?: number): number => {
+    if (foldWH !== undefined && typeof foldWH === 'number') {
+        return foldWH;
     }
     return dragDirection <= 1 ? MIN_VERTICAL_WH : MIN_HORIZONTAL_WH;
 };
@@ -492,14 +506,14 @@ const getMinDragWidth = (dragDirection: DragDirection, minWH?: number): number =
  * handleOpen：显示/隐藏可拖动容器；
  */
 export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen?: boolean) => void) ] => {
-    const { draggableWH, dragDirection, minWH, open = true } = props;
+    const { draggableWH, dragDirection, foldWH, sizeMethod = SizeMethod.PERCENT, open = true } = props;
     const container = useRef<HTMLDivElement>(null);
     const draggable = useRef<HTMLDivElement>(null);
     const [dragWh, setDragWh] = useState(String(draggableWH));
     const [autoPopUp, setAutoPopUp] = useState(true);
     const [containerWH, setContainerWH] = useState([0, 0] as [number, number]);
-    useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection)); }, [draggableWH, containerWH, dragDirection]);
-    const MIN_DRAG_WH = useMemo(() => getMinDragWidth(dragDirection, minWH), [dragDirection, minWH]);
+    useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection, sizeMethod)); }, [draggableWH, containerWH, dragDirection, sizeMethod]);
+    const MIN_DRAG_WH = useMemo(() => getMinDragWidth(dragDirection, foldWH), [dragDirection, foldWH]);
     const [dragTranslate, setDragTranslate] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
     const isOpen = useRef(dragTranslate === 0);
     useEffect(() => {
@@ -511,9 +525,17 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
     const movingState = useRef<MovingState>({ stat: 'idle', startX: 0, startY: 0, screenY: 0, screenX: 0 });
     const onMousedown = getHandleMouseDown(dragDirection, draggable, movingState, isOpen);
     const onMousemove = handleMouseMove(container, draggable, movingState, dragDirection, MIN_DRAG_WH);
-    const onMouseup = handleMouseUp(container, draggable, movingState, dragDirection, MIN_DRAG_WH);
-    const dragProps: DraggableContext = { dragDirection, container: containerWH, isOpen, minDragWh: MIN_DRAG_WH, draggable, dragTranslate, setDragTranslate };
-    const showDraggable = handleDraggableShow(dragProps);
+    const onMouseup = handleMouseUp({ container, draggable, movingState, dragDirection, minDragWh: MIN_DRAG_WH, sizeMethod });
+    const showDraggable = handleDraggableShow({
+        dragDirection,
+        container: containerWH,
+        isOpen,
+        minDragWh: MIN_DRAG_WH,
+        draggable,
+        dragTranslate,
+        setDragTranslate,
+        sizeMethod,
+    });
     const handleOpen = (needOpen = false): void => { if ((needOpen && !isOpen.current) || autoPopUp) { showDraggable(); setAutoPopUp(false); } };
     const Container = containerMap.get(dragDirection) as typeof ContainerBase;
     // 分割线混乱问题解决
@@ -527,7 +549,7 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
     const view = (viewProps: ViewProps): JSX.Element => {
         return <Container
             key={viewProps.id} ref={container} column translateXY={dragTranslate}
-            draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection)}
+            draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection, sizeMethod)}
             dragDirection={dragDirection} minWH={MIN_DRAG_WH}
             padding={viewProps.padding ?? 0}
             onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
