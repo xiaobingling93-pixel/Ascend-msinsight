@@ -60,12 +60,12 @@ std::vector<IndicatorDataStruct> SummaryService::GetPerformanceDataByDimension(
         ServerLog::Warn("Failed to query parallelism performance data.");
         return indicatorData;
     }
-    std::string err;
-    auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath(), err);
+    auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath());
     if (algPtr == nullptr) {
         ServerLog::Warn("Failed to get algorithm by project name for query parallelism performance.");
         return indicatorData;
     }
+    std::string err;
     result = algPtr->GetPerformanceIndicatorByDimension(params, stepStatisticData, indicatorData, err);
     if (!result) {
         ServerLog::Warn(err);
@@ -148,9 +148,8 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
     MergeParallelismPerformance(compareIndicatorData, baselineIndicatorData, indicatorData);
     // 非对比状态下，才计算专家建议信息
     if (!params.isCompare && database != nullptr) {
-        std::string err;
         auto algPtr =
-            ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath(), err);
+            ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath());
         if (algPtr != nullptr) {
             algPtr->CalAdviceInfo(params.dimension, indicatorData.advices, compareIndicatorData);
         }

@@ -21,8 +21,7 @@ public:
     void AddOrUpdateAlgorithm(const std::string& projectName,
         const std::shared_ptr<BaseParallelStrategyAlgorithm>& algPtr, const ParallelStrategyConfig& config);
     bool DeleteAlgorithm(const std::string &projectName);
-    std::shared_ptr<BaseParallelStrategyAlgorithm> GetAlgorithmByProjectName(const std::string &projectName,
-                                                                             std::string &err);
+    std::shared_ptr<BaseParallelStrategyAlgorithm> GetAlgorithmByProjectName(const std::string &projectName);
     ParallelStrategyConfig GetParallelStrategyConfig(const std::string &key);
 private:
     ParallelStrategyAlgorithmManager() = default;

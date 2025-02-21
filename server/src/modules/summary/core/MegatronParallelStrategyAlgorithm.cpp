@@ -21,7 +21,12 @@ void MegatronParallelStrategyAlgorithm::ClearStrategyConfigCache()
     data.connections.clear();
     elementSize = 1;
     paraOrder.clear();
+    paraOrderWithEp.clear();
     paraDetailsMap.clear();
+    updatedOrder.clear();
+    updatedOrderWithEp.clear();
+    parallelSize.clear();
+    parallelSizeWithEp.clear();
 
     // performance data
     wordSize = 1;
@@ -55,7 +60,40 @@ bool MegatronParallelStrategyAlgorithm::UpdateParallelDimension(const std::strin
         err = "Failed to update parallel view. Unexpected algorithm.";
         return false;
     }
+    paraOrderWithEp = paraOrder;
+    if (paraOrderWithEp.back() == PP_PARA) {
+        paraOrderWithEp.insert(paraOrderWithEp.begin() + epPosPpLast, EP_PARA);
+    } else {
+        paraOrderWithEp.insert(paraOrderWithEp.begin() + epPosDpLast, EP_PARA);
+    }
+
     bool res = UpdateShowMap(err);
+
+    // 删除不存在的通信域
+    updatedOrder = paraOrder;
+    updatedOrder.erase(std::remove_if(updatedOrder.begin(), updatedOrder.end(), [this](const std::string& group) {
+        return !(paraDetailsMap[group].isShown);
+        }), updatedOrder.end());
+    parallelSize.clear();
+    for (const auto& para : updatedOrder) {
+        parallelSize.push_back(paraDetailsMap[para].size);
+    }
+
+    if (paraDetailsMap[EP_PARA].isShown) {
+        // 仅影响连线生成，不影响布局
+        updatedOrderWithEp = paraOrderWithEp;
+        updatedOrderWithEp.erase(std::remove_if(updatedOrderWithEp.begin(), updatedOrderWithEp.end(),
+            [this](const std::string& group) { return !(paraDetailsMap[group].isShown); }), updatedOrderWithEp.end());
+        parallelSizeWithEp.clear();
+        for (const auto& para : updatedOrderWithEp) {
+            if (para == DP_PARA) {
+                // 前端入参已校验
+                parallelSizeWithEp.push_back(paraDetailsMap[DP_PARA].size / paraDetailsMap[EP_PARA].size);
+            } else {
+                parallelSizeWithEp.push_back(paraDetailsMap[para].size);
+            }
+        }
+    }
     UpdateElementSize();
     return res;
 }
@@ -73,7 +111,7 @@ void MegatronParallelStrategyAlgorithm::UpdateElementSize()
 bool MegatronParallelStrategyAlgorithm::UpdateShowMap(std::string &err)
 {
     // 按层次关闭showMap, 被关闭的层次size置1，接下来就不用感知区别不同层次size的影响了
-    for (const auto& para : paraOrder) {
+    for (const auto& para : paraOrderWithEp) {
         paraDetailsMap[para].isShown = false;
         paraDetailsMap[para].size = 1;
     }
@@ -101,11 +139,15 @@ bool MegatronParallelStrategyAlgorithm::UpdateShowMap(std::string &err)
 
 void MegatronParallelStrategyAlgorithm::SetParaDetail(const std::string &para, int64_t size)
 {
+    // 参数为1，该并行域未生效
+    if (size == 1) {
+        return;
+    }
     paraDetailsMap[para].isShown = true;
     paraDetailsMap[para].size = size;
 }
 
-void MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension()
+bool MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension(std::string &err)
 {
     ClearArrangementData();
     SetIndicatorAttr();
@@ -118,9 +160,17 @@ void MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension()
         GetPerArrangement(index, indexAttributes);
     }
     // get connections
-    for (auto& element : data.arrangements) {
-        GetConnections(element);
+    if (dimension == DIMENSIONS_TP) {
+        if (!GetConnectionsByTokenList(err)) {
+            return false;
+        }
+    } else {
+        // get connections for cp or pp dimension
+        for (auto& element : data.arrangements) {
+            GetConnections(element);
+        }
     }
+    return true;
 }
 
 void MegatronParallelStrategyAlgorithm::ClearArrangementData()
@@ -388,9 +438,67 @@ std::vector<uint32_t> MegatronParallelStrategyAlgorithm::GetElementContainRanks(
     return ranks;
 }
 
+/**
+ * 根据Token list生成全量通信域连线，目前仅适配全展开视图
+ * need UpdateParallelDimension first
+ * @return
+ */
+std::vector<Connection> MegatronParallelStrategyAlgorithm::GetAllCommunicationGroups(std::string &err)
+{
+    if (allCommunicationGroups.empty() && GetConnectionsByTokenList(err)) {
+        return {};
+    }
+    return allCommunicationGroups;
+}
+
+bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &err)
+{
+    if (wordSize == 1) {
+        err = "Failed to get connections. Parallel strategy configs have not been updated yet.";
+        return false;
+    }
+    for (const auto& pair : tokenNameList) {
+        bool hasTokenGroup = true;
+        std::string token = pair.first;
+        std::vector<std::string> parallelGroups = StringUtil::Split(token, "-");
+        for (const auto& group : parallelGroups) {
+            if (!paraDetailsMap[group].isShown) {
+                // 不存在当前含有当前并行域的通信组
+                hasTokenGroup = false;
+                break;
+            }
+        }
+        allGroupsType ranks{};
+        std::string groupName = pair.second;
+        if (hasTokenGroup) {
+            if (std::find(independentEpList.begin(), independentEpList.end(), groupName) != independentEpList.end()) {
+                // 计算并行通信域时需考虑ep
+                ranks = ParallelStrategyAlgorithmHelper::GetAllGroupsRanksByToken(parallelGroups, parallelSizeWithEp,
+                                                                                  updatedOrderWithEp, wordSize);
+            } else {
+                // 计算并行通信域时无需考虑ep
+                ranks = ParallelStrategyAlgorithmHelper::GetAllGroupsRanksByToken(parallelGroups, parallelSize,
+                                                                                  updatedOrder, wordSize);
+            }
+            if (ranks.empty()) {
+                err = "Failed to get connections by token list. Token: " + token;
+                return false;
+            }
+        }
+        for (const auto& rank : ranks) {
+            data.connections.emplace_back(groupName, rank, std::vector<std::string>{});
+        }
+    }
+    if (dimension == DIMENSIONS_TP) {
+        allCommunicationGroups = data.connections;
+    }
+    return true;
+}
+
 void MegatronParallelStrategyAlgorithm::GetConnections(Element &curEle)
 {
-    static const std::vector<std::string> dimsHasConnection = {DIMENSIONS_TP, DIMENSIONS_CP, DIMENSIONS_PP};
+    // 全展开维度的连线由GetConnectionsByTokenList()生成
+    static const std::vector<std::string> dimsHasConnection = {DIMENSIONS_CP, DIMENSIONS_PP};
     if (std::find(dimsHasConnection.begin(), dimsHasConnection.end(), dimension) == dimsHasConnection.end()) {
         return;
     }

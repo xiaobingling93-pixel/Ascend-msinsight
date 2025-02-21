@@ -21,13 +21,14 @@ public:
     virtual void ClearStrategyConfigCache() = 0;
     virtual bool UpdateParallelDimension(const std::string &dimension,
                                          const ParallelStrategyConfig &tmpConfig, std::string &err) = 0;
-    virtual void GenerateArrangementByDimension() = 0;
+    virtual bool GenerateArrangementByDimension(std::string &err) = 0;
     virtual ArrangementAndConnectionData GetArrangementData() = 0;
     virtual bool GetPerformanceIndicatorByDimension(const GetPerformanceIndicatorParam &params,
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
         std::vector<IndicatorDataStruct> &indicatorData, std::string &err) = 0;
     virtual void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
                                std::vector<IndicatorDataStruct> &indicatorData) = 0;
+    virtual std::vector<Connection> GetAllCommunicationGroups(std::string &err) = 0;
 
 protected:
     ParallelStrategyConfig strategyConfig;

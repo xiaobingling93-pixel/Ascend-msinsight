@@ -17,7 +17,7 @@ public:
     ~QueryParallelismArrangementHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
-    bool QueryArrangementByDimension(const std::string& projectName, std::string& err,
+    static bool QueryArrangementByDimension(const std::string& projectName, std::string& err,
         const QueryParallelismArrangementRequest& request, ParallelismArrangementResponse& response);
 };
 }

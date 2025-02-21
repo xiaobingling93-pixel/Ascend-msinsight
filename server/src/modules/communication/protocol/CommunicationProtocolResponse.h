@@ -399,7 +399,11 @@ struct MatrixListResponse : public Response {
 struct GroupInfo {
     std::string group;
     std::string parallelStrategy;
-    std::string type;
+    std::string type; // BASELINE or COMPARE
+    bool operator==(const GroupInfo& other) const
+    {
+        return group == other.group && parallelStrategy == other.parallelStrategy && type == other.type;
+    }
 };
 
 struct MatrixGroupResponseBody {

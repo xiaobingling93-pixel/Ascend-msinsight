@@ -93,7 +93,7 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     };
     std::string err;
     algorithm.UpdateParallelDimension(dimension, config, err);
-    algorithm.GenerateArrangementByDimension();
+    algorithm.GenerateArrangementByDimension(err);
     ArrangementAndConnectionData data = algorithm.GetArrangementData();
     ASSERT_EQ(data.size, EXPECTED_NAME.size());
     for (const auto& item : data.arrangements) {
@@ -125,7 +125,7 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     };
     std::string err;
     algorithm.UpdateParallelDimension(dimension, config, err);
-    algorithm.GenerateArrangementByDimension();
+    algorithm.GenerateArrangementByDimension(err);
     ArrangementAndConnectionData data = algorithm.GetArrangementData();
     ASSERT_EQ(data.arrangements.size(), EXPECTED_NAME.size());
     for (const auto& item : data.arrangements) {
@@ -145,7 +145,7 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
         {0, 0}, {1, 0}, {0, 1}, {1, 1}, {2, 0}, {3, 0}, {2, 1}, {3, 1}}; // position(x, y)
     MegatronParallelStrategyAlgorithm algorithm2;
     algorithm2.UpdateParallelDimension(dimension, config, err);
-    algorithm2.GenerateArrangementByDimension();
+    algorithm2.GenerateArrangementByDimension(err);
     data = algorithm2.GetArrangementData();
     ASSERT_EQ(data.arrangements.size(), EXPECTED_NAME2.size());
     for (const auto& item : data.arrangements) {
@@ -177,7 +177,7 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     const std::vector<Position> EXPECTED_POSITION = {{0, 0}, {1, 0}, {0, 1}, {1, 1}}; // position(x, y)
     std::string err;
     algorithm.UpdateParallelDimension(dimension, config, err);
-    algorithm.GenerateArrangementByDimension();
+    algorithm.GenerateArrangementByDimension(err);
     ArrangementAndConnectionData data = algorithm.GetArrangementData();
     ASSERT_EQ(data.arrangements.size(), EXPECTED_NAME.size());
     for (const auto& item : data.arrangements) {

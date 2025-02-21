@@ -61,11 +61,10 @@ bool ParallelStrategyAlgorithmManager::DeleteAlgorithm(const std::string &projec
 }
 
 std::shared_ptr<BaseParallelStrategyAlgorithm> ParallelStrategyAlgorithmManager::GetAlgorithmByProjectName(
-    const std::string &projectName, std::string &err)
+    const std::string &projectName)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (algorithmMap.count(projectName) == 0) {
-        err = "Failed to get algorithm by project name";
         return nullptr;
     }
     ServerLog::Info("Success to get algorithm by project name.");

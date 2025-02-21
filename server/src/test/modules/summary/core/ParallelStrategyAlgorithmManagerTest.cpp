@@ -24,7 +24,7 @@ public:
     void ClearStrategyConfigCache() override {};
     bool UpdateParallelDimension(const std::string &dimension,
                                  const ParallelStrategyConfig &tmpConfig, std::string &err) override { return true; }
-    void GenerateArrangementByDimension() override {}
+    bool GenerateArrangementByDimension(std::string &err) override { return true; }
     ArrangementAndConnectionData GetArrangementData() override { return data; }
     bool GetPerformanceIndicatorByDimension(const GetPerformanceIndicatorParam &params,
                                             const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
@@ -34,6 +34,7 @@ public:
     }
     void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
                        std::vector<IndicatorDataStruct> &indicatorData) override {}
+    std::vector<Connection> GetAllCommunicationGroups(std::string &err) override { return {}; }
 
 private:
     ArrangementAndConnectionData data;
@@ -78,7 +79,7 @@ TEST_F(ParallelStrategyAlgorithmManagerTest, GetAlgorithmByProjectName_ShouldRet
 {
     std::string err;
     std::shared_ptr<BaseParallelStrategyAlgorithm> result =
-        ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("NonExistentProject", err);
+            ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("NonExistentProject");
     EXPECT_EQ(result, nullptr);
 }
 
@@ -90,6 +91,6 @@ TEST_F(ParallelStrategyAlgorithmManagerTest, GetAlgorithmByProjectName_ShouldRet
     ParallelStrategyConfig config;
     ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(projectName, algPtr, config);
     std::shared_ptr<BaseParallelStrategyAlgorithm> result =
-        ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("ExistentProject", err);
+            ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("ExistentProject");
     EXPECT_NE(result, nullptr);
 }

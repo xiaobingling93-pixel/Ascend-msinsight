@@ -259,6 +259,14 @@ struct Connection {
     Connection(std::string type, const std::vector<uint32_t>& indexes,
         const std::vector<std::string>& communicationGroups) : indexes(indexes), type(std::move(type)),
         communicationGroups(communicationGroups) {}
+    Connection& operator=(const Connection& other)
+    {
+        if (this == &other) return *this;
+        indexes = other.indexes;
+        type = other.type;
+        communicationGroups = other.communicationGroups;
+        return *this;
+    }
 };
 
 // 一张卡或一个分组的相关信息，包括序号、名称、位置、并行分组属性、包含的卡等信息

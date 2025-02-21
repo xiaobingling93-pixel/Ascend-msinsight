@@ -36,7 +36,7 @@ bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol:
 bool QueryParallelismArrangementHandler::QueryArrangementByDimension(const std::string& projectName, std::string& err,
     const QueryParallelismArrangementRequest& request, ParallelismArrangementResponse& response)
 {
-    auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(projectName, err);
+    auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(projectName);
     if (algPtr == nullptr) {
         err = "Failed to get algorithm by project name for query parallelism arrangement.";
         return false;
@@ -45,7 +45,9 @@ bool QueryParallelismArrangementHandler::QueryArrangementByDimension(const std::
     if (!algorithm.UpdateParallelDimension(request.params.dimension, request.params.config, err)) {
         return false;
     }
-    algorithm.GenerateArrangementByDimension();
+    if (!algorithm.GenerateArrangementByDimension(err)) {
+        return false;
+    }
     response.arrangeData = algorithm.GetArrangementData();
     return true;
 }
