@@ -512,6 +512,8 @@ export class CanvasDrawer {
             return;
         }
 
+        this.hoverCtx?.resetTransform();
+        this.hoverCtx?.scale(devicePixelRatio, devicePixelRatio);
         this.clearHoverCanvas();
 
         let isLineActive = false;
