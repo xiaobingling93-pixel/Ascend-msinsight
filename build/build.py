@@ -445,13 +445,14 @@ def zip_package(profiler_path, package_name):
         shutil.move(app_dir, preview_app)
 
         # 签名app
-        # 清除旧bundle临时签名
-        if not clear_mac_app_signature(preview_app):
-            return 1
-        # 重签
-        if not sign_mac_app(preview_app, Const.MAC_SIGNATURE_CERTIFICATE_ID):
-            return 1
-        logging.info('[%s] %s', 'bin_package', 'MacOS application resigned successfully, start to build dmg')
+        if "aarch64" in package_name:
+            # 清除旧bundle临时签名
+            if not clear_mac_app_signature(preview_app):
+                return 1
+            # 重签
+            if not sign_mac_app(preview_app, Const.MAC_SIGNATURE_CERTIFICATE_ID):
+                return 1
+            logging.info('[%s] %s', 'bin_package', 'MacOS application resigned successfully, start to build dmg')
         # 通过dmgbuild打包
         if not build_dmg_for_mac_app(dst_file):
             logging.info('[%s] %s', 'bin_package', 'Build dmg for application failed.')
