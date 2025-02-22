@@ -389,7 +389,8 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
     std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis");
     command += "\" && \"" + analysisPath + "\" -d .";
     #else
-    std::string analysisPath = currPath + FILE_SEPARATOR + "cluster_analyse" + FILE_SEPARATOR + "cluster_analysis.py";
+    std::string analysisPath = currPath + FILE_SEPARATOR + "msprof_analyze";
+    analysisPath = analysisPath + FILE_SEPARATOR + "cluster_analyse" + FILE_SEPARATOR + "cluster_analysis.py";
     command += "\" && python3 \"" + analysisPath + "\" -d .";
     #endif
 #endif

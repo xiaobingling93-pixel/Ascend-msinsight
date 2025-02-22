@@ -31,7 +31,11 @@ HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 SRC_DIR = os.path.join(HOME_DIR, 'src')
 CLUSTER_ANALYSE = 'cluster_analyse'
+ADVISOR = 'advisor'
+PROF_COMMON = 'prof_common'
 CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'msprof_analyze', CLUSTER_ANALYSE)
+ADVISOR_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'msprof_analyze', ADVISOR)
+PROF_COMMON_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'msprof_analyze', PROF_COMMON)
 PROTO_DIR = os.path.join(SRC_DIR, 'protos')
 
 OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
@@ -134,10 +138,12 @@ def build_bin(args):
     att_dir = os.path.join(OUTPUT_DIR, gxx_type)
     att_bin_dir = os.path.join(att_dir, 'bin')
     if IS_LINUX:
-        script_path = os.path.join(att_bin_dir, CLUSTER_ANALYSE)
+        script_path = os.path.join(att_bin_dir, 'msprof_analyze')
         if os.path.exists(script_path):
             shutil.rmtree(script_path)
-        shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(att_bin_dir, CLUSTER_ANALYSE), copy_function=shutil.copy2)
+        shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(script_path, CLUSTER_ANALYSE), copy_function=shutil.copy2)
+        shutil.copytree(ADVISOR_DIR, os.path.join(script_path, ADVISOR), copy_function=shutil.copy2)
+        shutil.copytree(PROF_COMMON_DIR, os.path.join(script_path, PROF_COMMON), copy_function=shutil.copy2)
     else:
         build_att = [
             'pyinstaller', '--distpath=' + att_bin_dir, Spec_Path
