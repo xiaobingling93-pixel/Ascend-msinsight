@@ -9,7 +9,6 @@ module.exports = {
     open: false,
   },
   webpack: {
-    configure: (webpackConfig) => webpackCfg.jupyterConfigure(webpackConfig),
     alias: webpackCfg.alias,
   },
 };

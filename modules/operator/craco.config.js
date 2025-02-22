@@ -8,7 +8,6 @@ module.exports = {
     open: false,
   },
   webpack: {
-    configure: webpackConfig => webpackCfg.operatorConfigure(webpackConfig),
     alias: webpackCfg.alias,
   },
 };

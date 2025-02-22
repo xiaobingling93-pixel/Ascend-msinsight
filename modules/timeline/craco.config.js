@@ -9,7 +9,6 @@ module.exports = {
     open: false,
   },
   webpack: {
-    configure: (webpackConfig) => webpackCfg.timelineConfigure(webpackConfig),
     alias: webpackCfg.alias,
   },
 };

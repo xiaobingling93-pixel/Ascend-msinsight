@@ -1,52 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-const HTMLInlineCSSWebpackPlugin = require('html-inline-css-webpack-plugin').default;
-const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const fs = require('fs');
+
 const path = require('path');
-
-class ScriptTypePlugin {
-  apply(compiler) {
-    compiler.hooks.compilation.tap('ScriptTypePlugin', (compilation) => {
-      HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
-        'ScriptTypePlugin',
-        (data, cb) => {
-          data.html = data.html.replace(
-            /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-            (match) => match.replace('<script', '<script type="module"'),
-          );
-          cb(null, data);
-        },
-      );
-    });
-  }
-}
-
-class BackgroundSvgInlinePlugin {
-  constructor(module) {
-    this.moduleName = module;
-  }
-
-  apply(compiler) {
-    compiler.hooks.compilation.tap('BackgroundSvgInlinePlugin', (compilation) => {
-      HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
-        'BackgroundSvgInlinePlugin',
-        (data, cb) => {
-          data.html = data.html.replace(
-            /(?<svgPath>\.\.\/\.\.\/static\/media\/)(?<svgName>\w+)(?<svgCode>\.\w+\.svg)/g,
-            (m, svgPath, svgName) => {
-              const svgContent = fs.readFileSync(path.join(__dirname, `${this.moduleName}/src/assets/images`, `${svgName}.svg`));
-              return `'data:image/svg+xml;base64,${svgContent.toString('base64')}'`;
-            },
-          );
-          cb(null, data);
-        },
-      );
-    });
-  }
-}
 
 const htmllist = [
   new HtmlWebpackPlugin({
@@ -62,11 +19,6 @@ const htmllist = [
 ];
 
 const webpackCfg = {
-  timelineConfigure: (webpackConfig) => {
-    // 设置devtool = false，关闭构建代码映射的生成，减小前端构建产物的大小
-    webpackConfig.devtool = false;
-    return webpackConfig;
-  },
   clusterConfigure: (webpackConfig) => {
     webpackConfig.entry = {
       main: webpackConfig.entry,
@@ -75,15 +27,6 @@ const webpackCfg = {
     };
     webpackConfig.output.filename = 'static/js/[name].bundle.js';
     webpackConfig.plugins.push(...htmllist);
-    return webpackConfig;
-  },
-  memoryConfigure: (webpackConfig) => {
-    return webpackConfig;
-  },
-  operatorConfigure: (webpackConfig) => {
-    return webpackConfig;
-  },
-  jupyterConfigure: (webpackConfig) => {
     return webpackConfig;
   },
   computeConfigure: (webpackConfig) => {
@@ -117,9 +60,5 @@ const webpackCfg = {
 };
 
 module.exports = {
-  ScriptTypePlugin,
-  BackgroundSvgInlinePlugin,
-  HTMLInlineCSSWebpackPlugin,
-  HtmlInlineScriptPlugin,
   webpackCfg,
 };
