@@ -38,6 +38,7 @@ export class Session {
     isBinary: boolean | null = false;
     isIpynb: boolean = false;
     ipynbUrl: string = '';
+    isReset: boolean = false;
     isFullDb: boolean = false;
     // 解析状态
     parseCompleted: boolean = false;

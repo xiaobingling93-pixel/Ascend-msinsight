@@ -207,7 +207,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
             tooltip: getTooltip(session.isCompare),
         });
         setChartOptions(options);
-    }, [datasource, t, session.isCompare]);
+    }, [datasource, t, session.indicatorList, session.isCompare]);
 
     useEffect(() => {
         const filteredData = filterData(session.performanceData, session.performanceDataMap);

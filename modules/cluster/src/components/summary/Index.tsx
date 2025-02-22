@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { ExclamationCircleFilled } from '@ant-design/icons';
@@ -23,6 +23,7 @@ import { runInAction } from 'mobx';
 import { Communicator, partitionMode } from '../communicatorContainer/ContainerUtils';
 import connector from '../../connection';
 import { PerformanceDataItem } from '../../utils/interface';
+import { isEqual } from 'lodash';
 
 const FlowChartContainer = styled.div`
     margin-top: 24px;
@@ -93,10 +94,13 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
     const tips = useHit(true);
     const [isPipeline, setIsPipeline] = useState(false);
     const [activeRankId, setActiveRankId] = useState('');
-    const [performanceLoading, setPerformanceLoading] = useState(true);
+    const [performanceLoading, setPerformanceLoading] = useState(false);
     const [adviceContent, setAdviceContent] = useState<string[]>([]);
     const [performanceChartConditions, setPerformanceChartConditions] = useState<PerformanceChartConditions>(defaultPerformanceChartConditions);
     const [generateConditions, setGenerateConditions] = useState<GenerateConditions>(defaultGenerateConditions);
+    const isDefaultGenerateConditions: boolean = useMemo(() => {
+        return isEqual(generateConditions, defaultGenerateConditions);
+    }, [generateConditions]);
 
     const getPerformanceData = async (): Promise<void> => {
         setPerformanceLoading(true);
@@ -182,8 +186,6 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
     });
 
     useEffect(() => {
-        const isDefaultGenerateConditions = JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions);
-
         if (isDefaultGenerateConditions) {
             return;
         }
@@ -191,8 +193,6 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
     }, [performanceChartConditions.step, performanceChartConditions.baselineStep, JSON.stringify(generateConditions), session.isCompare]);
 
     useEffect(() => {
-        const isDefaultGenerateConditions = JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions);
-
         if (isDefaultGenerateConditions) {
             return;
         }
@@ -209,7 +209,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 onGenerateConditionsChange={handleGenerateConditionsChange}
             />
 
-            <CollapsiblePanel
+            {!isDefaultGenerateConditions && <CollapsiblePanel
                 id="communication-overview-panel"
                 secondary
                 title={<div className={'flex items-center'}>{t('Computation/CommunicationOverview')}{tips}</div>}
@@ -253,6 +253,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                         </>
                 }
             </CollapsiblePanel>
+            }
         </CollapsiblePanel>
     </Layout>;
 });

@@ -52,6 +52,11 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
         const dataSource = { ...orginDataSource };
+
+        if (session.isReset) {
+            session.reset();
+        }
+
         // 如果目标内容就是当前选中内容，则不做任何处理直接返回
         if (dataSource.projectName === activeDataSource.projectName && arraysValueEqual(dataSource.dataPath, activeDataSource.dataPath)) {
             return;
