@@ -163,6 +163,21 @@ std::string Database::sqlite3_column_string(sqlite3_stmt *stmt, int iCol)
     return std::string(reinterpret_cast<const char *>(data), len);
 }
 
+std::string Database::Sqlite3ColumnConvertStr(int colType, sqlite3_stmt *stmt, int iCol)
+{
+    std::ostringstream oss;
+    if (colType == SQLITE_INTEGER) {
+        int value = sqlite3_column_int(stmt, iCol);
+        oss << value;
+    } else if (colType == SQLITE_FLOAT) {
+        double value = sqlite3_column_double(stmt, iCol);
+        oss << value;
+    } else {
+        oss << "Unknown type";
+    }
+    return oss.str();
+}
+
 bool Database::StartTransaction()
 {
     return isOpen && ExecSql("BEGIN;");

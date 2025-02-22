@@ -36,6 +36,7 @@ namespace Dic::Module::Operator {
         void SetOpInputShapeGroupData(OperatorStatisticCmpInfoRes &data);
         void SetOpOrHcclTypeGroupData(OperatorStatisticCmpInfoRes &data);
         void CalDiffDataByGroup(const std::string &paramsGroup, OperatorStatisticCmpInfoRes &data);
+        std::string CalDataCompare(const std::string &com, const std::string &base);
         std::vector<Protocol::OperatorStatisticCmpInfoRes> GetFixNumDiffCmpData(
             std::vector<Protocol::OperatorStatisticCmpInfoRes> &statisticData,
             Protocol::OperatorStatisticReqParams &reqParams,

@@ -13,6 +13,7 @@
 #include "QueryOpStatisticInfoHandler.h"
 
 namespace {
+    using namespace Dic;
     using namespace Dic::Server;
     using StatisticCmpRes = Dic::Protocol::OperatorStatisticCmpInfoRes;
 
@@ -27,15 +28,15 @@ namespace {
         {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                     { return a.diff.accCore > b.diff.accCore; }},
         {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                             { return a.diff.totalTime > b.diff.totalTime; }},
+                             { return NumberUtil::IsStr2DoubleDesc(a.diff.totalTime, b.diff.totalTime); }},
         {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                       { return a.diff.count > b.diff.count; }},
+                       { return NumberUtil::IsStr2DoubleDesc(a.diff.count, b.diff.count); }},
         {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                     { return a.diff.avgTime > b.diff.avgTime; }},
+                     { return NumberUtil::IsStr2DoubleDesc(a.diff.avgTime, b.diff.avgTime); }},
         {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                      { return a.diff.maxTime > b.diff.maxTime; }},
+                      { return NumberUtil::IsStr2DoubleDesc(a.diff.maxTime, b.diff.maxTime); }},
         {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                      { return a.diff.minTime > b.diff.minTime; }}
+                      { return NumberUtil::IsStr2DoubleDesc(a.diff.minTime, b.diff.minTime); }}
     };
     std::unordered_map<std::string, StatisticCmpFun> StatisticAsceCompareFunctions = {
         {"op_type", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
@@ -47,15 +48,15 @@ namespace {
         {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                     { return a.diff.accCore < b.diff.accCore; }},
         {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                             { return a.diff.totalTime < b.diff.totalTime; }},
+                             { return NumberUtil::IsStr2DoubleAsce(a.diff.totalTime, b.diff.totalTime); }},
         {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                       { return a.diff.count < b.diff.count; }},
+                       { return NumberUtil::IsStr2DoubleAsce(a.diff.count, b.diff.count); }},
         {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                     { return a.diff.avgTime < b.diff.avgTime; }},
+                     { return NumberUtil::IsStr2DoubleAsce(a.diff.avgTime, b.diff.avgTime); }},
         {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                      { return a.diff.maxTime < b.diff.maxTime; }},
+                      { return NumberUtil::IsStr2DoubleAsce(a.diff.maxTime, b.diff.maxTime); }},
         {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
-                      { return a.diff.minTime < b.diff.minTime; }}
+                      { return NumberUtil::IsStr2DoubleAsce(a.diff.minTime, b.diff.minTime); }}
     };
     bool StatisticDescCmp(const StatisticCmpRes& a, const StatisticCmpRes& b, const std::string orderBy)
     {
@@ -184,54 +185,41 @@ namespace Dic::Module::Operator {
             }
         }
     }
+    std::string QueryOpStatisticInfoHandler::CalDataCompare(const std::string &com,
+                                                            const std::string &base)
+    {
+        // profiling给的数据不一定都是double且有可能为空，是double就计算，不是double原样呈现
+        if (NumberUtil::IsDouble(com) && NumberUtil::IsDouble(base)) {
+            return NumberUtil::StringDoubleMinus(com, base);
+        } else {
+            // 注意这里如果两个数据都是空，那么还是按照原数据呈现不要做处理，方便区分是未上报还是数据有问题
+            return com + "->" + base;
+        }
+    }
 
     void QueryOpStatisticInfoHandler::SetOpInputShapeGroupData(OperatorStatisticCmpInfoRes &data)
     {
-        if (data.compare.count == INT_MIN_VALUE) {
-            data.diff.opName = data.baseline.opName;
-            data.diff.inputShape = data.baseline.inputShape;
-            data.diff.accCore = data.baseline.accCore;
-        } else if (data.baseline.count == INT_MIN_VALUE) {
-            data.diff.opName = data.compare.opName;
-            data.diff.inputShape = data.compare.inputShape;
-            data.diff.accCore = data.compare.accCore;
-        } else {
-            data.diff.opType = data.compare.opType + " -> " + data.compare.opType;
-            data.diff.opName = data.compare.opName;
-            data.diff.inputShape = data.compare.inputShape;
-            data.diff.accCore = data.compare.accCore;
-            data.diff.totalTime = NumberUtil::Sub(data.compare.totalTime, data.baseline.totalTime);
-            data.diff.count = data.compare.count - data.baseline.count;
-            data.diff.avgTime = NumberUtil::Sub(data.compare.avgTime, data.baseline.avgTime);
-            data.diff.maxTime = NumberUtil::Sub(data.compare.maxTime, data.baseline.maxTime);
-            data.diff.minTime = NumberUtil::Sub(data.compare.minTime, data.baseline.minTime);
-        }
+        data.diff.opName = data.compare.opName.empty() ? data.baseline.opName : data.compare.opName;
+        data.diff.inputShape = data.compare.inputShape.empty() ? data.baseline.inputShape : data.compare.inputShape;
+        data.diff.opType = data.compare.opType + " -> " + data.compare.opType;
     }
 
     void QueryOpStatisticInfoHandler::SetOpOrHcclTypeGroupData(OperatorStatisticCmpInfoRes &data)
     {
-        if (data.compare.count == INT_MIN_VALUE) {
-            data.diff.opType = data.baseline.opType;
-            data.diff.accCore = data.baseline.accCore;
-        } else if (data.baseline.count == INT_MIN_VALUE) {
-            data.diff.opType = data.compare.opType;
-            data.diff.accCore = data.compare.accCore;
-        } else {
-            data.diff.opType = data.compare.opType;
-            data.diff.opName = data.compare.opName + "->" + data.baseline.opName;
-            data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
-            data.diff.accCore = data.compare.accCore;
-            data.diff.totalTime = NumberUtil::Sub(data.compare.totalTime, data.baseline.totalTime);
-            data.diff.count = data.compare.count - data.baseline.count;
-            data.diff.avgTime = NumberUtil::Sub(data.compare.avgTime, data.baseline.avgTime);
-            data.diff.maxTime = NumberUtil::Sub(data.compare.maxTime, data.baseline.maxTime);
-            data.diff.minTime = NumberUtil::Sub(data.compare.minTime, data.baseline.minTime);
-        }
+        data.diff.opType = data.compare.opType.empty() ? data.baseline.opType : data.compare.opType;
+        data.diff.opName = data.compare.opName + "->" + data.baseline.opName;
+        data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
     }
 
     void QueryOpStatisticInfoHandler::CalDiffDataByGroup(const std::string &paramsGroup,
                                                          OperatorStatisticCmpInfoRes &data)
     {
+        data.diff.accCore = data.compare.accCore.empty() ? data.baseline.accCore : data.compare.accCore;
+        data.diff.totalTime = CalDataCompare(data.compare.totalTime, data.baseline.totalTime);
+        data.diff.count = CalDataCompare(data.compare.count, data.baseline.count);
+        data.diff.avgTime = CalDataCompare(data.compare.avgTime, data.baseline.avgTime);
+        data.diff.maxTime = CalDataCompare(data.compare.maxTime, data.baseline.maxTime);
+        data.diff.minTime = CalDataCompare(data.compare.minTime, data.baseline.minTime);
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(paramsGroup);
         switch (operatorGroup) {
             case OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP:
@@ -255,10 +243,6 @@ namespace Dic::Module::Operator {
         GroupingData(group, base, groupMap, true);
         GroupingData(group, cmp, groupMap, false);
         for (auto &CmpInfo : groupMap) {
-            // 其中一个不存在，不做比较
-            if (CmpInfo.second.compare.count == INT_MIN_VALUE && CmpInfo.second.baseline.count == INT_MIN_VALUE) {
-                continue;
-            }
             CalDiffDataByGroup(group, CmpInfo.second);
             cmpRes.emplace_back(CmpInfo.second);
         }

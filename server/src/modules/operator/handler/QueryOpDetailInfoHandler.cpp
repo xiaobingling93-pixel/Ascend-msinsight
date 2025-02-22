@@ -11,7 +11,9 @@
 
 namespace {
     using namespace Dic::Server;
+    using namespace Dic;
     using DetailCmpRes = Dic::Protocol::OperatorDetailCmpInfoRes;
+
     using DetailCmpFun = std::function<bool(const DetailCmpRes&, const DetailCmpRes&)>;
     static std::unordered_map<std::string, DetailCmpFun> DetailDescCompareFunctions = {
         {"rank_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
@@ -25,13 +27,13 @@ namespace {
         {"accelerator_core", [](const DetailCmpRes& a, const DetailCmpRes& b)
                              { return a.diff.accCore > b.diff.accCore; }},
         {"start_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                       { return a.diff.startTime > b.diff.startTime; }},
+                       { return NumberUtil::IsStr2DoubleDesc(a.diff.startTime, b.diff.startTime); }},
         {"duration", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                     { return a.diff.duration > b.diff.duration; }},
+                     { return NumberUtil::IsStr2DoubleDesc(a.diff.duration, b.diff.duration); }},
         {"wait_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                      { return a.diff.waitTime > b.diff.waitTime; }},
+                      { return NumberUtil::IsStr2DoubleDesc(a.diff.waitTime, b.diff.waitTime); }},
         {"block_dim", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                      { return a.diff.blockDim > b.diff.blockDim; }},
+                      { return NumberUtil::IsStr2DoubleDesc(a.diff.blockDim, b.diff.blockDim); }},
         {"input_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
                          { return a.diff.inputShape > b.diff.inputShape; }},
         {"input_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
@@ -57,13 +59,13 @@ namespace {
         {"accelerator_core", [](const DetailCmpRes& a, const DetailCmpRes& b)
                              { return a.diff.accCore < b.diff.accCore; }},
         {"start_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                       { return a.diff.startTime < b.diff.startTime; }},
+                       { return NumberUtil::IsStr2DoubleAsce(a.diff.startTime, b.diff.startTime); }},
         {"duration", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                     { return a.diff.duration < b.diff.duration; }},
+                     { return NumberUtil::IsStr2DoubleAsce(a.diff.duration, b.diff.duration); }},
         {"wait_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                      { return a.diff.waitTime < b.diff.waitTime; }},
+                      { return NumberUtil::IsStr2DoubleAsce(a.diff.waitTime, b.diff.waitTime); }},
         {"block_dim", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                      { return a.diff.blockDim < b.diff.blockDim; }},
+                      { return NumberUtil::IsStr2DoubleAsce(a.diff.blockDim, b.diff.blockDim); }},
         {"input_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
                          { return a.diff.inputShape < b.diff.inputShape; }},
         {"input_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
@@ -270,49 +272,39 @@ namespace Dic::Module::Operator {
     }
 
     void QueryOpDetailInfoHandler::FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data,
-                                                    const std::set<std::string> &basePmuHeader,
-                                                    const std::set<std::string> &cmpPmuHeader)
+                                                    const std::set<std::string> &baseDiff,
+                                                    const std::set<std::string> &cmpDiff,
+                                                    const std::set<std::string> intersection)
     {
-        // data.compare.duration == DOUBLE_MIN_VALUE 表示compare数据没有不用做计算
-        if (data.compare.duration == DOUBLE_MIN_VALUE) {
-            data.diff.name = data.baseline.name;
-        } else if (data.baseline.duration == DOUBLE_MIN_VALUE) {
-            data.diff.name = data.compare.name;
-        } else {
-            data.diff.rankId = data.compare.rankId;
-            data.diff.stepId = data.compare.stepId;
-            data.diff.name = data.compare.name;
-            data.diff.type = data.compare.type + "->" + data.baseline.type;
-            data.diff.accCore = data.compare.accCore + "->" + data.baseline.accCore;
-            data.diff.startTime = std::to_string(NumberUtil::StringToDouble(data.compare.startTime) -
-                                  NumberUtil::StringToDouble(data.baseline.startTime));
-            data.diff.duration = NumberUtil::Sub(data.compare.duration, data.baseline.duration);
-            data.diff.waitTime = NumberUtil::Sub(data.compare.waitTime, data.baseline.waitTime);
-            data.diff.blockDim = data.compare.blockDim - data.baseline.blockDim;
-            data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
-            data.diff.inputType = data.compare.inputType + "->" + data.baseline.inputType;
-            data.diff.inputFormat = data.compare.inputFormat + "->" + data.baseline.inputFormat;
-            data.diff.outputShape = data.compare.outputShape + "->" + data.baseline.outputShape;
-            data.diff.outputType = data.compare.outputType + "->" + data.baseline.outputType;
-            data.diff.outputFormat = data.compare.outputFormat + "->" + data.baseline.outputFormat;
-            // 遍历base数据
-            for (const auto& col : basePmuHeader) {
-                // 先判断compare里面有没有这个数据
-                if (data.compare.pmuDatas.find(col) == data.compare.pmuDatas.end()) {
-                    data.diff.pmuDatas[col] = "-";
-                    continue;
-                }
-                data.diff.pmuDatas[col] = CalPmuDataCompare(data.compare.pmuDatas[col], data.baseline.pmuDatas[col]);
-            }
-            // 遍历compare
-            for (const auto& col : cmpPmuHeader) {
-                // 先判断base里面有没有这个数据
-                if (data.baseline.pmuDatas.find(col) == data.baseline.pmuDatas.end()) {
-                    data.diff.pmuDatas[col] = "-";
-                    continue;
-                }
-                data.diff.pmuDatas[col] = CalPmuDataCompare(data.compare.pmuDatas[col], data.baseline.pmuDatas[col]);
-            }
+        data.diff.rankId = data.compare.rankId.empty() ? data.baseline.rankId : data.compare.rankId;
+        data.diff.stepId = data.compare.stepId.empty() ? data.baseline.stepId : data.compare.stepId;
+        data.diff.name = data.compare.name.empty() ? data.baseline.name : data.compare.name;
+
+        data.diff.type = data.compare.type + "->" + data.baseline.type;
+        data.diff.accCore = data.compare.accCore + "->" + data.baseline.accCore;
+
+        data.diff.startTime = CalPmuDataCompare(data.compare.startTime, data.baseline.startTime);
+        data.diff.duration = CalPmuDataCompare(data.compare.duration, data.baseline.duration);
+        data.diff.waitTime = CalPmuDataCompare(data.compare.waitTime, data.baseline.waitTime);
+        data.diff.blockDim = CalPmuDataCompare(data.compare.blockDim, data.baseline.blockDim);
+        data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
+        data.diff.inputType = data.compare.inputType + "->" + data.baseline.inputType;
+        data.diff.inputFormat = data.compare.inputFormat + "->" + data.baseline.inputFormat;
+        data.diff.outputShape = data.compare.outputShape + "->" + data.baseline.outputShape;
+        data.diff.outputType = data.compare.outputType + "->" + data.baseline.outputType;
+        data.diff.outputFormat = data.compare.outputFormat + "->" + data.baseline.outputFormat;
+
+        // 先遍历比对和基线都有的数据
+        for (const auto& col : intersection) {
+            data.diff.pmuDatas[col] = CalPmuDataCompare(data.compare.pmuDatas[col], data.baseline.pmuDatas[col]);
+        }
+        // 遍历只有base有的数据
+        for (const auto& col : baseDiff) {
+            data.diff.pmuDatas[col] = "->" + data.baseline.pmuDatas[col];
+        }
+        // 遍历只有compare有的数据
+        for (const auto& col : cmpDiff) {
+            data.diff.pmuDatas[col] = data.compare.pmuDatas[col] + "->";
         }
     }
 
@@ -324,8 +316,18 @@ namespace Dic::Module::Operator {
         if (datailData.empty()) {
             return datailData;
         }
+        std::set<std::string> baseDiff;
+        std::set_difference(basePmuHeader.begin(), basePmuHeader.end(), cmpPmuHeader.begin(), cmpPmuHeader.end(),
+                            std::inserter(baseDiff, baseDiff.begin()));
+        std::set<std::string> cmpDiff;
+        std::set_difference(cmpPmuHeader.begin(), cmpPmuHeader.end(), basePmuHeader.begin(), basePmuHeader.end(),
+                            std::inserter(cmpDiff, cmpDiff.begin()));
+ 
+        std::set<std::string> intersection;
+        std::set_intersection(basePmuHeader.begin(), basePmuHeader.end(), cmpPmuHeader.begin(), cmpPmuHeader.end(),
+                              std::inserter(intersection, intersection.begin()));
         for (auto &data: datailData) {
-            FromatDatailData(data, basePmuHeader, cmpPmuHeader);
+            FromatDatailData(data, baseDiff, cmpDiff, intersection);
         }
         std::string dbOrderBy = reqParams.orderBy;
         // 对差值排序

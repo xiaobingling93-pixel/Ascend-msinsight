@@ -323,6 +323,44 @@ public:
         return (iss >> d) && (iss.eof());
     }
 
+    static bool IsStr2DoubleDesc(const std::string& a, const std::string& b)
+    {
+        bool isADouble = IsDouble(a);
+        bool isBDouble = IsDouble(b);
+        // 如果都是数字，则按数值排序
+        if (isADouble && isBDouble) {
+            return std::stod(a) > std::stod(b);
+        }
+        // 如果只有一个是数字，数字排在前面
+        if (isADouble) {
+            return true;
+        }
+        if (isBDouble) {
+            return false;
+        }
+        // 都不是数字，保持原有顺序
+        return false;
+    }
+
+    static bool IsStr2DoubleAsce(const std::string& a, const std::string& b)
+    {
+        bool isADouble = IsDouble(a);
+        bool isBDouble = IsDouble(b);
+        // 如果都是数字，则按数值排序
+        if (isADouble && isBDouble) {
+            return std::stod(a) < std::stod(b);
+        }
+        // 如果只有一个是数字，数字排在前面
+        if (isADouble) {
+            return true;
+        }
+        if (isBDouble) {
+            return false;
+        }
+        // 都不是数字，保持原有顺序
+        return false;
+    }
+
     static inline double Sub(double a, double b)
     {
         return DoubleReservedNDigits(DoubleReservedNDigits(a) - DoubleReservedNDigits(b));

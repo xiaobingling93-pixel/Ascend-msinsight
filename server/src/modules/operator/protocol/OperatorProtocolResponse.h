@@ -21,34 +21,34 @@ namespace Dic::Protocol {
 
     // 按Operator Type、Input Shape展示时算子统计信息
     struct OperatorStatisticInfoRes {
-        std::string opType{"-"};
-        std::string opName{"-"};
-        std::string inputShape{"-"};
-        std::string accCore{"-"};
-        double totalTime{DOUBLE_MIN_VALUE};
-        int64_t count{INT_MIN_VALUE};
-        double avgTime{DOUBLE_MIN_VALUE};
-        double maxTime{DOUBLE_MIN_VALUE};
-        double minTime{DOUBLE_MIN_VALUE};
+        std::string opType;
+        std::string opName;
+        std::string inputShape;
+        std::string accCore;
+        std::string totalTime;
+        std::string count;
+        std::string avgTime;
+        std::string maxTime;
+        std::string minTime;
     };
 
     // 按Operator展示算子详细信息，和See More响应
     struct OperatorDetailInfoRes {
-        std::string rankId{"-"};
-        std::string stepId{"-"};
-        std::string name{"-"};
-        std::string type{"-"};
-        std::string accCore{"-"};
-        std::string startTime{"-"};
-        double duration{DOUBLE_MIN_VALUE};
-        double waitTime{DOUBLE_MIN_VALUE};
-        int64_t blockDim{INT_MIN_VALUE};
-        std::string inputShape{"-"};
-        std::string inputType{"-"};
-        std::string inputFormat{"-"};
-        std::string outputShape{"-"};
-        std::string outputType{"-"};
-        std::string outputFormat{"-"};
+        std::string rankId;
+        std::string stepId;
+        std::string name;
+        std::string type;
+        std::string accCore;
+        std::string startTime;
+        std::string duration;
+        std::string waitTime;
+        std::string blockDim;
+        std::string inputShape;
+        std::string inputType;
+        std::string inputFormat;
+        std::string outputShape;
+        std::string outputType;
+        std::string outputFormat;
         std::map<std::string, std::string> pmuDatas;
     };
 

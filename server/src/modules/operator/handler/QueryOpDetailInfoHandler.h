@@ -35,8 +35,8 @@ namespace Dic::Module::Operator {
             const std::set<std::string> &basePmuHeader, const std::set<std::string> &cmpPmuHeader);
         void SortDataBynameAndStartTime(std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
                                 std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData);
-        void FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data, const std::set<std::string> &basePmuHeader,
-                              const std::set<std::string> &cmpPmuHeader);
+        void FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data, const std::set<std::string> &baseDiff,
+                              const std::set<std::string> &cmpDiff, const std::set<std::string> intersection);
         std::string CalPmuDataCompare(const std::string &comPmu, const std::string &basePmu);
     };
 }
