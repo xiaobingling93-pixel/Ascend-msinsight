@@ -102,7 +102,7 @@
       "Bubble Time: Bubble时间，指receive时间的总和"
     ],
     "Timeline not fully parsed": "时间线未完全解析",
-    "ProhibitConfiguration": "系统采集的数据，不能手动配置",
+    "GenerateConfirm": "该配置与系统采集的配置不一致，确定要更改吗？",
     "NoDataTip": "原始采集的数据中未包含并行策略配置参数，请手动配置",
     "Data Type": "数据类型",
     "None": "不展示",

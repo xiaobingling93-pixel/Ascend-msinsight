@@ -6,7 +6,7 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, InputNumber, Button, Select, Tooltip, CheckboxGroup, Tabs } from 'ascend-components';
-import { message } from 'antd';
+import { message, Popconfirm } from 'antd';
 import type { CheckboxValueType } from 'antd/es/checkbox/Group';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import eventBus from '../../utils/eventBus';
@@ -101,7 +101,7 @@ interface CommunicatorHeaderProps {
 }
 const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateConditions, setGenerateConditions }: CommunicatorHeaderProps) => {
     const [form] = Form.useForm();
-    const [disabled, setDisabled] = useState(false);
+    const [isCollectedConfiguration, setIsCollectedConfiguration] = useState(false);
     const [activeTab, setActiveTab] = useState(generateConditions.dimension);
     const { t } = useTranslation('summary');
     const dimensionOptions = getDimensionOptions(t);
@@ -109,9 +109,9 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
         const { dpSize, tpSize, ppSize, cpSize, epSize, level, algorithm } = await getParallelStrategy();
         const equal = dpSize === 1 && tpSize === 1 && tpSize === 1 && cpSize === 1;
         if (level === 'collected') {
-            setDisabled(true);
+            setIsCollectedConfiguration(true);
         } else {
-            setDisabled(false);
+            setIsCollectedConfiguration(false);
         }
         if (level === 'undefined' || equal) {
             setShowRank(false);
@@ -139,6 +139,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
             setGenerateConditions({ ...values, dimension: activeTab });
             setShowRank(true);
             eventBus.emit('activeCommunicator', undefined);
+            setIsCollectedConfiguration(false);
         } catch (e) {
             const errMsg = (e as ErrorInfo)?.message;
             if (errMsg !== undefined) {
@@ -156,7 +157,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     };
 
     return <>
-        <FormDom disabled={disabled} onClickGenerate={clickGenerate} form={form}/>
+        <FormDom isCollectedConfiguration={isCollectedConfiguration} onClickGenerate={clickGenerate} form={form}/>
         {showRank && <Tabs
             activeKey={activeTab}
             onChange={handleTabChange}
@@ -165,7 +166,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     </>;
 });
 
-const PARALLEL_STRATEGY_INPUT_PROPS = { min: 0, max: 255, style: { width: '80px' } };
+const PARALLEL_STRATEGY_INPUT_PROPS = { min: 1, max: 10000, style: { width: '80px' } };
 const selectOptions = [
     { value: 'megatron-lm(tp-cp-ep-dp-pp)', label: 'Megatron-LM(tp-cp-ep-dp-pp)' },
     { value: 'megatron-lm(tp-cp-pp-ep-dp)', label: 'Megatron-LM(tp-cp-pp-ep-dp)' },
@@ -177,8 +178,8 @@ const getDimensionOptions = (t: TFunction): Array<{key: string; label: string}> 
     { key: 'ep-dp-pp-cp-tp', label: `DP + PP + CP + TP ${t('Dimension')}` },
 ];
 
-const FormDom = ({ disabled, onClickGenerate, form }:
-{disabled: boolean; onClickGenerate: () => void; form: FormInstance<any> }): JSX.Element => {
+const FormDom = ({ isCollectedConfiguration, onClickGenerate, form }:
+{isCollectedConfiguration: boolean; onClickGenerate: () => void; form: FormInstance<any> }): JSX.Element => {
     const { t } = useTranslation('summary');
 
     return (
@@ -202,11 +203,20 @@ const FormDom = ({ disabled, onClickGenerate, form }:
                 <Form.Item name={'epSize'} label={t('EPSize')} style={{ margin: '10px 24px 10px 0' }}>
                     <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
                 </Form.Item>
-                <Tooltip placement="right" title={disabled ? t('ProhibitConfiguration') : ''}>
-                    <div style={{ width: '70px' }}>
-                        <Button type="primary" style={{ margin: '10px 32px 10px 0' }} disabled={disabled} onClick={onClickGenerate}>{t('Generate')}</Button>
-                    </div>
-                </Tooltip>
+                <Popconfirm
+                    placement="right"
+                    disabled={!isCollectedConfiguration}
+                    title={<div style={{ maxWidth: 400 }}>{t('GenerateConfirm')}</div>}
+                    onConfirm={onClickGenerate}
+                >
+                    <Button
+                        type="primary"
+                        style={{ margin: '10px 32px 10px 0' }}
+                        onClick={isCollectedConfiguration ? undefined : onClickGenerate}
+                    >
+                        {t('Generate')}
+                    </Button>
+                </Popconfirm>
             </Form>
         </>
     );
@@ -318,7 +328,7 @@ const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): J
                 dyeingMode !== 'None' &&
                 <Form.Item label={(<DyeingTipAndLabel/>)}>
                     <InputNumber
-                        data-testid='input-dyeing-step'
+                        data-testid="input-dyeing-step"
                         defaultValue={dyeingStep}
                         min={0.01}
                         max={0.1}
