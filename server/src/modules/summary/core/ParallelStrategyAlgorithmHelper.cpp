@@ -36,7 +36,7 @@ std::vector<bool> ParallelStrategyAlgorithmHelper::GetMask(const std::vector<std
                                                            const std::vector<std::string>& token)
 {
     std::vector<bool> mask(order.size(), false);
-    if (token.size() >= order.size()) {
+    if (token.size() > order.size()) {
         Server::ServerLog::Error("Failed to get mask for generate orthogonal rank groups. Unexpected order or token.");
         return {};
     }

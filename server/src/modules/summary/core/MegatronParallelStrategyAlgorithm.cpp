@@ -744,8 +744,8 @@ void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithCpDimension(
         one.indicators.emplace(KEY_FREE_TIME + KEY_MIN_SUFFIX, min.freeTime);
         one.indicators.emplace(KEY_FREE_TIME + KEY_RANGE_SUFFIX,
                                Reserved3DecimalPlaces(max.freeTime - min.freeTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MAX_SUFFIX, max.npuTotalTime);
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MIN_SUFFIX, min.npuTotalTime);
+        one.indicators.emplace(KEY_NPU_TIME + KEY_MAX_SUFFIX, Reserved3DecimalPlaces(max.npuTotalTime));
+        one.indicators.emplace(KEY_NPU_TIME + KEY_MIN_SUFFIX, Reserved3DecimalPlaces(min.npuTotalTime));
         one.indicators.emplace(KEY_NPU_TIME + KEY_RANGE_SUFFIX,
                                Reserved3DecimalPlaces(max.npuTotalTime - min.npuTotalTime));
         one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX, max.pureCommunicationTime);

@@ -87,7 +87,7 @@ const std::string CP_INDEX = "cpIndex";
 const std::string DP_INDEX = "dpIndex";
 const std::string TP_INDEX = "tpIndex";
 const std::string EP_INDEX = "epIndex";
-const int64_t MAX_PARALLEL_SIZE = 255;
+const int64_t MAX_PARALLEL_SIZE = 10000;
 const int64_t MAX_PARALLEL_PRODUCT_SIZE = 250000;
 
 struct ParallelStrategyConfig {
@@ -125,10 +125,10 @@ struct ParallelStrategyConfig {
             errorMsg = "[Summary] DP size must be evenly divided by EP Size.";
             return false;
         }
-        // 检查四个数的乘积是否小于MAX_PARALLEL_PRODUCT_SIZE(25万)
-        if (ppSize * tpSize * dpSize * cpSize > MAX_PARALLEL_PRODUCT_SIZE) {
+        // 检查四个数的乘积是否小于UINT32_MAX
+        if (ppSize * tpSize * dpSize * cpSize > UINT32_MAX) {
             errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
-                       std::to_string(MAX_PARALLEL_PRODUCT_SIZE);
+                       std::to_string(UINT32_MAX);
             return false;
         }
         return true;
