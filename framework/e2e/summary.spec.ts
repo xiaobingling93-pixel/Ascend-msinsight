@@ -160,6 +160,7 @@ test.describe('Summary', () => {
         await stepSelector.open();
         await stepSelector.selectOption('2');
         await rankGroupSelector.open();
+        await rankGroupSelector.setValue('(1,9)');
         await rankGroupSelector.selectOption('(1,9)');
         await orderBySelector.open();
         await orderBySelector.selectOption('Preparing');

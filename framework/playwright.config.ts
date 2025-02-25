@@ -63,7 +63,7 @@ export default defineConfig({
              * Use the preview server on CI for more realistic testing.
              * Playwright will re-use the local server if there is already a dev-server running.
              */
-            command: 'cd ..\\modules\\framework && npm start',
+            command: 'cd ..\\modules\\framework && npm run staging',
             url: 'http://127.0.0.1:5174',
             reuseExistingServer: !process.env.CI,
         },

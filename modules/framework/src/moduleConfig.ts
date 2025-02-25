@@ -13,7 +13,7 @@ export interface ModuleConfig {
     isJupyter?: boolean;
 };
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.REACT_APP_ENV === 'development';
 export const modulesConfig: ModuleConfig[] = [
     {
         name: 'Timeline',

@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { expect } from '@playwright/test';
 import { Component } from './Component';
 
 export class SelectHelpers extends Component {
@@ -9,6 +8,10 @@ export class SelectHelpers extends Component {
     async open(): Promise<void> {
         const selector = this.locator.locator('xpath=../..');
         await selector?.click();
+    }
+
+    async setValue(value: string): Promise<void> {
+        await this.locator.fill(value);
     }
 
     async selectOption(optionText: string): Promise<void> {
