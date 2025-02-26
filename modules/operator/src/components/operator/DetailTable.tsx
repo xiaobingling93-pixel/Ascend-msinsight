@@ -17,6 +17,7 @@ import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumn
 import { HelpIcon } from 'ascend-icon';
 
 interface FullConditionType {
+    isCompare: boolean;
     rankId: string ;
     group: string;
     topK: number;
@@ -249,7 +250,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [fullCondition, setFullCondition] = useState<FullConditionType>({
-        current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0, type: [], opType: [], name: [], opName: [], accCore: [],
+        isCompare: false, current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0, type: [], opType: [], name: [], opName: [], accCore: [],
     });
     const [compareColumnLevel, setCompareColumnLevel] = useState<string>();
     const [comparePmuColumns, setComparePmuColumns] = useState<string[]>([]);
@@ -335,7 +336,8 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     };
 
     useEffect(() => {
-        if (condition.rankId === '') {
+        // 首次渲染不更新表格
+        if (fullCondition.rankId === '') {
             setTableData([]);
             runInAction(() => {
                 session.total = 0;
@@ -343,8 +345,9 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
             return;
         }
         updateTable();
-    }, [JSON.stringify(fullCondition), condition.isCompare, t]);
+    }, [JSON.stringify(fullCondition), t]);
 
+    // 触发条件是同一工程切换页签时
     useEffect(() => {
         setSorter(defaultSorter);
         setPage(defaultPage);
@@ -352,6 +355,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         updateFullCondition({ ...defaultSorter, ...defaultPage, ...defaultFilters, ...condition });
     }, [condition.group]);
 
+    // 触发条件是切换不同工程的时候，包括非比对变成比对
     useEffect(() => {
         if (page.current * page.pageSize > page.total) {
             page.current = parseInt((page.total / page.pageSize).toString()) + 1;
@@ -359,7 +363,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         updateFullCondition({ ...sorter, ...page, ...filters, ...condition });
     }, [page.current, page.pageSize, page.total, sorter.field, sorter.order,
         filters.type, filters.opType, filters.name, filters.opName, filters.accCore,
-        condition.rankId, condition.topK]);
+        condition.rankId, condition.topK, condition.isCompare]);
 
     return <ResizeTable
         size="small"
