@@ -6,11 +6,13 @@ import { themeInstance } from 'ascend-theme';
 import { store } from '@/store';
 import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import { ThemeName, Language } from '@/utils/enum';
+import { getRankId } from '@/utils/Rank';
 
-export function sendTheme(): void {
+export function sendTheme(to?: number): void {
     connector.send({
         event: 'setTheme',
         body: { isDark: themeInstance.getCurrentTheme() === ThemeName.DARK },
+        to,
     });
 }
 
@@ -73,4 +75,47 @@ export const sendClusterBaselineStatus = (status: boolean): void => {
         event: 'clusterBaselineToggle',
         body: { status },
     });
+};
+
+export const sendDirectory = (to?: number): void => {
+    const session = store.sessionStore.activeSession;
+    const { projectName, dataPath } = session.activeDataSource;
+    let rankId: string = '';
+    // 比对数据
+    if (session.isCompareStatus) {
+        rankId = session.compareSet.comparison.rankId;
+    } else {
+        // 切换目录
+        if (projectName !== '' && dataPath.length > 0) {
+            rankId = getRankId({ projectName, filePath: dataPath[0] });
+        }
+    }
+    // 通知页签
+    connector.send({
+        event: 'switchDirectory',
+        body: { rankId, isCompare: session.isCompareStatus },
+        to,
+    });
+};
+
+export const sendSessionKey = (key: string, to?: number): void => {
+    const session = store.sessionStore.activeSession;
+    const value = (session as any)[key];
+    if (value === undefined) {
+        return;
+    }
+    connector.send({
+        event: 'updateSession',
+        body: { [key]: value },
+        to,
+    });
+};
+
+export const sendMap: Record<string, (to?: number) => void> = {
+    directory: sendDirectory,
+    status: sendStatus,
+    theme: sendTheme,
+    language: sendLanguage,
+    memoryRankIds: (to) => sendSessionKey('memoryRankIds', to),
+    operatorRankIds: (to) => sendSessionKey('operatorRankIds', to),
 };

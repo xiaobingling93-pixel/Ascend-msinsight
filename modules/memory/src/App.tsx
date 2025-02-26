@@ -8,9 +8,8 @@ import { SharedConfigProvider } from 'ascend-shared-config-provider';
 import { useRootStore } from './context/context';
 import { themeInstance } from './theme/theme';
 import Memory from './pages/Memory';
-import connector from './connection';
 import { GlobalStyles } from 'ascend-theme';
-import { registerEventHandlers } from './bootstrap';
+import { getInitStatus, registerEventHandlers } from './bootstrap';
 
 export const App = observer(() => {
     const { sessionStore } = useRootStore();
@@ -24,16 +23,8 @@ export const App = observer(() => {
 
     useEffect(() => {
         registerEventHandlers();
-        getLanguage();
-        connector.send({ event: 'getParseStatus', body: { from: 'Memory', request: 'memoryRankIds' } });
-        connector.send({ event: 'getTheme' });
+        getInitStatus();
     }, []);
-
-    const getLanguage = (): void => {
-        connector.send({
-            event: 'getLanguage',
-        });
-    };
 
     return (
         <ThemeProvider theme={themeInstance.getThemeType()}>

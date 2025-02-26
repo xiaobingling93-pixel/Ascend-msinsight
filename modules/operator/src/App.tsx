@@ -25,15 +25,8 @@ const App = observer(() => {
     useEffect(() => {
         session = sessionStore.activeSession;
         window.setTheme(true);
-        getLanguage();
-        connector.send({ event: 'getParseStatus', body: { from: 'Operator', request: 'operatorRankIds' } });
+        connector.send({ event: 'getParseStatus', body: { from: 'Operator', requests: ['language', 'theme', 'operatorRankIds', 'directory'] } });
     }, []);
-
-    const getLanguage = (): void => {
-        connector.send({
-            event: 'getLanguage',
-        });
-    };
 
     return session !== undefined
         ? <ThemeProvider theme={themeInstance.getThemeType()}>

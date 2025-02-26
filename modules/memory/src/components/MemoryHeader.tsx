@@ -79,7 +79,8 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     }, [session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
-        if (session.compareRank.rankId === memorySession.rankIdCondition.value) {
+        const hostSetted = memorySession.hostCondition.options.length === 0 || memorySession.hostCondition.value !== '';
+        if (session.compareRank.rankId === memorySession.rankIdCondition.value && hostSetted) {
             return;
         }
         const list = session.compareRank.rankId.split(' ');

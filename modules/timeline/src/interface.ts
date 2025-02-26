@@ -17,7 +17,6 @@ import {
     jupyterCompletedHandler,
     switchLanguageHandler,
     parseOperatorSuccessHandler,
-    parseMemorySuccessHandler,
     baselineAddHandler,
     removeBaselineHandler,
     updateProjectNameHandler,
@@ -35,7 +34,6 @@ export interface InterfaceDefs {
 };
 
 const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
-const MEMORY_COMPLETED = 'parse/memoryCompleted';
 const OPERATOR_COMPLETED = 'parse/operatorCompleted';
 const REMOTE_IMPORT = 'remote/import';
 const REMOTE_REMOVE = 'remote/remove';
@@ -60,7 +58,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [PARSE_CLUSTER_COMPLETED]: clusterCompletedHandler,
     [PARSE_CLUSTER_STEP2_COMPLETED]: clusterDurationCompletedHandler,
     [JUPYTER_COMPLETED]: jupyterCompletedHandler,
-    [MEMORY_COMPLETED]: parseMemorySuccessHandler,
     [OPERATOR_COMPLETED]: parseOperatorSuccessHandler,
     [BASELINE_ADD]: baselineAddHandler,
     [BASELINE_REMOVE]: removeBaselineHandler,

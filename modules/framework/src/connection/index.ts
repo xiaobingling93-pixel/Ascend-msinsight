@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { ServerConnector } from 'ascend-connection';
-import { INTERCEPTOR_HANDLERS } from './interceptor';
+import { INTERCEPTOR_HANDLERS, NOTIFICATION_INTERCEPTOR_HANDLERS } from './interceptor';
 import { listenerMap } from './notification';
 import { store } from '@/store';
 import { request } from '@/centralServer/server';
@@ -19,12 +19,15 @@ const connector = new ServerConnector({
         return res;
     },
     getInterceptorHandlers: (command: string): (...args: any[]) => void => INTERCEPTOR_HANDLERS[command] as any,
-    sendBefore: (originBody: any): any => {
-        const body = originBody;
-        if (pluginEvents.includes(body?.event as string)) {
-            body.target = 'plugin';
+    sendBefore: (origin: any): any => {
+        const message = origin;
+        if (pluginEvents.includes(message?.event as string)) {
+            message.target = 'plugin';
         }
-        return body;
+        if (NOTIFICATION_INTERCEPTOR_HANDLERS[message?.event] !== undefined) {
+            NOTIFICATION_INTERCEPTOR_HANDLERS[message.event](message.body);
+        }
+        return message;
     },
 });
 

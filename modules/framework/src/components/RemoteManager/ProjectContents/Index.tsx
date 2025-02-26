@@ -4,31 +4,15 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react';
 import { store } from '@/store';
-import connector from '@/connection';
 import ContextMenu from './ContextMenu';
 import Contents from './Contents';
-import { getRankId } from '@/utils/Rank';
+import { sendDirectory } from '@/connection/sendNotification';
 
 const Index = observer(() => {
     const session = store.sessionStore.activeSession;
 
     useEffect(() => {
-        const { projectName, dataPath } = session.activeDataSource;
-        let rankId: string = '';
-        // 比对数据
-        if (session.isCompareStatus) {
-            rankId = session.compareSet.comparison.rankId;
-        } else {
-            // 切换目录
-            if (projectName !== '' && dataPath.length > 0) {
-                rankId = getRankId({ projectName, filePath: dataPath[0] });
-            }
-        }
-        // 通知页签
-        connector.send({
-            event: 'switchDirectory',
-            body: { rankId, isCompare: session.isCompareStatus },
-        });
+        sendDirectory();
     }, [session.activeDataSource.dataPath, session.isCompareStatus, session.compareSet.comparison.rankId]);
 
     return <>

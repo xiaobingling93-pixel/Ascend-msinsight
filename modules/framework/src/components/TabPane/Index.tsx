@@ -12,6 +12,7 @@ import styled from '@emotion/styled';
 import { SessionAction } from '@/utils/enum';
 import { useTranslation } from 'react-i18next';
 import { getModuleConfig } from '@/utils/Request';
+import { updateSession } from '@/connection/notificationHandler';
 
 const Container = styled.div`
     width: 100%;
@@ -47,6 +48,16 @@ const Container = styled.div`
         background: transparent;
     }
 `;
+
+export function updateDataScene(data: Record<string, any>): void {
+    const scenceInfo = {
+        isCluster: data.isCluster,
+        isReset: data.reset,
+        isIpynb: data.isIpynb,
+        isBinary: data.isBinary,
+    };
+    updateSession(scenceInfo);
+}
 
 function getActive(session: Session, scene: Scene, activeModule: string, availableModules: ModuleConfig[]): string {
     const moduleNameList = availableModules.map(config => config.name);

@@ -83,3 +83,13 @@ export function registerEventHandlers(): void {
         });
     });
 }
+
+export function getInitStatus(): void {
+    connector.send({
+        event: 'getParseStatus',
+        body: {
+            from: 'Memory',
+            requests: ['language', 'theme', 'memoryRankIds', 'directory'],
+        },
+    });
+};

@@ -611,25 +611,6 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
     i18n.changeLanguage(lang);
 };
 
-export const parseMemorySuccessHandler: NotificationHandler = (data): void => {
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession;
-    runInAction(() => {
-        if (!session) {
-            return;
-        }
-        const memoryResult = data.memoryResult as Array<{ rankId: string;hasMemory: boolean }>;
-        const memoryRankIds: string[] = [];
-        memoryResult.forEach(item => {
-            if (item.hasMemory) {
-                memoryRankIds.push(item.rankId);
-            }
-        });
-        session.memoryRankIds = memoryRankIds;
-        connector.send({ event: 'updateSession', body: { memoryRankIds, broadcast: false } });
-    });
-};
-
 export const parseOperatorSuccessHandler: NotificationHandler = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
