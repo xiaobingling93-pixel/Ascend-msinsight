@@ -18,9 +18,11 @@ const onFilterDropdownOpenChange = (open: boolean): void => {
 };
 
 // 筛选列，是数字且小于0，用NA表示
-const getFilter = (item: any): any => {
-    if (!isNaN(Number(item))) {
-        return Number(item) < 0 ? 'NA' : Number(item);
+const getFilter = (item: any, dataIndex?: string): any => {
+    if (!isNaN(Number(item)) && Number(item) < 0) {
+        return 'NA';
+    } else if (dataIndex === 'L2Cache Hit Rate') {
+        return Number(item);
     } else {
         return item;
     }
@@ -35,7 +37,7 @@ export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFu
         if (col.dataIndex !== undefined && !unfilterableCols.includes(String(col.dataIndex))) {
             const items = [...new Set(curInstrData.map(item => item[col.dataIndex as keyof InstrsColumnType]))];
             const filters = items.map(item => ({
-                text: getFilter(item),
+                text: getFilter(item, String(col.dataIndex)),
                 value: item,
             }));
             Object.assign(col, {
