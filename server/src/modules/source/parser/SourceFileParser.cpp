@@ -20,6 +20,7 @@
 #include "BinFileParseUtil.h"
 #include "DetailsMemoryParser.h"
 #include "GlobalProtocolEvent.h"
+#include "NumberSafeUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -116,7 +117,7 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
             ServerLog::Error("Parse source file failed, source file is invalid.");
             return false;
         }
-        if (dataSize > static_cast<uint64_t>(INT64_MAX - startPos) || startPos + dataSize - paddingLength > INT64_MAX) {
+        if (dataSize > static_cast<uint64_t>(INT64_MAX - startPos) || startPos + dataSize < paddingLength) {
             // 溢出防护
             ServerLog::Error("Data block in selected file is invalid which data size is :", dataSize);
             return false;
@@ -281,7 +282,7 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
         }
         // 发送解析进度事件
         std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
-        curFileProgress->AddToParsedSize(pair.second - pair.first);
+        curFileProgress->AddToParsedSize(NumberSafe::Sub(pair.second, pair.first));
         instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
                                        curFileProgress->GetProgressPercentage());
     }
