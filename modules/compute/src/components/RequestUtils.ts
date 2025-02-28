@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import type { IOriginData as IRooflineData } from './detail/Roofline/Index';
+import type { QueryCacheRecordReturn } from '@/components/cacheKit/defs';
 /**
  * 查询源代码
  *
@@ -154,21 +155,6 @@ export const queryCoreOccupancy = async(isCompared: boolean): Promise<any> => {
 
 export const queryRoofline = async(): Promise<IRooflineData> => {
     return window.requestData('source/details/roofline', {});
-};
-
-export interface CacheRecordItem {
-    [key: string]: any;
-    allocate: number[];
-    cacheLineId: string;
-    evictAndWrite: number[];
-    evictWithoutWrite: number[];
-    hit: number[];
-    loadCount: number[];
-    miss: number[];
-    storeCount: number[];
-};
-interface QueryCacheRecordReturn {
-    cacheRecords: CacheRecordItem[];
 };
 
 /**

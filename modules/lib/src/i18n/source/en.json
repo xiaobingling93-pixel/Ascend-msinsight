@@ -20,6 +20,14 @@
     "Gpr Count": "Gpr Count",
     "L2Cache Hit Rate": "L2Cache Hit Rate",
     "EventNumber": "Number of events",
-    "EventRatio": "Proportion of events"
+    "EventRatio": "Proportion of events",
+    "Load Count": "Load Count",
+    "Store Count": "Store Count",
+    "Hit": "Hit",
+    "Miss": "Miss",
+    "Allocate": "Allocate",
+    "Evict And Write": "Evict And Write",
+    "Evict Without Write": "Evict Without Write",
+    "Cacheline Id": "Cacheline ID"
   }
 }

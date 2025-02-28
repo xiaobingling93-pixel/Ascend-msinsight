@@ -5,7 +5,7 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import { type NotificationHandler } from './defs';
 import i18n from 'ascend-i18n';
-import { DirInfo } from '../entity/session';
+import { type DirInfo, InstructionSelectSource } from '../entity/session';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -87,5 +87,20 @@ export const switchDirectoryHandler: NotificationHandler = async (data): Promise
             return;
         }
         session.dirInfo = dirInfo;
+    });
+};
+
+// 高亮cache 映射指令
+export const showCacheInstructionsHandler: NotificationHandler = async (data): Promise<void> => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.cacheUnit = {
+            cachelineId: (data as any).cachelineId,
+            addressRange: (data as any).addressRange,
+        };
+        session.instructionSelectSource = InstructionSelectSource.CACHE;
     });
 };

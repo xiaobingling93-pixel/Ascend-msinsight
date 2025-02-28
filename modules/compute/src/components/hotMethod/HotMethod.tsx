@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Checkbox } from 'ascend-components';
@@ -9,23 +9,26 @@ import type { ColumnsType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import './HotMethod.css';
 import type { Session } from '../../entity/session';
+import { InstructionSelectSource } from '../../entity/session';
 import Filter from './Filter';
 import CodeViewer from './codeViewer/CodeViewer';
 import { ResizeTable } from 'ascend-resize';
 import {
+    GetPageConfigWhithPageData,
     HeaderFixedContainer,
     LeftRightContainer,
-    syncScroller,
     limitInput,
-    GetPageConfigWhithPageData,
+    syncScroller,
 } from '../Common';
-import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
+import type { Iline, Ilinetable, InstrsColumnType, JsonInstructionType } from './defs';
+import { FieldType } from './defs';
 import { queryDynamicInstr, queryDynamicLine, querySourceCode } from '../RequestUtils';
 import { Layout } from 'ascend-layout';
 import { getInstrColumns } from './InstructionTable';
 import { getCodeColumns } from './CodeAttrTable';
 import TableHead, { type Col } from './TableHead';
-import { FieldType } from './defs';
+import { store } from '../../store';
+import { runInAction } from 'mobx';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -45,14 +48,27 @@ const useSourceColumns = (): Col[] => {
     const { t } = useTranslation('source');
     return [{ width: 45, textAlign: 'right', name: '#' }, { name: t('Source') }];
 };
-const isRelated = (codeline: Ilinetable, instr: InstrsColumnType): boolean => {
+const isRelated = (instr: InstrsColumnType, range: string[][] = []): boolean => {
     // 指令地址是否在代码行地址范围内
-    return Boolean(codeline?.['Address Range']?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
+    return Boolean(range?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
 };
 
+// 恢复默认的指令高亮来源
+const recoverDefaultInstructionSource = (): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.instructionSelectSource = InstructionSelectSource.DEFAULT;
+        // cache信息重置
+        session.cacheUnit = { cachelineId: -1, addressRange: [] };
+    });
+};
+
+const domId = 'hotMethod';
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(({ session }: { session: Session }) => {
-    const domId = 'hotMethod';
     const { t } = useTranslation('source');
     const [condition, setCondition] = useState<ConditionType>({ core: '', source: '', onlyRelated: false });
     const [code, setCode] = useState('');
@@ -67,14 +83,19 @@ const Index = observer(({ session }: { session: Session }) => {
     const [allInstrData, setAllInstrData] = useState<InstrsColumnType[]>([]);
     // 是否关联指令
     const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => {
-        if (selectedline > 0 && codeLines.length > 0) {
-            return isRelated(codeLines[selectedline - 1], instr);
+        if (session.instructionSelectSource === InstructionSelectSource.CACHE) {
+            return isRelated(instr, session.cacheUnit.addressRange);
+        } else {
+            if (selectedline > 0 && codeLines.length > 0) {
+                return isRelated(instr, codeLines[selectedline - 1]['Address Range']);
+            }
         }
         return false;
-    }, [selectedline, codeLines]);
+    }, [selectedline, codeLines, session.instructionSelectSource, session.cacheUnit.addressRange]);
     const getRelatedInstrs = useCallback((): InstrsColumnType[] => {
         return allInstrData.filter((record: InstrsColumnType) => isRelatedInstr(record));
     }, [allInstrData, isRelatedInstr]);
+    const relatedInstrs = useMemo(() => getRelatedInstrs(), [getRelatedInstrs]);
     // 指令表当前显示数据
     const curInstrData = useMemo(() => condition.onlyRelated ? getRelatedInstrs() : allInstrData, [allInstrData, condition.onlyRelated, getRelatedInstrs]);
     const instrColumns = useMemo(() => getInstrColumns(dynamicInstrFields, t, curInstrData), [dynamicInstrFields, t, curInstrData]);
@@ -90,8 +111,9 @@ const Index = observer(({ session }: { session: Session }) => {
     };
 
     const handleInstrsClick = (instr: InstrsColumnType): void => {
-        const data = loggedCodeLines.find((codeline: Ilinetable) => isRelated(codeline, instr));
+        const data = loggedCodeLines.find((codeline: Ilinetable) => isRelated(instr, codeline['Address Range']));
         setSelectedline(data?.Line ?? -1);
+        recoverDefaultInstructionSource();
     };
 
     function resizeHeight(): void {
@@ -254,6 +276,19 @@ const Index = observer(({ session }: { session: Session }) => {
     useEffect(() => {
         updateCode();
     }, [t]);
+    // Cache跳转高亮指令
+    useEffect(() => {
+        if (session.instructionSelectSource === InstructionSelectSource.CACHE) {
+            // 清理原来选中的代码行
+            reset();
+        }
+    }, [session.instructionSelectSource]);
+
+    useEffect(() => {
+        if (session.instructionSelectSource === InstructionSelectSource.CACHE) {
+            setLineClickListener(pre => (pre + 1) % 100);
+        }
+    }, [relatedInstrs]);
 
     return <div id={domId} style={{ height: '100%', width: '100%' }} className={'th35'}>
         <Layout>
@@ -266,10 +301,17 @@ const Index = observer(({ session }: { session: Session }) => {
                             <>
                                 <div className="hit-label">
                                     <span>
-                                        {t('Line')} :
-                                        <span>
-                                            {selectedline >= 0 ? selectedline : ''},
-                                        </span>
+                                        {
+                                            session.instructionSelectSource === InstructionSelectSource.CACHE
+                                                ? <>{t('Cacheline Id')}:<span>{session.cacheUnit.cachelineId}</span></>
+                                                : <>
+                                                    {t('Line')} :
+                                                    <span>
+                                                        {selectedline >= 0 ? selectedline : ''}
+                                                    </span>
+                                                </>
+                                        }
+                                        ,
                                         {t('RelatedInstructionsCount')} :
                                         <span>
                                             {getRelatedInstrs().length}
@@ -309,6 +351,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                             <CodeViewer
                                                 code={code}
                                                 handleLineClick={(line: number): void => {
+                                                    recoverDefaultInstructionSource();
                                                     setSelectedline(line);
                                                     setLineClickListener((lineClickListener + 1) % 100);
                                                 }}
@@ -329,6 +372,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                         onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {
                                             return {
                                                 onClick: (event: React.MouseEvent<HTMLElement>): void => {
+                                                    recoverDefaultInstructionSource();
                                                     setSelectedline(record.Line);
                                                     setLineClickListener((lineClickListener + 1) % 100);
                                                 },
@@ -352,6 +396,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                     selectedline={selectedline}
                                     lineClickListener={lineClickListener}
                                     isShowPage ={curInstrData.length > PAGE_LIMIT}
+                                    instructionSelectSource={session.instructionSelectSource}
                                 />}
                             />
                         }
@@ -372,18 +417,21 @@ interface IinstrProp {
     selectedline: number;
     lineClickListener: number;
     isShowPage?: boolean;
+    instructionSelectSource: InstructionSelectSource;
 }
 
-const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr }:
+const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr, instructionSelectSource = InstructionSelectSource.DEFAULT }:
 {
     condition: ConditionType;
     selectedline: number;
     showDataSource: InstrsColumnType[];
     isRelatedInstr: (instr: InstrsColumnType) => boolean;
+    instructionSelectSource: InstructionSelectSource;
 },
 ): void => {
     setTimeout(() => {
-        if (condition.onlyRelated === true || selectedline < 0) {
+        // 只显示关联代码，或默认场景下未选中代码行
+        if (condition.onlyRelated === true || (selectedline < 0 && instructionSelectSource === InstructionSelectSource.DEFAULT)) {
             return;
         }
         const index = showDataSource.findIndex(isRelatedInstr);
@@ -397,7 +445,7 @@ const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr 
 };
 
 function InstructionTable({
-    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, condition, lineClickListener, isShowPage,
+    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, condition, lineClickListener, isShowPage, instructionSelectSource,
 }: IinstrProp): JSX.Element {
     return isShowPage
         ? <InstructionTablePage
@@ -409,6 +457,7 @@ function InstructionTable({
             handleInstrsClick={handleInstrsClick}
             selectedline={selectedline}
             lineClickListener={lineClickListener}
+            instructionSelectSource={instructionSelectSource}
         />
         : <InstructionTableNopage
             tableHeight={tableHeight}
@@ -418,7 +467,9 @@ function InstructionTable({
             isRelatedInstr={isRelatedInstr}
             handleInstrsClick={handleInstrsClick}
             selectedline={selectedline}
-            lineClickListener={lineClickListener}/>;
+            lineClickListener={lineClickListener}
+            instructionSelectSource={instructionSelectSource}
+        />;
 };
 
 const getShowData = (dataSource: InstrsColumnType[], filters: Record<string, any[]>, sorter: Record<string, any>): InstrsColumnType[] => {
@@ -477,7 +528,7 @@ const sortData = (dataSource: InstrsColumnType[], sorter: Record<string, any>): 
     });
 };
 function InstructionTableNopage({
-    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
+    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition, instructionSelectSource,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState(dataSource);
     const [filters, setFilters] = useState({});
@@ -488,7 +539,7 @@ function InstructionTableNopage({
     }, [dataSource, filters, sorter]);
 
     useEffect(() => {
-        srcollToView({ condition, selectedline, showDataSource, isRelatedInstr });
+        srcollToView({ condition, selectedline, showDataSource, isRelatedInstr, instructionSelectSource });
     }, [lineClickListener, showDataSource]);
 
     return <ResizeTable
@@ -521,7 +572,7 @@ function InstructionTableNopage({
 }
 
 function InstructionTablePage({
-    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
+    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition, instructionSelectSource,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState<InstrsColumnType[]>([]);
     const [filters, setFilters] = useState({});
@@ -548,7 +599,7 @@ function InstructionTablePage({
         setPageData(curPageData);
     }, [showDataSource, page.pageSize, page.current]);
     useEffect(() => {
-        srcollToView({ condition, selectedline, showDataSource: pageData, isRelatedInstr });
+        srcollToView({ condition, selectedline, showDataSource: pageData, isRelatedInstr, instructionSelectSource });
     }, [lineClickListener, pageData, page.current]);
 
     return <ResizeTable
