@@ -8,6 +8,17 @@ export interface DirInfo {
     rankId: string;
     isCompare: boolean;
 };
+
+export enum InstructionSelectSource {
+    DEFAULT = 'default',
+    CACHE = 'cache',
+}
+
+export interface CacheUnit {
+    cachelineId?: number;
+    addressRange: string[][];
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     coreList: string[] = [];
@@ -20,6 +31,9 @@ export class Session {
     // global param
     dirInfo: DirInfo = { rankId: '', isCompare: false };
     computeAdvice?: string[];
+    // 指令高亮来源
+    instructionSelectSource: InstructionSelectSource = InstructionSelectSource.DEFAULT;
+    cacheUnit: CacheUnit = { cachelineId: -1, addressRange: [] };
     constructor() {
         makeAutoObservable(this);
     }

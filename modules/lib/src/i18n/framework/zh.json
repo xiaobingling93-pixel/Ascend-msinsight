@@ -54,7 +54,8 @@
       "Summary": "概览",
       "Communication": "通信",
       "Source": "源码",
-      "Details": "详情"
+      "Details": "详情",
+      "Cache": "缓存"
     }
   }
 }

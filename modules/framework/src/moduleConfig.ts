@@ -13,7 +13,7 @@ export interface ModuleConfig {
     isJupyter?: boolean;
 };
 
-const isDev = process.env.REACT_APP_ENV === 'development';
+const isDev = false;
 export const modulesConfig: ModuleConfig[] = [
     {
         name: 'Timeline',
@@ -75,6 +75,14 @@ export const modulesConfig: ModuleConfig[] = [
         requestName: 'compute',
         attributes: {
             src: isDev ? 'http://localhost:3004/detail.html' : './plugins/Compute/detail.html',
+        },
+        isCompute: true,
+    },
+    {
+        name: 'Cache',
+        requestName: 'compute',
+        attributes: {
+            src: isDev ? 'http://localhost:3004/cache.html' : './plugins/Compute/cache.html',
         },
         isCompute: true,
     },

@@ -52,7 +52,7 @@ export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFu
 };
 
 const instrsColsConfig = [
-    { title: '#', dataIndex: 'index', width: 50, align: 'right' as AlignType, ellipsis: true },
+    { title: '#', dataIndex: 'index', width: 60, align: 'right' as AlignType, ellipsis: true },
     { title: 'Address', dataIndex: 'Address', ellipsis: true },
     { title: 'Pipe', dataIndex: 'Pipe', ellipsis: true },
     {

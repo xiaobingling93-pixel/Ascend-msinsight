@@ -20,6 +20,14 @@
     "Gpr Count": "通用寄存器数",
     "L2Cache Hit Rate": "L2Cache命中率",
     "EventNumber": "事件次数",
-    "EventRatio": "事件占比"
+    "EventRatio": "事件占比",
+    "Load Count": "读取事件",
+    "Store Count": "写入事件",
+    "Hit": "命中",
+    "Miss": "未命中",
+    "Allocate": "缓存分配",
+    "Evict And Write": "换出并写回",
+    "Evict Without Write": "换出不写回",
+    "Cacheline Id": "缓存行索引"
   }
 }

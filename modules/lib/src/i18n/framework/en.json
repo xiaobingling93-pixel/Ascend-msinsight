@@ -54,7 +54,8 @@
       "Summary": "Summary",
       "Communication": "Communication",
       "Source": "Source",
-      "Details": "Details"
+      "Details": "Details",
+      "Cache": "Cache"
     }
   }
 }

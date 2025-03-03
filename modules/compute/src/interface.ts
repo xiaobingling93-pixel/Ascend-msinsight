@@ -9,6 +9,7 @@ import {
     resetHandler,
     switchLanguageHandler,
     switchDirectoryHandler,
+    showCacheInstructionsHandler,
 } from './connection/handler';
 
 const IMPORT = 'remote/import';
@@ -22,4 +23,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [RESET]: resetHandler,
     switchLanguage: switchLanguageHandler,
     switchDirectory: switchDirectoryHandler,
+    showCacheInstructions: showCacheInstructionsHandler,
 };

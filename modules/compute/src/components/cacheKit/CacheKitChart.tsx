@@ -7,12 +7,16 @@ import { range } from 'lodash';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { queryCacheRecord, type CacheRecordItem } from '../RequestUtils';
+import type { CacheEventType, CacheRecordItem } from './defs';
 import styled from '@emotion/styled';
 import { type Session } from '../../entity/session';
 import { safeStr } from 'ascend-utils';
 import * as echarts from 'echarts';
 import { type Theme, useTheme } from '@emotion/react';
+import { queryCacheRecord } from '../RequestUtils';
+import { swtich2Source } from '../../connection/sendNotification';
+import { CACHELINE_RECORD, CACHELINE_ID, ADDRESS_RANGE, HIT, MISS } from './defs';
+import { store } from '../../store';
 
 const ChartContainer = styled.div`
     width: 620px;
@@ -91,35 +95,75 @@ interface ChartDataItem {
     data: any[];
 };
 
-const baseOption = (yAxis: number[], data: any[], isPreview: boolean, t: TFunction, theme: Theme): any => {
+enum DataIndex {
+    INDEX = 2,
+    CACHELINE_ID_NUM = 3,
+    EVENT_NUM = 4,
+    RATIO = 5,
+}
+
+interface IOptionParams {
+    yAxis: number[];
+    data: any[];
+    isPreview: boolean;
+    t: TFunction;
+    theme: Theme;
+    name: string;
+}
+
+const baseSet = {
+    confine: true,
+    animation: false,
+    grid: {
+        right: '100px',
+    },
+    xAxis: {
+        type: 'category',
+        data: range(0, 128),
+    },
+};
+
+const visualMapBaseSet = {
+    animation: false,
+    min: 0,
+    max: 100,
+    calculable: false,
+    orient: 'vertical',
+    align: 'left',
+    right: '30px',
+    top: '50px',
+};
+
+const heatmapBaseSet = {
+    type: 'heatmap',
+    animation: false,
+    progressive: 0,
+    emphasis: {
+        itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
+        },
+    },
+};
+
+const getBaseOption = (params: IOptionParams): any => {
+    const { yAxis, data, isPreview, t, theme, name } = params;
     return {
-        animation: false,
+        ...baseSet,
         tooltip: {
-            position: 'top',
+            position: (point: number[]): string => point[1] < 100 ? 'bottom' : 'top',
             formatter: (item: { [key: string]: any }): string => {
-                return `${t('EventNumber')}：${safeStr(item.data[2])}<br/>${t('EventRatio')}：${safeStr(item.data[3])} %`;
+                return `${t('Cacheline Id')}：${safeStr(item.data[DataIndex.CACHELINE_ID_NUM])}<br/>
+${t('EventNumber')}：${safeStr(item.data[DataIndex.EVENT_NUM])}<br/>
+${t('EventRatio')}：${safeStr(item.data[DataIndex.RATIO])} %`;
             },
-        },
-        grid: {
-            right: '100px',
-        },
-        xAxis: {
-            type: 'category',
-            data: range(0, 128),
         },
         yAxis: {
             type: 'category',
             data: yAxis,
         },
         visualMap: {
-            animation: false,
-            min: 0,
-            max: 100,
-            calculable: false,
-            orient: 'vertical',
-            align: 'left',
-            right: '30px',
-            top: '50px',
+            ...visualMapBaseSet,
             textStyle: {
                 color: theme.textColorSecondary,
             },
@@ -127,29 +171,23 @@ const baseOption = (yAxis: number[], data: any[], isPreview: boolean, t: TFuncti
             color: ['red', 'yellow', 'lightGreen', theme.bgColorGrey],
         },
         series: {
-            type: 'heatmap',
-            animation: false,
-            progressive: 0,
+            ...heatmapBaseSet,
             data,
-            emphasis: {
-                itemStyle: {
-                    shadowBlur: 10,
-                    shadowColor: 'rgba(0, 0, 0, 0.5)',
-                },
-            },
+            name,
         },
     };
 };
 
-const getchartsData = async (): Promise<{ [key: string]: ChartDataItem } > => {
+let allCacheRecords: CacheRecordItem[] = [];
+const getchartsData = async (): Promise<{ chartsData: Record<string, ChartDataItem> ;cacheRecords: CacheRecordItem[]} > => {
     let cacheRecords: CacheRecordItem[] = [];
     try {
-        cacheRecords = (await queryCacheRecord() ?? { cacheRecords: [] }).cacheRecords;
+        cacheRecords = (await queryCacheRecord() ?? { [CACHELINE_RECORD]: [] })?.[CACHELINE_RECORD] ?? [];
     } catch (err) {
         // 请求异常，用初始空值
     }
     const chartsData: { [key: string]: ChartDataItem } = {};
-    const chartkeys = ['loadCount', 'storeCount', 'hit', 'miss', 'allocate', 'evictAndWrite', 'evictWithoutWrite'];
+    const chartkeys: CacheEventType[] = [HIT, MISS];
     chartkeys.forEach(key => {
         chartsData[key] = {
             yAxisNum: 0,
@@ -158,45 +196,85 @@ const getchartsData = async (): Promise<{ [key: string]: ChartDataItem } > => {
     });
     const yAxisNum = cacheRecords.length / 128;
     for (let i = 0; i < cacheRecords.length; i++) {
+        const cachelineId = cacheRecords[i][CACHELINE_ID];
         for (let j = 0; j < chartkeys.length; j++) {
-            const [eventNumber, eventRatio] = cacheRecords[i][chartkeys[j]];
+            const [eventNumber, eventRatio] = cacheRecords[i][chartkeys[j]].Value;
             const ratio = Number((eventRatio * 100).toFixed(1));
             chartsData[chartkeys[j]].yAxisNum = yAxisNum;
-            chartsData[chartkeys[j]].data.push([
-                i % 128,
-                Math.floor(i / 128),
-                eventNumber,
-                ratio,
-            ]);
+            chartsData[chartkeys[j]].data.push(
+                [
+                    i % 128,
+                    Math.floor(i / 128),
+                    i,
+                    cachelineId,
+                    eventNumber,
+                    ratio,
+                ],
+            );
         }
     }
-    return chartsData;
+    return { chartsData, cacheRecords };
 };
 
-const initCharts = (dataSource: ChartDataItem, domId: string, isPreview: boolean, t: TFunction, theme: Theme): void => {
+interface IParams {
+    domId: string;
+    dataSource: ChartDataItem;
+    isPreview: boolean;
+    t: TFunction;
+    theme: Theme;
+    name: string;
+}
+
+const initCharts = (params: IParams): void => {
+    const { domId, dataSource, isPreview, t, theme, name } = params;
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
         echarts.getInstanceByDom(chartDom)?.dispose();
         const myChart = echarts.init(chartDom);
         const { data, yAxisNum } = dataSource;
-        const options = baseOption(range(0, yAxisNum), data, isPreview, t, theme);
+        const options = getBaseOption({ yAxis: range(0, yAxisNum), data, isPreview, t, theme, name });
         myChart.setOption(options);
+        myChart.on('click', showInstructions);
     }
 };
+
+export function showInstructions(params: any): void {
+    const session = store.sessionStore.activeSession;
+    if (!session) {
+        return;
+    }
+    // 如果没有source信息
+    if (!(session.coreList?.length > 0)) {
+        return;
+    }
+    const { data, seriesName } = params;
+    const record = allCacheRecords[data[DataIndex.INDEX]];
+    if (record?.[seriesName]?.[ADDRESS_RANGE]?.length > 0) {
+        swtich2Source({ addressRange: record[seriesName][ADDRESS_RANGE], cachelineId: record[CACHELINE_ID] });
+    }
+}
 
 const PreviewCacheKitChart = ({ setShowPreChart, preChartData, title }:
 { setShowPreChart: (val: boolean) => void; preChartData: ChartDataItem; title: string }): JSX.Element => {
     const { t } = useTranslation('source');
     const theme = useTheme();
+    const params = {
+        domId: 'previewCacheKitChart',
+        dataSource: preChartData,
+        isPreview: true,
+        t,
+        theme,
+        name: title,
+    };
     useEffect(() => {
-        initCharts(preChartData, 'previewCacheKitChart', true, t, theme);
+        initCharts(params);
     }, []);
     useEffect(() => {
-        initCharts(preChartData, 'previewCacheKitChart', true, t, theme);
+        initCharts(params);
     }, [theme]);
     return <PreviewCacheKitChartContainer>
         <CloseCircleOutlined className="closePreview" onClick={(): void => setShowPreChart(false)} />
-        <div className="chartTitle">{title}</div>
+        <div className="chartTitle">{t(title)}</div>
         <div id="previewCacheKitChart" style={{ width: '1100px', height: '1000px', margin: 'auto' }}></div>
         <div className="mapTitle">{`${t('EventRatio')}(%)`}</div>
     </PreviewCacheKitChartContainer>;
@@ -206,22 +284,13 @@ const CacheKitChartBase = ({ session, title, data, handleClick }:
 { session: Session; title: string; data: ChartDataItem; handleClick: (val: ChartDataItem, title: string) => void }): JSX.Element => {
     const { t } = useTranslation('source');
     const theme = useTheme();
-    const titleMap: { [key: string]: string } = {
-        loadCount: 'Load Count',
-        storeCount: 'Store Count',
-        hit: 'Hit',
-        miss: 'Miss',
-        allocate: 'Allocate',
-        evictAndWrite: 'Evict And Write',
-        evictWithoutWrite: 'Evict Without Write',
-    };
     const domId = `cacheChart_${title}`;
     useEffect(() => {
-        initCharts(data, domId, false, t, theme);
+        initCharts({ dataSource: data, domId, isPreview: false, t, theme, name: title });
     }, [data, theme]);
     return <ChartContainer>
-        <div className="title">{titleMap[title]}</div>
-        <div id={domId} className="chart" onClick={(): void => handleClick(data, titleMap[title])} />
+        <div className="title">{t(title)}</div>
+        <div id={domId} className="chart" onClick={(): void => handleClick(data, title) } />
         <div className="mapTitle">{`${t('EventRatio')}(%)`}</div>
     </ChartContainer>;
 };
@@ -239,7 +308,8 @@ const CacheKitChart = observer(({ session }: { session: Session }): JSX.Element 
     useEffect(() => {
         getchartsData().then((data) => {
             setShowPreChart(false);
-            setChartsData(data);
+            setChartsData(data.chartsData);
+            allCacheRecords = data.cacheRecords;
         });
     }, [session.updateId]);
     return <>
