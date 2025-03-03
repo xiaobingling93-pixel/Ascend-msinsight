@@ -19,6 +19,7 @@
     "RegisterNum": "Register Number",
     "Gpr Count": "Gpr Count",
     "L2Cache Hit Rate": "L2Cache Hit Rate",
+    "Process Bytes": "Process Bytes",
     "EventNumber": "Number of events",
     "EventRatio": "Proportion of events",
     "Load Count": "Load Count",
