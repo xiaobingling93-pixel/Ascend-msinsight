@@ -541,6 +541,10 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " UNION all "
           " select info.ROWID as id, T.streamId as tid, name, 'Ascend Hardware' as pid, depth "
           " from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
+          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+          " UNION all "
+          " select info.ROWID as id, (globalTid & 0xFFFFFFFF) AS tid, message as name, (globalTid / 4294967296) AS pid,"
+          " depth from MSTX_EVENTS info"
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -549,7 +553,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     uint64_t timestamp = params.timestamp + minTimestamp;
-    resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp);
+    resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp, params.name, timestamp);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
         return false;

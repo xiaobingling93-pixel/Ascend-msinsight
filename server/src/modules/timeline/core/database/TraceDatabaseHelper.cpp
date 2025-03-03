@@ -356,7 +356,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <Sqlit
         "WHERE pid||'' = ? UNION "
         "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, "
-        "globalTid as processId, 'mstx' as threadId "
+        "globalTid as processId, 'MsTx' as threadId "
         "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE pid||'' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
@@ -376,7 +376,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <Sqlite
         "WHERE globalTid = ? UNION "
         "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, "
-        "depth, globalTid as processId, 'mstx' as threadId "
+        "depth, globalTid as processId, 'MsTx' as threadId "
         "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE globalTid = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
@@ -386,7 +386,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4MSTX(std::unique_ptr <SqlitePr
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, 'mstx' as threadId, "
+        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, 'MsTx' as threadId, "
         "(globalTid / 4294967296) AS pid FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE globalTid = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
