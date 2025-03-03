@@ -61,9 +61,9 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, UpdateParallelDimension_ShouldRetu
     std::string err;
     bool res = algorithm.UpdateParallelDimension(dimension, config, err);
     EXPECT_FALSE(res);
-    EXPECT_EQ(err, "Failed to update parallel view. Unexpected algorithm.");
+    EXPECT_EQ(err, "Failed to update parallel view. Unexpected algorithm for Megatron-LM.");
     MegatronParallelStrategyAlgorithm algorithm2;
-    config.algorithm = MEGATRON_LM_TP_DP_PP_ALG;
+    config.algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
     res = algorithm.UpdateParallelDimension(dimension, config, err);
     EXPECT_FALSE(res);
     EXPECT_EQ(err, "Failed to update show map for parallel view. Unexpected dimension.");

@@ -69,11 +69,13 @@ const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
 
 const std::string MEGATRON_ALG = "megatron";
 const std::string MINDSPEED_ALG = "mindspeed";
-const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
-const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
 const std::string MEGATRON_LM_TP_CP_EP_DP_PP_ALG = "megatron-lm(tp-cp-ep-dp-pp)";
 const std::string MEGATRON_LM_TP_CP_PP_EP_DP_ALG = "megatron-lm(tp-cp-pp-ep-dp)";
 const std::string MINDSPEED_TP_CP_EP_DP_PP_ALG = "mindspeed(tp-cp-ep-dp-pp)";
+const std::string MINDSPEED_ULYSSES_CP_ALG = "ulysses_cp_algo";
+const std::string MINDSPEED_MEGATRON_CP_ALG = "megatron_cp_algo";
+const std::string MINDSPEED_HYBIRD_CP_ALG = "hybird_cp_algo";
+const std::string MINDSPEED_HYBIRD_ADAPTIVE_CP_ALG = "hybird_adaptive_cp_algo";
 const std::string DIMENSIONS_DP = "ep-dp";
 const std::string DIMENSIONS_PP = "ep-dp-pp";
 const std::string DIMENSIONS_CP = "ep-dp-pp-cp";
@@ -92,13 +94,23 @@ const std::string EP_INDEX = "epIndex";
 const int64_t MAX_PARALLEL_SIZE = 10000;
 const int64_t MAX_PARALLEL_PRODUCT_SIZE = 250000;
 
+struct ParallelStrategyConfigForMindSpeed {
+    bool useTp2D = false;
+    int64_t nd1dim1 = 1;
+    int64_t nd2dim1 = 1;
+    std::string cpAlgo;
+    int64_t ulyssesDegree = 1;
+    int64_t winSize = 1;
+};
+
 struct ParallelStrategyConfig {
-    std::string algorithm = MEGATRON_LM_TP_DP_PP_ALG;
+    std::string algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
     int64_t ppSize{};
     int64_t tpSize{};
     int64_t dpSize{};
     int64_t cpSize = 1;
     int64_t epSize = 1;
+    ParallelStrategyConfigForMindSpeed configForMindSpeed;
     bool CheckParams(std::string &errorMsg) const
     {
         // 检查ppSize, tpSize, dpSize的范围
@@ -134,7 +146,6 @@ struct ParallelStrategyConfig {
             errorMsg = "[Summary] DP size must be evenly divided by EP Size.";
             return false;
         }
-
         // 检查四个数的乘积是否小于UINT32_MAX
         if (ppSize * tpSize * dpSize * cpSize > UINT32_MAX) {
             errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
@@ -342,7 +353,7 @@ const std::string RATIO_AXIS = "ratio";
 
 // 当初始状态的数据库有ClusterBaseInfo表时，存储distributed_args列的信息
 struct DistributedArgs {
-    ParallelStrategyConfig config{MEGATRON_LM_TP_DP_PP_ALG, 1, 1, 1, 1, 1};
+    ParallelStrategyConfig config{MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 1, 1, 1, 1};
     int64_t worldSize = 1;
     bool sequenceParallel = false;
 };

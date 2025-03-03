@@ -10,6 +10,67 @@
 namespace Dic {
 namespace Module {
 namespace Summary {
+bool SummaryService::CheckTp2DSizeForMindSpeed(const ParallelStrategyConfig& config, std::string& errorMsg)
+{
+    if (config.configForMindSpeed.useTp2D) {
+        if (config.configForMindSpeed.nd1dim1 <= 0 || config.configForMindSpeed.nd2dim1 <= 0) {
+            errorMsg = "[Summary] Nd1dim1 or nd2dim1 must be greater than 0.";
+            return false;
+        }
+        if (config.tpSize % config.configForMindSpeed.nd1dim1 != 0 ||
+            config.tpSize % config.configForMindSpeed.nd2dim1 != 0) {
+            errorMsg = "[Summary] TP size must be evenly divided by nd1dim1 or nd2dim1 for tp2d.";
+            return false;
+        }
+    }
+    return true;
+}
+
+
+bool SummaryService::CheckParamForMindSpeed(const ParallelStrategyConfig& config, std::string& errorMsg)
+{
+    if (config.configForMindSpeed.cpAlgo.empty()) {
+        return true;
+    }
+    // 检查tpSize是否能被nd1dim1 nd2dim1整除
+    if (!CheckTp2DSizeForMindSpeed(config, errorMsg)) {
+        return false;
+    }
+    // 检查cpSize是否能被ulyssesDegree整除
+    if (config.configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_CP_ALG ||
+        config.configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_ADAPTIVE_CP_ALG) {
+        if (config.configForMindSpeed.ulyssesDegree <= 0) {
+            errorMsg = "[Summary] Ulysses degree must be greater than 0.";
+            return false;
+        }
+        if (config.cpSize % config.configForMindSpeed.ulyssesDegree != 0) {
+            errorMsg = "[Summary] CP size must be evenly divided by ulysses degree for hybird cp.";
+            return false;
+        }
+    }
+    // 检查winSize
+    if (!config.configForMindSpeed.useTp2D && config.configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_CP_ALG) {
+        if (config.configForMindSpeed.winSize <= 0) {
+            errorMsg = "[Summary] CP Window size must be greater than 0.";
+            return false;
+        }
+        if (config.cpSize % (config.configForMindSpeed.ulyssesDegree * config.configForMindSpeed.winSize) != 0) {
+            errorMsg = "[Summary] CP size must be evenly divided by ulysses degree plus cp window size.";
+            return false;
+        }
+    }
+    if (!config.configForMindSpeed.useTp2D && config.configForMindSpeed.cpAlgo == MINDSPEED_MEGATRON_CP_ALG) {
+        if (config.configForMindSpeed.winSize <= 0) {
+            errorMsg = "[Summary] CP Window size must be greater than 0.";
+            return false;
+        }
+        if (config.cpSize % config.configForMindSpeed.winSize != 0) {
+            errorMsg = "[Summary] CP size must be evenly divided by cp window size.";
+            return false;
+        }
+    }
+    return true;
+}
 bool SummaryService::QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db)
 {
     // db在外层进行校验 必不为空

@@ -5,6 +5,7 @@
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "ParallelStrategyAlgorithmManager.h"
+#include "SummaryService.h"
 #include "QueryParallelismArrangementHandler.h"
 namespace Dic::Module::Summary {
 bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
@@ -16,7 +17,8 @@ bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol:
 
     // check request parameter
     std::string err;
-    if (!request.params.config.CheckParams(err)) {
+    if (!request.params.config.CheckParams(err) ||
+        !SummaryService::CheckParamForMindSpeed(request.params.config, err)) {
         SendResponse(std::move(responsePtr), false, err);
         return false;
     }

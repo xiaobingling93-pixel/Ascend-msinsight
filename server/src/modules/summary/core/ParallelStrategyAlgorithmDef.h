@@ -39,14 +39,19 @@ const std::string CP_RING_GROUP_NAME = "cp_ring";
 const std::vector<std::string> ULYSSES_RING_TOKEN = {CP_ULYSSES_GROUP, CP_RING_GROUP};
 const std::string CP_WIN_GROUP = "win";
 const std::string CP_WIN_GROUP_NAME = "cp_ring_intra";
+const std::string CP_INTER_GROUP = "inter";
+const std::vector<std::string> WIN_INTRA_TOKEN = {CP_WIN_GROUP, CP_INTER_GROUP};
+
 // 2D TP
 const std::string TP_GROUP_FOR_ND1_DIM1 = "nd1dim1";
 const std::string TP_GROUP_FOR_ND1_DIM1_NAME = "nd1_dim1";
 const std::string TP_GROUP_FOR_ND1_DIM2 = "nd1dim2";
 const std::string TP_GROUP_FOR_ND1_DIM2_NAME = "nd1_dim2";
+const std::vector<std::string> TP2D_ND1_TOKEN = {TP_GROUP_FOR_ND1_DIM1, TP_GROUP_FOR_ND1_DIM2};
 const std::string TP_GROUP_FOR_ND2_DIM1 = "nd2dim1";
 const std::string TP_GROUP_FOR_ND2_DIM1_NAME = "nd2_dim1";
 const std::string TP_GROUP_FOR_ND2_DIM2 = "nd2dim2";
 const std::string TP_GROUP_FOR_ND2_DIM2_NAME = "nd2_dim2";
+const std::vector<std::string> TP2D_ND2_TOKEN = {TP_GROUP_FOR_ND2_DIM1, TP_GROUP_FOR_ND2_DIM2};
 }
 #endif // PROFILER_SERVER_PARALLELSTRATEGYALGORITHMDEF_H

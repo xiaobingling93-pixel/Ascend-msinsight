@@ -20,11 +20,20 @@ const std::unordered_map<std::string, std::string> tokenWithEp = {
     {DP_CP_MODULO_EP_GROUP, DP_CP_MODULO_EP_GROUP_NAME}, {MP_EP_GROUP, MP_EP_GROUP_NAME}
 };
 
+const std::unordered_map<std::string, std::string> tokenOfTp2dNd1 = {
+    {TP_GROUP_FOR_ND1_DIM1, TP_GROUP_FOR_ND1_DIM1_NAME}, {TP_GROUP_FOR_ND1_DIM2, TP_GROUP_FOR_ND1_DIM2_NAME}
+};
+
+const std::unordered_map<std::string, std::string> tokenOfTp2dNd2 = {
+    {TP_GROUP_FOR_ND2_DIM1, TP_GROUP_FOR_ND2_DIM1_NAME}, {TP_GROUP_FOR_ND2_DIM2, TP_GROUP_FOR_ND2_DIM2_NAME}
+};
+
 class MindSpeedParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
     MindSpeedParallelStrategyAlgorithm();
     ~MindSpeedParallelStrategyAlgorithm() override;
 
+    void SetStrategyConfig(const ParallelStrategyConfig& config) override;
     bool UpdateParallelDimension(const std::string &tmpDimension,
                                  const ParallelStrategyConfig &tmpConfig, std::string &err) override;
     bool GenerateArrangementByDimension(std::string &err) override;
@@ -45,16 +54,31 @@ private:
     // get connections
     void UpdateOrderAndParallelSize();
     bool GetConnectionsByTokenList(std::string &err);
+    bool GetConnectionsByMegatronToken(std::string &err, bool independentEp);
+    bool GetConnectionsForCpUlyssesAndRing(std::vector<std::string> &updatedOrderForCp,
+        std::vector<uint32_t> &updatedParallelSizeForCp, std::string &err);
+    bool GetConnectionsForCpDoubleRing(std::vector<std::string> &updatedOrderForCp,
+                                       std::vector<uint32_t> &updatedParallelSizeForCp, std::string &err);
+    bool GetConnectionsForTp2d(std::string &err, const std::vector<std::string>& tokenList,
+        const std::vector<uint32_t>& sizeList, const std::unordered_map<std::string, std::string>& tokenMap);
+    static bool ReplaceParallelGroup(const std::string& para,
+        std::vector<std::string> &order, std::vector<uint32_t> &paraSize,
+        const std::vector<std::string>& orderList, const std::vector<uint32_t>& sizeList);
 
     std::vector<std::string> paraOrder;
     std::vector<std::string> paraOrderWithEp;
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
 
     // parameter for cp
-    bool useHybridCp = false;
-
+    bool useHybridCp = false; // use MINDSPEED_HYBIRD_CP_ALG or MINDSPEED_HYBIRD_ADAPTIVE_CP_ALG
     uint32_t ulyssesDegree = 1;
     uint32_t ringDegree = 1;
+    uint32_t winSize = 1;
+    uint32_t interSize = 1;
+    uint32_t nd1dim1 = 1;
+    uint32_t nd1dim2 = 1;
+    uint32_t nd2dim1 = 1;
+    uint32_t nd2dim2 = 1;
 };
 }
 

@@ -23,7 +23,7 @@ public:
     BaseParallelStrategyAlgorithm() = default;
     virtual ~BaseParallelStrategyAlgorithm() = default;
 
-    void SetStrategyConfig(const ParallelStrategyConfig& config);
+    virtual void SetStrategyConfig(const ParallelStrategyConfig& config);
     ParallelStrategyConfig GetStrategyConfig();
     void ClearStrategyConfigCache();
     virtual bool UpdateParallelDimension(const std::string &dimension,
@@ -87,6 +87,7 @@ protected:
     std::unordered_map<std::uint32_t, StepStatistic> reduceCpMax;
     std::unordered_map<std::uint32_t, StepStatistic> reduceCpMin;
     std::unordered_map<std::uint32_t, StepStatistic> reducePpStatistic;
+    const static inline int cpSizeWithEp = 1;
     const static inline int numTwo = 2; // 保留2位小数
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
 };

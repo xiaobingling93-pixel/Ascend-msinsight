@@ -408,7 +408,7 @@ TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpPpDp)
     Dic::Protocol::QueryParallelStrategyResponse response{};
     const int expectId = 1;
     response.config = {
-            .algorithm = MEGATRON_LM_TP_PP_DP_ALG,
+            .algorithm = MEGATRON_LM_TP_CP_PP_EP_DP_ALG,
             .ppSize = 0,
             .tpSize = 2,
             .dpSize = 1,
@@ -429,7 +429,7 @@ TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpDpPp)
     Dic::Protocol::QueryParallelStrategyResponse response{};
     const int expectId = 1;
     response.config = {
-            .algorithm = MEGATRON_LM_TP_DP_PP_ALG,
+            .algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG,
             .ppSize = 0,
             .tpSize = 2,
             .dpSize = 1,

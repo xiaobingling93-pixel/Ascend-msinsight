@@ -9,6 +9,7 @@
 #include "WsSessionManager.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
+#include "SummaryService.h"
 #include "SetParallelStrategyConfigHandler.h"
 
 namespace Dic::Module::Summary {
@@ -23,7 +24,7 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
     WsSession &session = *WsSessionManager::Instance().GetSession();
     // check request parameters
     std::string errorMsg;
-    if (!request.config.CheckParams(errorMsg)) {
+    if (!request.config.CheckParams(errorMsg) || !SummaryService::CheckParamForMindSpeed(request.config, errorMsg)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }

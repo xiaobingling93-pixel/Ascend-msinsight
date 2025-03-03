@@ -3,6 +3,7 @@
  */
 #include <gtest/gtest.h>
 #include "MindSpeedParallelStrategyAlgorithm.h"
+#include "ParallelStrategyAlgorithmManager.h"
 using namespace Dic::Module;
 using namespace Dic::Protocol;
 using namespace Dic::Module::Summary;
@@ -38,7 +39,7 @@ TEST_F(MindSpeedParallelStrategyAlgorithmTest, UpdateParallelDimension_ShouldRet
     std::string err;
     bool res = algorithm.UpdateParallelDimension(dimension, config, err);
     EXPECT_FALSE(res);
-    EXPECT_EQ(err, "Failed to update parallel view. Unexpected algorithm.");
+    EXPECT_EQ(err, "Failed to update parallel view. Unexpected algorithm for MindSpeed.");
     MindSpeedParallelStrategyAlgorithm algorithm2;
     config.algorithm = MINDSPEED_TP_CP_EP_DP_PP_ALG;
     res = algorithm.UpdateParallelDimension(dimension, config, err);
@@ -147,4 +148,91 @@ TEST_F(MindSpeedParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldG
             EXPECT_EQ(item.ranks.at(i), EXPECT_RANKS[item.index].at(i));
         }
     }
+}
+
+/**
+ * 返回93个connections: 'tp-cp': 2, 'dp-cp': 2, 'tp-dp-cp': 1, 'tp-dp': 6, 'tp': 12, 'cp': 4, 'dp': 12,
+ * 'cp_ulysses': 12, 'cp_ring': 8, 'cp_ring_intra': 8, 'dp_modulo_exp_cp': 4, 'tp_exp': 6, 'dp_modulo_exp': 4,
+ * 'exp': 12
+ */
+TEST_F(MindSpeedParallelStrategyAlgorithmTest, GetConnectionsByTokenlist_ShouleGetConnections_TestWithHybridCp)
+{
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    std::string projectName = "testProject";
+    config.ppSize = 1; // 1
+    config.tpSize = 2; // 2
+    config.dpSize = 2; // 2
+    config.cpSize = 6; // 6
+    config.epSize = 2; // 2
+    config.algorithm = MINDSPEED_TP_CP_EP_DP_PP_ALG;
+    config.configForMindSpeed.cpAlgo = MINDSPEED_HYBIRD_CP_ALG;
+    config.configForMindSpeed.ulyssesDegree = 2; // 2
+    config.configForMindSpeed.winSize = 3; // 3
+    std::string err;
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(projectName, config, err);
+    auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(projectName);
+    algorithm->UpdateParallelDimension(dimension, config, err);
+    algorithm->GenerateArrangementByDimension(err);
+    ArrangementAndConnectionData data = algorithm->GetArrangementData();
+    EXPECT_EQ(data.arrangements.size(), 24); // 24 = 2*2*6
+    EXPECT_EQ(data.connections.size(), 93); // 93
+    ParallelStrategyAlgorithmManager::Instance().DeleteAlgorithm(projectName);
+}
+
+/**
+ * 返回73个connections: 'tp-cp': 2, 'dp-cp': 2, 'tp-dp-cp': 1, 'tp-dp': 6, 'tp': 12, 'cp': 4, 'dp': 12,
+ * 'cp_ring_intra': 8, 'dp_modulo_exp_cp': 4, 'tp_exp': 6, 'dp_modulo_exp': 4,
+ * 'exp': 12
+ */
+TEST_F(MindSpeedParallelStrategyAlgorithmTest, GetConnectionsByTokenlist_ShouleGetConnections_TestWithMegatronCp)
+{
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    std::string projectName = "testProject";
+    config.ppSize = 1; // 1
+    config.tpSize = 2; // 2
+    config.dpSize = 2; // 2
+    config.cpSize = 6; // 6
+    config.epSize = 2; // 2
+    config.algorithm = MINDSPEED_TP_CP_EP_DP_PP_ALG;
+    config.configForMindSpeed.cpAlgo = MINDSPEED_MEGATRON_CP_ALG;
+    config.configForMindSpeed.winSize = 3; // 3
+    std::string err;
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(projectName, config, err);
+    auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("testProject");
+    algorithm->UpdateParallelDimension(dimension, config, err);
+    algorithm->GenerateArrangementByDimension(err);
+    ArrangementAndConnectionData data = algorithm->GetArrangementData();
+    EXPECT_EQ(data.arrangements.size(), 24); // 24 = 2*2*6
+    EXPECT_EQ(data.connections.size(), 73); // 73
+    ParallelStrategyAlgorithmManager::Instance().DeleteAlgorithm(projectName);
+}
+
+/**
+ * 返回79个connections: 'tp-cp': 2, 'dp-cp': 6, 'tp-dp-cp': 1, 'tp-dp': 2, 'tp': 4, 'cp': 12, 'dp': 12,
+ * 'nd1_dim1': 12, 'nd1_dim2': 8, nd1_dim1': 8, 'nd1_dim2': 12,
+ */
+TEST_F(MindSpeedParallelStrategyAlgorithmTest, GetConnectionsByTokenlist_ShouleGetConnections_TestWithTp2d)
+{
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    std::string projectName = "testProject";
+    config.ppSize = 1; // 1
+    config.tpSize = 6; // 6
+    config.dpSize = 2; // 2
+    config.cpSize = 2; // 2
+    config.algorithm = MINDSPEED_TP_CP_EP_DP_PP_ALG;
+    config.configForMindSpeed.useTp2D = true;
+    config.configForMindSpeed.nd1dim1 = 2; // 2
+    config.configForMindSpeed.nd2dim1 = 3; // 3
+    std::string err;
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(projectName, config, err);
+    auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("testProject");
+    algorithm->UpdateParallelDimension(dimension, config, err);
+    algorithm->GenerateArrangementByDimension(err);
+    ArrangementAndConnectionData data = algorithm->GetArrangementData();
+    EXPECT_EQ(data.arrangements.size(), 24); // 24 = 2*2*6
+    EXPECT_EQ(data.connections.size(), 79); // 79
+    ParallelStrategyAlgorithmManager::Instance().DeleteAlgorithm(projectName);
 }

@@ -220,9 +220,6 @@ struct QueryParallelStrategyResponse : public Response {
         if (config.algorithm == Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG ||
             config.algorithm == Module::MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
             return;
-        }
-        if (config.algorithm == Module::MEGATRON_LM_TP_PP_DP_ALG) {
-            config.algorithm = Module::MEGATRON_LM_TP_CP_PP_EP_DP_ALG;
         } else {
             config.algorithm = Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
         }

@@ -728,10 +728,10 @@ bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &
         // 通过判断dp和pp哪个先增加，来判断tp-dp-pp还是tp-pp-dp
         if (!flag) {
             if (dpSize > preDpIndex) {
-                config.algorithm = MEGATRON_LM_TP_DP_PP_ALG;
+                config.algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
                 flag = true;
             } else if (ppSize > prePpIndex) {
-                config.algorithm = MEGATRON_LM_TP_PP_DP_ALG;
+                config.algorithm = MEGATRON_LM_TP_CP_PP_EP_DP_ALG;
                 flag = true;
             }
             preDpIndex = dpSize;

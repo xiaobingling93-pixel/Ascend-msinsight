@@ -16,6 +16,8 @@ using namespace Protocol;
 
 class SummaryService {
 public:
+    static bool CheckTp2DSizeForMindSpeed(const ParallelStrategyConfig& config, std::string& errorMsg);
+    static bool CheckParamForMindSpeed(const ParallelStrategyConfig& config, std::string& err);
     static void QueryCompareSummaryBaseInfo(const SummaryTopRankRequest &request, SummaryTopRankResponse &response);
     static bool QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db);
     static bool QueryParallelismPerformanceInfo(const ParallelismPerformance &params,

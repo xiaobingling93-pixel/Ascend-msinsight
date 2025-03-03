@@ -44,13 +44,12 @@ bool MegatronParallelStrategyAlgorithm::UpdateParallelDimension(const std::strin
     const ParallelStrategyConfig &tmpConfig, std::string &err)
 {
     CalStrategyConfig(tmpDimension, tmpConfig);
-    if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG || tmpConfig.algorithm == MEGATRON_LM_TP_DP_PP_ALG) {
+    if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG) {
         paraOrder = {TP_PARA, CP_PARA, DP_PARA, PP_PARA};
-    } else if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG ||
-               tmpConfig.algorithm == MEGATRON_LM_TP_PP_DP_ALG) {
+    } else if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
         paraOrder = {TP_PARA, CP_PARA, PP_PARA, DP_PARA};
     } else {
-        err = "Failed to update parallel view. Unexpected algorithm.";
+        err = "Failed to update parallel view. Unexpected algorithm for Megatron-LM.";
         return false;
     }
     paraOrderWithEp = paraOrder;
@@ -83,15 +82,8 @@ bool MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension(std::stri
         GetPerArrangement(index, indexAttributes);
     }
     // get connections
-    if (dimension == DIMENSIONS_TP) {
-        if (!GetConnectionsByTokenList(err)) {
-            return false;
-        }
-    } else {
-        // get connections for cp or pp dimension
-        for (auto& element : data.arrangements) {
-            GetConnections(element);
-        }
+    if (dimension != DIMENSIONS_DP && !GetConnectionsByTokenList(err)) {
+        return false;
     }
     return true;
 }
@@ -215,22 +207,23 @@ bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &e
                 break;
             }
         }
+        if (!hasTokenGroup) {
+            continue;
+        }
         allGroupsType ranks{};
         std::string groupName = pair.second;
-        if (hasTokenGroup) {
-            if (std::find(independentEpList.begin(), independentEpList.end(), groupName) != independentEpList.end()) {
-                // 计算并行通信域时需考虑ep
-                ranks = ParallelStrategyAlgorithmHelper::GetAllGroupsRanksByToken(parallelGroups, parallelSizeWithEp,
-                                                                                  updatedOrderWithEp, wordSize);
-            } else {
-                // 计算并行通信域时无需考虑ep
-                ranks = ParallelStrategyAlgorithmHelper::GetAllGroupsRanksByToken(parallelGroups, parallelSize,
-                                                                                  updatedOrder, wordSize);
-            }
-            if (ranks.empty()) {
-                err = "Failed to get connections by token list. Token: " + token;
-                return false;
-            }
+        if (std::find(independentEpList.begin(), independentEpList.end(), groupName) != independentEpList.end()) {
+            // 计算并行通信域时需考虑ep
+            ranks = ParallelStrategyAlgorithmHelper::GetAllGroupsRanksByToken(parallelGroups, parallelSizeWithEp,
+                                                                              updatedOrderWithEp, wordSize);
+        } else {
+            // 计算并行通信域时无需考虑ep
+            ranks = ParallelStrategyAlgorithmHelper::GetAllGroupsRanksByToken(parallelGroups, parallelSize,
+                                                                              updatedOrder, wordSize);
+        }
+        if (ranks.empty()) {
+            err = "Failed to get connections by token list. Group name: " + groupName;
+            return false;
         }
         for (const auto& rank : ranks) {
             data.connections.emplace_back(groupName, rank, std::vector<std::string>{});
@@ -642,8 +635,7 @@ bool MegatronParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
         return true;
     }
     // 折叠PP
-    if (strategyConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG ||
-        strategyConfig.algorithm == MEGATRON_LM_TP_DP_PP_ALG) {
+    if (strategyConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG) {
         ReducePpPerformanceForPpLast();
     } else {
         ReducePpPerformanceForDpLast();

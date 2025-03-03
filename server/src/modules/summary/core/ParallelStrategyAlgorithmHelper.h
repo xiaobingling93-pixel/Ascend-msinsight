@@ -16,8 +16,6 @@ class ParallelStrategyAlgorithmHelper {
 public:
     static allGroupsType GetAllGroupsRanksByToken(const std::vector<std::string>& token,
         const std::vector<uint32_t>& parallelSize, const std::vector<std::string>& order, uint32_t worldSize);
-    template <typename T>
-    static std::vector<T> replaceElement(const std::vector<T> &vec, const T& oldValue, const std::vector<T>& newValues);
 private:
     static std::vector<bool> GetMask(const std::vector<std::string>& order, const std::vector<std::string>& token);
     static allGroupsType GenerateMaskedOrthogonalRankGroups(const std::vector<uint32_t>& parallelSize,
@@ -26,6 +24,5 @@ private:
     static uint32_t innerProduct(const std::vector<uint32_t>& x, const std::vector<uint32_t>& y);
     static std::vector<uint32_t> Decompose(uint32_t index, const std::vector<uint32_t>& shape);
 };
-
 }
 #endif // PROFILER_SERVER_PARALLELSTRATEGYALGORITHMHELPER_H
