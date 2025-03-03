@@ -13,8 +13,13 @@ using namespace Dic::Server;
 using namespace Dic::Protocol;
 void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
 {
-    unsigned maxThreadNum = 20;
-    maxThreadNum = std::max(maxThreadNum, SystemUtil::GetCpuCoreCount());
+    static constexpr int MIN_SIZE = 20;
+    static constexpr int MAX_SIZE = 200;
+    int maxThreadNum = MIN_SIZE;
+    unsigned int cpuCount = SystemUtil::GetCpuCoreCount();
+    if (cpuCount >= MIN_SIZE && cpuCount <= MAX_SIZE) {
+        maxThreadNum = cpuCount;
+    }
     static ThreadPool threadPool(maxThreadNum);
     std::string command = request->command;
     if (requestHandlerMap.count(command) == 0) {

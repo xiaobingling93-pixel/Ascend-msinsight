@@ -353,7 +353,7 @@ public:
         std::string rankId = GetRankIdFromPath(timeLineFile);
         // 上上层目录名没有则取文件的名字
         if (rankId.empty()) {
-            int index3 = timeLineFile.find_last_of('.');
+            size_t index3 = timeLineFile.find_last_of('.');
             rankId = timeLineFile.substr(parent.length() + 1, index3 - parent.length() - 1);
         }
         return rankId;
