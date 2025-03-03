@@ -9,7 +9,7 @@ import { COLOR, getDecimalCount, getCompareName, getBaselineName } from '../Comm
 import type { ConditionDataType } from './Filter';
 import type { CompareData, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix } from '../../utils/RequestUtils';
-import _, { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
@@ -315,9 +315,12 @@ const updateData = async(condition: ConditionDataType, setDataSource: VoidFuncti
     const param = { iterationId, stage, operatorName, isCompare, baselineIterationId };
     const res = await queryCommunicationMatrix(param);
     const data = res?.matrixList ?? [];
-    const rankIds = _.map(_.split(_.replace(stage, /[(),]/, ''), ','),
-        value => Number.parseInt(value)).filter(value => !Number.isNaN(value))
-        .sort((a, b) => a - b);
+    // 从矩阵数据中获取要展示的rankId列表
+    const rankIds = Array.from(
+        new Set(
+            data.flatMap(({ srcRank, dstRank }: {srcRank: number; dstRank: number}) => [srcRank, dstRank]),
+        ),
+    ).sort((a, b) => (a as number) - (b as number));
     setDataSource({ data, rankIds });
 };
 
