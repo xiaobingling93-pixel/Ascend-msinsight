@@ -3,8 +3,8 @@
 */
 export const CACHELINE_RECORD = 'Cacheline Records';
 export const CACHELINE_ID = 'Cacheline Id';
-const HIT = 'Hit';
-const MISS = 'Miss';
+export const HIT = 'Hit';
+export const MISS = 'Miss';
 export const ADDRESS_RANGE = 'Address Range';
 const VALUE = 'Value';
 

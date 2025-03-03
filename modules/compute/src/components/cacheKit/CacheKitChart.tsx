@@ -15,7 +15,7 @@ import * as echarts from 'echarts';
 import { type Theme, useTheme } from '@emotion/react';
 import { queryCacheRecord } from '../RequestUtils';
 import { swtich2Source } from '../../connection/sendNotification';
-import { CACHELINE_RECORD, CACHELINE_ID, ADDRESS_RANGE } from './defs';
+import { CACHELINE_RECORD, CACHELINE_ID, ADDRESS_RANGE, HIT, MISS } from './defs';
 import { store } from '../../store';
 
 const ChartContainer = styled.div`
@@ -187,7 +187,7 @@ const getchartsData = async (): Promise<{ chartsData: Record<string, ChartDataIt
         // 请求异常，用初始空值
     }
     const chartsData: { [key: string]: ChartDataItem } = {};
-    const chartkeys: CacheEventType[] = ['Hit', 'Miss'];
+    const chartkeys: CacheEventType[] = [HIT, MISS];
     chartkeys.forEach(key => {
         chartsData[key] = {
             yAxisNum: 0,
@@ -244,7 +244,7 @@ export function showInstructions(params: any): void {
         return;
     }
     // 如果没有source信息
-    if (session.coreList.length === 0) {
+    if (!(session.coreList?.length > 0)) {
         return;
     }
     const { data, seriesName } = params;

@@ -56,10 +56,10 @@ const isRelated = (instr: InstrsColumnType, range: string[][] = []): boolean => 
 // 恢复默认的指令高亮来源
 const recoverDefaultInstructionSource = (): void => {
     const session = store.sessionStore.activeSession;
+    if (!session) {
+        return;
+    }
     runInAction(() => {
-        if (!session) {
-            return;
-        }
         session.instructionSelectSource = InstructionSelectSource.DEFAULT;
         // cache信息重置
         session.cacheUnit = { cachelineId: -1, addressRange: [] };
