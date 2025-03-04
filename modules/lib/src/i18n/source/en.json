@@ -28,6 +28,9 @@
     "Allocate": "Allocate",
     "Evict And Write": "Evict And Write",
     "Evict Without Write": "Evict Without Write",
-    "Cacheline Id": "Cacheline ID"
+    "Cacheline Id": "Cacheline ID",
+    "UB Read Conflict": "UB Read Conflict",
+    "UB Write Conflict": "UB Write Conflict",
+    "Vector Utilization Percentage": "Vector Utilization Percentage"
   }
 }

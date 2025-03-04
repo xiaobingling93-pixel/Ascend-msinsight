@@ -28,6 +28,9 @@
     "Allocate": "缓存分配",
     "Evict And Write": "换出并写回",
     "Evict Without Write": "换出不写回",
-    "Cacheline Id": "缓存行索引"
+    "Cacheline Id": "缓存行索引",
+    "UB Read Conflict": "UB单元读冲突",
+    "UB Write Conflict": "UB单元写冲突",
+    "Vector Utilization Percentage": "Vector计算单元利用率百分比"
   }
 }
