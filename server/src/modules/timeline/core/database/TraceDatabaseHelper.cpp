@@ -897,29 +897,6 @@ void TraceDatabaseHelper::FilterTopLevelApi(std::vector<Protocol::FlowLocation> 
     }
 }
 
-
-void TraceDatabaseHelper::CalculateFwdBwdDataByFlow(const FlowStartAndEndTime &start, const FlowStartAndEndTime &end,
-    uint8_t index, const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData)
-{
-    if (end.sEndTime < start.sStartTime || start.fEndTime < end.fStartTime) {
-        Server::ServerLog::Warn("Invalid fwd/bwd data. Start flow: start ", start.sStartTime, ", end ", end.sEndTime,
-                                ", End flow: start ", end.fStartTime, ", end", start.fEndTime);
-        return;
-    }
-    Protocol::ThreadTraces fwdTrace = {
-        .name = std::to_string(index), .duration = end.sEndTime - start.sStartTime, // no overflow occurs
-        .startTime = start.sStartTime, .endTime = end.sEndTime, .depth = 0,
-        .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_FP
-    };
-    Protocol::ThreadTraces bwdTrace = {
-        .name = std::to_string(index), .duration = start.fEndTime - end.fStartTime, // no overflow occurs
-        .startTime = end.fStartTime, .endTime = start.fEndTime, .depth = 0,
-        .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_BP
-    };
-    fwdBwdData.push_back(fwdTrace);
-    fwdBwdData.push_back(bwdTrace);
-}
-
 // 使用sql命令查询前反向连线(fwdbwd)，并拼接同一条连线，按前向的start time升序排序，查询形成每一条连线FlowStartAndEndTime结构体
 // 遍历所有的连线，对于同一个前反向内的数据，前向的start time越来越大，后向的start time越来越小
 // 当不满足前面的条件时，表明开始了一个新的前反向，即tmp.fStartTime > first.fStartTime，此时根据第一个连线和上一个连线，计算前反向的时长
@@ -930,7 +907,8 @@ bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePre
     const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
     std::vector<Protocol::ThreadTraces> &fwdBwdData)
 {
-    auto resultSet = stmt->ExecuteQuery(offset, offset, offset, offset, range.minTimestamp, range.maxTimestamp);
+    auto resultSet = stmt->ExecuteQuery(range.minTimestamp, range.maxTimestamp,
+                                        offset, offset, offset, offset, offset, offset, offset, offset);
     if (resultSet == nullptr) {
         Server::ServerLog::Error("Failed to get result set for query fwd/bwd data.", stmt->GetErrorMessage());
         return false;
@@ -938,32 +916,47 @@ bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePre
     uint8_t index = 0;
     FlowStartAndEndTime first{};
     FlowStartAndEndTime last{}; // for last piece
+    bool firstFlag = true;
     // 查询数据格式, sStartTime, sEndTime, fStartTime, fEndTime，并按sStartTime升序排列
     while (resultSet->Next()) {
-        FlowStartAndEndTime tmp = {
-            .sStartTime = resultSet->GetUint64("sStart"),
-            .sEndTime = resultSet->GetUint64("sEnd"),
-            .fStartTime = resultSet->GetUint64("fStart"),
-            .fEndTime = resultSet->GetUint64("fEnd")
+        FlowStartAndEndTime lastOne = {
+            .sStartTime = resultSet->GetUint64("lastFpStart"),
+            .sEndTime = resultSet->GetUint64("lastFpEnd"),
+            .fStartTime = resultSet->GetUint64("lastBpStart"),
+            .fEndTime = resultSet->GetUint64("lastBpEnd")
         };
-        // 如果start未初始化，先初始化它
-        if (first.sEndTime == 0) {
-            first = tmp;
-        }
-        // 对于同一次前反向内前向的start越来越大，反向的start越来越小，如果反向的start大于上一次的start，则表示开始新一轮的前反向
-        if (tmp.fStartTime > first.fStartTime) {
-            CalculateFwdBwdDataByFlow(first, last, index, rankId, fwdBwdData);
-            index++;
-            first = tmp;
-            last = tmp;
+        FlowStartAndEndTime nextOne = {
+            .sStartTime = resultSet->GetUint64("nextFpStart"),
+            .sEndTime = resultSet->GetUint64("nextFpEnd"),
+            .fStartTime = resultSet->GetUint64("nextBpStart"),
+            .fEndTime = resultSet->GetUint64("nextBpEnd")
+        };
+        // 首个元素特殊处理，仅保留首条记录的last部分，作为第一个元素前向的开始和反向的结束
+        if (firstFlag) {
+            first = lastOne;
+            last = lastOne;
+            firstFlag = false;
             continue;
-        } else {
-            last = tmp;
         }
-    }
-    // 处理遗留的尾片
-    if (first.sEndTime != 0) {
-        CalculateFwdBwdDataByFlow(first, last, index, rankId, fwdBwdData);
+
+        // 防止后续溢出
+        if (lastOne.sEndTime <= last.sStartTime || last.fEndTime <= lastOne.fStartTime) {
+            continue;
+        }
+        Protocol::ThreadTraces fwdTrace = {
+            .name = std::to_string(index), .duration = lastOne.sEndTime - last.sStartTime, // no overflow occurs
+            .startTime = last.sStartTime, .endTime = lastOne.sEndTime, .depth = 0,
+            .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_FP
+        };
+        Protocol::ThreadTraces bwdTrace = {
+            .name = std::to_string(index), .duration = last.fEndTime - lastOne.fStartTime, // no overflow occurs
+            .startTime = lastOne.fStartTime, .endTime = last.fEndTime, .depth = 0,
+            .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_BP
+        };
+        fwdBwdData.push_back(fwdTrace);
+        fwdBwdData.push_back(bwdTrace);
+        index++;
+        last = nextOne;
     }
 
     return true;
@@ -991,7 +984,7 @@ bool TraceDatabaseHelper::ExecuteQueryP2POpData(std::unique_ptr<SqlitePreparedSt
         tmp.duration = resultSet->GetUint64("duration");
         if (StringUtil::StartWith(tmp.name, "hcom_send")) {
             tmp.cname = MARKER_SEND;
-        } else if (StringUtil::StartWith(tmp.name, "hcom_recv")) {
+        } else if (StringUtil::StartWith(tmp.name, "hcom_receive")) {
             tmp.cname = MARKER_RECV;
         } else {
             tmp.cname = MARKER_BATCH_SEND_RECV;

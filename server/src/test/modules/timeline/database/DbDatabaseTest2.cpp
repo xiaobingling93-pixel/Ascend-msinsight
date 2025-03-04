@@ -763,7 +763,8 @@ TEST_F(DbDatabaseTest2, TestQueryFwdBwdDataByFlowWhenTableNotRight)
     const Dic::Protocol::ExtremumTimestamp range;
     std::vector<Dic::Protocol::ThreadTraces> fwdBwdData;
     bool result = database.QueryFwdBwdDataByFlow(rankId, offset, range, fwdBwdData);
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(fwdBwdData.size(), 0);
 }
 
 TEST_F(DbDatabaseTest2, TestQueryP2PCommunicationOpDataWhenDbNotOpen)

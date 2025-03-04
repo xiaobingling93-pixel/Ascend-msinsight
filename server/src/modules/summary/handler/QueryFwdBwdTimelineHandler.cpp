@@ -77,8 +77,12 @@ bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineByRank(const std::string &ra
     uint64_t offset = Timeline::TraceTime::Instance().GetStartTime();
     auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to query fwd/bwd timeline data by rank due to null connection for database.");
-        return false;
+        // DB场景下无法根据rankId获取database
+        database = DataBaseManager::Instance().GetTraceDatabaseWithOutHost(rankId);
+        if (database == nullptr) {
+            ServerLog::Error("Failed to query fwd/bwd timeline data by rank due to null connection for database.");
+            return false;
+        }
     }
     Protocol::ExtremumTimestamp range = {offset, (uint64_t)INT64_MAX};
     // 此处不检查返回值，原因为如果查询失败，则以offset为最小值，INT64_MAX为最大值，对应ALL场景
