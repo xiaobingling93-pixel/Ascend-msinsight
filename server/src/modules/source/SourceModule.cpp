@@ -15,6 +15,7 @@
 #include "QueryDetailsMemoryTableHandler.h"
 #include "QueryInterCoreLoadAnalysisGraphHandler.h"
 #include "QueryDetailsRooflineHandler.h"
+#include "QueryCachelineRecordHandler.h"
 
 namespace Dic::Module {
 using namespace Dic::Module::Source;
@@ -47,6 +48,7 @@ void SourceModule::RegisterRequestHandlers()
                               std::make_unique<QueryInterCoreLoadAnalysisGraphHandler>());
     requestHandlerMap.emplace(std::string(REQ_RES_DETAILS_ROOFLINE),
                               std::make_unique<QueryDetailsRooflineHandler>());
+    requestHandlerMap.emplace(REQ_RES_CACHELINE_RECORD, std::make_unique<QueryCachelineRecordHandler>());
 }
 
 void SourceModule::OnRequest(std::unique_ptr<Protocol::Request> request)

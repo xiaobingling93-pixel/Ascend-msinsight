@@ -545,6 +545,25 @@ std::optional<document_t> ToResponseJson<DetailsRooflineResponse>(const DetailsR
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
+
+template<>
+std::optional<document_t> ToResponseJson<CachelineRecordResponse>(const CachelineRecordResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    // 将cachelineRecords复制到新的Document对象中
+    document_t document;
+    document.Parse(response.body.cachelineRecords.c_str());
+    if (document.HasParseError()) {
+        return std::move(json);
+    }
+    Value bodyValue;
+    bodyValue.CopyFrom(document, allocator);
+    JsonUtil::AddMember(json, "body", bodyValue, allocator);
+    return std::move(json);
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

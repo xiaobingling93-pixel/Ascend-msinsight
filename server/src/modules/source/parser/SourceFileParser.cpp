@@ -503,6 +503,32 @@ void SourceFileParser::SetFilePath(const std::string &inputFilePath)
     this->filePath = FileUtil::PathPreprocess(inputFilePath);
 }
 
+std::string SourceFileParser::GetFilePath()
+{
+    return this->filePath;
+}
+
+std::vector<Position> SourceFileParser::GetPositionByType(DataTypeEnum type)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    auto it = dataBlockMap.find(static_cast<int>(type));
+    if (it != dataBlockMap.end()) {
+        return it->second;
+    } else {
+        return {};
+    }
+}
+
+bool SourceFileParser::HasCachelineRecords()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    auto it = dataBlockMap.find(static_cast<int>(Module::Source::DataTypeEnum::DISPLAY_CACHE));
+    if (it != dataBlockMap.end()) {
+        return true;
+    }
+    return false;
+}
+
 void SourceFileParser::SetBaselineFilePath(const std::string &inputFilePath)
 {
     std::unique_lock<std::mutex> lock(mutex);

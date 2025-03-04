@@ -370,6 +370,15 @@ struct DetailsRooflineResponse : public Response {
     DetailsRooflineBody body;
 };
 
+struct CacheLineRecordResBody {
+    std::string cachelineRecords;
+};
+ 
+struct CachelineRecordResponse : public Response {
+    CachelineRecordResponse() : Response(std::string(REQ_RES_CACHELINE_RECORD)) {}
+    CacheLineRecordResBody body;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

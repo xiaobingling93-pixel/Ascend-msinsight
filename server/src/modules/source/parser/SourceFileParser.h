@@ -62,7 +62,9 @@ public:
     bool IsBaselineParsed(const std::string &inputFilePath);
     void SynchronizeBaselineInfo();
     void ResetBaseline();
-
+    std::vector<Position> GetPositionByType(DataTypeEnum type);
+    bool HasCachelineRecords();
+    std::string GetFilePath();
 private:
     std::string filePath;
     std::map<int, std::vector<Position>> dataBlockMap;

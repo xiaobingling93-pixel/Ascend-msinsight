@@ -23,6 +23,7 @@ void SourceProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH, ToDetailsInterCoreLoadGraphRequest);
     jsonToReqFactory.emplace(std::string(REQ_RES_DETAILS_ROOFLINE), ToDetailsRooflineRequest);
+    jsonToReqFactory.emplace(std::string(REQ_RES_CACHELINE_RECORD), ToCachelineRecordRequest);
 }
 
 void SourceProtocol::RegisterResponseToJsonFuncs()
@@ -38,6 +39,7 @@ void SourceProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH, ToDetailsInterCoreLoadGraphResponse);
     resToJsonFactory.emplace(std::string(REQ_RES_DETAILS_ROOFLINE), ToDetailsRooflineResponse);
+    resToJsonFactory.emplace(std::string(REQ_RES_CACHELINE_RECORD), ToCachelineRecordResponse);
 }
 
 void SourceProtocol::RegisterEventToJsonFuncs()
@@ -180,6 +182,11 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsRooflineRequest(const Dic::jso
     return reqPtr;
 }
 
+std::unique_ptr<Request> SourceProtocol::ToCachelineRecordRequest(const Dic::json_t &json, std::string &error)
+{
+    return ToNoParamsRequest(json, error, std::string(REQ_RES_CACHELINE_RECORD));
+}
+
 #pragma endregion
 
 #pragma region <<Reponse To Json>>
@@ -239,6 +246,12 @@ std::optional<document_t> SourceProtocol::ToDetailsRooflineResponse(const Dic::P
 {
     return ToResponseJson<DetailsRooflineResponse>(dynamic_cast<const DetailsRooflineResponse &>(response));
 }
+
+std::optional<document_t> SourceProtocol::ToCachelineRecordResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<CachelineRecordResponse>(dynamic_cast<const CachelineRecordResponse &>(response));
+}
+
 #pragma endregion
 
     } // namespace Protocol

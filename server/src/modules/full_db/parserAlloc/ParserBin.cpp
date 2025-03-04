@@ -90,6 +90,7 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
     response.body.isBinary = true;
     response.body.coreList = sourceFileParser.GetCoreList();
     response.body.sourceList = sourceFileParser.GetSourceList();
+    response.body.hasCachelineRecords =  sourceFileParser.HasCachelineRecords();
 }
 
 std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFiles(const std::string &selectFilePath,

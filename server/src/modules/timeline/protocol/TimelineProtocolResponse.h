@@ -35,6 +35,7 @@ struct ImportActionResBody {
     bool isIpynb = false;
     // 导入文件是否待解析
     bool isPending = false;
+    bool hasCachelineRecords = false;
 };
 
 struct ImportActionResponse : public Response {
