@@ -303,15 +303,14 @@ const Index = observer(({ session }: { session: Session }) => {
                                     <span>
                                         {
                                             session.instructionSelectSource === InstructionSelectSource.CACHE
-                                                ? <>{t('Cacheline Id')}:<span>{session.cacheUnit.cachelineId}</span></>
+                                                ? <>{t('Cacheline Id')}:<span>{session.cacheUnit.cachelineId},</span></>
                                                 : <>
                                                     {t('Line')} :
                                                     <span>
-                                                        {selectedline >= 0 ? selectedline : ''}
+                                                        {selectedline >= 0 ? selectedline : ''},
                                                     </span>
                                                 </>
                                         }
-                                        ,
                                         {t('RelatedInstructionsCount')} :
                                         <span>
                                             {getRelatedInstrs().length}

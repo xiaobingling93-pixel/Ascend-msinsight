@@ -33,9 +33,10 @@ const resMap = {
 };
 
 test.describe('Source', () => {
-    test.beforeEach(async ({page, sourcePage}) => {
+    test.beforeEach(async ({page, sourcePage}, testInfo) => {
         await page.goto('/');
-        await importData(page, FilePath.SOURCE);
+        const filePath = testInfo.title === 'test_source_sourceSelectChange' ? FilePath.SOURCE_MULTIFILE : FilePath.SOURCE;
+        await importData(page, filePath);
         await sourcePage.goto();
         const coreValue = sourcePage.sourceFrame.getByText('core0');
         await expect(coreValue).toBeVisible();
@@ -63,7 +64,6 @@ test.describe('Source', () => {
     // 筛选条件变化，修改Source选项
     // 预期：代码表的源代码Source变化
     test('test_source_sourceSelectChange', async ({page, sourcePage}) => {
-        await importData(page, FilePath.SOURCE_MULTIFILE);
         await sourcePage.goto();
         const {sourceFrame, sourceSelector, mainContent} = sourcePage;
         const coreSelect = new SelectHelpers(page, sourceSelector, sourceFrame);
