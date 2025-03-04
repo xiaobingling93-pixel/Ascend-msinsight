@@ -197,7 +197,14 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
             return;
         }
         getAllConnections();
-    }, [JSON.stringify(generateConditions)]);
+    }, [
+        generateConditions.algorithm,
+        generateConditions.ppSize,
+        generateConditions.tpSize,
+        generateConditions.cpSize,
+        generateConditions.dpSize,
+        generateConditions.epSize,
+    ]);
 
     return <Layout>
         <BaseInfo session={session}/>

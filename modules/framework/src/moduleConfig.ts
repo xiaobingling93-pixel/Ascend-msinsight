@@ -14,7 +14,7 @@ export interface ModuleConfig {
     hasCachelineRecords?: boolean;
 };
 
-const isDev = false;
+const isDev = process.env.REACT_APP_ENV === 'development';
 export const modulesConfig: ModuleConfig[] = [
     {
         name: 'Timeline',

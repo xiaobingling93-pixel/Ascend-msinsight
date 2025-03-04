@@ -105,7 +105,20 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     const [isCollectedConfiguration, setIsCollectedConfiguration] = useState(false);
     const [activeTab, setActiveTab] = useState(generateConditions.dimension);
     const { t } = useTranslation('summary');
-    const dimensionOptions = getDimensionOptions(t);
+    const dimensionOptions = useMemo(() => {
+        const options = getDimensionOptions(t);
+
+        // 无 CP 维度时，选中 DP 维度
+        if (generateConditions.cpSize === 1 && activeTab === 'ep-dp-pp-cp') {
+            setActiveTab('ep-dp');
+        }
+
+        return options.filter(option => {
+            // 当 cpSize = 1，隐藏 cp 维度视图
+            return !(generateConditions.cpSize === 1 && option.key === 'ep-dp-pp-cp');
+        });
+    }, [generateConditions.cpSize]);
+
     const init = async (): Promise<void> => {
         const { dpSize, tpSize, ppSize, cpSize, epSize, level, algorithm } = await getParallelStrategy();
         const equal = dpSize === 1 && tpSize === 1 && tpSize === 1 && cpSize === 1;

@@ -47,6 +47,7 @@ export interface GetParallelStrategyRes {
 export type SetParallelStrategyParams = Omit<GetParallelStrategyRes, 'level'>;
 
 export type ParallelismType = 'ep' | 'dp' | 'cp' | 'pp' | 'tp';
+export type ConnectionType = 'exp' | 'dp' | 'cp' | 'pp' | 'tp';
 export interface ParallelismArrangementParams extends SetParallelStrategyParams {
     dimension: 'ep-dp' | 'ep-dp-pp' | 'ep-dp-pp-cp' | 'ep-dp-pp-cp-tp';
 }
@@ -64,14 +65,9 @@ export interface IndicatorsItem {
 }
 
 export interface ConnectionsItem {
-    type: ParallelismType;
+    type: ConnectionType;
     list: number[];
     group: string[];
-}
-
-export interface DomainItem {
-    type: ParallelismType;
-    list: number[];
 }
 
 export interface ArrangementItem {

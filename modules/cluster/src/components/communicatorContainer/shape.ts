@@ -3,7 +3,7 @@
  */
 
 import type { RefObject } from 'react';
-import { ParallelismType } from '../../utils/interface';
+import { ConnectionType, ParallelismType } from '../../utils/interface';
 import { FrameGroupItem } from './ContainerUtils';
 import { FONT_FAMILY } from 'ascend-utils';
 
@@ -42,6 +42,7 @@ const colorsMap = {
     pp: '#0277FF',
     dp: '#6948C9',
     ep: '#EE891D',
+    exp: '#EE891D',
     cp: '#FD2F2F',
 };
 
@@ -215,20 +216,20 @@ interface ParallelismSize {
 // 连线（通信域）(group)
 export class Line extends Shape {
     static CLICK_TOLERANCE = 4; // 点击连线的容错范围
-    type: ParallelismType;
+    type: ConnectionType;
     rectList: FrameGroupItem['list'] = [];
     lineList: LinePosition[] = [];
     parallelismSize: ParallelismSize;
     ppOffset = -9;
-    epOffsetX = -3;
-    epOffsetY = 6;
+    expOffsetX = -3;
+    expOffsetY = 6;
     dpOffsetX = 3;
     dpOffsetY = 0;
     cpOffsetX = 9;
     cpOffsetY = -8;
     scrollLeft: number = 0;
     scrollTop: number = 0;
-    constructor(type: ParallelismType, list: FrameGroupItem['list'], parallelismSize: ParallelismSize) {
+    constructor(type: ConnectionType, list: FrameGroupItem['list'], parallelismSize: ParallelismSize) {
         super();
 
         this.type = type;
@@ -275,7 +276,7 @@ export class Line extends Shape {
                     break;
                 case 'dp':
                 case 'cp':
-                case 'ep': {
+                case 'exp': {
                     const offsetX = this[`${this.type}OffsetX`];
                     const offsetY = this[`${this.type}OffsetY`];
                     this.lineList.push([
