@@ -283,7 +283,14 @@ export const safeJSONParse = (str: any, defaultValue: any = null): any => {
     }
 };
 
-export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = []): void => {
+interface KeydownInfo {
+    hasCtrl: boolean;
+    hasCommand: boolean;
+    key: string;
+    isMac: boolean;
+}
+
+export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = [], specialHandler?: (key: KeydownInfo) => void): void => {
     document.addEventListener('keydown', (e) => {
         const defaultForbiddenComboKeys = ['f', 'p', 'g', 'j', 'r'];
         const defaultForbiddenSingleKeys = ['F3', 'F5', 'F7'];
@@ -294,6 +301,7 @@ export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = 
         if (isCtrlCombo || singleKeys.includes(e.key)) {
             e.preventDefault();
         }
+        specialHandler?.({ hasCtrl: e.ctrlKey, hasCommand: e.metaKey, key: e.key, isMac });
     });
 };
 

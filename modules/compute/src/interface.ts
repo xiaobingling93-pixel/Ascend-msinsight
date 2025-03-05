@@ -10,6 +10,7 @@ import {
     switchLanguageHandler,
     switchDirectoryHandler,
     showCacheInstructionsHandler,
+    keydownHandler,
 } from './connection/handler';
 
 const IMPORT = 'remote/import';
@@ -24,4 +25,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     switchLanguage: switchLanguageHandler,
     switchDirectory: switchDirectoryHandler,
     showCacheInstructions: showCacheInstructionsHandler,
+    keydownShortcut: keydownHandler,
 };

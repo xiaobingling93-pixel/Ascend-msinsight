@@ -31,6 +31,8 @@ export class Session {
     // global param
     dirInfo: DirInfo = { rankId: '', isCompare: false };
     computeAdvice?: string[];
+    // 打开代码搜索工具栏
+    openFind: boolean = false;
     // 指令高亮来源
     instructionSelectSource: InstructionSelectSource = InstructionSelectSource.DEFAULT;
     cacheUnit: CacheUnit = { cachelineId: -1, addressRange: [] };

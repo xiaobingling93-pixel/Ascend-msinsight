@@ -20,3 +20,9 @@ export interface CompareData<T> {
     baseline: T;
     diff: T;
 }
+export interface KeydownInfo {
+    hasCtrl: boolean;
+    hasCommand: boolean;
+    key: string;
+    isMac: boolean;
+}

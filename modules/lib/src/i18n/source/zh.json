@@ -19,6 +19,7 @@
     "RegisterNum": "寄存器数",
     "Gpr Count": "通用寄存器数",
     "L2Cache Hit Rate": "L2Cache命中率",
+    "No Result": "无结果",
     "Process Bytes": "处理数据量(Bytes)",
     "EventNumber": "事件次数",
     "EventRatio": "事件占比",
