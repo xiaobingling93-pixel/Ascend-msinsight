@@ -197,6 +197,8 @@ export class Session {
 
     autoAdjustUnitHeight: boolean = false;
     showBottomPanel: boolean | null = null;
+    // 是否处于拖拽场景下
+    isDragging: boolean = false;
 
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];

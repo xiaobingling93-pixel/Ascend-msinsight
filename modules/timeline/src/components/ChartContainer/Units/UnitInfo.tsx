@@ -79,6 +79,14 @@ const DefaultInfoContainer = styled.div`
     .insight-lane-info-header.expandable {
         align-items: center;
     }
+
+    .insight-lane-info-header.draggable {
+        cursor: grab;
+    }
+
+    .insight-lane-info-header.undraggable {
+        cursor: not-allowed;
+    }
 `;
 
 interface DefaultInfoProps {
@@ -88,6 +96,8 @@ interface DefaultInfoProps {
     hasPinButton: boolean;
     name: string;
     isSelected: boolean;
+    enableDrag?: boolean;
+    mouseDown: (e: React.MouseEvent) => void;
 }
 
 const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProps): JSX.Element => {
@@ -98,7 +108,12 @@ const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProp
     return <DefaultInfoContainer>
         <div
             key={ `${getAutoKey(unit)} lane info` }
-            className={cls('insight-lane-info-header', { expandable: unit.children && unit.children.length > 0 }) }
+            className={cls('insight-lane-info-header', {
+                expandable: unit.children && unit.children.length > 0,
+                draggable: !!props.enableDrag && !unit.isExpanded,
+                undraggable: !!props.enableDrag && unit.isExpanded,
+            }) }
+            onMouseDown={props.mouseDown}
         >
             <div className={cls('insight-lane-info-outer-name', { noTag: isEmpty(tag) })}>
                 <Tooltip title={tooltip}>
@@ -180,7 +195,9 @@ interface ConfigBarProps {
 const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected }: ConfigBarProps): JSX.Element => {
     return <div className="insight-lane-configbar" style={{ flex: 'none' }}>
         <div style={{ display: 'flex', marginLeft: 5 }} onMouseUp={(e: React.MouseEvent): void => {
-            e.stopPropagation();
+            if (!session.isDragging) {
+                e.stopPropagation();
+            }
             e.preventDefault();
         }}>
             {(isHovered || isSelected) && unit.configBar?.(session, unit.metadata)}
@@ -202,6 +219,8 @@ interface UnitInfoContentProps {
     hasPinButton: boolean;
     isPinned: boolean;
     isSelected: boolean;
+    enableDrag?: boolean;
+    onMouseDown: (e: React.MouseEvent) => void;
 }
 
 const InsightLaneInfoContainer = styled.div`
@@ -222,11 +241,18 @@ function getParserVisiable(unit: KeyedInsightUnit): boolean {
 
 const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentProps): JSX.Element => {
     const info = unit.renderInfo?.(session, unit.metadata, unit) ?? `${unit.name}`;
+    const onDragMouseDown = (e: React.MouseEvent): void => {
+        // 只允许鼠标左键拖拽
+        if (e.button === 0 && !unit.isExpanded && props.enableDrag) {
+            props.onMouseDown(e);
+        }
+    };
     if (typeof (info) === 'string') {
         return <DefaultInfo
             session={session}
             unit={unit}
             name={info}
+            mouseDown={onDragMouseDown}
             {...props}
         />;
     }
@@ -254,8 +280,14 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
             message.error(err);
         });
     };
+    const getCursorStyle = (): string => {
+        if (props.enableDrag) {
+            return unit.isExpanded ? 'not-allowed' : 'grab';
+        }
+        return 'auto';
+    };
     return <InsightLaneInfoContainer className="insight-lane-info">
-        {info}
+        <span onMouseDown={onDragMouseDown} style={{ flexGrow: 1, cursor: getCursorStyle() }}>{info}</span>
         { !unit.shouldParse && unit.configBar && <ConfigBar
             session={session}
             unit={unit}
@@ -331,10 +363,13 @@ interface UnitInfoProps {
     height: number;
     className: string;
     isSelected: boolean;
+    enableDrag?: boolean;
+    onMouseDown: (e: React.MouseEvent) => void;
 }
 
 export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, className, ...props }: UnitInfoProps): JSX.Element => {
     const { isSelected } = props;
+    const isDragging = session.isDragging;
     const [isHovered, setIsHovered] = React.useState(false);
     const selectUnit = useSelectUnit(session);
     const selectUnits = useSelectUnits(session);
@@ -376,11 +411,15 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         _unit.collapseAction?.(_unit);
     }, [session, expandable]);
     const onStopPropagation = React.useCallback((e: React.MouseEvent) => {
+        // 拖拽时允许事件冒泡
+        if (isDragging) {
+            return;
+        }
         // 阻止事件冒泡到 UnitInfoContainer
         e.stopPropagation();
         // 阻止默认事件行为
         e.preventDefault();
-    }, []);
+    }, [isDragging]);
     const onCheckChange = React.useCallback((e: CheckboxChangeEvent) => {
         const checked = (e.target as HTMLInputElement).checked;
         if (Object.is(checked, true)) {
@@ -390,6 +429,10 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         }
     }, [unit]);
     const onMouseLeft = (): void => {
+        // 拖拽时不触发点击事件
+        if (isDragging) {
+            return;
+        }
         selectUnit(unit);
         traceSingle('selectLane', [unit.name]);
         onExpand(unit);
@@ -403,7 +446,8 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         }
     };
     const onUnitInfoContainerMouseUp = useComplexMouseEvent({
-        stopPropagation: true,
+        // 为拖拽情况考虑，允许事件冒泡，在上层阻止
+        stopPropagation: false,
         left: onMouseLeft,
         right: onMouseRight,
     });

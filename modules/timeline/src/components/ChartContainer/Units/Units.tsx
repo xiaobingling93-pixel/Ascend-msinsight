@@ -31,13 +31,17 @@ import { ThreadMetaData } from '../../../entity/data';
 import { PAGE_PADDING } from '../../charts/ChartInteractor/draw';
 import { MouseButton } from '../../charts/ChartInteractor/actions';
 
-const Lane = styled.div<{ laneHeight: number; className: string }>`
-    position: relative;
+const Lane = styled.div<{ laneHeight: number; className: string; top: number; zIndex: number; isDragging: boolean }>`
+    position: ${(props): string => props.isDragging ? 'fixed' : 'relative'};
     display: flex;
     box-sizing: border-box;
     flex-direction: row;
     height: ${(props): number => props.laneHeight}px;
     border-bottom: solid 1px ${(props): string => props.theme.borderColor};
+    top: ${(props): number => props.top}px;
+    z-index: ${(props): number => props.zIndex};
+    transform: ${(props): string => props.isDragging ? 'scale(1.01)' : 'scale(1)'};
+    transition: transform .2s, box-shadow .2s;
     .unit-info {
         background-color: ${(props): string => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.contentBackgroundColor};
         div svg g use {
@@ -103,16 +107,24 @@ interface UnitProps {
     hasExpandIcon: boolean;
     isPinned: boolean;
     isSonPinned: boolean;
+    nextUnitTop?: number;
     isSelecting?: boolean;
     inRangeUnitKeys?: Set<string>;
     forwardedRef?: React.ForwardedRef<HTMLDivElement>;
+    enableDrag?: boolean;
+    startYRef?: React.MutableRefObject<number>;
+    getDraggingUnitIndexByKey?: (key: string) => void;
+    setNextUnitTop?: React.Dispatch<React.SetStateAction<number>>;
+    onMouseMove?: (e: MouseEvent, isMoveDown: boolean) => void;
 }
 
 const isSelectable = (unit: KeyedInsightUnit): boolean => {
     return !['Card', 'Root'].includes(unit?.name);
 };
 
-export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, inRangeUnitKeys, forwardedRef, ...props }: UnitProps): JSX.Element => {
+export const UnitObserver = observer((
+    { unit, session, isVisible, isSelecting, inRangeUnitKeys, forwardedRef, startYRef, ...props }: UnitProps,
+): JSX.Element => {
     const unitKey = getAutoKey(unit);
     const isSelected = session.selectedUnitKeys.includes(unitKey);
     const [chartWidth, ref] = useWatchResize<HTMLDivElement>('width');
@@ -131,6 +143,66 @@ export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, i
     const clickedUnitMetaData = clickedUnit?.metadata as ThreadMetaData;
     const isSameCard = unitMetaData.cardId === clickedUnitMetaData?.cardId || unitMetaData.cardId?.endsWith('.db');
 
+    // 拖拽泳道相关
+    const [top, setTop] = useState<number>(0);
+    const [zIndex, setZIndex] = useState<number>(0);
+    const [isCurrentDragging, setIsCurrentDragging] = useState<boolean>(false);
+    // 鼠标点击位置离拖拽泳道上边框的距离
+    const elementTop = useRef<number>(0);
+    const previousY = useRef<number>(0);
+
+    const onMouseDown = (e: React.MouseEvent): void => {
+        e.preventDefault();
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp, { once: true });
+        const ele = e.currentTarget.getBoundingClientRect();
+        elementTop.current = e.clientY - ele.top;
+        previousY.current = e.clientY;
+        props.getDraggingUnitIndexByKey?.(unitKey);
+        props.setNextUnitTop?.(ele.height);
+        setZIndex(999);
+        setIsCurrentDragging(true);
+        setTop(ele.top);
+    };
+
+    const onMouseMove = (e: MouseEvent): void => {
+        e.preventDefault();
+        const topDistance = e.clientY - elementTop.current;
+        // 拖拽过程中鼠标位置超出置顶区域时垂直方向触发滚动事件
+        const scrollElement = document.getElementById(PINNED_UNIT_WRAPPER_SCROLLER_ID);
+        if (scrollElement) {
+            const rect = scrollElement.getBoundingClientRect();
+            if (e.clientY > rect.bottom) {
+                scrollElement.scrollBy(0, 10);
+            }
+            if (e.clientY < rect.top) {
+                scrollElement.scrollBy(0, -10);
+            }
+        }
+        if (e.clientY !== previousY.current) {
+            props.onMouseMove?.(e, e.clientY > previousY.current);
+        }
+        previousY.current = e.clientY;
+        setTop(topDistance);
+        runInAction(() => {
+            session.isDragging = true;
+        });
+    };
+
+    const onMouseUp = (e: MouseEvent): void => {
+        e.preventDefault();
+        e.stopPropagation();
+        document.removeEventListener('mousemove', onMouseMove);
+        previousY.current = 0;
+        props.setNextUnitTop?.(0);
+        setTop(0);
+        setZIndex(0);
+        setIsCurrentDragging(false);
+        runInAction(() => {
+            session.isDragging = false;
+        });
+    };
+
     useEffect(() => {
         if (inRangeUnitKeys === undefined || [undefined, false].includes(isSelecting)) { return; }
         if (isSelectable(unit) && isSelectable(clickedUnit) && isSameCard) {
@@ -145,13 +217,14 @@ export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, i
     return <Lane className={cls('unit', {
         [UNIT_SELECTED]: isSelected,
         [UNIT_VISIBLE]: isVisible,
-    })} laneHeight={height} ref={forwardedRef}>
+    })} laneHeight={height} ref={forwardedRef} top={props.nextUnitTop ?? top} zIndex={zIndex} isDragging={isCurrentDragging}>
         <UnitInfo
             className={unit.name === 'Empty' ? 'empty' : ''}
             height={height}
             session={session}
             unit={unit}
             isSelected={isSelected}
+            onMouseDown={onMouseDown}
             {...props}
         />
         <div className={isSelected ? 'chart-selected' : 'chart'} ref={ref}

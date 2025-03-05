@@ -1,10 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
+import type { InsightUnit } from '../../entity/insight';
 const pinState = Symbol('pinnedState');
 const sonPinned = Symbol('sonPinned');
 
-export type PinUnit<T extends object> = T & { [pinState]?: boolean; children?: Array<PinUnit<T>>; [sonPinned]?: boolean};
+export type PinUnit<T extends object> = T & { [pinState]?: boolean; children?: Array<PinUnit<T>>; [sonPinned]?: boolean; parent?: InsightUnit};
 
 export const isPinned = function<T extends object>(unit: PinUnit<T>): boolean {
     if (unit[pinState] === undefined) {
@@ -18,6 +19,16 @@ export const isSonPinned = function <T extends object>(unit: PinUnit<T>): boolea
         unit[sonPinned] = false;
     }
     return unit[sonPinned];
+};
+
+export const isAncestorPinned = function <T extends object>(unit: PinUnit<T>): boolean {
+    if (unit.parent === undefined) {
+        return false;
+    }
+    if (isPinned(unit.parent)) {
+        return true;
+    }
+    return isAncestorPinned(unit.parent);
 };
 
 export const switchPinned = function<T extends object>(unit: PinUnit<T>): void {
