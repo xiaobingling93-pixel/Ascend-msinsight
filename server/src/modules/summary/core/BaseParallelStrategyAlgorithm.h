@@ -7,6 +7,7 @@
 
 #include <unordered_map>
 #include "ClusterDef.h"
+#include "SummaryProtocolResponse.h"
 #include "SummaryProtocolRequest.h"
 
 namespace Dic::Module::Summary {
@@ -34,7 +35,7 @@ public:
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
         std::vector<IndicatorDataStruct> &indicatorData, std::string &err) = 0;
     virtual void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
-                               std::vector<IndicatorDataStruct> &indicatorData) = 0;
+                               std::vector<IndicatorDataStruct> &indicatorData);
     virtual std::vector<Connection> GetAllCommunicationGroups(std::string &err) = 0;
 
 protected:
@@ -54,6 +55,24 @@ protected:
     void SetPpIndicatorAttr();
     void SetCpIndicatorAttr();
     void SetDpIndicatorAttr();
+
+    // get performance data
+    virtual void CalculatePerformanceDataWithTpDimension(
+        const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
+        std::vector<IndicatorDataStruct> &indicatorData);
+    void ReduceTpPerformance(const std::unordered_map<std::uint32_t, StepStatistic> &statistic);
+    virtual void CalculatePerformanceDataWithCpDimension(std::vector<IndicatorDataStruct> &indicatorData);
+    void ReduceCpPerformance();
+    void CalculatePerformanceDataWithPpDimension(std::vector<IndicatorDataStruct> &indicatorData);
+    void ReducePpPerformanceForPpLast();
+    void ReducePpPerformance(uint32_t startIndex, uint32_t step, uint32_t& dpGroupIdx);
+    static void GetPerformanceResponseDataWithDpDimension(
+        const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
+        std::vector<IndicatorDataStruct> &indicatorData);
+    static double Reserved3DecimalPlaces(double num);
+    static void AnalyzePerformanceAdviceWithDpCpPpTpDimension(
+        Protocol::TraceStatistic &max, Protocol::TraceStatistic &min, double meanE2ETime,
+        std::vector<std::string> &advices);
 
     ParallelStrategyConfig strategyConfig;
     std::string dimension = DIMENSIONS_DP; // 默认一层级
@@ -88,7 +107,7 @@ protected:
     std::unordered_map<std::uint32_t, StepStatistic> reduceCpMin;
     std::unordered_map<std::uint32_t, StepStatistic> reducePpStatistic;
     const static inline int cpSizeWithEp = 1;
-    const static inline int numTwo = 2; // 保留2位小数
+    const static inline int reservedNum = 2; // 保留2位小数
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
 };
 }

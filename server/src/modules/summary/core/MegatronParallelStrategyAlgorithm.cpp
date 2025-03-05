@@ -1,10 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include <cfloat>
 #include <unordered_map>
 #include "ServerLog.h"
-#include "NumberUtil.h"
 #include "MegatronParallelStrategyAlgorithm.h"
 
 namespace Dic::Module::Summary {
@@ -22,20 +20,21 @@ void MegatronParallelStrategyAlgorithm::UpdateOrderAndParallelSize()
     for (const auto& para : updatedOrder) {
         parallelSize.push_back(paraDetailsMap[para].size);
     }
-    if (paraDetailsMap[EP_PARA].isShown) {
-        // 仅影响连线生成，不影响布局
-        updatedOrderWithEp = paraOrderWithEp;
-        updatedOrderWithEp.erase(std::remove_if(updatedOrderWithEp.begin(), updatedOrderWithEp.end(),
-            [this](const std::string& group) { return !(paraDetailsMap[group].isShown); }),
-            updatedOrderWithEp.end());
-        parallelSizeWithEp.clear();
-        for (const auto& para : updatedOrderWithEp) {
-            if (para == DP_PARA) {
-                // 前端入参已校验
-                parallelSizeWithEp.push_back(paraDetailsMap[DP_PARA].size / paraDetailsMap[EP_PARA].size);
-            } else {
-                parallelSizeWithEp.push_back(paraDetailsMap[para].size);
-            }
+    if (!paraDetailsMap[EP_PARA].isShown) {
+        return;
+    }
+    // 仅影响连线生成，不影响布局
+    updatedOrderWithEp = paraOrderWithEp;
+    updatedOrderWithEp.erase(std::remove_if(updatedOrderWithEp.begin(), updatedOrderWithEp.end(),
+        [this](const std::string& group) { return !(paraDetailsMap[group].isShown); }),
+        updatedOrderWithEp.end());
+    parallelSizeWithEp.clear();
+    for (const auto& para : updatedOrderWithEp) {
+        if (para == DP_PARA) {
+            // 前端入参已校验
+            parallelSizeWithEp.push_back(paraDetailsMap[DP_PARA].size / paraDetailsMap[EP_PARA].size);
+        } else {
+            parallelSizeWithEp.push_back(paraDetailsMap[para].size);
         }
     }
 }
@@ -178,7 +177,7 @@ std::vector<uint32_t> MegatronParallelStrategyAlgorithm::GetElementContainRanks(
 }
 
 /**
- * 根据Token list生成全量通信域连线，目前仅适配全展开视图
+ * 根据Token list生成全量通信域连线
  * need UpdateParallelDimension first
  * @return
  */
@@ -190,15 +189,11 @@ std::vector<Connection> MegatronParallelStrategyAlgorithm::GetAllCommunicationGr
     return allCommunicationGroups;
 }
 
-bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &err)
+bool MegatronParallelStrategyAlgorithm::GetConnectionsByMegatronToken(std::string &err, bool independentEp = false)
 {
-    if (wordSize == 1) {
-        err = "Failed to get connections. Parallel strategy configs have not been updated yet.";
-        return false;
-    }
-    for (const auto& pair : tokenNameList) {
+    std::unordered_map<std::string, std::string> tmpToken = independentEp ? tokenWithEp : tokenExceptEp;
+    for (const auto& [token, groupName] : tmpToken) {
         bool hasTokenGroup = true;
-        std::string token = pair.first;
         std::vector<std::string> parallelGroups = StringUtil::Split(token, "-");
         for (const auto& group : parallelGroups) {
             if (!paraDetailsMap[group].isShown) {
@@ -211,8 +206,7 @@ bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &e
             continue;
         }
         allGroupsType ranks{};
-        std::string groupName = pair.second;
-        if (std::find(independentEpList.begin(), independentEpList.end(), groupName) != independentEpList.end()) {
+        if (independentEp) {
             // 计算并行通信域时需考虑ep
             ranks = ParallelStrategyAlgorithmHelper::GetAllGroupsRanksByToken(parallelGroups, parallelSizeWithEp,
                                                                               updatedOrderWithEp, wordSize);
@@ -222,12 +216,29 @@ bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &e
                                                                               updatedOrder, wordSize);
         }
         if (ranks.empty()) {
-            err = "Failed to get connections by token list. Group name: " + groupName;
+            err = "Failed to get connections by token list for Megatron. Group name: " + groupName;
             return false;
         }
         for (const auto& rank : ranks) {
             data.connections.emplace_back(groupName, rank, std::vector<std::string>{});
         }
+    }
+    return true;
+}
+
+bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &err)
+{
+    if (wordSize == 1) {
+        err = "Failed to get connections for Megatron. Parallel strategy configs have not been updated yet.";
+        return false;
+    }
+    // 计算并行通信域时无需考虑ep
+    if (!GetConnectionsByMegatronToken(err)) {
+        return false;
+    }
+    // 计算并行通信域时需考虑ep
+    if (paraDetailsMap[EP_PARA].isShown && !GetConnectionsByMegatronToken(err, true)) {
+        return false;
     }
     if (dimension == DIMENSIONS_TP) {
         allCommunicationGroups = data.connections;
@@ -281,289 +292,10 @@ void MegatronParallelStrategyAlgorithm::AddConnection(std::vector<Connection> &c
     }
 }
 
-void MegatronParallelStrategyAlgorithm::SortPerformanceDataByIndex(std::vector<IndicatorDataStruct>& performanceData)
-{
-    std::sort(performanceData.begin(), performanceData.end(),
-              [](const IndicatorDataStruct& a, const IndicatorDataStruct& b) {
-                  return a.index < b.index; // 按 index 升序
-              });
-}
-
-void MegatronParallelStrategyAlgorithm::AnalyzePerformanceAdviceWithDpCpPpTpDimension(Protocol::TraceStatistic &max,
-    Protocol::TraceStatistic &min, double meanE2ETime, std::vector<std::string> &advices)
-{
-    constexpr double threshold = 0.05;
-    Protocol::TraceStatistic diff = {
-        max.computeDiff - min.computeDiff,
-        max.communicationDiff - min.communicationDiff,
-        max.freeDiff - min.freeDiff
-    };
-    if (diff.computeDiff / meanE2ETime > threshold) {
-        advices.emplace_back("Computing has some issues, because the max difference of \"Computing\" "
-            "has reached " + std::to_string(Reserved3DecimalPlaces(diff.computeDiff)) + "us.");
-    }
-    if (diff.communicationDiff / meanE2ETime > threshold) {
-        advices.emplace_back("Communication has some issues, because the max difference of "
-            "\"Communication(Not Overlapped)\" has reached " +
-            std::to_string(Reserved3DecimalPlaces(diff.communicationDiff)) + "us.");
-    }
-    if (diff.freeDiff / meanE2ETime > threshold) {
-        advices.emplace_back("Free has some issues, because the max difference of \"Free\" "
-            "has reached " + std::to_string(Reserved3DecimalPlaces(diff.freeDiff)) + "us.");
-    }
-}
-
-void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithTpDimension(
-    const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
-    std::vector<IndicatorDataStruct> &indicatorData)
-{
-    for (uint32_t i = 0; i < wordSize; ++i) {
-        if (statistic.find(i) == statistic.end()) {
-            continue;
-        }
-        IndicatorDataStruct one{};
-        one.index = i;
-        const StepStatistic &item = statistic.at(i);
-        one.indicators.emplace(KEY_PREPARING_TIME,
-            NumberUtil::DoubleReservedNDigits(item.prepareTime, numTwo));
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME,
-            NumberUtil::DoubleReservedNDigits(item.computingTime, numTwo));
-        one.indicators.emplace(KEY_PURE_COMPUTING_TIME,
-            NumberUtil::DoubleReservedNDigits(item.computingTime - item.overlapCommunicationTime, numTwo));
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION,
-            NumberUtil::DoubleReservedNDigits(item.communicationTime, numTwo));
-        one.indicators.emplace(KEY_COMMUNICATION_OVERLAPPED,
-            NumberUtil::DoubleReservedNDigits(item.overlapCommunicationTime, numTwo));
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED,
-            NumberUtil::DoubleReservedNDigits(item.pureCommunicationTime, numTwo));
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE,
-            NumberUtil::DoubleReservedNDigits(item.pureCommunicationExcludeReceiveTime, numTwo));
-        one.indicators.emplace(KEY_FREE_TIME, NumberUtil::DoubleReservedNDigits(item.freeTime, numTwo));
-        one.indicators.emplace(KEY_STAGE_TIME, NumberUtil::DoubleReservedNDigits(item.stageTime, numTwo));
-        one.indicators.emplace(KEY_BUBBLE_TIME, NumberUtil::DoubleReservedNDigits(item.bubbleTime, numTwo));
-        double e2eTime = item.computingTime + item.pureCommunicationTime + item.freeTime;
-        one.indicators.emplace(KEY_COMPUTING_RATIO, e2eTime == 0 ? 0 :
-            NumberUtil::DoubleReservedNDigits(item.computingTime / e2eTime * PERCENTAGE_RATIO_SCALE, numTwo));
-        one.indicators.emplace(KEY_COMMUNICATION_RATIO, e2eTime == 0 ? 0 :
-            NumberUtil::DoubleReservedNDigits(item.communicationTime / e2eTime * PERCENTAGE_RATIO_SCALE, numTwo));
-        indicatorData.emplace_back(one);
-    }
-    SortPerformanceDataByIndex(indicatorData);
-}
-
 void MegatronParallelStrategyAlgorithm::CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
                                                       std::vector<IndicatorDataStruct> &indicatorData)
 {
-    if (dimension == DIMENSIONS_TP) {
-        Protocol::TraceStatistic max{};
-        Protocol::TraceStatistic min = {DBL_MAX, DBL_MAX, DBL_MAX};
-        double sum = 0;
-        for (auto &item: indicatorData) {
-            max.computeDiff = std::max(max.computeDiff, item.indicators[KEY_TOTAL_COMPUTING_TIME]);
-            max.communicationDiff = std::max(max.communicationDiff, item.indicators[KEY_COMMUNICATION_NOT_OVERLAPPED]);
-            max.freeDiff = std::max(max.freeDiff, item.indicators[KEY_FREE_TIME]);
-            min.computeDiff = std::min(min.computeDiff, item.indicators[KEY_TOTAL_COMPUTING_TIME]);
-            min.communicationDiff = std::min(min.communicationDiff, item.indicators[KEY_COMMUNICATION_NOT_OVERLAPPED]);
-            min.freeDiff = std::min(min.freeDiff, item.indicators[KEY_FREE_TIME]);
-            sum += item.indicators[KEY_TOTAL_COMPUTING_TIME] + item.indicators[KEY_COMMUNICATION_NOT_OVERLAPPED] +
-                item.indicators[KEY_FREE_TIME];
-        }
-        if (!indicatorData.empty() && sum != 0) {
-            AnalyzePerformanceAdviceWithDpCpPpTpDimension(max, min, sum / indicatorData.size(), advices);
-        }
-    }
-}
-
-void MegatronParallelStrategyAlgorithm::ReduceTpPerformance(
-    const std::unordered_map<std::uint32_t, StepStatistic> &statistic)
-{
-    uint32_t idx = 0;
-    for (uint32_t i = 0; i < wordSize; i += tpSize) {
-        // 若已经计算过，则不用重复计算
-        if (reduceTpMax.find(idx) != reduceTpMax.end()) {
-            idx++;
-            continue;
-        }
-        StepStatistic maxTpOne;
-        StepStatistic minTpOne = {"", "", "",
-            DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, 0, 0, 0};
-        for (uint32_t j = i; j < i + tpSize && j < wordSize; j++) {
-            // 跳过空数据卡
-            if (statistic.find(j) == statistic.end()) {
-                continue;
-            }
-            const StepStatistic &item = statistic.at(j);
-            maxTpOne.computingTime = std::max(maxTpOne.computingTime, item.computingTime);
-            maxTpOne.communicationTime = std::max(maxTpOne.communicationTime, item.communicationTime);
-            maxTpOne.pureCommunicationTime = std::max(maxTpOne.pureCommunicationTime, item.pureCommunicationTime);
-            maxTpOne.overlapCommunicationTime = std::max(maxTpOne.overlapCommunicationTime,
-                                                         item.overlapCommunicationTime);
-            maxTpOne.freeTime = std::max(maxTpOne.freeTime, item.freeTime);
-            maxTpOne.npuTotalTime = std::max(maxTpOne.npuTotalTime, item.npuTotalTime);
-
-            minTpOne.computingTime = std::min(minTpOne.computingTime, item.computingTime);
-            minTpOne.communicationTime = std::min(minTpOne.communicationTime, item.communicationTime);
-            minTpOne.pureCommunicationTime = std::min(minTpOne.pureCommunicationTime, item.pureCommunicationTime);
-            minTpOne.overlapCommunicationTime = std::min(minTpOne.overlapCommunicationTime,
-                                                         item.overlapCommunicationTime);
-            minTpOne.freeTime = std::min(minTpOne.freeTime, item.freeTime);
-            minTpOne.npuTotalTime = std::min(minTpOne.npuTotalTime, item.npuTotalTime);
-        }
-        // 若一组TP域不全为空，则存入reduceTpStatistic
-        if (maxTpOne.computingTime != 0.0) {
-            reduceTpMax[idx] = maxTpOne;
-            reduceTpMin[idx] = minTpOne;
-        }
-        idx++;
-    }
-}
-
-// 折叠CP域，形成DP+PP视图的性能数据，根据TP折叠后的最大/小值进一步计算最大值、最小值、极差等统计值
-void MegatronParallelStrategyAlgorithm::ReduceCpPerformance()
-{
-    uint32_t idx = 0;
-    for (uint32_t i = 0; i < wordSize / strategyConfig.tpSize; i += strategyConfig.cpSize) {
-        // 若已经计算过，则不用重复计算
-        if (reduceCpMax.find(idx) != reduceCpMax.end()) {
-            idx++;
-            continue;
-        }
-        StepStatistic maxCpOne;
-        StepStatistic minCpOne = {"", "", "",
-            DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, 0, 0, 0, 0, DBL_MAX, 0, 0, 0};
-        for (uint32_t j = i; j < i + strategyConfig.cpSize && j < wordSize; j++) {
-            // 跳过空数据卡，此处不判断reduceTpMin，因为它与reduceTpMax总是成对出现
-            if (reduceTpMax.find(j) == reduceTpMax.end()) {
-                continue;
-            }
-            const StepStatistic &maxItem = reduceTpMax.at(j);
-
-            maxCpOne.computingTime = std::max(maxCpOne.computingTime, maxItem.computingTime);
-            maxCpOne.communicationTime = std::max(maxCpOne.communicationTime, maxItem.communicationTime);
-            maxCpOne.pureCommunicationTime = std::max(maxCpOne.pureCommunicationTime, maxItem.pureCommunicationTime);
-            maxCpOne.freeTime = std::max(maxCpOne.freeTime, maxItem.freeTime);
-            maxCpOne.npuTotalTime = std::max(maxCpOne.npuTotalTime, maxItem.npuTotalTime);
-
-            const StepStatistic &minItem = reduceTpMin.at(j);
-            minCpOne.computingTime = std::min(minCpOne.computingTime, minItem.computingTime);
-            minCpOne.communicationTime = std::min(minCpOne.communicationTime, minItem.communicationTime);
-            minCpOne.pureCommunicationTime = std::min(minCpOne.pureCommunicationTime, minItem.pureCommunicationTime);
-            minCpOne.freeTime = std::min(minCpOne.freeTime, minItem.freeTime);
-            minCpOne.npuTotalTime = std::min(minCpOne.npuTotalTime, minItem.npuTotalTime);
-        }
-        // 若一组CP域不全为空，则存入
-        if (maxCpOne.computingTime != 0.0) {
-            reduceCpMax[idx] = maxCpOne;
-            reduceCpMin[idx] = minCpOne;
-        }
-        idx++;
-    }
-}
-
-void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithCpDimension(
-    std::vector<IndicatorDataStruct> &indicatorData)
-{
-    // 前面的逻辑保证tpSize不为0
-    for (uint32_t i = 0; i < wordSize / tpSize; ++i) {
-        if (reduceTpMax.find(i) == reduceTpMax.end()) {
-            continue;
-        }
-        IndicatorDataStruct one{};
-        one.index = i;
-        auto &max = reduceTpMax.at(i);
-        auto &min = reduceTpMin.at(i);
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX, max.computingTime);
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX, min.computingTime);
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.computingTime - min.computingTime));
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX, max.communicationTime);
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX, min.communicationTime);
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.communicationTime - min.communicationTime));
-        one.indicators.emplace(KEY_FREE_TIME + KEY_MAX_SUFFIX, max.freeTime);
-        one.indicators.emplace(KEY_FREE_TIME + KEY_MIN_SUFFIX, min.freeTime);
-        one.indicators.emplace(KEY_FREE_TIME + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.freeTime - min.freeTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MAX_SUFFIX, Reserved3DecimalPlaces(max.npuTotalTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MIN_SUFFIX, Reserved3DecimalPlaces(min.npuTotalTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.npuTotalTime - min.npuTotalTime));
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX, max.pureCommunicationTime);
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX, min.pureCommunicationTime);
-        indicatorData.emplace_back(one);
-    }
-    SortPerformanceDataByIndex(indicatorData);
-}
-
-void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithPpDimension(
-    std::vector<IndicatorDataStruct> &indicatorData)
-{
-    // 前面的逻辑保证tpCpSize不为0
-    for (uint32_t i = 0; i < wordSize / tpCpSize; ++i) {
-        if (reduceCpMax.find(i) == reduceCpMax.end()) {
-            continue;
-        }
-        IndicatorDataStruct one{};
-        one.index = i;
-        auto &max = reduceCpMax.at(i);
-        auto &min = reduceCpMin.at(i);
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
-                               Reserved3DecimalPlaces(max.computingTime));
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
-                               Reserved3DecimalPlaces(min.computingTime));
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.computingTime - min.computingTime));
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
-                               Reserved3DecimalPlaces(max.communicationTime));
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
-                               Reserved3DecimalPlaces(min.communicationTime));
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.communicationTime - min.communicationTime));
-        one.indicators.emplace(KEY_FREE_TIME + KEY_MAX_SUFFIX,
-                               Reserved3DecimalPlaces(max.freeTime));
-        one.indicators.emplace(KEY_FREE_TIME + KEY_MIN_SUFFIX, Reserved3DecimalPlaces(min.freeTime));
-        one.indicators.emplace(KEY_FREE_TIME + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.freeTime - min.freeTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MAX_SUFFIX, Reserved3DecimalPlaces(max.npuTotalTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MIN_SUFFIX, Reserved3DecimalPlaces(min.npuTotalTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_RANGE_SUFFIX,
-                               Reserved3DecimalPlaces(max.npuTotalTime - min.npuTotalTime));
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
-                               Reserved3DecimalPlaces(max.pureCommunicationTime));
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
-                               Reserved3DecimalPlaces(min.pureCommunicationTime));
-        indicatorData.emplace_back(one);
-    }
-    SortPerformanceDataByIndex(indicatorData);
-}
-
-void MegatronParallelStrategyAlgorithm::GetPerformanceResponseDataWithDpDimension(
-    const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
-    std::vector<IndicatorDataStruct> &indicatorData)
-{
-    for (const auto& item : statistic) {
-        IndicatorDataStruct one{};
-        one.index = item.first;
-        StepStatistic indicator = item.second;
-        one.indicators.emplace(VALUE_SUM_OF_MAX + KEY_TOTAL_COMPUTING_TIME,
-                               Reserved3DecimalPlaces(indicator.computingTime));
-        one.indicators.emplace(VALUE_SUM_OF_MAX + KEY_TOTAL_COMMUNICATION,
-                               Reserved3DecimalPlaces(indicator.communicationTime));
-        one.indicators.emplace(VALUE_SUM_OF_MAX + KEY_COMMUNICATION_NOT_OVERLAPPED,
-                               Reserved3DecimalPlaces(indicator.pureCommunicationTime));
-        one.indicators.emplace(VALUE_SUM_OF_MAX + KEY_FREE_TIME, Reserved3DecimalPlaces(indicator.freeTime));
-        indicatorData.emplace_back(one);
-    }
-    SortPerformanceDataByIndex(indicatorData);
-}
-
-void MegatronParallelStrategyAlgorithm::ReducePpPerformanceForPpLast()
-{
-    uint32_t dpGroupIdx = 0;
-    // 规约后共有dp_size个数据，且规约时步长为dp_size
-    for (uint32_t i = 0; i < strategyConfig.dpSize; i++) {
-        ReducePpPerformance(i, strategyConfig.dpSize, dpGroupIdx);
-    }
+    BaseParallelStrategyAlgorithm::CalAdviceInfo(dimension, advices, indicatorData);
 }
 
 void MegatronParallelStrategyAlgorithm::ReducePpPerformanceForDpLast()
@@ -577,33 +309,6 @@ void MegatronParallelStrategyAlgorithm::ReducePpPerformanceForDpLast()
     }
 }
 
-void MegatronParallelStrategyAlgorithm::ReducePpPerformance(uint32_t startIndex, uint32_t step, uint32_t& dpGroupIdx)
-{
-    // 若已经计算过，则不用重复计算
-    if (reducePpStatistic.find(dpGroupIdx) != reducePpStatistic.end()) {
-        dpGroupIdx++;
-        return;
-    }
-    StepStatistic reducePpOne;
-    // 取累加和
-    for (uint32_t k = startIndex; k < wordSize / tpCpSize && k < startIndex + step * strategyConfig.ppSize; k += step) {
-        // 跳过空数据卡
-        if (reduceCpMax.find(k) == reduceCpMax.end()) {
-            continue;
-        }
-        const StepStatistic &item = reduceCpMax.at(k);
-        reducePpOne.computingTime += item.computingTime;
-        reducePpOne.communicationTime += item.communicationTime;
-        reducePpOne.pureCommunicationTime += item.pureCommunicationTime;
-        reducePpOne.freeTime += item.freeTime;
-    }
-    // 若一组PP域不全为空，则存入reducePpStatistic
-    if (reducePpOne.computingTime != 0.0) {
-        reducePpStatistic[dpGroupIdx] = reducePpOne;
-    }
-    dpGroupIdx++;
-}
-
 bool MegatronParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     const GetPerformanceIndicatorParam &performanceParams,
     const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
@@ -611,7 +316,7 @@ bool MegatronParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     std::string& err)
 {
     if (!(strategyConfig==performanceParams.config)) {
-        err = "Failed to get parallelism performance indicator by dimension. Unexpected parallel config.";
+        err = "Failed to get parallelism performance indicator for Megatron-LM. Unexpected parallel config.";
         return false;
     }
     tpSize = strategyConfig.tpSize;
@@ -643,18 +348,8 @@ bool MegatronParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     if (performanceParams.dimension == DIMENSIONS_DP) {
         GetPerformanceResponseDataWithDpDimension(reducePpStatistic, indicatorData);
         return true;
-    } else {
-        err = "Failed to get parallelism performance indicator by dimension. Unexpected dimension.";
-        return false;
     }
-}
-
-double MegatronParallelStrategyAlgorithm::Reserved3DecimalPlaces(double num)
-{
-    if (num == 0.0 || num == DBL_MAX) {
-        return 0.0;
-    }
-    const int placeNum = 3;
-    return NumberUtil::DoubleReservedNDigits(num, placeNum);
+    err = "Failed to get parallelism performance indicator for Megatron-LM. Unexpected dimension.";
+    return false;
 }
 }

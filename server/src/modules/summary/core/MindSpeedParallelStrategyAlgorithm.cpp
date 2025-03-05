@@ -45,24 +45,25 @@ void MindSpeedParallelStrategyAlgorithm::UpdateOrderAndParallelSize()
     for (const auto& para : updatedOrder) {
         parallelSize.push_back(paraDetailsMap[para].size);
     }
-    if (paraDetailsMap[EP_PARA].isShown) {
-        // 仅影响连线生成，不影响布局
-        // 把cpSize置为1，dpSize * cpSize作为dpSize，生成ep相关通信域
-        updatedOrderWithEp = paraOrderWithEp;
-        updatedOrderWithEp.erase(std::remove_if(updatedOrderWithEp.begin(), updatedOrderWithEp.end(),
-            [this](const std::string& group) { return !(paraDetailsMap[group].isShown); }),
-            updatedOrderWithEp.end());
-        parallelSizeWithEp.clear();
-        uint32_t cpSize = paraDetailsMap[CP_PARA].size; // 原cpSize
-        for (const auto& para : updatedOrderWithEp) {
-            if (para == CP_PARA) {
-                parallelSizeWithEp.push_back(cpSizeWithEp); // 把cpSize置为1
-            } else if (para == DP_PARA) {
-                // 前端入参已校验, 原dpSize * 原cpSize作为dpSize
-                parallelSizeWithEp.push_back(paraDetailsMap[DP_PARA].size * cpSize / paraDetailsMap[EP_PARA].size);
-            } else {
-                parallelSizeWithEp.push_back(paraDetailsMap[para].size);
-            }
+    if (!paraDetailsMap[EP_PARA].isShown) {
+        return;
+    }
+    // 仅影响连线生成，不影响布局
+    // 把cpSize置为1，dpSize * cpSize作为dpSize，生成ep相关通信域
+    updatedOrderWithEp = paraOrderWithEp;
+    updatedOrderWithEp.erase(std::remove_if(updatedOrderWithEp.begin(), updatedOrderWithEp.end(),
+        [this](const std::string& group) { return !(paraDetailsMap[group].isShown); }),
+        updatedOrderWithEp.end());
+    parallelSizeWithEp.clear();
+    uint32_t cpSize = paraDetailsMap[CP_PARA].size; // 原cpSize
+    for (const auto& para : updatedOrderWithEp) {
+        if (para == CP_PARA) {
+            parallelSizeWithEp.push_back(cpSizeWithEp); // 把cpSize置为1
+        } else if (para == DP_PARA) {
+            // 前端入参已校验, 原dpSize * 原cpSize作为dpSize
+            parallelSizeWithEp.push_back(paraDetailsMap[DP_PARA].size * cpSize / paraDetailsMap[EP_PARA].size);
+        } else {
+            parallelSizeWithEp.push_back(paraDetailsMap[para].size);
         }
     }
 }
@@ -283,7 +284,7 @@ bool MindSpeedParallelStrategyAlgorithm::GetConnectionsByMegatronToken(std::stri
                                                                               updatedOrder, wordSize);
         }
         if (ranks.empty()) {
-            err = "Failed to get connections by token list. Group name: " + groupName;
+            err = "Failed to get connections by token list for MindSpeed. Group name: " + groupName;
             return false;
         }
         for (const auto& rank : ranks) {
@@ -318,7 +319,7 @@ bool MindSpeedParallelStrategyAlgorithm::GetConnectionsForTp2d(std::string &err,
 bool MindSpeedParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &err)
 {
     if (wordSize == 1) {
-        err = "Failed to get connections. Parallel strategy configs have not been updated yet.";
+        err = "Failed to get connections for MindSpeed. Parallel strategy configs have not been updated yet.";
         return false;
     }
     // 先把ep置为1，生成与ep无关通信域
@@ -371,12 +372,16 @@ void MindSpeedParallelStrategyAlgorithm::SetIndicatorAttr()
 
 std::vector<Connection> MindSpeedParallelStrategyAlgorithm::GetAllCommunicationGroups(std::string &err)
 {
-    return {};
+    if (allCommunicationGroups.empty() && !GetConnectionsByTokenList(err)) {
+        return {};
+    }
+    return allCommunicationGroups;
 }
 
 void MindSpeedParallelStrategyAlgorithm::CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
     std::vector<IndicatorDataStruct> &indicatorData)
 {
+    BaseParallelStrategyAlgorithm::CalAdviceInfo(dimension, advices, indicatorData);
 }
 
 bool MindSpeedParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
@@ -385,6 +390,36 @@ bool MindSpeedParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     std::vector<IndicatorDataStruct> &indicatorData,
     std::string& err)
 {
-    return true;
+    if (!(strategyConfig==performanceParams.config)) {
+        err = "Failed to get parallelism performance indicator for MindSpeed. Unexpected parallel config.";
+        return false;
+    }
+    tpSize = strategyConfig.tpSize;
+    wordSize = strategyConfig.tpSize * strategyConfig.ppSize * strategyConfig.cpSize * strategyConfig.dpSize;
+    if (performanceParams.dimension == DIMENSIONS_TP) {
+        CalculatePerformanceDataWithTpDimension(statistic, indicatorData);
+        return true;
+    }
+    // 折叠TP
+    ReduceTpPerformance(statistic);
+    if (performanceParams.dimension == DIMENSIONS_CP) {
+        // DP+PP+CP视图时，折叠TP，计算最大值、最小值、极差等统计值
+        CalculatePerformanceDataWithCpDimension(indicatorData);
+        return true;
+    }
+    // 折叠CP
+    ReduceCpPerformance();
+    if (performanceParams.dimension == DIMENSIONS_PP) {
+        CalculatePerformanceDataWithPpDimension(indicatorData);
+        return true;
+    }
+    // 折叠PP
+    ReducePpPerformanceForPpLast();
+    if (performanceParams.dimension == DIMENSIONS_DP) {
+        GetPerformanceResponseDataWithDpDimension(reducePpStatistic, indicatorData);
+        return true;
+    }
+    err = "Failed to get parallelism performance indicator for MindSpeed. Unexpected dimension.";
+    return false;
 }
 }

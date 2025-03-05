@@ -211,13 +211,13 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldRe
     std::vector<IndicatorDataStruct> responseData;
     bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
     EXPECT_EQ(res, false);
-    EXPECT_EQ(err, "Failed to get parallelism performance indicator by dimension. Unexpected parallel config.");
+    EXPECT_EQ(err, "Failed to get parallelism performance indicator for Megatron-LM. Unexpected parallel config.");
     // wrong dimension
     params.config.algorithm = config.algorithm;
     params.dimension = "xxx";
     res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
     EXPECT_EQ(res, false);
-    EXPECT_EQ(err, "Failed to get parallelism performance indicator by dimension. Unexpected dimension.");
+    EXPECT_EQ(err, "Failed to get parallelism performance indicator for Megatron-LM. Unexpected dimension.");
 }
 
 void PrepareParametersForGetPerformanceByDimensionTest(ParallelStrategyConfig& config,

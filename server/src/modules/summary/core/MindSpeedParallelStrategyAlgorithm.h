@@ -10,26 +10,23 @@
 #include "ParallelStrategyAlgorithmDef.h"
 
 namespace Dic::Module::Summary {
-const std::unordered_map<std::string, std::string> tokenExceptEp = {
-    {DP_GROUP, DP_GROUP}, {CP_GROUP, CP_GROUP}, {TP_GROUP, TP_GROUP}, {PP_GROUP, PP_GROUP}, {DP_CP_GROUP, DP_CP_GROUP},
-    {MP_GROUP, MP_GROUP_NAME}, {TP_DP_CP_GROUP, TP_DP_CP_GROUP}, {TP_DP_GROUP, TP_DP_GROUP}, {TP_CP_GROUP, TP_CP_GROUP}
-};
-
-const std::unordered_map<std::string, std::string> tokenWithEp = {
-    {EP_GROUP, EP_GROUP_NAME}, {TP_EP_GROUP, TP_EP_GROUP_NAME}, {DP_MODULO_EP_GROUP, DP_MODULO_EP_GROUP_NAME},
-    {DP_CP_MODULO_EP_GROUP, DP_CP_MODULO_EP_GROUP_NAME}, {MP_EP_GROUP, MP_EP_GROUP_NAME}
-};
-
-const std::unordered_map<std::string, std::string> tokenOfTp2dNd1 = {
-    {TP_GROUP_FOR_ND1_DIM1, TP_GROUP_FOR_ND1_DIM1_NAME}, {TP_GROUP_FOR_ND1_DIM2, TP_GROUP_FOR_ND1_DIM2_NAME}
-};
-
-const std::unordered_map<std::string, std::string> tokenOfTp2dNd2 = {
-    {TP_GROUP_FOR_ND2_DIM1, TP_GROUP_FOR_ND2_DIM1_NAME}, {TP_GROUP_FOR_ND2_DIM2, TP_GROUP_FOR_ND2_DIM2_NAME}
-};
-
 class MindSpeedParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
+    static const inline std::unordered_map<std::string, std::string> tokenExceptEp = {
+        {DP_GROUP, DP_GROUP}, {CP_GROUP, CP_GROUP}, {TP_GROUP, TP_GROUP}, {PP_GROUP, PP_GROUP},
+        {DP_CP_GROUP, DP_CP_GROUP}, {MP_GROUP, MP_GROUP_NAME}, {TP_DP_CP_GROUP, TP_DP_CP_GROUP},
+        {TP_DP_GROUP, TP_DP_GROUP}, {TP_CP_GROUP, TP_CP_GROUP}
+    };
+    static const inline std::unordered_map<std::string, std::string> tokenWithEp = {
+        {EP_GROUP, EP_GROUP_NAME}, {TP_EP_GROUP, TP_EP_GROUP_NAME}, {DP_MODULO_EP_GROUP, DP_MODULO_EP_GROUP_NAME},
+        {DP_CP_MODULO_EP_GROUP, DP_CP_MODULO_EP_GROUP_NAME}, {MP_EP_GROUP, MP_EP_GROUP_NAME}
+    };
+    static const inline std::unordered_map<std::string, std::string> tokenOfTp2dNd1 = {
+        {TP_GROUP_FOR_ND1_DIM1, TP_GROUP_FOR_ND1_DIM1_NAME}, {TP_GROUP_FOR_ND1_DIM2, TP_GROUP_FOR_ND1_DIM2_NAME}
+    };
+    static const inline std::unordered_map<std::string, std::string> tokenOfTp2dNd2 = {
+        {TP_GROUP_FOR_ND2_DIM1, TP_GROUP_FOR_ND2_DIM1_NAME}, {TP_GROUP_FOR_ND2_DIM2, TP_GROUP_FOR_ND2_DIM2_NAME}
+    };
     MindSpeedParallelStrategyAlgorithm();
     ~MindSpeedParallelStrategyAlgorithm() override;
 
@@ -65,8 +62,6 @@ private:
         std::vector<std::string> &order, std::vector<uint32_t> &paraSize,
         const std::vector<std::string>& orderList, const std::vector<uint32_t>& sizeList);
 
-    std::vector<std::string> paraOrder;
-    std::vector<std::string> paraOrderWithEp;
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
 
     // parameter for cp

@@ -21,19 +21,32 @@ void ParallelStrategyAlgorithmManager::Reset()
     algorithmMap.clear();
 }
 
+bool ParallelStrategyAlgorithmManager::IsSameAlgorithm(const std::string& algorithm1, const std::string& algorithm2)
+{
+    if (algorithm1 == algorithm2 || (StringUtil::Contains(algorithm1, MEGATRON_ALG) &&
+        StringUtil::Contains(algorithm2, MEGATRON_ALG))) {
+        return true;
+    }
+    return false;
+}
+
 bool ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& projectName,
     const ParallelStrategyConfig& config, std::string& errMsg)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    // 若已存在该project，则更新config
     auto it = algorithmMap.find(projectName);
     if (it != algorithmMap.end()) {
-        algorithmMap.at(projectName)->ClearStrategyConfigCache();
-        algorithmMap.at(projectName)->SetStrategyConfig(config);
-        Server::ServerLog::Info("Algorithm already exist. Update parallel strategy config for this program.");
-        return true;
+        ParallelStrategyConfig oldConfig = algorithmMap.at(projectName)->GetStrategyConfig();
+        // 若已存在该project，且算法类别相同, 则更新config
+        if (IsSameAlgorithm(oldConfig.algorithm, config.algorithm)) {
+            algorithmMap.at(projectName)->ClearStrategyConfigCache();
+            algorithmMap.at(projectName)->SetStrategyConfig(config);
+            Server::ServerLog::Info("Algorithm already exist. Update parallel strategy config for this program.");
+            return true;
+        }
+        DeleteAlgorithm(projectName);
     }
-    // 若不存在，则添加相应算法类
+    // 若不存在, 或算法类不同，则添加相应算法类
     if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
         algorithmMap.emplace(projectName, std::make_shared<MegatronParallelStrategyAlgorithm>());
     } else if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MINDSPEED_ALG)) {
