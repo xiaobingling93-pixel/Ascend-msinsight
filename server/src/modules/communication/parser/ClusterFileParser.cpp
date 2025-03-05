@@ -377,7 +377,7 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
     std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath);
 
 #ifdef _WIN32
-    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis.exe");
+    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis\\cluster_analysis.exe");
     // windows 下数据和安装目录不在一个磁盘需要切换磁盘
     std::string switchCommand = "";
     if (std::strcmp(currPath.substr(0, 1).c_str(), selectedPath.substr(0, 1).c_str()) != 0) {
@@ -386,7 +386,7 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
     command += "\"" + switchCommand + " && \"" + FileUtil::PathPreprocess(analysisPath) + "\" -d .";
 #else
     #ifdef __APPLE__
-    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis");
+    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis/cluster_analysis");
     command += "\" && \"" + analysisPath + "\" -d .";
     #else
     std::string analysisPath = currPath + FILE_SEPARATOR + "msprof_analyze";
