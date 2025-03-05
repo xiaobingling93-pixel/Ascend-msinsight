@@ -24,6 +24,7 @@ export {
     getDefaultChartOptions,
     getLegendStyle,
 };
+export { KEYS, getShortcutKey } from './key';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 export const StyledEmpty = ({ descriptor, style }:
@@ -464,3 +465,19 @@ export const hexToRgb = (hex: string): [number, number, number] | null => {
 
     return [r, g, b];
 };
+
+export const getOperatingSystem = function (): string {
+    const userAgent = navigator.userAgent.toLowerCase();
+
+    if (userAgent.includes('windows')) {
+        return 'Windows';
+    } else if (userAgent.includes('macintosh') || userAgent.includes('mac os')) {
+        return 'Mac OS';
+    } else if (userAgent.includes('linux')) {
+        return 'Linux';
+    } else {
+        return 'Unknown';
+    }
+};
+
+export const isMac = getOperatingSystem() === 'Mac OS';

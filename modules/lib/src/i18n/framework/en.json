@@ -56,6 +56,22 @@
       "Source": "Source",
       "Details": "Details",
       "Cache": "Cache"
-    }
+    },
+    "Keyboard shortcuts": "Keyboard shortcuts",
+    "shortcuts": {
+      "Zoom in": "Zoom in",
+      "Zoom out": "Zoom out",
+      "Pan left": "Pan left",
+      "Pan right": "Pan right",
+      "Toggle bottom drawer": "Toggle drawer",
+      "M selection": "Set or unset the temporary selection based on the current selected operator",
+      "Zoom into a selection": "Zoom into a selection",
+      "L align": "Align the selected operator's start time with the benchmark operator's start time",
+      "R align": "Align the selected operator's start time with the benchmark operator's end time",
+      "drag": "drag",
+      "click": "click",
+      "double-click": "double-click"
+    },
+    "Or": "Or"
   }
 }

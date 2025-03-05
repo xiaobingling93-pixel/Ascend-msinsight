@@ -56,6 +56,22 @@
       "Source": "源码",
       "Details": "详情",
       "Cache": "缓存"
-    }
+    },
+    "Keyboard shortcuts": "键盘快捷键",
+    "shortcuts": {
+      "Zoom in": "放大时间轴",
+      "Zoom out": "缩小时间轴",
+      "Pan left": "左移",
+      "Pan right": "右移",
+      "Toggle bottom drawer": "收起/展开底部面板",
+      "M selection": "根据当前选中的算子设置或取消框选区域",
+      "Zoom into a selection": "放大框选区域",
+      "L align": "选中算子的开始时间与基准算子的开始时间对齐",
+      "R align": "选中算子的开始时间与基准算子的结束时间对齐",
+      "drag": "拖动",
+      "click": "点击",
+      "double-click": "双击"
+    },
+    "Or": "或"
   }
 }

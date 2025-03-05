@@ -14,6 +14,7 @@ export { MIChart } from './MIChart';
 export { MITree as Tree } from './MITree';
 export { MISwitch as Switch } from './MISwitch';
 export { Responsive } from './Responsive';
+export { MIPopover as Popover } from './MIPopover';
 export {
     Col,
     Row,

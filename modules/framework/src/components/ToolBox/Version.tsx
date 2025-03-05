@@ -7,6 +7,8 @@ import VersionInfo from '@/version_info.json';
 import { useTranslation } from 'react-i18next';
 import { HelpIcon } from 'ascend-icon';
 import styled from '@emotion/styled';
+import { Popover } from 'ascend-components';
+import { ShortcutsModal } from '@/components/KbdShortcuts';
 
 // 软件首发年分
 const LAUNCH_YEAR = '2024';
@@ -28,6 +30,8 @@ const VersionContainer = styled.ul`
 function Version(): JSX.Element {
     const { t } = useTranslation('framework');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [popoverVisible, setPopoverVisible] = useState(false);
+    const [shortcutsVisible, setShortcutsVisible] = useState(false);
     const showVersion = (): void => {
         setIsModalOpen(true);
     };
@@ -35,14 +39,50 @@ function Version(): JSX.Element {
         setIsModalOpen(false);
     };
 
+    const handleHelpIconClick = (): void => {
+        setPopoverVisible(true);
+    };
+
+    const handleBlur = (): void => {
+        setTimeout(() => {
+            setPopoverVisible(false);
+        }, 200);
+    };
+
+    const showShortcutsModal = (): void => {
+        setShortcutsVisible(true);
+    };
+    const handleShortcutsModalClose = (): void => {
+        setShortcutsVisible(false);
+    };
+
+    const HelpPopoverContent = (): JSX.Element => {
+        return <div>
+            <div className="mi-popover-item" onClick={showShortcutsModal}>{t('Keyboard shortcuts')}</div>
+            <div className="mi-popover-item" onClick={showVersion}>{t('About')}</div>
+        </div>;
+    };
+
     return <>
-        <HelpIcon onClick={showVersion} data-testid="help-icon"/>
+        <Popover
+            content={HelpPopoverContent}
+            placement="bottomRight"
+            arrowPointAtCenter
+            open={popoverVisible}
+            getPopupContainer={(triggerNode: HTMLElement): HTMLElement => triggerNode}
+        >
+            <HelpIcon tabIndex={-1} onBlur={handleBlur} onClick={handleHelpIconClick} data-testid="help-icon"/>
+        </Popover>
         <Modal title={`${t('About')} MindStudio Insight`} open={isModalOpen} onCancel={closeVersion} destroyOnClose={true} footer={null}>
             <VersionContainer className="help-ul">
                 <li>{t('buildVersion', { version, modifyTime })}</li>
                 <li>{t('copyRight', { copyrightYear })}</li>
             </VersionContainer>
         </Modal>
+        <ShortcutsModal
+            open={shortcutsVisible}
+            onClose={handleShortcutsModalClose}
+        />
     </>;
 }
 
