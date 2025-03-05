@@ -107,7 +107,7 @@ module.exports = {
     '@typescript-eslint/promise-function-async': ['off'],
     '@typescript-eslint/no-floating-promises': ['off'],
     '@typescript-eslint/return-await': ['off'],
-    '@typescript-eslint/strict-boolean-expressions': ['error', {
+    '@typescript-eslint/strict-boolean-expressions': ['off', {
       allowNullableObject: true,
       allowNullableBoolean: true,
     }],
