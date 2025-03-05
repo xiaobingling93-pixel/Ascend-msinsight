@@ -554,7 +554,22 @@ void DbClusterDataBase::SetHasClusterBaseInfoTable()
 
 bool DbClusterDataBase::QueryDistributedArgs(ParallelStrategyConfig &config, std::string &level)
 {
-    std::string sql = "SELECT distributed_args FROM " + TABLE_CLUSTER_BASE_INFO;
+    // 考虑兼容性，既支持从列名为distributed_args的表中查询，也支持列名为key value的表中查询，以后profiling使用的列名为key value
+    std::string sql;
+    if (HasColumn(TABLE_CLUSTER_BASE_INFO, "distributed_args")) {
+        sql = "SELECT distributed_args FROM " + TABLE_CLUSTER_BASE_INFO;
+    } else if (HasColumn(TABLE_CLUSTER_BASE_INFO, "key") && HasColumn(TABLE_CLUSTER_BASE_INFO, "value")) {
+        sql = "SELECT value FROM " + TABLE_CLUSTER_BASE_INFO + " WHERE key = 'distributed_args'";
+    } else {
+        Server::ServerLog::Error("Format of table ClusterBaseInfo is not supported.");
+        return false;
+    }
+    return ExecuteQueryDistributedArgs(config, level, sql);
+}
+
+bool DbClusterDataBase::ExecuteQueryDistributedArgs(Dic::Module::ParallelStrategyConfig &config, std::string &level,
+                                                    std::string &sql)
+{
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         Server::ServerLog::Error("Failed to prepare a statement to query distributed args. error:", sqlite3_errmsg(db));

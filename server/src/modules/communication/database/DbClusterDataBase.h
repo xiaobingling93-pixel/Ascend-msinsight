@@ -68,6 +68,7 @@ private:
     std::string parseStatus = "UN_FINISH";
     // 标记初始状态的数据库是否有ClusterBaseInfo表
     bool hasClusterBaseInfoTable = false;
+    bool ExecuteQueryDistributedArgs(ParallelStrategyConfig &config, std::string &level, std::string &sql);
 };
 }
 }
