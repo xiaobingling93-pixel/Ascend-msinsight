@@ -17,15 +17,35 @@ const onFilterDropdownOpenChange = (open: boolean): void => {
     }
 };
 
+const isNegativeNum = (item: any): boolean => {
+    return !isNaN(Number(item)) && Number(item) < 0;
+};
 // 筛选列，是数字且小于0，用NA表示
-const getFilter = (item: any, dataIndex?: string): any => {
-    if (!isNaN(Number(item)) && Number(item) < 0) {
-        return 'NA';
+const getFilterText = (item: any, dataIndex?: string): any => {
+    if (isNegativeNum(item)) {
+        return NOT_APPLICABLE;
     } else if (dataIndex === 'L2Cache Hit Rate') {
         return Number(item);
     } else {
         return item;
     }
+};
+
+const getFilters = (curInstrData: InstrsColumnType[], dataIndex: string): any[] => {
+    const items = [...new Set(curInstrData.map(item => item[dataIndex]))];
+    let hasNegative = false;
+    return items.reduce<any[]>((pre, cur) => {
+        const text = getFilterText(cur, dataIndex);
+        if (text === NOT_APPLICABLE) {
+            if (!hasNegative) {
+                pre.push({ text: NOT_APPLICABLE, value: NOT_APPLICABLE });
+                hasNegative = true;
+            }
+        } else {
+            pre.push({ text, value: cur });
+        }
+        return pre;
+    }, []);
 };
 
 // 更新指令表的显示列
@@ -35,11 +55,8 @@ export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFu
     const unfilterableCols = ['index', 'RealStallCycles'];
     columns.forEach((col: ColumnType<InstrsColumnType>) => {
         if (col.dataIndex !== undefined && !unfilterableCols.includes(String(col.dataIndex))) {
-            const items = [...new Set(curInstrData.map(item => item[col.dataIndex as keyof InstrsColumnType]))];
-            const filters = items.map(item => ({
-                text: getFilter(item, String(col.dataIndex)),
-                value: item,
-            }));
+            const filters = getFilters(curInstrData, String(col.dataIndex));
+
             Object.assign(col, {
                 filters,
                 filterMode: 'menu',

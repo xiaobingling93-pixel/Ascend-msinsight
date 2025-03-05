@@ -21,7 +21,7 @@ import {
     syncScroller,
 } from '../Common';
 import type { Iline, Ilinetable, InstrsColumnType, JsonInstructionType } from './defs';
-import { FieldType } from './defs';
+import { FieldType, NOT_APPLICABLE } from './defs';
 import { queryDynamicInstr, queryDynamicLine, querySourceCode } from '../RequestUtils';
 import { Layout } from 'ascend-layout';
 import { getInstrColumns } from './InstructionTable';
@@ -483,7 +483,7 @@ const getShowData = (dataSource: InstrsColumnType[], filters: Record<string, any
 const isMatchfFilter = (filterValue: any, value: any): boolean => {
     if (!isNaN(Number(value))) {
         // 是数字的时候，筛选条件是 NA，选小于0的数字
-        return filterValue === 'NA' ? value < 0 : filterValue === value;
+        return filterValue === NOT_APPLICABLE ? value < 0 : filterValue === value;
     }
     return filterValue === value;
 };
