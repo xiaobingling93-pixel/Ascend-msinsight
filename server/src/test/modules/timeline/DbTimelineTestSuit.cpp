@@ -20,7 +20,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithFuzzyMatch)
     params.searchContent = "hcom";
     params.rankId = "2"; // cardId = 2
 
-    auto count = database->SearchSliceNameCount(params);
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -33,7 +33,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseMatch)
     params.rankId = "2"; // cardId = 2
     params.isMatchCase = true;
 
-    auto count = database->SearchSliceNameCount(params);
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -46,7 +46,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithExactMatch)
     params.rankId = "2"; // cardId = 2
     params.isMatchExact = true;
 
-    auto count = database->SearchSliceNameCount(params);
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -60,7 +60,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseAndExactMatch)
     params.isMatchExact = true;
     params.isMatchCase = true;
 
-    auto count = database->SearchSliceNameCount(params);
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -80,7 +80,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceName)
     int32_t expectDepth = 0;
     uint64_t expectDuration = 51121;
 
-    database->SearchSliceName(params, index, minTimestamp, body);
+    database->SearchSliceName(params, index, minTimestamp, body, {});
     EXPECT_EQ(body.pid, expectPid);
     EXPECT_EQ(body.tid, expectTid);
     EXPECT_EQ(body.startTime, expectStartTime);
@@ -579,7 +579,7 @@ TEST_F(FullDbTestSuit, SearchAllSlicesDetails)
     Protocol::SearchAllSlicesBody body;
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
 
-    database->SearchAllSlicesDetails(params, body, minTimestamp);
+    database->SearchAllSlicesDetails(params, body, minTimestamp, {});
     const uint64_t EXPECT_COUNT = 20;
 
     EXPECT_EQ(body.searchAllSlices.size(), EXPECT_COUNT);

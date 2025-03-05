@@ -62,9 +62,10 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
                         Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId) override;
-    int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;
+    int SearchSliceNameCount(const Protocol::SearchCountParams &params,
+        const std::vector<TrackQuery> &trackQuery) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
-                         Protocol::SearchSliceBody &responseBody) override;
+                         Protocol::SearchSliceBody &responseBody, const std::vector<TrackQuery> &trackQuery) override;
     bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                           std::vector<Protocol::UnitCounterData> &dataList) override;
@@ -91,7 +92,7 @@ public:
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
 
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
-                                uint64_t minTimestamp) override;
+                                uint64_t minTimestamp, const std::vector<TrackQuery> &trackQueryVec) override;
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
          Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
     bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
@@ -173,15 +174,10 @@ private:
                           std::map<std::string, std::vector<MetaDataDto>> &threadMap);
     bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
                                 std::unique_ptr<SqlitePreparedStatement> &updateCommunicationStmt);
-    std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
-                                      const std::string &order, const std::string &orderByField);
-    std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
     void QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList, const std::string &deviceId);
     bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);
     void GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector<std::string> &units,
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
-    std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase, const std::string& order,
-                                             const std::string& orderByField, const std::string &rankId);
     std::vector<Protocol::SimpleSlice>
     QueryThreadByPid(const Protocol::Metadata &metaData, uint64_t startTime, uint64_t endTime,
                      const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue);
@@ -194,8 +190,15 @@ private:
         uint64_t minTimestamp);
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
-    std::string GetComOpSliceDetailsSql(const std::string &rankId);
     std::vector<Protocol::FlowLocation> ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet);
+
+    int SearchSliceNameCount(const Protocol::SearchCountParams &params);
+
+    bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
+                         Protocol::SearchSliceBody &responseBody);
+
+    bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
+                                uint64_t minTimestamp);
 };
 }
 

@@ -60,9 +60,10 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
         uint64_t minTimestamp, uint64_t trackId) override;
-    int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;
+    int SearchSliceNameCount(const Protocol::SearchCountParams &params,
+        const std::vector<TrackQuery> &trackQuery) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
-        Protocol::SearchSliceBody &responseBody) override;
+        Protocol::SearchSliceBody &responseBody, const std::vector<TrackQuery> &trackQuery) override;
     bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string &rankId) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
         std::vector<Protocol::UnitCounterData> &dataList) override;
@@ -88,7 +89,7 @@ public:
     OneKernelData QueryKernelTid(const uint64_t trackId) override;
 
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
-        uint64_t minTimestamp) override;
+        uint64_t minTimestamp, const std::vector<TrackQuery> &trackQueryVec) override;
 
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
@@ -179,6 +180,20 @@ private:
 
     void AddThreadTrack(const std::string &fileId, std::map<std::pair<std::string, std::string>, std::string> &counters,
         std::unique_ptr<Protocol::UnitTrack> &process, const Thread &tThread);
+
+    bool SearchSliceNameWithOutLock(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
+                                    Protocol::SearchSliceBody &responseBody);
+
+    int SearchSliceNameCount(const Protocol::SearchCountParams &params);
+
+    bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
+                                uint64_t minTimestamp);
+
+    std::string GetSearchAllSliceWithLockRangeSql(const Protocol::SearchAllSliceParams &params,
+        const std::vector<TrackQuery> &trackQueryVec) const;
+
+    void GetSearchAllSliceData(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
+        uint64_t minTimestamp, std::unique_ptr<SqliteResultSet> &resultSet) const;
 };
 } // end of namespace Timeline
 // end of namespace Module

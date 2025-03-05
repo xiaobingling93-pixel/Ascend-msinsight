@@ -11,6 +11,7 @@
 #include "TraceDatabaseHelper.h"
 #include "RenderEngine.h"
 #include "DataEngine.h"
+#include "TrackInfoManager.h"
 #include "RepositoryFactory.h"
 
 class TimelineTest : TestSuit {};
@@ -459,7 +460,7 @@ TEST_F(TestSuit, SearchSliceNameCountWithFuzzyMatch)
     SearchCountParams params;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params);
+    int count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -471,7 +472,7 @@ TEST_F(TestSuit, SearchSliceNameCountWithExactMatch)
     params.isMatchExact = true;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params);
+    int count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -483,7 +484,7 @@ TEST_F(TestSuit, SearchSliceNameCountWithCaseMatch)
     params.isMatchCase = true;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params);
+    int count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -496,7 +497,7 @@ TEST_F(TestSuit, SearchSliceNameCountWithCaseAndExactMatch)
     params.isMatchCase = true;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params);
+    int count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -516,7 +517,7 @@ TEST_F(TestSuit, SearchSliceName)
     int32_t expectDepth = 3;
     uint64_t expectDuration = 18250;
 
-    database->SearchSliceName(params, index, minTimestamp, body);
+    database->SearchSliceName(params, index, minTimestamp, body, {});
     EXPECT_EQ(body.pid, expectPid);
     EXPECT_EQ(body.tid, expectTid);
     EXPECT_EQ(body.startTime, expectStartTime);
@@ -574,7 +575,7 @@ TEST_F(TestSuit, SearchAllSlicesDetailsWithFuzzyMatch)
 
     SearchAllSlicesBody body;
 
-    database->SearchAllSlicesDetails(params, body, 0);
+    database->SearchAllSlicesDetails(params, body, 0, {});
     EXPECT_EQ(body.searchAllSlices[0].timestamp, START_TIME);
     EXPECT_EQ(body.searchAllSlices[0].duration, DURATION);
     EXPECT_EQ(body.searchAllSlices[0].name, "Mul");

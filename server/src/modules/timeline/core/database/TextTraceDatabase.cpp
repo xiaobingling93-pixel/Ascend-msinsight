@@ -923,8 +923,41 @@ int TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &p
     return result;
 }
 
-bool TextTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
-    Protocol::SearchSliceBody &responseBody)
+int TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params,
+    const std::vector<TrackQuery> &trackQuery)
+{
+    int32_t result = 0;
+    if (trackQuery.empty() && !params.metadataList.empty()) {
+        return result;
+    }
+    if (trackQuery.empty()) {
+        return SearchSliceNameCount(params);
+    }
+    std::string sql = TextSqlConstant::GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase);
+    sql += " AND track_id = ? AND timestamp >= ? AND end_time <= ? ";
+    std::vector<std::string> sqls(trackQuery.size(), sql);
+    sql = StringUtil::join(sqls, " UNION ALL ");
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query slice name count failed!.");
+        return 0;
+    }
+    for (const auto &item : trackQuery) {
+        stmt->BindParams(params.searchContent, item.trackId, item.startTime, item.endTime);
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query slice name count. Failed to get result set.", stmt->GetErrorMessage());
+        return 0;
+    }
+    while (resultSet->Next()) {
+        result += resultSet->GetInt32(resultStartIndex);
+    }
+    return result;
+}
+
+bool TextTraceDatabase::SearchSliceNameWithOutLock(const Protocol::SearchSliceParams &params, int index,
+    uint64_t minTimestamp, Protocol::SearchSliceBody &responseBody)
 {
     std::string sql = TextSqlConstant::GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase);
     auto stmt = CreatPreparedStatement(sql);
@@ -933,6 +966,53 @@ bool TextTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, params.searchContent, index);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query slice name. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+    if (!resultSet->Next()) {
+        return false;
+    }
+    uint64_t id = resultSet->GetUint64("id");
+    responseBody.id = std::to_string(id);
+    responseBody.pid = resultSet->GetString("pid");
+    responseBody.tid = resultSet->GetString("tid");
+    responseBody.startTime = resultSet->GetUint64("startTime");
+    responseBody.duration = resultSet->GetUint64("duration");
+    uint64_t trackId = resultSet->GetInt32("trackId");
+    SliceQuery sliceQuery;
+    sliceQuery.trackId = trackId;
+    sliceQuery.rankId = params.rankId;
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
+    responseBody.depth = depthCache[id];
+    return true;
+}
+
+bool TextTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
+    Protocol::SearchSliceBody &responseBody, const std::vector<TrackQuery> &trackQuery)
+{
+    if (std::empty(trackQuery)) {
+        return SearchSliceNameWithOutLock(params, index, minTimestamp, responseBody);
+    }
+    std::string nameMatch = TextSqlConstant::GetSearchNameSqlSuffix(params.isMatchExact, params.isMatchCase);
+    nameMatch += " AND track_id = ? AND timestamp >= ? AND end_time <= ?";
+    std::string sql = "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
+        " FROM " +
+        SLICE_TABLE + " JOIN " + THREAD_TABLE + " USING (track_id) WHERE " + nameMatch;
+    std::vector<std::string> sqls(trackQuery.size(), sql);
+    sql = StringUtil::join(sqls, " UNION ALL ");
+    sql += " ORDER BY startTime LIMIT 1 OFFSET ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query slice name failed!.");
+        return false;
+    }
+    for (const auto &item: trackQuery) {
+        stmt->BindParams(minTimestamp, params.searchContent, item.trackId, item.startTime, item.endTime);
+    }
+    stmt->BindParams(index);
+    auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Query slice name. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1540,6 +1620,97 @@ bool TextTraceDatabase::HasFinishedParseLastTime(const std::string &statuInfo)
 }
 
 bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
+    Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp, const std::vector<TrackQuery> &trackQueryVec)
+{
+    if (!params.metadataList.empty() && trackQueryVec.empty()) {
+        body.currentPage = params.current;
+        body.pageSize = params.pageSize;
+        Protocol::SearchCountParams searchCountParams;
+        searchCountParams.searchContent = params.searchContent;
+        searchCountParams.isMatchCase = params.isMatchCase;
+        searchCountParams.isMatchExact = params.isMatchExact;
+        searchCountParams.rankId = params.rankId;
+        body.count = 0;
+        return true;
+    }
+    if (trackQueryVec.empty()) {
+        return SearchAllSlicesDetails(params, body, minTimestamp);
+    }
+    std::string sql = GetSearchAllSliceWithLockRangeSql(params, trackQueryVec);
+    uint64_t offset = (params.current - 1) * params.pageSize;
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Search all slices details failed!.");
+        return false;
+    }
+    for (const auto &item: trackQueryVec) {
+        stmt->BindParams(params.searchContent, item.trackId, item.startTime, item.endTime);
+    }
+    stmt->BindParams(params.pageSize, offset);
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Search all slices details. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+    GetSearchAllSliceData(params, body, minTimestamp, resultSet);
+    body.currentPage = params.current;
+    body.pageSize = params.pageSize;
+    Protocol::SearchCountParams searchCountParams;
+    searchCountParams.searchContent = params.searchContent;
+    searchCountParams.isMatchCase = params.isMatchCase;
+    searchCountParams.isMatchExact = params.isMatchExact;
+    searchCountParams.rankId = params.rankId;
+    body.count = SearchSliceNameCount(searchCountParams, trackQueryVec);
+    return true;
+}
+
+void TextTraceDatabase::GetSearchAllSliceData(const SearchAllSliceParams &params, SearchAllSlicesBody &body,
+    uint64_t minTimestamp, std::unique_ptr<SqliteResultSet> &resultSet) const
+{
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        SearchAllSlices searchAllSlice{};
+        searchAllSlice.name = resultSet->GetString(col++);
+        uint64_t tempStartTime = resultSet->GetUint64(col++);
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        searchAllSlice.timestamp = tempStartTime - minTimestamp;
+        searchAllSlice.duration = resultSet->GetUint64(col++);
+        searchAllSlice.id = resultSet->GetString(col++);
+        searchAllSlice.tid = resultSet->GetString(col++);
+        searchAllSlice.pid = resultSet->GetString(col++);
+        searchAllSlice.rankId = params.rankId;
+        searchAllSlice.deviceId = params.rankId;
+        body.searchAllSlices.emplace_back(searchAllSlice);
+    }
+}
+
+std::string TextTraceDatabase::GetSearchAllSliceWithLockRangeSql(const SearchAllSliceParams &params,
+    const std::vector<TrackQuery> &trackQueryVec) const
+{
+    std::string orderBy;
+    if (params.order == "descend") {
+        orderBy = " ORDER BY " + params.orderBy + " DESC";
+    } else {
+        orderBy = " ORDER BY " + params.orderBy + " ASC";
+    }
+    std::string nameMatch = TextSqlConstant::GetSearchNameSqlSuffix(params.isMatchExact, params.isMatchCase);
+    nameMatch += " AND s.track_id = ? AND s.timestamp >= ? AND s.end_time <= ?";
+    std::string sql = "SELECT s.name as name, s.timestamp as timestamp, s.duration as duration,"
+        " s.id as id, t.tid as tid, t.pid as pid"
+        " FROM " +
+        SLICE_TABLE + " s JOIN " + THREAD_TABLE +
+        " t on s.track_id = t.track_id "
+        "WHERE " +
+        nameMatch;
+    std::vector<std::string> sqls(trackQueryVec.size(), sql);
+    sql = StringUtil::join(sqls, " UNION ALL ");
+    sql += orderBy + " limit ? offset ?";
+    return sql;
+}
+
+bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
     Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp)
 {
     std::string sql =
@@ -1579,7 +1750,7 @@ bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
     searchCountParams.isMatchCase = params.isMatchCase;
     searchCountParams.isMatchExact = params.isMatchExact;
     searchCountParams.rankId = params.rankId;
-    body.count = SearchSliceNameCount(searchCountParams);
+    body.count = SearchSliceNameCount(searchCountParams, {});
     return true;
 }
 

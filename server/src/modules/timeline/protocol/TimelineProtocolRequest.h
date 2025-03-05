@@ -478,11 +478,6 @@ struct SearchAllSliceParams {
     uint64_t current = 0;
     uint64_t pageSize = 0;
     std::vector<Metadata> metadataList;
-    bool CheckParams(std::string &warnMsg) const
-    {
-        return CheckUnsignPageValid(pageSize, current, warnMsg);
-    }
-
     bool CheckParams(uint64_t minTime, std::string &warnMsg) const
     {
         for (const auto &item: metadataList) {

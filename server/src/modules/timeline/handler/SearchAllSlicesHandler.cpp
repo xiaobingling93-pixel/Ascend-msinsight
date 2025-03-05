@@ -4,6 +4,7 @@
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
+#include "TrackInfoManager.h"
 #include "SearchAllSlicesHandler.h"
 
 namespace Dic {
@@ -18,7 +19,8 @@ bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     SearchAllSlicesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     std::string warnMsg;
-    if (!request.params.CheckParams(warnMsg)) {
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
@@ -31,7 +33,22 @@ bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    if (!database->SearchAllSlicesDetails(request.params, response.body, TraceTime::Instance().GetStartTime())) {
+    std::vector<TrackQuery> trackQueryVec;
+    for (const auto &item : request.params.metadataList) {
+        if ((request.params.rankId == item.rankId || item.rankId == database->GetDbPath()) && !item.pid.empty() &&
+            !item.tid.empty()) {
+            TrackQuery trackQuery;
+            trackQuery.rankId = request.params.rankId;
+            trackQuery.processId = item.pid;
+            trackQuery.threadId = item.tid;
+            trackQuery.trackId = TrackInfoManager::Instance().GetTrackId(request.params.rankId, item.pid, item.tid);
+            trackQuery.startTime = item.lockStartTime + minTimestamp;
+            trackQuery.endTime = item.lockEndTime + minTimestamp;
+            trackQuery.metaType = item.metaType;
+            trackQueryVec.emplace_back(trackQuery);
+        }
+    }
+    if (!database->SearchAllSlicesDetails(request.params, response.body, minTimestamp, trackQueryVec)) {
         ServerLog::Error("Failed to search slice details.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));

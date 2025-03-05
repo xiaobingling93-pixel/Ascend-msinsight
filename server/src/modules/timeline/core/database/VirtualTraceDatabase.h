@@ -18,6 +18,7 @@
 #include "SummaryProtocolResponse.h"
 #include "TraceDatabaseDef.h"
 #include "EventDef.h"
+#include "DominQuery.h"
 
 namespace Dic::Module::Timeline {
 const uint64_t AICPU_OP_DURATION_THRESHOLD = 20000; // 20us
@@ -39,9 +40,10 @@ public:
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
     virtual bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
                                Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId) = 0;
-    virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params) = 0;
+    virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params,
+        const std::vector<TrackQuery> &trackQuery) = 0;
     virtual bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
-                         Protocol::SearchSliceBody &responseBody) = 0;
+                         Protocol::SearchSliceBody &responseBody, const std::vector<TrackQuery> &trackQuery) = 0;
     virtual bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) = 0;
     virtual bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                           std::vector<Protocol::UnitCounterData> &dataList) = 0;
@@ -64,7 +66,7 @@ public:
                                               Protocol::CommunicationKernelBody &body) = 0;
     virtual OneKernelData QueryKernelTid(uint64_t trackId) = 0;
     virtual bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
-                                        Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp) = 0;
+        Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp, const std::vector<TrackQuery> &trackQueryVec) = 0;
     virtual bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) = 0;
     virtual bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,

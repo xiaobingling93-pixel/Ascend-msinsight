@@ -18,6 +18,11 @@ public:
     };
     ~SearchCountHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+
+    std::vector<TrackQuery> GetTrackQueryVec(SearchCountRequest &request, uint64_t minTimestamp) const;
+
+    void QueryHostNameCount(const SearchCountRequest &request, SearchCountResponse &response,
+        const std::vector<TrackQuery> &trackQueryVec) const;
 };
 } // end of namespace Timeline
 } // end of namespace Module
