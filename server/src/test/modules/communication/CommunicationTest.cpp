@@ -6,6 +6,7 @@
 #include "CommunicationProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "ClusterDomainObject.h"
+#include "ClusterDef.h"
 #include "../../TestSuit.cpp"
 
 class CommunicationTest : TestSuit {
@@ -209,6 +210,14 @@ TEST_F(TestSuit, GetCommunicationGroups)
     EXPECT_EQ(groupList[1], "(0, 1, 2, 3, 4, 5, 6, 7)");
 }
 
+TEST_F(TestSuit, GetAllRankFromStepStatisticInfoSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<std::string> res = database->GetAllRankFromStepStatisticInfo();
+    int expectSize = 16;
+    EXPECT_EQ(res.size(), expectSize);
+}
+
 TEST_F(TestSuit, QueryMatrixData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
@@ -280,6 +289,26 @@ TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenSingleStep)
     result = database->QueryAllPerformanceDataByStep(step, data);
     EXPECT_EQ(result, true);
     EXPECT_EQ(data.size(), 0);
+}
+
+TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenSingleStep)
+{
+    DataBaseManager::Instance().SetDataType(DataType::TEXT);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string step = "2";
+    std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
+    const int exceptSize = 2;
+    EXPECT_EQ(result.size(), exceptSize);
+}
+
+TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenAllStep)
+{
+    DataBaseManager::Instance().SetDataType(DataType::TEXT);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string step = "";
+    std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
+    const int exceptSize = 2;
+    EXPECT_EQ(result.size(), exceptSize);
 }
 
 TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenAllStep)

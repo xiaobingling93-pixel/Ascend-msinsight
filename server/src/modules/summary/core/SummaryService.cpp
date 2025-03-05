@@ -5,7 +5,7 @@
 #include "SummaryService.h"
 #include "TraceTime.h"
 #include "DataBaseManager.h"
-#include "NumberUtil.h"
+#include "CollectionUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -194,12 +194,16 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
     GetPerformanceIndicatorParam indicatorParam{params.step,  params.dimension, params.config};
     std::vector<IndicatorDataStruct> compareIndicatorData = GetPerformanceDataByDimension(database,
                                                                                           indicatorParam);
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> compareCommInfo =
+        QueryParallelismCommTime(database, indicatorParam);
     // 查询baseline数据
     std::vector<IndicatorDataStruct> baselineIndicatorData;
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> baselineCommInfo;
     if (params.isCompare) {
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
         GetPerformanceIndicatorParam baselineParams{params.baselineStep, params.dimension, params.config};
         baselineIndicatorData = GetPerformanceDataByDimension(databaseBaseline, baselineParams);
+        baselineCommInfo = QueryParallelismCommTime(databaseBaseline, baselineParams);
     }
 
     if (compareIndicatorData.empty() && baselineIndicatorData.empty()) {
@@ -207,6 +211,7 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
         return false;
     }
     MergeParallelismPerformance(compareIndicatorData, baselineIndicatorData, indicatorData);
+    MergeCommDataPerformance(compareCommInfo, baselineCommInfo, indicatorData);
     // 非对比状态下，才计算专家建议信息
     if (!params.isCompare && database != nullptr) {
         auto algPtr =
@@ -218,6 +223,121 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
     return true;
 }
 
+void SummaryService::MergeCommDataPerformance(std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &compare,
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &baseline, PerformanceIndicatorData &indicatorData)
+{
+    for (auto &item: indicatorData.performanceData) {
+        std::string key = std::to_string(item.index);
+        MergeCommInfo(compare[key], baseline[key], item.commTimeIndicator);
+    }
+}
+
+void SummaryService::MergeCommInfo(std::vector<CommInfoUnderRank> compare, std::vector<CommInfoUnderRank> baseline,
+                                   CompareData<std::unordered_map<std::string, double>> &commRes)
+{
+    std::unordered_map<std::string, double> compareMap;
+    for (const auto &item: compare) {
+        compareMap[item.pgName] = item.commTime;
+    }
+
+    std::unordered_map<std::string, double> baselineMap;
+    for (const auto &item: baseline) {
+        baselineMap[item.pgName] = item.commTime;
+    }
+
+    commRes.compare = compareMap;
+    commRes.baseline = baselineMap;
+    commRes.diff = CalDiffIndicators(compareMap, baselineMap);
+}
+
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::QueryParallelismCommTime(
+    std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params)
+{
+    // 暂不支持折叠情况，后续支持后放开
+    if (params.dimension != "ep-dp-pp-cp-tp") {
+        ServerLog::Warn("Fail to query parallelism, not support dimension.");
+        return {};
+    }
+    if (database == nullptr) {
+        ServerLog::Warn("Fail to query parallelism communication info, database not exist.");
+        return {};
+    }
+    auto algPtr =
+            ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath());
+    if (algPtr == nullptr) {
+        ServerLog::Warn("Failed to get algorithm by project name for query parallelism communication info.");
+        return {};
+    }
+    std::string err;
+    // 获取根据并行策略配置计算出来的通信域信息
+    std::vector<Connection> connections = algPtr->GetAllCommunicationGroups(err);
+    if (!err.empty()) {
+        // 完整链接数据不存在，则直接返回
+        ServerLog::Warn("Fail to get all communication groups info.");
+        return {};
+    }
+    // 获取导入的rank数据信息
+    std::vector<std::string> importRankList = database->GetAllRankFromStepStatisticInfo();
+    if (importRankList.empty()) {
+        ServerLog::Warn("Fail to get all rank from step statistic info.");
+        return {};
+    }
+
+    // 获取要填充的数据
+    std::vector<CommInfoUnderRank> commTimeForRankDim = database->GetCommTimeForRankDim(params.step);
+    if (commTimeForRankDim.empty()) {
+        ServerLog::Warn("Fail to get communication time data.");
+        return {};
+    }
+    // 匹配数据
+    return MatchCommDataForConnection(commTimeForRankDim, connections, importRankList);
+}
+
+/**
+ * 将communication通信数据与Connection（summary中计算出来的链接数据）进行匹配
+ * @param commTimeForRankDim 从通信耗时表查询到的数据，每个通信域下每个卡的通信数据
+ * @param connections 按照并行策略计算出的全展开视图
+ * @param importRankList 实际导入的rank列表
+ * @return 匹配结果
+ */
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::MatchCommDataForConnection(
+    const std::vector<CommInfoUnderRank> &commTimeForRankDim, const std::vector<Connection> &connections,
+    const std::vector<std::string> &importRankList)
+{
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> commTimeMap;
+    for (const auto &item: commTimeForRankDim) {
+        commTimeMap[item.rankSet].push_back(item);
+    }
+    // 数据分配，为每一个connection找对应的通信数据
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> res;
+    for (const auto &item: connections) {
+        std::vector<std::string> fullRankList;
+        std::transform(item.indexes.begin(), item.indexes.end(), std::back_inserter(fullRankList), [](uint32_t num) {
+            return std::to_string(num);
+        });
+        for (const auto &commTime: commTimeMap) {
+            // 如果不匹配 直接跳过
+            if (!IsConnectionMappingToGroup(commTime.first, fullRankList, importRankList)) {
+                continue;
+            }
+            for (auto commItem: commTime.second) {
+                commItem.pgName = item.type;
+                res[commItem.rankId].push_back(commItem);
+            }
+            break;
+        }
+    }
+    return res;
+}
+
+bool SummaryService::IsConnectionMappingToGroup(const std::string &group, const std::vector<std::string> &fullRankList,
+                                                const std::vector<std::string> &importRankList)
+{
+    std::vector<std::string> groupList = StringUtil::SplitStringWithParenthesesByComma(group);
+    // 理论卡集合 ∩ 实际导入的卡集合 = 当前通信域卡集合，说明匹配上了
+    return CollectionUtil::IsVectorEqualIgnoreOrder(
+        CollectionUtil::CalIntersection(fullRankList, importRankList), groupList);
+}
 }
 }
 }

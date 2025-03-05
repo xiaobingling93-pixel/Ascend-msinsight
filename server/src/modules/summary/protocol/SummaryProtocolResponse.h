@@ -240,6 +240,8 @@ struct ParallelismArrangementResponse : public Response {
 struct IndicatorDataStructVo {
     uint32_t index{};
     CompareData<std::unordered_map<std::string, double>> indicators;
+    // 根据不同并行策略拆分的指标：实际数据根据通信耗时表计算得到
+    CompareData<std::unordered_map<std::string, double>> commTimeIndicator;
 };
 
 struct PerformanceIndicatorData {

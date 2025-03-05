@@ -293,6 +293,13 @@ struct Connection {
     }
 };
 
+struct CommInfoUnderRank {
+    double commTime = 0;
+    std::string rankId;
+    std::string rankSet;
+    std::string pgName;
+};
+
 // 一张卡或一个分组的相关信息，包括序号、名称、位置、并行分组属性、包含的卡等信息
 struct Element {
     uint32_t index; // rank or group index

@@ -202,6 +202,14 @@ TEST_F(DbCommunicationTest, GetCommunicationGroups)
     EXPECT_EQ(groupList[0], "(0,1,2,3,4,5,6,7)");
 }
 
+TEST_F(DbCommunicationTest, GetAllRankFromStepStatisticInfoSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<std::string> res = database->GetAllRankFromStepStatisticInfo();
+    int expectSize = 8;
+    EXPECT_EQ(res.size(), expectSize);
+}
+
 TEST_F(DbCommunicationTest, QueryMatrixData)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
@@ -425,6 +433,18 @@ TEST_F(DbCommunicationTest, QueryAllPerformanceDataByStepWhenAllStep)
     EXPECT_EQ(result, true);
     EXPECT_EQ(data.size(), 8); // 8
     EXPECT_EQ(data.at(0).prepareTime, 1075.410); // 1075.410 for result
+}
+
+TEST_F(DbCommunicationTest, GetCommTimeForRankDimByStepWhenAllStep)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string step = "1";
+    std::vector<Dic::Module::CommInfoUnderRank> result1 = database->GetCommTimeForRankDim(step);
+    const int exceptSize = 8;
+    EXPECT_EQ(result1.size(), exceptSize);
+    step = "All";
+    std::vector<Dic::Module::CommInfoUnderRank> result2 = database->GetCommTimeForRankDim(step);
+    EXPECT_EQ(result2.size(), exceptSize);
 }
 
 TEST_F(DbCommunicationTest, QueryParseClusterStatusSuccess)

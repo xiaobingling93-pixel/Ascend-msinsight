@@ -613,6 +613,28 @@ bool DbClusterDataBase::ExecuteQueryDistributedArgs(Dic::Module::ParallelStrateg
     level = PARALLEL_CONFIG_LEVEL_COLLECTED;
     return true;
 }
+
+std::vector<std::string> DbClusterDataBase::GetAllRankFromStepStatisticInfo()
+{
+    std::string sql = "SELECT DISTINCT \"index\" as rankId From " + TABLE_STEP_TRACE_TIME + " WHERE type = 'rank'";
+    return ExecuteGetAllRankFromStepStatisticInfo(sql);
+}
+
+std::vector<CommInfoUnderRank> DbClusterDataBase::GetCommTimeForRankDim(const std::string &stepId)
+{
+    std::string sql;
+    if (stepId.empty() || stepId == "All") {
+        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapsed_time) * 1000, 3) as commTime, g.rank_set as rankSet "
+            "FROM "+ TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN " + TABLE_COMM_GROUP + " as g ON t.group_name = "
+            "g.group_name WHERE hccl_op_name = 'Total Op Info' group by t.rank_id, g.rank_set";
+    } else {
+        sql = "SELECT t.rank_id as rankId, ROUND(t.elapsed_time * 1000, 3) as commTime, g.rank_set as rankSet FROM "
+            + TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN " + TABLE_COMM_GROUP + " as g ON t.group_name = g.group_name"
+            " WHERE step = ? AND hccl_op_name = 'Total Op Info'";
+    }
+    std::string stepAfterDeal = stepId.empty() || stepId == "All" ? stepId : "step" + stepId;
+    return ExecuteGetCommTimeForRankDim(sql, stepAfterDeal);
+}
 }
 }
 }

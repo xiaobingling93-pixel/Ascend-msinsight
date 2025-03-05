@@ -798,5 +798,51 @@ bool VirtualClusterDatabase::ExecuteQueryAllPerformanceDataByStep(const std::str
     }
     return true;
 }
+
+std::vector<std::string> VirtualClusterDatabase::ExecuteGetAllRankFromStepStatisticInfo(std::string &sql)
+{
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query all rank from step statistic info.");
+        return {};
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query all rank from step statistic info.");
+        return {};
+    }
+    std::vector<std::string> res;
+    while (resultSet->Next()) {
+        res.push_back(resultSet->GetString("rankId"));
+    }
+    return res;
+}
+
+std::vector<CommInfoUnderRank> VirtualClusterDatabase::ExecuteGetCommTimeForRankDim(std::string &sql,
+                                                                                    const std::string &step)
+{
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query communication time for rank dimension.");
+        return {};
+    }
+    if (step != "" && step != "All") {
+        stmt->BindParams(step);
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result for query communication time for rank dimension.");
+        return {};
+    }
+    std::vector<CommInfoUnderRank> res;
+    while (resultSet->Next()) {
+        CommInfoUnderRank info{};
+        info.rankId = resultSet->GetString("rankId");
+        info.commTime = resultSet->GetDouble("commTime");
+        info.rankSet = resultSet->GetString("rankSet");
+        res.push_back(info);
+    }
+    return res;
+}
 }
 }

@@ -152,6 +152,13 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                             : `${value} ${unit}`;
                 }
             }
+            for (const key of Object.keys(currentData.commCompare)) {
+                const diffValue = currentData.commDiff[key];
+                const value = currentData.commCompare[key];
+                updatedData[`${key}-${t('Communication')}`] = session.isCompare
+                    ? <span>{value}<span className={diffValue >= 0 ? 'positive-number' : 'negative-number'}>({diffValue})</span> μs</span>
+                    : `${value} μs`;
+            }
 
             return {
                 [t('Index')]: index,

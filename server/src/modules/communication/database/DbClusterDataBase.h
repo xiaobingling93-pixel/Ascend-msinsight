@@ -29,6 +29,8 @@ public:
                            Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
     bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
+    std::vector<std::string> GetAllRankFromStepStatisticInfo() override;
+    std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) override;
     bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) override;
     bool QueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList) override;
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;

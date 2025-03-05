@@ -114,7 +114,13 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
             setPerformanceLoading(false);
         });
         const performanceAfterDeal = performance.map(item => {
-            return { index: item.index, ...item.indicators.compare, diff: item.indicators.diff };
+            return {
+                index: item.index,
+                ...item.indicators.compare,
+                diff: item.indicators.diff,
+                commCompare: item.commTimeIndicator.compare,
+                commDiff: item.commTimeIndicator.diff,
+            };
         });
         setAdviceContent(advice ?? []);
         runInAction(() => {

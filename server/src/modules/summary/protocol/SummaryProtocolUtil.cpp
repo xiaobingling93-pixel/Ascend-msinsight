@@ -393,6 +393,15 @@ std::optional<document_t> ToResponseJson<ParallelismPerformanceResponse>(const P
         auto diff = IndicatorsInfoToJson(data.indicators.diff, allocator);
         JsonUtil::AddMember(indicatorsJson, "diff", diff, allocator);
         JsonUtil::AddMember(dataJson, "indicators", indicatorsJson, allocator);
+
+        json_t commIndicatorsJson(kObjectType);
+        auto commCompare = IndicatorsInfoToJson(data.commTimeIndicator.compare, allocator);
+        JsonUtil::AddMember(commIndicatorsJson, "compare", commCompare, allocator);
+        auto commBaseline = IndicatorsInfoToJson(data.commTimeIndicator.baseline, allocator);
+        JsonUtil::AddMember(commIndicatorsJson, "baseline", commBaseline, allocator);
+        auto commDiff = IndicatorsInfoToJson(data.commTimeIndicator.diff, allocator);
+        JsonUtil::AddMember(commIndicatorsJson, "diff", commDiff, allocator);
+        JsonUtil::AddMember(dataJson, "commTimeIndicator", commIndicatorsJson, allocator);
         performance.PushBack(dataJson, allocator);
     }
     JsonUtil::AddMember(body, "performance", performance, allocator);

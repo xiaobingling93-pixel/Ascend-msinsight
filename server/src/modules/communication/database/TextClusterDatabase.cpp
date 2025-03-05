@@ -562,6 +562,12 @@ bool TextClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam &para
     return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
 }
 
+std::vector<std::string> TextClusterDatabase::GetAllRankFromStepStatisticInfo()
+{
+    std::string sql = "SELECT DISTINCT rank_id as rankId FROM " + TABLE_STEP_TRACE + " WHERE rankId != ''";
+    return ExecuteGetAllRankFromStepStatisticInfo(sql);
+}
+
 bool TextClusterDatabase::GetGroups(const std::string &iterationId, std::vector<std::string> &groupList)
 {
     std::string sql = "SELECT DISTINCT group_id as groupId FROM " + TABLE_GROUP_ID;
@@ -922,6 +928,21 @@ bool TextClusterDatabase::QueryAllPerformanceDataByStep(const std::string &step,
             "WHERE rank_id <> '' and step_id = ?";
     }
     return ExecuteQueryAllPerformanceDataByStep(sql, step, data);
+}
+
+std::vector<CommInfoUnderRank> TextClusterDatabase::GetCommTimeForRankDim(const std::string &stepId)
+{
+    std::string sql;
+    if (stepId.empty() || stepId == "All") {
+        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapse_time) * 1000, 3) as commTime, g.group_id as rankSet FROM "
+            + TABLE_TIME_INFO + " as t LEFT JOIN " + TABLE_GROUP_ID + " as g ON t.stage_id = g.id "
+            "WHERE op_name = 'Total Op Info' group by t.rank_id, g.group_id";
+    } else {
+        sql = "SELECT t.rank_id as rankId, ROUND(t.elapse_time * 1000, 3) as commTime, g.group_id as rankSet FROM "
+            + TABLE_TIME_INFO + " as t LEFT JOIN " + TABLE_GROUP_ID + " as g ON t.stage_id = g.id "
+            "WHERE op_name = 'Total Op Info' AND iteration_id = ?";
+    }
+    return ExecuteGetCommTimeForRankDim(sql, stepId);
 }
 } // end of namespace Module
 } // end of namespace Dic

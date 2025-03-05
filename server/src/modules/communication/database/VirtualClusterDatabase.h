@@ -39,6 +39,8 @@ public:
                                    Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
     virtual bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
                                   Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
+    virtual std::vector<std::string> GetAllRankFromStepStatisticInfo() = 0;
+    virtual std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) = 0;
     virtual bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) = 0;
     virtual bool QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                                  std::vector<MatrixInfoDo> &matrixInfoDoList) = 0;
@@ -86,6 +88,8 @@ protected:
         Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
     bool ExecuteGetRankAndBubble(const Protocol::PipelineRankTimeParam &param, std::vector<std::string> &&stageIds,
                                  Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string &&sql);
+    std::vector<std::string> ExecuteGetAllRankFromStepStatisticInfo(std::string &sql);
+    std::vector<CommInfoUnderRank> ExecuteGetCommTimeForRankDim(std::string &sql, const std::string &step);
     bool ExecuteGetGroups(const std::string &iterationId, std::vector<std::string> &groupList, std::string sql);
     bool ExecuteQueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList,
         const std::string &sql);

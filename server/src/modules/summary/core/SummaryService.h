@@ -22,6 +22,8 @@ public:
     static bool QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db);
     static bool QueryParallelismPerformanceInfo(const ParallelismPerformance &params,
                                                 PerformanceIndicatorData &indicatorData);
+    static std::unordered_map<std::string, std::vector<CommInfoUnderRank>> QueryParallelismCommTime(
+        std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params);
 private:
     static std::vector<IndicatorDataStruct> GetPerformanceDataByDimension(
         std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params);
@@ -30,7 +32,17 @@ private:
                                             PerformanceIndicatorData &indicatorData);
     static std::unordered_map<std::string, double> CalDiffIndicators(std::unordered_map<std::string, double> &compare,
                                                                      std::unordered_map<std::string, double> &baseline);
-static inline int numberThousands = 1000;
+    static std::unordered_map<std::string, std::vector<CommInfoUnderRank>> MatchCommDataForConnection(
+        const std::vector<CommInfoUnderRank> &commTimeForRankDim, const std::vector<Connection> &connections,
+        const std::vector<std::string> &importRankList);
+    static bool IsConnectionMappingToGroup(const std::string &group, const std::vector<std::string> &fullRankList,
+                                           const std::vector<std::string> &importRankList);
+    static void MergeCommDataPerformance(std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &compare,
+                                         std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &baseline,
+                                         PerformanceIndicatorData &indicatorData);
+    static void MergeCommInfo(std::vector<CommInfoUnderRank> compare, std::vector<CommInfoUnderRank> baseline,
+                              CompareData<std::unordered_map<std::string, double>> &commRes);
+    static inline int numberThousands = 1000;
 };
 }
 }

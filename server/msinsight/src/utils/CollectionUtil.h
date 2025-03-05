@@ -51,6 +51,30 @@ public:
         }
         return result;
     }
+
+    // 检查类型T是否支持 == 操作符
+    template <typename T>
+    struct has_equal_operator : std::integral_constant<bool,
+            !std::is_same<decltype(std::declval<T>() == std::declval<T>()), void>::value> {};
+
+    // 模板函数，仅当T支持 == 操作符时才可用
+    template <typename T, typename = typename std::enable_if<has_equal_operator<T>::value>::type>
+    static inline bool IsVectorEqualIgnoreOrder(std::vector<T> const& vec1, std::vector<T> const& vec2)
+    {
+        // 如果长度不同，直接返回false
+        if (vec1.size() != vec2.size()) {
+            return false;
+        }
+
+        // 排序两个vector
+        std::vector<T> sortedVec1(vec1);
+        std::vector<T> sortedVec2(vec2);
+        std::sort(sortedVec1.begin(), sortedVec1.end());
+        std::sort(sortedVec2.begin(), sortedVec2.end());
+
+        // 比较排序后的vector
+        return sortedVec1 == sortedVec2;
+    }
 };
 }
 #endif // PROFILER_SERVER_COLLECTIONUTIL_H
