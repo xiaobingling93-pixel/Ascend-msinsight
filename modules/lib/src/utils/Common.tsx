@@ -283,19 +283,25 @@ export const safeJSONParse = (str: any, defaultValue: any = null): any => {
     }
 };
 
-export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = [], specialHandler?: (key: {hasCtrl: boolean;key: string}) => void): void => {
+interface KeydownInfo {
+    hasCtrl: boolean;
+    hasCommand: boolean;
+    key: string;
+    isMac: boolean;
+}
+
+export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = [], specialHandler?: (key: KeydownInfo) => void): void => {
     document.addEventListener('keydown', (e) => {
         const defaultForbiddenComboKeys = ['f', 'p', 'g', 'j', 'r'];
         const defaultForbiddenSingleKeys = ['F3', 'F5', 'F7'];
         const comboKeys = forbiddenComboKeys.length ? forbiddenComboKeys : defaultForbiddenComboKeys;
         const singleKeys = forbiddenSingleKeys.length ? forbiddenSingleKeys : defaultForbiddenSingleKeys;
-        const hasCtrl = e.ctrlKey || e.metaKey;
-        const isCtrlCombo = hasCtrl && comboKeys.includes(e.key.toLowerCase());
+        const isCtrlCombo = (e.ctrlKey || e.metaKey) && comboKeys.includes(e.key.toLowerCase());
 
         if (isCtrlCombo || singleKeys.includes(e.key)) {
             e.preventDefault();
         }
-        specialHandler?.({ hasCtrl, key: e.key });
+        specialHandler?.({ hasCtrl: e.ctrlKey, hasCommand: e.metaKey, key: e.key, isMac });
     });
 };
 

@@ -7,6 +7,7 @@ import { type NotificationHandler } from './defs';
 import i18n from 'ascend-i18n';
 import { type DirInfo, InstructionSelectSource } from '../entity/session';
 import { closeFind, openFind } from '../components/hotMethod/CodeTextSearch';
+import type { KeydownInfo } from '@/utils/interface';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -92,17 +93,17 @@ export const switchDirectoryHandler: NotificationHandler = async (data): Promise
 };
 
 export const keydownHandler: NotificationHandler = async (data): Promise<void> => {
-    shortcutSwitchFindwindow(data as any);
+    shortcutSwitchFindWindow(data as any);
 };
 
-export const shortcutSwitchFindwindow = (keyInfo: {hasCtrl: boolean;key: string}): void => {
+export const shortcutSwitchFindWindow = (keyInfo: KeydownInfo): void => {
     const session = store.sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
         }
-        // ctrl+f键，且当打开前source页
-        const isSwitchFindWindow = keyInfo.hasCtrl && keyInfo.key === 'f' &&
+        // ctrl+f键(或Mac 环境Command+f)，且当打开前source页
+        const isSwitchFindWindow = (keyInfo.isMac ? keyInfo.hasCommand : keyInfo.hasCtrl) && keyInfo.key === 'f' &&
             document.URL.toLowerCase().includes('source') && document.getElementById('root') !== null;
         if (isSwitchFindWindow) {
             if (session.openFind) {
