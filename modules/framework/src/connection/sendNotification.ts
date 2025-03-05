@@ -77,6 +77,13 @@ export const sendClusterBaselineStatus = (status: boolean): void => {
     });
 };
 
+export const sendShortcutKeys = (key: {hasCtrl: boolean;key: string}): void => {
+    connector.send({
+        event: 'keydownShortcut',
+        body: key,
+    });
+};
+
 export const sendDirectory = (to?: number): void => {
     const session = store.sessionStore.activeSession;
     const { projectName, dataPath } = session.activeDataSource;

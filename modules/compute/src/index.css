@@ -25,3 +25,23 @@
 .theme_dark .ant-message-notice-content{
     background: var(--grey60);
 }
+
+/*代码搜索高亮样式*/
+mark {
+    padding:0;
+    background-color:var(--mi-color-warning);
+}
+mark.current{
+    padding:0;
+    border:1px solid var(--mi-border-color);
+    background-color:var(--mi-color-primary-light-1);
+    border-radius:1px;
+}
+/*选中代码范围*/
+code.active-range li.range{
+    background-color:var(--mi-bg-color-light)!important;
+}
+/*头部gap*/
+.head-gap .ant-table-header{
+    margin-bottom: 48px;
+}

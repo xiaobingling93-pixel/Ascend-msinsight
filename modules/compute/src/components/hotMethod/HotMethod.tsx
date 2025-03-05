@@ -29,6 +29,7 @@ import { getCodeColumns } from './CodeAttrTable';
 import TableHead, { type Col } from './TableHead';
 import { store } from '../../store';
 import { runInAction } from 'mobx';
+import CodeTextSearch, { CODE_SEARCH_WINDOW_HEIGHT } from './CodeTextSearch';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -163,7 +164,7 @@ const Index = observer(({ session }: { session: Session }) => {
         return str;
     }
 
-    async function getInstrs(coreName: string): Promise<{instructions: InstrsColumnType[] ;fields: Record<string, FieldType>}> {
+    async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumnType[]; fields: Record<string, FieldType> }> {
         if (coreName === '') {
             return { instructions: [], fields: {} };
         }
@@ -191,7 +192,8 @@ const Index = observer(({ session }: { session: Session }) => {
         });
         return { instructions: list, fields };
     };
-    async function getLines(source: string, core: string): Promise<{ lines: Ilinetable[];fields: Record<string, FieldType> }> {
+
+    async function getLines(source: string, core: string): Promise<{ lines: Ilinetable[]; fields: Record<string, FieldType> }> {
         if (source === '' || core === '') {
             return { lines: [], fields: {} };
         }
@@ -247,6 +249,7 @@ const Index = observer(({ session }: { session: Session }) => {
             setCode(newCode);
         });
     }
+
     // 初始化
     useEffect(() => {
         reset();
@@ -271,7 +274,7 @@ const Index = observer(({ session }: { session: Session }) => {
 
     useEffect(() => {
         resizeHeight();
-    }, [code]);
+    }, [code, session.openFind]);
 
     useEffect(() => {
         updateCode();
@@ -324,11 +327,11 @@ const Index = observer(({ session }: { session: Session }) => {
                                         }}
                                     > {t('OnlyRelatedInstructions')}</Checkbox>
                                 </div>
-                                { instrLimit.overlimit
-                                    ? (<div style={{ color: 'red', padding: '0 10px 0 20px' }} >
+                                {instrLimit.overlimit
+                                    ? (<div style={{ color: 'red', padding: '0 10px 0 20px' }}>
                                         {t('ExceedInstructions', { max: instrLimit.maxSize })}
                                     </div>)
-                                    : <></> }
+                                    : <></>}
                             </>
                         }/>
                     </>
@@ -336,13 +339,15 @@ const Index = observer(({ session }: { session: Session }) => {
                 body={
                     <LeftRightContainer
                         flex
-                        left={<div style={{ height: '100%', width: '100%', overflow: 'auto', paddingRight: '8px' }}>
+                        left={<div style={{ height: '100%', width: '100%', overflow: 'auto', paddingRight: '8px' }}
+                            className={session.openFind ? 'head-gap' : ''}>
                             <LeftRightContainer
                                 flex
                                 leftPercent={70}
                                 left={
-                                    <HeaderFixedContainer
+                                    <><HeaderFixedContainer
                                         style={{ overflow: 'hidden' }}
+                                        headerStyle={{ marginBottom: session.openFind ? `${CODE_SEARCH_WINDOW_HEIGHT}px` : '0' }}
                                         header={<TableHead columns={useSourceColumns()}/>}
                                         bodyProps={{ id: 'CodeTable' }}
                                         bodyStyle={{ overflowX: 'scroll', marginRight: '-8px' }}
@@ -358,6 +363,8 @@ const Index = observer(({ session }: { session: Session }) => {
                                             />
                                         }
                                     />
+                                    {session.openFind ? <CodeTextSearch/> : <></>}
+                                    </>
                                 }
                                 rightProps={{ id: 'CodeAttrTable' }}
                                 right={
@@ -368,7 +375,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                         columns={codeColumns}
                                         dataSource={codeLines}
                                         rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
-                                        onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {
+                                        onRow={(record: Ilinetable): { onClick: (event: React.MouseEvent<HTMLElement>) => void } => {
                                             return {
                                                 onClick: (event: React.MouseEvent<HTMLElement>): void => {
                                                     recoverDefaultInstructionSource();
@@ -386,7 +393,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                 id={'Instructions'}
                                 style={{ paddingLeft: '8px' }}
                                 body={<InstructionTable
-                                    tableHeight={tableHeight}
+                                    tableHeight={session.openFind ? tableHeight + CODE_SEARCH_WINDOW_HEIGHT : tableHeight}
                                     columns={instrColumns}
                                     condition={condition}
                                     dataSource={curInstrData}
@@ -394,7 +401,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                     handleInstrsClick={handleInstrsClick}
                                     selectedline={selectedline}
                                     lineClickListener={lineClickListener}
-                                    isShowPage ={curInstrData.length > PAGE_LIMIT}
+                                    isShowPage={curInstrData.length > PAGE_LIMIT}
                                     instructionSelectSource={session.instructionSelectSource}
                                 />}
                             />
@@ -419,7 +426,13 @@ interface IinstrProp {
     instructionSelectSource: InstructionSelectSource;
 }
 
-const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr, instructionSelectSource = InstructionSelectSource.DEFAULT }:
+const srcollToView = ({
+    condition,
+    selectedline,
+    showDataSource,
+    isRelatedInstr,
+    instructionSelectSource = InstructionSelectSource.DEFAULT,
+}:
 {
     condition: ConditionType;
     selectedline: number;
@@ -444,7 +457,16 @@ const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr,
 };
 
 function InstructionTable({
-    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, condition, lineClickListener, isShowPage, instructionSelectSource,
+    columns,
+    dataSource,
+    isRelatedInstr,
+    handleInstrsClick,
+    tableHeight,
+    selectedline,
+    condition,
+    lineClickListener,
+    isShowPage,
+    instructionSelectSource,
 }: IinstrProp): JSX.Element {
     return isShowPage
         ? <InstructionTablePage
@@ -526,8 +548,17 @@ const sortData = (dataSource: InstrsColumnType[], sorter: Record<string, any>): 
         }
     });
 };
+
 function InstructionTableNopage({
-    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition, instructionSelectSource,
+    columns,
+    dataSource,
+    isRelatedInstr,
+    handleInstrsClick,
+    tableHeight,
+    selectedline,
+    lineClickListener,
+    condition,
+    instructionSelectSource,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState(dataSource);
     const [filters, setFilters] = useState({});
@@ -547,7 +578,7 @@ function InstructionTableNopage({
         columns={columns}
         dataSource={showDataSource}
         rowClassName={(record: InstrsColumnType): string => (isRelatedInstr(record) ? 'selected' : '')}
-        onRow={ (record: InstrsColumnType): { onClick: () => void } => ({
+        onRow={(record: InstrsColumnType): { onClick: () => void } => ({
             onClick: (): void => {
                 handleInstrsClick(record);
             },
@@ -571,7 +602,15 @@ function InstructionTableNopage({
 }
 
 function InstructionTablePage({
-    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition, instructionSelectSource,
+    columns,
+    dataSource,
+    isRelatedInstr,
+    handleInstrsClick,
+    tableHeight,
+    selectedline,
+    lineClickListener,
+    condition,
+    instructionSelectSource,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState<InstrsColumnType[]>([]);
     const [filters, setFilters] = useState({});
@@ -607,12 +646,12 @@ function InstructionTablePage({
         columns={columns}
         dataSource={pageData}
         rowClassName={(record: InstrsColumnType): string => (isRelatedInstr(record) ? 'selected' : '')}
-        onRow={ (record: InstrsColumnType): { onClick: () => void } => ({
+        onRow={(record: InstrsColumnType): { onClick: () => void } => ({
             onClick: (): void => {
                 handleInstrsClick(record);
             },
         })}
-        pagination={ GetPageConfigWhithPageData(page, setPage, [PAGE_LIMIT]) }
+        pagination={GetPageConfigWhithPageData(page, setPage, [PAGE_LIMIT])}
         scroll={{ y: tableHeight - 50, rowHeight: ROW_HEIGHT }}
         virtual={true}
         onChange={(pagination, newFilters, newSorter, extra): void => {

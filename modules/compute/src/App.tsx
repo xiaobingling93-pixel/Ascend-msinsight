@@ -9,8 +9,7 @@ import { useRootStore } from './context/context';
 import connector from './connection';
 import HotMethod from './components/hotMethod/HotMethod';
 import Detail from './components/detail/Index';
-import { themeInstance } from './theme/theme';
-import { GlobalStyles } from 'ascend-theme';
+import { GlobalStyles, themeInstance } from 'ascend-theme';
 import CacheKit from './components/cacheKit/Index';
 
 const app = observer(({ page }: {page?: string}) => {
