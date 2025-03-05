@@ -280,9 +280,12 @@ struct Connection {
     Connection(std::string type, const std::vector<uint32_t>& indexes,
         const std::vector<std::string>& communicationGroups) : indexes(indexes), type(std::move(type)),
         communicationGroups(communicationGroups) {}
+    Connection (const Connection& other) = default;
     Connection& operator=(const Connection& other)
     {
-        if (this == &other) return *this;
+        if (this == &other) {
+            return *this;
+        }
         indexes = other.indexes;
         type = other.type;
         communicationGroups = other.communicationGroups;
