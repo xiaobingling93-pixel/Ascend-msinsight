@@ -42,7 +42,11 @@ OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
 OUTPUT_OS_DIR = ''
 OUTPUT_BIN_DIR = ''
 OUTPUT_EXE_DIR = ''
-Spec_Path = os.path.join(BUILD_DIR, 'cluster_analysis.spec')
+# Windows采用One-Folder方式打包，macOS因为签名问题采用One-File方式打包
+if IS_WINDOWS:
+    Spec_Path = os.path.join(BUILD_DIR, 'cluster_analysis_windows.spec')
+elif IS_DARWIN:
+    Spec_Path = os.path.join(BUILD_DIR, 'cluster_analysis_darwin.spec')
 
 LOG_DIR = os.path.join(BUILD_DIR, 'logs')
 LOG_FILE = os.path.join(LOG_DIR, 'build.log')
