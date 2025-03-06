@@ -13,6 +13,8 @@
 #include "ThreadTable.h"
 #include "ProcessTable.h"
 #include "FlowTable.h"
+#include "EventUtil.h"
+#include "JsonUtil.h"
 #include "TrackInfoManager.h"
 using ::testing::ByMove;
 using ::testing::Return;
@@ -1081,4 +1083,24 @@ TEST_F(EventParserTest, TestSET_FLAGSimulationPhIsBParse)
         .Select(ThreadColumn::THREAD_SORT_INDEX)
         .ExcuteQuery(dbPtr, threadPOS);
     EXPECT_EQ(threadPOS.size(), expectSize);
+}
+
+/**
+ * 测试算子调优算子事件
+ */
+TEST_F(EventParserTest, TestToSimulationSliceEvent)
+{
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    Dic::JsonUtil::AddConstMember(json, "dur", "26.040520", allocator);
+    Dic::JsonUtil::AddConstMember(json, "ph", "X", allocator);
+    Dic::JsonUtil::AddConstMember(json, "cname", "thread_state_unknown", allocator);
+    Dic::JsonUtil::AddConstMember(json, "name", "TaskWaitRequest", allocator);
+    Dic::JsonUtil::AddConstMember(json, "pid", "AI CPU", allocator);
+    Dic::JsonUtil::AddConstMember(json, "tid", "TURN0", allocator);
+    Dic::JsonUtil::AddConstMember(json, "ts", "96.581932", allocator);
+    std::unique_ptr<Event> eventPtr = EventUtil::Instance().FromJson(json, "SX");
+    auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
+    const uint64_t expectDur = 26040;
+    EXPECT_EQ(event.dur, expectDur);
 }

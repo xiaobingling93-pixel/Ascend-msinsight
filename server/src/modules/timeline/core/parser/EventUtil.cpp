@@ -87,8 +87,12 @@ std::unique_ptr<Event> EventUtil::ToSimulationSliceEvent(const json_t &json)
 {
     std::unique_ptr<Slice> event = std::make_unique<Slice>();
     event->type = "SX";
-    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
-    event->dur = NumberUtil::TimestampUsToNs(JsonUtil::GetDouble(json, "dur"));
+    long double start = JsonUtil::GetLongDouble(json, "ts");
+    double tempDur = JsonUtil::GetDouble(json, "dur");
+    event->ts = NumberUtil::TimestampUsToNs(start);
+    long double end = NumberSafe::Add(start, tempDur);
+    event->end = NumberUtil::TimestampUsToNs(end);
+    event->dur = NumberSafe::Sub(event->end, event->ts);
     event->name = JsonUtil::GetString(json, "name");
     event->threadName = JsonUtil::GetString(json, "tid");
     event->processName = JsonUtil::GetString(json, "pid");
