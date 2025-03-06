@@ -8,7 +8,7 @@ export const loopActionFactory = (callBackFunc: (args: any) => void, msPerTime: 
     let delay = msDelay;
     function actionPerform<T>(args?: T): void {
         const now = performance.now();
-        if (now - lastTime >= msPerTime) {
+        if (now - lastTime >= msPerTime && isZoomInning) {
             lastTime = now + delay;
             callBackFunc(args);
             delay = 0;

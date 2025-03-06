@@ -83,12 +83,14 @@ test.describe('Summary', () => {
         await dataTypeSelector.open();
         await dataTypeSelector.selectOption('Preparing');
 
-        await expect(parallelismGraph).toHaveScreenshot('heatmap-default-dyeing-step.png', { maxDiffPixels: 300 });
+        await expect(parallelismGraph).toHaveScreenshot('heatmap-default.png', { maxDiffPixels: 300 });
 
-        const dyeingStepInput = summaryFrame.getByTestId('input-dyeing-step');
-        await dyeingStepInput.fill('0.06');
+        const dyeingMinimumInput = summaryFrame.getByTestId('input-dyeing-minimum');
+        const dyeingMaximumInput = summaryFrame.getByTestId('input-dyeing-maximum');
+        await dyeingMinimumInput.fill('700');
+        await dyeingMaximumInput.fill('900');
 
-        await expect(parallelismGraph).toHaveScreenshot('heatmap-higher-dyeing-step.png', { maxDiffPixels: 300 });
+        await expect(parallelismGraph).toHaveScreenshot('heatmap-edit.png', { maxDiffPixels: 300 });
     });
 
     // 点击卡，显示连线，点击连线，显示对应性能图表

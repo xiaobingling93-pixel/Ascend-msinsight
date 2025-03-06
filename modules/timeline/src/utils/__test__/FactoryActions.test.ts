@@ -29,6 +29,6 @@ describe('loopActionFactory', () => {
         jest.advanceTimersByTime(200);
 
         // 断言回调函数没有再被调用（说明循环已停止）
-        expect(callBackFunc).toHaveBeenCalledTimes(2);
+        expect(callBackFunc).toHaveBeenCalledTimes(1);
     });
 });

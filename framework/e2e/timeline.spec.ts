@@ -362,7 +362,7 @@ test.describe('Timeline', () => {
         expect(await clickUnitCheckboxTwo.isChecked()).toBe(true);
         await clickMenu(clickUnitTwo, timelineFrame, 'Hide');
         const hideUnit = timelineFrame.locator('#unitWrapperScroller .unit > .empty');
-        const hideUnitTitle = hideUnit.locator('.insight-lane-info > span');
+        const hideUnitTitle = hideUnit.locator('.insight-lane-info > span > span');
         expect(await hideUnitTitle.innerHTML()).toBe('2 units hidden');
         await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
         expect(await hideUnit.count()).toBe(0);
@@ -427,7 +427,6 @@ test.describe('Timeline', () => {
             // 聚焦在timeline
             await clickUnit.click({ button: 'left' }); // 选中unit+收起unit
             await clickUnit.click({ button: 'left' }); // 选中unit+展开unit
-            await page.keyboard.press('w');
             await page.keyboard.press('w');
             await page.waitForTimeout(1000);
             await page.mouse.move(0, 0);

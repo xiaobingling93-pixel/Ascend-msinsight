@@ -44,8 +44,14 @@ test.describe('Framework', () => {
     // 查看帮助信息
     test('view help info', async ({ page }) => {
         const frameworkPage = new FrameworkPage(page);
-        const { helpInfoDialog } = frameworkPage;
+        const { helpInfoDialog, shortcutsDialog } = frameworkPage;
         await frameworkPage.helpInfoBtn.click();
+        await page.getByText('Keyboard shortcuts').click();
+        await expect(shortcutsDialog).toBeVisible();
+        await page.getByLabel('Close', { exact: true }).click();
+
+        await frameworkPage.helpInfoBtn.click();
+        await page.getByText('About').click();
         await expect(helpInfoDialog).toBeVisible();
     });
 });

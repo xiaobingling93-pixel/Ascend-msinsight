@@ -32,8 +32,11 @@ export class FrameworkPage {
     readonly deleteAllConfirmBtn: Locator;
     readonly deleteAllCancelBtn: Locator;
 
-    // 帮助信息弹窗
+    // 版本信息弹窗
     readonly helpInfoDialog: Locator;
+
+    // 快捷键弹窗
+    readonly shortcutsDialog: Locator;
 
     readonly loadingDialog: Locator;
 
@@ -56,6 +59,7 @@ export class FrameworkPage {
         this.deleteAllConfirmBtn = page.getByRole('button', { name: 'Yes' });
         this.deleteAllCancelBtn = page.getByRole('button', { name: 'No' });
         this.projectList = page.getByRole('tree');
+        this.shortcutsDialog = page.getByLabel('Keyboard shortcuts');
         this.helpInfoDialog = page.getByLabel('About MindStudio Insight');
         this.loadingDialog = page.locator('.el-loading-mask');
     }
