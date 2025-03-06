@@ -824,7 +824,7 @@ std::map<std::pair<std::string, std::string>, std::string> TextTraceDatabase::Qu
 std::string TextTraceDatabase::ExtractGroupNameValue(const std::string& str)
 {
     // 静态初始化正则表达式，确保只编译一次
-    static const std::regex expr(R"(Group ([\S]+) Communication)");
+    static const std::regex expr(R"(Group ([\S]+(\s\w*)?) Communication)");
 
     std::smatch match;
     if (std::regex_match(str, match, expr) && match.size() > 1) {

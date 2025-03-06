@@ -192,8 +192,14 @@ void ParserAlloc::ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> &metaD
 {
     for (const auto &item: metaData) {
         for (const auto &thread: item->children) {
-            // 判断是否为group内容
-            auto groupInfoOpt = MetaDataCacheManager::Instance().GetParallelGroupInfo(thread->metaData.groupNameValue);
+            if (thread->metaData.groupNameValue.empty()) {
+                continue;
+            }
+            // 判断是否为group内容，此处进行了一个拆分判断，是由于数据中可能存在将一个通信甬道拆分成两个的情况（mc2算子）
+            // 这个场景会在真正的通信域后加上“Aicpu”进行区分，需要将该字段去掉才能与metadata中通信域的数据相匹配
+            std::vector<std::string> groupNameSplit = StringUtil::Split(thread->metaData.groupNameValue, " ");
+            std::string realGroupName = groupNameSplit.size() > 1 ? groupNameSplit[0] : thread->metaData.groupNameValue;
+            auto groupInfoOpt = MetaDataCacheManager::Instance().GetParallelGroupInfo(realGroupName);
             if (!groupInfoOpt.has_value()) {
                 continue;
             }
