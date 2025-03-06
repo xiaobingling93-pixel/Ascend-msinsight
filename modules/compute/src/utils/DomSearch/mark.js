@@ -137,36 +137,74 @@ export default class Mark {
         return afterNode; // 保持原始返回类型
     }
 
-    wrapRangeInMappedTextNode(textMapping, rs, re, filterCallback, eachCallback) {
-        let rangeStart = rs;
-        let rangeEnd = re;
+    wrapRangeInMappedTextNode(dict, start, end, filterCb, eachCb) {
+        let startOffset = start;
+        let endOffset = end;
+        for (let i = 0; i < dict.nodes.length; i++) {
+            const currentNode = dict.nodes[i];
+            const nextNode = dict.nodes[i + 1];
 
-        const updateTextMapping = (index, relativeEnd) => {
-            for (let j = index; j < textMapping.nodes.length; j++) {
-                if (j !== index && textMapping.nodes[j].start > 0) {
-                    textMapping.nodes[j].start -= relativeEnd;
+            // 确定是否需要处理当前节点
+            if (nextNode === undefined || nextNode.start > startOffset) {
+                if (!filterCb(currentNode.node)) {
+                    break; // 不满足过滤条件，终止处理
                 }
-                textMapping.nodes[j].end -= relativeEnd;
+
+                const relativeStart = startOffset - currentNode.start;
+                const relativeEnd = Math.min(endOffset, currentNode.end) - currentNode.start;
+
+                // 包裹文本节点并更新字典值
+                this.wrapNodeAndUpdateDict(currentNode, relativeStart, relativeEnd, dict);
+
+                // 调整后续节点的偏移量
+                this.adjustSubsequentOffsets(dict, i, relativeEnd);
+
+                // 更新结束偏移量
+                endOffset -= relativeEnd;
+
+                // 执行回调
+                eachCb(currentNode.node.previousSibling, currentNode.start);
+
+                // 判断是否需要继续处理后续节点
+                if (endOffset > currentNode.end) {
+                    startOffset = currentNode.end; // 更新起始偏移以继续处理
+                } else {
+                    break; // 当前范围处理完成
+                }
             }
-        };
+        }
+    }
 
-        for (let i = 0; i < textMapping.nodes.length && rangeEnd > rangeStart; i++) {
-            const { node, start, end } = textMapping.nodes[i];
-            if ((textMapping.nodes[i + 1]?.start ?? Infinity) <= rangeStart || !filterCallback(node)) {
-                continue;
+    // 包裹指定范围的文本节点并更新字典值
+    wrapNodeAndUpdateDict(nodeInfo, relStart, relEnd, dict) {
+        const preservedStart = nodeInfo.start;
+
+        // 分割原始文本
+        const prefix = dict.value.substring(0, preservedStart);
+        const suffix = dict.value.substring(preservedStart + relEnd);
+
+        // 包裹文本节点
+        nodeInfo.node = this.wrapRangeInTextNode(nodeInfo.node, relStart, relEnd);
+
+        // 更新字典中的完整文本值
+        dict.value = prefix + suffix;
+    }
+
+    // 调整后续节点的起止偏移量
+    adjustSubsequentOffsets(dict, startIndex, adjustLength) {
+        for (let j = startIndex; j < dict.nodes.length; j++) {
+            const node = dict.nodes[j];
+
+            // 当前节点之后的节点需要调整偏移量
+            if (j > startIndex) {
+                // 防止出现负偏移量
+                if (node.start > 0) {
+                    node.start -= adjustLength;
+                }
             }
 
-            const relativeStart = rangeStart - start;
-            const relativeEnd = Math.min(rangeEnd, end) - start;
-
-            textMapping.nodes[i].node = this.wrapRangeInTextNode(node, relativeStart, relativeEnd);
-            eachCallback(node.previousSibling, start);
-
-            textMapping.value = textMapping.value.slice(0, start) + textMapping.value.slice(relativeEnd + start);
-            updateTextMapping(i, relativeEnd);
-
-            rangeEnd -= relativeEnd;
-            rangeStart = end;
+            // 所有后续节点都需要调整结束偏移量
+            node.end -= adjustLength;
         }
     }
 

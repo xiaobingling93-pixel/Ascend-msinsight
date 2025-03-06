@@ -8,6 +8,7 @@ import i18n from 'ascend-i18n';
 import { type DirInfo, InstructionSelectSource } from '../entity/session';
 import { closeFind, openFind } from '../components/hotMethod/CodeTextSearch';
 import type { KeydownInfo } from '@/utils/interface';
+import { KEYS } from 'ascend-utils';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -102,15 +103,19 @@ export const shortcutSwitchFindWindow = (keyInfo: KeydownInfo): void => {
         if (!session) {
             return;
         }
-        // ctrl+f键(或Mac 环境Command+f)，且当打开前source页
-        const isSwitchFindWindow = (keyInfo.isMac ? keyInfo.hasCommand : keyInfo.hasCtrl) && keyInfo.key === 'f' &&
-            document.URL.toLowerCase().includes('source') && document.getElementById('root') !== null;
-        if (isSwitchFindWindow) {
-            if (session.openFind) {
-                closeFind();
-            } else {
-                openFind();
-            }
+        // ctrl+f键(Mac环境Command+f)，且当打开前source页
+        // esc键退出
+        const isOnSource = document.URL.toLowerCase().includes('source') && document.getElementById('root')?.offsetParent !== null;
+        if (!isOnSource) {
+            return;
+        }
+        const isOpenKey = (keyInfo.isMac ? keyInfo.hasCommand : keyInfo.hasCtrl) && keyInfo.key === KEYS.F;
+        const isCloseKey = keyInfo.key === KEYS.ESCAPE;
+        if (isOpenKey) {
+            openFind();
+        }
+        if (isCloseKey) {
+            closeFind();
         }
     });
 };
