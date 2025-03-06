@@ -44,13 +44,15 @@ export const getDyeingColor = ({ session, index, dyeingMode, range }: DyeingColo
     const [startVal, endVal] = range;
     const isRangeEmpty = startVal === null || endVal === null;
 
-    if (isRangeEmpty || performanceDataItem === undefined || !Object.keys(performanceDataItem).includes(dyeingMode)) {
+    if (isRangeEmpty || performanceDataItem === undefined) {
         return '';
     }
 
-    const performanceValue = performanceDataItem[dyeingMode];
-
-    if (performanceValue < startVal || performanceValue > endVal) {
+    let performanceValue = performanceDataItem[dyeingMode];
+    if (!performanceValue) {
+        performanceValue = performanceDataItem.commCompare[dyeingMode];
+    }
+    if (!performanceValue || performanceValue < startVal || performanceValue > endVal) {
         return '';
     }
 

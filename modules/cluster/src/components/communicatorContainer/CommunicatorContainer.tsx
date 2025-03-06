@@ -330,8 +330,11 @@ const ParallelSwitch = observer(({ session, dimension, generateConditions }: Par
         const options = session.dataTypeOptions.map(indicator => {
             return { value: indicator.key, label: t(indicator.name) };
         });
-        return getDefaultDataTypeOptions(t).concat(options);
-    }, [t, session.indicatorList]);
+        const commOptions = session.dynamicsIndicatorList.map(indicator => {
+            return { value: indicator.key, label: `${indicator.key.toUpperCase()}-${t(indicator.name)}` };
+        });
+        return getDefaultDataTypeOptions(t).concat(options).concat(commOptions);
+    }, [t, session.indicatorList, session.dynamicsIndicatorList]);
 
     useEffect(() => {
         const { min = null, max = null } = session.rankDyeingData[dyeingMode] ?? {};

@@ -31,6 +31,7 @@ export class Session {
     rankCount: number = 0;
     arrangementRankCount: number = 0;
     indicatorList: IndicatorsItem[] = []; // 性能指标项列表
+    dynamicsIndicatorList: IndicatorsItem[] = []; // 动态性能指标列表
     performanceData: PerformanceDataItem[] = []; // 性能数据
     performanceDataMap: PerformanceDataMap = new Map(); // 性能数据map
     rankDyeingData: RankDyeingData = {}; // 着色图例数据
@@ -81,6 +82,13 @@ export class Session {
                 const key = dataType.key;
                 data[key].max = Math.max(data[key].max, item[key]);
                 data[key].min = Math.min(data[key].min, item[key]);
+            });
+            Object.keys(item.commCompare).forEach(key => {
+                if (!(key in data)) {
+                    data[key] = { min: Number.MAX_SAFE_INTEGER, max: 0 };
+                }
+                data[key].max = Math.max(data[key].max, item.commCompare[key]);
+                data[key].min = Math.min(data[key].min, item.commCompare[key]);
             });
         });
 

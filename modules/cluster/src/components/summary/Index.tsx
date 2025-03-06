@@ -22,7 +22,7 @@ import { getParallelismPerformanceData, queryAllConnections } from '../../utils/
 import { runInAction } from 'mobx';
 import { Communicator, partitionMode } from '../communicatorContainer/ContainerUtils';
 import connector from '../../connection';
-import { PerformanceDataItem } from '../../utils/interface';
+import { IndicatorsItem, PerformanceDataItem } from '../../utils/interface';
 import { isEqual } from 'lodash';
 
 const FlowChartContainer = styled.div`
@@ -113,6 +113,15 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
         const { performance, advice } = await getParallelismPerformanceData(params).finally(() => {
             setPerformanceLoading(false);
         });
+        if (performance.length !== 0) {
+            const curName = params.dimension === 'ep-dp-pp-cp-tp' ? 'Communication' : 'Avg Communication';
+            session.dynamicsIndicatorList = Object.keys(performance[0].commTimeIndicator.diff).map(item => {
+                return {
+                    key: item,
+                    name: curName,
+                } as IndicatorsItem;
+            });
+        }
         const performanceAfterDeal = performance.map(item => {
             return {
                 index: item.index,
