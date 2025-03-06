@@ -213,7 +213,7 @@ enum MatchOption {
 const defaultCondition: Record<MatchOption, boolean> = { case: false, fullText: false, regular: false };
 
 // 代码搜索工具栏
-const CodeTextSearch = observer((): JSX.Element => {
+const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
     const { t } = useTranslation('source');
     const [condition, setCondition] = useState<Record<string, boolean>>(defaultCondition);
     const [inRange, setInRange] = useState(false);
@@ -222,9 +222,11 @@ const CodeTextSearch = observer((): JSX.Element => {
     const [total, setTotal] = useState(0);
     const [curIndex, setCurIndex] = useState(0);
 
-    const reset = (): void => {
-        setText('');
-        setSearchText('');
+    const reset = (clearAll = true): void => {
+        if (clearAll) {
+            setText('');
+            setSearchText('');
+        }
         setTotal(0);
         setCurIndex(0);
         clearMark();
@@ -235,7 +237,9 @@ const CodeTextSearch = observer((): JSX.Element => {
         goTo(0);
     };
     const handleSearch = (force?: boolean): void => {
-        if (text === '') {
+        if (!getCodeDom()) {
+            reset(false);
+        } else if (text === '') {
             reset();
         } else if (text !== searchText || force) {
             setSearchText(text);
@@ -266,7 +270,7 @@ const CodeTextSearch = observer((): JSX.Element => {
 
     useEffect(() => {
         handleSearch(true);
-    }, [condition, inRange]);
+    }, [condition, inRange, code]);
 
     useEffect(() => {
         if (inRange) {

@@ -363,7 +363,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                             />
                                         }
                                     />
-                                    {session.openFind ? <CodeTextSearch/> : <></>}
+                                    {session.openFind ? <CodeTextSearch code={code}/> : <></>}
                                     </>
                                 }
                                 rightProps={{ id: 'CodeAttrTable' }}
