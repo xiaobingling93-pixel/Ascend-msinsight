@@ -31,7 +31,15 @@ TextTraceDatabase::~TextTraceDatabase()
 bool TextTraceDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     Database::OpenDb(dbPath, clearAllTable);
-    return SetConfig();
+    bool res = SetConfig();
+    std::string dbVersion = GetDataBaseVersion();
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    if (IsDatabaseVersionChange()) {
+        res = res && DropTable();
+        res = res && UpdateParseStatus("NOT_FINISH");
+        res = res && ExecSql("PRAGMA user_version = " + dbVersion + ";");
+    }
+    return res;
 }
 
 bool TextTraceDatabase::InitStmt()

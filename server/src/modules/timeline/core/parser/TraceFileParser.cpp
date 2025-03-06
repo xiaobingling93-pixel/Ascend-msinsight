@@ -77,7 +77,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         return false;
     }
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
-    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime(statusInfo) &&
+    if (database->HasFinishedParseLastTime(statusInfo) &&
         !Global::BaselineManager::Instance().IsBaselineId(fileId)) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;

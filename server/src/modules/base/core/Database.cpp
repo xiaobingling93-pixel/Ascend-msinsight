@@ -547,9 +547,6 @@ bool Database::SetConfig()
     if (!ExecSql("PRAGMA journal_mode = WAL;PRAGMA synchronous = OFF;")) {
         return false;
     }
-    if (IsDatabaseVersionChange()) {
-        return ExecSql("PRAGMA user_version = " + dbVersion + ";");
-    }
     return true;
 }
 
