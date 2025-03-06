@@ -410,14 +410,15 @@ int FileUtil::FindDbOrJsonType(const std::string &path, int depth,
     if (!FileUtil::FindFolders(path, folders, files)) {
         return jsonFound;
     }
-    sort(files.begin(), files.end(), std::greater<std::string>());
+    // db优先:如果text和db数据共存，则优先判断为db
+    bool hasJson = false;
     for (const auto &file: files) {
         if (std::regex_match(file, dbRegex)) {
             return dbFound;
-        } else if (std::regex_match(file, jsonRegex)) {
-            return jsonFound;
         }
+        hasJson = hasJson || std::regex_match(file, jsonRegex);
     }
+
     for (const auto &folder: folders) {
         std::string tmpPath = FileUtil::SplicePath(path, folder);
         int result = FindDbOrJsonType(tmpPath, depth + 1, jsonRegex, dbRegex);
@@ -425,7 +426,7 @@ int FileUtil::FindDbOrJsonType(const std::string &path, int depth,
             return result;
         }
     }
-    return 0;
+    return hasJson ? jsonFound : 0;
 }
 
 // 递归查找函数
