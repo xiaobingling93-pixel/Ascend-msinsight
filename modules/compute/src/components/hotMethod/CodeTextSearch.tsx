@@ -22,7 +22,7 @@ const TextSearchContainer = styled.div`
     border-radius : 2px ;
     position: absolute;
     top: 32px;
-    right: 5px;
+    left: 0;
     padding: 8px 16px;
     .btn{
         color:${(p): string => p.theme.iconColor};

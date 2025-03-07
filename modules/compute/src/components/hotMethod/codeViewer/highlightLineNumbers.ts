@@ -18,7 +18,7 @@ export const highlightAllWithNumber = function(set = { showLine: false }): void 
             for (let j = 0; j < ul.children.length; j++) {
                 const li = ul.children[j];
                 const div = document.createElement('div');
-                div.append(String(j + 1));
+                div.append(String(` ${j + 1} `));
                 div.className = 'index';
                 li.insertBefore(div, li.childNodes[0]);
             }
