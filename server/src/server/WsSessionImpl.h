@@ -32,7 +32,7 @@ public:
     void OnRequestMessage(const std::string &data);
     void OnResponse(std::unique_ptr<Protocol::Response> responsePtr) override;
     void OnEvent(std::unique_ptr<Protocol::Event> eventPtr) override;
-    void Send(const std::string &message);
+    bool Send(const std::string &message);
     void SendResponse(const Protocol::Response &response);
     void SendEvent(Protocol::Event &event);
     void Start() override;

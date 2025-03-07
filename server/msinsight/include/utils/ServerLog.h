@@ -93,7 +93,12 @@ private:
     template <typename T> inline void ConvertString(std::vector<std::string>& logStrList, const T arg) const
     {
         std::stringstream ss;
-        ss << arg;
+        if constexpr (std::is_same_v<T, bool>) {
+            // bool类型使用true或false展示，而非0或1
+            ss << std::boolalpha << arg;
+        } else {
+            ss << arg;
+        }
         logStrList.emplace_back(ss.str());
     }
 

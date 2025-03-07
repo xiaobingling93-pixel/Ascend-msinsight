@@ -138,17 +138,6 @@ void WsSessionImpl::OnRequestMessage(const std::string &data)
     (*msgBuffer.get()) << data;
 }
 
-void PrintResponseInfo(const Protocol::Response &response)
-{
-    if (response.result) {
-        ServerLog::Info("Send response success: ", response.command, ", request id = ",
-                        response.requestId, ", response id = ", response.id, "\n");
-    } else {
-        ServerLog::Info("Send response failure: ", response.command, ", request id = ",
-                        response.requestId, ", response id = ", response.id, "\n");
-    }
-}
-
 void WsSessionImpl::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)
 {
     if (responsePtr != nullptr) {
@@ -157,7 +146,6 @@ void WsSessionImpl::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)
             responseQueueCv.notify_one();
         } else {
             SendResponse(*responsePtr.get());
-            PrintResponseInfo(*responsePtr);
         }
     }
 }
@@ -169,16 +157,18 @@ void WsSessionImpl::OnEvent(std::unique_ptr<Protocol::Event> eventPtr)
     }
 }
 
-void WsSessionImpl::Send(const std::string &message)
+bool WsSessionImpl::Send(const std::string &message)
 {
     if (GetStatus() == Status::CLOSED) {
         ServerLog::Info("Session has been closed.");
-        return;
+        return false;
     }
     if (channel != nullptr) {
-        channel->send(message, uWS::OpCode::TEXT, false);
+        WsChannel::SendStatus res = channel->send(message, uWS::OpCode::TEXT, false);
+        return res == WsChannel::SendStatus::SUCCESS;
     } else {
         ServerLog::Error("Channel is null, so that message cannot be sent.");
+        return false;
     }
 }
 
@@ -192,8 +182,10 @@ void WsSessionImpl::SendResponse(const Protocol::Response &response)
     }
     std::string responseStr = JsonUtil::JsonDump(json.value());
     // send header + response
-    loop->defer([this, responseStr]() {
-        Send(responseStr);
+    loop->defer([this, responseStr, response]() {
+        bool res = Send(responseStr);
+        ServerLog::Info("Send response status: ", res, ", response result: ", response.result, ", command: ",
+                        response.command, ", request id = ", response.requestId, ", response id = ", response.id);
     });
 }
 
@@ -207,15 +199,11 @@ void WsSessionImpl::SendEvent(Protocol::Event &event)
     }
     std::string eventStr = JsonUtil::JsonDump(json.value());
     // send header + response
-    loop->defer([this, eventStr]() {
-        Send(eventStr);
-        ServerLog::Info("Send event end.");
+    loop->defer([this, eventStr, event]() {
+        bool res = Send(eventStr);
+        ServerLog::Info("Send event status: ", res, ", event result: ", event.result, ", event name:", event.event,
+                        ", event id = ", event.id);
     });
-    if (event.result) {
-        ServerLog::Info("Send event success: ", event.event, ", event id = ", event.id);
-    } else {
-        ServerLog::Info("Send event failure: ", event.event, ", event id = ", event.id);
-    }
 }
 
 void WsSessionImpl::Start()
