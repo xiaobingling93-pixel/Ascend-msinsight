@@ -1,9 +1,11 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+#include <cstdlib>
 #include "ServerLog.h"
 #include "./utils/FileUtil.h"
 #include "PluginsManager.h"
 namespace Dic::Core {
 #ifdef _WIN32
+#include <windows.h>
     const static std::string EXT = ".dll";
 #else
     #ifdef __APPLE__
@@ -12,6 +14,34 @@ namespace Dic::Core {
         const static std::string EXT = ".so";
     #endif
 #endif
+
+void AddPathEnv(const std::string &newDir)
+{
+#if _WIN32
+    char buffer[32767]; // PATH 的最大长度通常为 32767 字符
+    DWORD length = GetEnvironmentVariable("PATH", buffer, sizeof(buffer));
+    if (length == 0) {
+        return;
+    }
+    std::string path;
+    if (length != 0) {
+        // 将 PATH 转换为 std::string
+        path.assign(buffer, length);
+        // 检查新目录是否已经存在于 PATH 中
+        if (path.find(newDir) != std::string::npos) {
+            return;
+        }
+    }
+
+    // 追加新目录到 PATH
+    if (!path.empty() && path.back() != ';') {
+        path += ";"; // 添加分隔符
+    }
+    path += newDir;
+    SetEnvironmentVariable("PATH", path.c_str());
+#endif
+}
+
 PluginsManager &PluginsManager::Instance()
 {
     static PluginsManager instance;
@@ -38,6 +68,7 @@ void PluginsManager::LoadPlugins()
         for (auto &file : fs::directory_iterator(dir)) {
             if (!is_directory(file) && file.path().extension().string() == EXT
                 && FileUtil::CheckFilePath(file.path().string())) {
+                AddPathEnv(dir.path().string());
 #ifdef _WIN32
                 LoadLibraryA(file.path().string().c_str());
 #else
