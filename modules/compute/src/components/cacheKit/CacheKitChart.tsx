@@ -123,6 +123,9 @@ const baseSet = {
         splitArea: {
             show: true,
         },
+        axisLabel: {
+            showMaxLabel: true,
+        },
     },
 };
 
@@ -164,6 +167,9 @@ ${t('EventRatio')}：${safeStr(item.data[DataIndex.RATIO])} %`;
         yAxis: {
             type: 'category',
             data: yAxis,
+            axisLabel: {
+                showMaxLabel: true,
+            },
         },
         visualMap: {
             ...visualMapBaseSet,
