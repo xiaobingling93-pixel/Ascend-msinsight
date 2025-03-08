@@ -118,7 +118,7 @@ std::vector<IndicatorDataStruct> SummaryService::GetPerformanceDataByDimension(
     std::unordered_map<std::uint32_t, StepStatistic> stepStatisticData{};
     bool result = database->QueryAllPerformanceDataByStep(params.step, stepStatisticData);
     if (!result || stepStatisticData.empty()) {
-        ServerLog::Warn("Failed to query parallelism performance data.");
+        ServerLog::Warn("Failed to query original parallelism performance data.");
         return indicatorData;
     }
     auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath());
