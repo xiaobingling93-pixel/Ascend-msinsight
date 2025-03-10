@@ -3,7 +3,7 @@
  */
 import {expect, test as baseTest} from '@playwright/test';
 import {DetailsPage, FrameworkPage} from './page-object';
-import {clearAllData, importData, setCompare} from './utils';
+import {clearAllData, importData, setCompare, waitForAllParsed} from './utils';
 import {FilePath} from './utils/constants';
 import {SelectHelpers} from './components';
 
@@ -43,11 +43,12 @@ const inputMap = {
 };
 
 test.describe('Details', () => {
-    test.beforeEach(async ({page, detailsPage}) => {
+    test.beforeEach(async ({page, detailsPage}, testInfo) => {
         await page.goto('/');
         await clearAllData(page);
-        await importData(page, FilePath.DETAILS);
-        await detailsPage.goto();
+        const filePath = testInfo.title === 'test_details_roofline_advice' ? FilePath.DETAILS_ROOFLINE : FilePath.DETAILS;
+        await importData(page, filePath);
+        await waitForAllParsed(page, detailsPage);
         const opType = detailsPage.detailsFrame.getByText('mix').first();
         await expect(opType).toBeVisible();
     });
@@ -90,7 +91,6 @@ test.describe('Details', () => {
     // roofline瓶颈分析-瓶颈分析
     // 预期：roofline分析的瓶颈分析显示正确
     test('test_details_roofline_advice', async ({page, detailsPage}) => {
-        await importData(page, FilePath.DETAILS_ROOFLINE);
         const {rooflineAdvice} = detailsPage;
         await expect(rooflineAdvice).toHaveScreenshot(imgMap.rooflineAdvice);
     });
@@ -119,6 +119,7 @@ test.describe('Details', () => {
     test('test_details_compute_workload_chart_compare', async ({detailsPage, page}) => {
         const {ComputeWorkloadChart, detailsFrame} = detailsPage;
         await importData(page, FilePath.DETAILS_ROOFLINE);
+        await waitForAllParsed(page, detailsPage);
         await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
         await expect(ComputeWorkloadChart).toHaveScreenshot(imgMap.computeWorkloadChartCompare);
     });
@@ -140,6 +141,7 @@ test.describe('Details', () => {
     test('test_details_compute_workload_table_compare', async ({detailsPage, page}) => {
         const {computeWorkloadTable, detailsFrame} = detailsPage;
         await importData(page, FilePath.DETAILS_ROOFLINE);
+        await waitForAllParsed(page, detailsPage);
         await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
         await expect(computeWorkloadTable).toHaveScreenshot(imgMap.computeWorkloadTableCompare);
     });
@@ -156,6 +158,7 @@ test.describe('Details', () => {
     test('test_details_memory_workload_chart_compare', async ({detailsPage, page}) => {
         const {memoryWorkloadChart, detailsFrame} = detailsPage;
         await importData(page, FilePath.DETAILS_ROOFLINE);
+        await waitForAllParsed(page, detailsPage);
         await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
         await expect(memoryWorkloadChart).toHaveScreenshot(imgMap.memoryWorkloadChartCompare);
     });

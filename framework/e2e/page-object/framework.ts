@@ -98,7 +98,7 @@ export class FileExploreDialogPage {
         this.cancelBtn = page.getByRole('button', { name: 'Cancel' });
         this.confirmBtn = page.getByRole('button', { name: 'Confirm' });
         this.closeBtn = page.getByLabel('Close this dialog');
-        this.input = page.getByPlaceholder('Enter the file path and press');
+        this.input = page.getByTestId('filePathInput');
         this.fileTree = this.mainDialog.getByRole('tree');
     }
 }

@@ -164,6 +164,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
                 value={inputPath}
                 onChange={handleInputChange}
                 onPressEnter={searchCatalog}
+                data-testid="filePathInput"
             />
             <Text type={hit.alert ? 'danger' : undefined}>{t(hit.message, hit.options)}</Text>
             <ResourceCatalog

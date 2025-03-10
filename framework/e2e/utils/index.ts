@@ -26,6 +26,7 @@ export async function importData(page: Page, filePath: FilePath = FilePath.TEXT)
         await expect(mainDialog).toBeVisible();
         const emptyBlock = fileTree.locator('.el-tree__empty-block');
         await emptyBlock.waitFor({ state: 'hidden', timeout: 2000 });
+        await input.waitFor({ state: 'visible', timeout: 2000 });
         await input.fill(filePath);
         await input.press('Enter');
         // 点击“确认”按钮
@@ -147,4 +148,13 @@ export async function setCompare(
     await setComparisonBtn.click();
     await frame.getByText('loading').first().waitFor({ state: 'hidden' });
     await frameworkPage.mouseOut();
+}
+
+export async function waitForAllParsed(page: Page, tabPage: any): Promise<void> {
+    const frameworkPage = new FrameworkPage(page);
+    await frameworkPage.clickTab('timeline');
+    const timelineFrame = page.frameLocator('#Timeline');
+    const parsingProgress = timelineFrame.locator('.unit-info .ant-progress').first();
+    await parsingProgress.waitFor({state: 'hidden'});
+    await tabPage.goto();
 }
