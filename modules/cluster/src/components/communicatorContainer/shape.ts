@@ -59,6 +59,7 @@ export class Rectangle extends Shape {
     yGap = 40;
     cpGap = 10;
     dpGap = 20;
+    epGap = 10;
     rowIndex: number;
     colIndex: number;
     textHeight = 0; // 底部文字
@@ -115,10 +116,11 @@ export class Rectangle extends Shape {
         let val = this.rowIndex * this.gap;
 
         if (this.attribute !== undefined) {
-            const { cpIndex, dpIndex, cpSize } = this.attribute;
+            const { cpIndex, dpIndex, epIndex = 0, cpSize } = this.attribute;
+            const epGaps = epIndex * this.epGap;
             const dpGaps = dpIndex * (this.dpGap + ((cpSize - 1) * this.cpGap));
             const cpGaps = cpIndex * this.cpGap;
-            val = val + dpGaps + cpGaps;
+            val = val + dpGaps + cpGaps + epGaps;
         }
 
         return val;

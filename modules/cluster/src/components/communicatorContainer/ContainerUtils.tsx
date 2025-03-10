@@ -107,6 +107,10 @@ export const findDPOrEPFrame = (arrangements: ArrangementItem[], type: Paralleli
         const { index, position, attribute } = arrangement;
         const indexKey = attribute[`${type}Index`];
 
+        if (indexKey === undefined) {
+            return;
+        }
+
         if (!groupMap.has(indexKey)) {
             groupMap.set(indexKey, []);
         }
