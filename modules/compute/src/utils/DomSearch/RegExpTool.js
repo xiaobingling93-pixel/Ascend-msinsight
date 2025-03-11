@@ -7,6 +7,7 @@ export default class RegExpTool {
         this.opt = Object.assign(
             {
                 accuracy: 'partially',
+                keepReg: false,
             },
             opt,
         );
@@ -23,6 +24,9 @@ export default class RegExpTool {
 
     /* 转义正则元字符：-[]/{}()*+?.\\^$| */
     _escapeStr(str) {
+        if (this.opt.keepReg) {
+            return str;
+        }
         return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
     }
 

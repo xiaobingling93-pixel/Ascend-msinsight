@@ -76,16 +76,18 @@ const serachInCode = ({ text, inRange, condition, handleAfterSearch }:
     const instance = new Mark(inRange ? getCodeRangeDom() : getCodeDom());
     const option: any = {
         className: HIGHTLIGHT_CLASSNAME,
+        indexName: INDEX_NAME,
         caseSensitive: condition.case,
         accuracy: condition.fullText ? 'exactly' : 'partially',
         done: handleAfterSearch,
         separateWordSearch: false,
         acrossElements: true,
+        keepReg: condition.regular,
     };
-    if (condition.regular) {
-        instance.markRegExp(new RegExp(text), option);
-    } else {
+    try {
         instance.mark(text, option);
+    } catch {
+        handleAfterSearch(0);
     }
 };
 
@@ -112,6 +114,8 @@ export const closeFind = (): void => {
 export const CODE_SEARCH_WINDOW_HEIGHT = 48;
 // 高亮类名
 const HIGHTLIGHT_CLASSNAME = 'code-hightlight';
+// 第index个结果
+const INDEX_NAME = 'index';
 // 当前查看元素类名
 const CURRENT_DOM_CLASSNAME = 'current';
 // 选中范围类名
@@ -135,9 +139,9 @@ const getCodeRangeDom = (): HTMLElement[] => {
 const goTo = (index: number): void => {
     const elements = document.querySelector('#CodeTable code')?.querySelectorAll(`.${HIGHTLIGHT_CLASSNAME}`);
     elements?.forEach(ele => ele.classList.remove(CURRENT_DOM_CLASSNAME));
-    const ele = elements?.[index];
-    ele?.scrollIntoView({ block: 'center' });
-    ele?.classList.add(CURRENT_DOM_CLASSNAME);
+    const eles = document.querySelector('#CodeTable code')?.querySelectorAll(`.${HIGHTLIGHT_CLASSNAME}[data-${INDEX_NAME}='${index}']`);
+    eles?.forEach(ele => ele?.classList.add(CURRENT_DOM_CLASSNAME));
+    eles?.[0]?.scrollIntoView({ block: 'center' });
 };
 
 // 获取上级Li元素
@@ -246,8 +250,16 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
             serachInCode({ text, inRange, condition, handleAfterSearch });
         } else {
             if (total > 0) {
-                setCurIndex(pre => (pre + 1) % total);
+                goToResultItem(curIndex + 1);
             }
+        }
+    };
+
+    const goToResultItem = (index: number): void => {
+        if (total > 0) {
+            const fixedIndex = (index + total) % total;
+            setCurIndex(fixedIndex);
+            goTo(fixedIndex);
         }
     };
 
@@ -260,13 +272,17 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
         setInRange(pre => !pre);
     };
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        const val = e.target.value;
+        setText(val);
+        if (val === '') {
+            reset();
+        }
+    };
+
     useEffect(() => {
         return registerCodeSelectEvent();
     }, []);
-
-    useEffect(() => {
-        goTo(curIndex);
-    }, [curIndex]);
 
     useEffect(() => {
         handleSearch(true);
@@ -278,14 +294,14 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
         }
     }, [observeRange.index]);
     return <TextSearchContainer onClick={(e): void => e.stopPropagation()}>
-        <Input style={{ width: 'calc(100% - 200px)' }} value={text} onChange={(e): void => { setText(e.target.value); }} onPressEnter={(): void => handleSearch()}
+        <Input style={{ width: 'calc(100% - 200px)' }} value={text} onChange={handleInputChange} onPressEnter={(): void => handleSearch()}
             suffix={ <Filter onChange={(val): void => setCondition(val)} theme={themeInstance.getCurrentTheme()}/>} allowClear/>
         <div className="search-result">
             { total === 0 ? t('No Result') : '' }
             { total > 0 ? <div>{curIndex + 1} of {total}</div> : <></> }
         </div>
-        <ArrowUpOutlined className={'btn'} onClick={(): void => setCurIndex(pre => total > 0 ? (pre - 1 + total) % total : pre)}/>
-        <ArrowDownOutlined className={'btn'} onClick={(): void => setCurIndex(pre => total > 0 ? (pre + 1) % total : pre)}/>
+        <ArrowUpOutlined className={'btn'} onClick={(): void => goToResultItem(curIndex - 1)}/>
+        <ArrowDownOutlined className={'btn'} onClick={(): void => goToResultItem(curIndex + 1)}/>
         <AlignLeftOutlined className={`btn ${inRange ? 'active' : ''}`} onClick={switchRange}/>
         <CloseOutlined className={'btn'} onClick={handleEsc}/>
     </TextSearchContainer>;

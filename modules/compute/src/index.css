@@ -28,12 +28,10 @@
 
 /*代码搜索高亮样式*/
 mark {
-    padding:0;
+    padding:5px 0;
     background-color:var(--mi-color-warning);
 }
 mark.current{
-    padding:0;
-    border:1px solid var(--mi-border-color);
     background-color:var(--mi-color-primary-light-1);
     border-radius:1px;
 }

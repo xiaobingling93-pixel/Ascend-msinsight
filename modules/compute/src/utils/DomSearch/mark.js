@@ -17,6 +17,7 @@ export default class Mark {
         this._opt = Object.assign({}, {
             highlightTagName: '',
             className: '',
+            indexName: 'index',
             exclude: [],
             separateWordSearch: true,
             acrossElements: false,
@@ -109,7 +110,7 @@ export default class Mark {
         ]));
     }
 
-    wrapRangeInTextNode(node, start, end) {
+    wrapRangeInTextNode(node, start, end, index) {
         // 保留原始边界检查
         if (start < 0 || end < start) {
             throw new Error(`Invalid start/end positions: ${start}-${end}`);
@@ -126,6 +127,7 @@ export default class Mark {
         // 保持原始元素创建逻辑
         const wrapper = document.createElement(tagName);
         wrapper.setAttribute('data-markjs', 'true');
+        wrapper.setAttribute(`data-${this.opt.indexName}`, index);
         if (className) {
             wrapper.setAttribute('class', className);
         }
@@ -137,7 +139,7 @@ export default class Mark {
         return afterNode; // 保持原始返回类型
     }
 
-    wrapRangeInMappedTextNode(dict, start, end, filterCb, eachCb) {
+    wrapRangeInMappedTextNode([dict, start, end, filterCb, eachCb, index]) {
         let startOffset = start;
         let endOffset = end;
         for (let i = 0; i < dict.nodes.length; i++) {
@@ -154,7 +156,7 @@ export default class Mark {
                 const relativeEnd = Math.min(endOffset, currentNode.end) - currentNode.start;
 
                 // 包裹文本节点并更新字典值
-                this.wrapNodeAndUpdateDict(currentNode, relativeStart, relativeEnd, dict);
+                this.wrapNodeAndUpdateDict(currentNode, relativeStart, relativeEnd, dict, index);
 
                 // 调整后续节点的偏移量
                 this.adjustSubsequentOffsets(dict, i, relativeEnd);
@@ -176,7 +178,7 @@ export default class Mark {
     }
 
     // 包裹指定范围的文本节点并更新字典值
-    wrapNodeAndUpdateDict(nodeInfo, relStart, relEnd, dict) {
+    wrapNodeAndUpdateDict(nodeInfo, relStart, relEnd, dict, index) {
         const preservedStart = nodeInfo.start;
 
         // 分割原始文本
@@ -184,7 +186,7 @@ export default class Mark {
         const suffix = dict.value.substring(preservedStart + relEnd);
 
         // 包裹文本节点
-        nodeInfo.node = this.wrapRangeInTextNode(nodeInfo.node, relStart, relEnd);
+        nodeInfo.node = this.wrapRangeInTextNode(nodeInfo.node, relStart, relEnd, index);
 
         // 更新字典中的完整文本值
         dict.value = prefix + suffix;
@@ -206,26 +208,6 @@ export default class Mark {
             // 所有后续节点都需要调整结束偏移量
             node.end -= adjustLength;
         }
-    }
-
-    // 辅助方法：更新字典数据
-    updateDictionaryData(dict, currentIndex, endOffset) {
-        const currentNode = dict.nodes[currentIndex];
-        const prefix = dict.value.substring(0, currentNode.start);
-        const suffix = dict.value.substring(endOffset + currentNode.start);
-        dict.value = prefix + suffix;
-    }
-
-    // 辅助方法：调整后续节点位置
-    adjustFollowingNodes(nodes, currentIndex, endOffset) {
-        nodes.forEach((node, index) => {
-            if (index >= currentIndex) {
-                if (index !== currentIndex && node.start > 0) {
-                    node.start -= endOffset;
-                }
-                node.end -= endOffset;
-            }
-        });
     }
 
     wrapMatches(regex, ignoreGroups, filterCb, eachCb, endCb) {
@@ -287,8 +269,8 @@ export default class Mark {
         const matchGroupIndex = this.getMatchGroupIndex(ignoreGroups);
 
         this.processTextNodes(textNodeDict => {
-            this.findAndWrapMatches(regex, textNodeDict, matchGroupIndex, filterCb, eachCb);
-            endCb();
+            const count = this.findAndWrapMatches(regex, textNodeDict, matchGroupIndex, filterCb, eachCb);
+            endCb(count);
         });
     }
 
@@ -305,7 +287,7 @@ export default class Mark {
     // 辅助方法：核心匹配查找和包装逻辑
     findAndWrapMatches(regex, textNodeDict, matchGroupIndex, filterCb, eachCb) {
         let matchResult;
-
+        let index = 0;
         while ((matchResult = this.getNextMatch(regex, textNodeDict.value)) !== null) {
             const { matchedText, startPos, endPos } = this.parseMatchResult(
                 matchResult,
@@ -317,16 +299,18 @@ export default class Mark {
             }
 
             this.wrapRangeInMappedTextNode(
-                textNodeDict,
-                startPos,
-                endPos,
-                currentNode => filterCb(matchedText, currentNode),
-                (wrappedNode, lastIndexPosition) => {
-                    this.updateRegexIndex(regex, lastIndexPosition);
-                    eachCb(wrappedNode);
-                },
+                [textNodeDict,
+                    startPos,
+                    endPos,
+                    currentNode => filterCb(matchedText, currentNode),
+                    (wrappedNode, lastIndexPosition) => {
+                        this.updateRegexIndex(regex, lastIndexPosition);
+                        eachCb(wrappedNode);
+                    },
+                    index++],
             );
         }
+        return index;
     }
 
     // 辅助方法：获取下一个正则匹配
@@ -421,9 +405,10 @@ export default class Mark {
                 this.opt.each(element);
             },
             done: () => {
-                matchCount === 0
-                    ? this.opt.noMatch(regexp)
-                    : this.opt.done(matchCount);
+                if (matchCount === 0) {
+                    this.opt.noMatch(regexp);
+                }
+                this.opt.done(matchCount);
             },
             filter: (node, matchText) => {
                 return this.opt.filter(
@@ -471,12 +456,12 @@ export default class Mark {
                     matcheCount++;
                     totalMatches++;
                     this.opt.each(ele);
-                }, () => {
+                }, (strMatchesCount) => {
                     if (matcheCount === 0) {
                         this.opt.noMatch(kw);
                     }
                     if (keywords[keywordsLen - 1] === kw) {
-                        this.opt.done(totalMatches);
+                        this.opt.done(strMatchesCount);
                     } else {
                         handleKeyword(keywords[keywords.indexOf(kw) + 1]);
                     }
