@@ -1299,7 +1299,8 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryFwdBwdDataByFlowWhenDbOpen)
     range.maxTimestamp = en;
     std::vector<Dic::Protocol::ThreadTraces> fwdBwdData;
     bool result = database.QueryFwdBwdDataByFlow(rankId, offset, range, fwdBwdData);
-    EXPECT_EQ(result, true);
+    EXPECT_EQ(fwdBwdData.size(), 0);
+    EXPECT_EQ(result, false);
 }
 
 TEST_F(TextTraceDatabaseMockTest, TestQueryAffinityAPIDataWhenDbNotOpen)

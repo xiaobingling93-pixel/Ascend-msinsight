@@ -3,6 +3,7 @@
 #include "TraceTime.h"
 #include "TableDefs.h"
 #include "TraceDatabaseHelper.h"
+#include "TraceDatabaseSqlConst.h"
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "CollectionTimeService.h"

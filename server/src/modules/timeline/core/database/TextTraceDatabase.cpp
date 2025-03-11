@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "TraceDatabaseHelper.h"
+#include "TraceDatabaseSqlConst.h"
 #include "TraceTime.h"
 #include "TextTraceDatabase.h"
 

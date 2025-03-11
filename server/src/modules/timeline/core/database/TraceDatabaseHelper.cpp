@@ -925,6 +925,38 @@ void TraceDatabaseHelper::FilterTopLevelApi(std::vector<Protocol::FlowLocation> 
     }
 }
 
+bool TraceDatabaseHelper::CalculateParallelParameter(const std::vector<Protocol::ThreadTraces> &fwdTraceList,
+    const std::vector<Protocol::ThreadTraces> &bwdTraceList,
+    uint64_t minBwdStartTime, std::pair<uint16_t, uint16_t> &parameter)
+{
+    uint16_t minBwdIndex = 1;
+    uint16_t microBatchSize = 1;
+    // 计算micro batch size
+    for (size_t i = 1; i < bwdTraceList.size(); i++) {
+        if (bwdTraceList.at(i).startTime > bwdTraceList.at(i - 1).startTime) {
+            microBatchSize++;
+        } else {
+            break;
+        }
+    }
+    for (size_t i = 0; i < bwdTraceList.size(); i++) {
+        if (minBwdStartTime == bwdTraceList.at(i).startTime) {
+            minBwdIndex = i; // (vppSize - 1) * microBatchSize
+            break;
+        }
+    }
+    if (microBatchSize == 0 || minBwdIndex % microBatchSize != 0) {
+        return false;
+    }
+
+    uint32_t vppSize = (minBwdIndex / microBatchSize) + 1;
+    if (vppSize > UINT16_MAX) {
+        vppSize = 1;
+    }
+    parameter = {microBatchSize, static_cast<uint16_t>(vppSize)};
+    return true;
+}
+
 // 使用sql命令查询前反向连线(fwdbwd)，并拼接同一条连线，按前向的start time升序排序，查询形成每一条连线FlowStartAndEndTime结构体
 // 遍历所有的连线，对于同一个前反向内的数据，前向的start time越来越大，后向的start time越来越小
 // 当不满足前面的条件时，表明开始了一个新的前反向，即tmp.fStartTime > first.fStartTime，此时根据第一个连线和上一个连线，计算前反向的时长
@@ -935,56 +967,54 @@ bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePre
     const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
     std::vector<Protocol::ThreadTraces> &fwdBwdData)
 {
-    auto resultSet = stmt->ExecuteQuery(range.minTimestamp, range.maxTimestamp,
-                                        offset, offset, offset, offset, offset, offset, offset, offset);
+    auto resultSet = stmt->ExecuteQuery(range.minTimestamp, range.maxTimestamp);
     if (resultSet == nullptr) {
-        Server::ServerLog::Error("Failed to get result set for query fwd/bwd data.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set for query fwd/bwd data.", stmt->GetErrorMessage());
         return false;
     }
-    uint8_t index = 0;
-    FlowStartAndEndTime first{};
-    FlowStartAndEndTime last{}; // for last piece
-    bool firstFlag = true;
-    // 查询数据格式, sStartTime, sEndTime, fStartTime, fEndTime，并按sStartTime升序排列
+    std::vector<Protocol::ThreadTraces> fwdTraceList{};
+    std::vector<Protocol::ThreadTraces> bwdTraceList{};
+    uint64_t minBwdStartTime = UINT64_MAX;
     while (resultSet->Next()) {
-        FlowStartAndEndTime lastOne = {
-            .sStartTime = resultSet->GetUint64("lastFpStart"),
-            .sEndTime = resultSet->GetUint64("lastFpEnd"),
-            .fStartTime = resultSet->GetUint64("lastBpStart"),
-            .fEndTime = resultSet->GetUint64("lastBpEnd")
-        };
-        FlowStartAndEndTime nextOne = {
-            .sStartTime = resultSet->GetUint64("nextFpStart"),
-            .sEndTime = resultSet->GetUint64("nextFpEnd"),
-            .fStartTime = resultSet->GetUint64("nextBpStart"),
-            .fEndTime = resultSet->GetUint64("nextBpEnd")
-        };
-        // 首个元素特殊处理，仅保留首条记录的last部分，作为第一个元素前向的开始和反向的结束
-        if (firstFlag) {
-            first = lastOne;
-            last = lastOne;
-            firstFlag = false;
-            continue;
-        }
-
-        // 防止后续溢出
-        if (lastOne.sEndTime <= last.sStartTime || last.fEndTime <= lastOne.fStartTime) {
-            continue;
-        }
         Protocol::ThreadTraces fwdTrace = {
-            .name = std::to_string(index), .duration = lastOne.sEndTime - last.sStartTime, // no overflow occurs
-            .startTime = last.sStartTime, .endTime = lastOne.sEndTime, .depth = 0,
-            .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_FP
+            .name = std::to_string(0), .duration = resultSet->GetUint64("fpDuration"),
+            .startTime = resultSet->GetUint64("fpStart") > offset ? resultSet->GetUint64("fpStart") - offset : 0,
+            .endTime = resultSet->GetUint64("fpEnd") > offset ? resultSet->GetUint64("fpEnd") - offset : 0,
+            .depth = 0, .threadId = LANE_FP_BP, .pid = rankId, .id = "", .cname = MARKER_FP
         };
         Protocol::ThreadTraces bwdTrace = {
-            .name = std::to_string(index), .duration = last.fEndTime - lastOne.fStartTime, // no overflow occurs
-            .startTime = lastOne.fStartTime, .endTime = last.fEndTime, .depth = 0,
-            .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_BP
+            .name = std::to_string(0), .duration = resultSet->GetUint64("bpDuration"),
+            .startTime = resultSet->GetUint64("bpStart") > offset ? resultSet->GetUint64("bpStart") - offset : 0,
+            .endTime = resultSet->GetUint64("bpEnd") > offset ? resultSet->GetUint64("bpEnd") - offset : 0,
+            .depth = 0, .threadId = LANE_FP_BP, .pid = rankId, .id = "", .cname = MARKER_BP
         };
-        fwdBwdData.push_back(fwdTrace);
-        fwdBwdData.push_back(bwdTrace);
-        index++;
-        last = nextOne;
+
+        fwdTraceList.push_back(fwdTrace);
+        bwdTraceList.push_back(bwdTrace);
+        minBwdStartTime = std::min(minBwdStartTime, bwdTrace.startTime);
+    }
+
+    if (fwdTraceList.empty() || bwdTraceList.empty()) {
+        ServerLog::Error("Failed to query fwd/bwd data due to empty result.");
+        return false;
+    }
+    std::pair<uint16_t, uint16_t> parallelParameter = {1, 1};
+    if (bwdTraceList.at(0).startTime != minBwdStartTime) {
+        if (!CalculateParallelParameter(fwdTraceList, bwdTraceList, minBwdStartTime, parallelParameter)) {
+            ServerLog::Error("Failed to calculate parallel parallel.");
+            return false;
+        }
+    }
+    uint32_t repetitionPeriod = parallelParameter.second * parallelParameter.first;
+    for (size_t i = 0; i < bwdTraceList.size(); i++) {
+        uint16_t gradientAccIndex = i / repetitionPeriod;
+        uint16_t tmpMicroBatch = i % repetitionPeriod;
+        uint16_t tmpMicroIndex = tmpMicroBatch % parallelParameter.first;
+        uint16_t realBatchIndex = gradientAccIndex * parallelParameter.first + tmpMicroIndex;
+        fwdTraceList.at(i).name = std::to_string(realBatchIndex);
+        bwdTraceList.at(i).name = std::to_string(realBatchIndex);
+        fwdBwdData.push_back(fwdTraceList.at(i));
+        fwdBwdData.push_back(bwdTraceList.at(i));
     }
 
     return true;

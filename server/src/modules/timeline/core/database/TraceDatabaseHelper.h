@@ -27,65 +27,6 @@ const std::string MARKER_SEND = "SEND";
 const std::string MARKER_RECV = "RECV";
 const std::string MARKER_BATCH_SEND_RECV = "BATCH_SEND_RECV";
 
-// 处理思路，根据前反向连线确定前反向，及SQL效率优化
-// 1、首先从flow表中过滤出连线类型为fwdbwd的前反向连线，并与slice表进行拼接成combined以获取timeline上每个元素的end_time；
-// 2、按type分成连线的起始(s)和连线结束(f)，实测比直接join combined表性能更好；
-// 3、将flow_id相同的连线join到一起，形成包含完整连线的记录，并按step的起止时间进行过滤，并按前向元素的开始时间升序排列；
-// 4、最后将连续两条记录join到一起，过滤其中下一条记录中反向开始时间大于上一条记录中反向开始时间的记录，它们是micro batch跳变时对应的记录，
-//    同时补全首条记录(d1.row_num = 1)和最后一条记录(d2.fStart IS NULL)，这样数据才是完整的
-const std::string QUERY_FWDBWD_FLOW_DATA_TEXT_SQL =
-    "WITH combined AS ( \n"
-    "    SELECT f.flow_id, f.type, f.timestamp AS slice_begin, s.end_time AS slice_end \n"
-    "    FROM " + FLOW_TABLE + " f JOIN " + SLICE_TABLE + " s ON f.track_id = s.track_id AND f.timestamp = s.timestamp "
-    "    WHERE f.cat = 'fwdbwd' AND f.type IN ('s', 'f') ORDER by f.flow_id  \n"
-    "), \n"
-    "s AS ( \n"
-    "    SELECT flow_id, slice_begin, slice_end FROM combined WHERE type = 's' \n"
-    "),  \n"
-    "f AS ( \n"
-    "    SELECT flow_id, slice_begin, slice_end FROM combined WHERE type = 'f' \n"
-    "), \n"
-    "data AS ( \n"
-    "    SELECT s.slice_begin AS sStart, s.slice_end AS sEnd, f.slice_begin AS fStart, f.slice_end AS fEnd, "
-    "    ROW_NUMBER() OVER (ORDER BY s.slice_begin) AS row_num \n"
-    "    FROM s JOIN f ON s.flow_id = f.flow_id and s.slice_begin >= ? and s.slice_end <= ? \n"
-    ") \n"
-    "SELECT d1.sStart -? as lastFpStart, d1.sEnd -? as lastFpEnd, "
-    "d1.fStart -? as lastBpStart, d1.fEnd -? as lastBpEnd, \n"
-    "COALESCE(d2.sStart - ?, 0) AS nextFpStart, COALESCE(d2.sEnd - ?, 0) AS nextFpEnd, "
-    "COALESCE(d2.fStart - ?, 0) AS nextBpStart, COALESCE(d2.fEnd - ?, 0) AS nextBpEnd \n"
-    "FROM data d1 LEFT JOIN data d2 ON d2.row_num = d1.row_num + 1 \n"
-    "WHERE d2.fStart > d1.fStart OR d2.fStart IS NULL OR d1.row_num = 1 ";
-
-const std::string QUERY_FWDBWD_FLOW_DATA_DB_SQL =
-    "with flow_table as ( \n"
-    "    SELECT ids.id as flowId, ids.connectionId as connectionId \n"
-    "    FROM " + TABLE_CONNECTION_CATS + " cats JOIN " + TABLE_CONNECTION_IDS + " ids \n"
-    "    ON cats.cat = 'fwdbwd' and cats.connectionId = ids.connectionId ORDER by ids.id ASC \n"
-    "), \n"
-    "api_table as ( \n"
-    "    SELECT startNs, endNs, connectionId FROM " + TABLE_API + " \n"
-    "    WHERE connectionId IS NOT NULL AND type in ( \n"
-    "        SELECT id FROM " + TABLE_ENUM_API_TYPE + " WHERE name = 'op' \n"
-    "    ) ORDER BY connectionId \n"
-    "), \n"
-    "combined as ( \n"
-    "    SELECT startNs, endNs, flow.connectionId FROM api_table api join flow_table flow \n"
-    "    ON api.connectionId = flow.flowId ORDER BY flow.connectionId ASC \n"
-    "), \n"
-    "data as (\n"
-    "    SELECT s.startNs as sStart, s.endNs as sEnd, f.startNs as fStart, f.endNs as fEnd, "
-    "    ROW_NUMBER() OVER (ORDER BY s.startNs) AS row_num \n"
-    "    FROM combined s JOIN combined f \n"
-    "    ON s.connectionId = f.connectionId and s.startNs >= ? and s.endNs <= ? AND s.startNs < f.startNs \n"
-    ") "
-    "SELECT d1.sStart - ? as lastFpStart, d1.sEnd - ? as lastFpEnd, "
-    "d1.fStart - ? as lastBpStart, d1.fEnd - ? as lastBpEnd, \n"
-    "COALESCE(d2.sStart - ?, 0) AS nextFpStart, COALESCE(d2.sEnd - ?, 0) AS nextFpEnd, "
-    "COALESCE(d2.fStart - ?, 0) AS nextBpStart, COALESCE(d2.fEnd - ?, 0) AS nextBpEnd \n"
-    "FROM data d1 LEFT JOIN data d2 ON d2.row_num = d1.row_num + 1 \n"
-    "WHERE d2.fStart > d1.fStart OR d2.fStart IS NULL OR d1.row_num = 1 ";
-
 // 目前根据通信算子名进行过滤，此种方式不够准确，待后续进一步优化为锁定通信域后便锁定p2p通信算子
 const std::string QUERY_P2P_COMMUNICATION_OP_TEXT_SQL =
     "SELECT t.pid as pid, t.tid as tid, s.timestamp - ? as startTime, s.duration as duration, s.name as name "
@@ -281,6 +222,9 @@ private:
 
     static void BindSearchNameWithLockRangeStmt(std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &path,
         const std::string &deviceId, const TrackQuery &item);
+    static bool CalculateParallelParameter(const std::vector<Protocol::ThreadTraces> &fwdTraceList,
+        const std::vector<Protocol::ThreadTraces> &bwdTraceList,
+        uint64_t minBwdStartTime, std::pair<uint16_t, uint16_t> &parameter);
 };
 };
 
