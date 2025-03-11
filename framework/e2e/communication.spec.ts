@@ -18,13 +18,14 @@ const test = baseTest.extend<TestFixtures>({
 });
 let requestDurationListResp: Promise<unknown>;
 let requestTableDataResp: Promise<unknown>;
+let allPagesSuccessRes: Promise<unknown>;
 let ws: Promise<WebSocket>;
 
 test.describe('Communication', () => {
     test.beforeEach(async ({ page, communicationPage }) => {
         ws = setupWebSocketListener(page);
         requestDurationListResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/duration/list');
-        requestTableDataResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/operatorDetails');
+        allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
 
         const { loadingDialog } = new FrameworkPage(page);
         await page.goto('/');
@@ -57,13 +58,14 @@ test.describe('Communication', () => {
         // 筛选通信域
         const communicationGroupSelect = new SelectHelpers(page, communicationGroupSelector, communicationFrame);
         await communicationGroupSelect.open();
-        await communicationGroupSelect.selectOption('(0, 1, 2, 3, 4, 5, 6, 7)');
+        await communicationGroupSelect.selectOption('tp-dp-cp:(0, 1, 2, 3, 4, 5, 6, 7)');
         // 筛选算子名称
         const operatorNameSelect = new SelectHelpers(page, operatorNameSelector, communicationFrame);
         await operatorNameSelect.open();
         await operatorNameSelect.selectOption('allgather-top1');
         // 通信矩阵和通信耗时分析单选开关
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
+        await allPagesSuccessRes;
     });
 
     // 【case】通信矩阵配置
