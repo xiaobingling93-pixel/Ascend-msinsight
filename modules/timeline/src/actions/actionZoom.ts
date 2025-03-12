@@ -6,8 +6,6 @@ import { register } from './register';
 import { KEYS } from 'ascend-utils';
 import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
-import { debounce } from 'lodash';
-import { setZoomHistory } from '../components/ContextMenu';
 import { getZoomPoint } from '../components/charts/ChartInteractor/ChartInteractor';
 
 enum ZoomDirection {
@@ -23,9 +21,13 @@ function undoZoom(session: Session): void {
         session.contextMenu.zoomHistory.pop();
         const zoomHistoryLength = session.contextMenu.zoomHistory.length;
         if (zoomHistoryLength === 0) {
-            session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+            session.setDomainWithoutHistory(
+                { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration },
+            );
         } else {
-            session.domainRange = session.contextMenu.zoomHistory[zoomHistoryLength - 1];
+            session.setDomainWithoutHistory(
+                session.contextMenu.zoomHistory[zoomHistoryLength - 1],
+            );
         }
     });
 }
@@ -35,7 +37,9 @@ function resetZoom(session: Session): void {
         return;
     }
     runInAction(() => {
-        session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+        session.setDomainWithoutHistory(
+            { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration },
+        );
         session.contextMenu.zoomHistory = [];
     });
 }
@@ -44,14 +48,7 @@ const zoomDomain = (session: Session, zoomCount: number, zoomPoint: number | und
     runInAction(() => {
         session.zoom = { zoomCount, zoomPoint };
     });
-    setZoomHistoryDebounce(session);
 };
-
-const setZoomHistoryDebounce = debounce((session) => {
-    runInAction(() => {
-        setZoomHistory(session, session.domainRange);
-    });
-}, 300);
 
 export const actionUndoZoom = register({
     name: 'undoZoom',

@@ -12,7 +12,7 @@ import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
 import type { ThreadMetaData, CardMetaData } from '../entity/data';
-import { preOrderFlatten, TimeStamp } from '../entity/common';
+import { preOrderFlatten } from '../entity/common';
 import { type InsightUnit, unit } from '../entity/insight';
 import { Tooltip } from 'ascend-components';
 import { isPinned, switchPinned } from './ChartContainer/unitPin';
@@ -120,13 +120,6 @@ const MenuItem = styled.div`
         opacity: 0.6;
     }
 `;
-
-export function setZoomHistory(session: Session, domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp }): void {
-    session.contextMenu.zoomHistory.push(domainRange);
-    if (session.contextMenu.zoomHistory.length > MAX_ZOOM_COUNT) {
-        session.contextMenu.zoomHistory = session.contextMenu.zoomHistory.slice(-MAX_ZOOM_COUNT);
-    }
-}
 
 function getSameGroupNameUnits(session: Session): InsightUnit[] {
     if (session.selectedUnits.length === 0) {

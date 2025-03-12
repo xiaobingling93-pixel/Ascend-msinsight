@@ -6,15 +6,17 @@ import type { FC } from 'react';
 import { type Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { type TimeStamp } from './common';
-import { Domain } from './domain';
+import { Domain, DomainRange } from './domain';
 import type { InsightUnit, UnitMatcher, LinkLines, LinkDataDesc } from './insight';
 import { type TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
-import { omit } from 'lodash';
+import { debounce, omit } from 'lodash';
 import { platform } from '../platforms';
 import i18n from 'ascend-i18n';
 import { type Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
 import { InsightUnitSet } from '../utils/PageSetting';
+
+export const MAX_ZOOM_COUNT = 10000;
 
 export interface SelectedParams {
     baseRawId?: number;
@@ -46,7 +48,7 @@ export interface LinkData {
 };
 export interface ContextMenu {
     isVisible: boolean;
-    zoomHistory: Array<{ domainStart: TimeStamp; domainEnd: TimeStamp }>;
+    zoomHistory: DomainRange[];
 };
 
 interface UnitsConfig {
@@ -191,7 +193,7 @@ export class Session {
     eventUnits: InsightUnit[] = [];
     projectName?: string;
     pageSetting: Record<string, {
-        domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp };
+        domainRange: DomainRange;
         units: InsightUnitSet[];
     } | undefined> = {};
 
@@ -199,6 +201,7 @@ export class Session {
     showBottomPanel: boolean | null = null;
     // 是否处于拖拽场景下
     isDragging: boolean = false;
+    debouncedSetZoomingHistory;
 
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];
@@ -214,6 +217,7 @@ export class Session {
     private _selectedRangeData?: Array<Record<string, unknown>>;
     private _interval: number;
     private _selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
+    private _disableZoomingHistory: boolean = false; // 禁止生成缩放历史记录
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this, {
@@ -231,7 +235,8 @@ export class Session {
         if (conf) {
             Object.assign(this, conf);
         }
-        this._domain = new Domain(this.isNsMode, this.endTimeAll);
+        this.debouncedSetZoomingHistory = debounce(this.setZoomingHistory.bind(this), 300);
+        this._domain = new Domain(this.isNsMode, this.endTimeAll, this.debouncedSetZoomingHistory);
         this.buttons = conf?.buttons ?? [];
         this.simpleCache = new SimpleCache();
         // 录制时长大于等于5min，建议结束录制
@@ -274,7 +279,7 @@ export class Session {
         return this._selectedUnitKeys;
     }
 
-    get domainRange(): { domainStart: TimeStamp; domainEnd: TimeStamp } {
+    get domainRange(): DomainRange {
         const { domainStart, domainEnd } = this._domain.domainRange;
         return { domainStart, domainEnd };
     }
@@ -344,8 +349,11 @@ export class Session {
         });
     }
 
-    set domainRange(domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp }) {
+    set domainRange(domainRange: DomainRange) {
         this._domain.domainRange = domainRange;
+        if (!this._disableZoomingHistory) {
+            this.debouncedSetZoomingHistory(domainRange);
+        }
     }
 
     set realTimeUpdate(realTime: boolean) {
@@ -417,5 +425,18 @@ export class Session {
             return;
         }
         this._selectedUnitKeys = value;
-    };
+    }
+
+    setDomainWithoutHistory(domainRange: DomainRange): void {
+        this._disableZoomingHistory = true;
+        this.domainRange = domainRange;
+        this._disableZoomingHistory = false;
+    }
+
+    setZoomingHistory(domainRange: DomainRange): void {
+        this.contextMenu.zoomHistory.push(domainRange);
+        if (this.contextMenu.zoomHistory.length > MAX_ZOOM_COUNT) {
+            this.contextMenu.zoomHistory = this.contextMenu.zoomHistory.slice(-MAX_ZOOM_COUNT);
+        }
+    }
 }

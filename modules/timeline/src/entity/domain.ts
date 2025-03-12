@@ -8,6 +8,11 @@ import type { TimeStamp } from './common';
 export const GOLDEN_RATE = 0.1236;
 export const PAN_RATE = 0.05; // 平移倍率
 
+export interface DomainRange {
+    domainStart: TimeStamp;
+    domainEnd: TimeStamp;
+}
+
 const validNumber = (num: number | undefined): number | undefined => {
     if (num === undefined || isNaN(num) || !isFinite(num)) {
         return undefined;
@@ -58,8 +63,9 @@ export class Domain {
     private _endTimeAll: TimeStamp;
     private _realTimeUpdate: boolean = true;
     private _chartViewWidth: number = 0;
+    private readonly _debouncedSetZoomingHistory;
 
-    constructor(isNsMode: boolean, endTimeAll: TimeStamp | undefined) {
+    constructor(isNsMode: boolean, endTimeAll: TimeStamp | undefined, debouncedSetZoomingHistory: (range: DomainRange) => void) {
         makeAutoObservable(this);
         // this is var is the viewport represents default time duration
         // return ns time duration or ms time duration
@@ -71,6 +77,7 @@ export class Domain {
         this._domainStart = 0;
         this.maxDuration = endTimeAll === undefined ? this._DEFAULT_DURATION : Math.min(this._UPPER_BOUND, endTimeAll * this.BOUNDARY_ZOOM_RATE);
         this._domainEnd = this.maxDuration;
+        this._debouncedSetZoomingHistory = debouncedSetZoomingHistory;
     }
 
     // temp api for WASD shortcut
@@ -86,7 +93,7 @@ export class Domain {
         return this._domainEnd - this._domainStart;
     }
 
-    get domainRange(): { domainStart: TimeStamp; domainEnd: TimeStamp } {
+    get domainRange(): DomainRange {
         return { domainStart: this._domainStart, domainEnd: this._domainEnd };
     }
 
@@ -137,9 +144,10 @@ export class Domain {
         if (this._domainEnd !== this._endTimeAll) {
             this._realTimeUpdate = false;
         }
+        this._debouncedSetZoomingHistory({ domainStart: this._domainStart, domainEnd: this._domainEnd });
     };
 
-    set domainRange({ domainStart, domainEnd }: { domainStart: TimeStamp; domainEnd: TimeStamp }) {
+    set domainRange({ domainStart, domainEnd }: DomainRange) {
         if (domainStart === this._domainStart && domainEnd === this._domainEnd) { return; }
         const positiveStart = Math.abs(domainStart);
         const positiveEnd = Math.abs(domainEnd);

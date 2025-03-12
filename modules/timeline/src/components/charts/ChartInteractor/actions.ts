@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
-import { clamp, throttle, debounce } from 'lodash';
+import { clamp, throttle } from 'lodash';
 import { runInAction } from 'mobx';
 import type React from 'react';
 import type { Session } from '../../../entity/session';
@@ -15,7 +15,6 @@ import { draw, drawOnMove, MIN_BRUSH_SIZE } from './draw';
 import type { DrawArgs, DrawCanvasArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
 import type { Theme } from '@emotion/react';
-import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
 
 const dragInitData = {
@@ -40,7 +39,6 @@ const updateSessionStatus = (e: MouseEvent, session: Session, newSelected: [numb
     runInAction(() => {
         if (e.altKey) {
             session.domainRange = { domainStart: newSelected[0], domainEnd: newSelected[1] };
-            setZoomHistory(session, session.domainRange);
         }
         session.selectedRange = newSelected;
         changeRangeMarkerTimestamp(session, newSelected);
@@ -282,12 +280,6 @@ const handleZoom = throttle((session: Session, accumulativeZoomRef: React.Mutabl
     accumulativeZoomRef.current = 0;
 }, 50);
 
-const setZoomHistoryDebounce = debounce((session) => {
-    runInAction(() => {
-        setZoomHistory(session, session.domainRange);
-    });
-}, 300);
-
 export const mouseWheelAction = (
     session: Session,
     accumulativeZoomRef: React.MutableRefObject<number>,
@@ -297,7 +289,6 @@ export const mouseWheelAction = (
     if (wheelEvent.ctrlKey) {
         accumulativeZoomRef.current += Math.sign(wheelEvent.deltaY);
         handleZoom(session, accumulativeZoomRef, zoomPoint);
-        setZoomHistoryDebounce(session);
     }
 };
 

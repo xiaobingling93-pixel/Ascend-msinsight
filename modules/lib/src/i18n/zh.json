@@ -112,7 +112,7 @@
     "Duration": "持续时间",
     "abilityName": "Ability名",
     "abilityEvent": "Ability事件",
-    "reset": "复原",
+    "reset": "重置缩放",
     "clean": "清空界面",
     "filter": "过滤",
     "search": "搜索",

@@ -5,15 +5,12 @@
 import { KEYS } from 'ascend-utils';
 import { register } from './register';
 import { runInAction } from 'mobx';
-import { setZoomHistory } from '../components/ContextMenu';
 import type { Session } from '../entity/session';
 
 function zoomIntoSelection(session: Session): void {
     runInAction(() => {
         if (session.selectedRange !== undefined) {
-            const domainRange = { domainStart: session.selectedRange[0], domainEnd: session.selectedRange[1] };
-            session.domainRange = domainRange;
-            setZoomHistory(session, domainRange);
+            session.domainRange = { domainStart: session.selectedRange[0], domainEnd: session.selectedRange[1] };
         }
     });
 }

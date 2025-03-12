@@ -3,7 +3,6 @@
  */
 import type { InsightUnit } from '../entity/insight';
 import { store } from '../store';
-import { setZoomHistory } from '../components/ContextMenu';
 
 // 保留当前页面（时间范围、卡等）
 export function savePageSetting(): void {
@@ -78,7 +77,6 @@ export function recoverPageSetting(): void {
         const { domainRange, units } = setting;
         // 时间范围
         session.domainRange = domainRange;
-        setZoomHistory(session, domainRange);
         // 卡展开
         new UnitTreeTool().recoverSetting(session.units, units);
     }

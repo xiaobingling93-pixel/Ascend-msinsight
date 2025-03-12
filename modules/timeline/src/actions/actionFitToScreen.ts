@@ -5,7 +5,6 @@
 import { register } from './register';
 import { runInAction } from 'mobx';
 import type { ThreadTrace } from '../entity/data';
-import { setZoomHistory } from '../components/ContextMenu';
 
 export const actionFitToScreen = register({
     name: 'fitToScreen',
@@ -15,9 +14,10 @@ export const actionFitToScreen = register({
         runInAction(() => {
             if (session.selectedData !== undefined) {
                 const selectedData = session.selectedData as ThreadTrace;
-                const domainRange = { domainStart: selectedData.startTime, domainEnd: selectedData.startTime + selectedData.duration };
-                session.domainRange = domainRange;
-                setZoomHistory(session, domainRange);
+                session.domainRange = {
+                    domainStart: selectedData.startTime,
+                    domainEnd: selectedData.startTime + selectedData.duration,
+                };
             }
         });
     },

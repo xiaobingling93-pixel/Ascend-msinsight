@@ -73,7 +73,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             if (unitData.startTimeUpdated === true) {
                 session.simpleCache.clear();
             }
-            session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+            session.setDomainWithoutHistory({ domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration });
 
             // 所有卡解析完成
             const parseCompleted = !(session.units.find(item => item.phase === 'analyzing'));

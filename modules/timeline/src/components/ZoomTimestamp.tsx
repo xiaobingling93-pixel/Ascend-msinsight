@@ -56,7 +56,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
             disabled={isResetDisabled}
             onClick={(): void => {
                 runInAction(() => {
-                    session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+                    session.setDomainWithoutHistory({ domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration });
                     session.contextMenu.zoomHistory = [];
                 });
             }}
