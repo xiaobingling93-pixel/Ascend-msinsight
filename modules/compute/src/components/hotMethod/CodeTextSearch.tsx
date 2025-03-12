@@ -66,14 +66,22 @@ const IconBtn = styled.div`
 
 // 清理查询结果
 const clearMark = (): void => {
-    const instance = new Mark(getCodeDom());
+    const dom = getCodeDom();
+    if (!dom) {
+        return;
+    }
+    const instance = new Mark(dom);
     instance.unmark();
 };
 // 代码查询
 const serachInCode = ({ text, inRange, condition, handleAfterSearch }:
 {text: string;inRange: boolean;condition: Record<string, boolean>;handleAfterSearch: (count: number) => void}): void => {
     clearMark();
-    const instance = new Mark(inRange ? getCodeRangeDom() : getCodeDom());
+    const dom = inRange ? getCodeRangeDom() : getCodeDom();
+    if (!dom) {
+        return;
+    }
+    const instance = new Mark(dom);
     const option: any = {
         className: HIGHTLIGHT_CLASSNAME,
         indexName: INDEX_NAME,
@@ -123,8 +131,8 @@ const CODE_RANGE_CLASSNAME = 'range';
 // 启用选中范围
 const CODE_RANGE_ACTIVE_CLASSNAME = 'active-range';
 // 代码Dom
-const getCodeDom = (): HTMLElement => {
-    return document.querySelector('#CodeTable code') as HTMLElement;
+const getCodeDom = (): HTMLElement | null => {
+    return document.querySelector('#CodeTable code');
 };
 // 选中范围内的代码Dom
 const getCodeRangeDom = (): HTMLElement[] => {
@@ -268,7 +276,11 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
     };
 
     const switchRange = (): void => {
-        getCodeDom().classList.toggle(CODE_RANGE_ACTIVE_CLASSNAME);
+        const dom = getCodeDom();
+        if (!dom) {
+            return;
+        }
+        dom.classList.toggle(CODE_RANGE_ACTIVE_CLASSNAME);
         setInRange(pre => !pre);
     };
 
