@@ -12,6 +12,7 @@ export interface ModuleConfig {
     isCompute?: boolean;
     isJupyter?: boolean;
     hasCachelineRecords?: boolean;
+    isOnlyTraceJson?: boolean;
 };
 
 const isDev = process.env.REACT_APP_ENV === 'development';
@@ -26,6 +27,7 @@ export const modulesConfig: ModuleConfig[] = [
         isCluster: true,
         isCompute: true,
         isJupyter: true,
+        isOnlyTraceJson: true,
     },
     {
         name: 'Memory',

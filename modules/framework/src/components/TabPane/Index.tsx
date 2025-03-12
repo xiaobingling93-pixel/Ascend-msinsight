@@ -51,11 +51,12 @@ const Container = styled.div`
 
 export function updateDataScene(data: Record<string, any>): void {
     const scenceInfo = {
-        isCluster: data.isCluster,
-        isReset: data.reset,
-        isIpynb: data.isIpynb,
-        isBinary: data.isBinary,
-        hasCachelineRecords: data.hasCachelineRecords,
+        isCluster: data.isCluster ?? false,
+        isReset: data.reset ?? false,
+        isIpynb: data.isIpynb ?? false,
+        isBinary: data.isBinary ?? false,
+        hasCachelineRecords: data.hasCachelineRecords ?? false,
+        isOnlyTraceJson: data.isOnlyTraceJson ?? false,
     };
     updateSession(scenceInfo);
 }
@@ -124,12 +125,13 @@ const Index = observer(({ session }: {session: Session}) => {
     }, [session.defaultConnected]);
 
     useEffect(() => {
+        // 删除工程的场景：不改变页签
         if (session.isBinary === null && session.isCluster === null) {
             return;
         }
         setScene(session.scene);
         setDataCompose({ hasCachelineRecords: session.hasCachelineRecords });
-    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords]);
+    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords, session.isOnlyTraceJson]);
     useEffect(() => {
         const newActiveModule = getActive(session, scene, activeModule, availableModules);
         setActiveModule(newActiveModule);

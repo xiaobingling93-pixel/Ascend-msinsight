@@ -6,8 +6,8 @@ import { type DataSource, LOCAL_HOST, PORT } from '../centralServer/websocket/de
 import type { CompareData } from '@/utils/Compare';
 import { SessionAction } from '@/utils/enum';
 
-// Scene：数据场景,默认、集群、算子调优、Jupter
-export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
+// Scene：数据场景：默认、集群、算子调优、Jupter、只trace.json文件
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson';
 
 interface ContextMenu {
     visible: boolean;
@@ -40,6 +40,7 @@ export class Session {
     ipynbUrl: string = '';
     isReset: boolean = false;
     isFullDb: boolean = false;
+    isOnlyTraceJson: boolean = false;
     hasCachelineRecords: boolean = false;
     // 解析状态
     parseCompleted: boolean = false;
@@ -78,10 +79,12 @@ export class Session {
         makeAutoObservable(this);
     }
 
-    // 导入数据场景：默认、集群、算子调优、Jupter
+    // 导入数据场景：默认、集群、算子调优、Jupter、只trace.json
     get scene(): Scene {
         let scene: Scene;
-        if (this.isBinary) {
+        if (this.isOnlyTraceJson) {
+            scene = 'OnlyTraceJson';
+        } else if (this.isBinary) {
             scene = 'Compute';
         } else if (this.isCluster) {
             scene = 'Cluster';
@@ -116,6 +119,7 @@ export class Session {
         this._activeDataSource = data;
     }
 
+    // remove：删除工程，不改变页签
     reset(remove?: boolean): void {
         this.isIpynb = false;
         this.isCluster = remove ? false : null;
