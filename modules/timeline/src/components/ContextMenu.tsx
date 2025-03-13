@@ -14,7 +14,6 @@ import type { ChartInteractorHandles, InteractorMouseState } from './charts/Char
 import type { ThreadMetaData, CardMetaData } from '../entity/data';
 import { preOrderFlatten } from '../entity/common';
 import { type InsightUnit, unit } from '../entity/insight';
-import { Tooltip } from 'ascend-components';
 import { isPinned, switchPinned } from './ChartContainer/unitPin';
 import { getRootUnit } from '../utils';
 import { getAutoKey } from '../utils/dataAutoKey';
@@ -202,11 +201,10 @@ function openMenu(session: Session): void {
 export const EmptyUnit = unit<EmptyMetaData>({
     name: 'Empty',
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { count: number}) => <Tooltip placement="leftBottom">
+    renderInfo: (session: Session, metadata: { count: number}) =>
         <span style={{ marginLeft: 3, overflow: 'hidden', fontSize: 14, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {metadata.count}{' units hidden'}
-        </span>
-    </Tooltip>,
+        </span>,
 });
 
 interface EmptyMetaData {

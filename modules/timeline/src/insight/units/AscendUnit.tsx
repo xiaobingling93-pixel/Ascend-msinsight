@@ -38,7 +38,6 @@ import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 import type { ChartHandle, ChartType, Scale, StackStatusConfig, StackStatusData, StatusData } from '../../entity/chart';
-import { Tooltip } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData } from '../../components/detailViews/Common';
 import { calculateDomainRange } from '../../components/CategorySearch';
@@ -519,11 +518,10 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { cardName: string; cardPath: string }) => <Tooltip placement="leftBottom" title={metadata.cardPath}>
-        <span style={{ marginLeft: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+    renderInfo: (session: Session, metadata: { cardName: string; cardPath: string }) =>
+        <span style={{ marginLeft: 6 }}>
             {metadata.cardName}
-        </span>
-    </Tooltip>,
+        </span>,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {

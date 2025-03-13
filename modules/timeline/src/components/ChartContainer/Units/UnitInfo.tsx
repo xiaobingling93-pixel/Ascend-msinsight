@@ -256,6 +256,9 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
             {...props}
         />;
     }
+    const tooltip = (children: JSX.Element): JSX.Element => unit.name === 'Card'
+        ? <Tooltip placement="leftBottom" title={(unit.metadata as { cardPath: string }).cardPath}>{children}</Tooltip>
+        : children;
     React.useEffect(() => {
         if (session.isParserLoading) {
             runInAction((): void => {
@@ -287,7 +290,9 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
         return 'auto';
     };
     return <InsightLaneInfoContainer className="insight-lane-info">
-        <span onMouseDown={onDragMouseDown} style={{ flexGrow: 1, cursor: getCursorStyle() }}>{info}</span>
+        {tooltip(<div onMouseDown={onDragMouseDown}
+            style={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: getCursorStyle() }}
+        >{info}</div>)}
         { !unit.shouldParse && unit.configBar && <ConfigBar
             session={session}
             unit={unit}
