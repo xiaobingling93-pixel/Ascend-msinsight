@@ -325,7 +325,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         setTimeout(() => {
             const newFullCondition = { ...fullCondition };
             const keys = ['group', 'rankId', 'topK', 'current', 'pageSize',
-                'field', 'order', 'type', 'opType', 'name', 'opName', 'accCore'];
+                'field', 'order', 'type', 'opType', 'name', 'opName', 'accCore', 'isCompare'];
             Object.keys(obj).forEach(key => {
                 if (keys.includes(key)) {
                     Object.assign(newFullCondition, { [key]: obj[key as keyof FullConditionType] });
