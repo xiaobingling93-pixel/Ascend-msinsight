@@ -13,16 +13,8 @@
 namespace Dic::Module::Summary {
 class MegatronParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
-
-    static const inline std::unordered_map<std::string, std::string> tokenExceptEp = {
-        {DP_GROUP, DP_GROUP}, {CP_GROUP, CP_GROUP}, {TP_GROUP, TP_GROUP}, {PP_GROUP, PP_GROUP},
-        {DP_CP_GROUP, DP_CP_GROUP}, {MP_GROUP, MP_GROUP_NAME}, {TP_DP_CP_GROUP, TP_DP_CP_GROUP},
-        {TP_DP_GROUP, TP_DP_GROUP}, {TP_CP_GROUP, TP_CP_GROUP}
-    };
-    static const inline std::unordered_map<std::string, std::string> tokenWithEp = {
-        {EP_GROUP, EP_GROUP_NAME}, {TP_EP_GROUP, TP_EP_GROUP_NAME}, {DP_MODULO_EP_GROUP, DP_MODULO_EP_GROUP_NAME},
-        {DP_CP_MODULO_EP_GROUP, DP_CP_MODULO_EP_GROUP_NAME}, {MP_EP_GROUP, MP_EP_GROUP_NAME}
-    };
+    static const std::unordered_map<std::string, std::string> tokenExceptEp;
+    static const std::unordered_map<std::string, std::string> tokenWithEp;
 
     MegatronParallelStrategyAlgorithm();
     ~MegatronParallelStrategyAlgorithm() override;

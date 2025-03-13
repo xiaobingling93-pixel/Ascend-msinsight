@@ -12,21 +12,10 @@
 namespace Dic::Module::Summary {
 class MindSpeedParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
-    static const inline std::unordered_map<std::string, std::string> tokenExceptEp = {
-        {DP_GROUP, DP_GROUP}, {CP_GROUP, CP_GROUP}, {TP_GROUP, TP_GROUP}, {PP_GROUP, PP_GROUP},
-        {DP_CP_GROUP, DP_CP_GROUP}, {MP_GROUP, MP_GROUP_NAME}, {TP_DP_CP_GROUP, TP_DP_CP_GROUP},
-        {TP_DP_GROUP, TP_DP_GROUP}, {TP_CP_GROUP, TP_CP_GROUP}
-    };
-    static const inline std::unordered_map<std::string, std::string> tokenWithEp = {
-        {EP_GROUP, EP_GROUP_NAME}, {TP_EP_GROUP, TP_EP_GROUP_NAME}, {DP_MODULO_EP_GROUP, DP_MODULO_EP_GROUP_NAME},
-        {DP_CP_MODULO_EP_GROUP, DP_CP_MODULO_EP_GROUP_NAME}, {MP_EP_GROUP, MP_EP_GROUP_NAME}
-    };
-    static const inline std::unordered_map<std::string, std::string> tokenOfTp2dNd1 = {
-        {TP_GROUP_FOR_ND1_DIM1, TP_GROUP_FOR_ND1_DIM1_NAME}, {TP_GROUP_FOR_ND1_DIM2, TP_GROUP_FOR_ND1_DIM2_NAME}
-    };
-    static const inline std::unordered_map<std::string, std::string> tokenOfTp2dNd2 = {
-        {TP_GROUP_FOR_ND2_DIM1, TP_GROUP_FOR_ND2_DIM1_NAME}, {TP_GROUP_FOR_ND2_DIM2, TP_GROUP_FOR_ND2_DIM2_NAME}
-    };
+    static const std::unordered_map<std::string, std::string> tokenExceptEp;
+    static const std::unordered_map<std::string, std::string> tokenWithEp;
+    static const std::unordered_map<std::string, std::string> tokenOfTp2dNd1;
+    static const std::unordered_map<std::string, std::string> tokenOfTp2dNd2;
     MindSpeedParallelStrategyAlgorithm();
     ~MindSpeedParallelStrategyAlgorithm() override;
 

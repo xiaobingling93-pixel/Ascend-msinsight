@@ -6,6 +6,15 @@
 #include "MegatronParallelStrategyAlgorithm.h"
 
 namespace Dic::Module::Summary {
+
+const std::unordered_map<std::string, std::string> MegatronParallelStrategyAlgorithm::tokenExceptEp = {
+    {DP_GROUP, DP_GROUP}, {CP_GROUP, CP_GROUP}, {TP_GROUP, TP_GROUP}, {PP_GROUP, PP_GROUP},
+    {DP_CP_GROUP, DP_CP_GROUP}, {MP_GROUP, MP_GROUP_NAME}, {TP_DP_CP_GROUP, TP_DP_CP_GROUP},
+    {TP_DP_GROUP, TP_DP_GROUP}, {TP_CP_GROUP, TP_CP_GROUP}};
+const std::unordered_map<std::string, std::string> MegatronParallelStrategyAlgorithm::tokenWithEp = {
+    {EP_GROUP, EP_GROUP_NAME}, {TP_EP_GROUP, TP_EP_GROUP_NAME}, {DP_MODULO_EP_GROUP, DP_MODULO_EP_GROUP_NAME},
+    {DP_CP_MODULO_EP_GROUP, DP_CP_MODULO_EP_GROUP_NAME}, {MP_EP_GROUP, MP_EP_GROUP_NAME}};
+
 MegatronParallelStrategyAlgorithm::MegatronParallelStrategyAlgorithm()
 {
     commInfoHandlers[DIMENSIONS_TP] =
