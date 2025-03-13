@@ -54,6 +54,8 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
         SetParseCallBack(Timeline::TraceFileSimulationParser::Instance());
         response.body.isSimulation = true;
+        auto [hasTraceJson, hasMemoryData, hasOperatorData] = CheckHasTraceJsonMemoryDataOperatorData(projectInfos);
+        response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData;
         SendResponse(std::move(responsePtr), true);
         for (const auto &rankEntry : rankListMap) {
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first,
