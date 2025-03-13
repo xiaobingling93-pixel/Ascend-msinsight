@@ -19,6 +19,7 @@ interface ImportActionBody {
     isIpynb: boolean;
     isPending: boolean;
     isSimulation: boolean;
+    isOnlyTraceJson: boolean;
     reset: boolean;
 }
 
