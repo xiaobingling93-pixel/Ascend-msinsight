@@ -4,9 +4,9 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import styled from '@emotion/styled';
-import { Input } from 'ascend-components';
+import { Input, Tooltip } from 'ascend-components';
 import { ArrowUpOutlined, ArrowDownOutlined, CloseOutlined, AlignLeftOutlined } from '@ant-design/icons';
-import { CaseIcon, FullTextIcon, RegularIcon } from 'ascend-icon';
+import { CaseIcon, FullTextIcon } from 'ascend-icon';
 import Mark from '../../utils/DomSearch/mark';
 import { store } from '../../store';
 import { observable, runInAction } from 'mobx';
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { themeInstance } from 'ascend-theme';
 
 const TextSearchContainer = styled.div`
+    z-index: 100;
     background:${(p): string => p.theme.bgColorLight};
     box-shadow : 0 8px 16px 0 rgba( 0,0,0,0.10 ) ;
     height:48px;
@@ -37,6 +38,14 @@ const TextSearchContainer = styled.div`
         }
         &:not(.active):hover{
             color:${(p): string => p.theme.textColorPrimary};
+        }
+        &.disabled{
+            background: none;
+            color:${(p): string => p.theme.textColorDisabled};
+            pointer-events: none;
+        }
+        &.disabled:hover{
+            color:${(p): string => p.theme.textColorDisabled};
         }
     }
     div{
@@ -90,7 +99,6 @@ const serachInCode = ({ text, inRange, condition, handleAfterSearch }:
         done: handleAfterSearch,
         separateWordSearch: false,
         acrossElements: true,
-        keepReg: condition.regular,
     };
     try {
         instance.mark(text, option);
@@ -220,9 +228,8 @@ const clearCodeRange = (): void => {
 enum MatchOption {
     CASE = 'case',
     FULL_TEXT = 'fullText',
-    REGULAR = 'regular',
 }
-const defaultCondition: Record<MatchOption, boolean> = { case: false, fullText: false, regular: false };
+const defaultCondition: Record<MatchOption, boolean> = { case: false, fullText: false };
 
 // 代码搜索工具栏
 const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
@@ -276,12 +283,12 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
     };
 
     const switchRange = (): void => {
+        setInRange(pre => !pre);
         const dom = getCodeDom();
         if (!dom) {
             return;
         }
         dom.classList.toggle(CODE_RANGE_ACTIVE_CLASSNAME);
-        setInRange(pre => !pre);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -312,9 +319,11 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
             { total === 0 ? t('No Result') : '' }
             { total > 0 ? <div>{curIndex + 1} of {total}</div> : <></> }
         </div>
-        <ArrowUpOutlined className={'btn'} onClick={(): void => goToResultItem(curIndex - 1)}/>
-        <ArrowDownOutlined className={'btn'} onClick={(): void => goToResultItem(curIndex + 1)}/>
-        <AlignLeftOutlined className={`btn ${inRange ? 'active' : ''}`} onClick={switchRange}/>
+        <ArrowUpOutlined className={`btn ${total === 0 ? 'disabled' : ''}`} onClick={(): void => goToResultItem(curIndex - 1)}/>
+        <ArrowDownOutlined className={`btn ${total === 0 ? 'disabled' : ''}`} onClick={(): void => goToResultItem(curIndex + 1)}/>
+        <Tooltip title={t('Find In Selection')}>
+            <AlignLeftOutlined className={`btn ${code === '' ? 'disabled' : ''} ${inRange ? 'active' : ''}`} onClick={switchRange}/>
+        </Tooltip>
         <CloseOutlined className={'btn'} onClick={handleEsc}/>
     </TextSearchContainer>;
 });
@@ -322,7 +331,6 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
 const btnGroup: Record<MatchOption, (active: boolean) => React.ReactNode> = {
     case: (active: boolean) => <CaseIcon active={active}/>,
     fullText: (active: boolean) => <FullTextIcon active={active}/>,
-    regular: (active: boolean) => <RegularIcon active={active}/>,
 };
 
 const Filter = ({ onChange }: {onChange: (condition: Record<string, boolean>) => void;theme?: string}): JSX.Element => {
