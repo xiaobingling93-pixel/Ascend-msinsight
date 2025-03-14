@@ -5,6 +5,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { Tooltip } from 'ascend-components';
 import i18n from 'ascend-i18n';
+import { NOT_APPLICABLE } from './defs';
 
 const StallBarContainer = styled.div`
     line-height: 20px;
@@ -91,6 +92,7 @@ const BarContainer = styled.div`
         border-left: 1px solid ${(p): string => p.theme.primaryColor};
         border-right: 1px solid ${(p): string => p.theme.primaryColor};
         borderRadius: 1px;
+        text-overflow: ellipsis;
     }
     .width0{
         border: none;
@@ -132,7 +134,7 @@ function Bar({ value, max = 1, type }: IProps): JSX.Element {
             : value;
     }
     return isWrongNumber
-        ? <>{type === BarType.PERCENT ? value : ''}</>
+        ? <>{NOT_APPLICABLE}</>
         : (<BarContainer title={`${valueNum}`}><BaseBar value={valueNum} percent={percent} label={label}/></BarContainer>);
 };
 export default Bar;

@@ -38,6 +38,7 @@ export function sendStatus(): void {
             durationFileCompleted: session.durationFileCompleted,
             isIpynb: session.isIpynb,
             ipynbUrl: session.ipynbUrl,
+            instrVersion: session.instrVersion,
         },
     });
 }

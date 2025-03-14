@@ -42,6 +42,7 @@ export const updateSessionHandler = (e: NotificationMessage): void => {
                     parseCompleted: session.parseCompleted,
                     clusterCompleted: session.clusterCompleted,
                     unitcount: session.unitcount,
+                    instrVersion: session.instrVersion,
                     ...updateState,
                 },
             });
