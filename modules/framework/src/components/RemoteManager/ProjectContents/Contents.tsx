@@ -144,7 +144,7 @@ const getTreeData = (session: Session): TreeDataNode[] => {
         key: dataSource.projectName,
         isLeaf: false,
         icon: <LocalImportIcon/>,
-        title: <Tooltip placement="bottom" title={dataSource.projectName}>
+        title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={dataSource.projectName}>
             <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: '' })}`}>
                 <span className="content-name" onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: '' })}>
                     <EditableText text={dataSource.projectName}/></span>
@@ -157,7 +157,7 @@ const getTreeData = (session: Session): TreeDataNode[] => {
         children: dataSource.dataPath?.map((path, dataPathIndex) => ({
             key: `${dataSource.projectName}-${path}`,
             isLeaf: true,
-            title: <Tooltip placement="bottom" title={path}>
+            title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={path}>
                 <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: path })}`}>
                     <span className="content-text can-right-click"
                         onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: path })}>
