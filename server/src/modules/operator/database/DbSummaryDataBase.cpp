@@ -391,7 +391,6 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = 0;
-        int columnCount = sqlite3_column_count(stmt);
         OperatorDetailInfoRes one{};
         one.rankId = sqlite3_column_string(stmt, col++);
         one.stepId = sqlite3_column_string(stmt, col++);
@@ -417,7 +416,6 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     sqlite3_finalize(stmt);
     return true;
 }
-// LCOV_EXCL_BR_STOP
 
 bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total)
 {
@@ -568,7 +566,6 @@ void DbSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMo
     sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
 }
 
-// LCOV_EXCL_BR_START
 bool DbSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDetailParams params,
     std::vector<Protocol::CommunicationDetail> &commDetails)
 {
@@ -881,7 +878,6 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
     sql += " LIMIT ? OFFSET ?";
     return sql;
 }
-// LCOV_EXCL_BR_STOP
 
 std::string DbSummaryDataBase::GenerateQueryCategoryDurationSqlForHCCL(
     const OperatorGroupConverter::OperatorGroup &operatorGroup)
@@ -1035,6 +1031,7 @@ bool DbSummaryDataBase::GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &
     }
     return true;
 }
+// LCOV_EXCL_BR_STOP
 
 void DbSummaryDataBase::ParserEnd(const std::string &fileId, bool result, const std::string &msg)
 {

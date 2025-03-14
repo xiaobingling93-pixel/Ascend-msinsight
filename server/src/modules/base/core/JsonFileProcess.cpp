@@ -187,7 +187,7 @@ bool JsonFileProcess::SeekPhEndPosition(std::ifstream &file, bool endFlag, int b
     }
     int pos = -1;
     uint32_t leftCount = 0;
-    for (int i = offset; i < str.size(); ++i) {
+    for (size_t i = offset; i < str.size(); ++i) {
         if (str[i] == '{') {
             leftCount++;
             continue;

@@ -862,7 +862,6 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
-            int columnCount = sqlite3_column_count(stmt);
             Protocol::OperatorDetailInfoRes one{};
             one.rankId = sqlite3_column_string(stmt, col++);
             one.stepId = sqlite3_column_string(stmt, col++);

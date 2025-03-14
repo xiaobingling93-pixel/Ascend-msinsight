@@ -543,7 +543,7 @@ std::string ClusterFileParser::GetClusterDbPath()
 
 ClusterFileParser::ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> database,
                                      const std::string &uniqueKey)
-    : selectedFilePath(filePath), database(database), uniqueKey(uniqueKey) {}
+    : selectedFilePath(filePath), uniqueKey(uniqueKey), database(database) {}
 
 bool ClusterFileParser::CheckIsCluster(const std::string &filePath)
 {
