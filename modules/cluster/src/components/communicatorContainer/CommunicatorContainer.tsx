@@ -6,12 +6,12 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, InputNumber, InputGroup, InputSplit, Button, Select, CheckboxGroup, Tabs } from 'ascend-components';
-import { message, Popconfirm } from 'antd';
+import { message, Popconfirm, Spin } from 'antd';
 import type { CheckboxValueType } from 'antd/es/checkbox/Group';
 import eventBus from '../../utils/eventBus';
 import styled from '@emotion/styled';
 import { FormInstance } from 'antd/lib/form';
-import { ParallelismGraph } from './ParallelismGraph';
+import { Loading, ParallelismGraph } from './ParallelismGraph';
 import { getParallelStrategy, setParallelStrategy } from '../../utils/RequestUtils';
 import { ErrorInfo, ParallelismArrangementParams, ParallelismType } from '../../utils/interface';
 import { ParallelSwitchConditionsProvider, useParallelSwitchConditions } from './Context';
@@ -19,13 +19,10 @@ import type { TFunction } from 'i18next';
 import { COLOR } from '../Common';
 
 const Legend = styled.div`
-    height: 20px;
     .legendContainer {
         display: flex;
-        padding-top: 20px;
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
+        justify-content: center;
+        padding: 20px 0 10px;
         .legendItem {
             display: flex;
             height: 12px;
@@ -44,7 +41,7 @@ const Legend = styled.div`
     }
 `;
 
-const ColorScaleContainer = styled.div`
+const ColorScaleContainer = styled.div<{ equal: boolean }>`
     height: 20px;
     line-height: 20px;
     display: flex;
@@ -52,7 +49,9 @@ const ColorScaleContainer = styled.div`
     color: ${(props): string => props.theme.svgPlayBackgroundColor};
     .colorScale {
         width: 200px;
-        background-image: linear-gradient(to right, ${COLOR.BAND_3}, ${COLOR.BAND_2},${COLOR.BAND_1},${COLOR.BAND_0});
+        background: ${(props): string => props.equal
+        ? COLOR.BAND_1
+        : `linear-gradient(to right, ${COLOR.BAND_3}, ${COLOR.BAND_2},${COLOR.BAND_1},${COLOR.BAND_0})`}
     }
     .colorScaleNum {
         color:${(props): string => props.theme.textColorTertiary};
@@ -64,9 +63,10 @@ interface CommunicatorContainerProps {
     session: Session;
     generateConditions: GenerateConditions;
     onGenerateConditionsChange: (params: GenerateConditions) => void;
+    loading: boolean;
 }
 
-export const CommunicatorContainer = observer(({ session, generateConditions, onGenerateConditionsChange }: CommunicatorContainerProps) => {
+export const CommunicatorContainer = observer(({ session, generateConditions, onGenerateConditionsChange, loading }: CommunicatorContainerProps) => {
     const { t } = useTranslation('summary');
     const [showRank, setShowRank] = useState(false);
 
@@ -82,10 +82,18 @@ export const CommunicatorContainer = observer(({ session, generateConditions, on
 
             {
                 showRank
-                    ? <CommunicatorContent
-                        session={session}
-                        generateConditions={generateConditions}
-                    />
+                    ? <div style={{ position: 'relative' }}>
+                        {
+                            loading &&
+                            <Loading>
+                                <Spin spinning={loading} />
+                            </Loading>
+                        }
+                        <CommunicatorContent
+                            session={session}
+                            generateConditions={generateConditions}
+                        />
+                    </div>
                     : <div className={'noDataTip'}>{t('NoDataTip')}</div>
             }
         </div>
@@ -117,7 +125,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
             // 当 cpSize = 1，隐藏 cp 维度视图
             return !(generateConditions.cpSize === 1 && option.key === 'ep-dp-pp-cp');
         });
-    }, [generateConditions.cpSize]);
+    }, [generateConditions.cpSize, t]);
 
     const init = async (): Promise<void> => {
         const { dpSize, tpSize, ppSize, cpSize, epSize, level, algorithm } = await getParallelStrategy();
@@ -259,7 +267,7 @@ const ColorScale = ({ min, max }: { min: number | null; max: number | null }): J
     const isRangeEmpty = min === null || max === null;
     return isRangeEmpty
         ? <></>
-        : <ColorScaleContainer>
+        : <ColorScaleContainer equal={min === max}>
             <div className="colorScaleNum">{min}</div>
             <div className="colorScale"></div>
             <div className="colorScaleNum">{max}</div>
@@ -367,7 +375,7 @@ const ParallelSwitch = observer(({ session, dimension, generateConditions }: Par
                                 data-testid="input-dyeing-minimum"
                                 value={startVal}
                                 min={range[0]}
-                                max={range[1]}
+                                max={Math.min(range[1], endVal ?? range[1])}
                                 step={1}
                                 center
                                 style={{ width: 100 }}
@@ -378,7 +386,7 @@ const ParallelSwitch = observer(({ session, dimension, generateConditions }: Par
                             <InputNumber
                                 data-testid="input-dyeing-maximum"
                                 value={endVal}
-                                min={range[0]}
+                                min={Math.max(range[0], startVal ?? range[0])}
                                 max={range[1]}
                                 step={1}
                                 center

@@ -3,12 +3,14 @@
  */
 
 import {
-    GetParallelismPerformanceData, GetParallelismPerformanceRes,
+    GetParallelismPerformanceData,
+    GetParallelismPerformanceRes,
     GetParallelStrategyRes,
     ParallelismArrangementParams,
     ParallelismArrangementResult,
     SetParallelStrategyParams,
 } from './interface';
+import { createCancelableApi } from 'ascend-utils';
 
 /**
  * 查询所有迭代ID
@@ -198,14 +200,18 @@ export const setParallelStrategy = async (params: SetParallelStrategyParams): Pr
  * @param {ParallelismArrangementParams} params
  * @return {ParallelismArrangementResult}
  */
-export const queryParallelismArrangement = async(params: ParallelismArrangementParams): Promise<ParallelismArrangementResult> => {
-    return await window.requestData('parallelism/arrangement/all', params, 'summary');
-};
+export const queryParallelismArrangementCancelable = createCancelableApi(
+    async(params: ParallelismArrangementParams): Promise<ParallelismArrangementResult> => {
+        return await window.requestData('parallelism/arrangement/all', params, 'summary');
+    },
+);
 
 export const queryAllConnections = async(params: ParallelismArrangementParams): Promise<ParallelismArrangementResult> => {
     return await window.requestData('parallelism/arrangement/all', params, 'summary');
 };
 
-export const getParallelismPerformanceData = async (params: GetParallelismPerformanceData): Promise<GetParallelismPerformanceRes> => {
-    return await window.requestData('parallelism/performance/data', params, 'summary');
-};
+export const getParallelismPerformanceDataCancelable = createCancelableApi(
+    async (params: GetParallelismPerformanceData): Promise<GetParallelismPerformanceRes> => {
+        return await window.requestData('parallelism/performance/data', params, 'summary');
+    },
+);

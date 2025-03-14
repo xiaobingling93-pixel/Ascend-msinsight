@@ -484,3 +484,33 @@ export const isArray = (val: any): boolean => {
         return Array.isArray(val);
     }
 };
+
+// 创建可取消的异步请求, 解决异步请求竞态问题
+type AsyncFunction<TArgs extends any[], TResult> = (...args: TArgs) => Promise<TResult>;
+export const createCancelableApi = <TArgs extends any[], TResult>(
+    asyncApi: AsyncFunction<TArgs, TResult>,
+): {
+    invoke: (...args: TArgs) => Promise<TResult>;
+    cancel: () => void;
+} => {
+    let cancel: () => void = () => {};
+
+    function invoke(...args: TArgs): Promise<TResult> {
+        cancel(); // 先取消上一次请求
+
+        let isCanceled = false;
+
+        return new Promise<TResult>((resolve, reject) => {
+            cancel = (): void => {
+                isCanceled = true;
+            };
+
+            asyncApi(...args).then(
+                (res) => !isCanceled && resolve(res),
+                (err) => !isCanceled && reject(err),
+            );
+        });
+    }
+
+    return { invoke, cancel };
+};

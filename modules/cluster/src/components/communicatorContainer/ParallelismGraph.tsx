@@ -3,7 +3,7 @@
  */
 
 import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { queryParallelismArrangement } from '../../utils/RequestUtils';
+import { queryParallelismArrangementCancelable } from '../../utils/RequestUtils';
 import { ParallelismArrangementResult } from '../../utils/interface';
 import { Session } from '../../entity/session';
 import { observer } from 'mobx-react';
@@ -19,9 +19,10 @@ import { useTheme } from '@emotion/react';
 import { throttle } from 'lodash';
 import { Responsive } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
+import { Spin } from 'antd';
 
 const CanvasContainer = styled.div`
-    max-height: 700px;
+    max-height: 720px;
     overflow: auto;
     margin-top: 10px;
     background-color: ${(props): string => props.theme.rankContainerBackgroudColor};
@@ -35,12 +36,13 @@ const Canvas = styled.canvas`
     height: 100%;
 `;
 
-const Loading = styled.div`
+export const Loading = styled.div`
+    z-index: 1;
     display: flex;
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: ${(props): string => props.theme.bgColorLight};
+    background-color: ${(props): string => props.theme.maskColor};
     color: ${(props): string => props.theme.textColorPrimary};
 
     > div {
@@ -70,9 +72,10 @@ const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns =>
             return;
         }
 
+        const { invoke } = queryParallelismArrangementCancelable;
         try {
             setLoading(true);
-            const res = await queryParallelismArrangement(params);
+            const res = await invoke(params);
             isUpdated.current = !isUpdated.current;
             setData(res);
         } catch (err) {
@@ -393,7 +396,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     };
 
     return <div className="parallelism-graph" style={{ position: 'relative' }}>
-        {loading && <Loading data-testid="parallelism-graph-loading"><div>Loading...</div></Loading>}
+        {loading && <Loading data-testid="parallelism-graph-loading"><Spin /></Loading>}
         <Responsive onChange={handleResize}>
             {
                 ({ width, height }): React.ReactNode => {

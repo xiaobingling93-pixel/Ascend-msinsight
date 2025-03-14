@@ -57,7 +57,7 @@ export const getDyeingColor = ({ session, index, dyeingMode, range }: DyeingColo
     }
 
     if (performanceValue === startVal && performanceValue === endVal) {
-        return COLOR.BAND_0;
+        return COLOR.BAND_1;
     }
 
     // 计算归一化比例

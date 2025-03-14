@@ -18,7 +18,10 @@ import { Tooltip } from 'ascend-components';
 import { PerformanceChart } from './PerformanceChart';
 import { FlowChart } from './FlowChart';
 import styled from '@emotion/styled';
-import { getParallelismPerformanceData, queryAllConnections } from '../../utils/RequestUtils';
+import {
+    getParallelismPerformanceDataCancelable,
+    queryAllConnections,
+} from '../../utils/RequestUtils';
 import { runInAction } from 'mobx';
 import { Communicator, partitionMode } from '../communicatorContainer/ContainerUtils';
 import connector from '../../connection';
@@ -110,7 +113,9 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
             ...generateConditions,
             isCompare: session.isCompare,
         };
-        const { performance, advice } = await getParallelismPerformanceData(params).finally(() => {
+
+        const { invoke } = getParallelismPerformanceDataCancelable;
+        const { performance, advice } = await invoke(params).finally(() => {
             setPerformanceLoading(false);
         });
         if (performance.length !== 0) {
@@ -229,6 +234,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 session={session}
                 generateConditions={generateConditions}
                 onGenerateConditionsChange={handleGenerateConditionsChange}
+                loading={performanceLoading}
             />
 
             {!isDefaultGenerateConditions && <CollapsiblePanel
