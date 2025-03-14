@@ -132,5 +132,6 @@ export const showCacheInstructionsHandler: NotificationHandler = async (data): P
             addressRange: (data as any).addressRange,
         };
         session.instructionSelectSource = InstructionSelectSource.CACHE;
+        session.instructionUpdateId = (session.instructionUpdateId + 1) % 100;
     });
 };

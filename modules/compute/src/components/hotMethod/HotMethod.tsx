@@ -92,13 +92,13 @@ const Index = observer(({ session }: { session: Session }) => {
             }
         }
         return false;
-    }, [selectedline, codeLines, session.instructionSelectSource, session.cacheUnit.addressRange]);
+    }, [selectedline, codeLines, session.instructionSelectSource, session.cacheUnit.addressRange, session.instructionUpdateId]);
     const getRelatedInstrs = useCallback((): InstrsColumnType[] => {
         return allInstrData.filter((record: InstrsColumnType) => isRelatedInstr(record));
     }, [allInstrData, isRelatedInstr]);
     const relatedInstrs = useMemo(() => getRelatedInstrs(), [getRelatedInstrs]);
     // 指令表当前显示数据
-    const curInstrData = useMemo(() => condition.onlyRelated ? getRelatedInstrs() : allInstrData, [allInstrData, condition.onlyRelated, getRelatedInstrs]);
+    const curInstrData = useMemo(() => condition.onlyRelated ? relatedInstrs : allInstrData, [allInstrData, condition.onlyRelated, relatedInstrs]);
     const instrColumns = useMemo(() => getInstrColumns(dynamicInstrFields, t, curInstrData), [dynamicInstrFields, t, curInstrData]);
     const [lineClickListener, setLineClickListener] = useState<number>(0);
     const [tableHeight, setTableHeight] = useState<number>(1000);
@@ -316,7 +316,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                         }
                                         {t('RelatedInstructionsCount')} :
                                         <span>
-                                            {getRelatedInstrs().length}
+                                            {relatedInstrs.length}
                                         </span>
                                     </span>
                                     <Checkbox

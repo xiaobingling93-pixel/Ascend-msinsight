@@ -36,6 +36,7 @@ export class Session {
     // 指令高亮来源
     instructionSelectSource: InstructionSelectSource = InstructionSelectSource.DEFAULT;
     cacheUnit: CacheUnit = { cachelineId: -1, addressRange: [] };
+    instructionUpdateId: number = 0;
     constructor() {
         makeAutoObservable(this);
     }
