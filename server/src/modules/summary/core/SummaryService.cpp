@@ -303,7 +303,10 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
 {
     std::unordered_map<std::string, std::vector<CommInfoUnderRank>> commTimeMap;
     for (const auto &item: commTimeForRankDim) {
-        commTimeMap[item.rankSet].push_back(item);
+        std::vector<std::string> groupList = StringUtil::SplitStringWithParenthesesByComma(item.rankSet);
+        std::sort(groupList.begin(), groupList.end());
+        std::string rankSortStr = StringUtil::join(groupList, '-');
+        commTimeMap[rankSortStr].push_back(item);
     }
     // 数据分配，为每一个connection找对应的通信数据
     std::unordered_map<std::string, std::vector<CommInfoUnderRank>> res;
@@ -312,28 +315,18 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
         std::transform(item.indexes.begin(), item.indexes.end(), std::back_inserter(fullRankList), [](uint32_t num) {
             return std::to_string(num);
         });
-        for (const auto &commTime: commTimeMap) {
-            // 如果不匹配 直接跳过
-            if (!IsConnectionMappingToGroup(commTime.first, fullRankList, importRankList)) {
-                continue;
-            }
-            for (auto commItem: commTime.second) {
+        std::vector<std::string> aclRankList = CollectionUtil::CalIntersection(fullRankList, importRankList);
+        std::sort(aclRankList.begin(), aclRankList.end());
+        std::string rankSortStr = StringUtil::join(aclRankList, '-');
+        auto findRes = commTimeMap.find(rankSortStr);
+        if (findRes != commTimeMap.end()) {
+            for (auto commItem: findRes->second) {
                 commItem.pgName = item.type;
                 res[commItem.rankId].push_back(commItem);
             }
-            break;
         }
     }
     return res;
-}
-
-bool SummaryService::IsConnectionMappingToGroup(const std::string &group, const std::vector<std::string> &fullRankList,
-                                                const std::vector<std::string> &importRankList)
-{
-    std::vector<std::string> groupList = StringUtil::SplitStringWithParenthesesByComma(group);
-    // 理论卡集合 ∩ 实际导入的卡集合 = 当前通信域卡集合，说明匹配上了
-    return CollectionUtil::IsVectorEqualIgnoreOrder(
-        CollectionUtil::CalIntersection(fullRankList, importRankList), groupList);
 }
 }
 }
