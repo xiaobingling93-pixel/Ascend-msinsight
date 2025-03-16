@@ -103,8 +103,8 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const mainCanvasRef = useRef<HTMLCanvasElement>(null);
     const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
+    const lastMousePositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const [canvasDrawer, setCanvasDrawer] = useState<CanvasDrawer | null>(null);
-    const [mousePos, setMousePos] = useState<{x: number;y: number}>({ x: 0, y: 0 });
     const [lastRect, setLastRect] = useState<Rectangle>();
     const [activeRectIndex, setActiveRectIndex] = useState<number | null>(null);
     const [hoveredRectIndex, setHoveredRectIndex] = useState<number | null>(null);
@@ -369,7 +369,6 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const setRectActive = useCallback(throttle((x, y): void => {
         const activeRect = canvasDrawer?.rectangleList.find(rect => rect.isInside(x, y));
 
-        setMousePos({ x, y });
         setHoveredRectIndex(activeRect === undefined ? null : activeRect.index);
     }, 100), [canvasDrawer]);
 
@@ -380,6 +379,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         const y = offsetY - scrollTop;
 
         setRectActive(x, y);
+        lastMousePositionRef.current = { x, y };
         canvasDrawer?.renderHoverCanvas(x, y);
     };
 
@@ -387,9 +387,13 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         setHoveredRectIndex(null);
     };
 
-    const onScroll = useCallback(() => {
+    const onScroll = (): void => {
         requestAnimationFrame(render);
-    }, [canvasDrawer, canvasContainerRef.current]);
+
+        // 获取当前鼠标位置
+        const { x, y } = lastMousePositionRef.current;
+        setRectActive(x, y);
+    };
 
     const handleResize = (size: {width: number;height: number}): void => {
         setResponsiveSize(size);
@@ -426,8 +430,8 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             }
         </Responsive>
         <TooltipComponent
-            mouseX={mousePos.x}
-            mouseY={mousePos.y}
+            mouseX={lastMousePositionRef.current.x}
+            mouseY={lastMousePositionRef.current.y}
             content={hoveredData}
         />
     </div>;
