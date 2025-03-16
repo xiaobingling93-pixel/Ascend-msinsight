@@ -21,6 +21,8 @@ export interface CacheUnit {
 
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
+    // 指令数据版本
+    instrVersion: number = -1;
     coreList: string[] = [];
     sourceList: string[] = [];
     instructions: JsonInstructionType[] = [];

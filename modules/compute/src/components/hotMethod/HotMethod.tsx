@@ -538,14 +538,18 @@ const sortData = (dataSource: InstrsColumnType[], sorter: Record<string, any>): 
     const sign = sorter.order === 'ascend' ? 1 : -1;
     const field: keyof InstrsColumnType = sorter.field;
     return [...dataSource].sort((a, b) => {
-        // 数字和字符串混合，无论升序降序，数字都排前面
         const aType = isNaN(Number(a[field])) ? typeof a[field] : 'number';
         const bType = isNaN(Number(b[field])) ? typeof b[field] : 'number';
-        if (aType === 'number') {
-            return bType === 'number' ? sign * (Number(a[field]) - Number(b[field])) : -1;
-        } else {
-            return bType === 'number' ? 1 : sign * String(a[field]).localeCompare(String(b[field]));
+        // 如果都是负数，不修改顺序
+        const isAllNegativeNumber = aType === 'number' && bType === 'number' && a[field] < 0 && b[field] < 0;
+        if (isAllNegativeNumber) {
+            return -1;
         }
+        // 数字和字符串混合，把字符串当做数字-1
+        if (aType === 'number' || bType === 'number') {
+            return sign * ((aType === 'number' ? Number(a[field]) : -1) - (bType === 'number' ? Number(b[field]) : -1));
+        }
+        return sign * String(a[field]).localeCompare(String(b[field]));
     });
 };
 

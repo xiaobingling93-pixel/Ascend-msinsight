@@ -42,6 +42,7 @@ export class Session {
     isFullDb: boolean = false;
     isOnlyTraceJson: boolean = false;
     hasCachelineRecords: boolean = false;
+    instrVersion: number = -1;
     // 解析状态
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;

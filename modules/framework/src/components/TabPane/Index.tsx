@@ -57,6 +57,7 @@ export function updateDataScene(data: Record<string, any>): void {
         isBinary: data.isBinary ?? false,
         hasCachelineRecords: data.hasCachelineRecords ?? false,
         isOnlyTraceJson: data.isOnlyTraceJson ?? false,
+        instrVersion: data.instrVersion ?? -1,
     };
     updateSession(scenceInfo);
 }

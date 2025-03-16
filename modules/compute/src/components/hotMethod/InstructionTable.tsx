@@ -25,7 +25,7 @@ const getFilterText = (item: any, dataIndex?: string): any => {
     if (isNegativeNum(item)) {
         return NOT_APPLICABLE;
     } else if (dataIndex === 'L2Cache Hit Rate') {
-        return Number(item);
+        return isNaN(Number(item)) ? NOT_APPLICABLE : Number(item);
     } else {
         return item;
     }
@@ -104,18 +104,46 @@ const instrsColsConfig = [
             <StallBar real={record.RealStallCycles as number} theoretical={record.TheoreticalStallCycles as number}/>,
         className: 'height20',
     },
-    {
-        title: 'L2Cache Hit Rate',
-        dataIndex: 'L2Cache Hit Rate',
-        width: 120,
-        ellipsis: true,
-        sorter: true,
-        render: (percent: number): React.ReactNode => {
-            return <Bar value={percent} type={BarType.PERCENT}/>;
-        },
-        className: 'height20',
-    },
 ];
+
+export const percentageColConfig = {
+    width: 120,
+    ellipsis: true,
+    render: (percent: number): React.ReactNode => {
+        return <Bar value={percent} type={BarType.PERCENT}/>;
+    },
+    className: 'height20',
+};
+
+interface IParams<T> {
+    colName: string;
+    fieldType: FieldType;
+    presetCols: ColumnsType<T>;
+    t: TFunction;
+    defaultSort?: boolean;
+}
+export const getColConfig = <T extends object>({ colName, fieldType, presetCols, t, defaultSort = true }: IParams<T>): ColumnType<T> => {
+    const col = presetCols.find(colConfig => colConfig.title === colName);
+    if (!col && (fieldType === FieldType.PERCENTAGE || colName === 'L2Cache Hit Rate')) {
+        return {
+            ...percentageColConfig,
+            sorter: defaultSort,
+            title: t(colName),
+            dataIndex: colName,
+        };
+    }
+    return col
+        ? { ...col, title: t(colName) }
+        : {
+            ellipsis: true,
+            sorter: defaultSort,
+            title: t(colName),
+            dataIndex: colName,
+            // 数据是int或者float时，数值为-1显示为NA
+            render: (value: React.Key): React.ReactNode =>
+                [FieldType.INT, FieldType.FLOAT].includes(fieldType) && typeof value === 'number' && value < 0 ? NOT_APPLICABLE : value,
+        };
+};
 
 // 固定显示列
 const fixedCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
@@ -138,18 +166,6 @@ export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<strin
             ...allCols.filter(colName => !headerCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),
             ...endCols.filter(colName => allCols.includes(colName)),
         ];
-    return cols.map(colName => {
-        const col = instrsColsConfig.find(colConfig => colConfig.title === colName);
-        return col
-            ? { ...col, title: t(colName) }
-            : {
-                title: t(colName),
-                dataIndex: colName,
-                ellipsis: true,
-                sorter: true,
-                // 数据是int或者float时，数值为-1显示为NA
-                render: (value: React.Key): React.ReactNode =>
-                    [FieldType.INT, FieldType.FLOAT].includes(dynamicFields[colName]) && typeof value === 'number' && value < 0 ? NOT_APPLICABLE : value,
-            };
-    });
+    return cols.map(colName => getColConfig<InstrsColumnType>(
+        { colName, fieldType: dynamicFields[colName], presetCols: instrsColsConfig, t }));
 };

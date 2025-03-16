@@ -50,6 +50,7 @@ export enum FieldType {
     INT = 1,
     FLOAT = 2,
     STRING = 3,
+    PERCENTAGE = 4,
 }
 
 export const NOT_APPLICABLE = 'NA';

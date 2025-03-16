@@ -4,22 +4,11 @@
 import type { Ilinetable } from './defs';
 import type { TFunction } from 'i18next';
 import type { ColumnsType } from 'antd/es/table';
-import { FieldType, NOT_APPLICABLE } from './defs';
-import React from 'react';
-import Bar, { BarType } from './Bar';
+import { FieldType } from './defs';
+import { getColConfig } from './InstructionTable';
 
 // 列配置
-const codeCols: ColumnsType<Ilinetable> = [
-    {
-        title: 'L2Cache Hit Rate',
-        dataIndex: 'L2Cache Hit Rate',
-        width: 120,
-        ellipsis: true,
-        render: (percent: number): React.ReactNode => {
-            return <Bar value={percent} type={BarType.PERCENT}/>;
-        },
-        className: 'height20',
-    }];
+const codeCols: ColumnsType<Ilinetable> = [];
 
 // 固定显示列
 const fixedCols = ['Instructions Executed', 'Cycles'];
@@ -34,17 +23,6 @@ export const getCodeColumns = (t: TFunction, dynamicFields: Record<string, Field
             ...dynamicCols.filter(colName => !fixedCols.includes(colName) && !notDisplayedCols.includes(colName)),
         ]
     ;
-    return cols.map(colName => {
-        const col = codeCols.find(colItem => colItem.title === colName);
-        return col
-            ? { ...col, title: t(colName) }
-            : {
-                title: t(colName),
-                dataIndex: colName,
-                ellipsis: true,
-                // 数据是int或者float时，数值为-1显示为NA
-                render: (value: React.Key): React.ReactNode =>
-                    [FieldType.INT, FieldType.FLOAT].includes(dynamicFields[colName]) && typeof value === 'number' && value < 0 ? NOT_APPLICABLE : value,
-            };
-    });
+    return cols.map(colName =>
+        getColConfig<Ilinetable>({ colName, fieldType: dynamicFields[colName], presetCols: codeCols, defaultSort: false, t }));
 };
