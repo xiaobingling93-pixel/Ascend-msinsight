@@ -55,7 +55,10 @@ const isHiddenDuration = (data: AscendSliceDetail): boolean => {
     return data.duration === undefined;
 };
 
-const isHiddenSelfTime = (data: AscendSliceDetail): boolean => {
+const isHiddenSelfTime = (data: AscendSliceDetail, session?: Session): boolean => {
+    if (session?.isSimulation) {
+        return true;
+    }
     return data.selfTime === undefined || data.selfTime === 0;
 };
 

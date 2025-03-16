@@ -242,7 +242,7 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
                     const render = item[1];
                     if (item[2] !== undefined) {
                         const isHiden = item[2];
-                        if (!isHiden(result)) {
+                        if (!isHiden(result, session)) {
                             renderField.push([item[0], render(result, session)]);
                         }
                     } else {

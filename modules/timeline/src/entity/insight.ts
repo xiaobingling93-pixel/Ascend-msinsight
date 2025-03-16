@@ -57,7 +57,8 @@ type CellRenderer<DataType> = (d: DataType, session: Session, tabState: TabState
 export type ColumnDef<DataType> = // name, renderer, width?, fixed?
     [string, CellRenderer<DataType>] |
     [string, CellRenderer<DataType>, ColumnWidth] |
-    [string, CellRenderer<DataType>, ColumnWidth, FixedType];
+    [string, CellRenderer<DataType>, ColumnWidth, FixedType] |
+    [string, CellRenderer<DataType>, ColumnWidth, FixedType, (p: any) => boolean];
 
 export interface TableDataAdapter<DataType extends Record<string, unknown>> {
     columns: Array<ColumnDef<DataType>>;
@@ -111,7 +112,7 @@ type DetailDesc<
 } & TableDataAdapter<DataType>;
 
 export type renderFieldsType<DataType> =
-[string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element), (data: DataType) => boolean ] |
+[string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element), (data: DataType, session?: Session,) => boolean ] |
 [string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element) ];
 
 export interface SingleDataDesc<DataType extends Record<string, unknown>, MetaData> {

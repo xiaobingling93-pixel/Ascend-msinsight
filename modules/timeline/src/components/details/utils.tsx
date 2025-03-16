@@ -33,6 +33,9 @@ export const parseColDef = <T extends Record<string, unknown>>(
     }
     const cols = [] as ColumnsType<Record<string, unknown>>;
     def.columns.forEach((col, index) => {
+        if (col[4]?.(session)) {
+            return;
+        }
         const actionDef = def.actions?.[index];
         const partialCol = {
             title: col[0],
