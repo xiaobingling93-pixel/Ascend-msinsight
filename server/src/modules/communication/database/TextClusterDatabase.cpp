@@ -57,11 +57,7 @@ bool TextClusterDatabase::CreateTable()
             " bandwidth_utilization double, large_package_ratio double, size_distribution json,"
             " transit_size double, transit_time double);" +
             "CREATE TABLE " + TABLE_BASE_INFO +
-            " (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path VARCHAR(500), ranks json,steps json,"
-            " collect_start_time DATETIME, collect_duration double, data_size double, stages json, pp_stages json, "
-            "algorithm VARCHAR(50), dp_size INTEGER, pp_size INTEGER, tp_size INTEGER, cp_size INTEGER, "
-            "ep_size INTEGER, level VARCHAR(10), "
-            "parse_status VARCHAR(10)); "
+            " (key VARCHAR(50) PRIMARY KEY, value TEXT); "
             "CREATE TABLE " + TABLE_STEP_TRACE +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id VARCHAR(50), step_id VARCHAR(50),"
             " stage_id VARCHAR(50), compute_time double, pure_communication_time double, "
@@ -365,13 +361,14 @@ void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
 {
     sqlite3_stmt *stmt;
     std::string sql = "INSERT INTO " + TABLE_BASE_INFO +
-        "(file_path, ranks, steps, collect_start_time, collect_duration, data_size, stages, pp_stages, "
-        "algorithm, dp_size, pp_size, tp_size, level) VALUES (?, "
-        "(select json_group_array(rank_id) from "
-        "    (select DISTINCT rank_id from step_statistic_info where rank_id !='')), "
-        "(select json_group_array(step_id) from"
-        "    (select DISTINCT step_id from step_statistic_info where rank_id !='')) ,"
-        "?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                      " (key, value) VALUES ('file_path', ?), "
+                      " ('ranks', (SELECT json_group_array(rank_id) FROM "
+                      " (SELECT DISTINCT rank_id FROM step_statistic_info WHERE rank_id !=''))), "
+                      " ('steps', (SELECT json_group_array(step_id) FROM "
+                      " (SELECT DISTINCT step_id FROM step_statistic_info WHERE rank_id !=''))), "
+                      " ('collect_start_time', ?), ('collect_duration', ?), ('data_size', ?), "
+                      " ('stages', ?), ('pp_stages', ?), ('algorithm', ?), ('dp_size', ?), ('pp_size', ?), "
+                      " ('tp_size', ?), ('cp_size', '1'), ('ep_size', '1'), ('level', ?), ('parse_status', NULL);";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare baseInfoTable statement. error:", sqlite3_errmsg(db));
         return;
@@ -380,18 +377,24 @@ void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
         ServerLog::Error("Failed to get baseInfoTable stmt.");
         return;
     }
+    std::string stringStartTime = std::to_string(baseInfo.collectStartTime);
+    std::string stringDuration = std::to_string(baseInfo.collectDuration);
+    std::string stringDataSize = std::to_string(baseInfo.dataSize);
+    std::string stringDpSize = std::to_string(baseInfo.config.dpSize);
+    std::string stringPpSize = std::to_string(baseInfo.config.ppSize);
+    std::string stringTpSize = std::to_string(baseInfo.config.tpSize);
     int idx = bindStartIndex;
     sqlite3_bind_text(stmt, idx++, baseInfo.filePath.c_str(), baseInfo.filePath.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, idx++, baseInfo.collectStartTime);
-    sqlite3_bind_double(stmt, idx++, baseInfo.collectDuration);
-    sqlite3_bind_int64(stmt, idx++, baseInfo.dataSize);
+    sqlite3_bind_text(stmt, idx++, stringStartTime.c_str(), stringStartTime.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringDuration.c_str(), stringDuration.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringDataSize.c_str(), stringDataSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.stages.c_str(), baseInfo.stages.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.ppStages.c_str(), baseInfo.ppStages.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.config.algorithm.c_str(),
                       baseInfo.config.algorithm.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, idx++, baseInfo.config.dpSize);
-    sqlite3_bind_int64(stmt, idx++, baseInfo.config.ppSize);
-    sqlite3_bind_int64(stmt, idx++, baseInfo.config.tpSize);
+    sqlite3_bind_text(stmt, idx++, stringDpSize.c_str(), stringDpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringPpSize.c_str(), stringPpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringTpSize.c_str(), stringTpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.level.c_str(), baseInfo.level.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
@@ -475,24 +478,30 @@ bool TextClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams 
 bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
 {
     baseInfo.filePath = GetDbPath();
-    std::string baseInfoSql = "select ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
+    std::string baseInfoSql = "SELECT key, value FROM " + TABLE_BASE_INFO +
+        " WHERE key IN ('ranks', 'steps', 'data_size');";
     return ExecuteQueryBaseInfo(baseInfo, baseInfoSql);
 }
 
 std::string TextClusterDatabase::QueryParseClusterStatus()
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;
-    std::string baseInfoSql = "select parse_status from " + TABLE_BASE_INFO;
+    std::string baseInfoSql = "SELECT key, value FROM " + TABLE_BASE_INFO + " WHERE key IN ('parse_status');";
     int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
     if (baseInfoResult != SQLITE_OK) {
         ServerLog::Error("Query parse status statement failed to prepare sql.", sqlite3_errmsg(db));
         return "";
     }
+    std::map<std::string, std::string> info;
     std::string parseStatus;
     while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
         int coll = resultStartIndex;
-        parseStatus = sqlite3_column_string(stmtBaseInfo, coll++);
+        std::string key = sqlite3_column_string(stmtBaseInfo, coll++);
+        std::string value = sqlite3_column_string(stmtBaseInfo, coll++);
+        info.insert({key, value});
     }
+    std::string valueParseStatus = FindValueByKey(info, "parse_status", "");
+    parseStatus = valueParseStatus;
     sqlite3_finalize(stmtBaseInfo);
     return parseStatus;
 }
@@ -502,7 +511,7 @@ void TextClusterDatabase::UpdateClusterParseStatus(std::string status)
     ServerLog::Info("Update_Cluster_Parse_Status status: ", status);
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int index = bindStartIndex;
-    std::string baseInfoSql = "update " + TABLE_BASE_INFO + " set parse_status=?";
+    std::string baseInfoSql = "UPDATE " + TABLE_BASE_INFO + " SET value = ? WHERE key = 'parse_status';";
     int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
     sqlite3_bind_text(stmtBaseInfo, index, status.c_str(), status.length(), SQLITE_TRANSIENT);
     if (baseInfoResult != SQLITE_OK) {
@@ -982,7 +991,7 @@ bool TextClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam 
 
 bool TextClusterDatabase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    std::string sql = "SELECT ranks FROM " + TABLE_BASE_INFO;
+    std::string sql = "SELECT key, value FROM " + TABLE_BASE_INFO + " WHERE key IN ('ranks');";
     return ExecuteQueryRanksHandler(responseBody, sql);
 }
 
@@ -1055,7 +1064,7 @@ std::vector<Protocol::OperatorNamesObject> TextClusterDatabase::MergeOperatorNam
 
 bool TextClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    std::string sql = "SELECT steps FROM " + TABLE_BASE_INFO;
+    std::string sql = "SELECT key, value FROM " + TABLE_BASE_INFO + " WHERE key IN ('steps');";
     return ExecuteQueryIterations(responseBody, sql);
 }
 
@@ -1262,15 +1271,23 @@ void TextClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string
 
 bool TextClusterDatabase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
 {
-    std::string sql = "select algorithm, dp_size, pp_size, tp_size, cp_size, ep_size, level from " + TABLE_BASE_INFO;
+    std::string sql = "SELECT key, value FROM " + TABLE_BASE_INFO + " WHERE key IN " +
+        "('algorithm', 'dp_size', 'pp_size', 'tp_size', 'cp_size', 'ep_size', 'level');";
     return ExecuteQueryParallelStrategyConfig(sql, config, level);
 }
 
 bool TextClusterDatabase::UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
     std::string &level, std::string &msg)
 {
-    std::string sql = "update " + TABLE_BASE_INFO +
-        " set algorithm = ?, dp_size = ?, pp_size = ?, tp_size = ?, cp_size = ?, ep_size = ?, level = ? WHERE id = '1'";
+    std::string sql = "UPDATE " + TABLE_BASE_INFO + " SET value = "
+                      " CASE WHEN key = 'algorithm' THEN ?"
+                      " WHEN key = 'dp_size' THEN ?"
+                      " WHEN key = 'pp_size' THEN ?"
+                      " WHEN key = 'tp_size' THEN ?"
+                      " WHEN key = 'cp_size' THEN ?"
+                      " WHEN key = 'ep_size' THEN ?"
+                      " WHEN key = 'level' THEN ?"
+                      " ELSE value END;";
     return ExecuteSetParallelStrategyConfig(sql, config, level);
 }
 

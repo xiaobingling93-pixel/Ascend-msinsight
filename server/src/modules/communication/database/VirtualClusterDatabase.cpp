@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+#include <map>
 #include <ConstantDefs.h>
 #include "pch.h"
 #include "NumDefs.h"
@@ -95,20 +96,25 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &bas
         ServerLog::Error("Failed to prepare Query base info statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    std::map<std::string, std::string> info;
     while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
         int coll = resultStartIndex;
-        std::string ranks = sqlite3_column_string(stmtBaseInfo, coll++);
-        if (!ranks.empty()) {
-            baseInfo.rankList = JsonUtil::JsonToVector(ranks);
-        }
-        std::string steps = sqlite3_column_string(stmtBaseInfo, coll++);
-        if (!steps.empty()) {
-            baseInfo.stepList = JsonUtil::JsonToVector(steps);
-        }
-        baseInfo.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
-        baseInfo.stepNum = baseInfo.stepList.size();
-        baseInfo.rankCount = baseInfo.rankList.size();
+        std::string key = sqlite3_column_string(stmtBaseInfo, coll++);
+        std::string value = sqlite3_column_string(stmtBaseInfo, coll++);
+        info.insert({key, value});
     }
+    std::string valueRanks = FindValueByKey(info, "ranks", "");
+    std::string valueSteps = FindValueByKey(info, "steps", "");
+    std::string valueDataSize = FindValueByKey(info, "data_size", "");
+    if (!valueRanks.empty()) {
+        baseInfo.rankList = JsonUtil::JsonToVector(valueRanks);
+    }
+    if (!valueSteps.empty()) {
+        baseInfo.stepList = JsonUtil::JsonToVector(valueSteps);
+    }
+    baseInfo.dataSize = NumberUtil::StringToDouble(valueDataSize) / MB_SIZE;
+    baseInfo.stepNum = baseInfo.stepList.size();
+    baseInfo.rankCount = baseInfo.rankList.size();
     sqlite3_finalize(stmtBaseInfo);
     return true;
 }
@@ -436,11 +442,15 @@ bool VirtualClusterDatabase::ExecuteQueryRanksHandler(std::vector<Protocol::Iter
         ServerLog::Error("Failed to prepare query ranks statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    std::map<std::string, std::string> info;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        std::string ranks = sqlite3_column_string(stmt, col++);
-        GetStepsOrRanksObject(ranks, responseBody);
+        std::string key = sqlite3_column_string(stmt, col++);
+        std::string value = sqlite3_column_string(stmt, col++);
+        info.insert({key, value});
     }
+    std::string valueRanks = FindValueByKey(info, "ranks", "");
+    GetStepsOrRanksObject(valueRanks, responseBody);
     sqlite3_finalize(stmt);
     return true;
 }
@@ -478,11 +488,15 @@ bool VirtualClusterDatabase::ExecuteQueryIterations(std::vector<Protocol::Iterat
         ServerLog::Error("Failed to prepare query iterations statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    std::map<std::string, std::string> info;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        std::string steps = sqlite3_column_string(stmt, col++);
-        GetStepsOrRanksObject(steps, responseBody);
+        std::string key = sqlite3_column_string(stmt, col++);
+        std::string value = sqlite3_column_string(stmt, col++);
+        info.insert({key, value});
     }
+    std::string valueSteps = FindValueByKey(info, "steps", "");
+    GetStepsOrRanksObject(valueSteps, responseBody);
     if (responseBody.empty()) {
         ServerLog::Warn("Failed to obtain the number of iteration ids. At least one id must be contained. "
                          "Check whether communication data files exist in the directory.");
@@ -639,16 +653,27 @@ bool VirtualClusterDatabase::ExecuteQueryParallelStrategyConfig(std::string &sql
         ServerLog::Error("Failed to prepare query parallel strategy config statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    std::map<std::string, std::string> info;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        config.algorithm = sqlite3_column_string(stmt, col++);
-        config.dpSize = sqlite3_column_int64(stmt, col++);
-        config.ppSize = sqlite3_column_int64(stmt, col++);
-        config.tpSize = sqlite3_column_int64(stmt, col++);
-        config.cpSize = sqlite3_column_int64(stmt, col++);
-        config.epSize = sqlite3_column_int64(stmt, col++);
-        level = sqlite3_column_string(stmt, col++);
+        std::string key = sqlite3_column_string(stmt, col++);
+        std::string value = sqlite3_column_string(stmt, col++);
+        info.insert({key, value});
     }
+    std::string valueAlgorithm = FindValueByKey(info, "algorithm", "");
+    std::string valueDpSize = FindValueByKey(info, "dp_size", "");
+    std::string valuePpSize = FindValueByKey(info, "pp_size", "");
+    std::string valueTpSize = FindValueByKey(info, "tp_size", "");
+    std::string valueCpSize = FindValueByKey(info, "cp_size", "");
+    std::string valueEpSize = FindValueByKey(info, "ep_size", "");
+    std::string valueLevel = FindValueByKey(info, "level", "");
+    config.algorithm = valueAlgorithm;
+    config.dpSize = NumberUtil::StringToLongLong(valueDpSize);
+    config.ppSize = NumberUtil::StringToLongLong(valuePpSize);
+    config.tpSize = NumberUtil::StringToLongLong(valueTpSize);
+    config.cpSize = NumberUtil::StringToLongLong(valueCpSize);
+    config.epSize = NumberUtil::StringToLongLong(valueEpSize);
+    level = valueLevel;
     sqlite3_finalize(stmt);
     return true;
 }
@@ -663,16 +688,22 @@ bool VirtualClusterDatabase::ExecuteSetParallelStrategyConfig(std::string &sql,
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     int index = bindStartIndex;
+    std::string stringDpSize = std::to_string(config.dpSize);
+    std::string stringPpSize = std::to_string(config.ppSize);
+    std::string stringTpSize = std::to_string(config.tpSize);
+    std::string stringCpSize = std::to_string(config.cpSize);
+    std::string stringEpSize = std::to_string(config.epSize);
     sqlite3_bind_text(stmt, index++, config.algorithm.c_str(), config.algorithm.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, index++, config.dpSize);
-    sqlite3_bind_int64(stmt, index++, config.ppSize);
-    sqlite3_bind_int64(stmt, index++, config.tpSize);
-    sqlite3_bind_int64(stmt, index++, config.cpSize);
-    sqlite3_bind_int64(stmt, index++, config.epSize);
+    sqlite3_bind_text(stmt, index++, stringDpSize.c_str(), stringDpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stringPpSize.c_str(), stringPpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stringTpSize.c_str(), stringTpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stringCpSize.c_str(), stringCpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stringEpSize.c_str(), stringEpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, level.c_str(), level.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Fail to update parallel strategy config. ", sqlite3_errmsg(db));
+        return false;
     }
     sqlite3_finalize(stmt);
     return true;
@@ -817,6 +848,15 @@ std::vector<CommInfoUnderRank> VirtualClusterDatabase::ExecuteGetCommTimeForRank
         res.push_back(info);
     }
     return res;
+}
+
+std::string VirtualClusterDatabase::FindValueByKey(const std::map<std::string, std::string> &info,
+                                                   const std::string &key, const std::string defaultValue)
+{
+    if (info.find(key) == info.end()) {
+        return defaultValue;
+    }
+    return info.at(key);
 }
 }
 }

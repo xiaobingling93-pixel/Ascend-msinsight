@@ -121,10 +121,10 @@ protected:
     bool ExecuteSetParallelStrategyConfig(std::string &sql, const ParallelStrategyConfig &config, std::string &level);
     bool ExecuteQueryAllPerformanceDataByStep(const std::string &sql,
         const std::string &step, std::unordered_map<std::uint32_t, StepStatistic> &data);
-
-private:
+    std::string FindValueByKey(const std::map<std::string, std::string> &info,
+        const std::string &key, const std::string defaultValue);
     void GetStepsOrRanksObject(const std::string &jsonStr,
-        std::vector<Protocol::IterationsOrRanksObject> &responseBody);
+                               std::vector<Protocol::IterationsOrRanksObject> &responseBody);
 };
 } // end of namespace Module
 } // end of namespace Dic
