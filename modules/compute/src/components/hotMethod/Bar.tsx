@@ -133,6 +133,9 @@ function Bar({ value, max = 1, type }: IProps): JSX.Element {
             ? `${valueNum}%`
             : value;
     }
+    if (value === undefined || value === null) {
+        return <></>;
+    }
     return isWrongNumber
         ? <>{NOT_APPLICABLE}</>
         : (<BarContainer title={`${valueNum}`}><BaseBar value={valueNum} percent={percent} label={label}/></BarContainer>);
