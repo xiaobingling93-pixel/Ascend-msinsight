@@ -5,6 +5,7 @@
 #include "TimeUtil.h"
 #include "ModuleManager.h"
 #include "ProtocolManager.h"
+#include "ConstantDefs.h"
 #include "WsSessionImpl.h"
 
 namespace Dic {
@@ -181,6 +182,7 @@ void WsSessionImpl::SendResponse(const Protocol::Response &response)
         return;
     }
     std::string responseStr = JsonUtil::JsonDump(json.value());
+    responseStr = StringUtil::ToUtf8Str(responseStr);
     // send header + response
     loop->defer([this, responseStr, response]() {
         bool res = Send(responseStr);
@@ -198,6 +200,7 @@ void WsSessionImpl::SendEvent(Protocol::Event &event)
         return;
     }
     std::string eventStr = JsonUtil::JsonDump(json.value());
+    eventStr = StringUtil::ToUtf8Str(eventStr);
     // send header + response
     loop->defer([this, eventStr, event]() {
         bool res = Send(eventStr);

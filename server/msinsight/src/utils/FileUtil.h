@@ -60,9 +60,6 @@ public:
     {
 #ifdef _WIN32
         std::string tmpPath(path);
-        if (StringUtil::IsUtf8String(path)) {
-            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
-        }
         if (_access(tmpPath.c_str(), mode) == -1) {
             return false;
         }
@@ -154,9 +151,9 @@ public:
                 continue;
             }
             if ((fileInfo.attrib & _A_SUBDIR) != 0) {
-                folders.emplace_back(StringUtil::GbkToUtf8(fileInfo.name));
+                folders.emplace_back(fileInfo.name);
             } else {
-                files.emplace_back(StringUtil::GbkToUtf8(fileInfo.name));
+                files.emplace_back(fileInfo.name);
             }
             if (folders.size() + files.size() > fileCountLimit) {
                 Server::ServerLog::Warn("There are too many sub files in the folder");
@@ -219,9 +216,6 @@ public:
     {
 #ifdef _WIN32
         std::string tmpPath(path);
-        if (StringUtil::IsUtf8String(path)) {
-            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
-        }
         return PathIsDirectory(tmpPath.c_str());
 #else
         struct stat st;
@@ -235,11 +229,6 @@ public:
     static inline bool RemoveFile(const std::string &path)
     {
         std::string tmpPath(path);
-#ifdef _WIN32
-        if (StringUtil::IsUtf8String(path)) {
-            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
-        }
-#endif
         return std::remove(tmpPath.c_str()) == 0;
     }
 
@@ -275,12 +264,6 @@ public:
 #ifdef _WIN32
         std::string tmpSourcePath(sourceFilePath);
         std::string tmpTargetPath(targetFilePath);
-        if (StringUtil::IsUtf8String(sourceFilePath)) {
-            tmpSourcePath = StringUtil::Utf8ToGbk(sourceFilePath.c_str());
-        }
-        if (StringUtil::IsUtf8String(targetFilePath)) {
-            tmpTargetPath = StringUtil::Utf8ToGbk(targetFilePath.c_str());
-        }
         return CopyFile(tmpSourcePath.c_str(), tmpTargetPath.c_str(), false);
 #else
         pid_t pid = fork();
@@ -407,11 +390,6 @@ public:
     static inline std::string PathPreprocess(const std::string filePath)
     {
         std::string path(filePath);
-#ifdef _WIN32
-        if (StringUtil::IsUtf8String(filePath)) {
-            path = StringUtil::Utf8ToGbk(filePath.c_str());
-        }
-#endif
         return path;
     }
 

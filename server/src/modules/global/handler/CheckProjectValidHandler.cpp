@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "WsSessionManager.h"
 #include "ProjectExplorerManager.h"
+#include "ConstantDefs.h"
 #include "CheckProjectValidHandler.h"
 
 namespace Dic {
@@ -54,7 +55,8 @@ bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheck
         if (++fileCount > FILE_COUNT_LIMIT) {
             break;
         }
-        auto filePath = fs::u8path(path);
+        std::string tempPath = StringUtil::ToUtf8Str(path);
+        auto filePath = fs::u8path(tempPath);
         if (!fs::exists(filePath)) {
             continue;
         }

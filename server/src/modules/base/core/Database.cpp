@@ -21,11 +21,12 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
 {
     struct stat st;
     std::string dbPathStr = CheckSqlString(dbPath);
+    std::string utfDbPath = StringUtil::ToUtf8Str(dbPathStr);
     if (stat(dbPathStr.c_str(), &st) == -1) {
-        int result = sqlite3_open(dbPathStr.c_str(), &db);
+        int result = sqlite3_open(utfDbPath.c_str(), &db);
         if (result) {
             sqlite3_close(db); // 异常后关闭数据库
-            ServerLog::Error("Open db fail when create Db.");
+            ServerLog::Error("Open db fail when create Db. path is: ", utfDbPath);
             return false;
         }
         sqlite3_close(db); // 修改权限前先关闭数据库
@@ -67,7 +68,8 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         ServerLog::Error("The db file has been opened.");
         return false;
     }
-    int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
+    std::string utfDbPath = StringUtil::ToUtf8Str(dbPath);
+    int result = sqlite3_open_v2(CheckSqlString(utfDbPath).c_str(), &db,
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (result == SQLITE_OK) {
         isOpen = true;

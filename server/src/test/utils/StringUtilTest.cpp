@@ -30,16 +30,6 @@ TEST(StringUtil, ByteNum) {
     std::cout << StringUtil::ByteNum(11) << std::endl;
 }
 
-TEST(StringUtil, IsUtf8String) {
-    EXPECT_EQ(StringUtil::IsUtf8String("a"), true);
-    EXPECT_EQ(StringUtil::IsUtf8String("`"), true);
-    EXPECT_EQ(StringUtil::IsUtf8String("/\n"), true);
-    EXPECT_EQ(StringUtil::IsUtf8String("∞∞"), true);
-    EXPECT_EQ(StringUtil::IsUtf8String("Ļb"), true);
-    EXPECT_EQ(StringUtil::IsUtf8String("¦b"), true);
-    EXPECT_EQ(StringUtil::IsUtf8String("\xD6\xD0"), false);
-}
-
 TEST(StringUtil, IsAllDigitsWithNormalInput) {
     EXPECT_EQ(StringUtil::IsAllDigits("123"), true);
     EXPECT_EQ(StringUtil::IsAllDigits("1"), true);

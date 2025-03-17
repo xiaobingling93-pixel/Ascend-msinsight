@@ -96,32 +96,6 @@ public:
         return byteNum;
     }
 
-    static bool IsUtf8String(const std::string &str)
-    {
-        std::uint32_t byteNum = 0;
-        std::uint8_t byte;
-        for (char c : str) {
-            byte = static_cast<std::uint8_t>(c);
-            // ASCII
-            if ((byteNum == 0) && ((byte & 0x80) == 0)) {
-                continue;
-            }
-            // UTF8 first byte
-            if (byteNum == 0) {
-                byteNum = ByteNum(byte);
-                if (byteNum == 0) {
-                    return false;
-                }
-            } else { // UTF8 other bytes
-                if ((byte & 0xC0) != 0x80) {
-                    return false;
-                }
-                byteNum--;
-            }
-        }
-        return true;
-    }
-
     static inline bool IsAllDigits(const std::string &str)
     {
         return std::all_of(str.begin(), str.end(), ::isdigit);
@@ -147,6 +121,30 @@ public:
         str.erase(0, str.find_first_not_of(" "));
         str.erase(str.find_last_not_of(" ") + 1);
         return str;
+    }
+
+    static std::string ToUtf8Str(const std::string &input)
+    {
+        static const unsigned int GBK_CODE_PAGE = 936;
+#ifdef _WIN32
+        UINT codePage = GetACP();
+        if (codePage == GBK_CODE_PAGE) {
+            return StringUtil::GbkToUtf8(input.c_str());
+        }
+#endif
+        return input;
+    }
+
+    static std::string ToLocalStr(const std::string &input)
+    {
+        static const unsigned int GBK_CODE_PAGE = 936;
+#ifdef _WIN32
+        UINT codePage = GetACP();
+        if (codePage == GBK_CODE_PAGE) {
+            return StringUtil::Utf8ToGbk(input.c_str());
+        }
+#endif
+        return input;
     }
 
 #ifdef _WIN32

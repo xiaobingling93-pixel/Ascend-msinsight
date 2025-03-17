@@ -25,7 +25,7 @@ void FileSelector::GetFoldersAndFiles(const std::string &path,
     std::vector<std::string> folders;
     std::vector<std::string> files;
     // 处理中文路径
-    std::string tempPath = FileUtil::PathPreprocess(path);
+    std::string tempPath = path;
 #ifdef _WIN32
     // windows环境下无需处理
 #else

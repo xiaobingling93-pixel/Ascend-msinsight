@@ -36,10 +36,6 @@ std::string BinFileParseUtil::GetContentStr(std::ifstream& file, const Position&
         ServerLog::Error("Failed to read content str.");
         return "";
     }
-    if (!StringUtil::IsUtf8String(jsonStr)) {
-        ServerLog::Error("Can't decode a text frame as utf-8, json string is invalid.");
-        return "";
-    }
     return jsonStr;
 }
 

@@ -263,7 +263,7 @@ void ProjectExplorerManager::InitSystemMemoryDbPath(const std::string &filePath)
 {
     std::string path = FileUtil::SplicePath(filePath, "system_memory.db");
 #ifdef _WIN32
-    systemMemoryDbPath = StringUtil::GbkToUtf8(path.c_str());
+    systemMemoryDbPath = path;
 #else
     systemMemoryDbPath = path;
 #endif

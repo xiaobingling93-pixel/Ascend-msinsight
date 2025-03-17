@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "ProtocolEnumUtil.h"
 #include "ProtocolManager.h"
+#include "ConstantDefs.h"
 #include "ProtocolMessageBuffer.h"
 
 namespace Dic {
@@ -75,6 +76,7 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
         return nullptr;
     }
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);
+    bodyStr = StringUtil::ToLocalStr(bodyStr);
     std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
     if (request == nullptr) {
         // 从buffer中删除无法处理的请求数据

@@ -33,27 +33,27 @@ const std::string_view MSVP_SLASH = "/";
 }
 std::string FileUtil::GetCurrPath()
 {
-    char currPath[1024];
-    std::string strCurrPath;
+    char curPath[1024];
+    std::string strCurPath;
 #ifdef _WIN32
-    ::GetModuleFileName(nullptr, currPath, MAX_PATH);
-    (_tcsrchr(currPath, '\\'))[1] = 0;
-    strCurrPath = StringUtil::GbkToUtf8(currPath);
+    ::GetModuleFileName(nullptr, curPath, MAX_PATH);
+    (_tcsrchr(curPath, '\\'))[1] = 0;
+    strCurPath = curPath;
 #else
 #ifdef __APPLE__
-    uint32_t size = sizeof(currPath);
-    if (_NSGetExecutablePath(currPath, &size) == 0) {
-        strCurrPath = std::string(dirname(currPath));
+    uint32_t size = sizeof(curPath);
+    if (_NSGetExecutablePath(curPath, &size) == 0) {
+        strCurPath = std::string(dirname(curPath));
     }
 #else
-    ssize_t len = readlink("/proc/self/exe", currPath, sizeof(currPath) - 1);
+    ssize_t len = readlink("/proc/self/exe", curPath, sizeof(curPath) - 1);
     if (len != -1) {
-        currPath[len] = '\0';
-        strCurrPath = std::string(dirname(currPath));
+        curPath[len] = '\0';
+        strCurPath = std::string(dirname(curPath));
     }
 #endif
 #endif
-    return strCurrPath;
+    return strCurPath;
 }
 
 bool FileUtil::IsAbsolutePath(const std::string &path)
@@ -173,11 +173,6 @@ bool FileUtil::CheckDirValid(const std::string &path)
 bool FileUtil::CheckFilePathExist(const std::string& filePath)
 {
     std::string tmpPath(filePath);
-#ifdef _WIN32
-    if (StringUtil::IsUtf8String(filePath)) {
-        tmpPath = StringUtil::Utf8ToGbk(filePath.c_str());
-    }
-#endif
     if (access(tmpPath.c_str(), R_OK) == -1) {
         Server::ServerLog::Error("Check file path exist cannot read file path");
         return false;
@@ -256,11 +251,6 @@ void FileUtil::CalculateDirSize(const std::string &path, long long int &size, in
         CalculateDirSize(spliceFile, size, depth + 1);
     }
     std::string gbkPath(path);
-#ifdef _WIN32
-    if (StringUtil::IsUtf8String(path)) {
-        gbkPath = StringUtil::Utf8ToGbk(path.c_str());
-    }
-#endif
     for (std::string& file: files) {
         std::string spliceFile = SplicePath(gbkPath, file);
         if (std::strcmp(DATABASE_FILE_NAME.c_str(), file.c_str()) != 0 &&
@@ -363,11 +353,6 @@ std::shared_ptr<std::string> FileUtil::GetRelativePath(const std::string& target
 bool FileUtil::ModifyFilePermissions(const std::string &filePath, const mode_t &mode)
 {
     std::string tmpPath(filePath);
-#ifdef _WIN32
-    if (StringUtil::IsUtf8String(filePath)) {
-        tmpPath = StringUtil::Utf8ToGbk(filePath.c_str());
-    }
-#endif
     return chmod(tmpPath.c_str(), mode);
 }
 
