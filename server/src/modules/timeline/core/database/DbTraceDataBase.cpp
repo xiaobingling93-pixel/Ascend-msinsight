@@ -25,9 +25,7 @@ DbTraceDataBase::~DbTraceDataBase()
 }
 
 bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
-                                   Protocol::UnitThreadsBody &responseBody,
-                                   uint64_t minTimestamp,
-                                   const std::vector<uint64_t> &trackIdList)
+    Protocol::UnitThreadsBody &responseBody, uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList)
 {
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
@@ -307,15 +305,12 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
 bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
     Protocol::SummaryStatisticsBody &responseBody)
 {
-    std::string stepCondition;
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT round(sum(endNs - startNs) / 1000.0, 2) as duration, TASKTYPE.value as acceleratorCore "
-        "  FROM COMPUTE_TASK_INFO"
-        "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-        "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-        " WHERE acceleratorCore in ('AI_CPU','AI_CORE',"
-        " 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') "
-        " GROUP BY acceleratorCore";
+        "FROM COMPUTE_TASK_INFO JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
+        "JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType "
+        "WHERE acceleratorCore in ('AI_CPU','AI_CORE', 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') "
+        "GROUP BY acceleratorCore";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Query compute statistics data failed!. ", sqlite3_errmsg(db));
@@ -448,14 +443,6 @@ bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePrepar
     return true;
 }
 
-std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, std::string key)
-{
-    if (stringsCache.count(path) == 0 || stringsCache.at(path).count(key) == 0) {
-        return key;
-    }
-    return stringsCache.at(path)[key];
-}
-
 bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol::KernelDetailsParams &requestParams)
 {
     if (!requestParams.filters.empty()) {
@@ -474,9 +461,7 @@ bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol:
         if (filter.first == "name" || filter.first == "taskId") {
             sql += " lower(" + filter.first + ") LIKE lower(?) ";  // 绑定filter.second
         } else {
-            sql += filter.first + " IN ("
-                   "    SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower(?)"
-                   ")";
+            sql += filter.first + " IN ( SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower(?) )";
         }
     }
     return true;
@@ -1190,7 +1175,7 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
 
 bool DbTraceDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
-    return Database::OpenDb(dbPath, clearAllTable) && GetMetaVersion() && SetConfig() && InitStmt();
+    return Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion() && SetConfig() && InitStmt();
 }
 
 void DbTraceDataBase::InitConnectionCats()
@@ -1201,6 +1186,14 @@ void DbTraceDataBase::InitConnectionCats()
     if (ExecSql(DbSqlDefs::GetConnectionCatSql())) {
         UpdateValueIntoStatusInfoTable(CONNECTION_STATUS, FINISH_STATUS);
     }
+}
+
+std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, const std::string& key)
+{
+    if (stringsCache.count(path) == 0 || stringsCache.at(path).count(key) == 0) {
+        return key;
+    }
+    return stringsCache.at(path)[key];
 }
 
 void DbTraceDataBase::InitStringsCache()
@@ -1287,24 +1280,26 @@ bool DbTraceDataBase::SetConfig()
 
     if (isVersionChange) {
         if (CheckTableExist(TABLE_TASK)) {
-            ExecSql("alter table TASK add depth integer;");
+            if (!CheckColumnExist(TABLE_TASK, "depth")) {
+                ExecSql("alter table " + TABLE_TASK + " add depth integer;");
+            }
             ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     " deviceId integer, startNs integer, endNs integer, type integer);");
         }
-        if (isExistPytorch) {
-            ExecSql("alter table PYTORCH_API add depth integer;");
+        if (isExistPytorch && !CheckColumnExist(TABLE_API, "depth")) {
+            ExecSql("alter table " + TABLE_API + " add depth integer;");
         }
-        if (isExistCann) {
-            ExecSql("alter table CANN_API add depth integer;");
+        if (isExistCann && !CheckColumnExist(TABLE_CANN_API, "depth")) {
+            ExecSql("alter table " + TABLE_CANN_API + " add depth integer;");
         }
-        if (isExistMstx) {
+        if (isExistMstx && !CheckColumnExist(TABLE_MSTX_EVENTS, "depth")) {
             ExecSql("alter table " + TABLE_MSTX_EVENTS + " add depth integer;");
         }
-        if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {
-            ExecSql("alter table COMPUTE_TASK_INFO add column waitNs INTEGER;");
+        if (CheckTableExist(TABLE_COMPUTE_TASK_INFO) && !CheckColumnExist(TABLE_COMPUTE_TASK_INFO, "waitNs")) {
+            ExecSql("alter table " + TABLE_COMPUTE_TASK_INFO + " add column waitNs INTEGER;");
         }
-        if (CheckTableExist(TABLE_COMMUNICATION_OP)) {
-            ExecSql("alter table COMMUNICATION_OP add column waitNs INTEGER;");
+        if (CheckTableExist(TABLE_COMMUNICATION_OP) && !CheckColumnExist(TABLE_COMMUNICATION_OP, "waitNs")) {
+            ExecSql("alter table " + TABLE_COMMUNICATION_OP + " add column waitNs INTEGER;");
         }
         for (const auto &status: DB_STATUS_LIST) {
             UpdateValueIntoStatusInfoTable(status, NOT_FINISH_STATUS);
@@ -1497,10 +1492,8 @@ void DbTraceDataBase::UpdataCommucationThreadName(const PROCESS_TYPE &type,
 }
 
 void DbTraceDataBase::ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &process,
-                                        std::unique_ptr<SqliteResultSet> &resultSet,
-                                        std::unique_ptr<Protocol::UnitTrack> &thread,
-                                        const std::string &threadId,
-                                        const PROCESS_TYPE &type) const
+    std::unique_ptr<SqliteResultSet> &resultSet, std::unique_ptr<Protocol::UnitTrack> &thread,
+    const std::string &threadId, const PROCESS_TYPE &type) const
 {
     const static std::string WRONG_THREAD_ID = std::to_string(UINT32_MAX);
     // hccl的plane泳道约定一个异常数据不做展示
@@ -1749,10 +1742,7 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
         ServerLog::Warn("The PYTORCH_API table isn't exist.");
         return false;
     }
-    std::string sql = "SELECT py.ROWID as id, py.startNs - ? as startTime, (py.endNs - py.startNs) / 1000 as duration, "
-        "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
-        "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
-        "WHERE str.value IN (" + optimizers + ") ORDER BY " + params.orderBy + " " + params.order;
+    std::string sql = TextSqlConstant::QueryAffinityOptimizerDbSql(optimizers, params.orderBy, params.order);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Query Affinity Optimizer by DB.", sqlite3_errmsg(db));
@@ -1781,10 +1771,10 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
     const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    std::string sql = TextSqlConstant::GenerateAICpuQuerySqlDB(replace, params, dataType);
+    std::string sql = TextSqlConstant::GenerateAICpuQueryDbSql(replace, params, dataType);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for AICpuOpCanBeOptimized.");
+        ServerLog::Error("Failed to prepare sql for AICpuOpCanBeOptimized.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
@@ -1810,11 +1800,19 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
 }
 
 bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
-    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
+    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
+    const std::vector<std::string> &trackIdList)
 {
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack in request parameter orderBy. Error param: % ",
+                         requestParams.orderBy);
         return false;
+    }
+    for (const auto& tidItem : requestParams.tid) {
+        if (!StringUtil::CheckSqlValid(tidItem)) {
+            ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", tidItem);
+            return false;
+        }
     }
     std::string orderBy = " ORDER BY " + requestParams.orderBy;
     orderBy.append(requestParams.order == "descend" ? " DESC " : " ASC ");
@@ -1834,6 +1832,10 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.depth = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
+        sameOperatorsDetail.tid = resultSet->GetString(col++);
+        if (sameOperatorsDetail.tid.empty()) {  // some process not have tid, use request.tid[0], ex:pytorch
+            sameOperatorsDetail.tid = requestParams.tid[0];
+        }
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
     responseBody.currentPage = requestParams.current;
@@ -1845,21 +1847,7 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
 bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    std::string sql =
-        "SELECT info.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, task.startNs - ? as startTime, "
-        "(task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, task.streamId as tid,"
-        " task.depth as depth "
-        "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
-        "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
-        "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
-        "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
-        "WHERE s1.value IN ("
-        "    SELECT str.value FROM " + TABLE_COMPUTE_TASK_INFO + " info "
-        "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
-        "    WHERE str.value LIKE 'aclnn%' "
-        "    GROUP BY str.value HAVING COUNT(str.value) >= ?"
-        ") ORDER BY " + params.orderBy + " " + params.order;
-    auto stmt = CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(TraceDatabaseSqlConst::GenerateAclnnQueryDbSql(params));
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
@@ -1887,11 +1875,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
     const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
 {
-    std::string sql = "SELECT py.ROWID as id, str.value as name, py.startNs - ? as startTime, "
-        "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
-        "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
-        "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' ORDER BY py.globalTid ASC, py.startNs ASC ";
-    auto stmt = CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(QUERY_AFFINITY_API_DB_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for Affinity API.");
         return false;
@@ -1935,24 +1919,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
 bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
 {
-    std::string sql =
-        "WITH data AS ( "
-        "SELECT info.ROWID as id, task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
-        "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
-        "task.streamId as tid, task.depth as depth, "
-        "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
-        "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
-        "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
-        "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
-        "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
-        " ) "
-        "SELECT d0.* FROM data d0 ";
-    for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
-        std::string table = "d" + std::to_string(i);
-        sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
-               " AND " + table + ".op_type = '" + rule.opList.at(i) + "' ";
-    }
-    sql += "WHERE d0.op_type = '" +  rule.opList.at(0) + "' ORDER BY " + params.orderBy + " " + params.order;
+    std::string sql = TextSqlConstant::GenerateFuseableOpFilterDbSql(params, rule);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
@@ -1991,12 +1958,8 @@ bool DbTraceDataBase::QueryEventsViewData(const Protocol::EventsViewParams &para
     }
     return TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, GetDeviceId(params.rankId));
 }
-
 std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metadata &metaData,
-                                                                     uint64_t startTime,
-                                                                     uint64_t endTime,
-                                                                     const std::string &rankId,
-                                                                     std::map<std::string, uint64_t> &selfTimeKeyValue)
+    uint64_t startTime, uint64_t endTime, const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue)
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {

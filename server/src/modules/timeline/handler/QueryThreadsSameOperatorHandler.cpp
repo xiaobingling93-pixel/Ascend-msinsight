@@ -33,10 +33,12 @@ bool QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    int64_t trackId = TrackInfoManager::Instance()
-            .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result = db->QueryThreadSameOperatorsDetails(request.params, response.body,
-                                                      minTimestamp, trackId);
+    std::vector<std::string> trackIdList;
+    for (const auto& tid : request.params.tid) {
+        trackIdList.emplace_back(std::to_string(TrackInfoManager::Instance()
+            .GetTrackId(request.params.rankId, request.params.pid, tid)));
+    }
+    bool result = db->QueryThreadSameOperatorsDetails(request.params, response.body, minTimestamp, trackIdList);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

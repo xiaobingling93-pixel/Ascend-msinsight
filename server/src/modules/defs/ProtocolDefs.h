@@ -77,6 +77,8 @@ const std::string REQ_RES_FLOW_CATEGORY_LIST = "flow/categoryList";
 const std::string REQ_RES_FLOW_CATEGORY_EVENTS = "flow/categoryEvents";
 const std::string REQ_RES_UNIT_COUNTER = "unit/counter";
 const std::string REQ_RES_SAME_OPERATORS_DURATION = "query/all/same/operators/duration";
+const std::string REQ_RES_SYSTEM_VIEW_OVERALL = "systemView/overall";
+const std::string REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS = "systemView/overall/more/details";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";

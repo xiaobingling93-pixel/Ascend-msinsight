@@ -7,6 +7,7 @@
 #define PROFILER_SERVER_COMMONDEFS_H
 
 #include <string>
+#include <vector>
 
 namespace Dic {
     const static std::string MSPROF_PREFIX = "[MSPROF]";
@@ -38,6 +39,13 @@ namespace Dic {
     const static std::vector<std::string> CANN_APIS = {"acl", "runtime", "model", "node", "hccl", "communication"};
     const static std::vector<std::string> OVERLAP_TYPES = {"Computing", "Communication",
                                                            "Communication(Not Overlapped)", "Free"};
+    const static std::string E2E_TIME = "E2E Time";
+    const static std::string COMPUTING_TIME = "Computing Time";
+    const static std::string COMMUNICATION_NOT_OVERLAP_TIME = "Communication(Not Overlapped) Time";
+    const static std::string COMMUNICATION_TIME = "Communication Time";
+    const static std::string FREE_TIME = "Free Time";
+    const static std::string WAIT_TIME = "Wait Time";
+    const static std::string TRANSMIT_TIME = "Transmit Time";
 }
 
 #endif // PROFILER_SERVER_COMMONDEFS_H

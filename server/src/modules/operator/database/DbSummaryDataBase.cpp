@@ -17,7 +17,7 @@ using namespace Server;
 using namespace Dic::Module::Timeline;
 bool DbSummaryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
-    auto result = Database::OpenDb(dbPath, clearAllTable) && GetMetaVersion();
+    auto result = Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion();
     blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
     return result;
 }

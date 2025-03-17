@@ -136,7 +136,11 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
         JsonUtil::AddMember(threadsJson, "occurrences", threads.occurrences, allocator);
         JsonUtil::AddMember(threadsJson, "avgWallDuration", threads.avgWallDuration, allocator);
         JsonUtil::AddMember(threadsJson, "selfTime", threads.selfTime, allocator);
-        JsonUtil::AddMember(threadsJson, "tid", threads.tid, allocator);
+        json_t tidJson(kArrayType);
+        for (const auto &item: threads.tid) {
+            tidJson.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+        }
+        JsonUtil::AddMember(threadsJson, "tid", tidJson, allocator);
         JsonUtil::AddMember(threadsJson, "pid", threads.pid, allocator);
         JsonUtil::AddMember(threadsJson, "metaType", threads.metaType, allocator);
         data.PushBack(threadsJson, allocator);
@@ -510,15 +514,33 @@ std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const Uni
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t sameOperatorsDetails(kArrayType);
+    uint64_t index = 0;
     for (const SameOperatorsDetails &sameOperators : response.body.sameOperatorsDetails) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "timestamp", sameOperators.timestamp, allocator);
         JsonUtil::AddMember(itemJson, "duration", sameOperators.duration, allocator);
-        JsonUtil::AddMember(itemJson, "depth", sameOperators.depth, allocator);
-        JsonUtil::AddMember(itemJson, "id", sameOperators.id, allocator);
+        if (!sameOperators.id.empty()) { // depth用于支持选中列表功能
+            JsonUtil::AddMember(itemJson, "depth", sameOperators.depth, allocator);
+            JsonUtil::AddMember(itemJson, "id", sameOperators.id, allocator);
+        } else {  // name、rankId用于支持overall metric more details列表
+            JsonUtil::AddMember(itemJson, "name", sameOperators.name, allocator);
+            JsonUtil::AddMember(itemJson, "id", index++, allocator);
+        }
+        // 临时用于支持db场景时间线跳转
+        if (!response.body.metaType.empty()) {
+            JsonUtil::AddMember(itemJson, "depth", sameOperators.depth, allocator);
+            JsonUtil::AddMember(itemJson, "opId", sameOperators.opId, allocator);
+        }
+        JsonUtil::AddMember(itemJson, "tid", sameOperators.tid, allocator);
         sameOperatorsDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "sameOperatorsDetails", sameOperatorsDetails, allocator);
+    if (!response.body.rankId.empty()) {
+        JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
+    }
+    if (!response.body.metaType.empty()) {
+        JsonUtil::AddMember(body, "metaType", response.body.metaType, allocator);
+    }
     JsonUtil::AddMember(body, "count", response.body.count, allocator);
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
@@ -550,6 +572,58 @@ template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(co
     JsonUtil::AddMember(body, "count", response.body.count, allocator);
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+json_t SystemViewOverallResToJson(const SystemViewOverallRes &res,
+                                  RAPIDJSON_DEFAULT_ALLOCATOR &allocator, uint64_t depth = 1)
+{
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "totalTime", res.totalTime, allocator);
+    JsonUtil::AddMember(json, "ratio", res.ratio, allocator);
+    if (res.max == 0) {
+        JsonUtil::AddMember(json, "nums", "-", allocator);
+        JsonUtil::AddMember(json, "avg", "-", allocator);
+        JsonUtil::AddMember(json, "max", "-", allocator);
+        JsonUtil::AddMember(json, "min", "-", allocator);
+    } else {
+        JsonUtil::AddMember(json, "nums", res.nums, allocator);
+        JsonUtil::AddMember(json, "avg", res.avg, allocator);
+        JsonUtil::AddMember(json, "max", res.max, allocator);
+        JsonUtil::AddMember(json, "min", res.min, allocator);
+    }
+    JsonUtil::AddMember(json, "name", res.name, allocator);
+    JsonUtil::AddMember(json, "id", res.id, allocator);
+    JsonUtil::AddMember(json, "level", res.level, allocator);
+    json_t children(kArrayType);
+    if (depth < 5) { // No more than 5 layers
+        for (const auto &child : res.children) {
+            children.PushBack(SystemViewOverallResToJson(child, allocator, depth + 1), allocator);
+        }
+    }
+    if (!children.Empty()) {
+        JsonUtil::AddMember(json, "children", children, allocator);
+    }
+    std::string jsonString = JsonUtil::JsonDump(json);
+    return json;
+}
+
+template <>
+std::optional<document_t> ToResponseJson<SystemViewOverallResponse>(const SystemViewOverallResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t data(kArrayType);
+    for (const auto& item : response.details) {
+        data.PushBack(SystemViewOverallResToJson(item, allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(body, "count", response.pageParam.total, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.pageParam.pageSize, allocator);
+    JsonUtil::AddMember(body, "current", response.pageParam.current, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

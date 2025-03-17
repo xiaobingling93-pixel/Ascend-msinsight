@@ -75,7 +75,7 @@ TEST_F(TimelineProtocolUtilTest, TestUnitThreadsResponseToJsonError)
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"unit/"
         "threads\",\"moduleName\":\"unknown\",\"body\":{\"emptyFlag\":false,\"data\":[{\"title\":\"\",\"wallDuration\":"
-        "0,\"occurrences\":0,\"avgWallDuration\":0,\"selfTime\":0,\"tid\":\"\",\"pid\":\"\",\"metaType\":\"\"}]}}";
+        "0,\"occurrences\":0,\"avgWallDuration\":0,\"selfTime\":0,\"tid\":[],\"pid\":\"\",\"metaType\":\"\"}]}}";
     EXPECT_EQ(json, jsonStr);
 }
 

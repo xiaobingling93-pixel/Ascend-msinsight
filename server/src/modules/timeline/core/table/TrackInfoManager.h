@@ -60,6 +60,7 @@ public:
         const std::map<uint64_t, std::pair<std::string, std::string>> &threadMap);
     std::string GetRankId(const std::string &host, const std::string &deviceId);
     void Reset();
+    std::string GetDeviceId(const std::string &cardId);
 
 private:
     TrackInfoManager() = default;
@@ -91,7 +92,6 @@ private:
     std::unordered_map<std::string, std::string> deviceIdToRankIdMap;
     uint64_t maxTrackId = 0;
     std::string GetRankId(const std::string &cardId);
-    std::string GetDeviceId(const std::string &cardId);
     std::string GetHost(const std::string &cardId);
 };
 }

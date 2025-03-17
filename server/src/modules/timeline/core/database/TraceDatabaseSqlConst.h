@@ -99,5 +99,96 @@ const std::string QUERY_FWDBWD_FLOW_DATA_SQL =
     "d2.nextFpEnd - d1.prevFpStart as fpDuration, d1.prevBpEnd - d2.nextBpStart as bpDuration \n"
     "FROM possibleData d1 JOIN possibleData d2 ON d2.rowNum = d1.rowNum + 1 \n"
     "WHERE d1.prevFpStart >= ? AND d1.prevFpStart <= ?";
+
+// 兼容老版本（1.0.0）
+    const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_1_0_SQL =
+        "SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM " + TABLE_COMMUNICATION_TASK_INFO + " "
+        "GROUP BY groupName || planeId "
+        "UNION "
+        "SELECT op.groupName, -1 as planeId, 'Group ' || row_num || ' Communication' as threadName "
+        "FROM " + TABLE_COMMUNICATION_OP + " op JOIN ( "
+        "    SELECT groupName, row_number() OVER (ORDER BY groupName ASC) - 1 as row_num "
+        "    FROM " + TABLE_COMMUNICATION_OP + " GROUP BY groupName "
+        ") grp ON op.groupName = grp.groupName "
+        "GROUP BY op.groupName";
+    const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_SQL =
+        "    SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM COMMUNICATION_TASK_INFO "
+        "    GROUP BY groupName || planeId  "
+        "    UNION "
+        "    SELECT op.groupName, -1 as planeId, 'Group ' || strGroup.value || ' Communication' as threadName "
+        "    FROM COMMUNICATION_OP op JOIN ( "
+        "        SELECT groupName "
+        "        FROM  COMMUNICATION_OP  GROUP BY groupName "
+        "    ) grp ON op.groupName = grp.groupName "
+        "    JOIN STRING_IDS strGroup ON op.groupName = strGroup.id "
+        "    GROUP BY op.groupName ";
+
+// 兼容老版本（1.0.0）
+const std::string QUERY_COMMUNICATION_SUMMARY_DB_1_0_SQL =
+    "WITH data AS ("
+    "    SELECT *, row_number() OVER (ORDER BY groupName ASC, planeId ASC, start_time ASC) as row_num "
+    "    FROM ("
+    "        SELECT str1.value as name, task.startNs as start_time, task.endNs - task.startNs as duration, "
+    "        task.endNs as end_time, groupName, planeId, 'Plane ' || planeId as thread_name, 0 as type "
+    "        FROM " + TABLE_COMMUNICATION_TASK_INFO + " info "
+    "        JOIN " + TABLE_STRING_IDS + " str1 ON info.taskType = str1.id "
+    "        JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
+    "        UNION "
+    "        SELECT str2.value as name, startNs as start_time, endNs - startNs as duration, "
+    "        endNs as end_time, op.groupName, -1 as planeId, "
+    "        'Group ' || row_num || ' Communication' as thread_name, 1 as type "
+    "        FROM " + TABLE_COMMUNICATION_OP + " op "
+    "        JOIN " + TABLE_STRING_IDS + " str2 ON op.opName = str2.id "
+    "        JOIN ( "
+    "            SELECT groupName, row_number() OVER (ORDER BY groupName ASC) - 1 as row_num "
+    "            FROM " + TABLE_COMMUNICATION_OP + " GROUP BY groupName "
+    "        ) grp ON op.groupName = grp.groupName "
+    "    ) "
+    ") ";
+const std::string QUERY_COMMUNICATION_SUMMARY_DB_SQL =
+    "  WITH data AS ("
+    "      SELECT *, row_number() OVER (ORDER BY groupName ASC, planeId ASC, start_time ASC) as row_num "
+    "  FROM ("
+    "      SELECT str1.value as name, task.startNs as start_time, task.endNs - task.startNs as duration, "
+    "      task.endNs as end_time, groupName, planeId, 'Plane ' || planeId as thread_name, 0 as type "
+    "      FROM COMMUNICATION_TASK_INFO info "
+    "      JOIN STRING_IDS str1 ON info.taskType = str1.id "
+    "      JOIN TASK task ON info.globalTaskId = task.globalTaskId "
+    "      UNION "
+    "      SELECT str2.value as name, startNs as start_time, endNs - startNs as duration, "
+    "      endNs as end_time, op.groupName, -1 as planeId,  "
+    "      'Group ' || strGroup.value || ' Communication'  as thread_name,"
+    "       1 as type "
+    "      FROM COMMUNICATION_OP op "
+    "      JOIN STRING_IDS str2 ON op.opName = str2.id "
+    "      JOIN STRING_IDS strGroup ON op.groupName = strGroup.id "
+    "      JOIN ( "
+    "          SELECT groupName, row_number() OVER (ORDER BY groupName ASC) - 1 as row_num "
+    "          FROM COMMUNICATION_OP GROUP BY groupName "
+    "          )"
+    "      grp ON op.groupName = grp.groupName "
+    "      )"
+    " ) ";
+class TraceDatabaseSqlConst {
+public:
+    static std::string GenerateAclnnQueryDbSql(const Protocol::KernelDetailsParams &params)
+    {
+        std::string sql =
+            "SELECT info.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, "
+            "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
+            "task.streamId as tid, task.depth as depth "
+            "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
+            "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
+            "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
+            "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
+            "WHERE s1.value IN ("
+            "    SELECT str.value FROM " + TABLE_COMPUTE_TASK_INFO + " info "
+            "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
+            "    WHERE str.value LIKE 'aclnn%' "
+            "    GROUP BY str.value HAVING COUNT(str.value) >= ? "
+            ") ORDER BY " + params.orderBy + " " + params.order;
+        return sql;
+    }
+};
 }
 #endif // PROFILER_SERVER_TRACEDATABASESQLCONST_H

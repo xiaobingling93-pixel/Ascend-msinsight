@@ -11,6 +11,7 @@
 #include <vector>
 #include "FileUtil.h"
 #include "ProtocolDefs.h"
+#include "ProtocolParamUtil.h"
 #include "ProtocolMessage.h"
 
 namespace Dic {
@@ -351,6 +352,24 @@ struct UnitCounterRequest : public Request {
     UnitCounterParams params;
 };
 
+struct SystemViewOverallReqParam {
+    std::string rankId;
+    std::vector<std::string> categoryList;
+    std::string name;
+    OrderParam order;
+    PageParam page{};
+};
+
+struct SystemViewOverallRequest : public Request {
+    SystemViewOverallRequest() : Request(REQ_RES_SYSTEM_VIEW_OVERALL) {};
+    SystemViewOverallReqParam params;
+};
+
+struct SystemViewOverallMoreDetailsRequest : public Request {
+    SystemViewOverallMoreDetailsRequest() : Request(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS) {};
+    SystemViewOverallReqParam params;
+};
+
 struct SystemViewParams {
     std::string orderBy;
     std::string order;
@@ -454,7 +473,7 @@ struct CommunicationKernelRequest : public Request {
 
 struct UnitThreadsOperatorsParams {
     std::string rankId;
-    std::string tid;
+    std::vector<std::string> tid;
     std::string pid;
     std::string metaType;
     uint64_t startTime = 0;
@@ -473,6 +492,9 @@ struct UnitThreadsOperatorsParams {
         if (endTime > UINT64_MAX - minTime) {
             warnMsg = "unit threads operators end time is invalid";
             return false;
+        }
+        if (tid.empty()) {
+            warnMsg = "Failed to query threads same operator. Track id list is empty.";
         }
         return CheckUnsignPageValid(pageSize, current, warnMsg);
     }

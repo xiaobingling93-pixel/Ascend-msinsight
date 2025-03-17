@@ -223,7 +223,7 @@ std::string Database::QueryValueFromMetaDataByName(const std::string &name)
     }
 }
 
-bool Database::GetMetaVersion()
+bool Database::QueryMetaVersion()
 {
     if (CheckTableExist(TABLE_META_DATA)) {
         isLowCamel = true;
@@ -235,6 +235,11 @@ bool Database::GetMetaVersion()
         metaVersion = schemaVersion;
     }
     return true;
+}
+
+std::string Database::GetMetaVersion()
+{
+    return metaVersion;
 }
 
 bool Database::IsDatabaseVersionChange()
@@ -454,6 +459,66 @@ bool Database::CheckTablesExist(const std::vector<std::string> &tablesName)
         }
     }
     return true;
+}
+
+bool Database::CheckColumnExist(const std::string& tableName, const std::string& columnName)
+{
+    if (!isOpen) {
+        ServerLog::Error("Failed to check column. Database is closed or sql is empty.");
+        return false;
+    }
+    if (!StringUtil::CheckSqlValid(tableName)) {
+        ServerLog::Error("There is an SQL injection attack when check column. Table name: ", tableName);
+        return false;
+    }
+    std::string sql = "PRAGMA table_info(" + tableName + ")";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed prepare sql when check column.");
+        return false;
+    }
+
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to execute query when check column.");
+        return false;
+    }
+    while (resultSet->Next()) {
+        std::string currentColumnName = resultSet->GetString("name");
+        if (currentColumnName == columnName) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Database::CheckStringInColumn(const std::string& tableName, const std::string& columnName,
+                                   const std::string& searchString)
+{
+    if ((!isOpen)) {
+        ServerLog::Error("Failed to check string in column. Database is closed or sql is empty.");
+        return false;
+    }
+    if (!StringUtil::CheckSqlValid(tableName) || !StringUtil::CheckSqlValid(columnName)) {
+        ServerLog::Error("There is an SQL injection attack when check string in column.");
+        return false;
+    }
+    std::string sql = "select count(*) from " + tableName + " where " + columnName + " = ?;";
+
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed prepare sql when check string in column.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(searchString);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to execute query when check string in column.");
+        return false;
+    }
+    if (resultSet->Next()) {
+        return resultSet->GetInt64("count(*)") > 0;
+    }
+    return false;
 }
 
 bool Database::CreateStatusInfoTable()

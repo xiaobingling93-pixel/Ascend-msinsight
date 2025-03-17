@@ -1,0 +1,178 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+#include <gtest/gtest.h>
+#include "DataBaseManager.h"
+#include "ParamsParser.h"
+#include "FileUtil.h"
+#include "FullDbParser.h"
+#include "ParserStatusManager.h"
+#include "TraceTime.h"
+#include "ParserFactory.h"
+#include "WsSessionImpl.h"
+#include "WsSessionManager.h"
+#include "SystemViewOverallRepoFactory.h"
+
+using namespace Dic::Module::Timeline;
+using namespace Dic::Module::FullDb;
+using namespace Dic::Module;
+using namespace Dic;
+namespace Dic::Module::Timeline {
+class SystemViewOverallDbRepoTest : public ::testing::Test {
+public:
+    static void SetUpTestCase()
+    {
+        FullDb::FullDbParser::Instance().Reset();
+        std::string currPath = Dic::FileUtil::GetCurrPath();
+        const ParamsOption &option = ParamsParser::Instance().GetOption();
+        ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
+        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(nullptr);
+        WsSessionManager::Instance().AddSession(std::move(session));
+        std::string subStr = "server";
+        size_t index = currPath.rfind(subStr);
+        currPath = currPath.substr(0, index - 1);
+        std::string dbPath3 = currPath +
+            R"(/test/data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
+        DataBaseManager::Instance().SetDataType(DataType::DB);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+        DataBaseManager::Instance().CreatConnectionPool("0", dbPath3);
+        std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
+        ParserType allocType = parserType.second;
+        std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
+        // 路径列表不为空，需要进行文件目录的新增、覆盖
+        ProjectTypeEnum projectType = factory->GetProjectType({ dbPath3 });
+        std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;
+
+        std::string warn;
+        // 获取文件列表
+        std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(dbPath3, projectType, warn);
+        Global::ProjectExplorerInfo projectExplorerInfo;
+        projectExplorerInfo.fileName = dbPath3;
+        projectExplorerInfo.projectName = dbPath3;
+        projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
+        projectExplorerInfo.importType = "import";
+        Global::ParseFileInfo parseFileInfo;
+        parseFileInfo.parseFilePath = dbPath3;
+        projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+        projectExplorerInfoList.push_back(projectExplorerInfo);
+
+        if (allocType != ParserType::JSON) {
+            ParserFactory::Reset();
+        }
+        ImportActionRequest request;
+        factory->Parser(projectExplorerInfoList, request);
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", dbPath3, "ubuntu3538958389648580163_0");
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("0", dbPath3, "ubuntu3538958389648580163_0");
+        while (ParserStatusManager::Instance().GetParserStatus("ubuntu3538958389648580163_0 0") !=
+               ParserStatus::FINISH_ALL) {
+        }
+    }
+
+    static void TearDownTestCase()
+    {
+        auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();
+        for (auto &conn : connList) {
+            conn->Stop();
+        }
+        Timeline::DataBaseManager::Instance().Clear();
+        Timeline::TraceTime::Instance().Reset();
+        Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
+    }
+};
+
+TEST_F(SystemViewOverallDbRepoTest, QueryOverlapAnalysisDataForOverallMetricTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
+        DataBaseManager::Instance().GetDataType());
+    if (repoPtr == nullptr) {
+        // GetSystemViewOverallRepo中已有日志报错
+        return;
+    }
+    Dic::Protocol::SystemViewOverallReqParam requestParams;
+    requestParams.rankId = "0";
+    std::vector<OverallTmpInfo> overlapInfos;
+    overlapInfos = repoPtr->QueryOverlapAnalysisDataForOverallMetric(requestParams, database);
+    ASSERT_EQ(overlapInfos.size(), 3);  // 3
+    const double toleranceThreshold = 0.01;
+    const std::vector<std::string> EXPECT_OVERLAP_NAME = {"Communication(Not Overlapped)", "Computing", "Free"};
+    const std::vector<double> EXPECT_OVERLAP_TINE = {98071.95, 8903.43, 25258.14};
+    for (size_t index = 0; index < EXPECT_OVERLAP_TINE.size(); index++) {
+        ASSERT_FALSE(overlapInfos[index].categoryList.empty());
+        EXPECT_EQ(overlapInfos[index].categoryList[0], EXPECT_OVERLAP_NAME[index]);
+        EXPECT_NEAR(overlapInfos[index].duration, EXPECT_OVERLAP_TINE[index], toleranceThreshold);
+    }
+}
+
+// System View Overall: 查询Computing拆解所需数据（有PMU数据，能正常查询）
+TEST_F(SystemViewOverallDbRepoTest, QueryDataForComputingOverallMetricTestWithPmu)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
+        DataBaseManager::Instance().GetDataType());
+    if (repoPtr == nullptr) {
+        // GetSystemViewOverallRepo中已有日志报错
+        return;
+    }
+    Dic::Protocol::SystemViewOverallReqParam requestParams;
+    requestParams.rankId = "0";
+    SystemViewOverallHelper computeHelper;
+    bool result = repoPtr->QueryDataForComputingOverallMetric(requestParams, computeHelper, database);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(computeHelper.cpuCubeOps.size(), 24);  // 24
+    EXPECT_EQ(computeHelper.kernelEvents.size(), 185);  // 185
+    EXPECT_EQ(computeHelper.bwdTrackId, 13471134862279280); // globalTid in PYTORCH_API = 13471134862279280
+}
+
+TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhenSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
+        DataBaseManager::Instance().GetDataType());
+    if (repoPtr == nullptr) {
+        // GetSystemViewOverallRepo中已有日志报错
+        return;
+    }
+    Dic::Protocol::SystemViewOverallReqParam requestParams;
+    requestParams.rankId = "0";
+    const double e2eTime = 151888.75;
+    SystemViewOverallHelper computeHelper;
+    std::vector<Protocol::SystemViewOverallRes> responseBody;
+    repoPtr->QueryCommunicationOverlapOverallInfos(requestParams, e2eTime, responseBody, database);
+    EXPECT_EQ(responseBody.size(), 1);
+    EXPECT_DOUBLE_EQ(responseBody[0].totalTime, 98071.947); // 98071.947
+    EXPECT_DOUBLE_EQ(responseBody[0].ratio, 64.57); // 64.57
+}
+
+TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTestWhenSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
+        DataBaseManager::Instance().GetDataType());
+    if (repoPtr == nullptr) {
+        // GetSystemViewOverallRepo中已有日志报错
+        return;
+    }
+    Dic::Protocol::SystemViewOverallReqParam requestParams;
+    requestParams.rankId = "0";
+    SystemViewOverallHelper computeHelper;
+    UnitThreadsOperatorsResponse response;
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string sql = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+                      QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL : QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL;
+    std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+                       "Communication(Not Overlapped)" : "2";
+    uint64_t totalTime = 0;
+    std::vector<Protocol::ThreadTraces> notOverlapData{};
+    bool result = database->QueryOverlapAnalysisData(sql, type, minTimestamp, notOverlapData, totalTime);
+    EXPECT_TRUE(result);
+    repoPtr->QueryCommunicationOpsTimeDataByGroupName("Group 0 Communication", minTimestamp, notOverlapData,
+                                                      response.body.sameOperatorsDetails, database);
+    EXPECT_EQ(response.body.sameOperatorsDetails.size(), 4); // 4
+    int index = 0;
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_0_1");
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_1_1");
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_2_1");
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_3_1");
+}
+}

@@ -247,7 +247,12 @@ static inline const std::string WString2String(const std::wstring& ws)
     {
         return str.find(subStr) != std::string::npos;
     }
-
+    static bool ContainAnyOfSubStr(const std::string& str, const std::vector<std::string>& subStrs)
+    {
+        return std::any_of(subStrs.begin(), subStrs.end(), [&str](const std::string& subStr) {
+            return Contains(str, subStr);
+        });
+    }
     static std::string ToLower(const std::string& input)
     {
         std::string lowerInput = input;

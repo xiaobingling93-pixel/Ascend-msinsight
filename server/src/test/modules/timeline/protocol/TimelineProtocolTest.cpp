@@ -365,6 +365,43 @@ TEST_F(ProtocolTest, ResponseToJson)
     });
 }
 
+TEST_F(ProtocolTest, ToSystemViewOverallResponseTest)
+{
+    Dic::Protocol::TimelineProtocol timelineProtocol;
+    timelineProtocol.Register();
+    std::string error;
+    Dic::Protocol::SystemViewOverallResponse response;
+    response.details = {
+        {1.0, 30, 3, 4.0, 5.0, 3.0, "computing", {
+            {1.0, 30, 3, 4.0, 5.0, 3.0, "fa", {
+                {1.0, 30, 3, 4.0, 5.0, 3.0, "fa-fwb"},
+                {1.0, 30, 3, 4.0, 5.0, 3.0, "fa-bwb"}
+            }},
+            {1.0, 30, 3, 4.0, 5.0, 3.0, "matmal", {}}
+        }},
+        {2.0, 40, 5, 4.0, 5.0, 3.0, "communication", {}},
+    };
+    response.pageParam.total = response.details.size();
+
+    std::optional<Dic::document_t> jsonOptional = timelineProtocol.ToJson(response, error);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("data"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["data"].IsArray(), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.details.size());
+    size_t i = 0;
+    for (auto &item : jsonOptional.value()["body"]["data"].GetArray()) {
+        EXPECT_EQ(item["name"].GetString(), response.details[i].name);
+        EXPECT_EQ(item["totalTime"].GetDouble(), response.details[i].totalTime);
+        EXPECT_EQ(item["ratio"].GetDouble(), response.details[i].ratio);
+        EXPECT_EQ(item["nums"].GetUint(), response.details[i].nums);
+        EXPECT_EQ(item["avg"].GetDouble(), response.details[i].avg);
+        EXPECT_EQ(item["max"].GetDouble(), response.details[i].max);
+        EXPECT_EQ(item["min"].GetDouble(), response.details[i].min);
+        i++;
+    }
+}
+
 TEST_F(ProtocolTest, EventToJson)
 {
     EXPECT_NO_THROW({

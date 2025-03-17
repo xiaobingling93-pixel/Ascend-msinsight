@@ -52,7 +52,6 @@ static std::optional<std::string> QueryConnectionId(std::unique_ptr<SqlitePrepar
 static std::unique_ptr<SqliteResultSet>
 QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t startTime, uint64_t endTime,
                   const Dic::Protocol::Metadata &metaData, const std::string &rankId);
-
 static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
       const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId);
 
@@ -181,6 +180,18 @@ static inline bool IsValidHCCLGroupNameValue(const std::string &groupNameValue)
     const std::regex pattern(regexStr);
     return std::regex_search(groupNameValue, pattern);
 }
+static std::string GeneratorCommunicationSummarySql4Text(const OrderParam &orderParam, const PageParam &pageParam);
+static std::string GeneratorCommunicationSummarySql4Db(const OrderParam &orderParam, const PageParam &pageParam,
+                                                       const std::string &sqlForVersion);
+// 给定一个通信算子或Task，计算其未被通信掩盖部分的耗时
+static uint64_t CalculateUncoveredTime(const std::vector<Protocol::ThreadTraces> &uncovered, size_t &index,
+                                const Protocol::ThreadTraces &element);
+static uint64_t QueryCommunicationGroupIdByName(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                const std::string& name);
+static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t groupId,
+    uint64_t offset, const std::vector<Protocol::ThreadTraces> &notOverlapData,
+    std::vector<SameOperatorsDetails> &details);
+
 private:
 /* Functions for BbTraceDataBase */
     static inline std::unique_ptr<NpuInfoRepo> npuInfoRepo = std::make_unique<NpuInfoRepo>();
@@ -207,6 +218,8 @@ private:
 
     static std::string GetOrderByCondition(const EventsViewParams &params);
     static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId);
+    static std::string GetQueryThreadSameOperatorsDetailsSql(const std::vector<std::string> &tidList,
+        PROCESS_TYPE type, const Protocol::UnitThreadsOperatorsParams &requestParams);
 
     static std::string GetSingleSearchNameWithLockRangeSql(const std::string &path, const TrackQuery &singleQuery);
 

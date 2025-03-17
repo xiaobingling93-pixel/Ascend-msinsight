@@ -19,7 +19,7 @@ std::map<std::string, Protocol::MemorySuccess> FullDb::DbMemoryDataBase::ranks =
 
 bool DbMemoryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
-    return Database::OpenDb(dbPath, clearAllTable) && GetMetaVersion();
+    return Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion();
 }
 
 bool DbMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::string> &graphId)

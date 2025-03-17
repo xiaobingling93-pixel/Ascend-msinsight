@@ -94,7 +94,8 @@ public:
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
                                 uint64_t minTimestamp, const std::vector<TrackQuery> &trackQueryVec) override;
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
-         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
+                                         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
+                                         const std::vector<std::string> &trackIdList) override;
     bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();
@@ -123,10 +124,10 @@ public:
     void UpdateAllDepth();
     void InitStringsCache();
     void InitMetaDataInfo();
+    static std::string GetStringCacheValue(const std::string& path, const std::string& key);
     void InitConnectionCats();
     void UpdateWaitTime();
     void GenerateOverlapAnalysis();
-    static std::string GetStringCacheValue(const std::string& path, std::string key);
     static void Reset();
     bool QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
         std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
@@ -191,7 +192,6 @@ private:
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
     std::vector<Protocol::FlowLocation> ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet);
-
     int SearchSliceNameCount(const Protocol::SearchCountParams &params);
 
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,

@@ -51,19 +51,23 @@ public:
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement();
+    bool ExecSql(const std::string &sql);
     bool DropSomeTables(const std::vector<std::string>& tableNames);
     bool DropAllTable();
     bool IsDatabaseVersionChange();
-    bool GetMetaVersion();
+    bool QueryMetaVersion();
+    std::string GetMetaVersion();
     bool SetDataBaseVersion();
     std::string QueryValueFromMetaDataByName(const std::string &name);
 
     bool CheckTableExist(const std::string& tableName);
     bool CheckTablesExist(const std::vector<std::string> &tablesName);
+    bool CheckColumnExist(const std::string& tableName, const std::string& columnName);
+    bool CheckStringInColumn(const std::string& tableName, const std::string& columnName,
+                             const std::string& searchString);
     bool ExtendColumns(const std::string &tableName, const std::vector<std::string>& columns);
 
 protected:
-    bool ExecSql(const std::string &sql);
     bool CheckTableContainData(const std::string& tableName);
     virtual bool SetConfig();
     static std::string CheckSqlString(const std::string &src);

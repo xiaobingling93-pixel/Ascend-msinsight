@@ -1,10 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "TraceDatabaseHelper.h"
+#include <sstream>
 #include <algorithm>
 #include "NpuInfoRepo.h"
+#include "TraceDatabaseHelper.h"
 
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
@@ -161,6 +161,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
     return ExecuteQuery(stmt, mainSql + sql + orderBy + limitSql, searchName, rankId,
                         requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
 }
+
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId)
 {
@@ -212,24 +213,18 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     const std::string& rankId, uint64_t minTimestamp, const std::string& orderBy)
 {
     auto processType = GetProcessType(requestParams.metaType);
-    std::string comSql;
     std::string sql;
+    auto sameOperatorsDetailsSql = GetQueryThreadSameOperatorsDetailsSql(requestParams.tid, processType, requestParams);
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            Prepare(stmt, ASCEND_SAME_NAME_DETAIL_SQL + orderBy)->BindParams(requestParams.name, minTimestamp);
-            return Execute(stmt, rankId, requestParams.tid, requestParams.startTime, requestParams.endTime);
+            Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(requestParams.name, minTimestamp);
+            return Execute(stmt, rankId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
-            comSql = IsDeviceIdUnique(requestParams.rankId) ? COM_OP_SAME_NAME_DETAIL_SQL_UNIQUE_DEVICE :
-                COM_OP_SAME_NAME_DETAIL_SQL_NOT_UNIQUE_DEVICE;
-            sql = TASK_INFO_SAME_NAME_DETAIL_SQL + comSql + orderBy;
-            Prepare(stmt, sql)->BindParams(minTimestamp, rankId);
-            return Execute(stmt, requestParams.startTime, requestParams.endTime, requestParams.tid, requestParams.name);
+            Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(minTimestamp, rankId);
+            return Execute(stmt, requestParams.startTime, requestParams.endTime, requestParams.name);
         case PROCESS_TYPE::CANN_API:
-            sql = "with nameIds as (select id from STRING_IDS where value = ?)\n"
-                  "select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id "
-                  " from CANN_API main join  nameIds on name = id where globalTid = ? and type = ? "
-                  " and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
-            return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid, requestParams.tid,
+            sql = sameOperatorsDetailsSql + orderBy;
+            return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::MS_TX:
             sql = "with nameIds as (select id from STRING_IDS where value = ?) "
@@ -246,13 +241,41 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
             return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            sql = "select startNs - ? as timestamp, endNs - startNs as duration, 0 as depth, "
-                  " main.ROWID as id from OVERLAP_ANALYSIS main "
-              " where deviceId = ? and type = ? and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
-            return ExecuteQuery(stmt, sql, minTimestamp, rankId, requestParams.tid,
-                                requestParams.startTime, requestParams.endTime);
+            sql = sameOperatorsDetailsSql + orderBy;
+            return ExecuteQuery(stmt, sql, minTimestamp, rankId, requestParams.startTime, requestParams.endTime);
         default:
             throw DatabaseException("unsupported type!");
+    }
+}
+
+std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsSql(const std::vector<std::string> &tidList,
+    PROCESS_TYPE type, const Protocol::UnitThreadsOperatorsParams &requestParams)
+{
+    std::string tidPlaceholders = StringUtil::Join4SqlGroup(tidList);
+    // 已经在DbTraceDataBase::QueryThreadSameOperatorsDetails中检查过tid sql注入风险
+    std::string comSql;
+    switch (type) {
+        case PROCESS_TYPE::ASCEND_HARDWARE:
+            return ASCEND_SAME_NAME_DETAIL_SQL + tidPlaceholders
+            + ") and timestamp + duration >= ? AND timestamp <= ? ";
+        case PROCESS_TYPE::HCCL:
+            comSql = IsDeviceIdUnique(requestParams.rankId) ? COM_OP_SAME_NAME_DETAIL_SQL_UNIQUE_DEVICE :
+                     COM_OP_SAME_NAME_DETAIL_SQL_NOT_UNIQUE_DEVICE;
+            return HCCL_SAME_NAME_DETAIL_SQL_PART1 + tidPlaceholders + comSql + tidPlaceholders
+                   + ") and timestamp + duration >= startTime AND timestamp <= endTime group by op.opId ";
+        case PROCESS_TYPE::CANN_API:
+            return " with nameIds as (select id from STRING_IDS where value = ?) "
+                   " select startNs - ? as timestamp, endNs - startNs as duration, depth, "
+                   " main.ROWID as id , type as tid"
+                   " from CANN_API main join nameIds on name = id where globalTid = ? and type in (" + tidPlaceholders
+                   + ") and timestamp + duration >= ? AND timestamp <= ? ";
+        case PROCESS_TYPE::OVERLAP_ANALYSIS:
+            return "select startNs - ? as timestamp, endNs - startNs as duration, 0 as depth, type as tid"
+                   " main.ROWID as id , type as tid"
+                   " from OVERLAP_ANALYSIS main where deviceId = ? and type in (" + tidPlaceholders
+                   + ") and timestamp + duration >= ? AND timestamp <= ? ";
+        default:
+            return "";
     }
 }
 
@@ -925,6 +948,65 @@ void TraceDatabaseHelper::FilterTopLevelApi(std::vector<Protocol::FlowLocation> 
     }
 }
 
+std::string TraceDatabaseHelper::GeneratorCommunicationSummarySql4Text(
+    const OrderParam &orderParam, const PageParam &pageParam)
+{
+    std::string sql =
+        "WITH data as ("
+        "    SELECT s.name, s.timestamp as start_time, s.duration, s.end_time as end_time, t.pid, t.tid, s.track_id, "
+        "    t.thread_name, CASE WHEN t.thread_name like 'Group%' THEN 1 ELSE 0 END as type, "
+        "    row_number() OVER (ORDER by s.track_id ASC, s.timestamp ASC) as row_num FROM " + SLICE_TABLE + " s "
+        "    JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id WHERE s.track_id in ( "
+        "        SELECT track_id FROM " + THREAD_TABLE + " WHERE pid in ( "
+        "            SELECT pid FROM " + PROCESS_TABLE + " WHERE process_name in "
+                                                         " ('HCCL', 'COMMUNICATION', 'Communication') "
+        "        ) "
+        "    ) "
+        ") "
+        "SELECT d1.name as name, d1.start_time as startTime, d1.duration as duration, d1.end_time as endTime, "
+        "d1.pid as groupName, d1.tid as plane, d1.thread_name as threadName, d1.type as type, "
+        "CASE "
+        "    WHEN d1.name = 'Notify_Wait' THEN "
+        "        CASE "
+        "            WHEN d2.name = 'RDMASend' AND d3.name = 'RDMASend' OR "
+        "                (d3.name = 'Notify_Wait' AND d4.name = 'RDMASend' AND d5.name = 'RDMASend') THEN '0' "
+        "            ELSE '1' "
+        "        END "
+        "    ELSE '0' "
+        "END as flag "
+        "FROM data d1 "
+        "LEFT JOIN data d2 ON d2.row_num = d1.row_num - 1 AND d2.track_id = d1.track_id "
+        "LEFT JOIN data d3 ON d3.row_num = d1.row_num - 2 AND d3.track_id = d1.track_id "
+        "LEFT JOIN data d4 ON d4.row_num = d1.row_num - 3 AND d4.track_id = d1.track_id "
+        "LEFT JOIN data d5 ON d5.row_num = d1.row_num - 4 AND d5.track_id = d1.track_id "
+        "ORDER BY d1.pid, d1.tid, d1.start_time";
+    return sql;
+}
+
+std::string TraceDatabaseHelper::GeneratorCommunicationSummarySql4Db(const OrderParam &orderParam,
+    const PageParam &pageParam, const std::string &sqlForVersion)
+{
+    std::string sql = sqlForVersion +
+        "SELECT d1.name as name, d1.start_time as startTime, d1.duration as duration, d1.end_time as endTime, "
+        "d1.groupName as groupName, d1.planeId as plane, d1.thread_name as threadName, d1.type as type, "
+        "CASE "
+        "    WHEN d1.name = 'Notify_Wait' THEN "
+        "        CASE "
+        "           WHEN d2.name = 'RDMASend' AND d3.name = 'RDMASend' OR "
+        "               (d3.name = 'Notify_Wait' AND d4.name = 'RDMASend' AND d5.name = 'RDMASend') THEN '0' "
+        "           ELSE '1' "
+        "        END "
+        "    ELSE '0' "
+        "END as flag "
+        "FROM data d1 "
+        "LEFT JOIN data d2 ON d2.groupName = d1.groupName AND d2.planeId = d1.planeId AND d2.row_num = d1.row_num - 1 "
+        "LEFT JOIN data d3 ON d3.groupName = d1.groupName AND d3.planeId = d1.planeId AND d3.row_num = d1.row_num - 2 "
+        "LEFT JOIN data d4 ON d4.groupName = d1.groupName AND d4.planeId = d1.planeId AND d4.row_num = d1.row_num - 3 "
+        "LEFT JOIN data d5 ON d5.groupName = d1.groupName AND d5.planeId = d1.planeId AND d5.row_num = d1.row_num - 4 "
+        "ORDER BY d1.groupName, d1.planeId, d1.start_time";
+    return sql;
+}
+
 bool TraceDatabaseHelper::CalculateParallelParameter(const std::vector<Protocol::ThreadTraces> &fwdTraceList,
     const std::vector<Protocol::ThreadTraces> &bwdTraceList,
     uint64_t minBwdStartTime, std::pair<uint16_t, uint16_t> &parameter)
@@ -1123,8 +1205,12 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
             threads.wallDuration = cur.duration;
             threads.occurrences = 1;
             threads.avgWallDuration = cur.duration;
-            threads.selfTime = selfTimeKeyValue.at(cur.name);
-            threads.tid = cur.tid;
+            if (cur.name.empty()) {
+                continue;
+            } else {
+                threads.selfTime = selfTimeKeyValue.at(cur.name);
+            }
+            threads.tid.insert(cur.tid);
             threads.pid = cur.pid;
             threads.metaType = cur.metaType;
             responseBody.data.emplace_back(threads);
@@ -1133,6 +1219,7 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
             responseBody.data[index].occurrences += 1;
             responseBody.data[index].avgWallDuration = NumberSafe::Division(
                 responseBody.data[index].wallDuration, responseBody.data[index].occurrences);
+            responseBody.data[index].tid.insert(cur.tid);
         }
     }
 }
@@ -1156,7 +1243,7 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             threads.occurrences = 1;
             threads.avgWallDuration = cur.duration;
             threads.selfTime = selfTimeKeyValue.at(cur.name);
-            threads.tid = cur.tid;
+            threads.tid.insert(cur.tid);
             threads.pid = cur.pid;
             threads.metaType = cur.metaType;
             responseBody.data.emplace_back(threads);
@@ -1165,8 +1252,99 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             responseBody.data[index].occurrences += 1;
             responseBody.data[index].avgWallDuration = NumberSafe::Division(
                 responseBody.data[index].wallDuration, responseBody.data[index].occurrences);
+            responseBody.data[index].tid.insert(cur.tid);
         }
     }
+}
+
+uint64_t TraceDatabaseHelper::CalculateUncoveredTime(const std::vector<Protocol::ThreadTraces> &uncovered,
+    size_t &index, const ThreadTraces &element)
+{
+    uint64_t totalUncoveredTime = 0;
+    if (uncovered.empty() || index >= uncovered.size()) {
+        return totalUncoveredTime;
+    }
+    // sql语句能够保证uncovered按start_time升序排列
+    while (index < uncovered.size()) {
+        Protocol::ThreadTraces uncoveredEle = uncovered.at(index);
+        // 未掩盖部分的分片小于通信Op或Task时，二者无交集，需要跳到下一个未掩盖部分的分片
+        if (element.startTime >= uncoveredEle.endTime) {
+            index++;
+            continue;
+        }
+        // 未掩盖部分的分片大于通信Op或Task时，二者也无交集，退出循环
+        if (element.endTime <= uncoveredEle.startTime) {
+            break;
+        }
+        // 二者有交集时，取其交集部分，就是通信Op或Task真实的未掩盖部分
+        uint64_t startMax = uncoveredEle.startTime > element.startTime ? uncoveredEle.startTime : element.startTime;
+        uint64_t endMin = uncoveredEle.endTime > element.endTime ? element.endTime : uncoveredEle.endTime;
+        uint64_t uncoveredTime = endMin >= startMax ? endMin - startMax : 0;
+
+        if (UINT64_MAX - totalUncoveredTime > uncoveredTime) {
+            totalUncoveredTime += uncoveredTime;
+        } else {
+            // 实际数据很小，正常情况下不会溢出
+            ServerLog::Error("Accumulation overflow occurred when calculating the total uncovered time.");
+            totalUncoveredTime += 0;
+        }
+        if (element.endTime > uncoveredEle.endTime) {
+            index++;
+        } else {
+            break;
+        }
+    }
+    return totalUncoveredTime;
+}
+
+uint64_t TraceDatabaseHelper::QueryCommunicationGroupIdByName(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                              const std::string& name)
+{
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Query Communication Group Id By Name.", stmt->GetErrorMessage());
+        return UINT64_MAX;
+    }
+    while (resultSet->Next()) {
+        std::string tmpName = resultSet->GetString("groupName");
+        uint64_t groupId = resultSet->GetUint64("groupId");
+        if (tmpName == name) {
+            return groupId;
+        }
+    }
+
+    return UINT64_MAX;
+}
+
+bool TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    uint64_t groupId, uint64_t offset, const std::vector<Protocol::ThreadTraces> &notOverlapData,
+    std::vector<SameOperatorsDetails> &details)
+{
+    auto resultSet = stmt->ExecuteQuery(offset, offset, groupId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query communication ops time data.",
+                         stmt->GetErrorMessage());
+        return false;
+    }
+    size_t index = 0;
+    while (resultSet->Next()) {
+        Protocol::ThreadTraces one{};
+        one.name = resultSet->GetString("name");
+        one.duration = resultSet->GetUint64("duration");
+        one.startTime = resultSet->GetUint64("startNs");
+        one.endTime = resultSet->GetUint64("endNs");
+        if (!notOverlapData.empty()) { // calculate not overlapped time
+            uint64_t time = CalculateUncoveredTime(notOverlapData, index, one);
+            // 与未掩盖部分无交集，说明此通信算子被掩盖，无需计入数据
+            if (time == 0) {
+                continue;
+            }
+        }
+        SameOperatorsDetails tmp = {one.startTime, one.duration, "", one.name, resultSet->GetUint64("id"), 0, ""};
+        details.push_back(tmp);
+    }
+
+    return true;
 }
 
 void TraceDatabaseHelper::SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr)

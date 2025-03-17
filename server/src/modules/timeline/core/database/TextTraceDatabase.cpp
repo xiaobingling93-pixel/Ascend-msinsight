@@ -6,6 +6,7 @@
 #include "TraceDatabaseHelper.h"
 #include "TraceDatabaseSqlConst.h"
 #include "TraceTime.h"
+#include "TrackInfoManager.h"
 #include "TextTraceDatabase.h"
 
 namespace Dic::Module::Timeline {
@@ -58,7 +59,7 @@ bool TextTraceDatabase::InitSliceFlowCounterStmt()
     insertSliceStmt = CreatPreparedStatement(sql);
     sql = TextSqlConstant::GetInsertFlowSql();
     insertFlowStmt = CreatPreparedStatement(sql);
-    sql = TextSqlConstant::GetInsertCounterql();
+    sql = TextSqlConstant::GetInsertCounterSql();
     insertCounterStmt = CreatPreparedStatement(sql);
     if (insertSliceStmt == nullptr || insertFlowStmt == nullptr || insertCounterStmt == nullptr) {
         ServerLog::Error("Failed to prepare slice statement.");
@@ -1490,27 +1491,45 @@ OneKernelData TextTraceDatabase::QueryKernelTid(const uint64_t trackId)
 }
 
 bool TextTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
-    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
+    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
+    const std::vector<std::string> &trackIdList)
 {
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack");
+        ServerLog::Error("There is an SQL injection attack in request parameter orderBy.");
         return false;
     }
-    std::string sql = TextSqlConstant::GetThreadSameOperatorsDetailsSql(requestParams.order, requestParams.orderBy);
+    for (const auto& trackId : trackIdList) {
+        if (!StringUtil::CheckSqlValid(trackId)) {
+            ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", trackId);
+            return false;
+        }
+    }
+    std::string sql = TextSqlConstant::GetThreadSameOperatorsDetailsSql(requestParams.order, requestParams.orderBy,
+                                                                        trackIdList);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query thread same operators details. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    auto resultSet =
-        stmt->ExecuteQuery(requestParams.name, traceId, endTime, startTime, requestParams.pageSize, offset);
+    auto resultSet = stmt->ExecuteQuery(requestParams.name, endTime, startTime, requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("Query thread same operators details. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
+    ExecuteQueryThreadSameOperatorsDetails(resultSet, minTimestamp, requestParams, responseBody);
+    responseBody.currentPage = requestParams.current;
+    responseBody.pageSize = requestParams.pageSize;
+    responseBody.count = SameOperatorsCount(requestParams.name, trackIdList, startTime, endTime);
+    return true;
+}
+
+void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique_ptr<SqliteResultSet>& resultSet,
+    uint64_t minTimestamp, const Protocol::UnitThreadsOperatorsParams &requestParams,
+    Protocol::UnitThreadsOperatorsBody &responseBody)
+{
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
@@ -1521,32 +1540,33 @@ bool TextTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         sameOperatorsDetail.timestamp = tempStartTime - minTimestamp;
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
+        uint64_t trackId = resultSet->GetInt64("track_id");
+        TrackInfo trackInfo;
+        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
+        sameOperatorsDetail.tid = trackInfo.threadId;
         SliceQuery sliceQuery;
         sliceQuery.rankId = requestParams.rankId;
-        sliceQuery.trackId = traceId;
+        sliceQuery.trackId = trackId;
         std::unordered_map<uint64_t, uint32_t> depthCache;
         sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
         sameOperatorsDetail.depth = depthCache[std::atoll(sameOperatorsDetail.id.c_str())];
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
-    responseBody.currentPage = requestParams.current;
-    responseBody.pageSize = requestParams.pageSize;
-    responseBody.count = SameOperatorsCount(requestParams.name, traceId, startTime, endTime);
-    return true;
 }
 
-uint64_t TextTraceDatabase::SameOperatorsCount(const std::string &name, int64_t &trackId, uint64_t &startTime,
-    uint64_t &endTime)
+uint64_t TextTraceDatabase::SameOperatorsCount(const std::string &name, const std::vector<std::string> &trackIdList,
+                                               uint64_t &startTime, uint64_t &endTime)
 {
     uint64_t total = 0;
-    std::string sql = "SELECT count(*) FROM " + sliceTable +
-        " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ?;";
+    std::string trackIdPlaceholders = StringUtil::join(trackIdList, ", ");
+    std::string sql = "SELECT count(*) FROM " + sliceTable + " WHERE name = ? AND "
+        " track_id in (" + trackIdPlaceholders + ") AND timestamp <= ? AND timestamp + duration >= ?;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for same operators count.", sqlite3_errmsg(db));
         return total;
     }
-    auto resultSet = stmt->ExecuteQuery(name, trackId, endTime, startTime);
+    auto resultSet = stmt->ExecuteQuery(name, endTime, startTime);
     if (resultSet == nullptr) {
         ServerLog::Error("same operators count. Failed to get result set.", stmt->GetErrorMessage());
         return total;
@@ -1560,7 +1580,7 @@ uint64_t TextTraceDatabase::SameOperatorsCount(const std::string &name, int64_t 
 bool TextTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params,
     const std::string &optimizers, std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
 {
-    std::string sql = TextSqlConstant::QueryAffinityOptimizerSql(optimizers, params.orderBy, params.order);
+    std::string sql = TextSqlConstant::QueryAffinityOptimizerTextSql(optimizers, params.orderBy, params.order);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for query affinity optimizer.", sqlite3_errmsg(db));
@@ -1591,7 +1611,7 @@ bool TextTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
     if (!CheckTableExist(sliceTable) || !CheckTableExist(TABLE_KERNEL)) {
         return false;
     }
-    std::string sql = TextSqlConstant::GenerateAICpuQuerySql(replace, params, dataType);
+    std::string sql = TextSqlConstant::GenerateAICpuQueryTextSql(replace, params, dataType);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for AI cpu op exceed threshold.");
@@ -1766,7 +1786,7 @@ bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
 bool TextTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    auto stmt = CreatPreparedStatement(TextSqlConstant::GenerateAclnnQuerySql(params));
+    auto stmt = CreatPreparedStatement(TextSqlConstant::GenerateAclnnQueryTextSql(params));
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
@@ -1793,7 +1813,7 @@ bool TextTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams
     const std::set<std::string> &pattern, uint64_t minTimestamp,
     std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
 {
-    auto stmt = CreatPreparedStatement(QUERY_AFFINITY_API_SQL);
+    auto stmt = CreatPreparedStatement(QUERY_AFFINITY_API_TEXT_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for Affinity API.");
         return false;
@@ -1833,7 +1853,7 @@ bool TextTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams
 bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
 {
-    std::string sql = TextSqlConstant::GenerateFuseableOpFilterSql(params, rule);
+    std::string sql = TextSqlConstant::GenerateFuseableOpFilterTextSql(params, rule);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
@@ -1927,6 +1947,4 @@ bool TextTraceDatabase::DeleteEmptyFlow()
     ExecSql(sql);
     return true;
 }
-} // end of namespace Timeline
-  // end of namespace Module
-  // end of namespace Dic
+} // end of namespace Dic::Module::Timeline

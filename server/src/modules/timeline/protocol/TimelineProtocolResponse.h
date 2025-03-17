@@ -8,9 +8,15 @@
 
 #include <utility>
 #include <vector>
+#include <set>
+#include <cmath>
+#include <atomic>
+#include <unordered_map>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
+#include "ProtocolParamUtil.h"
 #include "ProtocolMessage.h"
+#include "NumberUtil.h"
 
 namespace Dic {
 namespace Protocol {
@@ -89,7 +95,7 @@ struct Threads {
     uint64_t occurrences = 0;
     uint64_t avgWallDuration = 0;
     uint64_t selfTime = 0;
-    std::string tid;
+    std::set<std::string> tid;
     std::string pid;
     std::string metaType;
 };
@@ -323,6 +329,65 @@ struct SystemViewResponse : public Response {
     SystemViewBody body;
 };
 
+struct SystemViewOverallRes {
+    double totalTime{};
+    double ratio{};
+    uint32_t nums{};
+    double avg{};
+    double max = -std::numeric_limits<double>::infinity();
+    double min = std::numeric_limits<double>::infinity();
+    std::string name;
+    std::vector<SystemViewOverallRes> children;
+    uint32_t level{1};
+    // 每个结构体对象返回一个唯一id
+    static std::atomic<uint32_t> idCounter;
+    std::string id;
+
+    void ValidateValues()
+    {
+        max = (max == -std::numeric_limits<double>::infinity()) ? 0.0 : max;
+        min = (min == std::numeric_limits<double>::infinity()) ? 0.0 : min;
+    }
+
+    static bool CompareByName(const SystemViewOverallRes& a, const SystemViewOverallRes& b)
+    {
+        return a.name < b.name;
+    }
+};
+
+struct CommunicationSummaryInfoByThread {
+    std::string threadName;
+    std::string group;
+    std::string plane;
+    uint64_t completeWaitTime{};
+    uint64_t completeTransmitTime{};
+    uint64_t uncoveredWaitTime{};
+    uint64_t uncoveredTransmitTime{};
+
+    void UpdateData(bool waitFlag, uint64_t completeTime, uint64_t uncoveredTime)
+    {
+        if (waitFlag) {
+            completeWaitTime += completeTime;
+            uncoveredWaitTime += uncoveredTime;
+        } else {
+            completeTransmitTime += completeTime;
+            uncoveredTransmitTime += uncoveredTime;
+        }
+    }
+};
+
+struct CommunicationSummaryInfoByGroup {
+    std::string groupName;
+    CommunicationSummaryInfoByThread op;
+    std::unordered_map<std::string, CommunicationSummaryInfoByThread> taskMap;
+};
+
+struct SystemViewOverallResponse : public Response {
+    SystemViewOverallResponse() : Response(REQ_RES_SYSTEM_VIEW_OVERALL) {}
+    std::vector<SystemViewOverallRes> details;
+    PageParam pageParam;
+};
+
 class EventDetail {
 public:
     virtual ~EventDetail() = default;
@@ -447,14 +512,22 @@ struct CommunicationKernelResponse : public Response {
 };
 
 struct SameOperatorsDetails {
-    uint64_t timestamp = 0;
-    uint64_t duration = 0;
+    uint64_t timestamp{};
+    uint64_t duration{};
+    // id、depth用于支持选中列表;
     std::string id;
-    uint64_t depth;
+    // name用于支持overall metric more details列表
+    std::string name;
+    // 临时支持db场景跳转
+    uint64_t opId{};
+    uint64_t depth{};
+    std::string tid;
 };
 
 struct UnitThreadsOperatorsBody {
     std::vector<SameOperatorsDetails> sameOperatorsDetails;
+    std::string rankId;
+    std::string metaType;
     uint64_t count{};
     uint64_t pageSize{};
     uint64_t currentPage{};

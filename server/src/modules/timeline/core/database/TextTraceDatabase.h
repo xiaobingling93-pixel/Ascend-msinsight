@@ -92,11 +92,15 @@ public:
         uint64_t minTimestamp, const std::vector<TrackQuery> &trackQueryVec) override;
 
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
-        Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
+                                         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
+                                         const std::vector<std::string> &trackIdList) override;
 
     std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
-
-    uint64_t SameOperatorsCount(const std::string &name, int64_t &trackId, uint64_t &startTime, uint64_t &endTime);
+    uint64_t SameOperatorsCount(const std::string &name, const std::vector<std::string> &trackIdList,
+                                uint64_t &startTime, uint64_t &endTime);
+    void ExecuteQueryThreadSameOperatorsDetails(const std::unique_ptr<SqliteResultSet>& resultSet,
+        uint64_t minTimestamp, const Protocol::UnitThreadsOperatorsParams &requestParams,
+        Protocol::UnitThreadsOperatorsBody &responseBody);
     bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
 

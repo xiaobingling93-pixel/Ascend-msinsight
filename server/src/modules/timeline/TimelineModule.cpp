@@ -23,6 +23,8 @@
 #include "SearchAllSlicesHandler.h"
 #include "QueryEventsViewHandler.h"
 #include "QueryCommunicationKernelHandler.h"
+#include "QuerySystemViewOverallHandler.h"
+#include "QueryOverallMoreDetailsHandler.h"
 #include "ParseCardsHandler.h"
 #include "RenderEngine.h"
 #include "DataEngine.h"
@@ -82,6 +84,9 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SAME_OPERATORS_DURATION, std::make_unique<QueryThreadsSameOperatorHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_ALL_SLICES, std::make_unique<SearchAllSlicesHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_EVENTS_VIEW, std::make_unique<QueryEventsViewHandler>());
+    requestHandlerMap.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, std::make_unique<QuerySystemViewOverallHandler>());
+    requestHandlerMap.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS,
+                              std::make_unique<QueryOverallMoreDetailsHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

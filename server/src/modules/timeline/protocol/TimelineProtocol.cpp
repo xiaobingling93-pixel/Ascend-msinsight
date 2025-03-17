@@ -33,6 +33,8 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_KERNEL_DETAIL, ToCommunicationKernelRequest);
     jsonToReqFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesRequest);
+    jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallRequest);
+    jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToSystemViewOverallMoreDetailsRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -58,6 +60,8 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesResponseJson);
     resToJsonFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsResponseJson);
+    resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallResponseJson);
+    resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToOverallMoreDetailsResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -438,7 +442,11 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
+    if (json["params"].HasMember("tid") && json["params"]["tid"].IsArray()) {
+        for (const auto &tid : json["params"]["tid"].GetArray()) {
+            reqPtr->params.tid.emplace_back(tid.GetString());
+        }
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
@@ -481,6 +489,43 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchAllSlicesRequest(const Dic::j
     }
     return reqPtr;
 }
+
+std::unique_ptr<Request> TimelineProtocol::ToSystemViewOverallRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<SystemViewOverallRequest> reqPtr = std::make_unique<SystemViewOverallRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info for system view overall command.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.page.current, json["params"], "current");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.page.pageSize, json["params"], "pageSize");
+    return reqPtr;
+}
+
+std::unique_ptr<Request>TimelineProtocol::ToSystemViewOverallMoreDetailsRequest(const Dic::json_t &json,
+                                                                                std::string &error)
+{
+    std::unique_ptr<SystemViewOverallMoreDetailsRequest> reqPtr =
+        std::make_unique<SystemViewOverallMoreDetailsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info for system view overall command.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    if (json["params"].HasMember("categoryList") && json["params"]["categoryList"].IsArray()) {
+        for (const auto &cat : json["params"]["categoryList"].GetArray()) {
+            reqPtr->params.categoryList.emplace_back(cat.GetString());
+        }
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order.orderType, json["params"], "order");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.page.current, json["params"], "current");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.page.pageSize, json["params"], "pageSize");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region << Response To Json>>
@@ -633,6 +678,15 @@ std::optional<document_t> TimelineProtocol::ToParseProgressEventJson(const Event
     return ToEventJson<ParseProgressEvent>(dynamic_cast<const ParseProgressEvent &>(event));
 }
 
+std::optional<document_t> TimelineProtocol::ToSystemViewOverallResponseJson(const Response &response)
+{
+    return ToResponseJson<SystemViewOverallResponse>(dynamic_cast<const SystemViewOverallResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToOverallMoreDetailsResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitThreadsOperatorsResponse>(dynamic_cast<const UnitThreadsOperatorsResponse &>(response));
+}
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic

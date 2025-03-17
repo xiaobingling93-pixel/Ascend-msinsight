@@ -19,6 +19,7 @@ const int INVALID_NUMBER = 0xffffffff;
 const int HEXADECIMAL = 16;
 const std::string THOUSAND_SUFFIX = "000";
 const int THOUSAND = 1000;
+const int TWO = 2;
 const double PERCENTAGE_RATIO_SCALE = 100.0;
 const int64_t MAX = pow(10, 12);
 constexpr int MAX_RESERVED_DIGITS = 6;

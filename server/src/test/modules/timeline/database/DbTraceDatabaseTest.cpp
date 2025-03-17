@@ -422,7 +422,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenSqlInject)
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     requestParams.orderBy = "lll@#";
     const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
+    const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, false);
 }
@@ -434,7 +434,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbNotOpen)
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
+    const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, false);
 }
@@ -450,12 +450,14 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.tid = {"0"};
+    requestParams.pid = "17738580008830245";
     requestParams.metaType = "Ascend Hardware";
     requestParams.orderBy = "name";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
+    const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }
@@ -472,12 +474,14 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenHccl)
     DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.tid = {"0"};
+    requestParams.pid = "17738580008830245";
     requestParams.metaType = "HCCL";
     requestParams.orderBy = "name";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
+    const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, false);
 }
@@ -492,12 +496,14 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
     DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.tid = {"0"};
+    requestParams.pid = "17738580008830245";
     requestParams.metaType = "CANN_API";
     requestParams.orderBy = "name";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
+    const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }
@@ -512,32 +518,14 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenMstx)
     DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.tid = {"0"};
+    requestParams.pid = "17738580008830245";
     requestParams.metaType = "MSTX_EVENTS";
     requestParams.orderBy = "depth";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
-    bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
-    EXPECT_EQ(result, true);
-}
-
-TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenOverlap)
-{
-    std::recursive_mutex testMutex;
-    MockDatabase2 database(testMutex);
-    sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
-    database.SetDbPtr(db);
-    Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.metaType = "OVERLAP_ANALYSIS";
-    requestParams.orderBy = "depth";
-    requestParams.order = "DESC";
-    Dic::Protocol::UnitThreadsOperatorsBody responseBody;
-    const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
+    const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }
@@ -560,6 +548,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     DatabaseTestCaseMockUtil::InsertData(db, strData);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.tid = {"0"};
     requestParams.pid = "17738580008830245";
     requestParams.metaType = "PYTORCH_API";
     requestParams.orderBy = "depth";
@@ -571,7 +560,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     requestParams.name = "FORMAT_ND";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const int64_t traceId = 0;
+    const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }

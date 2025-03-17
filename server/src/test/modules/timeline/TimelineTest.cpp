@@ -540,7 +540,7 @@ TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
     requestParam.pageSize = PAGE_SIZE;
     Protocol::UnitThreadsOperatorsBody responseBody;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 65;
+    std::vector<string> traceId = {"65"};
 
     // response data
     uint64_t TIMESTAMP1 = 1695115378714082800;
@@ -1015,4 +1015,31 @@ TEST_F(TestSuit, QuerySliceByTimepointAndNameTest)
     const uint64_t expectDur = 496851;
     EXPECT_EQ(slice.duration, expectDur);
     EXPECT_EQ(slice.cardId, "0");
+}
+
+TEST_F(TestSuit, QueryOverlapAnalysisDataTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    std::vector<Protocol::ThreadTraces> notOverlapData{};
+    uint64_t totalTime = 0;
+    bool result = database->QueryOverlapAnalysisData("", "", 0, notOverlapData, totalTime);
+    EXPECT_EQ(result, false);
+    EXPECT_EQ(notOverlapData.empty(), true);
+    result = database->QueryOverlapAnalysisData(QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL,
+        OVERLAP_TYPES.at(2), 0, notOverlapData, totalTime); // 2 for not overlap
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(notOverlapData.size(), 34); // 34
+}
+
+TEST_F(TestSuit, QueryCommunicationGroupMapTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    std::map<std::string, std::string> groupMap{};
+    bool result = database->QueryCommunicationGroupMap("", groupMap);
+    EXPECT_EQ(result, false);
+    EXPECT_EQ(groupMap.empty(), true);
+    result = database->QueryCommunicationGroupMap(QUERY_COMMUNICATION_GROUP_MAP_TEXT_SQL, groupMap);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(groupMap.size(), 21); // 21
+    EXPECT_EQ(groupMap.at("14083661400@17"), "Group 2 Communication");
 }
