@@ -59,6 +59,7 @@ class Const:
     MAC_OS_APPNAME = 'MindStudioInsight.app'
     PYTHON = 'python' if platform.system() == WINDOWS_OS else 'python3'
     NPM = 'npm.cmd' if platform.system() == WINDOWS_OS else 'npm'
+    CARGO = 'cargo.exe' if platform.system() == WINDOWS_OS else 'cargo'
     GRADLE = 'gradle.bat' if platform.system() == WINDOWS_OS else 'gradle'
     GRADLEW = 'gradlew.bat' if platform.system() == WINDOWS_OS else 'gradlew'
     JUPYTER = 'jupyter'
@@ -95,6 +96,23 @@ def clean():
         build_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR, module, Const.BUILD_DIR)
         if os.path.exists(build_dir):
             shutil.rmtree(build_dir)
+
+
+# 后台下载npm和cargo依赖，与server并行执行，以缩短构建时间
+def download_dependency_background() -> bool:
+    modules_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR)
+    build_modules = [Const.NPM, 'install', '--force']
+    platform_dir = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR)
+    build_platform = [Const.CARGO, 'fetch']
+    try:
+        subprocess.Popen(build_modules, cwd=modules_dir, stdout=subprocess.PIPE)
+        logging.info('[download dependency]Start to download dependency for modules in background.')
+        subprocess.Popen(build_platform, cwd=platform_dir, stdout=subprocess.PIPE)
+        logging.info('[download dependency]Start to download dependency for platform in background.')
+        return True
+    except Exception as e:
+        logging.error('[download dependency] Failed to start to download dependency in background. %s.', e)
+        return False
 
 
 def traverse_folder_and_chmod(path, dir_mode, file_mode):
@@ -375,14 +393,12 @@ def build_light_package(version, os_name, is_huaweicloud):
     # 华为云构建将插件一并打包
     if is_huaweicloud:
         huaweicloud_install_plugin(profiler_path=profiler_path)
-    # 构建底座
-    cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
     # 在macos下使用cargo bundle --release直接构建为app
     if platform.system() == Const.MAC_OS:
-        cmd_list = [cargo_cmd, 'bundle', '--release']
+        cmd_list = [Const.CARGO, 'bundle', '--release']
         set_mac_app_signature_certificate_id(os_name)
     else:
-        cmd_list = [cargo_cmd, 'build', '--release']
+        cmd_list = [Const.CARGO, 'build', '--release']
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
     if is_huaweicloud:
         shutil.copyfile(os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py"),
@@ -397,6 +413,7 @@ def build_light_package(version, os_name, is_huaweicloud):
     if result != 0:
         return 1
     return zip_package(profiler_path, package_name)
+
 
 file_names = {
     (Const.WINDOWS_OS, 'bin'): 'MindStudioInsight.exe',
@@ -551,14 +568,19 @@ def create_version_info_file(version, modify_time):
 
 def build_product_parallel(vscode_version, idea_version, os_name):
     logging.info('Start to build products')
-    funcs = [build_vscode, build_intellij, build_package, build_jupyterlab]
+    funcs = [build_package, build_jupyterlab]
     args_list = [
-        (vscode_version, os_name),
-        (idea_version, os_name),
         (idea_version, os_name),
         (vscode_version, os_name)
     ]
-    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
+    if os.getenv('BUILD_INTELLIJ'):
+        funcs.append(build_intellij)
+        args_list.append((idea_version, os_name))
+    if os.getenv('BUILD_VSCODE'):
+        funcs.append(build_vscode)
+        args_list.append((vscode_version, os_name))
+
+    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), len(funcs)))
     results = []
     for func, args in zip(funcs, args_list):
         results.append(pool.apply_async(func, args))
@@ -603,6 +625,8 @@ def update_plugins_version(version):
 
 
 def huaweicloud_install_plugin(profiler_path):
+    if WORKSPACE_PATH is None:
+        return
     plugins_dir = os.path.join(WORKSPACE_PATH, "Msi_plugin_package")
     if not os.path.exists(plugins_dir):
         logging.warning("Plugin dir not found")
@@ -673,6 +697,7 @@ def set_mac_app_signature_certificate_id(framework: str):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     idea_version = load_version_info('7.0.RC3')
     update_plugins_version(idea_version)
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
@@ -685,6 +710,8 @@ def main():
         os_name = 'win'
     elif os_info.find('mac') > -1:
         os_name = 'darwin-' + framework
+    if not download_dependency_background():
+        return 1
     result = build_server()
     if result != 0:
         logging.error('Failed to build server.')

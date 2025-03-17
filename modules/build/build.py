@@ -79,7 +79,7 @@ def parallel_build():
     logging.info('Start to build modules')
 
     npm_cmd = 'npm.cmd' if platform.system() == 'Windows' else 'npm'
-    result = execute_cmd('moudles', MODULES_DIR, [npm_cmd, 'install', '--force'])
+    result = execute_cmd('modules', MODULES_DIR, [npm_cmd, 'install', '--force'])
     if result != 0:
         logging.error('Failed to install dependencies, %s', result)
         return 1
@@ -89,7 +89,7 @@ def parallel_build():
         return 1
 
     modules = list(MODULES_MAP.keys())
-    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
+    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), len(MODULES_MAP)))
     results = pool.map(build_module, modules)
     pool.close()
     pool.join()
