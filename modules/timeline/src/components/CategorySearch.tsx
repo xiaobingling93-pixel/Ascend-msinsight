@@ -184,6 +184,8 @@ const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): voi
                         duration: slice.duration,
                         depth: slice.depth,
                         threadId: slice.tid,
+                        processId: slice.pid,
+                        cardId: slice.rankId,
                         id: slice.id,
                         metaType: (unit.metadata as ThreadMetaData).metaType,
                     };

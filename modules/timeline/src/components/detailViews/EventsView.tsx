@@ -194,6 +194,8 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
                     duration: rowData.duration,
                     depth,
                     threadId: rowData.threadId,
+                    processId: rowData.processId,
+                    cardId: rankId,
                     startRecordTime: props.session.startRecordTime,
                     showDetail: false,
                 };

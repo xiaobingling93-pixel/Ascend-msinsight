@@ -283,6 +283,8 @@ const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
                     duration: rowData.duration,
                     depth,
                     threadId: rowData.tid,
+                    processId: rowData.pid,
+                    cardId: rowData.rankId,
                     startRecordTime: props.session.startRecordTime,
                     metaType: rowData.pid,
                     showDetail: false,

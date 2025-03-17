@@ -284,7 +284,9 @@ export const ThreadUnit = unit<ThreadMetaData>({
                         return;
                     }
                     const check = selectedUnitMetaData !== undefined && selectedData !== undefined &&
-                        selectedUnitMetaData.threadId === threadMetaData.threadId;
+                        selectedUnitMetaData.threadId === threadMetaData.threadId &&
+                        selectedUnitMetaData.processId === threadMetaData.processId &&
+                        selectedUnitMetaData.cardId === threadMetaData.cardId;
                     // 来自本泳道点击的数据，给数据描边+画线
                     ctx.strokeStyle = theme.textColorPrimary;
                     if (check) {
@@ -723,6 +725,8 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                         duration: record.duration,
                         depth: record.depth,
                         threadId: record.tid,
+                        processId: record.pid,
+                        cardId: (metadata as MetaData).cardId,
                         startRecordTime: session.startRecordTime,
                         showSelectedData: true,
                     };

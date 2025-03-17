@@ -581,6 +581,8 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
                     duration: slice.duration,
                     depth: slice.depth,
                     threadId: slice.threadId,
+                    processId: slice.processId,
+                    cardId: slice.rankId,
                     metaType: (unit.metadata as ThreadMetaData).metaType,
                 };
             },
