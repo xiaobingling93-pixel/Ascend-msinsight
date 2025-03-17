@@ -37,6 +37,7 @@ struct ImportActionResBody {
     // 导入文件是否待解析
     bool isPending = false;
     bool hasCachelineRecords = false;
+    uint16_t version = 0x5a;
 };
 
 struct ImportActionResponse : public Response {

@@ -109,7 +109,12 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
         if (!file) {
             break;
         }
-        // 跳转到实际数据的开始
+
+        if (dataType == static_cast<int>(DataTypeEnum::API_INSTR)) {
+            file.read(reinterpret_cast<char *>(&instrVersion), instrVersionLen);
+        } else {
+            file.seekg(instrVersionLen, std::ios::cur);
+        }
         file.seekg(reserveLen, std::ios::cur);
 
         int64_t startPos = file.tellg();
@@ -527,6 +532,11 @@ bool SourceFileParser::HasCachelineRecords()
         return true;
     }
     return false;
+}
+
+int8_t SourceFileParser::GetInstrVersion()
+{
+    return  instrVersion;
 }
 
 void SourceFileParser::SetBaselineFilePath(const std::string &inputFilePath)

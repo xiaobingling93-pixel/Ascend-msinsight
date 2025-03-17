@@ -139,7 +139,7 @@ void SourceInstructionParser::ParseInstruction(Value &instr)
             ProcessColumnDataArray<std::string>(columData, sourceFileInstruction.stringColumnMap[columnName]);
         } else if (type == ColumDataType::INT) {
             ProcessColumnDataArray<int>(columData, sourceFileInstruction.intColumnMap[columnName]);
-        } else if (type == ColumDataType::FLOAT) {
+        } else if (type == ColumDataType::FLOAT || type == ColumDataType::PERCENTAGE) {
             ProcessColumnDataArray<float>(columData, sourceFileInstruction.floatColumnMap[columnName]);
         }
     }
@@ -354,7 +354,7 @@ void SourceInstructionParser::ParseFile(Value &file)
                 ProcessColumnDataArray<std::string>(columData, sourceFileLine.stringColumnMap[columnName]);
             } else if (type == ColumDataType::INT) {
                 ProcessColumnDataArray<int>(columData, sourceFileLine.intColumnMap[columnName]);
-            } else if (type == ColumDataType::FLOAT) {
+            } else if (type == ColumDataType::FLOAT || type == ColumDataType::PERCENTAGE) {
                 ProcessColumnDataArray<float>(columData, sourceFileLine.floatColumnMap[columnName]);
             }
         }

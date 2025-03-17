@@ -64,6 +64,7 @@ public:
     void ResetBaseline();
     std::vector<Position> GetPositionByType(DataTypeEnum type);
     bool HasCachelineRecords();
+    int8_t GetInstrVersion();
     std::string GetFilePath();
 private:
     std::string filePath;
@@ -89,11 +90,18 @@ private:
     int64_t trackId = 0;
     int64_t pid = 0;
     int64_t tid = 0;
+    int8_t instrVersion = 0;
 
     const int dataSizeLen = 8; // 数据类型字段距离数据大小字段的偏移
     const int dataTypeLen = 1; // 填充长度字段距离数据类型字段的偏移
     const int paddingLen = 1;  // 填充长度字段距离数据类型字段的偏移
-    const int reserveLen = 2;  // 实际数据距离填充长度字段的偏移
+    /* 实际数据距离填充长度字段的偏移,在25年3月迭代高八位用作版本标识
+    ** 0标识新版本，地址用AscendC Inner Code做映射
+    ** 0x5a 老版本，用addressrange 做映射
+    */
+    const int instrVersionLen = 1;
+
+    const int reserveLen = 1;
     const int filePathLen = 4096;
 
     bool ParseDataBlocks(std::ifstream &file, long long fileSize,

@@ -13,7 +13,8 @@ struct ColumDataType {
         SKIP = 0,
         INT,
         FLOAT,
-        STRING
+        STRING,
+        PERCENTAGE,
     };
 };
 }
