@@ -18,11 +18,8 @@ import { TableState } from '../../components/details/types';
 import { Table } from 'antd';
 import { AutoKey } from '../../utils/dataAutoKey';
 
-const isHidden = (session: Session, fieldName: string): boolean => {
-    if (fieldName === 'Self Time') {
-        return session.isSimulation;
-    }
-    return false;
+const isSelfTimeHidden = (session: Session): boolean => {
+    return session.isSimulation;
 };
 
 export const slicesListDetail = detail({
@@ -30,7 +27,7 @@ export const slicesListDetail = detail({
     columns: [
         ['Name', (data): string => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll'],
         ['Wall Duration', (data): string => getSliceTimeDisplay(data.wallDuration as number), 180],
-        ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime as number), 180, 'left', (session: Session): boolean => isHidden(session, 'Self Time')],
+        ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime as number), 180, 'left', isSelfTimeHidden],
         ['Average Wall Duration', (data): string => getSliceTimeDisplay(data.avgWallDuration as number), 180],
         ['Occurrences', (data): string => `${(data.occurrences as string) ?? 0}`, 180],
     ],
