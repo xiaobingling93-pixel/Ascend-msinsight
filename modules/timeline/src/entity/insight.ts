@@ -58,7 +58,7 @@ export type ColumnDef<DataType> = // name, renderer, width?, fixed?
     [string, CellRenderer<DataType>] |
     [string, CellRenderer<DataType>, ColumnWidth] |
     [string, CellRenderer<DataType>, ColumnWidth, FixedType] |
-    [string, CellRenderer<DataType>, ColumnWidth, FixedType, (p: any) => boolean];
+    [string, CellRenderer<DataType>, ColumnWidth, FixedType | undefined, (p: any) => boolean];
 
 export interface TableDataAdapter<DataType extends Record<string, unknown>> {
     columns: Array<ColumnDef<DataType>>;
