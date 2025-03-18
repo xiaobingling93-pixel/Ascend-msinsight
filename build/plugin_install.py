@@ -9,6 +9,7 @@ import sys
 import shutil
 import zipfile
 import json
+import stat
 
 logging.basicConfig(level=logging.INFO)
 
@@ -68,7 +69,12 @@ def is_within_directory(src, dst):
     """ 检查是否存在压缩跨路径覆盖攻击"""
     abs_src_dir = os.path.abspath(os.path.join(dst, src))
     abs_dst_dir = os.path.abspath(dst)
-    return os.path.commonpath([abs_src_dir]) == os.path.commonpath([abs_src_dir, abs_dst_dir])
+    return os.path.commonpath([abs_dst_dir, abs_src_dir]) == abs_dst_dir
+
+
+def is_symlink(file_info):
+    # windows平台无软链接问题
+    return stat.S_ISLNK(file_info.external_attr >> 16)
 
 
 def unzip_safety(zip_file: str, dist_path):
@@ -80,8 +86,11 @@ def unzip_safety(zip_file: str, dist_path):
             if zip_file.getinfo(file).file_size > max_extract_file_size:
                 logging.error(f"File size exceeds max extract file limit(200MB), file={file}")
                 return False
+            if is_symlink(zip_file.getinfo(file)):
+                logging.error("Detect extract symbol link file")
+                return False
             if not is_within_directory(file, dist_path):
-                logging.error("Detect extract file cross dist path")
+                logging.error("Detected extract file cross dist path")
                 return False
             if not common_path_check(os.path.join(dist_path, file), exist_only=False):
                 logging.error("Extract file path is invalided")
