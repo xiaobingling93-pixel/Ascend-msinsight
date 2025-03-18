@@ -72,6 +72,8 @@ export const jumpToUnitOperator = (opDetail: OpDetail): void => {
                     duration,
                     depth,
                     threadId: tid,
+                    processId: pid,
+                    cardId,
                     startRecordTime: session.startRecordTime,
                     showSelectedData: true,
                 };

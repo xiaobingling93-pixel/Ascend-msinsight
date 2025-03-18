@@ -83,12 +83,16 @@ const OverallMetricsTable = observer(({ bottomHeight, rankId, session, selectedR
             return;
         }
         setLoading(true);
-        const { data, count: total } = await getOverallMetrics({ rankId, pageSize: page.pageSize, current: page.current }).finally(() => {
+        try {
+            const { data, count: total } = await getOverallMetrics({ rankId, pageSize: page.pageSize, current: page.current }).finally(() => {
+                setLoading(false);
+                setTableData([]);
+            });
+            setPage({ ...page, total });
+            setTableData(data ?? []);
+        } catch (e) {
             setLoading(false);
-            setTableData([]);
-        });
-        setPage({ ...page, total });
-        setTableData(data ?? []);
+        }
     }
 
     useEffect(() => {
