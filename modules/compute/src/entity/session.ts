@@ -18,6 +18,7 @@ export interface CacheUnit {
     cachelineId?: number;
     addressRange: string[][];
 }
+export const defaultCacheUnit = { cachelineId: -1, addressRange: [] };
 
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
@@ -37,9 +38,20 @@ export class Session {
     openFind: boolean = false;
     // 指令高亮来源
     instructionSelectSource: InstructionSelectSource = InstructionSelectSource.DEFAULT;
-    cacheUnit: CacheUnit = { cachelineId: -1, addressRange: [] };
+    cacheUnit: CacheUnit = defaultCacheUnit;
     instructionUpdateId: number = 0;
     constructor() {
         makeAutoObservable(this);
+    }
+
+    reset(): void {
+        this.coreList = [];
+        this.sourceList = [];
+        this.parseStatus = false;
+        this.blockIdList = [];
+        this.instructions = [];
+        // 指令表选中
+        this.instructionSelectSource = InstructionSelectSource.DEFAULT;
+        this.cacheUnit = defaultCacheUnit;
     }
 }

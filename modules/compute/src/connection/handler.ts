@@ -61,13 +61,7 @@ const reset = (): void => {
         if (!session) {
             return;
         }
-        Object.assign(session, {
-            coreList: [],
-            sourceList: [],
-            parseStatus: false,
-            blockIdList: [],
-            instructions: [],
-        });
+        session.reset();
     });
 };
 

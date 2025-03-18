@@ -140,7 +140,7 @@ export const switchModuleHandler = (e: NotificationMessage): void => {
         });
         if (body.toModuleEvent !== undefined) {
             // 向目标模块发送消息
-            connector.send({ event: body.toModuleEvent, to: moduleIndex, body: body.params });
+            connector.send({ event: body.toModuleEvent, to: body.broadcast ? undefined : moduleIndex, body: body.params });
         }
     }
 };

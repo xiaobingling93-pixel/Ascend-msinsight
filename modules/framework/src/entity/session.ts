@@ -125,6 +125,7 @@ export class Session {
         this.isIpynb = false;
         this.isCluster = remove ? false : null;
         this.isBinary = remove ? false : null;
+        this.hasCachelineRecords = false;
         this.toIframeUrl = '';
         this.startTime = -1;
         this.endTimeAll = -1;

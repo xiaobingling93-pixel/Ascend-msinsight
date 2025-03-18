@@ -9,7 +9,7 @@ import type { ColumnsType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import './HotMethod.css';
 import type { Session } from '../../entity/session';
-import { InstructionSelectSource } from '../../entity/session';
+import { defaultCacheUnit, InstructionSelectSource } from '../../entity/session';
 import Filter from './Filter';
 import CodeViewer from './codeViewer/CodeViewer';
 import { ResizeTable } from 'ascend-resize';
@@ -64,7 +64,7 @@ const recoverDefaultInstructionSource = (): void => {
     runInAction(() => {
         session.instructionSelectSource = InstructionSelectSource.DEFAULT;
         // cache信息重置
-        session.cacheUnit = { cachelineId: -1, addressRange: [] };
+        session.cacheUnit = defaultCacheUnit;
     });
 };
 

@@ -190,7 +190,7 @@ ${t('EventRatio')}：${safeStr(item.data[DataIndex.RATIO])} %`;
 };
 
 let allCacheRecords: CacheRecordItem[] = [];
-const getchartsData = async (): Promise<{ chartsData: Record<string, ChartDataItem> ;cacheRecords: CacheRecordItem[]} > => {
+const getchartsData = async (parsed: boolean = true): Promise<{ chartsData: Record<string, ChartDataItem> ;cacheRecords: CacheRecordItem[]} > => {
     let cacheRecords: CacheRecordItem[] = [];
     const chartsData: { [key: string]: ChartDataItem } = {};
     const chartkeys: CacheEventType[] = [HIT, MISS];
@@ -200,6 +200,10 @@ const getchartsData = async (): Promise<{ chartsData: Record<string, ChartDataIt
             data: [],
         };
     });
+    if (!parsed) {
+        return { chartsData, cacheRecords };
+    }
+
     try {
         cacheRecords = (await queryCacheRecord() ?? { [CACHELINE_RECORD]: [] })?.[CACHELINE_RECORD] ?? [];
     } catch (err) {
@@ -360,12 +364,12 @@ const CacheKitChart = observer(({ session }: { session: Session }): JSX.Element 
         setShowPreChart(true);
     };
     useEffect(() => {
-        getchartsData().then((data) => {
+        getchartsData(session.parseStatus).then((data) => {
             setShowPreChart(false);
             setChartsData(data.chartsData);
             allCacheRecords = data.cacheRecords;
         });
-    }, [session.updateId]);
+    }, [session.updateId, session.parseStatus]);
     return <>
         <CacheKitChartsContainer style={{ display: showPreChart ? 'none' : 'grid' }}>
             {

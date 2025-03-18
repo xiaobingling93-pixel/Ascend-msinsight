@@ -11,6 +11,7 @@ export const swtich2Source = (data: Record<string, any>): void => {
             switchTo: 'source',
             toModuleEvent: 'showCacheInstructions',
             params: data,
+            broadcast: true,
         },
     });
 };
