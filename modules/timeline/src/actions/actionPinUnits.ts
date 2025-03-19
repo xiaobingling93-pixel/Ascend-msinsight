@@ -34,7 +34,7 @@ function calculateSelectedUnitStatus(selectedUnit: InsightUnit): SelectedUnitSta
     };
     const metadata = selectedUnit.metadata as ThreadMetaData;
     return {
-        isThreadNameStartWithGroup: metadata?.threadName?.startsWith('Group') ?? false,
+        isThreadNameStartWithGroup: metadata?.threadName?.includes('Group') ?? false,
         isGroupCommunicationUnit: hasStringValue(metadata?.groupNameValue),
         groupNameValue: (selectedUnit.metadata as ThreadMetaData)?.groupNameValue ?? '',
         isPinned: isPinned(selectedUnit),
