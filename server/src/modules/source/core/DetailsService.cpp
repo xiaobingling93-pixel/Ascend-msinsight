@@ -260,12 +260,11 @@ std::vector<TableDetail<CompareData<TableRow>>> DetailsService::MergeCompareTabl
     }
 
     for (const auto &item: baseline) {
-        TableDetail<CompareData<TableRow>> &tableDetail = memoryTableDetailMap[item.tableName];
-        if (tableDetail.tableName.empty()) {
-            tableDetail.tableName = item.tableName;
-            tableDetail.size = item.size;
-            tableDetail.headerName = item.headerName;
+        // 以compare的数据为准，如果compare有数据 baseline没数据，则不显示
+        if (memoryTableDetailMap.count(item.tableName) == 0) {
+            continue;
         }
+        TableDetail<CompareData<TableRow>> &tableDetail = memoryTableDetailMap[item.tableName];
         tableDetail.row = MergeCompareRows(memoryTableDetailMap[item.tableName].row, item.row);
         // 表格内容合并后，重置表格大小
         std::vector<std::string> newSize = {std::to_string(tableDetail.headerName.size()),
