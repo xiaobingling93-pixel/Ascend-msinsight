@@ -13,7 +13,9 @@ import { isPinned, switchPinned } from '../components/ChartContainer/unitPin';
 interface EmptyMetaData {
     count: number;
     dataSource: DataSource;
-};
+}
+
+const MAX_RECURSIVE_COUNT = 10;
 
 function hideUnit(session: Session): void {
     if (session.selectedRangeIsLock) {
@@ -36,13 +38,13 @@ function unpinUnitIfPinned(session: Session, insightUnit: InsightUnit): void {
 }
 
 const setChildrenUnitHide = (units: InsightUnit[]): void => {
-    const hideChildrenUnit = (insightUnit: InsightUnit): void => {
+    const hideChildrenUnit = (insightUnit: InsightUnit, count = 1): void => {
         runInAction(() => {
             insightUnit.isUnitVisible = false;
         });
-        if (insightUnit.children) {
+        if (insightUnit.children && count <= MAX_RECURSIVE_COUNT) {
             for (const child of insightUnit.children) {
-                hideChildrenUnit(child);
+                hideChildrenUnit(child, count + 1);
             }
         }
     };
@@ -52,7 +54,7 @@ const setChildrenUnitHide = (units: InsightUnit[]): void => {
 };
 
 const hideUnits = (session: Session, selectUnits: InsightUnit[]): void => {
-    const hideEveryUnit = (insightUnit: InsightUnit, ancestorsIsVisible: boolean = true): void => {
+    const hideEveryUnit = (insightUnit: InsightUnit, ancestorsIsVisible: boolean = true, count = 1): void => {
         /**
          * 对于有父子Unit被选中的情况
          * 由于代码是从顶向下找的，当发现第一个父Unit是选中的，就直接 hideSelectUnit，然后退出程序
@@ -63,10 +65,10 @@ const hideUnits = (session: Session, selectUnits: InsightUnit[]): void => {
             if (ancestorsIsVisible) { // 只有祖先都是可见的情况下，才需要隐藏，否则不需要处理
                 hideSelectUnit(insightUnit);
             }
-        } else if (insightUnit.children) {
+        } else if (insightUnit.children && count <= MAX_RECURSIVE_COUNT) {
             for (const child of insightUnit.children) {
                 // 如果当前泳道已经是不可见（隐藏）的，设为 false, 否则用本次传入的
-                hideEveryUnit(child, insightUnit.isUnitVisible ? ancestorsIsVisible : false);
+                hideEveryUnit(child, insightUnit.isUnitVisible ? ancestorsIsVisible : false, count + 1);
             }
         }
     };

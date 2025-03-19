@@ -449,8 +449,9 @@ export interface InsightTemplate {
  * @param unit unit
  * @param unitPhase unitPhase
  */
-export const recursiveSetUnits = (unit: InsightUnit, unitPhase: string): void => {
-    if (!unit.children) {
+const MAX_RECURSIVE_COUNT = 10;
+export const recursiveSetUnits = (unit: InsightUnit, unitPhase: string, count = 1): void => {
+    if (!unit.children || count > MAX_RECURSIVE_COUNT) {
         return;
     }
     for (let index = 0; index < unit.children.length; index++) {
@@ -459,7 +460,7 @@ export const recursiveSetUnits = (unit: InsightUnit, unitPhase: string): void =>
                 unit.children[index].phase = unitPhase;
             }
         });
-        recursiveSetUnits(unit.children[index], unitPhase);
+        recursiveSetUnits(unit.children[index], unitPhase, count + 1);
     }
 };
 
