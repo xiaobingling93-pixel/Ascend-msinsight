@@ -44,7 +44,7 @@ inline bool CheckStrParamValidWithoutLenLimit(const std::string &param,
         return false;
     }
     if (!StringUtil::ValidateStringParam(param)) {
-        errorMsg = "Parameter contains illegal character.";
+        errorMsg = "Parameter contains illegal character, such as '|', ';', '&', '$', etc.";
         return false;
     }
     return true;
@@ -64,7 +64,7 @@ inline bool CheckStrParamValid(const std::string &param,
         return false;
     }
     if (!StringUtil::ValidateStringParam(param)) {
-        errorMsg = "Parameter contains illegal character.";
+        errorMsg = "Parameter contains illegal character, such as '|', ';', '&', '$', etc.";
         return false;
     }
     return true;
@@ -80,7 +80,7 @@ inline bool CheckStrParamValidEmptyAllowed(const std::string &param,
         return false;
     }
     if (!StringUtil::ValidateStringParam(param)) {
-        errorMsg = "Parameter contains illegal character.";
+        errorMsg = "Parameter contains illegal character, such as '|', ';', '&', '$', etc.";
         return false;
     }
     return true;
