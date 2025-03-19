@@ -14,9 +14,9 @@
 }
 
 /*设置二级目录勾选框不可见、不可点击*/
-.ant-tree-treenode:not(.ant-tree-treenode-switcher-open) .ant-tree-checkbox {
-  pointer-events:none;
-  display:none;
+.ant-tree-treenode:not(.ant-tree-list-holder-inner > .ant-tree-treenode-switcher-open,.ant-tree-list-holder-inner > .ant-tree-treenode-switcher-close) .ant-tree-checkbox {
+  pointer-events: none;
+  display: none;
 }
 
 /*loading遮罩*/
