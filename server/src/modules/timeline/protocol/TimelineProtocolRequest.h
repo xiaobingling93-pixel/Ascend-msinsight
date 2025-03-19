@@ -9,6 +9,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <set>
 #include "FileUtil.h"
 #include "ProtocolDefs.h"
 #include "ProtocolParamUtil.h"
@@ -383,8 +384,11 @@ struct SystemViewParams {
     std::string searchName;
     bool CheckParams(std::string &warnMsg) const
     {
-        if (!StringUtil::CheckSqlValid(layer)) {
-            warnMsg = "Layer name not incorrect!";
+        static const std::set<std::string> validLayerTypeSet = {
+            "Python", "CANN",          "Ascend Hardware",
+            "HCCL",   "COMMUNICATION", "Overlap Analysis" };
+        if (validLayerTypeSet.find(layer) == validLayerTypeSet.end()) {
+            warnMsg = "Layer is invalid";
             return false;
         }
         return CheckUnsignPageValid(pageSize, current, warnMsg);
