@@ -90,7 +90,7 @@ private:
     int64_t trackId = 0;
     int64_t pid = 0;
     int64_t tid = 0;
-    int8_t instrVersion = 0;
+    int8_t instrVersion = 0x5a;
 
     const int dataSizeLen = 8; // 数据类型字段距离数据大小字段的偏移
     const int dataTypeLen = 1; // 填充长度字段距离数据类型字段的偏移

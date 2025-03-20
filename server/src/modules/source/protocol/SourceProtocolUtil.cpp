@@ -551,19 +551,33 @@ std::optional<document_t> ToResponseJson<CachelineRecordResponse>(const Cachelin
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
-    
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    // 将cachelineRecords复制到新的Document对象中
-    document_t document;
-    document.Parse(response.body.cachelineRecords.c_str());
-    if (document.HasParseError()) {
+    Value bodyValue(kObjectType);
+
+    std::string data = response.body.cachelineRecords;
+    if (data.empty()) {
+        JsonUtil::AddMember(json, "body", bodyValue, allocator);
         return std::move(json);
     }
-    Value bodyValue;
-    bodyValue.CopyFrom(document, allocator);
+
+    document_t document;
+    // 处理解析错误
+    if (document.Parse(data.c_str()).HasParseError() || !document.IsObject()) {
+        JsonUtil::AddMember(json, "body", bodyValue, allocator);
+        return std::move(json);
+    }
+
+    try {
+        bodyValue.CopyFrom(document, allocator);
+    } catch (const std::exception& e) {
+        JsonUtil::AddMember(json, "body", bodyValue, allocator);
+        return std::move(json);
+    }
+
     JsonUtil::AddMember(json, "body", bodyValue, allocator);
     return std::move(json);
 }
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic
