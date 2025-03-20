@@ -14,6 +14,7 @@ import { SorterResult } from 'antd/lib/table/interface';
 
 const TABLE_HEAD_HEIGHT = 35;
 const TABLE_SUMMARY_HEIGHT = 30;
+const TABLE_MIN_WIDTH = 900;
 
 export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     { session, height, detail, tabState, commonState, depsList, summaryBuilder }: TableViewProps<TabProto, T>) => {
@@ -32,7 +33,8 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     }, [state.dataSource]);
     // 新增Summary(Totals)行
     const summary = (): React.ReactNode => (summaryBuilder === undefined) ? undefined : summaryBuilder(state, dataSource);
-    return <ResizeTable {...state} summary={summary} dataSource={dataSource} scroll={{ y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT }} virtual
+    return <ResizeTable {...state} summary={summary} dataSource={dataSource}
+        scroll={{ y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT, x: TABLE_MIN_WIDTH }} virtual
         rowClassName={(row): string => {
             return session.selectedDetailKeys[0] === getAutoKey(row) ? 'selected-row' : 'click-able';
         }}
