@@ -10,8 +10,8 @@
     "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider tsc --declaration",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\lib\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build/* ../../framework/plugins/lib"
+    "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\lib\\ /E /I /Y",
+    "publishLinux": "cp -rf ./build/* ../framework/public/plugins/lib"
   },
   "browserslist": {
     "production": [
