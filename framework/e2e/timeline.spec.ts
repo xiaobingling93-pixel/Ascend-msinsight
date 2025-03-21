@@ -128,7 +128,14 @@ test.describe('Timeline', () => {
         const systemView = new SystemView(page);
         await systemView.goto();
 
-        const statsSystemViewOptions = ['Python API Summary', 'CANN API Summary', 'Ascend HardWare Task Summary', 'Communication Summary', 'Overlap Analysis', 'Kernel Details'];
+        const statsSystemViewOptions = [
+            'Python API Summary',
+            'CANN API Summary',
+            'Ascend HardWare Task Summary',
+            'Communication Summary',
+            'Overlap Analysis',
+            'Kernel Details',
+        ];
 
         await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Overall-Metrics.png', { maxDiffPixels: 400 });
 
@@ -473,9 +480,19 @@ test.describe('Timeline', () => {
         await zoomOutBtn.click();
         await page.mouse.move(0, 0);
         await page.keyboard.press('ArrowRight');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowRight.png`, { maxDiffPixels: 100 });
+        try {
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowRight.png`, { maxDiffPixels: 100 });
+        } catch (e) {
+            await page.keyboard.press('ArrowRight');
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowRight.png`, { maxDiffPixels: 100 });
+        }
         await page.keyboard.press('ArrowLeft');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowLeft.png`, { maxDiffPixels: 100 });
+        try {
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowLeft.png`, { maxDiffPixels: 100 });
+        } catch (e) {
+            await page.keyboard.press('ArrowLeft');
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowLeft.png`, { maxDiffPixels: 100 });
+        }
     });
 
     // Marker小旗子

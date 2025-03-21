@@ -76,6 +76,8 @@ test.describe('Details', () => {
     // 预期：导入数据，roofline图显示正确
     test('test_details_roofline', async ({page, detailsPage}) => {
         const {rooflineChart} = detailsPage;
+        // 等待 1s 图表动画完成
+        await page.waitForTimeout(1000);
         await expect(rooflineChart).toHaveScreenshot(imgMap.rooflineChart);
     });
     // roofline瓶颈分析-瓶颈分析
@@ -101,6 +103,8 @@ test.describe('Details', () => {
         const blockIdSelect = new SelectHelpers(page, computeWorkloadBlockIdSelector, detailsFrame);
         await blockIdSelect.open();
         await blockIdSelect.selectOption(inputMap.computeWorkloadBlockId);
+        // 等待 1s 图表动画完成
+        await page.waitForTimeout(1000);
         await expect(ComputeWorkloadChart).toHaveScreenshot(imgMap.computeWorkloadBlockIdChange);
     });
 
