@@ -12,8 +12,8 @@
     "eject": "react-scripts eject",
     "lint": "eslint src --fix",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
-    "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Cluster\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build/* ../../framework/plugins/Cluster"
+    "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\Cluster\\ /E /I /Y",
+    "publishLinux": "cp -rf ./build/* ../framework/public/plugins/Cluster"
   },
   "jest": {
     "transformIgnorePatterns": [

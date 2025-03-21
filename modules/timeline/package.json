@@ -13,8 +13,8 @@
     "lint": "eslint src",
     "eslintfix": "eslint --fix src",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
-    "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Timeline\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build/* ../../framework/plugins/Timeline"
+    "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\Timeline\\ /E /I /Y",
+    "publishLinux": "cp -rf ./build/* ../framework/public/plugins/Timeline"
   },
   "jest": {
     "transformIgnorePatterns": [
