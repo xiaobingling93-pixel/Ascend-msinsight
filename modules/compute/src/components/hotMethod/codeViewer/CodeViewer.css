@@ -26,6 +26,7 @@ pre code.hljs {
     cursor: pointer;
     min-width: 100%;
     font-size: 12px;
+    padding: 0 10px 0 5px;
 }
 .hljs .index{
     display: inline-block;

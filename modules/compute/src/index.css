@@ -43,3 +43,27 @@ code.active-range li.range{
 .head-gap .ant-table-header{
     margin-bottom: 48px;
 }
+
+/*隐藏序号滚动条*/
+#CodeLine ::-webkit-scrollbar {
+    width: 0;
+}
+#CodeLine th.ant-table-cell.ant-table-cell-scrollbar {
+    display: none;
+}
+#CodeLine .ant-table-tbody > tr > td {
+    box-shadow: none;
+    border-right: 1px solid var(--mi-border-color-light);
+}
+#CodeLine .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):before {
+    display: none;
+}
+
+/*表格无数据不显示*/
+.hiddenEmpty #CodeLine .ant-table-tbody > tr > td {
+    border: none;
+}
+
+.hiddenEmpty .ant-empty {
+    display: none;
+}

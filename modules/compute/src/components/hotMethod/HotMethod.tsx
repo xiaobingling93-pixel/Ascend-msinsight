@@ -26,11 +26,11 @@ import { queryDynamicInstr, queryDynamicLine, querySourceCode } from '../Request
 import { Layout } from 'ascend-layout';
 import { getInstrColumns } from './InstructionTable';
 import { getCodeColumns } from './CodeAttrTable';
-import TableHead, { type Col } from './TableHead';
 import { store } from '../../store';
 import { runInAction } from 'mobx';
 import CodeTextSearch, { CODE_SEARCH_WINDOW_HEIGHT } from './CodeTextSearch';
 import { formatDecimal } from 'ascend-utils';
+import { ThContainer } from './TableHead';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -46,10 +46,6 @@ interface ConditionType {
     onlyRelated?: boolean;
 };
 
-const useSourceColumns = (): Col[] => {
-    const { t } = useTranslation('source');
-    return [{ width: 45, textAlign: 'right', name: '#' }, { name: t('Source') }];
-};
 const isRelated = (instr: InstrsColumnType, range: string[][] = []): boolean => {
     // 指令地址是否在代码行地址范围内
     return Boolean(range?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
@@ -284,8 +280,10 @@ const Index = observer(({ session }: { session: Session }) => {
     useEffect(() => {
         reset();
         // 同步滚动条
-        syncScroller(document.getElementById('CodeTable'),
-            document.querySelector('#CodeAttrTable .ant-table-body'));
+        syncScroller([document.getElementById('CodeTable'),
+            document.querySelector('#CodeAttrTable .ant-table-body'),
+            document.querySelector('#CodeLine .ant-table-body'),
+        ]);
         resizeHeight();
 
         window.addEventListener('resize', event => {
@@ -374,27 +372,52 @@ const Index = observer(({ session }: { session: Session }) => {
                             <LeftRightContainer
                                 flex
                                 leftPercent={70}
-                                left={
-                                    <><HeaderFixedContainer
-                                        style={{ overflow: 'hidden' }}
-                                        headerStyle={{ marginBottom: session.openFind ? `${CODE_SEARCH_WINDOW_HEIGHT}px` : '0' }}
-                                        header={<TableHead columns={useSourceColumns()}/>}
-                                        bodyProps={{ id: 'CodeTable' }}
-                                        bodyStyle={{ overflowX: 'scroll', marginRight: '-8px' }}
-                                        body={
-                                            <CodeViewer
-                                                code={code}
-                                                handleLineClick={(line: number): void => {
-                                                    recoverDefaultInstructionSource();
-                                                    setSelectedline(line);
-                                                    setLineClickListener((lineClickListener + 1) % 100);
-                                                }}
-                                                selectedline={selectedline}
-                                            />
-                                        }
+                                left={<>
+                                    <LeftRightContainer
+                                        flex
+                                        flexStyle={{ right: 0, width: '10px' }}
+                                        leftWidth={45}
+                                        minWidth={30}
+                                        className={codeLines.length === 0 ? 'hiddenEmpty' : ''}
+                                        left={<ResizeTable
+                                            size="small"
+                                            pagination={false}
+                                            columns={[{ title: '#', dataIndex: 'Line', align: 'center', ellipsis: true }]}
+                                            dataSource={codeLines}
+                                            rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
+                                            onRow={(record: Ilinetable): { onClick: (event: React.MouseEvent<HTMLElement>) => void } => {
+                                                return {
+                                                    onClick: (event: React.MouseEvent<HTMLElement>): void => {
+                                                        recoverDefaultInstructionSource();
+                                                        setSelectedline(record.Line);
+                                                        setLineClickListener((lineClickListener + 1) % 100);
+                                                    },
+                                                };
+                                            }}
+                                            id="CodeLine"
+                                            scroll={{ y: tableHeight }}
+                                        />}
+                                        right={<HeaderFixedContainer
+                                            style={{ overflow: 'hidden' }}
+                                            headerStyle={{ marginBottom: session.openFind ? `${CODE_SEARCH_WINDOW_HEIGHT}px` : '0' }}
+                                            header={<ThContainer><div className="th"><span>{t('Source')}</span></div></ThContainer>}
+                                            bodyProps={{ id: 'CodeTable' }}
+                                            bodyStyle={{ overflowX: 'scroll', marginRight: '-8px' }}
+                                            body={
+                                                <CodeViewer
+                                                    code={code}
+                                                    handleLineClick={(line: number): void => {
+                                                        recoverDefaultInstructionSource();
+                                                        setSelectedline(line);
+                                                        setLineClickListener((lineClickListener + 1) % 100);
+                                                    }}
+                                                    selectedline={selectedline}
+                                                />
+                                            }
+                                        />}
                                     />
                                     {session.openFind ? <CodeTextSearch code={code}/> : <></>}
-                                    </>
+                                </>
                                 }
                                 rightProps={{ id: 'CodeAttrTable' }}
                                 right={

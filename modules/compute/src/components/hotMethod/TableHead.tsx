@@ -8,7 +8,7 @@ import { Resizor } from 'ascend-resize';
 import { useWatchDomResize } from 'ascend-utils';
 import { changeIndexWidth } from './codeViewer/CodeViewer';
 
-const ThContainer = styled.div`
+export const ThContainer = styled.div`
     background:  ${(p): string => p.theme.bgColorLight};
     color: ${(p): string => p.theme.textColorSecondary};
     display: flex;
@@ -25,7 +25,7 @@ const ThContainer = styled.div`
         text-overflow: ellipsis;
 
         //分隔符号
-        &::before {
+        &::before , &::after{
             position: absolute;
             background-color: ${(p): string => p.theme.borderColorLight};
             content: "";
@@ -34,6 +34,9 @@ const ThContainer = styled.div`
             top: 25%;
             transition: background-color .3s;
             width: 1px;
+        }
+        &::before {
+            left: 0;
         }
 
         & > span {

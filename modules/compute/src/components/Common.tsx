@@ -72,7 +72,10 @@ const LeftRightBox = styled.div`
   }
 `;
 
-export const LeftRightContainer = ({ left, right, style, headerStyle, bodyStyle, leftPercent, leftProps = {}, rightProps = {}, minWidth = 50, flex = false }:
+export const LeftRightContainer = ({
+    left, right, style, headerStyle, bodyStyle, flexStyle, leftPercent, className,
+    leftWidth: initLeftWidth, leftProps = {}, rightProps = {}, minWidth = 50, flex = false,
+}:
 {
     left?: React.ReactNode;
     right?: React.ReactNode;
@@ -84,8 +87,11 @@ export const LeftRightContainer = ({ left, right, style, headerStyle, bodyStyle,
     minWidth?: number;
     flex?: boolean;
     leftPercent?: number;
+    leftWidth?: number;
+    flexStyle?: React.CSSProperties;
+    className?: string;
 }): JSX.Element => {
-    const [leftWidth, setLeftWidth] = useState(-1);
+    const [leftWidth, setLeftWidth] = useState(initLeftWidth ?? -1);
     const leftWidthStyle = useMemo(() => leftWidth > 0 ? `${leftWidth}px` : `${leftPercent ?? 50}%`, [leftWidth]);
     const rightWidthStyle = useMemo(() => leftWidth > 0 ? `calc(100% - ${leftWidth}px)` : `${100 - (leftPercent ?? 50)}%`, [leftWidth]);
     const [boxWidth, ref] = useWatchDomResize<HTMLDivElement>('width');
@@ -98,9 +104,9 @@ export const LeftRightContainer = ({ left, right, style, headerStyle, bodyStyle,
         }
     };
 
-    return <LeftRightBox ref={ref} style={style}>
+    return <LeftRightBox ref={ref} style={style} className={className}>
         <div className="left" style={{ ...headerStyle, width: leftWidthStyle }} {...leftProps}>
-            {flex && <Resizor onResize={ handleResizeEvent}/>}
+            {flex && <Resizor onResize={ handleResizeEvent} style={flexStyle}/>}
             {left}
         </div>
         <div className="right" style={{ ...bodyStyle, width: rightWidthStyle }} {...rightProps }>
@@ -137,7 +143,7 @@ export function addClass(dom: Element, className: string): void {
 export function removeClass(dom: Element, className: string): void {
     dom.classList.remove(className);
 }
-export function syncScroller(...args: Array<HTMLElement | null>): () => void {
+export function syncScroller(args: Array<HTMLElement | null>): () => void {
     const nodes: HTMLElement[] = Array.prototype.filter.call(args, item => item instanceof HTMLElement);
     const max = nodes.length;
     if (!max || max === 1) {

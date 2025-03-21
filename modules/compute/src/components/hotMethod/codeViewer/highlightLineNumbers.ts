@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import hljs from 'highlight.js';
-export const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
+export const BREAK_LINE_REGEXP = /\r\n|\r|\n/;
 const BREAK = 'break';
 export const highlightAllWithNumber = function(set = { showLine: false }): void {
     const codes = document.querySelectorAll('pre code');
@@ -13,14 +13,13 @@ export const highlightAllWithNumber = function(set = { showLine: false }): void 
     const e = document.querySelectorAll('code');
     const elen = e.length;
     for (let i = 0; i < elen; i++) {
+        const linebreakStr = e[i].innerText.match(BREAK_LINE_REGEXP)?.[0] ?? '';
         const ul = splitNode(e[i]);
         if (set.showLine) {
             for (let j = 0; j < ul.children.length; j++) {
                 const li = ul.children[j];
-                const div = document.createElement('div');
-                div.append(String(` ${j + 1} `));
-                div.className = 'index';
-                li.insertBefore(div, li.childNodes[0]);
+                const linebreak = document.createTextNode(linebreakStr);
+                li.appendChild(linebreak);
             }
         }
         e[i].innerHTML = '';
