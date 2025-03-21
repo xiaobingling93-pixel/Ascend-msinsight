@@ -68,9 +68,7 @@ std::vector<ParallelGroupInfo> MetaDataParser::ConvertGroupInfoJsonToObject(cons
     }
     for (auto iter = json.MemberBegin(); iter != json.MemberEnd(); ++iter) {
         ParallelGroupInfo info;
-        if (iter->name.IsString()) {
-            info.group = iter->name.GetString();
-        }
+        info.group =JsonUtil::GetStringWithoutKey(iter->name);
         info.globalRanks = JsonUtil::GetVector<std::string>(iter->value, GLOBAL_RANKS);
         info.groupName = JsonUtil::GetString(iter->value, GLOBAL_NAME);
         res.push_back(info);

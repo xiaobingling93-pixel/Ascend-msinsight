@@ -195,6 +195,14 @@ public:
         return "";
     }
 
+    static inline std::string GetStringWithoutKey(const json_t & json)
+    {
+        if (json.IsString()) {
+            return json.GetString();
+        }
+        return "";
+    }
+
     static inline float GetFloat(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {
