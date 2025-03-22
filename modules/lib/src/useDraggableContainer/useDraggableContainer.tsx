@@ -93,7 +93,7 @@ const ContainerBase = styled.div<CssProps>`
     }
 `;
 const ContainerLeft = styled(ContainerBase)`
-    flex-direction: row-reverse;
+    flex-direction: row-reverse; // 应用 flex-direction: row-reverse; 并不会改变子元素或父容器相对于视口的位置。也就是说，如果弹性容器原本位于页面的某个位置（比如距离顶部50像素），那么即使你改变了内部子元素的排列顺序，这个容器及其内容相对于视口的位置保持不变。
     height: 100%;
     & > .topC {
         flex: 1;
@@ -328,7 +328,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
             if (offset <= 8 && offset > 0 && isOpen.current) {
                 movingState.current = {
                     ...baseMS,
-                    startX: domDragRect.left,
+                    startX: domDragRect.right,
                     startY: domDragRect.y,
                 };
             }
@@ -338,7 +338,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
             if (offset <= 8 && offset > 0 && isOpen.current) {
                 movingState.current = {
                     ...baseMS,
-                    startX: domDragRect.right,
+                    startX: domDragRect.left,
                     startY: domDragRect.y,
                 };
             }
@@ -362,6 +362,7 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
     if (Math.abs(e.screenY - moving.screenY) < 2 && Math.abs(e.screenX - moving.screenX) < 2) { return; }
     let offsetY: number;
     let offsetX: number;
+    const domRect = dom.getBoundingClientRect();
     switch (dragDirection) {
         case DragDirection.BOTTOM:
             offsetY = e.y - moving.startY;
@@ -378,13 +379,13 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
         case DragDirection.LEFT:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
-                domDrag.style.width = `${clamp(e.x, 245, dom.clientHeight - minDragWh)}px`;
+                domDrag.style.width = `${clamp(e.clientX - domRect.left, 245, dom.clientWidth - minDragWh)}px`;
             }
             break;
         default:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
-                domDrag.style.width = `${clamp(moving.startX - e.clientX, minDragWh, dom.clientWidth * RIGHT_PERCENT)}px`;
+                domDrag.style.width = `${clamp(domRect.left + dom.clientWidth - e.clientX, minDragWh, dom.clientWidth * RIGHT_PERCENT)}px`;
             }
             break;
     }
@@ -409,6 +410,7 @@ const handleMouseUp = ({ container, draggable, movingState, dragDirection, minDr
         moving.stat = 'idle';
         return;
     }
+    const domRect = dom.getBoundingClientRect();
     let dragWHTmp: number;
     switch (dragDirection) {
         case DragDirection.TOP:
@@ -422,13 +424,13 @@ const handleMouseUp = ({ container, draggable, movingState, dragDirection, minDr
             window.dispatchEvent(new Event('bottomResize'));
             break;
         case DragDirection.LEFT:
-            dragWHTmp = clamp(e.clientX, 245, dom.clientHeight - minDragWh);
-            domDrag.style.width = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientHeight * 100}%`;
+            dragWHTmp = clamp(e.clientX - domRect.left, 245, dom.clientWidth - minDragWh);
+            domDrag.style.width = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientWidth * 100}%`;
             window.dispatchEvent(new Event('leftResize'));
             break;
         case DragDirection.RIGHT:
-            dragWHTmp = clamp(moving.startX - e.clientX, minDragWh, dom.clientWidth * RIGHT_PERCENT);
-            domDrag.style.width = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientHeight * 100}%`;
+            dragWHTmp = clamp(domRect.left + dom.clientWidth - e.clientX, minDragWh, dom.clientWidth * RIGHT_PERCENT);
+            domDrag.style.width = sizeMethod === SizeMethod.NUMBER ? `${dragWHTmp}px` : `${dragWHTmp / dom.clientWidth * 100}%`;
             window.dispatchEvent(new Event('rightResize'));
             break;
         default:
