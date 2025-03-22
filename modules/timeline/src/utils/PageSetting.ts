@@ -56,6 +56,8 @@ class UnitTreeTool {
             const unitset = unitsSetting[index];
             unit.isExpanded = unitset.isExpanded;
             unit.onceExpand = unitset.isExpanded;
+            // 只有在自身状态是开启的情况下，才需要恢复子泳道的状态
+            if (!unitset.isExpanded) { return; }
             if (unit.children !== undefined && unit.children.length > 0 && Number(unitset.children.length) > 0) {
                 this.recoverSettingLimited(unit.children, unitset.children, iteration + 1);
             }
