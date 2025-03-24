@@ -1102,8 +1102,8 @@ bool TextTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, ui
         return false;
     }
     std::string curArgs;
+    UnitCounterData unitCounterData;
     while (resultSet->Next()) {
-        UnitCounterData unitCounterData;
         unitCounterData.timestamp = resultSet->GetUint64("startTime");
         unitCounterData.valueJsonStr = resultSet->GetString("args");
         if (unitCounterData.valueJsonStr != curArgs) {
@@ -1111,7 +1111,9 @@ bool TextTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, ui
             curArgs = unitCounterData.valueJsonStr;
         }
     }
-    ServerLog::Info("Unit counter size is: ", dataList.size());
+    if (!dataList.empty()) {
+        dataList.emplace_back(unitCounterData);
+    }
     return true;
 }
 

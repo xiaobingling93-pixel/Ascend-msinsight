@@ -1655,3 +1655,45 @@ TEST_F(TextTraceDatabaseMockTest, TestGetTableList)
     const uint64_t expectSize = 5;
     EXPECT_EQ(tableList.size(), expectSize);
 }
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryCounter)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string flowData =
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (14375, "
+        "'APP/Memory', '662921300', 1695375189320960800, NULL, '{\"KB\":\"18167880.0\"}');\n"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (14393, "
+        "'APP/Memory', '662921300', 1695375189340960800, NULL, '{\"KB\":\"18167880.0\"}');\n"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (14585, "
+        "'APP/Memory', '662921300', 1695375189360960800, NULL, '{\"KB\":\"18167880.0\"}');\n"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (14603, "
+        "'APP/Memory', '662921300', 1695375189380961800, NULL, '{\"KB\":\"18167880.0\"}');\n"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (14795, "
+        "'APP/Memory', '662921300', 1695375189400962800, NULL, '{\"KB\":\"18167880.0\"}');\n"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (14813, "
+        "'APP/Memory', '662921300', 1695375189420961800, NULL, '{\"KB\":\"18167880.0\"}');\n"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (14831, "
+        "'APP/Memory', '662921300', 1695375189440961800, NULL, '{\"KB\":\"18167880.0\"}');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, flowData);
+    Dic::Protocol::UnitCounterParams params;
+    const uint64_t minTimestamp = 0;
+    std::vector<Dic::Protocol::UnitCounterData> dataList;
+    bool emptyResult = database.QueryUnitCounter(params, minTimestamp, dataList);
+    EXPECT_EQ(emptyResult, true);
+    EXPECT_EQ(dataList.empty(), true);
+    params.pid = "662921300";
+    params.threadName = "APP/Memory";
+    const uint64_t start = 1595375189320960800;
+    const uint64_t end = 1795375189320960800;
+    params.startTime = start;
+    params.endTime = end;
+    bool result = database.QueryUnitCounter(params, minTimestamp, dataList);
+    EXPECT_EQ(result, true);
+    const uint64_t expectSize = 2;
+    EXPECT_EQ(dataList.size(), expectSize);
+}

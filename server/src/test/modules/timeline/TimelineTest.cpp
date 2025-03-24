@@ -201,7 +201,7 @@ TEST_F(TestSuit, QueryUnitCounterData)
     requestParams.startTime = STARTTIME;
     requestParams.endTime = ENDTIME;
     database->QueryUnitCounter(requestParams, 0, unitData);
-    EXPECT_EQ(unitData.size(), 1);                         // unit data size = 2
+    EXPECT_EQ(unitData.size(), 2);                         // unit data size = 2
     EXPECT_EQ(unitData[0].timestamp, 1695115378653323500); // timestamp = 1695115378653323500
 }
 
