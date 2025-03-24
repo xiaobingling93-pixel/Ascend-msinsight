@@ -24,6 +24,7 @@ void DataEngine::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQue
         return;
     }
     sliceRespo->QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
+    std::sort(sliceVec.begin(), sliceVec.end());
 }
 
 void DataEngine::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds)

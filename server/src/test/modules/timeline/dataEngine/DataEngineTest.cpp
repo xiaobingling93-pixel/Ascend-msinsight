@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include "DataEngine.h"
 #include "RepositoryFactory.h"
+#include "HcclRepo.h"
 #include "TrackInfoManager.h"
 #include "DominQuery.h"
 
@@ -18,6 +19,42 @@ class DataEngineTest : public ::testing::Test {
     {
         TrackInfoManager::Instance().Reset();
     }
+
+protected:
+    class SliceRepoMock : public Dic::Module::Timeline::HcclRepo {
+    public:
+        void QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
+            std::vector<SliceDomain> &sliceVec) override
+        {
+            SliceDomain sliceDomain1;
+            SliceDomain sliceDomain2;
+            SliceDomain sliceDomain3;
+            const uint64_t expectStart1 = 10;
+            const uint64_t expectId1 = 10;
+            const uint64_t expectStart2 = 7;
+            const uint64_t expectId2 = 11;
+            const uint64_t expectStart3 = 7;
+            const uint64_t expectId3 = 12;
+            sliceDomain1.timestamp = expectStart1;
+            sliceDomain1.id = expectId1;
+            sliceDomain2.timestamp = expectStart2;
+            sliceDomain2.id = expectId2;
+            sliceDomain3.timestamp = expectStart3;
+            sliceDomain3.id = expectId3;
+            sliceVec.emplace_back(sliceDomain1);
+            sliceVec.emplace_back(sliceDomain2);
+            sliceVec.emplace_back(sliceDomain3);
+        }
+    };
+
+    class RespotoryFactoryMock : public Dic::Module::Timeline::RepositoryFactory {
+    public:
+        std::shared_ptr<SliceRepoInterface> GetSliceRespo(PROCESS_TYPE)override
+        {
+            std::shared_ptr<SliceRepoInterface> res = std::make_shared<SliceRepoMock>();
+            return res;
+        }
+    };
 };
 
 TEST_F(DataEngineTest, QueryAllThreadInfoNormalTest)
@@ -324,4 +361,27 @@ TEST_F(DataEngineTest, QuerySliceByTimepointAndNameTestWithOutFactory)
         sliceQuery.metaType = PROCESS_TYPE::API;
         dataEngine.QuerySliceByTimepointAndName(sliceQuery, sliceDomain);
     });
+}
+
+TEST_F(DataEngineTest, QuerySimpleSliceWithOutNameByTrackId)
+{
+    Dic::Module::Timeline::DataEngine dataEngine;
+    std::shared_ptr<Dic::Module::Timeline::RepositoryFactoryInterface> repositoryFactoryInterface =
+        std::make_shared<RespotoryFactoryMock>();
+    dataEngine.SetRepositoryFactory(repositoryFactoryInterface);
+    const SliceQuery sliceQuery;
+    std::vector<SliceDomain> sliceVec;
+    dataEngine.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
+    const uint64_t expectSize = 3;
+    const uint64_t first = 0;
+    const uint64_t third = 2;
+    EXPECT_EQ(sliceVec.size(), expectSize);
+    const uint64_t firstTime = 7;
+    EXPECT_EQ(sliceVec[first].timestamp, firstTime);
+    const uint64_t firstId = 11;
+    EXPECT_EQ(sliceVec[first].id, firstId);
+    const uint64_t thirdTime = 10;
+    EXPECT_EQ(sliceVec[third].timestamp, thirdTime);
+    const uint64_t thirdId = 10;
+    EXPECT_EQ(sliceVec[third].id, thirdId);
 }
