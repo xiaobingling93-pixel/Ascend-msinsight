@@ -496,12 +496,12 @@ const SummaryChart = chart({
 
 export const ProcessUnit = unit<ProcessMetaData>({
     name: 'Process',
-    configBar: (session: Session, metadata: ProcessMetaData) => {
+    configBar: (session: Session, metadata: ProcessMetaData, onClick?: () => void) => {
         // Host侧第三级泳道不显示offset
         if ((metadata as ThreadMetaData).threadId !== '') {
             return <></>;
         }
-        return offsetConfig(session, metadata);
+        return offsetConfig(session, metadata, onClick);
     },
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',

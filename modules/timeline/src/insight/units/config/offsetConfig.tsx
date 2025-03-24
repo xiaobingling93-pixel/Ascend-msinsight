@@ -155,7 +155,7 @@ function handleAlignStart(inputRef: RefObject<InputRef>, session: Session, setVa
     inputRef?.current?.focus();
 }
 
-export const InputOption = observer(({ session, metaData }: { session: Session; metaData: any }): JSX.Element => {
+export const InputOption = observer(({ session, metaData, onClick }: { session: Session; metaData: any; onClick?: () => void }): JSX.Element => {
     const timestampOffsetKey = getTimeOffsetKey(session, metaData as ThreadTraceRequest);
     const timestampOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[timestampOffsetKey] ?? 0;
     const [offset, setOffset] = useState(String(timestampOffset));
@@ -186,11 +186,11 @@ export const InputOption = observer(({ session, metaData }: { session: Session; 
                 </InputDiv>
             </InputContainer>}
         overlayInnerStyle={{ borderRadius: 2 }}>
-        <OffsetButton data-testid={'offset-btn'}>{t('Offset', { ns: 'timeline' })}</OffsetButton>
+        <OffsetButton data-testid={'offset-btn'} onClick={onClick}>{t('Offset', { ns: 'timeline' })}</OffsetButton>
     </Tooltip>
     ;
 });
 
-export const offsetConfig = (session: Session, metadata: any): JSX.Element => {
-    return <InputOption session={session} metaData={metadata} />;
+export const offsetConfig = (session: Session, metadata: any, onClick?: () => void): JSX.Element => {
+    return <InputOption session={session} metaData={metadata} onClick={onClick} />;
 };

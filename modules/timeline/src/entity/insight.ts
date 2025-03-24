@@ -189,7 +189,7 @@ export interface InsightUnitParams<
 > {
     name: string;
     pinType?: 'move' | 'copied';
-    configBar?: (session: Session, metadata: MetaData) => JSX.Element;
+    configBar?: (session: Session, metadata: MetaData, onClick?: () => void) => JSX.Element;
     tag?: string | ((session: Session, metadata: MetaData) => string | null);
     description?: string;
     chart?: ChartDesc<ChartType> | Array<ChartDesc<ChartType>>;

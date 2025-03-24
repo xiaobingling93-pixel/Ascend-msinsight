@@ -99,6 +99,7 @@ interface DefaultInfoProps {
     isSelected: boolean;
     enableDrag?: boolean;
     mouseDown: (e: React.MouseEvent) => void;
+    onConfigBarClick?: () => void;
 }
 
 const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProps): JSX.Element => {
@@ -192,8 +193,9 @@ interface ConfigBarProps {
     isHovered: boolean;
     hasPinButton: boolean;
     isSelected: boolean;
+    onConfigBarClick?: () => void;
 }
-const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected }: ConfigBarProps): JSX.Element => {
+const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected, onConfigBarClick }: ConfigBarProps): JSX.Element => {
     const selectUnits = useSelectUnits(session);
     const deselectUnits = useDeselectUnits(session);
     const onStopPropagation = React.useCallback((e: React.MouseEvent) => {
@@ -217,7 +219,7 @@ const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected
             }
             e.preventDefault();
         }}>
-            {(isHovered || isSelected) && unit.configBar?.(session, unit.metadata)}
+            {(isHovered || isSelected) && unit.configBar?.(session, unit.metadata, onConfigBarClick)}
             <UnitInfoActionDiv
                 showCheckbox={session.phase === 'download' && (isHovered || isSelected)}
                 onMouseUp={onStopPropagation}>
@@ -243,6 +245,7 @@ interface UnitInfoContentProps {
     isSelected: boolean;
     enableDrag?: boolean;
     onMouseDown: (e: React.MouseEvent) => void;
+    onConfigBarClick?: () => void;
 }
 
 const InsightLaneInfoContainer = styled.div`
@@ -392,6 +395,11 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     const isClickDownRef = React.useRef<boolean>(false);
     const selectUnit = useSelectUnit(session);
     const expandable: boolean = hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction)));
+    const selectSelf = React.useCallback(() => {
+        if (isSelected) { return; }
+        selectUnit(unit);
+        traceSingle('selectLane', [unit.name]);
+    }, [selectUnit, unit, props.isSelected]);
     const onExpand = React.useCallback(async (_unit: KeyedInsightUnit) => {
         if (!expandable) {
             return;
@@ -430,8 +438,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
             return;
         }
         isClickDownRef.current = false;
-        selectUnit(unit);
-        traceSingle('selectLane', [unit.name]);
+        selectSelf();
         onExpand(unit);
     };
     const onMouseRight = (): void => {
@@ -442,8 +449,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         isClickDownRef.current = false;
         // 当前泳道已选中，不再对当前泳道选中
         if (!isSelected) {
-            selectUnit(unit);
-            traceSingle('selectLane', [unit.name]);
+            selectSelf();
             // 显示右键菜单需使用 contentmenu 事件，不在 mouseup 事件中处理
         }
     };
@@ -475,6 +481,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
                     unit={unit}
                     session={session}
                     isHovered={isHovered}
+                    onConfigBarClick={selectSelf}
                     {...props}
                 />
             </div>
