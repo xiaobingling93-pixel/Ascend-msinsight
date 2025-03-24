@@ -6,7 +6,6 @@
 #include "pch.h"
 #include "ProtocolEnumUtil.h"
 #include "ProtocolManager.h"
-#include "ConstantDefs.h"
 #include "ProtocolMessageBuffer.h"
 
 namespace Dic {

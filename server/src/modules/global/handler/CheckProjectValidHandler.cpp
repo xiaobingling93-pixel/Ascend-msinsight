@@ -5,7 +5,6 @@
 #include "pch.h"
 #include "WsSessionManager.h"
 #include "ProjectExplorerManager.h"
-#include "ConstantDefs.h"
 #include "CheckProjectValidHandler.h"
 
 namespace Dic {

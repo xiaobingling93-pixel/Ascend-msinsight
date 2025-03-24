@@ -5,7 +5,6 @@
 #include "TimeUtil.h"
 #include "ModuleManager.h"
 #include "ProtocolManager.h"
-#include "ConstantDefs.h"
 #include "WsSessionImpl.h"
 
 namespace Dic {

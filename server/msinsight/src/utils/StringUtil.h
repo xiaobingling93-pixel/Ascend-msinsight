@@ -125,8 +125,8 @@ public:
 
     static std::string ToUtf8Str(const std::string &input)
     {
-        static const unsigned int GBK_CODE_PAGE = 936;
 #ifdef _WIN32
+        static const unsigned int GBK_CODE_PAGE = 936;
         UINT codePage = GetACP();
         if (codePage == GBK_CODE_PAGE) {
             return StringUtil::GbkToUtf8(input.c_str());
@@ -137,8 +137,8 @@ public:
 
     static std::string ToLocalStr(const std::string &input)
     {
-        static const unsigned int GBK_CODE_PAGE = 936;
 #ifdef _WIN32
+        static const unsigned int GBK_CODE_PAGE = 936;
         UINT codePage = GetACP();
         if (codePage == GBK_CODE_PAGE) {
             return StringUtil::Utf8ToGbk(input.c_str());
