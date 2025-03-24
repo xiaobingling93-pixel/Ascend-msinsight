@@ -710,8 +710,6 @@ def main():
         os_name = 'win'
     elif os_info.find('mac') > -1:
         os_name = 'darwin-' + framework
-    if not download_dependency_background():
-        return 1
     result = build_server()
     if result != 0:
         logging.error('Failed to build server.')
