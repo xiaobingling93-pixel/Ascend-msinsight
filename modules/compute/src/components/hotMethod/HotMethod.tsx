@@ -437,7 +437,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                                 },
                                             };
                                         }}
-                                        scroll={{ y: tableHeight, x: codeColumns.length * 100 }}
+                                        scroll={{ y: tableHeight, x: codeLines.length > 0 ? codeColumns.length * 100 : 0 }}
                                     />
                                 }/>
                         </div>}
@@ -641,7 +641,7 @@ function InstructionTableNopage({
             },
         })}
         pagination={false}
-        scroll={{ y: tableHeight, rowHeight: ROW_HEIGHT, scrollToFirstRowOnChange: false, x: columns.length * 110 }}
+        scroll={{ y: tableHeight, rowHeight: ROW_HEIGHT, scrollToFirstRowOnChange: false, x: showDataSource.length > 0 ? columns.length * 110 : 0 }}
         virtual={true}
         onChange={(pagination, newFilters, newSorter, extra): void => {
             switch (extra.action) {
@@ -709,7 +709,7 @@ function InstructionTablePage({
             },
         })}
         pagination={GetPageConfigWhithPageData(page, setPage, [PAGE_LIMIT])}
-        scroll={{ y: tableHeight - 50, rowHeight: ROW_HEIGHT, x: columns.length * 110 }}
+        scroll={{ y: tableHeight - 50, rowHeight: ROW_HEIGHT, x: pageData.length > 0 ? columns.length * 110 : 0 }}
         virtual={true}
         onChange={(pagination, newFilters, newSorter, extra): void => {
             switch (extra.action) {

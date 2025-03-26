@@ -222,6 +222,11 @@ const StyledTable = styled(Support)`
     .ant-table-summary {
         background: ${(p): string => p.theme.bgColorLight};
     }
+
+    //表格为空时
+    .ant-table.ant-table-small .ant-table-expanded-row-fixed {
+        margin: -8px -16px;
+    }
 `;
 
 interface ExtendsColumnType {minWidth?: number};
