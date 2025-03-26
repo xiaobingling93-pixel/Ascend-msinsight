@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import EditableText from './EditableText';
 import CheckMenu from './CheckMenu';
 import { getRankId } from '@/utils/Rank';
-import { cancelCompareData } from '@/utils/Compare';
+import { cancelCompareData, isInClusterCompare } from '@/utils/Compare';
 
 const ContentsContainer = styled.div`
     margin-right: 10px;
@@ -224,6 +224,9 @@ const Contents = observer(({ session }: {session: Session}) => {
                     dataPath: [dataSource.dataPath[dataPathIndex]],
                 };
             });
+            if (isInClusterCompare()) {
+                return;
+            }
             cancelCompareData();
         };
     };
