@@ -33,6 +33,10 @@ struct OperatorDetailsParam {
             errorMsg = "[Communication] Failed to check iteration id." + paramError;
             return false;
         }
+        if (!CheckStrParamValidEmptyAllowed(this->rankId, paramError)) {
+            errorMsg = "[Communication] Failed to check rank id." + paramError;
+            return false;
+        }
         if (!CheckStrParamValidEmptyAllowed(this->orderBy, paramError)) {
             errorMsg = "[Communication] Failed to check orderBy." + paramError;
             return false;
@@ -43,6 +47,14 @@ struct OperatorDetailsParam {
         }
         if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
             errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->queryType, paramError)) {
+            errorMsg = "[Communication] Failed to check query type." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
+            errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
         return true;
@@ -81,12 +93,20 @@ struct BandwidthDataParam {
             errorMsg = "[Communication] Failed to check iteration id." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(this->rankId, paramError)) {
+            errorMsg = "[Communication] Failed to check rank id." + paramError;
+            return false;
+        }
         if (!CheckStrParamValid(this->operatorName, paramError)) {
             errorMsg = "[Communication] Failed to operator name." + paramError;
             return false;
         }
         if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
             errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
+            errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
         return true;
@@ -112,16 +132,24 @@ struct DistributionDataParam {
             errorMsg = "[Communication] Failed to check iteration id." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(this->rankId, paramError)) {
+            errorMsg = "[Communication] Failed to check rank id." + paramError;
+            return false;
+        }
         if (!CheckStrParamValid(this->operatorName, paramError)) {
-            errorMsg = "[Communication] Failed to operator name." + paramError;
+            errorMsg = "[Communication] Failed to check operator name." + paramError;
             return false;
         }
         if (!CheckStrParamValid(this->transportType, paramError)) {
-            errorMsg = "[Communication] Failed to transport type." + paramError;
+            errorMsg = "[Communication] Failed to check transport type." + paramError;
             return false;
         }
         if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
             errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
+            errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
         return true;
@@ -176,6 +204,10 @@ struct OperatorNamesParams {
             errorMsg = "[Communication] Failed to check stage." + paramError;
             return false;
         }
+        if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
+            errorMsg = "[Communication] Failed to check pg name." + paramError;
+            return false;
+        }
         return true;
     }
 
@@ -227,6 +259,10 @@ struct DurationListParams {
         }
         if (!CheckStrParamValidEmptyAllowed(this->baselineIterationId, paramError)) {
             errorMsg = "[Communication] Failed to check baseline iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
+            errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
         return true;
@@ -300,6 +336,10 @@ struct MatrixBandwidthParam {
         }
         if (!CheckStrParamValidEmptyAllowed(this->baselineIterationId, paramError)) {
             errorMsg = "[Communication] Failed to check baseline iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
+            errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
         return true;
