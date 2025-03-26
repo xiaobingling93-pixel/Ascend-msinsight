@@ -395,8 +395,9 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
     #endif
 #endif
 
-    if (!FileUtil::CheckFilePathExist(analysisPath)) {
-        ServerLog::Error("Can not find cluster analysis execute file: ", analysisPath);
+    if (!FileUtil::CheckFilePathExist(analysisPath) || !StringUtil::ValidateCommandFilePathParam(analysisPath)) {
+        ServerLog::Error("Can not find cluster analysis execute file: % or"
+            " path of cluster analysis contains illegal character.", analysisPath);
         return false;
     } else {
         if (!mode.empty()) {
