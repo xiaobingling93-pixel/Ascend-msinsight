@@ -111,6 +111,12 @@ const handleClusterCompare = async(data: CompareData): Promise<void> => {
     sendClusterBaselineStatus(true);
 };
 
+export const isInClusterCompare = (): boolean => {
+    const session = store.sessionStore.activeSession;
+    const { projectName, rankId } = session.compareSet.baseline;
+    return projectName !== '' && rankId === '';
+};
+
 /**
  * 取消基线数据
  */
