@@ -16,6 +16,7 @@ export { MISwitch as Switch } from './MISwitch';
 export { Responsive } from './Responsive';
 export { MIPopover as Popover } from './MIPopover';
 export { MIDropdown as Dropdown } from './MIDropdown';
+export { MIDynamicTooltip as DynamicTooltip } from './MIDynamicTooltip';
 export {
     Col,
     Row,

@@ -8,7 +8,6 @@ import { ParallelismArrangementResult } from '../../utils/interface';
 import { Session } from '../../entity/session';
 import { observer } from 'mobx-react';
 import { CanvasDrawer, Frame, Line, Rectangle } from './shape';
-import { TooltipComponent } from './Tooltips';
 import { GenerateConditions } from './CommunicatorContainer';
 import { runInAction } from 'mobx';
 import { getDyeingColor, groupFrames } from './ContainerUtils';
@@ -17,7 +16,7 @@ import styled from '@emotion/styled';
 import { useParallelSwitchConditions } from './Context';
 import { useTheme } from '@emotion/react';
 import { throttle } from 'lodash';
-import { Responsive } from 'ascend-components';
+import { DynamicTooltip, Responsive } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 import { Spin } from 'antd';
 
@@ -429,7 +428,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 }
             }
         </Responsive>
-        <TooltipComponent
+        <DynamicTooltip
             mouseX={lastMousePositionRef.current.x}
             mouseY={lastMousePositionRef.current.y}
             content={hoveredData}

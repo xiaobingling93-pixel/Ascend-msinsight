@@ -15,7 +15,7 @@ export interface TooltipArg {
     content?: Record<string, any> | null;
 };
 
-const Tooltip = styled.div(props => ({
+const TooltipContainer = styled.div(props => ({
     position: 'absolute',
     backgroundColor: props.theme.bgColorLight,
     color: props.theme.textColorSecondary,
@@ -77,7 +77,7 @@ const TooltipComp = ({ x, y, content }: TooltipArg): JSX.Element => {
             transform: `translate3d(${translateX}px, ${translateY}px, 0px)`,
         };
 
-    return <Tooltip ref={tooltipRef} style={styles}>
+    return <TooltipContainer ref={tooltipRef} style={styles}>
         {
             currentContent && <div className="formatter">
                 {Object.entries(currentContent).map(([key, value]) => (
@@ -88,7 +88,7 @@ const TooltipComp = ({ x, y, content }: TooltipArg): JSX.Element => {
                 ))}
             </div>
         }
-    </Tooltip>;
+    </TooltipContainer>;
 };
 
 export interface TooltipProps {
@@ -97,7 +97,7 @@ export interface TooltipProps {
     mouseY: number | null;
 }
 
-export function TooltipComponent({ content, mouseX, mouseY }: TooltipProps): JSX.Element | null {
+export function MIDynamicTooltip({ content, mouseX, mouseY }: TooltipProps): JSX.Element | null {
     if (mouseX === null || mouseY === null) { return null; }
 
     return <TooltipComp x={mouseX} y={mouseY} content={content} />;
