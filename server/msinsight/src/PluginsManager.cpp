@@ -58,6 +58,9 @@ bool PluginsManager::RegisterPlugin(std::unique_ptr<BasePlugin> plugin)
 void PluginsManager::LoadPlugins()
 {
     std::string tempPath = StringUtil::ToUtf8Str(FileUtil::SplicePath(FileUtil::GetCurrPath(), "plugins"));
+    if (!FileUtil::CheckDirValid(StringUtil::ToLocalStr(tempPath))) {
+        return;
+    }
     auto pluginsDir = fs::u8path(tempPath);
     if (!fs::exists(pluginsDir)) {
         return;
@@ -66,9 +69,12 @@ void PluginsManager::LoadPlugins()
         if (!is_directory(dir)) {
             continue;
         }
+        std::string dirPath = StringUtil::ToLocalStr(dir.path().string());
+        if (!FileUtil::CheckDirValid(dirPath)) {
+            continue;
+        }
         for (auto &file : fs::directory_iterator(dir)) {
             std::string filePath = StringUtil::ToLocalStr(file.path().string());
-            std::string dirPath = StringUtil::ToLocalStr(dir.path().string());
             if (!is_directory(file) && file.path().extension().string() == EXT
                 && FileUtil::CheckFilePath(filePath)) {
                 AddPathEnv(dirPath);
