@@ -39,6 +39,10 @@ TEST(NumberUtil, TryParseUnsignedLongLongWithNormalNumberReturnValid) {
     EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("0+1"), 0);
     EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("55-2"), 55);
     EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("+55"), 55);
+    const uint64_t maxInt = INT32_MAX;
+    const uint64_t expectInt = maxInt + 1;
+    std::string input = std::to_string(expectInt);
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong(input), expectInt);
 }
 
 TEST(NumberUtil, TryParseUnsignedLongLongWithAbnormalNumberReturnInvalid) {

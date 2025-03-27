@@ -42,7 +42,7 @@ public:
 
     static inline unsigned long long TryParseUnsignedLongLong(const std::string &longLongStr)
     {
-        int ret;
+        unsigned long long ret;
         try {
             ret = std::stoull(longLongStr);
         } catch (std::invalid_argument &) {
