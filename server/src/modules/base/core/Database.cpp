@@ -633,5 +633,67 @@ bool Database::ExtendColumns(const std::string &tableName, const std::vector<std
     return ExecSql(sql);
 }
 
+bool Database::CreateMetaDataTableForText()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    if (!isOpen) {
+        ServerLog::Error("Failed to create meta data table. Database is not open.");
+        return false;
+    }
+    if (CheckTableExist(metaDataTable)) {
+        return true;
+    }
+    std::string sql = "CREATE TABLE " + metaDataTable + " ( name TEXT PRIMARY KEY, value TEXT );";
+    return ExecSql(sql);
+}
+
+std::string Database::GetValueFromTextMetaDataTable(const std::string& name)
+{
+    std::string value;
+    if (!StringUtil::CheckSqlValid(name)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter, param: name.");
+    }
+    if (!CheckTableExist(metaDataTable)) {
+        ServerLog::Warn("Get empty value from meta data table because table is not exist.");
+        return value;
+    }
+
+    std::string sql = "SELECT value From " + metaDataTable + " WHERE name = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for getting value from meta data table: ", sqlite3_errmsg(db));
+        return value;
+    }
+    auto results = stmt->ExecuteQuery(name);
+    if (results == nullptr) {
+        ServerLog::Error("Failed to get result set for getting value from meta data table: ", stmt->GetErrorMessage());
+        return value;
+    }
+    if (results->Next()) {
+        value = results->GetString("value");
+    }
+    return value;
+}
+
+bool Database::UpdateMetaDataTable(const std::string &name, const std::string &value)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string sql = "INSERT INTO " + metaDataTable + " (value, name) VALUES (?, ?)"
+                      " ON CONFLICT(name) DO"
+                      " UPDATE SET value = excluded.value;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to create prepared stmt: name=", name, ", value=", value);
+        return false;
+    }
+    stmt->BindParams(value, name);
+    if (!stmt->Execute()) {
+        ServerLog::Error("Failed to execute prepared stmt: name=", name, ", value=", value);
+        return false;
+    }
+
+    return true;
+}
+
 } // end of namespace Module
 } // end of namespace Dic

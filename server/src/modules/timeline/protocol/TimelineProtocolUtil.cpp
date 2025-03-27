@@ -218,6 +218,16 @@ template <> std::optional<document_t> ToResponseJson<UnitFlowsResponse>(const Un
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToResponseJson<SetCardAliasResponse>(const SetCardAliasResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 
 template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response)
 {
@@ -682,6 +692,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     JsonUtil::AddMember(unit, "type", event.body.unit.type, allocator);
     json_t metadata(kObjectType);
     JsonUtil::AddMember(metadata, "cardId", event.body.unit.metadata.cardId, allocator);
+    JsonUtil::AddMember(metadata, "cardAlias", event.body.unit.metadata.cardAlias, allocator);
     JsonUtil::AddMember(unit, "metadata", metadata, allocator);
     json_t children(kArrayType);
     for (const auto &track : event.body.unit.children) {

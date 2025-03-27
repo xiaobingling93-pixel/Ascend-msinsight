@@ -226,5 +226,6 @@ export const dark: Theme = {
     rankContainerBackgroudColor: '#181B20',
     unitInfoTextColor: '#BCBCBC',
     scrollBarWidth: 7,
+    splitLineColor: '#3C3C3C',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

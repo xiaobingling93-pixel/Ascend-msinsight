@@ -64,6 +64,7 @@ const std::string REQ_RES_UNIT_THREADS = "unit/threads";
 const std::string REQ_RES_UNIT_THREAD_DETAIL = "unit/threadDetail";
 const std::string REQ_RES_UNIT_FLOWS = "unit/flows";
 const std::string REQ_RES_RESET_WINDOW = "remote/reset";
+const std::string REQ_RES_UNIT_SET_CARD_ALIAS = "unit/setCardAlias";
 const std::string REQ_RES_UNIT_SYSTEM_VIEW = "unit/systemView";
 const std::string REQ_RES_UNIT_EVENTS_VIEW = "unit/eventView";
 const std::string REQ_RES_UNIT_KERNEL_DETAILS = "unit/kernelDetails";

@@ -41,7 +41,9 @@
       "Set base slice": "设置基准算子",
       "Clear base slice": "清除基准算子",
       "Lock selection area": "锁定框选区域",
-      "Unlock selection area": "解锁框选区域"
+      "Unlock selection area": "解锁框选区域",
+      "Set alias": "设置别名",
+      "Alias": "别名"
     },
     "sliceDetail": {
       "Slice Detail": "选中详情",

@@ -41,6 +41,9 @@ public:
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
     virtual bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
                                Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId) = 0;
+    virtual bool SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
+                                Protocol::SetCardAliasBody &responseBody) = 0;
+    virtual std::string QueryCardAlias() = 0;
     virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params,
         const std::vector<TrackQuery> &trackQuery) = 0;
     virtual bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,

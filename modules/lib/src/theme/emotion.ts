@@ -231,5 +231,6 @@ declare module '@emotion/react' {
         rankContainerBackgroudColor: string;
         unitInfoTextColor: string;
         scrollBarWidth: number; // 滚动条宽度
+        splitLineColor: string; // 分割线颜色
     }
 }

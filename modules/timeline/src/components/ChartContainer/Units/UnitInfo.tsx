@@ -90,6 +90,22 @@ const DefaultInfoContainer = styled.div`
     }
 `;
 
+const TagDiv = styled.div`
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0px 5px;
+
+    .tag-content {
+        margin-left: 6px;
+        background-color: ${(props): string => `${props.theme.bgColorCommon}bd`};
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 13px;
+        border-radius: 4px;
+        padding: 0 2px;
+    }
+`;
+
 interface DefaultInfoProps {
     session: Session;
     unit: KeyedInsightUnit;
@@ -315,9 +331,25 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
         return 'auto';
     };
     return <InsightLaneInfoContainer className="insight-lane-info">
-        {tooltip(<div onMouseDown={onDragMouseDown}
-            style={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: getCursorStyle() }}
-        >{info}</div>)}
+        {
+            tooltip(
+                <div
+                    onMouseDown={onDragMouseDown}
+                    style={{ display: 'flex', flexGrow: 1, overflow: 'hidden', cursor: getCursorStyle() }}
+                >
+                    <div style={{ flexBasis: '50%', flexGrow: 1, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {info}
+                    </div>
+                    {
+                        (unit instanceof CardUnit && unit.metadata?.label !== '') && <TagDiv>
+                            <div className='tag-content'>
+                                {unit.metadata.label}
+                            </div>
+                        </TagDiv>
+                    }
+                </div>,
+            )
+        }
         { !unit.shouldParse && unit.configBar && <ConfigBar
             session={session}
             unit={unit}

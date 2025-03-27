@@ -18,6 +18,7 @@
 #include "QueryThreadTracesSummaryHandler.h"
 #include "QueryKernelDetailHandler.h"
 #include "QueryOneKernelHandler.h"
+#include "SetCardAliasHandler.h"
 #include "QueryThreadsSameOperatorHandler.h"
 #include "QueryFlowsBySliceInfoHandler.h"
 #include "SearchAllSlicesHandler.h"
@@ -65,6 +66,7 @@ void TimelineModule::RegisterRequestHandlers()
 
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOWS, std::make_unique<QueryFlowsBySliceInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_RESET_WINDOW, std::make_unique<ResetWindowHandler>());
+    requestHandlerMap.emplace(REQ_RES_UNIT_SET_CARD_ALIAS, std::make_unique<SetCardAliasHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());
     requestHandlerMap.emplace(REQ_RES_PARSE_CARDS, std::make_unique<ParseCardsHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_COUNT, std::make_unique<SearchCountHandler>());

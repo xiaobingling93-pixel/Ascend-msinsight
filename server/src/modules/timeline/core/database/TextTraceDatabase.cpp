@@ -576,6 +576,25 @@ bool TextTraceDatabase::QueryUintFlows(const Protocol::UnitFlowsParams &requestP
     return true;
 }
 
+bool TextTraceDatabase::SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
+                                     Protocol::SetCardAliasBody &responseBody)
+{
+    if (!CreateMetaDataTableForText()) {
+        ServerLog::Error("Failed to create meta data table for text.");
+        return false;
+    }
+    return UpdateMetaDataTable(cardAliasName, requestParams.cardAlias);
+}
+
+std::string TextTraceDatabase::QueryCardAlias()
+{
+    std::string cardAlias = GetValueFromTextMetaDataTable(cardAliasName);
+    if (cardAlias.empty()) {
+        return "";
+    }
+    return cardAlias;
+}
+
 void TextTraceDatabase::AssembleUnitFlowsBody(UnitFlowsBody &responseBody, uint64_t minTimestamp,
     std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap)
 {

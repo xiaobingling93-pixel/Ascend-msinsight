@@ -165,16 +165,6 @@ struct UnitThreadsRequest : public Request {
     UnitThreadsParams params;
 };
 
-struct ThreadDetailParams {
-    std::string rankId;
-    std::string pid;
-    std::string tid;
-    std::string id;
-    std::string metaType;
-    uint64_t startTime = 0;
-    uint32_t depth = 0;
-};
-
 struct ThreadDetailRequest : public Request {
     ThreadDetailRequest() : Request(REQ_RES_UNIT_THREAD_DETAIL){};
     ThreadDetailParams params;
@@ -206,6 +196,11 @@ struct UnitFlowsParams {
 struct UnitFlowsRequest : public Request {
     UnitFlowsRequest() : Request(REQ_RES_UNIT_FLOWS){};
     UnitFlowsParams params;
+};
+
+struct SetCardAliasRequest : public Request {
+    SetCardAliasRequest() : Request(REQ_RES_UNIT_SET_CARD_ALIAS){};
+    SetCardAliasParams params;
 };
 
 struct ResetWindowParams {};

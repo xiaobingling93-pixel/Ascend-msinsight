@@ -7,6 +7,7 @@ import {
     GetOverallMetricsParams,
     GetOverallMetricsResult, GetOverallMetricsResultItem,
     ParseCardsParam,
+    SetCardAliasParams,
 } from './interface';
 
 // 根据cardId集合解析timeline
@@ -38,4 +39,9 @@ export const getOverallMetrics = async (params: GetOverallMetricsParams): Promis
 // 获取system view综合指标详细算子列表
 export const getOverallMetricsMoreList = async (params: GetOverallMetricsMoreListParams): Promise<GetOverallMetricsMoreListResult> => {
     return window.requestData('systemView/overall/more/details', params, 'timeline');
+};
+
+// 设置卡级别别名
+export const setCardAliasReq = async (params: SetCardAliasParams): Promise<any> => {
+    return window.requestData('unit/setCardAlias', params, 'timeline');
 };

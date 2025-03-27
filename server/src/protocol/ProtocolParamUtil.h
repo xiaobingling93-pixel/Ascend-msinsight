@@ -7,6 +7,7 @@
 #define PROFILER_SERVER_PROTOCOLPARAMUTIL_H
 
 #include <string>
+#include "ProtocolMessage.h"
 
 namespace Dic::Protocol {
 struct OrderParam {
@@ -49,6 +50,30 @@ struct PageParam {
     {
         if (pageSize == 0) {
             errMsg = "Failed to check page parameter. Page size cannot be zero.";
+            return false;
+        }
+        return true;
+    }
+};
+
+struct ThreadDetailParams {
+    std::string rankId;
+    std::string pid;
+    std::string tid;
+    std::string id;
+    std::string metaType;
+    uint64_t startTime = 0;
+    uint32_t depth = 0;
+};
+
+struct SetCardAliasParams {
+    std::string rankId;
+    std::string cardAlias;
+    bool CheckParams(std::string alias, std::string &errMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(alias, paramError)) {
+            errMsg = "[Timeline]Failed to check card alias, " + paramError;
             return false;
         }
         return true;

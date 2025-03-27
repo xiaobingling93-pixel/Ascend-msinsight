@@ -706,6 +706,7 @@ export interface CardMetaData {
     cardName: string;
     cardPath: string;
     dataSource: DataSource;
+    label?: string;
 };
 
 export interface HostMetaData {

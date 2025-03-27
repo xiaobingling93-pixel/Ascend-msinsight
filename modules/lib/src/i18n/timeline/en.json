@@ -41,7 +41,9 @@
       "Set base slice": "Set base slice",
       "Clear base slice": "Clear base slice",
       "Lock selection area": "Lock selection area",
-      "Unlock selection area": "Unlock selection area"
+      "Unlock selection area": "Unlock selection area",
+      "Set alias": "Set Alias",
+      "Alias": "Alias"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",

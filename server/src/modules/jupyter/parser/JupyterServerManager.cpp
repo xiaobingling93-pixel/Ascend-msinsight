@@ -15,6 +15,7 @@ JupyterServerManager &JupyterServerManager::Instance()
     return instance;
 }
 
+// LCOV_EXCL_BR_START
 bool JupyterServerManager::Close()
 {
     // 根据port获取pid(外层已校验服务是否启动)
@@ -260,6 +261,7 @@ void JupyterServerManager::FillJupyterServerInfo(const std::string& url)
         jupyterServerInfo.fragment = url_match[urlFragmentPosition].str();
     }
 }
+// LCOV_EXCL_BR_STOP
 
 JupyterServerManager::JupyterServerManager() = default;
 

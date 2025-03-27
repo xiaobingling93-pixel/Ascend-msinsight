@@ -60,6 +60,9 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
         uint64_t minTimestamp, uint64_t trackId) override;
+    bool SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
+                              Protocol::SetCardAliasBody &responseBody) override;
+    std::string QueryCardAlias() override;
     int SearchSliceNameCount(const Protocol::SearchCountParams &params,
         const std::vector<TrackQuery> &trackQuery) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
@@ -136,6 +139,7 @@ private:
     const std::string timelineParseStatus = "Timeline files parsing status";
     const uint32_t unit = 1000;
     const uint32_t tolerance = 500; // 匹配算子时的范围为±500
+    const std::string cardAliasName = "RANK_LABEL";
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateProcessNameStmt = nullptr;

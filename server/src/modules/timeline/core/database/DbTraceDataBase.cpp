@@ -156,6 +156,17 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
     return true;
 }
 
+bool DbTraceDataBase::SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
+                                   Protocol::SetCardAliasBody &responseBody)
+{
+    return false;
+}
+
+std::string DbTraceDataBase::QueryCardAlias()
+{
+    return "";
+}
+
 int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
 {
     int32_t result = 0;

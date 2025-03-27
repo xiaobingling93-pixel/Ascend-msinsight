@@ -139,6 +139,7 @@ void ParserAlloc::SendParseSuccessEvent(const std::string &fileId)
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         return;
     }
+    event->body.unit.metadata.cardAlias = database->QueryCardAlias();
     database->QueryExtremumTimestamp(min, max);
     if (min == max && max == 0) {
         event->body.startTimeUpdated = false;

@@ -19,6 +19,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_FLOWS, ToUnitFlowsRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_SET_CARD_ALIAS, ToSetCardAliasRequest);
     jsonToReqFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceRequest);
@@ -45,6 +46,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOWS, ToUnitFlowsResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_SET_CARD_ALIAS, ToSetCardAliasResponseJson);
     resToJsonFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
@@ -207,6 +209,18 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitFlowsRequest(const json_t &json
     JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isSimulation, json["params"], "isSimulation");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToSetCardAliasRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<SetCardAliasRequest> reqPtr = std::make_unique<SetCardAliasRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.cardAlias, json["params"], "cardAlias");
     return reqPtr;
 }
 
@@ -567,6 +581,11 @@ std::optional<document_t> TimelineProtocol::ToThreadDetailResponseJson(const Res
 std::optional<document_t> TimelineProtocol::ToUnitFlowsResponseJson(const Response &response)
 {
     return ToResponseJson<UnitFlowsResponse>(dynamic_cast<const UnitFlowsResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToSetCardAliasResponseJson(const Response &response)
+{
+    return ToResponseJson<SetCardAliasResponse>(dynamic_cast<const SetCardAliasResponse &>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToResetWindowResponseJson(const Response &response)

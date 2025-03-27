@@ -226,4 +226,5 @@ export const light: Theme = {
     rankContainerBackgroudColor: '#EBEFF6',
     unitInfoTextColor: '#4E5865',
     scrollBarWidth: 7,
+    splitLineColor: '#DFE5EF',
 };

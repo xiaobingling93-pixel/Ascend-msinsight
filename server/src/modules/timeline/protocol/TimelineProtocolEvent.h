@@ -15,6 +15,7 @@ namespace Dic {
 namespace Protocol {
 struct UnitMetaData {
     std::string cardId;
+    std::string cardAlias;
 };
 
 struct UnitTrackMetaData {

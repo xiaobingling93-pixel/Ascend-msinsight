@@ -42,6 +42,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
+                    (unit.metadata as CardMetaData).label = unitData.unit.metadata.cardAlias;
                     unit.alignStartTimestamp = unitData.offset as number;
                     const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
                     if (unitData.unit.children !== undefined && unitData.unit.children.length > 0) {

@@ -76,3 +76,8 @@ export interface GetOverallMetricsMoreListResult extends PaginationModel {
     pageSize: number;
     currentPage: number;
 }
+
+export interface SetCardAliasParams {
+    rankId: string;
+    cardAlias: string;
+}

@@ -172,6 +172,14 @@ struct UnitFlowsResponse : public Response {
     UnitFlowsBody body;
 };
 
+struct SetCardAliasBody {
+};
+
+struct SetCardAliasResponse : public Response {
+    SetCardAliasResponse() : Response(REQ_RES_UNIT_SET_CARD_ALIAS){};
+    SetCardAliasBody body;
+};
+
 struct ResetWindowResponse : public Response {
     ResetWindowResponse() : Response(REQ_RES_RESET_WINDOW) {}
 };

@@ -38,6 +38,7 @@ import {
     actionUndoZoom, actionUnLockSelection,
     actionUnpinAll,
     actionZoomIntoSelection,
+    actionSetCardAlias,
 } from '../actions';
 import { Action } from '../actions/types';
 import { getShortcutFromShortcutName, ShortcutName } from '../actions/shortcuts';
@@ -378,6 +379,7 @@ const contextMenuItems: Action[] = [
     actionClearBenchmarkSlice,
     actionLockSelection,
     actionUnLockSelection,
+    actionSetCardAlias,
 ];
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
