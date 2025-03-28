@@ -27,15 +27,15 @@ namespace {
                  { return a.diff.inputShape > b.diff.inputShape; }},
         {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                     { return a.diff.accCore > b.diff.accCore; }},
-        {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"total_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                              { return NumberUtil::IsStr2DoubleDesc(a.diff.totalTime, b.diff.totalTime); }},
-        {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"cnt", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                        { return NumberUtil::IsStr2DoubleDesc(a.diff.count, b.diff.count); }},
-        {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"avg_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                      { return NumberUtil::IsStr2DoubleDesc(a.diff.avgTime, b.diff.avgTime); }},
-        {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"max_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                       { return NumberUtil::IsStr2DoubleDesc(a.diff.maxTime, b.diff.maxTime); }},
-        {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"min_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                       { return NumberUtil::IsStr2DoubleDesc(a.diff.minTime, b.diff.minTime); }}
     };
     std::unordered_map<std::string, StatisticCmpFun> StatisticAsceCompareFunctions = {
@@ -47,15 +47,15 @@ namespace {
                  { return a.diff.inputShape < b.diff.inputShape; }},
         {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                     { return a.diff.accCore < b.diff.accCore; }},
-        {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"total_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                              { return NumberUtil::IsStr2DoubleAsce(a.diff.totalTime, b.diff.totalTime); }},
-        {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"cnt", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                        { return NumberUtil::IsStr2DoubleAsce(a.diff.count, b.diff.count); }},
-        {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"avg_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                      { return NumberUtil::IsStr2DoubleAsce(a.diff.avgTime, b.diff.avgTime); }},
-        {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"max_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                       { return NumberUtil::IsStr2DoubleAsce(a.diff.maxTime, b.diff.maxTime); }},
-        {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+        {"min_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
                       { return NumberUtil::IsStr2DoubleAsce(a.diff.minTime, b.diff.minTime); }}
     };
     bool StatisticDescCmp(const StatisticCmpRes& a, const StatisticCmpRes& b, const std::string orderBy)
