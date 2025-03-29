@@ -101,7 +101,9 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
         return nullptr;
     }
     reqPtr->params.projectAction = static_cast<ProjectActionEnum>(projectAction);
-    reqPtr->params.isConflict = json["params"]["isConflict"].GetBool();
+    if (json["params"].HasMember("isConflict") && json["params"]["isConflict"].IsBool()) {
+        reqPtr->params.isConflict = json["params"]["isConflict"].GetBool();
+    }
     return reqPtr;
 }
 

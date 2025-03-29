@@ -318,19 +318,13 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
         std::copy(std::istream_iterator<unsigned char>(communicationGroup), std::istream_iterator<unsigned char>(),
                   back_inserter(fileContent));
         doc.Parse(fileContent.c_str());
-        if (!CheckDocumentValid(doc) || !doc.HasMember("p2p") || !doc.HasMember("collective")) {
+        if (!CheckDocumentValid(doc)) {
             return;
         }
         auto p2p = doc.FindMember("p2p")->value.GetArray();
         auto collective = doc.FindMember("collective")->value.GetArray();
-        auto orderByLenDesAndNumAsc = [](const Value& a, const Value& b) {
-            if (a.Size() == b.Size() && a.Size() > 0) {
-                return a[0].GetInt() < b[0].GetInt();
-            }
-            return a.Size() > b.Size();
-        };
-        std::sort(p2p.Begin(), p2p.End(), orderByLenDesAndNumAsc);
-        std::sort(collective.Begin(), collective.End(), orderByLenDesAndNumAsc);
+        std::sort(p2p.Begin(), p2p.End(), OrderByLenDesAndNumAsc);
+        std::sort(collective.Begin(), collective.End(), OrderByLenDesAndNumAsc);
         std::for_each(p2p.begin(), p2p.end(), [&collective](auto& item) {
             auto pos = std::find(collective.begin(), collective.end(), item);
             if (pos != collective.end()) {
@@ -351,13 +345,27 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
     }
 }
 
+bool ClusterFileParser::OrderByLenDesAndNumAsc(const Value& a, const Value& b)
+{
+    if (!a.IsArray() || !b.IsArray()) {
+        return true;
+    }
+    if (a.Size() == b.Size() && a.Size() > 0) {
+        if (!a[0].IsInt() || !b[0].IsInt()) {
+            return true;
+        }
+        return a[0].GetInt() < b[0].GetInt();
+    }
+    return a.Size() > b.Size();
+}
+
 bool ClusterFileParser::CheckDocumentValid(const Document &doc)
 {
     if (doc.HasParseError()) {
         ServerLog::Error("JSON file is invalid.");
         return false;
     }
-    bool isLegal = doc.HasMember("p2p") && doc.FindMember("p2p")->value.IsArray() &&
+    bool isLegal = doc.IsObject() && doc.HasMember("p2p") && doc.FindMember("p2p")->value.IsArray() &&
                    doc.HasMember("collective") && doc.FindMember("collective")->value.IsArray();
     if (!isLegal) {
         ServerLog::Error("JSON file is illegal.");

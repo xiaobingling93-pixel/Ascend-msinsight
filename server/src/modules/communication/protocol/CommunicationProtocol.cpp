@@ -154,7 +154,9 @@ std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &
     JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineIterationId, json["params"], "baselineIterationId");
     if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {
         for (const auto &rankId : json["params"]["rankList"].GetArray()) {
-            reqPtr->params.rankList.emplace_back(rankId.GetString());
+            if (rankId.IsString()) {
+                reqPtr->params.rankList.emplace_back(rankId.GetString());
+            }
         }
     }
     return reqPtr;
@@ -183,7 +185,9 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {
         for (const auto &rankId : json["params"]["rankList"].GetArray()) {
-            reqPtr->params.rankList.emplace_back(rankId.GetString());
+            if (rankId.IsString()) {
+                reqPtr->params.rankList.emplace_back(rankId.GetString());
+            }
         }
     }
     return reqPtr;
@@ -201,7 +205,9 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixOpNamesRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {
         for (const auto &rankId : json["params"]["rankList"].GetArray()) {
-            reqPtr->params.rankList.emplace_back(rankId.GetString());
+            if (rankId.IsString()) {
+                reqPtr->params.rankList.emplace_back(rankId.GetString());
+            }
         }
     }
     return reqPtr;

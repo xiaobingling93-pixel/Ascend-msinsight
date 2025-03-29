@@ -53,6 +53,7 @@ private:
     static bool CheckDocumentValid(const Document &doc);
     static std::string GetStrValue(std::map<std::string, size_t> &dataMap, const std::vector<std::string> &tokens,
                                    const std::string &key);
+    static bool OrderByLenDesAndNumAsc(const Value &a, const Value &b);
 };
 } // end of namespace Timeline
 } // end of namespace Module
