@@ -103,7 +103,7 @@ export const shortcutSwitchFindWindow = (keyInfo: KeydownInfo): void => {
         if (!isOnSource) {
             return;
         }
-        const isOpenKey = (keyInfo.isMac ? keyInfo.hasCommand : keyInfo.hasCtrl) && keyInfo.key === KEYS.F;
+        const isOpenKey = (keyInfo.isMac ? keyInfo.hasCommand : keyInfo.hasCtrl) && keyInfo.key?.toLowerCase() === KEYS.F;
         const isCloseKey = keyInfo.key === KEYS.ESCAPE;
         if (isOpenKey) {
             openFind();
