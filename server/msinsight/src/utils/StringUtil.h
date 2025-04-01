@@ -37,16 +37,8 @@ public:
             return static_cast<uint32_t>(num);
         } catch (const std::invalid_argument& e) {
             return UINT32_MAX;
-        }
-    }
-
-    static inline double StringToDouble(std::string numStr)
-    {
-        try {
-            double num = std::stod(numStr);
-            return num;
-        } catch (const std::invalid_argument& e) {
-            return 0;
+        } catch (const std::out_of_range &) {
+            return UINT32_MAX;
         }
     }
 
@@ -56,6 +48,8 @@ public:
             int num = std::stoi(numStr);
             return num;
         } catch (const std::invalid_argument& e) {
+            return 0;
+        } catch (const std::out_of_range &) {
             return 0;
         }
     }
@@ -108,7 +102,7 @@ public:
             return str;
         }
         std::string res(str);
-        int pos = res.length() / MIN_LEN;
+        size_t pos = res.length() / MIN_LEN;
         res.replace(pos, pos, pos, '*');
         return res;
     }

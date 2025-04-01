@@ -153,3 +153,21 @@ TEST(StringUtil, CreateQuestionMarkStringWhenInputNotZero)
     auto result = StringUtil::CreateQuestionMarkString(5);
     EXPECT_EQ(result, "?,?,?,?,?");
 }
+
+TEST(StringUtil, StringToUint32)
+{
+    const uint64_t tempMax = INT64_MAX;
+    const uint64_t input = tempMax + 1;
+    std::string inputStr = std::to_string(input);
+    auto result = StringUtil::StringToUint32(inputStr);
+    EXPECT_EQ(result, UINT32_MAX);
+}
+
+TEST(StringUtil, StringToInt)
+{
+    const uint64_t tempMax = INT64_MAX;
+    const uint64_t input = tempMax + 1;
+    std::string inputStr = std::to_string(input);
+    auto result = StringUtil::StringToInt(inputStr);
+    EXPECT_EQ(result, 0);
+}
