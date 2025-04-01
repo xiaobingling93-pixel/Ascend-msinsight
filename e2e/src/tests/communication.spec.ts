@@ -1,11 +1,11 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
 import { test as baseTest, expect, WebSocket } from '@playwright/test';
-import { CommunicationPage, FrameworkPage, TimelinePage } from './page-object';
-import { clearAllData, importData, setupWebSocketListener, waitForResponse, waitForWebSocketEvent } from './utils';
-import { SelectHelpers, CheckboxHelpers, TableHelpers } from './components';
+import { CommunicationPage, FrameworkPage, TimelinePage } from '@/page-object';
+import { clearAllData, importData, setupWebSocketListener, waitForResponse, waitForWebSocketEvent } from '@/utils';
+import { SelectHelpers, TableHelpers } from '@/components';
 
 interface TestFixtures {
     communicationPage: CommunicationPage;

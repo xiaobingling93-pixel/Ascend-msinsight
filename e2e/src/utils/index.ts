@@ -6,7 +6,7 @@ import { expect, type FrameLocator, type Page, WebSocket } from '@playwright/tes
 import { FrameworkPage, FileExploreDialogPage } from '../page-object';
 import { FilePath, WEBSOCKET_URL } from './constants';
 
-let iterationNum: number = 0;
+let iterationNum = 0;
 // 导入数据
 export async function importData(page: Page, filePath: FilePath = FilePath.TEXT): Promise<void> {
     if (iterationNum > 3) {
@@ -96,7 +96,7 @@ export async function waitForWebSocketEvent<T>(page: Page, matchCondition: (payl
 
 // 监听 websocket 连接，返回 ws 实例
 export function setupWebSocketListener(page: Page): Promise<WebSocket> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         page.on('websocket', (ws) => {
             const url = ws.url();
             if (url === WEBSOCKET_URL) {
@@ -156,6 +156,6 @@ export async function waitForAllParsed(page: Page, tabPage: any): Promise<void> 
     await frameworkPage.clickTab('timeline');
     const timelineFrame = page.frameLocator('#Timeline');
     const parsingProgress = timelineFrame.locator('.unit-info .ant-progress').first();
-    await parsingProgress.waitFor({state: 'hidden'});
+    await parsingProgress.waitFor({ state: 'hidden' });
     await tabPage.goto();
 }

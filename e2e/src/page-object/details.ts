@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import type {FrameLocator, Page} from '@playwright/test';
-import {FrameworkPage, TabName} from './framework';
-import {Locator} from '@playwright/test';
+import type { FrameLocator, Page } from '@playwright/test';
+import { FrameworkPage, TabName } from './framework';
+import { Locator } from '@playwright/test';
 
 export class DetailsPage {
     readonly page: Page;

@@ -3,8 +3,8 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { FilePath } from './utils/constants';
-import { clearAllData, importData } from './utils';
+import { FilePath } from '@/utils/constants';
+import { clearAllData, importData } from '@/utils';
 
 // jupyter 页面正常加载
 test('test_jupyterLoaded', async ({ page }) => {

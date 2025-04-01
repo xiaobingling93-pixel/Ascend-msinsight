@@ -1,11 +1,11 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
 import { test as baseTest, expect } from '@playwright/test';
-import { OperatorPage } from './page-object';
-import { clearAllData, importData, setCompare, waitForWebSocketEvent } from './utils';
-import { SelectHelpers } from './components';
+import { OperatorPage } from '@/page-object';
+import { clearAllData, importData, setCompare, waitForWebSocketEvent } from '@/utils';
+import { SelectHelpers } from '@/components';
 
 interface TestFixtures {
     operatorPage: OperatorPage;
@@ -68,7 +68,7 @@ test.describe('Operator', () => {
     test('operator_compare_rank', async ({ page, operatorPage }) => {
         const { operatorFrame } = operatorPage;
         await setCompare(page, operatorFrame);
-        await operatorFrame.locator('.ant-spin').waitFor({state: 'hidden'});
+        await operatorFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
         await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot(operatorImgMap.compareRankRes, {
             maxDiffPixels: 500,
         });

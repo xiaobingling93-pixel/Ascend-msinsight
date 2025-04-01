@@ -1,11 +1,11 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
 import { test as baseTest, expect } from '@playwright/test';
-import { SummaryPage, FrameworkPage } from './page-object';
-import { clearAllData, importData, waitForWebSocketEvent } from './utils';
-import { SelectHelpers } from './components';
+import { SummaryPage, FrameworkPage } from '@/page-object';
+import { clearAllData, importData, waitForWebSocketEvent } from '@/utils';
+import { SelectHelpers } from '@/components';
 
 interface TestFixtures {
     summaryPage: SummaryPage;
@@ -41,7 +41,7 @@ test.describe('Summary', () => {
     });
 
     // 基础数据展示
-    test('test_baseInfoDisplay', async ({ page, summaryPage }) => {
+    test('test_baseInfoDisplay', async ({ summaryPage }) => {
         const { summaryFrame } = summaryPage;
         const baseInfoContainer = summaryFrame.locator('.mi-collapsible-panel').first();
 
@@ -62,7 +62,7 @@ test.describe('Summary', () => {
         const { summaryFrame, parallelismGraph, parallelismGraphLoading } = summaryPage;
         const dimensionTabs = ['DP Dimension >', 'DP + PP Dimension >', 'DP + PP + CP Dimension >', 'DP + PP + CP + TP Dimension'];
 
-        for (let tab of dimensionTabs) {
+        for (const tab of dimensionTabs) {
             await summaryFrame.getByRole('tab', { name: tab }).click();
             if (tab !== 'DP Dimension >') {
                 await parallelismGraphLoading.waitFor({ state: 'hidden' });
@@ -175,7 +175,7 @@ test.describe('Summary', () => {
 
     // 点击性能数据图表的某张卡，Computing Detail、Communication Detail 加载对应数据
     test('test_computingDetailTableAndCommunicationDetailTable_when_clickSpecificRankInPerformanceChart', async ({ page, summaryPage }) => {
-        const { performanceChart, statisticsTableContainer, summaryFrame } = summaryPage;
+        const { performanceChart, statisticsTableContainer } = summaryPage;
         const performanceChartCanvas = performanceChart.locator('canvas');
 
         await summaryPage.changeDimensionTo('tp');

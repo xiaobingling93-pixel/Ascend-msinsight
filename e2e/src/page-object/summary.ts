@@ -4,7 +4,6 @@
 
 import type { FrameLocator, Page, Locator } from '@playwright/test';
 import { FrameworkPage } from './framework';
-import { CheckboxHelpers, SelectHelpers } from '../components';
 
 interface ParallelValue {
     algorithm: 'Megatron-LM(tp-cp-ep-dp-pp)' | 'Megatron-LM(tp-cp-pp-ep-dp)';
@@ -13,16 +12,6 @@ interface ParallelValue {
     dpSize: number;
     cpSize: number;
     epSize: number;
-}
-
-interface ParallelSwitchValue {
-    pipelineParallel: boolean;
-    tensorParallel: boolean;
-    dataParallel: boolean;
-    contextParallel: boolean;
-    expertParallel: boolean;
-    dataType: string;
-    dyeingStep?: number;
 }
 
 type DimensionType = 'tp' | 'pp' | 'cp' | 'dp';

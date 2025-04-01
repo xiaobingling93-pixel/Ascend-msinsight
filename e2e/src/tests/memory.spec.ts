@@ -1,12 +1,12 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
 import { expect, test as baseTest } from '@playwright/test';
-import { MemoryPage, TimelinePage } from './page-object';
-import { clearAllData, importData, setCompare, waitForWebSocketEvent } from './utils';
-import { CheckboxHelpers, InputHelpers, SelectHelpers } from './components';
-import { FilePath } from './utils/constants';
+import { MemoryPage, TimelinePage } from '@/page-object';
+import { clearAllData, importData, setCompare, waitForWebSocketEvent } from '@/utils';
+import { CheckboxHelpers, InputHelpers, SelectHelpers } from '@/components';
+import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     memoryPage: MemoryPage;

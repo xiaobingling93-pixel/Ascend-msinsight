@@ -1,12 +1,12 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
 import { test as baseTest, expect } from '@playwright/test';
-import { TimelinePage, SystemView, CommunicationPage } from './page-object';
-import { clearAllData, importData } from './utils';
-import { InputHelpers, SelectHelpers } from './components';
-import { FilePath } from './utils/constants';
+import { TimelinePage, SystemView, CommunicationPage } from '@/page-object';
+import { clearAllData, importData } from '@/utils';
+import { InputHelpers, SelectHelpers } from '@/components';
+import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     timelinePage: TimelinePage;
@@ -313,8 +313,8 @@ test.describe('Timeline', () => {
     });
 
     // 右键菜单--Fit to screen
-    test('test_fitToScreen_when_rightClickOperator', async ({ page, timelinePage }) => {
-        const { timelineFrame, mainContainer, unitWrapperScroller, expandUnit } = timelinePage;
+    test('test_fitToScreen_when_rightClickOperator', async ({ timelinePage }) => {
+        const { timelineFrame, mainContainer, unitWrapperScroller } = timelinePage;
         const secondLayerUnit = mainContainer.getByText('Python (2045554)');
 
         await secondLayerUnit.click();
@@ -460,7 +460,6 @@ test.describe('Timeline', () => {
     // 键盘 W、S、A、D、方向键
     test('test_keyword', async ({ timelinePage, page }) => {
         const { timelineFrame, zoomOutBtn, resetBtn } = timelinePage;
-        const unitList = timelineFrame.locator('#unitWrapperScroller');
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
         await page.mouse.move(0, 0);
@@ -546,7 +545,7 @@ test.describe('Timeline(Operator)', () => {
     });
 
     // 算子调优-点击算子
-    test('test_compute_timeline_operator_click', async ({ timelinePage, page }) => {
+    test('test_compute_timeline_operator_click', async ({ timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();

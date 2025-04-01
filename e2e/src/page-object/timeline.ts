@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import { expect, type Locator, type FrameLocator, type Page } from '@playwright/test';
+import { type Locator, type FrameLocator, type Page } from '@playwright/test';
 import { FrameworkPage } from './framework';
 
 export class TimelinePage {

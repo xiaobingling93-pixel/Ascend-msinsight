@@ -1,10 +1,10 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
 import { test, expect } from '@playwright/test';
-import { FrameworkPage } from './page-object';
-import { clearAllData, importData } from './utils';
+import { FrameworkPage } from '@/page-object';
+import { clearAllData, importData } from '@/utils';
 
 test.describe('Framework', () => {
     test.beforeEach(async ({ page }) => {

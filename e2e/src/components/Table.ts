@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { Page, Locator, expect, FrameLocator } from '@playwright/test';
+import { Locator } from '@playwright/test';
 import { Component } from './Component';
 
 export class TableHelpers extends Component {
