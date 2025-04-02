@@ -216,7 +216,7 @@ void TextClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> 
         sqlite3_bind_text(stmt, idx++, timeInfo.opName.c_str(), timeInfo.opName.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, timeInfo.opSuffix.c_str(), timeInfo.opSuffix.length(),
                           SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, NumberUtil::CeilingClamp(timeInfo.startTime, (uint64_t)INT64_MAX));
+        sqlite3_bind_int64(stmt, idx++, NumberUtil::CeilingClamp(timeInfo.startTime, static_cast<uint64_t>(INT64_MAX)));
         sqlite3_bind_double(stmt, idx++, timeInfo.elapseTime);
         sqlite3_bind_double(stmt, idx++, timeInfo.synchronizationTimeRatio);
         sqlite3_bind_double(stmt, idx++, timeInfo.synchronizationTime);
@@ -1144,6 +1144,10 @@ std::string TextClusterDatabase::GetStageIdByGroupId(const std::string &groupId)
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     resultSet = stmt->ExecuteQuery(groupId);
+    if (!resultSet) {
+        ServerLog::Error("Failed to execute query.");
+        return "";
+    }
     std::string stageId;
     if (resultSet->Next()) {
         stageId = resultSet->GetString("id");

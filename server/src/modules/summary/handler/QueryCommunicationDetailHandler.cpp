@@ -25,7 +25,7 @@ bool QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Re
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryCommunicationOpDetail(request.params, response.commDetails) or
         !database->QueryTotalNumByAcceleratorCore(request.params.timeFlag, response.totalNum)) {
-        ServerLog::Warn("query communication detail or get total num is failed");
+        ServerLog::Warn("Failed to query communication detail or get total num.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;

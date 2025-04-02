@@ -25,7 +25,7 @@ bool QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryComputeOpDetail(request.params, response.computeDetails) or
         !database->QueryTotalNumByAcceleratorCore(request.params.timeFlag, response.totalNum)) {
-        ServerLog::Warn("Query compute detail or query total num is failed");
+        ServerLog::Warn("Failed to query compute detail or query total num.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;

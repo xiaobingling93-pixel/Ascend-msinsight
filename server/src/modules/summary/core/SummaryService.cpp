@@ -25,8 +25,9 @@ bool SummaryService::QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared
         return false;
     }
     baseInfo.collectStartTime =
-        NumberUtil::CeilingClamp(min / (numberThousands * numberThousands), (uint64_t)INT64_MAX);
-    baseInfo.collectDuration = NumberUtil::CeilingClamp((max - min) / numberThousands, (uint64_t)INT64_MAX);
+        NumberUtil::CeilingClamp(min / (numberThousands * numberThousands), static_cast<uint64_t>(INT64_MAX));
+    baseInfo.collectDuration =
+        NumberUtil::CeilingClamp((max - min) / numberThousands, static_cast<uint64_t>(INT64_MAX));
     return true;
 }
 void SummaryService::QueryCompareSummaryBaseInfo(const SummaryTopRankRequest &request, SummaryTopRankResponse &response)

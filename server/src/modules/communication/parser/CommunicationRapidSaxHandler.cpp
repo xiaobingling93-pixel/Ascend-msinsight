@@ -41,7 +41,7 @@ bool CommunicationRapidSaxHandler::Int(int i)
 bool CommunicationRapidSaxHandler::Uint(unsigned int u)
 {
     if (currentDepth == sizeDistributionDepth) {
-        tempInt = u;
+        tempInt = NumberUtil::CeilingClamp(u, static_cast<unsigned int>(INT_MAX));
     } else {
         rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
         currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
@@ -82,7 +82,7 @@ bool CommunicationRapidSaxHandler::RawNumber(const char *str, SizeType len, bool
 
     const std::string numberStr(str);
     if (StringUtil::Contains(numberStr, ".")) {
-        tempTransitSize = std::strtod(str, nullptr);
+        tempTransitSize = NumberUtil::StringToDouble(numberStr);
     } else {
         tempInt = std::strtol(str, nullptr, INT_TEN);
     }
@@ -215,7 +215,12 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
     } else {
         timeInfo.opName = tempOpName;
     }
-    timeInfo.startTime = NumberUtil::TimestampUsToNs(JsonUtil::GetString(json, "Start Timestamp(us)"));
+    int64_t tempStartTime = NumberUtil::TimestampUsToNs(JsonUtil::GetString(json, "Start Timestamp(us)"));
+    if (tempStartTime <= 0) {
+        timeInfo.startTime = 0;
+    } else {
+        timeInfo.startTime = tempStartTime;
+    }
     timeInfo.elapseTime = JsonUtil::GetDouble(json, "Elapse Time(ms)");
     timeInfo.idleTime = JsonUtil::GetDouble(json, "Idle Time(ms)");
     timeInfo.synchronizationTimeRatio = JsonUtil::GetDouble(json, "Synchronization Time Ratio");

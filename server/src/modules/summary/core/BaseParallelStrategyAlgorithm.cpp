@@ -115,7 +115,7 @@ bool BaseParallelStrategyAlgorithm::UpdateShowMap(std::string &err)
     return false;
 }
 
-void BaseParallelStrategyAlgorithm::SetParaDetail(const std::string &para, int64_t size)
+void BaseParallelStrategyAlgorithm::SetParaDetail(const std::string &para, uint32_t size)
 {
     // 参数为1，该并行域未生效
     if (size == 1) {
@@ -636,7 +636,7 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStra
  * @return
  */
 std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStrategyAlgorithm::ReduceCommDefaultFunc(
-    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, int w, int h)
+    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, uint32_t w, uint32_t h)
 {
     if (input.empty()) {
         Server::ServerLog::Error("Fail to reduce communication data, input is empty.");
@@ -644,9 +644,9 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStra
     }
 
     // 检查参数是否为0，滑动窗口是否符合折叠要求
-    bool isParamZero = strategyConfig.ppSize == 0 || tpCpDpSize == 0 || w == 0 || h == 0;
-    bool isInvalidWindowSize = strategyConfig.ppSize % h != 0 || tpCpDpSize % w != 0;
-    if (isParamZero || isInvalidWindowSize) {
+    bool isParamInvalid = strategyConfig.ppSize == 0 || tpCpDpSize == 0 || w == 0 || h == 0 ||
+        strategyConfig.ppSize % h != 0 || tpCpDpSize % w != 0;
+    if (isParamInvalid) {
         Server::ServerLog::Error("Fail to reduce communication data, param error.");
         return {};
     }

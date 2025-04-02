@@ -478,7 +478,7 @@ std::string ClusterFileParser::GetStrValue(std::map<std::string, size_t> &dataMa
     if (dataMap.find(key) == dataMap.end()) {
         return "";
     }
-    int index = dataMap[key];
+    size_t index = dataMap[key];
     return tokens[index];
 }
 

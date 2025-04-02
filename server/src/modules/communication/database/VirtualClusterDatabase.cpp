@@ -61,8 +61,8 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &bas
         baseInfo.stepList = JsonUtil::JsonToVector(valueSteps);
     }
     baseInfo.dataSize = NumberUtil::StringToDouble(valueDataSize) / MB_SIZE;
-    baseInfo.stepNum = baseInfo.stepList.size();
-    baseInfo.rankCount = baseInfo.rankList.size();
+    baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(INT_MAX));
+    baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(INT_MAX));
     sqlite3_finalize(stmtBaseInfo);
     return true;
 }
@@ -213,8 +213,18 @@ bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uin
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        min = sqlite3_column_int64(stmt, col++);
-        max = sqlite3_column_int64(stmt, col++);
+        int64_t tempMin = sqlite3_column_int64(stmt, col++);
+        if (tempMin <= 0) {
+            min = 0;
+        } else {
+            min = tempMin;
+        }
+        int64_t tempMax = sqlite3_column_int64(stmt, col++);
+        if (tempMax <= 0) {
+            max = 0;
+        } else {
+            max = tempMax;
+        }
     }
     sqlite3_finalize(stmt);
     return true;
@@ -262,7 +272,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
         return false;
     }
     int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
+    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, static_cast<uint64_t>(INT64_MAX)));
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
@@ -467,7 +477,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Duration List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
+    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, static_cast<uint64_t>(INT64_MAX)));
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
@@ -510,7 +520,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Operator List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
+    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, static_cast<uint64_t>(INT64_MAX)));
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     if (requestParams.operatorName != totalOpInfo) {
@@ -522,8 +532,18 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         OperatorTimeDo object{};
         object.rankId = sqlite3_column_string(stmt, col++);
         object.operatorName = sqlite3_column_string(stmt, col++);
-        object.startTime = sqlite3_column_int64(stmt, col++);
-        object.elapseTime = sqlite3_column_int64(stmt, col++);
+        int64_t tempStartTime = sqlite3_column_int64(stmt, col++);
+        if (tempStartTime <= 0) {
+            object.startTime = 0;
+        } else {
+            object.startTime = tempStartTime;
+        }
+        int64_t tempElapseTime = sqlite3_column_int64(stmt, col++);
+        if (tempElapseTime <= 0) {
+            object.elapseTime = 0;
+        } else {
+            object.elapseTime = tempElapseTime;
+        }
         operatorTimeDoList.push_back(object);
     }
     sqlite3_finalize(stmt);

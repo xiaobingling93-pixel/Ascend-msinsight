@@ -49,7 +49,7 @@ protected:
     // get arrangements
     void ClearArrangementData();
     bool UpdateShowMap(std::string &err);
-    void SetParaDetail(const std::string &para, int64_t size);
+    void SetParaDetail(const std::string &para, uint32_t size);
     void UpdateElementSize();
     std::string GetElementName(std::unordered_map<std::string, uint32_t> &indexAttributes);
     Position GetElementPosition(std::unordered_map<std::string, uint32_t>& indexAttributes) const;
@@ -79,7 +79,7 @@ protected:
         std::vector<std::string> &advices);
 
     std::unordered_map<std::string, std::vector<CommInfoUnderRank>> ReduceCommDefaultFunc(
-        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, int w, int h);
+        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, uint32_t w, uint32_t h);
 
     ParallelStrategyConfig strategyConfig;
     std::string dimension = DIMENSIONS_DP; // 默认一层级
