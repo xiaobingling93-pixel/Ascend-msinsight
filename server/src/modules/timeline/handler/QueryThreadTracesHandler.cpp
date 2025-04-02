@@ -30,7 +30,7 @@ bool QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    int64_t trackId = TrackInfoManager::Instance().GetTrackId(request.params.cardId, request.params.processId,
+    uint64_t trackId = TrackInfoManager::Instance().GetTrackId(request.params.cardId, request.params.processId,
         request.params.threadId);
 
     renderEngine->QueryThreadTraces(request.params, response.body, minTimestamp, trackId);

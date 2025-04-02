@@ -17,7 +17,7 @@ void RenderEngine::SetDataEngineInterface(std::shared_ptr<DataEngineInterface> d
 }
 
 void RenderEngine::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-    Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
+    Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, uint64_t traceId)
 {
     SliceQuery sliceQuery;
     sliceQuery.startTime = requestParams.startTime;

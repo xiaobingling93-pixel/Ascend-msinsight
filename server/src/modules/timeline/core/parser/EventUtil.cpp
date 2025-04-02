@@ -90,7 +90,7 @@ std::unique_ptr<Event> EventUtil::ToSimulationSliceEvent(const json_t &json)
     long double start = JsonUtil::GetLongDouble(json, "ts");
     double tempDur = JsonUtil::GetDouble(json, "dur");
     event->ts = NumberUtil::TimestampUsToNs(start);
-    long double end = start < std::numeric_limits<long double>::max() - tempDur ? start + tempDur : 0;
+    long double end = start > std::numeric_limits<long double>::max() - tempDur ? 0 : start + tempDur;
     event->end = NumberUtil::TimestampUsToNs(end);
     event->dur = event->end > event->ts ? event->end - event->ts : 0;
     event->name = JsonUtil::GetString(json, "name");

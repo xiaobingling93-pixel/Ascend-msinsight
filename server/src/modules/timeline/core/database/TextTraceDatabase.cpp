@@ -24,10 +24,14 @@ TextTraceDatabase::TextTraceDatabase(std::recursive_mutex &sqlMutex) : VirtualTr
 
 TextTraceDatabase::~TextTraceDatabase()
 {
-    CommitData();
-    ReleaseStmt();
-    sliceAnalyzerPtr = nullptr;
-    flowAnalyzerPtr = nullptr;
+    try {
+        CommitData();
+        ReleaseStmt();
+        sliceAnalyzerPtr = nullptr;
+        flowAnalyzerPtr = nullptr;
+    } catch (const std::exception&) {
+        // do nothing
+    }
 }
 
 bool TextTraceDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
@@ -510,7 +514,7 @@ std::vector<FlowDetailDto> TextTraceDatabase::QuerySingleFlowDetail(const std::s
         flowDetailDto.flowId = resultSet->GetString("flowId");
         flowDetailDto.flowTimestamp = resultSet->GetUint64("timestamp");
         flowDetailDto.type = resultSet->GetString("type");
-        flowDetailDto.trackId = resultSet->GetInt64("trackId");
+        flowDetailDto.trackId = resultSet->GetUint64("trackId");
         flowDetailVec.emplace_back(flowDetailDto);
     }
     return flowDetailVec;
@@ -932,9 +936,9 @@ void TextTraceDatabase::CommitData()
     }
 }
 
-int TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
+uint32_t TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
 {
-    int32_t result = 0;
+    uint32_t result = 0;
     std::string sql = TextSqlConstant::GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -947,15 +951,15 @@ int TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &p
         return 0;
     }
     if (resultSet->Next()) {
-        result = resultSet->GetInt32(resultStartIndex);
+        result = resultSet->GetUint32(resultStartIndex);
     }
     return result;
 }
 
-int TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params,
+uint32_t TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params,
     const std::vector<TrackQuery> &trackQuery)
 {
-    int32_t result = 0;
+    uint32_t result = 0;
     if (trackQuery.empty() && !params.metadataList.empty()) {
         return result;
     }
@@ -980,7 +984,12 @@ int TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &p
         return 0;
     }
     while (resultSet->Next()) {
-        result += resultSet->GetInt32(resultStartIndex);
+        const uint32_t count = resultSet->GetUint32(resultStartIndex);
+        if (result > UINT32_MAX - count) {
+            ServerLog::Warn("Sum of searching slice name count is overflow.");
+            break;
+        }
+        result += count;
     }
     return result;
 }
@@ -1008,7 +1017,7 @@ bool TextTraceDatabase::SearchSliceNameWithOutLock(const Protocol::SearchSlicePa
     responseBody.tid = resultSet->GetString("tid");
     responseBody.startTime = resultSet->GetUint64("startTime");
     responseBody.duration = resultSet->GetUint64("duration");
-    uint64_t trackId = resultSet->GetInt32("trackId");
+    uint64_t trackId = resultSet->GetUint64("trackId");
     SliceQuery sliceQuery;
     sliceQuery.trackId = trackId;
     sliceQuery.rankId = params.rankId;
@@ -1055,7 +1064,7 @@ bool TextTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
     responseBody.tid = resultSet->GetString("tid");
     responseBody.startTime = resultSet->GetUint64("startTime");
     responseBody.duration = resultSet->GetUint64("duration");
-    uint64_t trackId = resultSet->GetInt32("trackId");
+    uint64_t trackId = resultSet->GetUint64("trackId");
     SliceQuery sliceQuery;
     sliceQuery.trackId = trackId;
     sliceQuery.rankId = params.rankId;
@@ -1561,7 +1570,7 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
         sameOperatorsDetail.timestamp = tempStartTime - minTimestamp;
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
-        uint64_t trackId = resultSet->GetInt64("track_id");
+        uint64_t trackId = resultSet->GetUint64("track_id");
         TrackInfo trackInfo;
         TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
         sameOperatorsDetail.tid = trackInfo.threadId;
@@ -1570,7 +1579,7 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
         sliceQuery.trackId = trackId;
         std::unordered_map<uint64_t, uint32_t> depthCache;
         sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
-        sameOperatorsDetail.depth = depthCache[std::atoll(sameOperatorsDetail.id.c_str())];
+        sameOperatorsDetail.depth = depthCache[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
 }

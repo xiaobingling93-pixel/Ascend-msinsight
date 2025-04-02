@@ -312,13 +312,13 @@ void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     database->InsertCounter(event);
 }
 
-int64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
+uint64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
 {
     std::string str = pid + tid;
     if (trackIdMap.count(str) > 0) {
         return trackIdMap.at(str);
     }
-    int64_t id = TrackInfoManager::Instance().GetTrackId(fileId, pid, tid);
+    uint64_t id = TrackInfoManager::Instance().GetTrackId(fileId, pid, tid);
     trackIdMap.emplace(str, id);
     return id;
 }

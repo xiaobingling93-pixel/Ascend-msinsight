@@ -15,7 +15,7 @@ class DbTimelineTestSuit : FullDbTestSuit {
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithFuzzyMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-    int expectCount = 1;
+    uint32_t expectCount = 1;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "hcom";
     params.rankId = "2"; // cardId = 2
@@ -27,7 +27,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithFuzzyMatch)
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-    int expectCount = 0;
+    uint32_t expectCount = 0;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "Hcom";
     params.rankId = "2"; // cardId = 2
@@ -40,7 +40,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseMatch)
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithExactMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-    int expectCount = 3;
+    uint32_t expectCount = 3;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "aclnnInplaceadd";
     params.rankId = "2"; // cardId = 2
@@ -53,7 +53,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithExactMatch)
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseAndExactMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-    int expectCount = 0;
+    uint32_t expectCount = 0;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "aclnnInplaceadd";
     params.rankId = "2"; // cardId = 2
@@ -77,7 +77,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceName)
     std::string expectPid = "Ascend Hardware";
     std::string expectTid = "8";
     uint64_t expectStartTime = 181306181;
-    int32_t expectDepth = 0;
+    uint32_t expectDepth = 0;
     uint64_t expectDuration = 51121;
 
     database->SearchSliceName(params, index, minTimestamp, body, {});

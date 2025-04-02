@@ -22,7 +22,7 @@ public:
     ~RenderEngine() override = default;
     void SetDataEngineInterface(std::shared_ptr<DataEngineInterface>) override;
     void QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-        Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
+        Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, uint64_t traceId) override;
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
     void QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,

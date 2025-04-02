@@ -44,7 +44,7 @@ public:
     virtual bool SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
                                 Protocol::SetCardAliasBody &responseBody) = 0;
     virtual std::string QueryCardAlias() = 0;
-    virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params,
+    virtual uint32_t SearchSliceNameCount(const Protocol::SearchCountParams &params,
         const std::vector<TrackQuery> &trackQuery) = 0;
     virtual bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody, const std::vector<TrackQuery> &trackQuery) = 0;

@@ -118,9 +118,9 @@ struct ModuleResetEvent : public Event {
 
 struct ParseProgressEventBody {
     std::string fileId;
-    uint64_t parsedSize;
-    uint64_t totalSize;
-    int progress;
+    uint64_t parsedSize = 0;
+    uint64_t totalSize = 0;
+    int progress = 0;
 };
 
 struct ParseProgressEvent : public Event {

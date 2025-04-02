@@ -15,8 +15,8 @@ struct SliceDto {
     uint64_t id = 0;
     uint64_t timestamp = 0;
     uint64_t duration = 0;
-    int32_t depth = 0;
-    int64_t trackId = 0;
+    uint32_t depth = 0;
+    uint64_t trackId = 0;
     std::string name;
     std::string args;
     std::string cat;
@@ -34,11 +34,11 @@ struct FlowDetailDto {
     std::string flowId;
     std::string pid;
     std::string tid;
-    int32_t depth = 0;
+    uint32_t depth = 0;
     uint64_t timestamp = 0;
     uint64_t flowTimestamp = 0;
     std::string type;
-    int64_t trackId = 0;
+    uint64_t trackId = 0;
 };
 // flow连接着两个界面元素，s标识flow的起点元素块，f标识flow的终点元素块，它们分别都有起始时间和结束时间
 // 下面是flow的起点元素块

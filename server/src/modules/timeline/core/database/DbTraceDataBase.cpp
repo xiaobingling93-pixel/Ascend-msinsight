@@ -174,9 +174,9 @@ std::string DbTraceDataBase::QueryCardAlias()
     return cardAlias;
 }
 
-int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
+uint32_t DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
 {
-    int32_t result = 0;
+    uint32_t result = 0;
     const std::string &sql =
         TraceDatabaseHelper::GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase, params.rankId);
     auto stmt = CreatPreparedStatement(sql);
@@ -190,12 +190,12 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
         return 0;
     }
     if (resultSet->Next()) {
-        result = resultSet->GetInt32(resultStartIndex);
+        result = resultSet->GetUint32(resultStartIndex);
     }
     return result;
 }
 
-int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params,
+uint32_t DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params,
     const std::vector<TrackQuery> &trackQuery)
 {
     if (trackQuery.empty() && !params.metadataList.empty()) {
@@ -216,9 +216,14 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
         ServerLog::Error("Query slice name count. Failed to get result set.", stmt->GetErrorMessage());
         return 0;
     }
-    int32_t result = 0;
+    uint32_t result = 0;
     while (resultSet->Next()) {
-        result += resultSet->GetInt32(resultStartIndex);
+        const uint32_t count = resultSet->GetUint32(resultStartIndex);
+        if (result > UINT32_MAX - count) {
+            ServerLog::Warn("Sum of searching slice name count is overflow.");
+            break;
+        }
+        result = result + count;
     }
     return result;
 }
@@ -258,7 +263,7 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
     responseBody.tid = resultSet->GetString("tid");
     responseBody.startTime = resultSet->GetUint64("startTime");
     responseBody.duration = resultSet->GetUint64("duration");
-    responseBody.depth = resultSet->GetInt32("depth");
+    responseBody.depth = resultSet->GetUint32("depth");
     responseBody.id = resultSet->GetString("id");
     return true;
 }
@@ -291,7 +296,7 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
     uint64_t endTime = resultSet->GetUint64("endTime");
     responseBody.duration = endTime >= responseBody.startTime ? endTime - responseBody.startTime : 0;
     responseBody.startTime -= minTimestamp; // 业务上 minTimestamp 是最小的时间，一定有 item.timestamp > minTimestamp
-    responseBody.depth = resultSet->GetInt32("depth");
+    responseBody.depth = resultSet->GetUint32("depth");
     responseBody.id = resultSet->GetString("id");
     return true;
 }
@@ -1375,10 +1380,10 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
 void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
                                        std::map<std::string, std::vector<MetaDataDto>> &threadMap)
 {
-    int64_t curPid = 0;
+    uint64_t curPid = 0;
     std::unique_ptr<UnitTrack> process;
     for (auto &thread : threadMap) {
-        auto globalTid = atoll(thread.first.c_str());
+        uint64_t globalTid = NumberUtil::StringToUnsignedLongLong(thread.first);
         auto pid = globalTid >> 32;
         auto tid = globalTid & 0XFFFFFFFF;
         if (curPid != pid) {
@@ -1408,7 +1413,9 @@ void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
         if (!cannApiUnit->children.empty()) {
             threadUnit->children.emplace_back(std::move(cannApiUnit));
         }
-        process->children.emplace_back(std::move(threadUnit));
+        if (process.operator bool()) {
+            process->children.emplace_back(std::move(threadUnit));
+        }
     }
     if (process.operator bool()) {
         metaData.emplace_back(std::move(process));
@@ -1996,7 +2003,7 @@ std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metad
             simpleSlice.duration = resultSet->GetUint64(col++);
             simpleSlice.endTime = resultSet->GetUint64(col++);
             simpleSlice.name = stringsCache.at(path)[resultSet->GetString(col++)];
-            simpleSlice.depth = resultSet->GetInt32(col++);
+            simpleSlice.depth = resultSet->GetUint32(col++);
             simpleSlice.tid = metaData.tid;
             simpleSlice.pid = metaData.pid;
             simpleSlice.metaType = metaData.metaType;

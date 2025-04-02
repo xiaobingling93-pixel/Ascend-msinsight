@@ -78,6 +78,10 @@ std::map<uint64_t, uint64_t> SystemViewOverallTextRepo::QueryFlowDict(
         " as end from " + FLOW_TABLE + " where cat = 'async_npu' group by flow_id having "
         " count(case when type = 's' then 1 end) = 1 and count (case when type = 'f' then 1 end) = 1 order by end;";
     auto stmt = database->CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to query flow dictionary for system view overall.");
+        return {};
+    }
     std::map<uint64_t, uint64_t> flowDict;
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
@@ -96,6 +100,10 @@ std::vector<CpuCubeOpInfo> SystemViewOverallTextRepo::QueryCpuCubeOp(
     std::string sql = "select timestamp as start, end_time as end, name, track_id "
                       " from slice where cat = 'cpu_op' order by start;";
     auto stmt = database->CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to query cpu cube operators for system view overall.");
+        return {};
+    }
     std::vector<CpuCubeOpInfo> cpuCubeOps;
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
@@ -129,6 +137,10 @@ std::vector<OverallTmpInfo> SystemViewOverallTextRepo::QueryKernelEventsForSyste
                " order by start_time;";
     }
     auto stmt = database->CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to query kernel events for system view overall.");
+        return {};
+    }
     std::vector<OverallTmpInfo> kernelEvents;
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
@@ -163,6 +175,10 @@ void SystemViewOverallTextRepo::QueryBwdTrackIdForComputingOverall(uint64_t& bwd
     // 查询backward track id
     std::string sql = "select track_id from flow where cat = 'fwdbwd' and type = 'f' limit 1;";
     auto stmt = database->CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to query backward track id for system view overall.");
+        return;
+    }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to query backward track id for system view overall.");

@@ -65,7 +65,7 @@ public:
     bool SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
                       Protocol::SetCardAliasBody &responseBody) override;
     std::string QueryCardAlias() override;
-    int SearchSliceNameCount(const Protocol::SearchCountParams &params,
+    uint32_t SearchSliceNameCount(const Protocol::SearchCountParams &params,
         const std::vector<TrackQuery> &trackQuery) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody, const std::vector<TrackQuery> &trackQuery) override;
@@ -196,7 +196,7 @@ private:
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
     std::vector<Protocol::FlowLocation> ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet);
-    int SearchSliceNameCount(const Protocol::SearchCountParams &params);
+    uint32_t SearchSliceNameCount(const Protocol::SearchCountParams &params);
 
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody);

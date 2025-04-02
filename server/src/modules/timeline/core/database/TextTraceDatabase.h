@@ -63,7 +63,7 @@ public:
     bool SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
                               Protocol::SetCardAliasBody &responseBody) override;
     std::string QueryCardAlias() override;
-    int SearchSliceNameCount(const Protocol::SearchCountParams &params,
+    uint32_t SearchSliceNameCount(const Protocol::SearchCountParams &params,
         const std::vector<TrackQuery> &trackQuery) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
         Protocol::SearchSliceBody &responseBody, const std::vector<TrackQuery> &trackQuery) override;
@@ -192,7 +192,7 @@ private:
     bool SearchSliceNameWithOutLock(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                                     Protocol::SearchSliceBody &responseBody);
 
-    int SearchSliceNameCount(const Protocol::SearchCountParams &params);
+    uint32_t SearchSliceNameCount(const Protocol::SearchCountParams &params);
 
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
                                 uint64_t minTimestamp);

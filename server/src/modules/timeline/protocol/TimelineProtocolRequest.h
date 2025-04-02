@@ -26,8 +26,8 @@ enum class ProjectActionEnum {
 struct ImportActionParams {
     std::string projectName;
     std::vector<std::string> path;
-    ProjectActionEnum projectAction;
-    bool isConflict;
+    ProjectActionEnum projectAction = ProjectActionEnum::UNKNOWN;
+    bool isConflict = false;
     bool CommonCheck(std::string &errorMsg)
     {
         if (this->projectName.empty()) {

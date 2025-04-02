@@ -146,7 +146,7 @@ static inline PROCESS_TYPE GetProcessType(const std::string &metaType)
 {
     auto processType = STR_TO_ENUM<PROCESS_TYPE>(metaType);
     if (!processType.has_value()) {
-        return static_cast<PROCESS_TYPE>(atoi(metaType.c_str()));
+        return static_cast<PROCESS_TYPE>(NumberUtil::StringToLong(metaType));
     }
     return processType.value();
 }

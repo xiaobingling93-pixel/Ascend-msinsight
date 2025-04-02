@@ -216,7 +216,7 @@ namespace Dic::Module::Timeline {
         const int maxDepth = 5;
         const int timeScale = 1000; // us转化为ns
         static void UpdateSystemViewResStatus(SystemViewOverallRes& currentRes, const OverallTmpInfo& tmpInfo);
-        void SummarizeSystemViewOverall(SystemViewOverallRes &currentRes, int depth);
+        void SummarizeSystemViewOverall(SystemViewOverallRes &currentRes, uint32_t depth);
         static void ComputeOverallMetrics(std::vector<SystemViewOverallRes> &resList,
                                           const OverallTmpInfo& tmpInfo, size_t index);
         static SystemViewOverallRes& FindOrCreateChild(std::vector<SystemViewOverallRes> &list,

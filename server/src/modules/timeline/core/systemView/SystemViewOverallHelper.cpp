@@ -89,7 +89,7 @@ void SystemViewOverallHelper::AggregateComputingOverallMetrics(std::vector<Syste
     responseBody[0].ValidateValues();
 }
 
-void SystemViewOverallHelper::SummarizeSystemViewOverall(SystemViewOverallRes &currentRes, int depth)
+void SystemViewOverallHelper::SummarizeSystemViewOverall(SystemViewOverallRes &currentRes, uint32_t depth)
 {
     // 防止无穷递归
     if (depth > maxDepth) {

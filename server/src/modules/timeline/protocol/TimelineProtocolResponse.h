@@ -244,11 +244,11 @@ struct SimpleSlice {
 };
 struct SearchResult {
     std::string rankId;
-    int count = 0;
+    uint32_t count = 0;
 };
 
 struct SearchCountBody {
-    int totalCount = 0;
+    uint32_t totalCount = 0;
     std::vector<SearchResult> countList;
 };
 
@@ -264,7 +264,7 @@ struct SearchSliceBody {
     std::string id;
     uint64_t startTime = 0;
     uint64_t duration = 0;
-    int32_t depth = 0;
+    uint32_t depth = 0;
 };
 
 struct SearchSliceResponse : public Response {
@@ -375,13 +375,13 @@ struct CommunicationSummaryInfoByThread {
     void UpdateData(bool waitFlag, uint64_t completeTime, uint64_t uncoveredTime)
     {
         if (waitFlag) {
-            completeWaitTime = completeWaitTime < UINT64_MAX - completeTime ? completeWaitTime + completeTime : 0;
-            uncoveredWaitTime = uncoveredWaitTime < UINT64_MAX - uncoveredTime ? uncoveredWaitTime + uncoveredTime : 0;
+            completeWaitTime = completeWaitTime > UINT64_MAX - completeTime ? 0 : completeWaitTime + completeTime;
+            uncoveredWaitTime = uncoveredWaitTime > UINT64_MAX - uncoveredTime ? 0 : uncoveredWaitTime + uncoveredTime;
         } else {
-            completeTransmitTime += completeTransmitTime < UINT64_MAX - completeTime ?
-                completeTransmitTime + completeTime : 0;
-            uncoveredTransmitTime += uncoveredTransmitTime < UINT64_MAX - uncoveredTime ?
-                uncoveredTransmitTime + uncoveredTime : 0;
+            completeTransmitTime += completeTransmitTime > UINT64_MAX - completeTime ? 0 :
+                completeTransmitTime + completeTime;
+            uncoveredTransmitTime += uncoveredTransmitTime > UINT64_MAX - uncoveredTime ? 0 :
+                uncoveredTransmitTime + uncoveredTime;
         }
     }
 };
@@ -513,7 +513,7 @@ struct OneKernelResponse : public Response {
 };
 
 struct CommunicationKernelBody : public OneKernelBody {
-    uint64_t startTime;
+    uint64_t startTime = 0;
 };
 
 struct CommunicationKernelResponse : public Response {

@@ -10,7 +10,11 @@ ConnectionPool::ConnectionPool(std::string dbPath, std::function<VirtualTraceDat
 
 ConnectionPool::~ConnectionPool()
 {
-    Stop();
+    try {
+        Stop();
+    } catch (const std::exception &) {
+        // do nothing
+    }
 }
 
 std::shared_ptr<VirtualTraceDatabase> ConnectionPool::GetConnection()

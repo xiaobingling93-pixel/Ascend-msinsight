@@ -41,7 +41,7 @@ struct MetaDataArgs {
 };
 
 struct MetaData : public Event {
-    int64_t trackId = 0;
+    uint64_t trackId = 0;
     std::string tid;
     std::string name;
     std::string pid;

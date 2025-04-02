@@ -69,7 +69,7 @@ protected:
             }
             if (item.second.type == "SE") {
                 Trace::Slice slice = filedFlagSliceMap[item.first];
-                slice.dur = slice.ts - filedFlagSliceMap[item.first].ts ?
+                slice.dur = slice.ts > filedFlagSliceMap[item.first].ts ?
                     slice.ts - filedFlagSliceMap[item.first].ts : 0;
                 result.emplace_back(slice);
                 filedFlagSliceMap.erase(item.first);

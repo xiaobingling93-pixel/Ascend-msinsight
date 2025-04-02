@@ -47,10 +47,10 @@ private:
     void FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     void SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
-    std::map<std::string, int64_t> trackIdMap;
+    std::map<std::string, uint64_t> trackIdMap;
     std::map<std::string, Trace::Slice> setFlagSliceMap;
     std::map<std::string, Trace::Slice> waitFlagSliceMap;
-    int64_t GetTrackId(const std::string &pid, const std::string &tid);
+    uint64_t GetTrackId(const std::string &pid, const std::string &tid);
 
     void ProcessLastFlagSlice();
 };

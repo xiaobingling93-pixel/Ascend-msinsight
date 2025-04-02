@@ -233,6 +233,18 @@ public:
         }
     }
 
+    static inline unsigned long long StringToUnsignedLongLong(const std::string& usStr)
+    {
+        if (usStr.empty()) {
+            return 0;
+        }
+        try {
+            return std::stoull(usStr);
+        } catch (std::exception &) {
+            return 0;
+        }
+    }
+
     static inline std::string StringDoubleMinus(const std::string &str1, const std::string &str2, int precision = 3)
     {
         long double num1 = StringToLongDouble(str1);

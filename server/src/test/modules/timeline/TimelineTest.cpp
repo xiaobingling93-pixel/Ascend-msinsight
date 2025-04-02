@@ -379,7 +379,7 @@ TEST_F(TestSuit, QueryThreadTraces)
     request.timePerPx = 1;
     Dic::Protocol::UnitThreadTracesBody response;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 30;
+    uint64_t traceId = 30;
 
     int expectSize = 25;
     std::string expectName = "AscendCL@aclDestroyTensorDesc";
@@ -456,48 +456,48 @@ TEST_F(TestSuit, QueryExtremumTimestamp)
 TEST_F(TestSuit, SearchSliceNameCountWithFuzzyMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    int expectCount = 91;
+    uint32_t expectCount = 91;
     SearchCountParams params;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params, {});
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
 TEST_F(TestSuit, SearchSliceNameCountWithExactMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    int expectCount = 4;
+    uint32_t expectCount = 4;
     SearchCountParams params;
     params.isMatchExact = true;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params, {});
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
 TEST_F(TestSuit, SearchSliceNameCountWithCaseMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    int expectCount = 55;
+    uint32_t expectCount = 55;
     SearchCountParams params;
     params.isMatchCase = true;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params, {});
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
 TEST_F(TestSuit, SearchSliceNameCountWithCaseAndExactMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    int expectCount = 4;
+    uint32_t expectCount = 4;
     SearchCountParams params;
     params.isMatchExact = true;
     params.isMatchCase = true;
     params.searchContent = "Mul";
 
-    int count = database->SearchSliceNameCount(params, {});
+    auto count = database->SearchSliceNameCount(params, {});
     EXPECT_EQ(count, expectCount);
 }
 
@@ -514,7 +514,7 @@ TEST_F(TestSuit, SearchSliceName)
     std::string expectPid = "1408366";
     std::string expectTid = "1408366";
     uint64_t expectStartTime = 1695115378713520800;
-    int32_t expectDepth = 3;
+    uint32_t expectDepth = 3;
     uint64_t expectDuration = 18250;
 
     database->SearchSliceName(params, index, minTimestamp, body, {});
