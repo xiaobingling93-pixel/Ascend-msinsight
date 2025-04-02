@@ -45,7 +45,7 @@ private:
 
     JupyterServerInfo jupyterServerInfo;
     std::shared_ptr<std::thread> jupyterThread;
-    FILE *pipe;
+    FILE *pipe = nullptr;
     std::string jupyterLogPath;
     static const int maxRetryTimes = 10;
     const std::string jupyterUrlReg =

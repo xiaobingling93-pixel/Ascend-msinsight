@@ -18,25 +18,29 @@ JupyterServerManager &JupyterServerManager::Instance()
 // LCOV_EXCL_BR_START
 bool JupyterServerManager::Close()
 {
-    // 根据port获取pid(外层已校验服务是否启动)
-    std::string pid = GetPidByPort(jupyterServerInfo.port);
-    if (pid.empty()) {
-        ServerLog::Warn("Get pid by port failed!");
-        return false;
-    }
+    try {
+        // 根据port获取pid(外层已校验服务是否启动)
+        std::string pid = GetPidByPort(jupyterServerInfo.port);
+        if (pid.empty()) {
+            ServerLog::Warn("Get pid by port failed!");
+            return false;
+        }
 
-    if (StringUtil::IsAllDigits(pid)) {
-        ServerLog::Warn("Invalid pid!");
-        return false;
-    }
+        if (StringUtil::IsAllDigits(pid)) {
+            ServerLog::Warn("Invalid pid!");
+            return false;
+        }
 
-    // 根据pid杀死进程
-    if (!KillProcessByPid(pid)) {
-        ServerLog::Warn("Failed to kill process!");
+        // 根据pid杀死进程
+        if (!KillProcessByPid(pid)) {
+            ServerLog::Warn("Failed to kill process!");
+            return false;
+        }
+        ClearJupyterServerInfo();
+        return true;
+    } catch (const std::exception &e) {
         return false;
     }
-    ClearJupyterServerInfo();
-    return true;
 }
 
 std::string JupyterServerManager::GetPidByPort(std::string& port)
