@@ -113,6 +113,17 @@ function wrapData({ data, limit, tDetails, isCompared, setExpandedKeys, theme }:
     return { tablelist, limit: { ...limit, current: count, overlimit: count > limit.maxSize } };
 }
 
+async function getMemoryData(condition: Icondition): Promise<{data: ItableDetail[];advice: string[]}> {
+    if (condition.blockId === '') {
+        return { data: [], advice: [] };
+    }
+
+    const res = await queryMemoryTable(condition);
+    const data = (res?.memoryTable?.[0]?.tableDetail ?? []) as ItableDetail[];
+    const advice = (res?.memoryTable?.[0]?.advice ?? []) as string[];
+    return { data, advice };
+}
+
 const defaultLimit = { overlimit: false, maxSize: 1000, current: 0 };
 const memoryTable = observer(({ condition, session }: {condition: Icondition;session: Session}): JSX.Element => {
     const [data, setData] = useState<ItableDetail[]>([]);
@@ -123,9 +134,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
     const [expandedRowKeys, setExpandedKeys] = React.useState<string[]>([]);
     const theme = useTheme();
     const updateData = async(): Promise<void> => {
-        const res = await queryMemoryTable(condition);
-        const newData = (res?.memoryTable?.[0]?.tableDetail ?? []) as ItableDetail[];
-        const newAdvice = (res?.memoryTable?.[0]?.advice ?? []) as string[];
+        const { data: newData, advice: newAdvice } = await getMemoryData(condition);
         setData(newData);
         setAdvice(newAdvice);
     };
