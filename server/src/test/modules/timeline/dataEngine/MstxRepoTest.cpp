@@ -109,7 +109,7 @@ TEST_F(MstxRepoTest, TestQuerySliceDetailInfoWhenIdNotExistThenReturnFalse)
     MstxRepoMock mstxRepoMock;
     mstxRepoMock.SetMock(dependency);
     SliceQuery query;
-    query.sliceId = "99998";
+    query.sliceId = "99998\t\b\v";
     query.rankId = "hhh";
     CompeteSliceDomain slice;
     bool result = mstxRepoMock.QuerySliceDetailInfo(query, slice);

@@ -318,6 +318,24 @@ TEST_F(DataEngineTest, QuerySliceDetailInfoTestWithOutFactory)
     });
 }
 
+TEST_F(DataEngineTest, QuerySliceDetailInfoFailTest)
+{
+    EXPECT_NO_THROW({
+        Dic::Module::Timeline::DataEngine dataEngine;
+        SliceQuery sliceQuery;
+        sliceQuery.sliceId = "\n\t\bAA\v";
+        CompeteSliceDomain sliceVec;
+        dataEngine.QuerySliceDetailInfo(sliceQuery, sliceVec);
+        std::shared_ptr<Dic::Module::Timeline::RepositoryFactoryInterface> repositoryFactoryInterface =
+            std::make_shared<Dic::Module::Timeline::RepositoryFactory>();
+        dataEngine.SetRepositoryFactory(repositoryFactoryInterface);
+        sliceQuery.metaType = PROCESS_TYPE::API;
+        dataEngine.QuerySliceDetailInfo(sliceQuery, sliceVec);
+        sliceQuery.metaType = PROCESS_TYPE::OVERLAP_ANALYSIS;
+        dataEngine.QuerySliceDetailInfo(sliceQuery, sliceVec);
+    });
+}
+
 TEST_F(DataEngineTest, QueryAllFlagSliceTestWithOutFactory)
 {
     EXPECT_NO_THROW({

@@ -96,7 +96,7 @@ bool OverlapAnsRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteS
     std::vector<CompeteSliceDomain> sliceVec;
     QueryCompeteSliceByIds(sliceQuery, { sliceId }, sliceVec);
     if (std::empty(sliceVec)) {
-        ServerLog::Warn("Failed to query overlap slice detail by id. id is: ", sliceQuery.sliceId);
+        ServerLog::Warn("Failed to query overlap slice detail by id. id is: %", sliceQuery.sliceId);
         return false;
     }
     competeSliceDomain = std::move(sliceVec[0]);

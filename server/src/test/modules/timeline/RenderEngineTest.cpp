@@ -53,3 +53,21 @@ TEST_F(RenderEngineTest, TestFindSliceByTimePointNormal)
     CompeteSliceDomain slice = renderEngine.FindSliceByTimePoint("", "", 0, "TEXT");
     EXPECT_EQ(slice.depth, expectDepth);
 }
+
+/**
+ * 根据时间点查询算子，查询返回 false，打印日志中的特殊字符转义
+ */
+TEST_F(RenderEngineTest, TestFindSliceByTimePointTypeWrong)
+{
+    class DataEngineMock : public DataEngine {
+    public:
+        bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override
+        {
+            return false;
+        }
+    };
+    RenderEngine renderEngine;
+    std::shared_ptr<DataEngineMock> dataEngineMock = std::make_unique<DataEngineMock>();
+    renderEngine.SetDataEngineInterface(dataEngineMock);
+    CompeteSliceDomain slice = renderEngine.FindSliceByTimePoint("", "AAA\n%\t\\", 0, "TEXT");
+}

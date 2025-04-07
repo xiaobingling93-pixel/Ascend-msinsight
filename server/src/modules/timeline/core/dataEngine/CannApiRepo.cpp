@@ -79,7 +79,7 @@ bool CannApiRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSlic
         .Eq(CannApiColumn::ID, sliceQuery.sliceId)
         .ExcuteQuery(sliceQuery.rankId, cannApipoVec);
     if (std::empty(cannApipoVec)) {
-        ServerLog::Warn("Failed to query CANN slice detail by id. id is: ", sliceQuery.sliceId);
+        ServerLog::Warn("Failed to query CANN slice detail by id. id is: %", sliceQuery.sliceId);
         return false;
     }
     CannApiPO target = cannApipoVec[0];

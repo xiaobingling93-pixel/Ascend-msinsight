@@ -164,7 +164,7 @@ TEST_F(HardWareRepoTest, TestQuerySliceDetailInfoWhenSliceNotExistThenReturnFals
 {
     HardWareRepo hardWareRepo;
     SliceQuery query;
-    query.sliceId = "1";
+    query.sliceId = "1\u007F\"'\'<>";
     query.rankId = "hhh";
     CompeteSliceDomain slice;
     bool result = hardWareRepo.QuerySliceDetailInfo(query, slice);

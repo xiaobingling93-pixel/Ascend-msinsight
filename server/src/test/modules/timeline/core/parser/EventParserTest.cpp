@@ -448,6 +448,25 @@ TEST_F(EventParserTest, TestMParseModifyProcessLabel)
 }
 
 /**
+ * 测试解析type为M的json, json 的 name 非法
+ */
+TEST_F(EventParserTest, TestMParseModifyProcessLabelWithInvalidName)
+{
+    std::string jsonContent =
+        "[{\"name\": \"invalid_name\\ta\", \"pid\": 2094647552, \"tid\": 8, \"args\": {\"labels\": \"CPU\"}, \"ph\": "
+        "\"M\"}]";
+    sqlite3 *dbPtr = nullptr;
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::RUNNING);
+    EXPECT_CALL(*mockFileReader, ReadJsonArray(filePath, startPosition, endPosition)).WillOnce(Return(jsonContent));
+    Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    mockDatabase->SetDbPtr(dbPtr);
+    mockDatabase->CreateTable();
+    EventParserMock eventParserMock(filePath, fileId, mockDatabase);
+    eventParserMock.SetFileReaderAndDatabase(std::move(mockFileReader));
+    eventParserMock.Parse(startPosition, endPosition);
+}
+
+/**
  * 测试解析type为M的json,修改process_sort_index
  */
 TEST_F(EventParserTest, TestMParseModifyProcessSortIndex)

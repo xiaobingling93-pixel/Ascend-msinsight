@@ -268,13 +268,13 @@ private:
     inline std::string FormatString(std::vector<std::string> &logStrList)
     {
         std::ostringstream oss;
+        std::string format = logStrList[0];
         for (auto& arg : logStrList) {
             arg = SanitizeLogMessage(arg);
         }
         size_t start = 0;
         size_t pos = 0;
         size_t argIndex = 1;
-        std::string format = logStrList[0];
         while ((pos = format.find('%', start)) != std::string::npos) {
             oss << format.substr(start, pos - start);
             if (argIndex < logStrList.size()) {

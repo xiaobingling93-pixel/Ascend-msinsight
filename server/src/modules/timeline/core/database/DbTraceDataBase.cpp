@@ -529,7 +529,7 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
     }
 
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: %", requestParams.orderBy);
     } else if (!requestParams.orderBy.empty() && !requestParams.order.empty()) {
         sql += " ORDER by " + requestParams.orderBy + " " + (requestParams.order == "ascend" ? "ASC" : "DESC");
     }
@@ -781,7 +781,7 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
         std::sort(timeInfoList.begin(), timeInfoList.end(), std::less<OVERLAP_INFO>());
         const std::vector<OVERLAP_INFO> overlapInfoList = BuildOverlapInfoList(timeInfoList);
         if (InsertOverlapAnalysisInfo(timeInfoList, deviceId) && InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
-            Server::ServerLog::Info("Generate overlap analysis success");
+            Server::ServerLog::Info("Generate overlap analysis success for device: ", deviceId);
         } else {
             Server::ServerLog::Error("Generate overlap analysis fail");
             return;

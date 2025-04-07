@@ -240,7 +240,7 @@ bool HcclRepo::QueryPlaneSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSl
         .Eq(TaskColumn::ROW_ID, sliceQuery.sliceId)
         .ExcuteQuery(sliceQuery.rankId, taskPOs);
     if (std::empty(taskPOs)) {
-        ServerLog::Warn("Failed to query plane slice detail by id. id is: ", sliceQuery.sliceId);
+        ServerLog::Warn("Failed to query plane slice detail by id. id is: %", sliceQuery.sliceId);
         return false;
     }
     TaskPO targetPO = taskPOs[0];
@@ -387,7 +387,7 @@ bool HcclRepo::QueryGroupSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSl
         .Eq(CommucationTaskOpColumn::OP_ID, sliceQuery.sliceId)
         .ExcuteQuery(trackInfo.cardId, commucationTaskOpPOVec);
     if (std::empty(commucationTaskOpPOVec)) {
-        ServerLog::Warn("Failed to query group slice detail by id. id is: ", sliceQuery.sliceId);
+        ServerLog::Warn("Failed to query group slice detail by id. id is: %", sliceQuery.sliceId);
         return false;
     }
     competeSliceDomain.id = commucationTaskOpPOVec[0].opId;

@@ -475,7 +475,7 @@ TEST_F(HcclRepoTest, TestGroupQueryGroupSliceDetailInfoWhenSliceNotExistThenRetu
     HcclRepo hcclRepoMock;
     SliceQuery query;
     CompeteSliceDomain slice;
-    query.sliceId = "1";
+    query.sliceId = "1|&$\n";
     const uint64_t trackId = TrackInfoManager::Instance().GetTrackId("hhh", "ppp", "379group");
     query.trackId = trackId;
     query.rankId = "hhh";
@@ -491,7 +491,7 @@ TEST_F(HcclRepoTest, TestPlaneQueryGroupSliceDetailInfoWhenSliceNotExistThenRetu
     HcclRepo hcclRepoMock;
     SliceQuery query;
     CompeteSliceDomain slice;
-    query.sliceId = "1";
+    query.sliceId = "1|&$";
     const uint64_t trackId = TrackInfoManager::Instance().GetTrackId("hhh", "ppp", "1669");
     query.trackId = trackId;
     query.rankId = "hhh";

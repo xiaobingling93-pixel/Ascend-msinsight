@@ -157,7 +157,7 @@ bool PythonApiRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSl
         .Eq(PytorchApiColumn::ID, sliceQuery.sliceId)
         .ExcuteQuery(sliceQuery.rankId, apiPOs);
     if (std::empty(apiPOs)) {
-        ServerLog::Warn("Failed to query pytorch api slice detail by id. id is: ", sliceQuery.sliceId);
+        ServerLog::Warn("Failed to query pytorch api slice detail by id. id is: %", sliceQuery.sliceId);
         return false;
     }
     const PytorchApiPO target = apiPOs[0];

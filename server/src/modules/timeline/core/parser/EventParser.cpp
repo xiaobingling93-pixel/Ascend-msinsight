@@ -127,7 +127,7 @@ void EventParser::MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr)
         event.trackId = GetTrackId(event.pid, event.tid);
         database->UpdateThreadSortIndex(event);
     } else {
-        ServerLog::Error("Event Parser. Failed to get meta data type. name:", event.name);
+        ServerLog::Error("Event Parser. Failed to get meta data type. name: %", event.name);
     }
 }
 

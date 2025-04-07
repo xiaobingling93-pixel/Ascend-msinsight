@@ -235,7 +235,7 @@ TEST_F(CannApiRepoTest, TestQuerySliceDetailInfoWhenIdNotExistThenReturnFalse)
     CannApiRepoMock cannApiRepoMock;
     cannApiRepoMock.SetMock(dependency);
     SliceQuery query;
-    query.sliceId = "9999999999";
+    query.sliceId = "9999999999\r\f\b\v";
     query.rankId = "hhh";
     CompeteSliceDomain slice;
     bool result = cannApiRepoMock.QuerySliceDetailInfo(query, slice);

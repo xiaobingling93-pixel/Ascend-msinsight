@@ -236,7 +236,7 @@ CompeteSliceDomain RenderEngine::FindSliceByTimePoint(const std::string &fileId,
     CompeteSliceDomain slice;
     bool res = dataEngine->QuerySliceByTimepointAndName(sliceQuery, slice);
     if (!res) {
-        ServerLog::Warn("Failed to find slice, name is: ", name);
+        ServerLog::Warn("Failed to find slice, name is: %", name);
         return slice;
     }
     std::unordered_map<uint64_t, uint32_t> depthCache;

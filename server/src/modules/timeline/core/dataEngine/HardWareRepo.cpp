@@ -109,7 +109,7 @@ bool HardWareRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSli
         .Eq(TaskColumn::ROW_ID, sliceQuery.sliceId)
         .ExcuteQuery(sliceQuery.rankId, taskPOS);
     if (std::empty(taskPOS)) {
-        ServerLog::Warn("Failed to query hard ware slice detail by id. id is: ", sliceQuery.sliceId);
+        ServerLog::Warn("Failed to query hard ware slice detail by id. id is: %", sliceQuery.sliceId);
         return false;
     }
     const TaskPO targetTask = taskPOS[0];

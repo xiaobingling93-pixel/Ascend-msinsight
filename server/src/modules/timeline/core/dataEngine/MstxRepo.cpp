@@ -100,7 +100,7 @@ bool MstxRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDo
         .Eq(MstxEventsColumn::ID, sliceQuery.sliceId)
         .ExcuteQuery(sliceQuery.rankId, mstxPOs);
     if (std::empty(mstxPOs)) {
-        ServerLog::Warn("Failed to query mstx slice detail by id. id is: ", sliceQuery.sliceId);
+        ServerLog::Warn("Failed to query mstx slice detail by id. id is: %", sliceQuery.sliceId);
         return false;
     }
     competeSliceDomain.id = mstxPOs[0].id;
