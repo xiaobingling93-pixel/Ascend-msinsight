@@ -400,7 +400,6 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
         ServerLog::Error("Failed to get connection.");
         return false;
     }
-    bool isHeader = true;
     // 用来存储数据处理的系列函数
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> parseProcessList;
@@ -419,10 +418,9 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
         const std::basic_string<char>& basicString(line);
         std::vector<std::string> rowVector = StringUtil::StringSplit(basicString);
         // 如果是表头且非空
-        if (isHeader and !rowVector.empty()) {
+        if (lineNumber == 1 and !rowVector.empty()) {
             // 获取每一列，更新db表
             ProcessHeaderGetParseFunc(db, rowVector, columns, dataMap, parseProcessList);
-            isHeader = false;
             continue;
         }
         // 解析非表头数据存储在db里
