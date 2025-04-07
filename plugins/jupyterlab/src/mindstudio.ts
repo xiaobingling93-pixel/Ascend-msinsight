@@ -101,18 +101,11 @@ export function shutdownAll(
   return staticMindStudio.shutdownAll(settings);
 }
 
-export async function getToken(
-  settings?: ServerConnection.ISettings
-): Promise<string> {
-  return await staticMindStudio.getToken(settings);
-}
-
 export async function getUrl(
   name: string,
-  token: string,
   settings?: ServerConnection.ISettings
 ): Promise<string> {
-  return await staticMindStudio.getUrl(name, token, settings);
+  return await staticMindStudio.getUrl(name, settings);
 }
 
 /**

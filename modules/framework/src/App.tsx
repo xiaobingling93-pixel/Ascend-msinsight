@@ -12,7 +12,7 @@ import RemoteManager from './components/RemoteManager/Index';
 import Main from './components/Main';
 import { Session } from '@/entity/session';
 import { connectRemote } from '@/centralServer/server';
-import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { LOCAL_HOST, PORT, JUPYTERLABPROXY } from '@/centralServer/websocket/defs';
 import './index.css';
 import { registerEventListeners } from '@/connection';
 import { registerDragAndDropFile } from '@/utils';
@@ -28,7 +28,7 @@ const init = async(session: Session): Promise<void> => {
     registerEventListeners();
 
     // 连接ws（启动后第一次）
-    const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
+    const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, jupyterlabProxy: JUPYTERLABPROXY, projectName: '', dataPath: [] });
     if (isSuccess) {
         runInAction(() => {
             session.defaultConnected = true;

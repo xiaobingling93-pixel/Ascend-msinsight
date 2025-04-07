@@ -22,7 +22,7 @@ export class DefaultMindStudio implements MindStudio.IMindStudio {
         this._name = name;
         this.serverSettings =
             options.serverSettings || ServerConnection.makeSettings();
-        this._runningUrl = Private.getMindStudioInstanceUrl(this.serverSettings.baseUrl, this._name, '9000', '');
+        this._runningUrl = Private.getMindStudioInstanceUrl(this.serverSettings.baseUrl, this._name, false, '9000');
     }
 
     get name(): string {

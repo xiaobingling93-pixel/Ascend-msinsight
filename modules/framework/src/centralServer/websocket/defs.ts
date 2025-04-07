@@ -20,9 +20,11 @@ const getParamMap = (): Map<string, string> => {
 };
 const PARAM_MAP = getParamMap();
 const port: number = Number.parseInt(<string>PARAM_MAP.get('port'));
+const jupyterlabProxy: boolean = PARAM_MAP.get('jupyterlabProxy') === 'true';
 
 export const LOCAL_HOST = '127.0.0.1';
 export const PORT: number = port;
+export const JUPYTERLABPROXY: boolean = jupyterlabProxy;
 export const GLOBAL_HOST = { remote: LOCAL_HOST, port: PORT };
 
 export interface DataRequest {
@@ -67,6 +69,7 @@ export type ModuleName = string;
 export interface Host {
     remote: string;
     port: number;
+    jupyterlabProxy?: boolean;
 };
 
 export interface Project {

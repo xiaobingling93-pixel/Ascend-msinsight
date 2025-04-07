@@ -12,11 +12,9 @@ const MINDSTUDIO_SERVICE_URL = '';
 
 const MINDSTUDIO_STATIC_CONFIG_URL = '';
 
-const MINDSTUDIO_TOKEN_URL = '/mindstudio_insight_jupyterlab/get_token';
-
 const MINDSTUDIO_URL = '/resources/frontend/index.html';
 
-const MINDSTUDIO_PORT_URL = '/mindstudio_insight_jupyterlab/get_available_port';
+const MINDSTUDIO_IFRAME_CONFIG_URL = '/mindstudio_insight_jupyterlab/get_iframe_config';
 
 /**
  * A namespace for private data.
@@ -50,17 +48,10 @@ export function getServiceUrl(baseUrl: string): string {
 }
 
 /**
- * Get the token url.
+ * Get the iframe config url.
  */
-export function getTokenUrl(baseUrl: string): string {
-    return URLExt.join(baseUrl, MINDSTUDIO_TOKEN_URL);
-}
-
-/**
- * Get the port url.
- */
-export function getPortUrl(baseUrl: string): string {
-    return URLExt.join(baseUrl, MINDSTUDIO_PORT_URL);
+export function getIFrameConfigUrl(baseUrl: string): string {
+    return URLExt.join(baseUrl, MINDSTUDIO_IFRAME_CONFIG_URL);
 }
 
 /**
@@ -81,9 +72,12 @@ export function getMindStudioInstanceRootUrl(baseUrl: string): string {
 export function getMindStudioInstanceUrl(
     baseUrl: string,
     name: string,
-    port: string,
-    token: string
+    proxy: boolean,
+    port: string
 ): string {
     let url = URLExt.join(baseUrl, MINDSTUDIO_URL);
-    return `${url}?port=${port}&token=${token}`;
+    if (proxy) {
+        return `${url}?jupyterlabProxy=true&port=${port}`;
+    }
+    return `${url}?port=${port}`;
 }

@@ -45,7 +45,15 @@ export class Connection {
 
         const session = store.sessionStore.activeSession;
         const protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
-        if (!window.location.pathname.includes('/proxy/')) {
+        if (dataSource.jupyterlabProxy) {
+            const { host, search } = window.location;
+            const path = `/proxy/${dataSource.port}${window.location.pathname}`;
+            const uri = protocol + host + path + search;
+            this._ws = new WebSocket(uri);
+            runInAction(() => {
+                session.toIframeUrl = `${protocol}${host}${path.replace(/\/index.html/, '')}`;
+            });
+        } else if (!window.location.pathname.includes('/proxy/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
             this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}${window.location.search}`);
             runInAction(() => {

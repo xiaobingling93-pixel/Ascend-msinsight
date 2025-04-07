@@ -9,8 +9,10 @@ import sys
 import json
 import subprocess
 import socket
-import uuid
 import logging
+import re
+import shutil
+import psutil
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
 import tornado
@@ -27,11 +29,66 @@ logging.basicConfig(
 profiler_process = None
 # default profiler_server port
 available_port = 9000
-# generate random token
-gen_token = str(uuid.uuid4())
 
 
-def find_available_port(start_port=9000, host='127.0.0.1', max_tries=100):
+def check_jupyter_server_proxy_installed():
+    try:
+        # 动态查找 jupyter 的绝对路径
+        jupyter_path = shutil.which('jupyter')
+        if not jupyter_path:
+            raise FileNotFoundError("jupyter executable not found in PATH")
+        
+        # 执行命令
+        result = subprocess.run(
+            [jupyter_path, 'labextension', 'list'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        # 获取标准输出和标准错误输出
+        output = result.stdout + result.stderr
+        # 检查扩展是否在输出中
+        return 'jupyter-server-proxy' in output
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to check jupyter-server-proxy, because {e}")
+    except FileNotFoundError as e:
+        logging.error(f"Failed to check jupyter-server-proxy, because {e}")
+    return False
+
+
+def get_host_ip():
+    user_dir = os.path.expanduser('~')
+    config_path = os.path.join(user_dir, '.jupyter', 'jupyter_lab_config.py')
+    host_ip = '127.0.0.1'  # 默认值
+
+    if not os.path.exists(config_path):
+        return host_ip
+
+    try:
+        with open(config_path, 'r') as f:
+            content = f.read()
+
+        # 匹配 c.ServerApp.ip 的值
+        ip_pattern = r'^[ \t]*(?!\s*#)c\.ServerApp\.ip\s*=\s*[\'"](.*?)[\'"]'
+        match = re.search(ip_pattern, content, flags=re.MULTILINE)
+
+        if match:
+            host_ip = match.group(1)
+    except Exception as e:
+        logging.error(f"Failed to check jupyter-lab-config, because {e}")
+
+    return host_ip
+
+
+def get_local_ip():
+    if check_jupyter_server_proxy_installed():
+        return '127.0.0.1'
+    else:
+        return get_host_ip()
+
+
+def find_available_port(host, start_port=9000, max_tries=100):
     global available_port
     available_port = start_port
     tries = 0
@@ -57,11 +114,11 @@ def start_profiler_server():
     profiler_server_path = os.path.join(os.path.dirname(__file__), 'resources', 'server', 'profiler_server')
 
     global available_port
-    available_port = find_available_port()
+    available_port = find_available_port(get_local_ip())
     # 配置参数
     command = [
         profiler_server_path, '--wsPort', str(available_port),
-        '--wsHost', '0.0.0.0', '--logPath', mindstudio_insight_dir
+        '--wsHost', get_local_ip(), '--logPath', mindstudio_insight_dir
     ]
 
     if sys.platform == 'win32':
@@ -81,6 +138,13 @@ def start_profiler_server():
         profiler_process = subprocess.Popen(command, cwd=server_dir, env=env)
 
 
+def is_port_in_use(port):
+    for conn in psutil.net_connections():
+        if conn.status == 'LISTEN' and conn.laddr.port == port:
+            return True
+    return False
+
+
 def stop_profiler_server():
     global profiler_process
     if profiler_process:
@@ -96,24 +160,13 @@ def shutdown_hook(web_app):
     stop_profiler_server()
 
 
-class TokenHandler(APIHandler):
-    @tornado.web.authenticated
-    def get(self):
-        # generate random token
-        global gen_token
-        # logging info for token
-        logging.info(f"To access the mindstudio insight server, you should take this token: {gen_token}")
-        self.finish(json.dumps({
-            "token": gen_token
-        }))
-
-
-class PortHandler(APIHandler):
+class IFrameConfigHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
         # find available port
         global available_port
         self.finish(json.dumps({
+            "proxy": check_jupyter_server_proxy_installed(),
             "port": available_port
         }))
 
@@ -129,23 +182,16 @@ class RouteHandler(APIHandler):
         }))
 
 
-class TokenAwareStaticFileHandler(StaticFileHandler):
+class IFrameStaticFileHandler(StaticFileHandler):
     def prepare(self):
-        # 获取请求url
-        request_uri = self.request.uri
-        # 获取请求中的token
-        token = self.get_argument("token", None)
-
-        global gen_token
-        if '/resources/frontend/index.html' in request_uri:
-            if not token or token != gen_token:
-                self.set_status(403)
-                self.finish(json.dumps({
-                    "error": "Invalid or missing token"
-                }))
-                return
-
-        super().prepare()
+        if is_port_in_use(available_port):
+            super().prepare()
+        else:
+            self.set_status(403)
+            self.finish(json.dumps({
+                "error": "Failed to start profiler server, please check it."
+            }))
+            return
 
 
 def setup_handlers(web_app):
@@ -153,21 +199,18 @@ def setup_handlers(web_app):
     host_pattern = ".{1,255}$"
     base_url = web_app.settings["base_url"]
 
-    token_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_token")
-    token_handlers = [(token_route_pattern, TokenHandler)]
-
-    port_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_available_port")
-    port_handlers = [(port_route_pattern, PortHandler)]
+    iframe_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_iframe_config")
+    iframe_handlers = [(iframe_route_pattern, IFrameConfigHandler)]
 
     static_frontend_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'frontend')
     static_route_pattern = url_path_join(base_url, "/resources/frontend/(.*)")
     static_handlers = [
-        (static_route_pattern, TokenAwareStaticFileHandler, {'path': static_frontend_path})
+        (static_route_pattern, IFrameStaticFileHandler, {'path': static_frontend_path})
     ]
 
     api_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_example")
     api_handlers = [(api_route_pattern, RouteHandler)]
 
-    web_app.add_handlers(host_pattern, token_handlers + port_handlers + static_handlers + api_handlers)
+    web_app.add_handlers(host_pattern, iframe_handlers + static_handlers + api_handlers)
 
     start_profiler_server()
