@@ -52,9 +52,14 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
     };
 
     const updateData = async (isCompared: boolean): Promise<void> => {
-        const res = await queryCoreOccupancy(isCompared);
-        const newData = (res ?? defaultData) as ICoreOccupancy;
-        setData(newData);
+        try {
+            const res = await queryCoreOccupancy(isCompared);
+            const newData = (res ?? defaultData) as ICoreOccupancy;
+            setData(newData);
+        } catch (expected) {
+            // 接口异常
+            setData(defaultData);
+        }
     };
 
     useEffect(() => {

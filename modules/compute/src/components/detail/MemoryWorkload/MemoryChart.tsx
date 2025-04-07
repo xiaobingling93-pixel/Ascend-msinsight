@@ -78,6 +78,10 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
     const [style, setStyle] = useState({ height: '420px' });
     const { t: tDetails } = useTranslation('details');
     const updateData = async (): Promise<void> => {
+        if (condition.blockId === '') {
+            setData(defaultData);
+            return;
+        }
         const res = await queryMemoryGraph(condition);
         const newData = (res?.coreMemory?.[0] ?? defaultData) as ImemoryData;
         setData(newData);
