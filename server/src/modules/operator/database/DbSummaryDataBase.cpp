@@ -106,7 +106,6 @@ bool DbSummaryDataBase::QueryTotalNumByAcceleratorCore(std::string name, int64_t
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + TABLE_COMPUTE_TASK_INFO +
             " WHERE taskType = (select id from STRING_IDS WHERE value = ?)";
-    ServerLog::Debug(sql);
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
         int index = bindStartIndex;

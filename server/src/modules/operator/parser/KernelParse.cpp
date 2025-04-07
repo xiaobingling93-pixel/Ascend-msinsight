@@ -408,7 +408,9 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::string realFileId = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         FileUtil::GetProfilerFileId(filePath) : fileId;
     std::vector<std::string> columns;
+    uint64_t lineNumber = 0;
     while (getline(file, line)) {
+        lineNumber++;
         if (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) != Timeline::ParserStatus::RUNNING) {
             ServerLog::Error("Parsing process of kernel_details.csv is interrupted.");
             return false;
@@ -430,7 +432,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
         }
         // 如果这列数据和列名个数对不上，说明可能有数据缺了，不存储这一行
         if (rowVector.size() != dataMap.size() || kernel.utilizationInfo.size() != columns.size()) {
-            ServerLog::Warn("Invalid data is discarded in the line %.", line);
+            ServerLog::Warn("Invalid data is discarded in the line: ", lineNumber);
             continue;
         }
         // 记录有多少device
