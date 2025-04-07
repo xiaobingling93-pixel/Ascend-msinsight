@@ -339,8 +339,9 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath, 
         ServerLog::Error("File path length check failed.");
         return false;
     }
-    std::ifstream file = OpenReadFileSafely(selectedFilePath, std::ios::binary, errMsg);
+    std::ifstream file = OpenReadFileSafely(selectedFilePath, std::ios::binary);
     if (!file) {
+        ServerLog::Error("Failed to open file, file is invalid!");
         return false;
     }
 

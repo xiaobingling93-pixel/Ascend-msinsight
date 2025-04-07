@@ -30,7 +30,8 @@ protected:
         Dic::Module::Global::BaselineInfo baselineInfo{"", "baseline", "", ""};
         Dic::Module::Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         Dic::Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
-        EXPECT_EQ(true, parser.CheckOperatorBinary(dataPath));
+        std::string errMsg;
+        EXPECT_EQ(true, parser.CheckOperatorBinary(dataPath, errMsg));
         if (fileId == "baseline") {
             parser.SetBaselineFilePath(dataPath);
         } else {

@@ -18,10 +18,8 @@ TEST_F(SafeFileTest, testOpenReadFileSafelyWhenFileCanNotBeWrittenByOthers)
     // 设置仅owner拥有写权限
     fs::permissions(path, fs::perms::owner_all);
 
-    std::string msg;
     // 读取文件并比较内容
-    auto in = Dic::OpenReadFileSafely(path, std::ios::in, msg);
-    EXPECT_TRUE(msg.empty());
+    auto in = Dic::OpenReadFileSafely(path, std::ios::in);
     EXPECT_TRUE(in);
     std::string readLine;
     readLine.resize(content.length());

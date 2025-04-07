@@ -4,7 +4,7 @@
 #include "SafeFile.h"
 
 namespace Dic {
-std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mode, std::string &errMsg)
+std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mode)
 {
     std::ifstream res;
     res.setstate(std::ifstream::badbit);
@@ -12,20 +12,17 @@ std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mod
     if (mode & std::ios::out) {
         message = "Should open file in read mode.";
         Server::ServerLog::Error(message + " path: " + path);
-        errMsg = message;
         return res;
     }
     std::string tmpPath = FileUtil::PathPreprocess(path);
     if (!FileUtil::CheckFileValid(tmpPath)) {
         message = "Unable to open file safely, the file path is insecure or not a regular file.";
         Server::ServerLog::Error(message + " path: " + path);
-        errMsg = message;
         return res;
     }
     if (!FileUtil::CheckFileSize(path)) {
         message = "Unable to open file safely, the file size does not comply with security regulations.";
         Server::ServerLog::Error(message + " path: " + path);
-        errMsg = message;
         return res;
     }
     res.open(tmpPath, std::ios::in | mode);

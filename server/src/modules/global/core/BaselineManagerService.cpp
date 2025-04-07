@@ -85,6 +85,9 @@ void BaselineManagerService::InitBaselineParallelStrategy()
     auto config = ParallelStrategyAlgorithmManager::Instance().GetParallelStrategyConfig(database->GetDbPath());
     std::string errMsg;
     auto baselineDb = FullDb::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+    if (baselineDb == nullptr) {
+        return;
+    }
     ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(baselineDb->GetDbPath(), config, errMsg);
 }
 }

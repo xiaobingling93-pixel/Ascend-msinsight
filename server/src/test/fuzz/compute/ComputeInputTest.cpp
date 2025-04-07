@@ -42,7 +42,8 @@ TEST(TestInputFiles, ApiFiles)
 
         std::string binFilePath = "./visualize_data.bin";
         Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
-        EXPECT_EQ(true, parser.CheckOperatorBinary(binFilePath));
+        std::string errMsg;
+        EXPECT_EQ(true, parser.CheckOperatorBinary(binFilePath, errMsg));
         std::string fileId = "testFile" + std::to_string(fuzzi);
         EXPECT_TRUE(parser.Parse(std::vector<std::string>(), fileId, binFilePath));
     }

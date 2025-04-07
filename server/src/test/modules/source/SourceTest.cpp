@@ -95,9 +95,10 @@ protected:
 TEST_F(SourceTest, CheckOperatorBinarySuccessfulWithFixedPath)
 {
     Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
-    EXPECT_EQ(true, parser.CheckOperatorBinary(g_apiFileData));
-    EXPECT_EQ(true, parser.CheckOperatorBinary(g_memoryData));
-    EXPECT_EQ(true, parser.CheckOperatorBinary(g_baseInfo));
+    std::string errMsg;
+    EXPECT_EQ(true, parser.CheckOperatorBinary(g_apiFileData, errMsg));
+    EXPECT_EQ(true, parser.CheckOperatorBinary(g_memoryData, errMsg));
+    EXPECT_EQ(true, parser.CheckOperatorBinary(g_baseInfo, errMsg));
 }
 
 TEST_F(SourceTest, CheckOperatorBinaryFailedWithSpecificPath)
@@ -116,18 +117,20 @@ TEST_F(SourceTest, CheckOperatorBinaryFailedWithSpecificPath)
             path += "/";
         }
     }
+    std::string errMsg;
     // Failed to check file exists
-    EXPECT_EQ(false, parser.CheckOperatorBinary(path));
+    EXPECT_EQ(false, parser.CheckOperatorBinary(path, errMsg));
 
     // Failed to check file length
     path += "0";
-    EXPECT_EQ(false, parser.CheckOperatorBinary(path));
+    EXPECT_EQ(false, parser.CheckOperatorBinary(path, errMsg));
 }
 
 static Module::Source::SourceFileParser &InitParser(const string& dataPath)
 {
     Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
-    EXPECT_EQ(true, parser.CheckOperatorBinary(dataPath));
+    std::string errMsg;
+    EXPECT_EQ(true, parser.CheckOperatorBinary(dataPath, errMsg));
     parser.SetFilePath(dataPath);
     parser.Parse(std::vector<std::string>(), "", dataPath);
     return parser;

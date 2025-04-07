@@ -32,7 +32,7 @@ public:
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
         const std::string &selectedFile) override;
     void Reset() override;
-    bool CheckOperatorBinary(const std::string &selectedFilePath, std::string &errMsg = g_emptyErrorMsg);
+    bool CheckOperatorBinary(const std::string &selectedFilePath, std::string &errMsg);
     static void PreParseTask(const std::string &fileId);
     static bool InitParser(const std::string &fileId);
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
