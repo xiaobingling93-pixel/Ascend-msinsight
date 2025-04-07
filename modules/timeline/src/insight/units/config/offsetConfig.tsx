@@ -19,8 +19,9 @@ import type { SvgType } from '../../../components/base/rc-table/types';
 import { ReactComponent as AlignStartIcon } from '../../../assets/images/timeline/ic_align_start.svg';
 const AlignIcon = AlignStartIcon as SvgType;
 const defaultOffset = '0';
-const minOffset = -Number.MAX_VALUE;
-const maxOffset = Number.MAX_VALUE;
+const MAX_OFFSET_TIME = 30 * 24 * 60 * 60 * 1000_000_000; // 30 天，单位 ns
+const minOffset = -MAX_OFFSET_TIME;
+const maxOffset = MAX_OFFSET_TIME;
 const defaultBorderColor = '#838383FF';
 const inputBorderColor = '#1890ff';
 const invalidBorderColor = '#C61E37FF';
