@@ -34,7 +34,6 @@ export class Connection {
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
     private _fetchFlag: boolean = true;
-    private _heartCheckTimer: any;
 
     constructor(dataSource: DataSource) {
         console.info('[connector]', 'init');
@@ -188,7 +187,6 @@ export class Connection {
     }
 
     fetchDataOnMessage = (ev: MessageEvent<string>): void => {
-        this.clearHeartCheckTimer();
         if (ev.data.startsWith(CONTENT_LENGTH_PREFIX)) {
             // ignore this message
             return;
@@ -230,7 +228,6 @@ export class Connection {
             throw new Error('');
         }
         this._ws.send(msgStr);
-        this.setHeartCheck();
     }
 
     private initHeartCheck(): void {
@@ -238,20 +235,6 @@ export class Connection {
         setTimeout(() => {
             this.initHeartCheck();
         }, 30 * 1000);
-    }
-
-    private setHeartCheck(): void {
-        this.clearHeartCheckTimer();
-        this._heartCheckTimer = setTimeout(() => {
-            this.sendHeartCheck();
-        }, 60 * 1000);
-    }
-
-    private clearHeartCheckTimer(): void {
-        if (this._heartCheckTimer !== undefined) {
-            clearTimeout(this._heartCheckTimer);
-            this._heartCheckTimer = undefined;
-        }
     }
 
     private sendHeartCheck(): void {
