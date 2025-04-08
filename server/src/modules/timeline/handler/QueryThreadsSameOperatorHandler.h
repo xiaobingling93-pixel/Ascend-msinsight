@@ -15,7 +15,7 @@ class QueryThreadsSameOperatorHandler : public TimelineRequestHandler {
 public:
     QueryThreadsSameOperatorHandler()
     {
-        command = Protocol::REQ_RES_UNIT_THREADS;
+        command = Protocol::REQ_RES_SAME_OPERATORS_DURATION;
     };
     ~QueryThreadsSameOperatorHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;

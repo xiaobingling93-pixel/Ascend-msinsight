@@ -1345,7 +1345,7 @@ bool TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<
                 continue;
             }
         }
-        SameOperatorsDetails tmp = {one.startTime, one.duration, "", one.name, resultSet->GetUint64("id"), 0, ""};
+        SameOperatorsDetails tmp = {one.startTime, one.duration, "", one.name, 0, ""};
         details.push_back(tmp);
     }
 

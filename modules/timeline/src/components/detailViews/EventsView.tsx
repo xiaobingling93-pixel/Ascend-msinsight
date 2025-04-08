@@ -149,22 +149,24 @@ const updateData = async ({
 const generateEventColumns = (
     eventColum: string[],
     setRowData: React.Dispatch<React.SetStateAction<any>>,
-): any[] => [
-    ...eventColum,
-    {
-        title: i18n.t('timeline:tableHead.Click To Timeline'),
-        dataIndex: 'click',
-        key: 'click',
-        ellipsis: true,
-        render: (_: any, record: any) => (
-            <Button type="link" onClick={(): void => {
-                setRowData(record);
-            }}>
-                {i18n.t('timeline:tableHead.Click')}
-            </Button>
-        ),
-    },
-];
+): any[] => eventColum.length === 0
+    ? []
+    : [
+        ...eventColum,
+        {
+            title: i18n.t('timeline:tableHead.Click To Timeline'),
+            dataIndex: 'click',
+            key: 'click',
+            ellipsis: true,
+            render: (_: any, record: any) => (
+                <Button type="link" onClick={(): void => {
+                    setRowData(record);
+                }}>
+                    {i18n.t('timeline:tableHead.Click')}
+                </Button>
+            ),
+        },
+    ];
 
 const handleSelected = async(rowData: any, props: any): Promise<void> => {
     const rankId = props.session.eventUnits[0].metadata.cardId;

@@ -80,9 +80,6 @@ namespace Dic::Module::Timeline {
         double macTime{};
         // 多级目录
         std::vector<std::string> categoryList;
-        // 支持db场景跳转
-        uint64_t opId{};
-        uint64_t depth{};
 
         // 判断categoryList目录列表是否符合expectList（对比范围仅限expectList.size()），符合则返回true
         bool IsCategoryListEqual(const std::vector<std::string>& expectList) const

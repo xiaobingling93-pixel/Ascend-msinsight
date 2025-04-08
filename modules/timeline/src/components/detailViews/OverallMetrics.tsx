@@ -160,7 +160,7 @@ const OverallMetricsMoreTable = observer(({ rankId, session, selectedRow, bottom
                     duration,
                     cardId: rankId,
                     tid: res.threadId,
-                    id: session.isFullDb ? record.opId?.toString() : res.id, // db数据使用opId，因为res中的id不准确
+                    id: res.id,
                 });
                 setSelectedRowId(id);
             },

@@ -528,8 +528,6 @@ struct SameOperatorsDetails {
     std::string id;
     // name用于支持overall metric more details列表
     std::string name;
-    // 临时支持db场景跳转
-    uint64_t opId{};
     uint64_t depth{};
     std::string tid;
 };
@@ -537,7 +535,6 @@ struct SameOperatorsDetails {
 struct UnitThreadsOperatorsBody {
     std::vector<SameOperatorsDetails> sameOperatorsDetails;
     std::string rankId;
-    std::string metaType;
     uint64_t count{};
     uint64_t pageSize{};
     uint64_t currentPage{};

@@ -611,7 +611,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " 0 as depth from COMMUNICATION_OP info "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500 "
           " UNION all "
-          " select info.ROWID as id, T.streamId as tid, name, 'Ascend Hardware' as pid, depth "
+          " select T.ROWID as id, T.streamId as tid, name, 'Ascend Hardware' as pid, depth "
           " from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
           " UNION all "
@@ -635,7 +635,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
         responseBody.depth = resultSet->GetUint64("depth");
         responseBody.threadId = resultSet->GetString("tid");
         responseBody.pid = resultSet->GetString("pid");
-        responseBody.rankId = QueryHostInfo() + params.rankId;
+        responseBody.rankId = params.rankId;
     }
     return true;
 }

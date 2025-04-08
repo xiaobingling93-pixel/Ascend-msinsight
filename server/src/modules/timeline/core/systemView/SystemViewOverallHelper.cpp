@@ -54,9 +54,6 @@ std::vector<SameOperatorsDetails> SystemViewOverallHelper::FilterComputingEvents
                 continue;
             }
             details.timestamp = kernelEvent.startTime - minTimeStamp;
-            // 临时用于支持db场景跳转
-            details.opId = kernelEvent.opId;
-            details.depth = kernelEvent.depth;
             filteredEvents.push_back(details);
         }
     }

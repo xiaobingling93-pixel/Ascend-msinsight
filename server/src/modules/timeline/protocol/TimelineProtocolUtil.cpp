@@ -536,20 +536,12 @@ std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const Uni
             JsonUtil::AddMember(itemJson, "name", sameOperators.name, allocator);
             JsonUtil::AddMember(itemJson, "id", index++, allocator);
         }
-        // 临时用于支持db场景时间线跳转
-        if (!response.body.metaType.empty()) {
-            JsonUtil::AddMember(itemJson, "depth", sameOperators.depth, allocator);
-            JsonUtil::AddMember(itemJson, "opId", sameOperators.opId, allocator);
-        }
         JsonUtil::AddMember(itemJson, "tid", sameOperators.tid, allocator);
         sameOperatorsDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "sameOperatorsDetails", sameOperatorsDetails, allocator);
     if (!response.body.rankId.empty()) {
         JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
-    }
-    if (!response.body.metaType.empty()) {
-        JsonUtil::AddMember(body, "metaType", response.body.metaType, allocator);
     }
     JsonUtil::AddMember(body, "count", response.body.count, allocator);
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);

@@ -36,8 +36,6 @@ bool QueryOverallMoreDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Req
 
     if (request.params.categoryList[0] == OVERALL_CAT_COMPUTING) {
         GetComputingOverallMetricDetails(database, request.params, response, minTimestamp, overallHelper);
-        // 临时支持db场景跳转
-        response.body.metaType = "Ascend Hardware";
     } else if (request.params.categoryList[0] == COMMUNICATION_NOT_OVERLAP_TIME ||
             request.params.categoryList[0] == COMMUNICATION_TIME) {
         GetCommunicationOverallMetricDetails(database, request.params, response, minTimestamp, overallHelper);

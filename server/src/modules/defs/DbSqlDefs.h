@@ -143,7 +143,7 @@ const static std::string ASCEND_SAME_NAME_DETAIL_SQL =
 const static std::string HCCL_SAME_NAME_DETAIL_SQL_PART1 =
     "with nameIds as (select id, ? as minTime, ? as rankId, ? as startTime, ? as endTime "
     "                   from STRING_IDS where value = ?) "
-    "select startNs-minTime as timestamp,endNs-startNs as duration,0 as depth,c.ROWID as id , "
+    "select startNs-minTime as timestamp,endNs-startNs as duration,0 as depth, main.ROWID as id , "
     " groupName || '_' || planeId as tid "
     "from  TASK main "
     "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.taskType = id "

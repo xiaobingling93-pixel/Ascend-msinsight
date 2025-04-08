@@ -230,9 +230,6 @@ std::vector<OverallTmpInfo> SystemViewOverallDbRepo::QueryKernelEventsForSystemV
     std::vector<OverallTmpInfo> kernelEvents;
     while (resultSet->Next()) {
         OverallTmpInfo kernelEvent;
-        // 临时支持db跳转功能
-        kernelEvent.opId = resultSet->GetUint64("opId");
-        kernelEvent.depth = resultSet->GetUint64("depth");
         kernelEvent.opName = GetOrUpdateStringCacheValue(database, database->GetDbPath(),
                                                          resultSet->GetString("opName"));
         kernelEvent.opType = GetOrUpdateStringCacheValue(database, database->GetDbPath(),
