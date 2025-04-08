@@ -597,6 +597,17 @@ bool Database::UpdateValueIntoStatusInfoTable(const std::string &key, const std:
     return true;
 }
 
+bool Database::CheckAndResetDatabaseOnVersionChange()
+{
+    bool res = true;
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    if (IsDatabaseVersionChange()) {
+        ServerLog::Info("The database version has changed, the table structure and data will be reset.");
+        res = DropAllTable() && SetDataBaseVersion();
+    }
+    return res;
+}
+
 std::string Database::GetLastError()
 {
     if (!isOpen) {

@@ -194,6 +194,14 @@ bool TextSummaryDataBase::HasFinishedParseLastTime()
     return CheckValueFromStatusInfoTable(kernelParseState, FINISH_STATUS);
 }
 
+bool TextSummaryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
+{
+    if (!Database::OpenDb(dbPath, clearAllTable)) {
+        return false;
+    }
+    return SetConfig() && CheckAndResetDatabaseOnVersionChange();
+}
+
 uint64_t TextSummaryDataBase::QueryMinStartTime()
 {
     std::string sql = "Select MIN(start_time) FROM " + TABLE_KERNEL + " WHERE start_time > 0";

@@ -177,7 +177,7 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
 #endif
         return false;
     }
-    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime()) {
+    if (database->HasFinishedParseLastTime()) {
         uint64_t minTimestamp = database->QueryMinStartTime();
         Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
         std::set<std::string> devices = database->QueryRankIds();

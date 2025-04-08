@@ -95,6 +95,7 @@ protected:
     std::string GetValueFromStatusInfoTable(const std::string& key);
     bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
     bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
+    bool CheckAndResetDatabaseOnVersionChange();
     template <typename... Args> static inline std::unique_ptr<SqliteResultSet> ExecuteQuery(
             std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &sql, Args&&... args)
     {

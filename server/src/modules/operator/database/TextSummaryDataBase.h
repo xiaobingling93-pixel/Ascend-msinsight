@@ -17,6 +17,7 @@ public:
     explicit TextSummaryDataBase(std::recursive_mutex &sqlMutex);
     ~TextSummaryDataBase() override;
 
+    bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool SetConfig();
     bool CreateTable();
     bool DropTable();

@@ -20,6 +20,7 @@ public:
     explicit TextMemoryDataBase(std::recursive_mutex &sqlMutex);
     ~TextMemoryDataBase() override;
 
+    bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool SetConfig();
     bool CreateTable();
     bool DropTable();

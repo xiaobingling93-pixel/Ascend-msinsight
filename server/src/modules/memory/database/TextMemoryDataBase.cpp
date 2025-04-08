@@ -22,7 +22,13 @@ TextMemoryDataBase::~TextMemoryDataBase()
     }
     CloseDb();
 }
-
+bool TextMemoryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
+{
+    if (!Database::OpenDb(dbPath, clearAllTable)) {
+        return false;
+    }
+    return SetConfig() && CheckAndResetDatabaseOnVersionChange();
+}
 bool TextMemoryDataBase::SetConfig()
 {
     return Database::SetConfig();
