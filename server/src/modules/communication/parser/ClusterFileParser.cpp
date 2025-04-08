@@ -490,13 +490,15 @@ bool ClusterFileParser::ParserClusterOfDb()
     if (!FileUtil::IsFolder(selectedFilePath)) {
         tempPath = FileUtil::GetParentPath(selectedFilePath);
     }
-    // cluster analysis
-    if (!AttAnalyze(tempPath, ATT_MODEL_DEFAULT, AttDataType::DB)) {
-        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
-        return false;
-    }
-
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(tempPath, std::regex(clusterDBReg));
+    // 集群解析，判断是否已经存在集群db，如果存在则不进行重复解析，如果不存在，则调用mstt进行重新解析
+    if (clusterPath.empty()) {
+        if (!AttAnalyze(tempPath, ATT_MODEL_DEFAULT, AttDataType::DB)) {
+            ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
+            return false;
+        }
+        clusterPath = FileUtil::FindFilesWithFilter(tempPath, std::regex(clusterDBReg));
+    }
     if (clusterPath.empty()) {
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
@@ -520,29 +522,36 @@ bool ClusterFileParser::ParserClusterOfDb()
         return true;
     }
 
-    // 如果数据库中初始就有ClusterBaseInfo表，将其中的并行策略信息保存到baseInfo结构体中
-    // 将并行策略信息保存到baseInfo结构体后，删除ClusterBaseInfo表，然后新建同名表，按照指定格式存储信息
-    // 如果数据库中初始无ClusterBaseInfo表，从ClusterStepTraceTime表获取并行策略信息
-    clusterDatabase->SetHasClusterBaseInfoTable();
     ClusterBaseInfo baseInfo;
-    if (clusterDatabase->HasClusterBaseInfoTable()) {
-        clusterDatabase->QueryDistributedArgs(baseInfo.config, baseInfo.level);
-    } else {
-        clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
-    }
+    InitFullDbClusterBaseInfo(clusterDatabase, baseInfo);
 
     if (!clusterDatabase->DropTable() or !clusterDatabase->CreateTable() or !clusterDatabase->SetDataBaseVersion() or
         !clusterDatabase->UpdatesClusterParseStatus(NOT_FINISH_STATUS)) {
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
-
     clusterDatabase->InsertClusterBaseInfo(baseInfo);
-
     clusterDatabase->UpdatesClusterParseStatus(FINISH_STATUS);
     ServerLog::Info("ParseClusterFiles is success");
     ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
     return true;
+}
+
+void ClusterFileParser::InitFullDbClusterBaseInfo(std::shared_ptr<FullDb::DbClusterDataBase> &clusterDatabase,
+                                                  ClusterBaseInfo &baseInfo)
+{
+    if (clusterDatabase == nullptr) {
+        return;
+    }
+    // 如果数据库中初始就有ClusterBaseInfo表，将其中的并行策略信息保存到baseInfo结构体中
+    // 将并行策略信息保存到baseInfo结构体后，删除ClusterBaseInfo表，然后新建同名表，按照指定格式存储信息
+    // 如果数据库中初始无ClusterBaseInfo表，从ClusterStepTraceTime表获取并行策略信息
+    clusterDatabase->SetHasClusterBaseInfoTable();
+    if (clusterDatabase->HasClusterBaseInfoTable()) {
+        clusterDatabase->QueryDistributedArgs(baseInfo.config, baseInfo.level);
+    } else {
+        clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
+    }
 }
 
 std::string ClusterFileParser::GetClusterDbPath()

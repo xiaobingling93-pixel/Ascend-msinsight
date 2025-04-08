@@ -10,6 +10,7 @@
 #include <vector>
 #include "VirtualClusterDatabase.h"
 #include "ClusterDef.h"
+#include "DbClusterDataBase.h"
 #include "pch.h"
 
 namespace Dic {
@@ -38,6 +39,8 @@ private:
     bool InitClusterDatabase();
     StepStatistic MapToStepStatistic(std::map<std::string, size_t> &dataMap,
                                      const std::vector<std::string> &tokens);
+    static void InitFullDbClusterBaseInfo(std::shared_ptr<FullDb::DbClusterDataBase> &clusterDatabase,
+                                          ClusterBaseInfo &baseInfo);
     size_t subStrlen = 2;
     std::string clusterDbPath;
     bool needClearDb = true;
