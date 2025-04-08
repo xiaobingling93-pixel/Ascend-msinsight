@@ -443,3 +443,16 @@ TEST(TestUtil, CopyFileByPath)
     std::remove(sourcePath.c_str());
     std::remove(targetPath.c_str());
 }
+
+TEST(TestUtil, TestSplitFilePathSuccess)
+{
+#ifdef __WIN32
+    std::string dbPath1 = R"(D:\GUI_TEST_DATA\deepseek_32B\actor worker\ma-job_ascend_pt\ASCEND_PROFILER_OUTPUT\)";
+#else
+    std::string dbPath1 = "D:/GUI_TEST_DATA/deepseek_32B/actor worker/ma-job_ascend_pt/ASCEND_PROFILER_OUTPUT/";
+#endif
+    auto result1 = FileUtil::SplitFilePath(dbPath1);
+    std::vector<std::string> expected1 = { "D:", "GUI_TEST_DATA", "deepseek_32B",
+        "actor worker", "ma-job_ascend_pt", "ASCEND_PROFILER_OUTPUT" };
+    EXPECT_EQ(result1, expected1);
+}

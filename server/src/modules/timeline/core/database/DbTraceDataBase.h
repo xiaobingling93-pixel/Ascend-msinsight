@@ -103,6 +103,7 @@ public:
 
     std::vector<std::string> QueryRankId();
     std::string QueryHostInfo() override;
+    std::string QueryHostInfoWithHostPath(const std::string &pathTillCard);
     std::string GetDeviceId(const std::string& fileId);
     std::unordered_map<std::string, std::string> QueryRankIdAndDeviceMap();
 
@@ -136,6 +137,7 @@ public:
         std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
     bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
         const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) override;
+    static std::string GetHostPath(const std::string &filePath);
 
 private:
     const uint32_t cacheSize = 5000;
@@ -145,6 +147,7 @@ private:
     bool isExistMstx = false;
 
     std::string host;
+    std::string hostPath; // 记录到 card 之前的文件路径
     const std::string cardAliasName = "RANK_LABEL";
 
     std::unique_ptr<SqlitePreparedStatement> updateTaskDepthStmt = nullptr;

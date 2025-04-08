@@ -990,6 +990,11 @@ std::string DbTraceDataBase::GetDeviceId(const std::string &fileId)
 
 std::string DbTraceDataBase::QueryHostInfo()
 {
+    return DbTraceDataBase::QueryHostInfoWithHostPath(hostPath);
+}
+
+std::string DbTraceDataBase::QueryHostInfoWithHostPath(const std::string &path)
+{
     if (!host.empty() || !CheckTableDataInvalid(TABLE_HOST_INFO)) {
         return host;
     }
@@ -1023,7 +1028,7 @@ std::string DbTraceDataBase::QueryHostInfo()
         endTime = sqlite3_column_int64(timeStmt, col++);
     }
     sqlite3_finalize(timeStmt);
-    host = CollectionTimeService::Instance().ComputeMarkHost(host, startTime, endTime);
+    host = CollectionTimeService::Instance().ComputeMarkHost(host, path, startTime, endTime);
     return host;
 }
 
@@ -1199,7 +1204,30 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
 
 bool DbTraceDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
+    this->hostPath = DbTraceDataBase::GetHostPath(dbPath);
     return Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion() && SetConfig() && InitStmt();
+}
+
+std::string DbTraceDataBase::GetHostPath(const std::string &filePath)
+{
+    if (std::empty(filePath)) {
+        return "";
+    }
+    std::string leavePath = filePath;
+    std::vector<std::string> pathList = FileUtil::SplitFilePath(leavePath);
+
+    std::string result;
+    // 查找第一个出现的以 "PROF_" 开头或以 "_ascend_pt" 或 "_ascend_ms" 结尾的部分
+    for (const auto &fileStr : pathList) {
+        if (StringUtil::StartWith(fileStr, "PROF_") ||
+            StringUtil::EndWith(fileStr, "_ascend_pt") ||
+            StringUtil::EndWith(fileStr, "_ascend_ms")) {
+            return result;
+        }
+        result += fileStr + FILE_SEPARATOR;
+    }
+    // 不存在以 "PROF_" 开头或以 "_ascend_pt" 或 "_ascend_ms" 结尾的部分，则认为没找到 hostPath，返回空字符串
+    return "";
 }
 
 void DbTraceDataBase::InitConnectionCats()

@@ -91,6 +91,18 @@ std::string FileUtil::GetAbsPath(const std::string &path)
     return curPath + std::string(MSVP_SLASH) + path;
 }
 
+std::vector<std::string> FileUtil::SplitFilePath(std::string &path)
+{
+    if (path.empty()) {
+        return {};
+    }
+#ifdef _WIN32
+    return StringUtil::Split(path, "\\\\");
+#else
+    return StringUtil::Split(path, "/");
+#endif
+}
+
 bool FileUtil::IsSoftLink(const std::string &path)
 {
 #ifdef _WIN32

@@ -9,6 +9,7 @@
 namespace Dic::Module::Timeline {
 struct HostTimeStruct {
     std::string hostWithOutMark;
+    std::string hostPath;
     uint64_t startTime = UINT64_MAX;
     uint64_t endTime = 0;
     uint32_t mark = 0;
@@ -24,7 +25,8 @@ public:
     CollectionTimeService &operator = (const CollectionTimeService &) = delete;
     CollectionTimeService(CollectionTimeService &&) = delete;
     CollectionTimeService &operator = (CollectionTimeService &&) = delete;
-    std::string ComputeMarkHost(std::string &hostWithOutMark, uint64_t startTime, uint64_t endTime)
+    std::string ComputeMarkHost(std::string &hostWithOutMark, const std::string &hostPath,
+        uint64_t startTime, uint64_t endTime)
     {
         std::unique_lock<std::mutex> lock(mutex);
         std::string result = hostWithOutMark;
@@ -35,8 +37,9 @@ public:
                 continue;
             }
             mark++;
+            bool isSamePath = item.hostPath == hostPath;
             bool isOverLap = !((startTime > item.endTime) || (endTime < item.startTime));
-            if (isOverLap) {
+            if (isSamePath && isOverLap) {
                 isAddHostTime = false;
                 mark = item.mark;
                 item.startTime = std::min(item.startTime, startTime);
@@ -45,7 +48,7 @@ public:
             }
         }
         if (isAddHostTime) {
-            HostTimeStruct temp = { hostWithOutMark, startTime, endTime, mark };
+            HostTimeStruct temp = { hostWithOutMark, hostPath, startTime, endTime, mark };
             hostTimeVec.emplace_back(temp);
         }
         result = result + "_" + std::to_string(mark) + " ";

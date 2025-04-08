@@ -489,6 +489,8 @@ public:
         return FileUtil::FindFirstByRegex(path, 0, fileRegex);
     }
 
+    // 切分路径
+    static std::vector<std::string> SplitFilePath(std::string &path);
     static bool IsSoftLink(const std::string &path);
     static bool IsAbsolutePath(const std::string &path);
     static bool IsRegularFile(const std::string &filePath);

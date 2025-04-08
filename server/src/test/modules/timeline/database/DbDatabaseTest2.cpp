@@ -1134,3 +1134,32 @@ TEST_F(DbDatabaseTest2, TestIsValidGroupNameValueFail)
     const bool res = Dic::Protocol::TraceDatabaseHelper::IsValidHCCLGroupNameValue(groupNameValue);
     EXPECT_EQ(res, false);
 }
+
+TEST_F(DbDatabaseTest2, TestGetHostPath)
+{
+#ifdef _WIN32
+    std::string filePath1 = R"(D:\GUI_TEST_DATA\32B\actor worker\ma-job_ascend_pt\ASCEND_PROFILER_OUTPUT\a.db)";
+    std::string filePath2 = R"(D:\GUI_TEST_DATA\32B\actor worker\ma-job_ascend_ms\ASCEND_PROFILER_OUTPUT\a.db)";
+    std::string filePath3 = R"(D:\GUI_TEST_DATA\32B\actor worker\PROF_000001_11\ASCEND_PROFILER_OUTPUT\a.db)";
+    std::string filePath4 = R"(D:\GUI_TEST_DATA\deepseek_32B\actor worker\ascend_pytorch_profiler_3.db)";
+#else
+    std::string filePath1 = "/home/GUI_TEST_DATA/32B/actor worker/ma-job_ascend_pt/ASCEND_PROFILER_OUTPUT/a.db";
+    std::string filePath2 = "/home/GUI_TEST_DATA/32B/actor worker/ma-job_ascend_ms/ASCEND_PROFILER_OUTPUT/a.db";
+    std::string filePath3 = "/home/GUI_TEST_DATA/32B/actor worker/PROF_000001_11/ASCEND_PROFILER_OUTPUT/a.db";
+    std::string filePath4 = "/home/GUI_TEST_DATA/deepseek_32B/actor worker/ascend_pytorch_profiler_3.db";
+#endif
+    auto result1 = Dic::Module::FullDb::DbTraceDataBase::GetHostPath(filePath1);
+    auto result2 = Dic::Module::FullDb::DbTraceDataBase::GetHostPath(filePath2);
+    auto result3 = Dic::Module::FullDb::DbTraceDataBase::GetHostPath(filePath3);
+    auto result4 = Dic::Module::FullDb::DbTraceDataBase::GetHostPath(filePath4);
+#ifdef _WIN32
+    EXPECT_EQ(result1, R"(D:\GUI_TEST_DATA\32B\actor worker\)");
+    EXPECT_EQ(result2, R"(D:\GUI_TEST_DATA\32B\actor worker\)");
+    EXPECT_EQ(result3, R"(D:\GUI_TEST_DATA\32B\actor worker\)");
+#else
+    EXPECT_EQ(result1, "/home/GUI_TEST_DATA/32B/actor worker/");
+    EXPECT_EQ(result2, "/home/GUI_TEST_DATA/32B/actor worker/");
+    EXPECT_EQ(result3, "/home/GUI_TEST_DATA/32B/actor worker/");
+#endif
+    EXPECT_EQ(result4, "");
+}

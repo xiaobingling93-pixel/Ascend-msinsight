@@ -60,7 +60,7 @@ public:
     std::vector<Summary::VirtualSummaryDataBase *> GetAllSummaryDatabase();
 
     std::string GetDbPath(const std::string &fileId);
-    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseWithOutHost(const std::string &fileId);
+    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseWithOutHost(const std::string &rankId);
     DataType GetDataType();
     void SetDataType(DataType type);
     FileType GetFileType();
@@ -69,7 +69,7 @@ public:
     void SetBaselineDataType(DataType type);
     void SetBaselineFileType(FileType type);
     bool ResetBaseline();
-    void SetDbPathMapping(const std::string& rankId, const std::string& filePath, const std::string& hostId);
+    void SetDbPathMapping(const std::string& fileId, const std::string& filePath, const std::string& hostId);
     bool IsContainDatabasePath(const std::string& databasePath);
     inline std::vector<std::string> GetDbPathByHost(const std::string& id)
     {

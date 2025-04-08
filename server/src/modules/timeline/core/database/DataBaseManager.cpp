@@ -312,11 +312,11 @@ std::string DataBaseManager::GetDbPath(const std::string &fileId)
     return it->second->GetDbPath();
 }
 
-std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseWithOutHost(const std::string &fileId)
+std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseWithOutHost(const std::string &rankId)
 {
     std::vector<std::string> ids;
     for (const auto &hostInfo : host2DbPath) {
-        ids.push_back(StringUtil::ReplaceFirst(hostInfo.first, "Host", fileId));
+        ids.push_back(StringUtil::ReplaceFirst(hostInfo.first, "Host", rankId));
     }
     std::shared_ptr<VirtualTraceDatabase> database;
     for (const auto &id : ids) {
@@ -372,11 +372,11 @@ void DataBaseManager::SetBaselineDataType(DataType type)
     baselineType = type;
 }
 
-void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &filePath,
+void DataBaseManager::SetDbPathMapping(const std::string &fileId, const std::string &filePath,
     const std::string &hostId)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex);
-    dbFilePathMap[rankId] = filePath;
+    dbFilePathMap[fileId] = filePath;
     host2DbPath[hostId].push_back(filePath);
 }
 
