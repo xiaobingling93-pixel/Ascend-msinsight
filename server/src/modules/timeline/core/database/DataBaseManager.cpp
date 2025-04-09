@@ -27,21 +27,21 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
     std::unique_lock<std::recursive_mutex> lock(mutex);
     databasePathSet.emplace(dbPath);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
-    std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
+    std::map<std::string, std::shared_ptr<ConnectionPool>> &curTraceDbMap =
         isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
     DataType curDataType = isBaseline ? baselineType : dataType;
     if (curTraceDbMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        std::unique_ptr<ConnectionPool> conn;
+        std::shared_ptr<ConnectionPool> conn;
         switch (curDataType) {
             case DataType::DB:
-                conn = std::make_unique<ConnectionPool>(dbPath,
+                conn = std::make_shared<ConnectionPool>(dbPath,
                     [&dbMutex]() { return new FullDb::DbTraceDataBase(dbMutex); });
                 break;
             case DataType::TEXT:
             default:
                 conn =
-                    std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() { return new TextTraceDatabase(dbMutex); });
+                    std::make_shared<ConnectionPool>(dbPath, [&dbMutex]() { return new TextTraceDatabase(dbMutex); });
                 break;
         }
         conn->SetMaxActiveCount(CPU_CORE_COUNT);
@@ -57,7 +57,7 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
-    std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
+    std::map<std::string, std::shared_ptr<ConnectionPool>> &curTraceDbMap =
         isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
     auto it = curTraceDbMap.find(fileId);
     if (it == curTraceDbMap.end() && dbFilePathMap.count(fileId) != 0) {

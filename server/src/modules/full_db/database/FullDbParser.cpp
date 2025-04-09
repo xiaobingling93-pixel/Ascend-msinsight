@@ -49,6 +49,8 @@ void FullDbParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");
     Timeline::ParserStatusManager::Instance().SetAllTerminateStatus();
+    threadPool->Reset();
+    ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->Reset();
     ServerLog::Info("Task completed.");
     auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {
@@ -63,7 +65,6 @@ void FullDbParser::Reset()
     FullDb::DbSummaryDataBase::Reset();
     FullDb::DbTraceDataBase::Reset();
     ServerLog::Info("End Reset trace Parser");
-    threadPool->Reset();
     CollectionTimeService::Instance().Reset();
 }
 

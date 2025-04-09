@@ -91,13 +91,13 @@ private:
     std::map<std::string, std::string> dbFilePathMap;
     std::map<std::string, std::vector<std::string>> host2DbPath;
     std::unordered_set<std::string> databasePathSet;
-    std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
+    std::map<std::string, std::shared_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
     std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
     FileType baselineFileType = FileType::PYTORCH;
-    std::map<std::string, std::unique_ptr<ConnectionPool>> traceBaselineDatabaseMap;
+    std::map<std::string, std::shared_ptr<ConnectionPool>> traceBaselineDatabaseMap;
     std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
     std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
 
