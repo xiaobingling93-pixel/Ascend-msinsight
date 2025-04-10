@@ -419,8 +419,11 @@ int FileUtil::FindDbOrJsonType(const std::string &path, int depth,
     for (const auto &folder: folders) {
         std::string tmpPath = FileUtil::SplicePath(path, folder);
         int result = FindDbOrJsonType(tmpPath, depth + 1, jsonRegex, dbRegex);
-        if (result != 0) {
-            return result;
+        if (result == dbFound) {
+            return dbFound;
+        }
+        if (result == jsonFound) {
+            hasJson = true;
         }
     }
     return hasJson ? jsonFound : 0;
