@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { makeAutoObservable } from 'mobx';
-import type { JsonInstructionType } from '../components/hotMethod/defs';
+import type { Ilinetable, JsonInstructionType } from '../components/hotMethod/defs';
 
 export interface DirInfo {
     rankId: string;
@@ -22,6 +22,8 @@ export const defaultCacheUnit = { cachelineId: -1, addressRange: [] };
 
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
+    // 代码行日志
+    loggedCodeLines: Ilinetable[] = [];
     // 指令数据版本
     instrVersion: number = -1;
     coreList: string[] = [];

@@ -8,7 +8,7 @@ import i18n from 'ascend-i18n';
 import { type DirInfo, InstructionSelectSource } from '../entity/session';
 import { closeFind, openFind } from '../components/hotMethod/CodeTextSearch';
 import type { KeydownInfo } from '@/utils/interface';
-import { KEYS } from 'ascend-utils';
+import { getUpdateObject, KEYS } from 'ascend-utils';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -50,6 +50,18 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
             });
         }
     });
+};
+
+export const updateSession = (data: Record<string, any>): Record<string, any> => {
+    const session = store.sessionStore.activeSession;
+    if (!session) {
+        return {};
+    }
+    const updateState = getUpdateObject(data, session, false);
+    runInAction(() => {
+        Object.assign(session, updateState);
+    });
+    return updateState;
 };
 
 export const resetHandler: NotificationHandler = (data): void => {
