@@ -66,6 +66,9 @@ bool DbTraceDataBase::GenerateOverlapAnalysisMetadata(const std::string &fileId,
 {
     auto metaType = ENUM_TO_STR(PROCESS_TYPE::OVERLAP_ANALYSIS).value_or("");
     auto overlap_analysis = GenerateBaseUnitTrack("process", fileId, metaType, metaType, metaType);
+    if (stringsCache.find(path) == stringsCache.end()) {
+        stringsCache[path] = {}; // 初始化空的映射
+    }
     for (size_t index = 0; index < OVERLAP_TYPES.size(); index++) {
         auto thread = GenerateBaseUnitTrack("thread", fileId,
                                             overlap_analysis->metaData.processId, "", metaType);
