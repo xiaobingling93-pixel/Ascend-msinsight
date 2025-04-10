@@ -14,12 +14,11 @@ export function changeIndexWidth(width: number): void {
     });
 }
 
-// eslint-disable-next-line max-lines-per-function
-const CodeViewer = ({ code, selectedline, hoverline, style, className = '', handleLineClick, ...restProps }: {
+const CodeViewer = ({ code, selectedLine, hoverline, style, className = '', handleLineClick, ...restProps }: {
     code: string;
     style?: React.CSSProperties;
     className?: string;
-    selectedline?: number;
+    selectedLine?: number;
     hoverline?: number;
     handleLineClick?: (line: number) => void;
 }): JSX.Element => {
@@ -29,7 +28,7 @@ const CodeViewer = ({ code, selectedline, hoverline, style, className = '', hand
 
     useEffect(() => {
         document.querySelectorAll('code li').forEach((node, index) => {
-            if (selectedline === index + 1) {
+            if (selectedLine === index + 1) {
                 addClass(node, 'selected');
                 if (!isViewable(node,
                     { fixedtop: document.getElementById('CodeTable')?.getBoundingClientRect().top ?? 120 })) {
@@ -39,7 +38,7 @@ const CodeViewer = ({ code, selectedline, hoverline, style, className = '', hand
                 removeClass(node, 'selected');
             }
         });
-    }, [selectedline]);
+    }, [selectedLine]);
     const handleClick = (event: React.MouseEvent<HTMLElement>): void => {
         event.stopPropagation();
         let dom: any = event.target as HTMLElement;

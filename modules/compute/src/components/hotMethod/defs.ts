@@ -6,7 +6,7 @@ const SOURCE = 'Source';
 const PIPE = 'Pipe';
 const INSTRUCIONS_EXECUTED = 'Instructions Executed';
 const CYCLES = 'Cycles';
-const LINE = 'Line';
+export const LINE = 'Line';
 const ADDRESS_RANGE = 'Address Range';
 const REAL_STALL_CYCLES = 'RealStallCycles';
 const THEORETICAL_STALL_CYCLES = 'TheoreticalStallCycles';
@@ -61,4 +61,10 @@ export const NOT_APPLICABLE = 'NA';
 export enum InstructionVersion {
     DEFAULT = 90,
     'ASCENDC_INNER_CODE' = 0,
+}
+
+export interface Limit {
+    maxSize: number;
+    overlimit: boolean;
+    current: number;
 }

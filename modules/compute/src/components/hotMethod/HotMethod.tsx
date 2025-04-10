@@ -2,326 +2,143 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
+import { useTranslation } from 'react-i18next';
 import { Checkbox } from 'ascend-components';
+import { Layout } from 'ascend-layout';
+import { ResizeTable } from 'ascend-resize';
+import { formatDecimal } from 'ascend-utils';
 import type { ColumnsType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import './HotMethod.css';
-import type { Session } from '../../entity/session';
-import { defaultCacheUnit, InstructionSelectSource } from '../../entity/session';
 import Filter from './Filter';
-import CodeViewer from './codeViewer/CodeViewer';
-import { ResizeTable } from 'ascend-resize';
-import {
-    GetPageConfigWhithPageData,
-    HeaderFixedContainer,
-    LeftRightContainer,
-    limitInput,
-    syncScroller,
-} from '../Common';
-import type { Iline, Ilinetable, InstrsColumnType, JsonInstructionType } from './defs';
-import { FieldType, InstructionVersion, ASCENDC_INNER_CODE, NOT_APPLICABLE } from './defs';
-import { queryDynamicInstr, queryDynamicLine, querySourceCode } from '../RequestUtils';
-import { Layout } from 'ascend-layout';
+import { CODE_SEARCH_WINDOW_HEIGHT } from './CodeTextSearch';
+import CodeTable, { UNSELECTED } from './CodeAttrTable';
 import { getInstrColumns } from './InstructionTable';
-import { getCodeColumns } from './CodeAttrTable';
-import { store } from '../../store';
-import { runInAction } from 'mobx';
-import CodeTextSearch, { CODE_SEARCH_WINDOW_HEIGHT } from './CodeTextSearch';
-import { formatDecimal } from 'ascend-utils';
-import { ThContainer } from './TableHead';
+import { ASCENDC_INNER_CODE, NOT_APPLICABLE, InstructionVersion, FieldType } from './defs';
+import type { Ilinetable, InstrsColumnType, JsonInstructionType, Limit } from './defs';
+import { queryDynamicInstr } from '../RequestUtils';
+import { GetPageConfigWhithPageData, HeaderFixedContainer, LeftRightContainer, syncScroller } from '../Common';
+import { updateSession } from '../../connection/handler';
+import { defaultCacheUnit, InstructionSelectSource } from '../../entity/session';
+import type { Session } from '../../entity/session';
+import './HotMethod.css';
 
-const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
-const MAX_FILE_SIZE = 1000000; // 100,0000
-const MAX_LINE_LENGTH = 10000; // 10000
-const MAX_LINE = 10000;
 const MAX_INSTRUCTION = 1000000; // 100,0000
 const PAGE_LIMIT = 500000; // 50,0000
 const ROW_HEIGHT = 32;
 
-interface ConditionType {
+export interface ConditionType {
     core: string;
     source: string;
     onlyRelated?: boolean;
 };
 
-const isRelated = (instr: InstrsColumnType, range: string[][] = []): boolean => {
+// 指令是否关联
+export const isRelated = (instr: InstrsColumnType, range: string[][] = []): boolean => {
     // 指令地址是否在代码行地址范围内
     return Boolean(range?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
 };
 
-// 恢复默认的指令高亮来源
-const recoverDefaultInstructionSource = (): void => {
-    const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
+interface IRelatedLineParams {
+    instr: InstrsColumnType;
+    instrVersion: InstructionVersion;
+    condition: ConditionType;
+    loggedCodeLines: Ilinetable[];
+}
+
+// 指令查找代码行
+function getRelatedLine({ instr, instrVersion, condition, loggedCodeLines }: IRelatedLineParams): number {
+    let line = UNSELECTED;
+    // 指令数据ASCENDC_INNER_CODE可用版本
+    if (instrVersion === InstructionVersion.ASCENDC_INNER_CODE) {
+        const infoList = String(instr[ASCENDC_INNER_CODE]).split(':');
+        const file = infoList[0];
+        const fileLine = Number(infoList[1]);
+        if (file === condition.source && !isNaN(fileLine)) {
+            line = fileLine;
+        }
     }
-    runInAction(() => {
-        session.instructionSelectSource = InstructionSelectSource.DEFAULT;
-        // cache信息重置
-        session.cacheUnit = defaultCacheUnit;
+    if (line <= 0) {
+        const data = loggedCodeLines.find((codeline: Ilinetable) => isRelated(instr, codeline['Address Range']));
+        line = data?.Line ?? UNSELECTED;
+    }
+    return line;
+}
+
+// 恢复默认的指令高亮来源
+export const recoverDefaultInstructionSource = (): void => {
+    updateSession({
+        instructionSelectSource: InstructionSelectSource.DEFAULT,
+        cacheUnit: defaultCacheUnit,
     });
 };
 
-const domId = 'hotMethod';
-// eslint-disable-next-line max-lines-per-function
 const Index = observer(({ session }: { session: Session }) => {
     const { t } = useTranslation('source');
     const [condition, setCondition] = useState<ConditionType>({ core: '', source: '', onlyRelated: false });
-    const [code, setCode] = useState('');
-    const [codeLines, setCodeLines] = useState<Ilinetable[]>([]);
-    const [loggedCodeLines, setLoggedCodeLines] = useState<Ilinetable[]>([]);
-    const [dynamicCodeFields, setDynamicCodeFields] = useState<Record<string, FieldType>>({});
-    const codeColumns = useMemo(() => getCodeColumns(t, dynamicCodeFields), [dynamicCodeFields, t]);
     // 选中代码行
-    const [selectedline, setSelectedline] = useState<number>(-1);
-    // 指令表
-    const [dynamicInstrFields, setDynamicInstrFields] = useState<Record<string, FieldType>>({});
-    const [allInstrData, setAllInstrData] = useState<InstrsColumnType[]>([]);
-    // 是否关联指令
-    const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => {
-        if (session.instructionSelectSource === InstructionSelectSource.CACHE) {
-            return isRelated(instr, session.cacheUnit.addressRange);
-        } else {
-            if (selectedline > 0 && codeLines.length > 0) {
-                return isRelated(instr, codeLines[selectedline - 1]['Address Range']);
-            }
-        }
-        return false;
-    }, [selectedline, codeLines, session.instructionSelectSource, session.cacheUnit.addressRange, session.instructionUpdateId]);
-    const getRelatedInstrs = useCallback((): InstrsColumnType[] => {
-        return allInstrData.filter((record: InstrsColumnType) => isRelatedInstr(record));
-    }, [allInstrData, isRelatedInstr]);
-    const relatedInstrs = useMemo(() => getRelatedInstrs(), [getRelatedInstrs]);
-    // 指令表当前显示数据
-    const curInstrData = useMemo(() => condition.onlyRelated ? relatedInstrs : allInstrData, [allInstrData, condition.onlyRelated, relatedInstrs]);
-    const instrColumns = useMemo(() => getInstrColumns(dynamicInstrFields, t, curInstrData), [dynamicInstrFields, t, curInstrData]);
-    const [lineClickListener, setLineClickListener] = useState<number>(0);
-    const [tableHeight, setTableHeight] = useState<number>(1000);
+    const [selectedLine, setSelectedLine] = useState<number>(UNSELECTED);
+    const [selectedCodeLine, setSelectedCodeLine] = useState<Ilinetable | null>(null);
+    // 指令表跳转到关联指令
+    const [jumpListener, setJumpListener] = useState<number>(0);
+    const [codeTableHeight, setCodeTableHeight] = useState<number>(1000);
+    const [instructionTableHeight, setInstructionTableHeight] = useState<number>(1000);
+    // 安全防护
     const [instrLimit, setInstrLimit] = useState({ maxSize: MAX_INSTRUCTION, overlimit: false, current: 0 });
-    const reset = (): void => {
-        // 重置选中行数，-1不选中任一行
-        setSelectedline(-1);
-    };
+    const [relatedInstrsLength, setRelatedInstrsLength] = useState<number>();
+
     const handleFilterChange = (newConditions: ConditionType): void => {
         setCondition({ ...condition, ...newConditions });
     };
 
-    const handleInstrsClick = (instr: InstrsColumnType): void => {
-        let line = -1;
-        // 指令数据ASCENDC_INNER_CODE可用版本
-        if (session.instrVersion === InstructionVersion.ASCENDC_INNER_CODE) {
-            const infoList = String(instr[ASCENDC_INNER_CODE]).split(':');
-            const file = infoList[0];
-            const fileLine = Number(infoList[1]);
-            if (file === condition.source && !isNaN(fileLine)) {
-                line = fileLine;
-            }
-        }
-        if (line <= 0) {
-            const data = loggedCodeLines.find((codeline: Ilinetable) => isRelated(instr, codeline['Address Range']));
-            line = data?.Line ?? -1;
-        }
-        setSelectedline(line);
-        recoverDefaultInstructionSource();
-    };
-
     function resizeHeight(): void {
-        const codeTable = document.getElementById('CodeTable');
-        const height = codeTable?.clientHeight ?? 1000;
+        const height = document.getElementById('CodeTable')?.clientHeight ?? 1000;
         if (height === 0) {
             return;
         }
-        setTableHeight(height);
+        setCodeTableHeight(height);
+        setInstructionTableHeight(session.openFind ? height + CODE_SEARCH_WINDOW_HEIGHT : height);
     }
 
-    async function getCode(source: string): Promise<string> {
-        if (source === '') {
-            return '';
-        }
-        const res = await querySourceCode(source);
-        let str: string = res?.fileContent ?? '';
-        let linebreak;
-        if (str.includes('\r\n')) {
-            linebreak = '\r\n';
-        } else if (str.includes('\r')) {
-            linebreak = '\r';
-        } else if (str.includes('\n')) {
-            linebreak = '\n';
-        } else {
-            linebreak = '';
-        }
-        if (str.length > MAX_FILE_SIZE) {
-            str = str.slice(0, MAX_FILE_SIZE);
-            str += `${linebreak}----------【${t('CharactersExceed', { max: MAX_FILE_SIZE })}】----------`;
-        }
-        if (str.length > 0) {
-            let splitlines: string[] = str.split(BREAK_LINE_REGEXP);
-            if (splitlines.length > MAX_LINE) {
-                splitlines = splitlines.slice(0, MAX_LINE);
-                splitlines.push(`----------【${t('LineExceed', { max: MAX_LINE })}】----------`);
-            }
-            splitlines = splitlines.map(codeline => {
-                if (codeline.length > MAX_LINE_LENGTH) {
-                    return `${codeline.slice(0, MAX_LINE_LENGTH)} 【${t('Exceed', { max: MAX_LINE_LENGTH })}】`;
-                } else {
-                    return codeline;
-                }
-            });
-            return splitlines.join(linebreak);
-        }
-        return str;
+    // 指令表跳转到关联指令
+    function activeJump(): void {
+        setTimeout(() => {
+            setJumpListener(pre => (pre + 1) % 100);
+        });
     }
 
-    async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumnType[]; fields: Record<string, FieldType> }> {
-        if (coreName === '') {
-            return { instructions: [], fields: {} };
-        }
-        const res = await queryDynamicInstr({ coreName });
-        // 动态列
-        const fields = res?.['Instructions Dtype']?.Instructions ?? {};
-        // 指令记录
-        const records = res?.Instructions ?? [];
-        setInstrLimit({ ...instrLimit, overlimit: records.length > instrLimit.maxSize });
-        const percentageFields = Object.keys(fields).filter(fieldName => fields[fieldName] === FieldType.PERCENTAGE);
-        const list: InstrsColumnType[] = records.map((item: JsonInstructionType, index: number) => {
-            const formatData: Record<string, any> = {};
-            percentageFields.forEach(fieldName => {
-                formatData[fieldName] = formatDecimal(item[fieldName] as number);
-            });
-            return {
-                ...item,
-                ...formatData,
-                index: index + 1,
-                maxCycles: 0,
-            };
-        });
-        let maxCycles = 1;
-        list.forEach(item => {
-            if (!isNaN(Number(item.Cycles))) {
-                maxCycles = Math.max(maxCycles, Number(item.Cycles));
-            }
-        });
-        list.forEach(item => {
-            item.maxCycles = maxCycles;
-        });
-        return { instructions: list, fields };
+    function cancelSelected(): void {
+        // 清除选中
+        setSelectedLine(UNSELECTED);
     };
-
-    async function getLines(source: string, core: string): Promise<{ lines: Ilinetable[]; fields: Record<string, FieldType> }> {
-        if (source === '' || core === '') {
-            return { lines: [], fields: {} };
-        }
-        const res = await queryDynamicLine({ sourceName: source, coreName: core });
-        const fields = res?.['Files Dtype']?.Lines ?? {};
-        let list: Iline[] = res?.Lines ?? [];
-        const percentageFields = Object.keys(fields).filter(fieldName => fields[fieldName] === FieldType.PERCENTAGE);
-        if (percentageFields.length > 0) {
-            list = list.map(item => {
-                const formatData: Record<string, any> = {};
-                percentageFields.forEach(fieldName => {
-                    formatData[fieldName] = formatDecimal(item[fieldName] as number);
-                });
-                return { ...item, ...formatData };
-            });
-        }
-        return { lines: list.reverse(), fields };
-    };
-
-    function clear(): void {
-        // 文件源码
-        setCode('');
-        // 代码行记录
-        setLoggedCodeLines([]);
-        setDynamicCodeFields({});
-        // 选中行
-        setCodeLines([]);
-        // 指令记录
-        setAllInstrData([]);
-        setDynamicInstrFields({});
-    }
-
-    async function updateData(): Promise<void> {
-        Promise.all([
-            getCode(condition.source),
-            getLines(condition.source, condition.core),
-        ]).then(([newCode, { lines: newLoggedCodeLines, fields }]) => {
-            // 文件源码
-            setCode(newCode);
-            // 代码行动态列
-            setDynamicCodeFields(fields);
-            // 代码行记录
-            setLoggedCodeLines(newLoggedCodeLines);
-            // 全部代码行
-            const sourceCodeList = newCode === '' ? [] : newCode.split(BREAK_LINE_REGEXP);
-            const sourceCodeLines = sourceCodeList.map((codeItem: string, index: number) => {
-                const line = index + 1;
-                const lineInfo = newLoggedCodeLines.find((item: Ilinetable) => item.Line === line) ?? {};
-                return { Line: line, ...lineInfo };
-            });
-            setCodeLines(sourceCodeLines);
-        });
-        // 指令记录
-        getInstrs(condition.core).then(({ instructions: newInstrlist, fields }) => {
-            setDynamicInstrFields(fields);
-            setAllInstrData(newInstrlist);
-        });
-    }
-
-    function updateCode(): void {
-        getCode(condition.source).then(newCode => {
-            // 文件源码
-            setCode(newCode);
-        });
-    }
 
     // 初始化
     useEffect(() => {
-        reset();
         // 同步滚动条
         syncScroller([document.getElementById('CodeTable'),
             document.querySelector('#CodeAttrTable .ant-table-body'),
             document.querySelector('#CodeLine .ant-table-body'),
         ]);
-        resizeHeight();
 
-        window.addEventListener('resize', event => {
+        const resizeFunc = (): void => {
             resizeHeight();
-        });
-        limitInput();
+        };
+        window.addEventListener('resize', resizeFunc);
+        return (): void => {
+            window.removeEventListener('resize', resizeFunc);
+        };
     }, []);
-    useEffect(() => {
-        reset();
-        if (!session.parseStatus) {
-            clear();
-            return;
-        }
-        updateData();
-    }, [condition.core, condition.source, session.parseStatus, session.updateId]);
 
-    useEffect(() => {
-        resizeHeight();
-    }, [code, session.openFind]);
-
-    useEffect(() => {
-        updateCode();
-    }, [t]);
-    // Cache跳转高亮指令
+    // Cache跳转过来
     useEffect(() => {
         if (session.instructionSelectSource === InstructionSelectSource.CACHE) {
             // 清理原来选中的代码行
-            reset();
+            cancelSelected();
+            activeJump();
         }
-    }, [session.instructionSelectSource]);
+    }, [session.instructionSelectSource, session.cacheUnit]);
 
-    useEffect(() => {
-        if (session.instructionSelectSource === InstructionSelectSource.CACHE) {
-            setLineClickListener(pre => (pre + 1) % 100);
-        }
-    }, [relatedInstrs]);
-
-    return <div id={domId} style={{ height: '100%', width: '100%' }} className={'th35'}>
+    return <div id="hotMethod" style={{ height: '100%', width: '100%' }} className={'th35'}>
         <Layout>
             <HeaderFixedContainer
                 headerStyle={{ padding: '10px' }}
@@ -338,13 +155,13 @@ const Index = observer(({ session }: { session: Session }) => {
                                                 : <>
                                                     {t('Line')} :
                                                     <span>
-                                                        {selectedline >= 0 ? selectedline : ''},
+                                                        {selectedLine >= 0 ? selectedLine : ''},
                                                     </span>
                                                 </>
                                         }
                                         {t('RelatedInstructionsCount')} :
                                         <span>
-                                            {relatedInstrs.length}
+                                            {relatedInstrsLength}
                                         </span>
                                     </span>
                                     <Checkbox
@@ -367,95 +184,30 @@ const Index = observer(({ session }: { session: Session }) => {
                 body={
                     <LeftRightContainer
                         flex
-                        left={<div style={{ height: '100%', width: '100%', overflow: 'auto', paddingRight: '8px' }}
-                            className={session.openFind ? 'head-gap' : ''}>
-                            <LeftRightContainer
-                                flex
-                                leftPercent={70}
-                                left={<>
-                                    <LeftRightContainer
-                                        flex
-                                        flexStyle={{ right: 0, width: '10px' }}
-                                        leftWidth={45}
-                                        minWidth={30}
-                                        className={codeLines.length === 0 ? 'hiddenEmpty' : ''}
-                                        left={<ResizeTable
-                                            size="small"
-                                            pagination={false}
-                                            columns={[{ title: '#', dataIndex: 'Line', align: 'center', ellipsis: true }]}
-                                            dataSource={codeLines}
-                                            rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
-                                            onRow={(record: Ilinetable): { onClick: (event: React.MouseEvent<HTMLElement>) => void } => {
-                                                return {
-                                                    onClick: (event: React.MouseEvent<HTMLElement>): void => {
-                                                        recoverDefaultInstructionSource();
-                                                        setSelectedline(record.Line);
-                                                        setLineClickListener((lineClickListener + 1) % 100);
-                                                    },
-                                                };
-                                            }}
-                                            id="CodeLine"
-                                            scroll={{ y: tableHeight }}
-                                        />}
-                                        right={<HeaderFixedContainer
-                                            style={{ overflow: 'hidden' }}
-                                            headerStyle={{ marginBottom: session.openFind ? `${CODE_SEARCH_WINDOW_HEIGHT}px` : '0' }}
-                                            header={<ThContainer><div className="th"><span>{t('Source')}</span></div></ThContainer>}
-                                            bodyProps={{ id: 'CodeTable' }}
-                                            bodyStyle={{ overflowX: 'scroll', marginRight: '-8px' }}
-                                            body={
-                                                <CodeViewer
-                                                    code={code}
-                                                    handleLineClick={(line: number): void => {
-                                                        recoverDefaultInstructionSource();
-                                                        setSelectedline(line);
-                                                        setLineClickListener((lineClickListener + 1) % 100);
-                                                    }}
-                                                    selectedline={selectedline}
-                                                />
-                                            }
-                                        />}
-                                    />
-                                    {session.openFind ? <CodeTextSearch code={code}/> : <></>}
-                                </>
-                                }
-                                rightProps={{ id: 'CodeAttrTable' }}
-                                right={
-                                    <ResizeTable
-                                        size="small"
-                                        minThWidth={50}
-                                        pagination={false}
-                                        columns={codeColumns}
-                                        dataSource={codeLines}
-                                        rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
-                                        onRow={(record: Ilinetable): { onClick: (event: React.MouseEvent<HTMLElement>) => void } => {
-                                            return {
-                                                onClick: (event: React.MouseEvent<HTMLElement>): void => {
-                                                    recoverDefaultInstructionSource();
-                                                    setSelectedline(record.Line);
-                                                    setLineClickListener((lineClickListener + 1) % 100);
-                                                },
-                                            };
-                                        }}
-                                        scroll={{ y: tableHeight, x: codeLines.length > 0 ? codeColumns.length * 100 : 0 }}
-                                    />
-                                }/>
-                        </div>}
+                        left={<CodeTable
+                            session={session}
+                            tableHeight={codeTableHeight}
+                            activeJump={activeJump}
+                            condition={condition}
+                            resizeHeight={resizeHeight}
+                            selectedLine={selectedLine}
+                            setSelectedLine={setSelectedLine}
+                            setSelectedCodeLine={setSelectedCodeLine}
+                        />}
                         right={
                             <HeaderFixedContainer
                                 id={'Instructions'}
                                 style={{ paddingLeft: '8px' }}
                                 body={<InstructionTable
-                                    tableHeight={session.openFind ? tableHeight + CODE_SEARCH_WINDOW_HEIGHT : tableHeight}
-                                    columns={instrColumns}
+                                    session={session}
+                                    tableHeight={instructionTableHeight}
                                     condition={condition}
-                                    dataSource={curInstrData}
-                                    isRelatedInstr={isRelatedInstr}
-                                    handleInstrsClick={handleInstrsClick}
-                                    selectedline={selectedline}
-                                    lineClickListener={lineClickListener}
-                                    isShowPage={curInstrData.length > PAGE_LIMIT}
-                                    instructionSelectSource={session.instructionSelectSource}
+                                    selectedLine={selectedLine}
+                                    setSelectedLine={setSelectedLine}
+                                    selectedCodeLine={selectedCodeLine}
+                                    jumpListener={jumpListener}
+                                    setInstrLimit={setInstrLimit}
+                                    setRelatedInstrsLength={setRelatedInstrsLength}
                                 />}
                             />
                         }
@@ -466,6 +218,127 @@ const Index = observer(({ session }: { session: Session }) => {
     </div>;
 });
 
+// 查询指令
+async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumnType[]; fields: Record<string, FieldType>;count: number }> {
+    if (coreName === '') {
+        return { instructions: [], fields: {}, count: 0 };
+    }
+    const res = await queryDynamicInstr({ coreName });
+    // 动态列
+    const fields = res?.['Instructions Dtype']?.Instructions ?? {};
+    // 指令记录
+    let records = res?.Instructions ?? [];
+    // 安全防护
+    const count = records.length;
+    records = records.slice(0, MAX_INSTRUCTION);
+    // percentage类型值小数位保留2位(从小数点后第一个非0数开始）
+    const percentageFields = Object.keys(fields).filter(fieldName => fields[fieldName] === FieldType.PERCENTAGE);
+    const list: InstrsColumnType[] = records.map((item: JsonInstructionType, index: number) => {
+        const formatData: Record<string, any> = {};
+        percentageFields.forEach(fieldName => {
+            formatData[fieldName] = formatDecimal(item[fieldName] as number);
+        });
+        return {
+            ...item,
+            ...formatData,
+            index: index + 1,
+            maxCycles: 0,
+        };
+    });
+    // Cycles
+    let maxCycles = 1;
+    list.forEach(item => {
+        if (!isNaN(Number(item.Cycles))) {
+            maxCycles = Math.max(maxCycles, Number(item.Cycles));
+        }
+    });
+    list.forEach(item => {
+        item.maxCycles = maxCycles;
+    });
+
+    return { instructions: list, fields, count };
+};
+
+function isRelatedInstruction({ instr, session, selectedCodeLine }: {
+    instr: InstrsColumnType;
+    session: Session;
+    selectedCodeLine: Ilinetable | null;
+}): boolean {
+    if (session.instructionSelectSource === InstructionSelectSource.CACHE) {
+        return isRelated(instr, session.cacheUnit.addressRange);
+    }
+    if (selectedCodeLine !== null && selectedCodeLine !== undefined) {
+        return isRelated(instr, selectedCodeLine['Address Range']);
+    }
+    return false;
+}
+
+interface IProps {
+    session: Session;
+    condition: ConditionType;
+    tableHeight: number;
+    selectedLine: number;
+    selectedCodeLine: Ilinetable | null;
+    jumpListener: number;
+    setInstrLimit: (val: (pre: Limit) => Limit) => void ;
+    setSelectedLine: (val: number) => void;
+    setRelatedInstrsLength: (val: number) => void;
+}
+
+const InstructionTable = observer(({
+    session, condition, tableHeight, selectedCodeLine, setInstrLimit, selectedLine, jumpListener, setSelectedLine, setRelatedInstrsLength,
+}: IProps) => {
+    const { t } = useTranslation('source');
+    const [allInstrs, setAllInstrs] = useState<InstrsColumnType[]>([]);
+    // 是否关联指令
+    const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => isRelatedInstruction({ instr, session, selectedCodeLine })
+        , [selectedCodeLine, session.instructionSelectSource, session.cacheUnit.addressRange]);
+    const getRelatedInstrs = useCallback((): InstrsColumnType[] => allInstrs.filter((record: InstrsColumnType) => isRelatedInstr(record))
+        , [allInstrs, isRelatedInstr]);
+    const relatedInstrs = useMemo(() => getRelatedInstrs(), [getRelatedInstrs]);
+    // 表格数据
+    const showInstrs = useMemo(() => condition.onlyRelated ? relatedInstrs : allInstrs, [allInstrs, relatedInstrs, condition.onlyRelated]);
+
+    // 动态列
+    const [dynamicInstrFields, setDynamicInstrFields] = useState<Record<string, FieldType>>({});
+    const instrColumns = useMemo(() => getInstrColumns(dynamicInstrFields, t, showInstrs), [dynamicInstrFields, t, showInstrs]);
+
+    async function updateInstrs(): Promise<void> {
+        // 指令记录
+        getInstrs(condition.core).then(({ instructions: newInstrlist, fields, count }) => {
+            setDynamicInstrFields(fields);
+            setAllInstrs(newInstrlist);
+            setInstrLimit(pre => ({ ...pre, overlimit: count > MAX_INSTRUCTION, current: count }));
+        });
+    }
+
+    const handleInstrsClick = (instr: InstrsColumnType): void => {
+        setSelectedLine(getRelatedLine({ instr, instrVersion: session.instrVersion, condition, loggedCodeLines: session.loggedCodeLines }));
+        recoverDefaultInstructionSource();
+    };
+
+    useEffect(() => {
+        updateInstrs();
+    }, [condition.core]);
+
+    useEffect(() => {
+        setRelatedInstrsLength(relatedInstrs.length);
+    }, [relatedInstrs.length]);
+
+    return <InstructionTableComp
+        tableHeight={tableHeight}
+        columns={instrColumns}
+        condition={condition}
+        dataSource={showInstrs}
+        isRelatedInstr={isRelatedInstr}
+        handleInstrsClick={handleInstrsClick}
+        selectedLine={selectedLine}
+        jumpListener={jumpListener}
+        isShowPage={showInstrs.length > PAGE_LIMIT}
+        instructionSelectSource={session.instructionSelectSource}
+    />;
+});
+
 interface IinstrProp {
     condition: ConditionType;
     columns: ColumnsType<InstrsColumnType>;
@@ -473,51 +346,49 @@ interface IinstrProp {
     isRelatedInstr: (instr: InstrsColumnType) => boolean;
     handleInstrsClick: (instr: InstrsColumnType) => void;
     tableHeight: number;
-    selectedline: number;
-    lineClickListener: number;
+    selectedLine: number;
+    jumpListener: number;
     isShowPage?: boolean;
     instructionSelectSource: InstructionSelectSource;
 }
 
 const srcollToView = ({
     condition,
-    selectedline,
+    selectedLine,
     showDataSource,
     isRelatedInstr,
     instructionSelectSource = InstructionSelectSource.DEFAULT,
 }:
 {
     condition: ConditionType;
-    selectedline: number;
+    selectedLine: number;
     showDataSource: InstrsColumnType[];
     isRelatedInstr: (instr: InstrsColumnType) => boolean;
     instructionSelectSource: InstructionSelectSource;
 },
 ): void => {
-    setTimeout(() => {
-        // 只显示关联代码，或默认场景下未选中代码行
-        if (condition.onlyRelated === true || (selectedline < 0 && instructionSelectSource === InstructionSelectSource.DEFAULT)) {
-            return;
-        }
-        const index = showDataSource.findIndex(isRelatedInstr);
-        if (index < 0) {
-            return;
-        }
-        const top = index * ROW_HEIGHT;
-        const parentNode = document.querySelector('#Instructions .ant-table-body') as HTMLElement;
-        parentNode.scrollTo({ top });
-    });
+    // 只显示关联代码，或默认场景下未选中代码行
+    if (condition.onlyRelated === true || (selectedLine < 0 && instructionSelectSource === InstructionSelectSource.DEFAULT)) {
+        return;
+    }
+    const index = showDataSource.findIndex(isRelatedInstr);
+    if (index < 0) {
+        return;
+    }
+    const top = index * ROW_HEIGHT;
+    const parentNode = document.querySelector('#Instructions .ant-table-body') as HTMLElement;
+    parentNode.scrollTo({ top });
 };
 
-function InstructionTable({
+function InstructionTableComp({
     columns,
     dataSource,
     isRelatedInstr,
     handleInstrsClick,
     tableHeight,
-    selectedline,
+    selectedLine,
     condition,
-    lineClickListener,
+    jumpListener,
     isShowPage,
     instructionSelectSource,
 }: IinstrProp): JSX.Element {
@@ -529,8 +400,8 @@ function InstructionTable({
             dataSource={dataSource}
             isRelatedInstr={isRelatedInstr}
             handleInstrsClick={handleInstrsClick}
-            selectedline={selectedline}
-            lineClickListener={lineClickListener}
+            selectedLine={selectedLine}
+            jumpListener={jumpListener}
             instructionSelectSource={instructionSelectSource}
         />
         : <InstructionTableNopage
@@ -540,8 +411,8 @@ function InstructionTable({
             dataSource={dataSource}
             isRelatedInstr={isRelatedInstr}
             handleInstrsClick={handleInstrsClick}
-            selectedline={selectedline}
-            lineClickListener={lineClickListener}
+            selectedLine={selectedLine}
+            jumpListener={jumpListener}
             instructionSelectSource={instructionSelectSource}
         />;
 };
@@ -612,8 +483,8 @@ function InstructionTableNopage({
     isRelatedInstr,
     handleInstrsClick,
     tableHeight,
-    selectedline,
-    lineClickListener,
+    selectedLine,
+    jumpListener,
     condition,
     instructionSelectSource,
 }: IinstrProp): JSX.Element {
@@ -621,13 +492,15 @@ function InstructionTableNopage({
     const [filters, setFilters] = useState({});
     const [sorter, setSorter] = useState({});
 
+    const doSrcollToView = useCallback((): void => srcollToView({ condition, selectedLine, showDataSource, isRelatedInstr, instructionSelectSource })
+        , [condition, selectedLine, showDataSource, isRelatedInstr, instructionSelectSource]);
     useEffect(() => {
         setShowDataSource(getShowData(dataSource, filters, sorter));
     }, [dataSource, filters, sorter]);
 
     useEffect(() => {
-        srcollToView({ condition, selectedline, showDataSource, isRelatedInstr, instructionSelectSource });
-    }, [lineClickListener, showDataSource]);
+        doSrcollToView();
+    }, [jumpListener]);
 
     return <ResizeTable
         size="small"
@@ -664,8 +537,8 @@ function InstructionTablePage({
     isRelatedInstr,
     handleInstrsClick,
     tableHeight,
-    selectedline,
-    lineClickListener,
+    selectedLine,
+    jumpListener,
     condition,
     instructionSelectSource,
 }: IinstrProp): JSX.Element {
@@ -674,6 +547,8 @@ function InstructionTablePage({
     const [sorter, setSorter] = useState({});
     const [page, setPage] = useState({ current: 1, pageSize: PAGE_LIMIT, total: dataSource.length });
     const [pageData, setPageData] = useState(showDataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize));
+    const doSrcollToView = useCallback((): void => srcollToView({ condition, selectedLine, showDataSource: pageData, isRelatedInstr, instructionSelectSource })
+        , [condition, selectedLine, pageData, isRelatedInstr, instructionSelectSource]);
 
     useEffect(() => {
         setShowDataSource(getShowData(dataSource, filters, sorter));
@@ -687,15 +562,15 @@ function InstructionTablePage({
         if (index > 0 && onPage !== page.current) {
             setPage({ ...page, current: onPage, total: showDataSource.length });
         }
-    }, [showDataSource, selectedline, lineClickListener]);
+    }, [showDataSource, jumpListener]);
 
     useEffect(() => {
         const curPageData = showDataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize);
         setPageData(curPageData);
     }, [showDataSource, page.pageSize, page.current]);
     useEffect(() => {
-        srcollToView({ condition, selectedline, showDataSource: pageData, isRelatedInstr, instructionSelectSource });
-    }, [lineClickListener, pageData, page.current]);
+        doSrcollToView();
+    }, [jumpListener, pageData, page.current]);
 
     return <ResizeTable
         size="small"

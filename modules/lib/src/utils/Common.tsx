@@ -490,6 +490,26 @@ export const isArray = (val: any): boolean => {
     }
 };
 
+export const getUpdateObject = (data: Record<string, any>, obj: Record<string, any>, ignoreNull: boolean = true): Record<string, any> => {
+    if (data === undefined || data === null) {
+        return {};
+    }
+    const dataPropKeys = Object.keys(data);
+    const objPropKeys = Object.keys(obj);
+    const updateState: Record<string, any> = {};
+    for (const key of dataPropKeys) {
+        // 1.data的字段key在obj中存在
+        // 2.data[key]的类型（例如string、boolean)obj[key]相同。如果ignoreNull，session[key]等于null也可以更新。
+        const valid = objPropKeys.includes(key) &&
+            (Object.prototype.toString.call(data[key]) === Object.prototype.toString.call(obj[key]) ||
+                (ignoreNull && obj[key] === null));
+        if (valid) {
+            Object.assign(updateState, { [key]: data[key] });
+        }
+    }
+    return updateState;
+};
+
 // 创建可取消的异步请求, 解决异步请求竞态问题
 type AsyncFunction<TArgs extends any[], TResult> = (...args: TArgs) => Promise<TResult>;
 export const createCancelableApi = <TArgs extends any[], TResult>(
