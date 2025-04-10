@@ -229,7 +229,8 @@ bool Database::QueryMetaVersion()
         std::string schemaVersion = QueryValueFromMetaDataByName("SCHEMA_VERSION");
         if (schemaVersion.empty()) {
             ServerLog::Error("Get Meta Version Fail");
-            return false;
+            metaVersion = "1.0.0";
+            return true;
         }
         metaVersion = schemaVersion;
     }

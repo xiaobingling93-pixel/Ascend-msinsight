@@ -522,6 +522,11 @@ public:
     static bool CheckPathInvalidChar(const std::string &filePath);
 
     /**
+    * @brief 检查文件属主
+    */
+    static bool CheckPathOwner(const std::string &filePath);
+
+    /**
     * @brief 检查文件权限，后续替换现有实现
     */
     static bool CheckPathPermission(const std::string &filePath, fs::perms permission);

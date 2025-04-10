@@ -701,14 +701,18 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
 void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT startTimeNs, endTimeNs FROM " + TABLE_SESSION_TIME_INFO;
+    std::string sql;
+    if (CheckTableExist(TABLE_API) && !CheckTableExist(TABLE_SESSION_TIME_INFO)) {
+        sql = "SELECT min(startNs) as startTimeNs, max(endNs) as endTimeNs FROM " + TABLE_API;
+    } else {
+        sql = "SELECT startTimeNs, endTimeNs FROM " + TABLE_SESSION_TIME_INFO;
+    }
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to Update Start Time. Msg: ", sqlite3_errmsg(db), " ", result);
         sqlite3_finalize(stmt);
         return;
     }
-
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         int64_t startTime = sqlite3_column_int64(stmt, col++);
@@ -1053,6 +1057,7 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to get Statistic Num. Msg: ", sqlite3_errmsg(db), " ", result);
         sqlite3_finalize(stmt);
+        rankIds.emplace_back(path);
         return rankIds;
     }
 
@@ -1061,6 +1066,9 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
         rankIds.emplace_back(id);
     }
     sqlite3_finalize(stmt);
+    if (rankIds.empty()) {
+        rankIds.emplace_back(path);
+    }
     return rankIds;
 }
 

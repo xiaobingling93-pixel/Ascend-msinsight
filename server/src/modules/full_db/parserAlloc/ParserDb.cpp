@@ -148,9 +148,9 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
             ServerLog::Error("Failed to convert virtual trace database to db trace database in getting report files.");
             continue;
         }
+        auto host = database->QueryHostInfo();
         std::vector<std::string> rankIds = database->QueryRankId();
         std::unordered_map<std::string, std::string> rankAndDeviceMap = database->QueryRankIdAndDeviceMap();
-        auto host = database->QueryHostInfo();
         for (const auto &rank : rankIds) {
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");

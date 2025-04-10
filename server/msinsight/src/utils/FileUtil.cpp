@@ -179,6 +179,10 @@ bool FileUtil::CheckDirValid(const std::string &path)
         Server::ServerLog::Error("The path has no read access. path: %.", dir);
         return false;
     }
+    if (!CheckPathOwner(dir)) {
+        Server::ServerLog::Error("The path is writable by any other users. path: %.", dir);
+        return false;
+    }
     return true;
 }
 
@@ -581,6 +585,31 @@ bool FileUtil::CheckPathInvalidChar(const std::string &filePath)
         }
     }
     return false;
+}
+
+bool FileUtil::CheckPathOwner(const std::string &filePath)
+{
+#ifdef _WIN32
+    return true;
+#else
+    struct stat fileStat{};
+    if (stat(filePath.c_str(), &fileStat) != 0) {
+        Server::ServerLog::Warn("Get file info failed when check owner");
+        return false;
+    }
+    if (geteuid() == 0) {
+        return true;
+    }
+    if (fileStat.st_mode & S_IWOTH) {
+        return false;
+    }
+    if (fileStat.st_uid == 0) {
+        return true;
+    }
+    uid_t fileOwner = fileStat.st_uid;
+    uid_t currentUser = geteuid();
+    return fileOwner == currentUser;
+#endif
 }
 
 bool FileUtil::CheckPathPermission(const std::string &filePath, fs::perms permission)

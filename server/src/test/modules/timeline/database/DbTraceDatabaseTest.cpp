@@ -74,7 +74,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryRankIdWithRankDeviceAndNpuInfoTableNotExist
     std::recursive_mutex testMutex;
     Dic::Module::FullDb::DbTraceDataBase database(testMutex);
     std::vector<std::string> rankIds = database.QueryRankId();
-    EXPECT_EQ(rankIds.size(), 0);
+    const uint64_t expectSize = 1;
+    EXPECT_EQ(rankIds.size(), expectSize);
     Dic::Protocol::DataBaseManager::Instance().Clear();
 }
 
