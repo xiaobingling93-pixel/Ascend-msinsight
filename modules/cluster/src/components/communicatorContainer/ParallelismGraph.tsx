@@ -366,7 +366,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
 
     // 鼠标移入卡时，选中当前卡
     const setRectActive = useCallback(throttle((x, y): void => {
-        const activeRect = canvasDrawer?.rectangleList.find(rect => rect.isInside(x, y));
+        const activeRect = canvasDrawer?.visibleRectangleList.find(rect => rect.isInside(x, y));
 
         setHoveredRectIndex(activeRect === undefined ? null : activeRect.index);
     }, 100), [canvasDrawer]);
