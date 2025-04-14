@@ -448,7 +448,6 @@ def zip_package(profiler_path, package_name):
         shutil.copytree(os.path.join(Const.PLATFORM_PREVIEW_DIR, 'resources'),
                             os.path.join(app_bin_file_dir, 'resources'))
         shutil.move(app_dir, preview_app)
-
         # 签名app
         if "aarch64" in package_name:
             # 清除旧bundle临时签名
@@ -458,10 +457,55 @@ def zip_package(profiler_path, package_name):
             if not sign_mac_app(preview_app, Const.MAC_SIGNATURE_CERTIFICATE_ID):
                 return 1
             logging.info('[%s] %s', 'bin_package', 'MacOS application resigned successfully, start to build dmg')
+        if not chmod_mac_app(preview_app, 'aarch64' if 'aarch64' in package_name else 'x86_64'):
+            return 1
         # 通过dmgbuild打包
         if not build_dmg_for_mac_app(dst_file):
             logging.info('[%s] %s', 'bin_package', 'Build dmg for application failed.')
+            return 1
+        # 将dmg文件设置为640
+        os.chmod(dst_file, 0o640)
     return 0
+
+
+def chmod_mac_app(app_path: str, arch: str) -> bool:
+    path_list = get_mac_app_structure(app_path, arch)
+    if not path_list:
+        logging.warning(f'Failed to get structure of {app_path}, '
+                        f'no further permission modification actions will be performed.')
+        return False
+    # 将目录设置为750, 文件设置为640
+    for path in path_list:
+        try:
+            os.chmod(path, 0o750 if os.path.isdir(path) else 0o640)
+        except Exception as e:
+            logging.error(f'An exception occurred while performing chmod.Path:{path}, Error: {e}')
+            return False
+    return True
+
+
+def get_mac_app_structure(app_path: str, arch: str) -> list:
+    """
+    获取mac app捆绑包特定的目录结构
+    :param app_path: app路径 如 /tmp/example.app
+    :return: 捆绑包内的文件、目录
+    """
+    app_structure_paths = [app_path]
+    contents_dir = os.path.join(app_path, 'Contents')
+    macos_dir = os.path.join(contents_dir, 'MacOS')
+    resources_dir = os.path.join(contents_dir, 'Resources')
+    info_file = os.path.join(contents_dir, 'Info.plist')
+    icon_file = os.path.join(resources_dir, 'MindStudioInsight.icns')
+    app_structure_paths.extend([contents_dir, macos_dir, resources_dir, info_file, icon_file])
+    if 'aarch64' in arch:
+        sign_dir = os.path.join(contents_dir, '_CodeSignature')
+        sign_file = os.path.join(sign_dir, 'CodeResources')
+        app_structure_paths.extend([sign_dir, sign_file])
+    for path in app_structure_paths:
+        if not os.path.exists(path):
+            logging.warning(f'{path} not found.')
+            return []
+    return app_structure_paths
 
 
 def clear_mac_app_signature(app_path: str) -> bool:

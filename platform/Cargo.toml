@@ -27,5 +27,4 @@ version = "{plugins_version}"
 short_description = "MindStudioInsight {plugins_version}"
 long_description = "Application: MindStudioInsight {plugins_version}"
 copyright = "Huawei Enterprise End User License Agreement."
-resources = ["./resources/*"]
 icon = ["resources/images/icons/mindstudio.ico"]
