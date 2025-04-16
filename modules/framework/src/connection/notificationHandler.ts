@@ -5,7 +5,7 @@ import { runInAction } from 'mobx';
 import { store } from '@/store';
 import type { Session } from '@/entity/session';
 import connector from '@/connection';
-import { firstLetterUpper, getModuleIndex } from '@/utils';
+import { firstLetterUpper } from '@/utils';
 import {
     sendMap,
     sendLanguage,
@@ -96,7 +96,7 @@ export const getParseStatusHandler = (e: NotificationMessage): void => {
         connector.send({
             event: 'updateSession',
             body: { [requestKey]: (session as any)[requestKey] },
-            to: getModuleIndex(receiver?.from),
+            to: receiver?.from === undefined ? undefined : firstLetterUpper(receiver?.from),
         });
         return;
     }
@@ -132,21 +132,18 @@ export const switchModuleHandler = (e: NotificationMessage): void => {
         return;
     }
     const moduleName = firstLetterUpper(body.switchTo);
-    const moduleIndex = getModuleIndex(moduleName);
-    if (moduleIndex > -1) {
-        // 切换到此模块
-        runInAction(() => {
-            session.actionListener = { type: SessionAction.SWITCH_ACTIVE_MODULE, value: moduleName };
+    // 切换到此模块
+    runInAction(() => {
+        session.actionListener = { type: SessionAction.SWITCH_ACTIVE_MODULE, value: moduleName };
+    });
+    if (body.toModuleEvent !== undefined) {
+        // 向目标模块发送消息
+        connector.send({
+            event: body.toModuleEvent,
+            // 广播到所有模块，还是只目标模块
+            to: body.broadcast ? undefined : moduleName,
+            body: body.params,
         });
-        if (body.toModuleEvent !== undefined) {
-            // 向目标模块发送消息
-            connector.send({
-                event: body.toModuleEvent,
-                // 广播到所有模块，还是只目标模块
-                to: body.broadcast ? undefined : moduleIndex,
-                body: body.params,
-            });
-        }
     }
 };
 

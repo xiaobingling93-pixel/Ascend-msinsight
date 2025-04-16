@@ -56,8 +56,6 @@ declare global {
         dataSource: DataSource;
 
         closeWaiting: () => void;
-
-        sendToModule: (...rest: any[]) => void;
     }
 };
 
@@ -67,11 +65,4 @@ window.requestData = async (command, params, module): Promise<any> => {
         module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
     });
     return (data as any)?.body;
-};
-window.sendToModule = (body): void => {
-    connector.send({
-        event: 'moduleMessage',
-        body,
-        to: 2,
-    });
 };

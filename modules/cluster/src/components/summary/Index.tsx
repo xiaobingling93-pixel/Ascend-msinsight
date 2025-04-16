@@ -180,7 +180,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 defaultPPSize: 0,
             };
         });
-        connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
+        connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 'Communication' });
     };
 
     const handleGenerateConditionsChange = async (params: GenerateConditions): Promise<void> => {
