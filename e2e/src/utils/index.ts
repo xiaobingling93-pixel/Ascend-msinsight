@@ -67,6 +67,8 @@ export async function clearAllData(page: Page): Promise<void> {
     await checkbtn.waitFor({ state: 'hidden' });
     const elementText = await projectList.textContent();
     await expect(elementText?.trim()).toBe('');
+    // 等待后端完成清理动作
+    await page.waitForTimeout(1000);
 }
 
 // 等待ws返回指定数据

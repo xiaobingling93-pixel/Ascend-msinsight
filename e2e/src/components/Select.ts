@@ -26,6 +26,6 @@ export class SelectHelpers extends Component {
     }
 
     async getValue(): Promise<string> {
-        return await this.locator.innerText();
+        return await this.locator.locator('xpath=..').locator('xpath=..').innerText();
     }
 }
