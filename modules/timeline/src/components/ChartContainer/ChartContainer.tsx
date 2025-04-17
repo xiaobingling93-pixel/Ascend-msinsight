@@ -117,6 +117,7 @@ const ChartBody = observer((props: ChartBodyProps) => {
                     hasPinButton={Boolean(interactive)} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
                 draggableContainer: <PinnedUnits session={session} height={pinnedHeight} ref={pinnedRef} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
                 id: 'UnitsPage',
+                gap: true,
             })
         }
         <Overlay leftOffset={LANE_INFO_WIDTH_PX.value} rightAreaName={CHARTINTERACTOR_NAME}>

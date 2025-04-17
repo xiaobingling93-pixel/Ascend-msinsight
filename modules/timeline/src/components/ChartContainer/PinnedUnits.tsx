@@ -22,7 +22,6 @@ import { PINNED_UNIT_WRAPPER_SCROLLER_ID } from './Units/Units';
 // 拖拽时当鼠标距离相邻泳道边界达到阈值时触发相邻泳道移动
 const UNIT_MOVE_THRESHOLD = 10;
 const PinnedUnitsContainer = styled.div`
-    box-shadow: 1px 2px 11px 1px ${(props): string => props.theme.shadowBackgroundColor};
     z-index: 1;
     flex-grow: 1;
 `;

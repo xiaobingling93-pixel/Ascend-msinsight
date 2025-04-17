@@ -18,6 +18,7 @@ export interface ViewProps {
     draggableContainer?: JSX.Element;
     slot?: JSX.Element;
     id: string;
+    gap?: boolean;
 }
 
 export enum DragDirection {
@@ -217,6 +218,16 @@ const ContainerTop = styled(ContainerBase)`
                 border-bottom-width: 1px;
                 cursor: n-resize;
             }
+        }
+    }
+    &.gap {
+        .splitLine {
+            background-color: ${(p): string => p.theme.bgColorDark};
+            border-top:${(p): string => p.theme.dividerColor} 2px solid;
+            border-bottom:${(p): string => p.theme.dividerColor} 2px solid;
+        }
+        .dragContainer {
+            padding-bottom: 10px;
         }
     }
 
@@ -506,7 +517,7 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
     };
     const Container = containerMap.get(dragDirection) as typeof ContainerBase;
     const view = (vProps: ViewProps): JSX.Element => {
-        return <Container key={vProps.id} ref={container} column draggableWH={open ? dragWh : '0px'}
+        return <Container key={vProps.id} ref={container} column draggableWH={open ? dragWh : '0px'} className={vProps.gap ? 'gap' : ''}
             splitLineH={open ? '10px' : '0px'} dragDirection={dragDirection} minWH={MIN_DRAG_WH}
             onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
             onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
