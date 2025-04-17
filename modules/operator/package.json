@@ -15,43 +15,6 @@
     "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\Operator\\ /E /I /Y",
     "publishLinux": "cp -rf ./build/* ../framework/public/plugins/Operator"
   },
-  "jest": {
-    "transformIgnorePatterns": [
-      "/node_modules/(?!d3|d3-array)"
-    ],
-    "clearMocks": true,
-    "coverageReporters": [
-      "json",
-      "lcov",
-      "text",
-      "text-summary"
-    ],
-    "collectCoverageFrom": [
-      "**/src/**/*.{ts,tsx}"
-    ],
-    "coveragePathIgnorePatterns": [
-      "<rootDir>/src/i18n",
-      "<rootDir>/src/style",
-      "<rootDir>/src/insight",
-      "<rootDir>/src/tests",
-      ".d.ts",
-      ".type.ts",
-      ".const.ts",
-      ".mock.[ts,tsx]",
-      "index.[ts,tsx]",
-      "types.ts",
-      "__mocks__",
-      "__snapshots__"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "statements": 0,
-        "branches": 0,
-        "functions": 0,
-        "lines": 0
-      }
-    }
-  },
   "browserslist": {
     "production": [
       ">0.2%",

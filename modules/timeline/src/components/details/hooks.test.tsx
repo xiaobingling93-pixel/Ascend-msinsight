@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react';
 import { useDetailUpdater, useMoreUpdater, useSelectedParamsDetailUpdater, useExtraDataUpdater, useSelectedDataDetailUpdater } from './hooks';
 import { EMPTY_TABLE_STATE } from './types';
 import type { ColumnDef, DetailDescriptor, InsightUnit, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
@@ -63,7 +63,7 @@ describe('hooks test', () => {
         });
         const tabDep: unknown = [tabStateLocal];
         const onDataLoadFinish = jest.fn();
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result, rerender } = renderHook(
             ({ session, detail, tabState, dep, onDataLoaded }) => useDetailUpdater(session, detail, tabState, dep, onDataLoaded),
             { initialProps: { session, detail: detailDescriptor, tabState: tabStateLocal, dep: tabDep, onDataLoaded: onDataLoadFinish } },
         );
@@ -74,7 +74,6 @@ describe('hooks test', () => {
         session.phase = 'download';
         await act(async () => {
             rerender({ session, detail: detailDescriptor, tabState: tabStateLocal as TabState, dep: tabDep, onDataLoaded: onDataLoadFinish });
-            await waitForNextUpdate();
         });
         expect(JSON.stringify(result.current)).toEqual(JSON.stringify(expectedTablestate));
 
@@ -86,7 +85,6 @@ describe('hooks test', () => {
         };
         await act(async () => {
             rerender({ session, detail: detailDescriptor, tabState: {} as TabState, dep: tabDep, onDataLoaded: onDataLoadFinish });
-            await waitForNextUpdate();
         });
         expect(onDataLoadFinish).toBeCalled();
 
@@ -96,7 +94,6 @@ describe('hooks test', () => {
         };
         await act(async () => {
             rerender({ session, detail: detailDescriptor, tabState: tabStateLocal as TabState, dep: tabDep, onDataLoaded: onDataLoadFinish });
-            await waitForNextUpdate();
         });
         expect(detailDescriptor.fetchData).toBeCalled();
         expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
@@ -123,7 +120,7 @@ describe('hooks test', () => {
 
     it('useSelectedParamsDetailUpdater test', async () => {
         let detailDescriptor: DetailDescriptor<unknown> | undefined;
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result, rerender } = renderHook(
             ({ session, detail }) => useSelectedParamsDetailUpdater(session, detail),
             { initialProps: { session, detail: detailDescriptor } },
         );
@@ -139,7 +136,6 @@ describe('hooks test', () => {
         session.selectedParams = { baseRawId: 1, curRawId: 1 };
         await act(async () => {
             rerender({ session, detail: detailDescriptor });
-            await waitForNextUpdate();
         });
         expect(detailDescriptor.fetchData).toBeCalled();
         expect(JSON.stringify(result.current)).toEqual(JSON.stringify(expectedTablestate));
@@ -150,7 +146,6 @@ describe('hooks test', () => {
         };
         await act(async () => {
             rerender({ session, detail: detailDescriptor });
-            await waitForNextUpdate();
         });
         expect(detailDescriptor.fetchData).toBeCalled();
         expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
@@ -158,7 +153,7 @@ describe('hooks test', () => {
 
     it('useExtraDataUpdater test', async () => {
         let detailDescriptor: DetailDescriptor<unknown> | undefined;
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result, rerender } = renderHook(
             ({ session, detail }) => useExtraDataUpdater(session, detail),
             { initialProps: { session, detail: detailDescriptor } },
         );
@@ -172,7 +167,6 @@ describe('hooks test', () => {
         session.phase = 'download';
         await act(async () => {
             rerender({ session, detail: detailDescriptor });
-            await waitForNextUpdate();
         });
         expect(detailDescriptor.fetchExtraData).toBeCalled();
         expect(result.current).toStrictEqual({ result: 'res' });
@@ -184,7 +178,6 @@ describe('hooks test', () => {
         };
         await act(async () => {
             rerender({ session, detail: detailDescriptor });
-            await waitForNextUpdate();
         });
         expect(detailDescriptor.fetchExtraData).toBeCalled();
         expect(result.current).toStrictEqual({});
@@ -197,7 +190,7 @@ describe('hooks test', () => {
         };
         let selectedRecord: Record<string, string> | undefined;
         session.phase = 'download';
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result, rerender } = renderHook(
             ({ session, detail, selectedData }) => useSelectedDataDetailUpdater(session, detail, selectedData),
             { initialProps: { session, detail: dataDesc, selectedData: selectedRecord } },
         );
@@ -207,7 +200,6 @@ describe('hooks test', () => {
         selectedRecord = { name: 'test' };
         await act(async () => {
             rerender({ session, detail: dataDesc, selectedData: selectedRecord });
-            await waitForNextUpdate();
         });
         expect(dataDesc.fetchData).toBeCalled();
         expect(result.current).toStrictEqual({
@@ -230,7 +222,6 @@ describe('hooks test', () => {
         };
         await act(async () => {
             rerender({ session, detail: dataDesc, selectedData: selectedRecord });
-            await waitForNextUpdate();
         });
         expect(dataDesc.fetchData).toBeCalled();
         expect(render).toBeCalled();
@@ -245,7 +236,6 @@ describe('hooks test', () => {
         };
         await act(async () => {
             rerender({ session, detail: dataDesc, selectedData: selectedRecord });
-            await waitForNextUpdate();
         });
         expect(dataDesc.fetchData).toBeCalled();
         expect(hidden).toBeCalled();
@@ -257,7 +247,6 @@ describe('hooks test', () => {
         };
         await act(async () => {
             rerender({ session, detail: dataDesc, selectedData: selectedRecord });
-            await waitForNextUpdate();
         });
         expect(dataDesc.fetchData).toBeCalled();
         expect(result.current).toStrictEqual(expectedRes);
