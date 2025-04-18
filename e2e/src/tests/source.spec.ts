@@ -3,7 +3,7 @@
  */
 import { expect, test as baseTest } from '@playwright/test';
 import { FrameworkPage, SourcePage } from '@/page-object';
-import { importData } from '@/utils';
+import { clearAllData, importData } from '@/utils';
 import { FilePath } from '@/utils/constants';
 import { SelectHelpers } from '@/components';
 
@@ -40,6 +40,10 @@ test.describe('Source', () => {
         await sourcePage.goto();
         const coreValue = sourcePage.sourceFrame.getByText('core0');
         await expect(coreValue).toBeVisible();
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
     });
 
     // 源码数据导入成功
@@ -112,5 +116,6 @@ test.describe('Source', () => {
         await frameworkPage.switchLanguageBtn.click();
         await sourcePage.mouseOut();
         await expect(mainContent).toHaveScreenshot(imgMap.switchChineseLanguageSuccess);
+        await frameworkPage.switchLanguageBtn.click();
     });
 });

@@ -22,7 +22,6 @@ const memoryImgMap = {
     loadPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single.png',
     filterPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-filter.png',
     queryPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-query.png',
-    resetPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-reset.png',
     compareRankRes: 'memory-compare-rank.png',
     queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess: 'memory-pytorch-interval-only-show.png',
     loadMindSporeDataSuccess: 'memory-mindspore-loaded.png',
@@ -96,18 +95,28 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
     // 【case】memory底部表格条件重置后结果加载
     test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
-        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
-        const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
-        const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
+        const { memoryFrame, maxSizeInputor } = memoryPage;
         const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
-        expect(await nameInput.expectValueToBe(''));
-        expect(await minSizeInput.expectValueToBe('0'));
-        expect(await maxSizeInput.expectValueToBe('503810'));
-        const queryBtn = memoryFrame.getByTestId('reset-btn');
-        await queryBtn.waitFor({ state: 'visible' });
+        const resetBtn = memoryFrame.getByTestId('reset-btn');
+        const queryBtn = memoryFrame.getByTestId('query-btn');
+
+        const tableWrapper = memoryFrame.locator('.mi-page').locator('.panel-content').nth(1);
+
+        await page.mouse.move(0, 0);
+        await expect(tableWrapper).toHaveScreenshot('memory-pytorch-single-reset.png', {
+            maxDiffPixels: 500,
+        });
+
+        await maxSizeInput.setValue('1000');
         await queryBtn.click();
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.resetPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(tableWrapper).toHaveScreenshot('memory-pytorch-single-reset-change.png', {
+            maxDiffPixels: 500,
+        });
+
+        await resetBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(tableWrapper).toHaveScreenshot('memory-pytorch-single-reset.png', {
             maxDiffPixels: 500,
         });
     });
@@ -135,6 +144,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.compareRankRes, {
             maxDiffPixels: 500,
         });
+        await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
     // 【case】memory中间调整区间，底部表格仅查看在选中时间区间分配或释放内存的数据时的结果展示
@@ -211,7 +221,7 @@ test.describe('Memory(MindSpore)', () => {
         await rankIdSelect.open();
         await rankIdSelect.selectOption('0');
         // 等待echarts加载完成再操作
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
         // 滚动到最下方，让graph折线图和表格显示出来
         await page.mouse.wheel(0, 800);
         // 框选
@@ -324,6 +334,7 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
         });
         await resetBtn.click();
         await minSizeInput.expectValueToBe('-243840');
+        await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
     test.afterEach(async ({ page }) => {
@@ -435,6 +446,7 @@ test.describe('Memory(Pytorch_Group_By_Component', () => {
         await expect(memoryFrame.locator('tbody')).toContainText('104.2');
         await memoryFrame.getByRole('row', { name: 'HCCL Difference -400.004 15.' }).getByRole('button').click();
         await expect(memoryFrame.locator('tbody')).toContainText('1600.046875');
+        await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
     test.afterEach(async ({ page }) => {

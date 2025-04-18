@@ -72,6 +72,7 @@ test.describe('Operator', () => {
         await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot(operatorImgMap.compareRankRes, {
             maxDiffPixels: 500,
         });
+        await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
     test.afterEach(async ({ page }) => {

@@ -53,6 +53,10 @@ test.describe('Details', () => {
         await expect(opType).toBeVisible();
     });
 
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
+    });
+
     // 基本信息
     // 预期：基本信息文字、图表正确
     test('test_details_baseinfo_data_correct', async ({ detailsPage }) => {
@@ -156,6 +160,11 @@ test.describe('Details(Compare)', () => {
         await importData(page, FilePath.DETAILS_ROOFLINE);
         await waitForAllParsed(page, detailsPage);
         await setCompare(page, detailsFrame, { baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE });
+        await page.waitForTimeout(1000);
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
     });
 
     // 基本信息-对比

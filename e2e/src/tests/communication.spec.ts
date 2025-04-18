@@ -269,6 +269,7 @@ test.describe('Communication(cluster)', () => {
         await communicationGroupSelect.open();
         await communicationGroupSelect.setValue('p2p');
         await communicationGroupSelect.selectOption('p2p');
+        await page.waitForTimeout(1000); // 延时确保 echarts 动画完成
         await expect(matrixChart).toHaveScreenshot('communication-matrix-p2p.png');
     });
 });
