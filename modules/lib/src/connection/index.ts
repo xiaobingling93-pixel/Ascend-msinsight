@@ -111,23 +111,19 @@ abstract class BaseConnector {
     }
 
     protected getClientWindows(id?: string | number): TargetWindow[] {
-        if (typeof id === 'number') {
-            return [this.getFrameWindow()[id]];
+        const frames = this.getFrameWindow().frames;
+        if (typeof id === 'number' || typeof id === 'string') {
+            return [frames[id as any]];
         }
         const res: TargetWindow[] = [];
-        this.getFrameWindow().document?.querySelectorAll('iframe')?.forEach((item, index) => {
-            if (item.contentWindow) {
-                if (typeof id === 'string' && item.id !== id) {
-                    return;
-                }
-                res.push(item.contentWindow);
-            }
-        });
+        for (let i = 0; i < frames.length; i++) {
+            res.push(frames[i]);
+        }
         return res;
     }
 
     protected getCurWindowIndex(): number {
-        return Object.entries(this.getFrameWindow()).findIndex(([, val]) => val === window);
+        return Object.entries(this.getFrameWindow().frames).findIndex(([, val]) => val === window);
     }
 
     protected abstract getFrameWindow(): TargetWindow;

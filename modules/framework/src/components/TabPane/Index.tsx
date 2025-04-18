@@ -151,6 +151,7 @@ const Index = observer(({ session }: {session: Session}) => {
                 {...moduleConfig.attributes}
                 key={`frame-${moduleConfig.name}`}
                 id={moduleConfig.name}
+                name={moduleConfig.name}
                 style={{ display: activeModule === moduleConfig.name ? 'block' : 'none' }}
             />
         ))}
