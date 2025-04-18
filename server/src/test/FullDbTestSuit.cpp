@@ -29,36 +29,45 @@ public:
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
         std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(nullptr);
         WsSessionManager::Instance().AddSession(std::move(session));
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPath3 = currPath + R"(/src/test/test_data/full_db/msprof_0.db)";
+        const std::string server = "server";
+        int index = currPath.find_last_of(server);
+        currPath = currPath.substr(0, index - server.length()); // 取 server 前的文件路径
+        std::string dbPath3 = currPath + R"(/server/src/test/test_data/full_db/msprof_0.db)";
+        std::string dbPath4 = currPath +
+            R"(/test/data/pytorch/db/level2/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
+        std::vector<std::string> dbPathes = { dbPath3, dbPath4 };
+
         DataBaseManager::Instance().SetDataType(DataType::DB);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
         ParserType allocType = parserType.second;
         std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
         // 路径列表不为空，需要进行文件目录的新增、覆盖
-        ProjectTypeEnum projectType = factory->GetProjectType({ dbPath3 });
+        ProjectTypeEnum projectType = factory->GetProjectType(dbPathes);
         std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;
 
-        std::string warn;
-        // 获取文件列表
-        std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(dbPath3, projectType, warn);
-        Global::ProjectExplorerInfo projectExplorerInfo;
-        projectExplorerInfo.fileName = dbPath3;
-        projectExplorerInfo.projectName = dbPath3;
-        projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
-        projectExplorerInfo.importType = "import";
-        Global::ParseFileInfo parseFileInfo;
-        parseFileInfo.parseFilePath = dbPath3;
-        projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
-        projectExplorerInfoList.push_back(projectExplorerInfo);
+        for (const auto& path : dbPathes) {
+            std::string warn;
+            // 获取文件列表
+            std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(path, projectType, warn);
+            Global::ProjectExplorerInfo projectExplorerInfo;
+            projectExplorerInfo.fileName = path;
+            projectExplorerInfo.projectName = path;
+            projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
+            projectExplorerInfo.importType = "import";
+            Global::ParseFileInfo parseFileInfo;
+            parseFileInfo.parseFilePath = path;
+            projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+            projectExplorerInfoList.push_back(projectExplorerInfo);
+        }
 
         if (allocType != ParserType::JSON) {
             ParserFactory::Reset();
         }
         ImportActionRequest request;
         factory->Parser(projectExplorerInfoList, request);
+
         Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", dbPath3, "");
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDbNew", dbPath4, "");
         Timeline::DataBaseManager::Instance().SetDbPathMapping("2", dbPath3, "");
         while (ParserStatusManager::Instance().GetParserStatus("2") != ParserStatus::FINISH_ALL) {
         }

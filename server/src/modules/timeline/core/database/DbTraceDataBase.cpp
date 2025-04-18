@@ -485,7 +485,8 @@ bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol:
         if (index != 0) {
             sql += " AND ";
         }
-        if (filter.first == "name" || filter.first == "taskId") {
+        // name, type 已经过 string_ids 表映射获取到真实的字符串字面量，taskId 本身就是数字，不需要映射
+        if (filter.first == "name" || filter.first == "taskId" || filter.first == "type") {
             sql += " lower(" + filter.first + ") LIKE lower(?) ";  // 绑定filter.second
         } else {
             sql += filter.first + " IN ( SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower(?) )";
@@ -507,12 +508,12 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
       "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
       "       join nameIds on opName = nameIds.id group by info.opName\n"
       "     UNION all"
-      "     select TASK.ROWID, nameIds.realName as name, opType, info.taskType, startNs,"
+      "     select TASK.ROWID, nameIds.realName as name, s2.realName AS opType, info.taskType, startNs,"
       "            round((endNs - startNs)/1000.0, 3) as duration,\n"
       "" + blockDimColumnName + ", round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
       "            outputShapes, outputDataTypes, outputFormats, TASK.connectionId as taskId "
-      "      from COMPUTE_TASK_INFO info "
-      "      JOIN TASK ON info.globalTaskId = TASK.globalTaskId join nameIds on name = nameIds.id where deviceId = ?), "
+      "      from COMPUTE_TASK_INFO info JOIN TASK ON info.globalTaskId = TASK.globalTaskId "
+      "      join nameIds on name = nameIds.id join nameIds s2 on opType = s2.id where deviceId = ?), "
       "    total as (select count(*) as num "
       "    from ("
       "        SELECT name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"

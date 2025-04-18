@@ -227,6 +227,28 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData)
     EXPECT_EQ(responseBody.acceleratorCoreList.size(), 1);
 }
 
+TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData_QueryHCCLType)
+{
+    Dic::Protocol::KernelDetailsParams requestParams;
+    requestParams.current = 1;
+    requestParams.pageSize = 20; // pageSize = 20
+    requestParams.order = "ASC";
+    requestParams.orderBy = "name";
+    requestParams.coreType = "HCCL";
+    requestParams.searchName = "";
+    requestParams.rankId = "2";
+    requestParams.filters.emplace_back("type", "hcom");
+    Dic::Protocol::KernelDetailsBody responseBody;
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
+        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDbNew"));
+
+    database->QueryKernelDetailData(requestParams, responseBody, minTimestamp);
+
+    EXPECT_EQ(responseBody.kernelDetails.size(), 4); // size = 4
+    EXPECT_EQ(responseBody.acceleratorCoreList.size(), 4);
+}
+
 TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
