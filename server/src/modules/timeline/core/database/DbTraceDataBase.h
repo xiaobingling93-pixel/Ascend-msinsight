@@ -86,7 +86,6 @@ public:
     std::vector<std::string> QueryCoreType() override;
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp) override;
-    bool GetKernelDetailFilterSql(std::string& sql, const Protocol::KernelDetailsParams &requestParams);
     uint64_t QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams) override;
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) override;
@@ -176,7 +175,7 @@ private:
     bool NeedUpdateDepth(const std::string &table);
     void GenerateCounterMetadata(const std::string &fileId,
                                  std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
-    std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams);
+
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
         const std::string &cardId, const std::string &processId, const std::string &processName,
         const std::string &metaType);

@@ -1,4 +1,5 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+#include "DbTraceDataBase.h"
 #include "pch.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
@@ -9,7 +10,7 @@
 #include "CollectionTimeService.h"
 #include "MetaDataParser.h"
 #include "MetaDataCacheManager.h"
-#include "DbTraceDataBase.h"
+#include "DbKernelDetailHelper.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;
@@ -410,18 +411,18 @@ bool DbTraceDataBase::QuerySystemViewAICoreFreqData(const Protocol::SystemViewAI
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
     Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = GetKernelDetailSql(requestParams);
+    std::string sql = DbKernelDetailHelper::GetKernelDetailSql(requestParams, isLowCamel);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         Server::ServerLog::Error("Fail to prepare sql to query kernel detail data.");
         return false;
     }
-    if (!requestParams.rankId.empty()) {
-        stmt->BindParams(GetDeviceId(requestParams.rankId));
-    }
     for (const auto& filter : requestParams.filters) {  // 第一次绑定filter
         std::string bindFilter = "%" + filter.second + "%";
         stmt->BindParams(bindFilter);
+    }
+    if (!requestParams.rankId.empty()) {
+        stmt->BindParams(GetDeviceId(requestParams.rankId));
     }
     for (const auto& filter : requestParams.filters) {  // 第二次绑定filter
         std::string bindFilter = "%" + filter.second + "%";
@@ -474,78 +475,6 @@ bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePrepar
         responseBody.kernelDetails.emplace_back(detail);
     }
     return true;
-}
-
-bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol::KernelDetailsParams &requestParams)
-{
-    if (!requestParams.filters.empty()) {
-        sql += " WHERE ";
-    }
-    for (uint64_t index = 0; index < requestParams.filters.size(); index++) {
-        std::pair<std::string, std::string> filter = requestParams.filters[index];
-        if (!StringUtil::CheckSqlValid(filter.first)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
-            sql.clear();
-            return false;
-        }
-        if (index != 0) {
-            sql += " AND ";
-        }
-        // name, type 已经过 string_ids 表映射获取到真实的字符串字面量，taskId 本身就是数字，不需要映射
-        if (filter.first == "name" || filter.first == "taskId" || filter.first == "type") {
-            sql += " lower(" + filter.first + ") LIKE lower(?) ";  // 绑定filter.second
-        } else {
-            sql += filter.first + " IN ( SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower(?) )";
-        }
-    }
-    return true;
-}
-
-std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
-{
-    std::string blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
-    std::string sql = "with nameIds as (select id, value as realName from STRING_IDS),\n"
-      "     main as ("
-      "     select info.ROWID, nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as opType,"
-      "       'HCCL' as taskType, info.startNs, round((info.endNs - info.startNs)/1000.0, 3) as duration,\n"
-      " 0 as " + blockDimColumnName + ",round(waitNs/1000.0, 3) as wait_time,'N/A' as inputShapes, 'N/A' as "
-      " inputDataTypes,'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats,"
-      " TASK.connectionId as taskId"
-      "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
-      "       join nameIds on opName = nameIds.id group by info.opName\n"
-      "     UNION all"
-      "     select TASK.ROWID, nameIds.realName as name, s2.realName AS opType, info.taskType, startNs,"
-      "            round((endNs - startNs)/1000.0, 3) as duration,\n"
-      "" + blockDimColumnName + ", round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
-      "            outputShapes, outputDataTypes, outputFormats, TASK.connectionId as taskId "
-      "      from COMPUTE_TASK_INFO info JOIN TASK ON info.globalTaskId = TASK.globalTaskId "
-      "      join nameIds on name = nameIds.id join nameIds s2 on opType = s2.id where deviceId = ?), "
-      "    total as (select count(*) as num "
-      "    from ("
-      "        SELECT name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"
-      "        wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
-      "        inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, taskId FROM main"
-      "    ) subquery ";
-    if (!GetKernelDetailFilterSql(sql, requestParams)) {  // 第一次绑定filter.second占位
-        return sql;
-    }
-    sql += " )\n"
-      "SELECT ROWID as id, total.num, name, opType as type, taskType AS acceleratorCore, startNs AS startTime,\n"
-      "       duration, wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
-      "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, taskId\n"
-      "FROM main join total ";
-    if (!GetKernelDetailFilterSql(sql, requestParams)) {  // 第二次绑定filter.second占位
-        return sql;
-    }
-
-    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: %", requestParams.orderBy);
-    } else if (!requestParams.orderBy.empty() && !requestParams.order.empty()) {
-        sql += " ORDER by " + requestParams.orderBy + " " + (requestParams.order == "ascend" ? "ASC" : "DESC");
-    }
-    sql += " LIMIT ? OFFSET ?";
-
-    return sql;
 }
 
 uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams)

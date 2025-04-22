@@ -44,6 +44,7 @@ include_directories(${SRC_HOME_DIR}/modules/global/database)
 include_directories(${SRC_HOME_DIR}/modules/timeline)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/database)
+include_directories(${SRC_HOME_DIR}/modules/timeline/core/database/helper)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/analyze)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/cache)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/parser)
@@ -112,6 +113,7 @@ aux_source_directory(${SRC_HOME_DIR}/modules/global/database DIC_MODULES_GLOBAL_
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline  DIC_MODULES_TIMELINE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core DIC_MODULES_TIMELINE_CORE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/database DIC_MODULES_TIMELINE_CORE_DATABASE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/database/helper DIC_MODULES_TIMELINE_CORE_DATABASE_HELPER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/analyze DIC_MODULES_TIMELINE_CORE_ANALYZE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/cache DIC_MODULES_TIMELINE_CORE_CACHE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/parser DIC_MODULES_TIMELINE_CORE_PARSER_SRC)
@@ -186,6 +188,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_TIMELINE_SRC}
         ${DIC_MODULES_TIMELINE_CORE_SRC}
         ${DIC_MODULES_TIMELINE_CORE_DATABASE_SRC}
+        ${DIC_MODULES_TIMELINE_CORE_DATABASE_HELPER_SRC}
         ${DIC_MODULES_TIMELINE_CORE_ANALYZE_SRC}
         ${DIC_MODULES_TIMELINE_CORE_CACHE_SRC}
         ${DIC_MODULES_TIMELINE_CORE_PARSER_SRC}

@@ -1,0 +1,113 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+
+#include "DbKernelDetailHelper.h"
+#include <sstream>
+
+namespace Dic::Module::FullDb {
+using namespace Server;
+std::string DbKernelDetailHelper::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams,
+    const bool isLowCamel)
+{
+    try {
+        std::ostringstream sqlStream;
+        sqlStream << "with nameIds as (select id, value as realName from STRING_IDS),\n"
+                  << GetKernelDetailSqlWithHCCL(requestParams) << ",\n" // 第一次绑定 filter.second
+                  << GetKernelDetailSqlWithoutHCCL(requestParams, isLowCamel) << ",\n" // 第二次绑定 filter.second
+                  << "main as (select * from main_hccl UNION ALL select * from main_other), "
+                  << "  total as (select count(*) as num from main )\n"
+                  << "SELECT ROWID as id, total.num, name, type, acceleratorCore, startTime,\n"
+                  << "       duration, waitTime, blockDim, inputShapes,\n"
+                  << "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, taskId\n"
+                  << "FROM main join total ";
+
+        if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. error param: %",
+                requestParams.orderBy);
+        } else if (!requestParams.orderBy.empty() && !requestParams.order.empty()) {
+            sqlStream << " ORDER by " << requestParams.orderBy << " "
+                      << (requestParams.order == "ascend" ? "ASC" : "DESC");
+        }
+        sqlStream << " LIMIT ? OFFSET ?";
+        return sqlStream.str();
+    } catch (DatabaseException&) {
+        return "";
+    } catch (const std::exception& e) {
+        ServerLog::Error("An unexpected exception occurred: %s", e.what());
+        return "";
+    }
+}
+
+std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithHCCL(const Protocol::KernelDetailsParams &requestParams)
+{
+    if (requestParams.filters.empty()) {
+        return "";
+    }
+    std::string sql = " WHERE 1";
+    for (const auto& [key, _] : requestParams.filters) {
+        if (!StringUtil::CheckSqlValid(key)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
+            throw DatabaseException("filter first value is invalid for sql.");
+        }
+        // hccl 查询出来的本身就是字面量，不需要映射
+        sql += " AND lower(" + key + ") LIKE lower(?) ";  // 绑定filter.second
+    }
+    return sql;
+}
+
+std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithoutHCCL(
+    const Protocol::KernelDetailsParams &requestParams)
+{
+    if (requestParams.filters.empty()) {
+        return "";
+    }
+    std::string sql = " WHERE 1";
+    for (const auto& [key, _] : requestParams.filters) {
+        if (!StringUtil::CheckSqlValid(key)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
+            throw DatabaseException("filter first value is invalid for sql.");
+        }
+        // name 已经过 string_ids 表映射获取到真实的字符串字面量，taskId 本身就是数字，不需要映射
+        if (key == "name" || key == "taskId") {
+            sql += " AND lower(" + key + ") LIKE lower(?) ";  // 绑定filter.second
+        } else {
+            sql += " AND " + key + " IN ( SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower(?) )";
+        }
+    }
+    return sql;
+}
+
+// throw DatabaseException
+std::string DbKernelDetailHelper::GetKernelDetailSqlWithHCCL(const Protocol::KernelDetailsParams &requestParams)
+{
+    const std::string filterSql = GetKernelDetailFilterSqlWithHCCL(requestParams); // 绑定 filter.second
+    // 前置已有 with nameIds as (select id, value as realName from STRING_IDS)
+    return " main_hccl_tmp as ("
+      "select info.ROWID, nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as type,"
+      " 'HCCL' as acceleratorCore, info.startNs as startTime, round((info.endNs - info.startNs)/1000.0, 3) as duration,"
+      " 0 as blockDim, round(waitNs/1000.0, 3) as waitTime, 'N/A' as inputShapes, 'N/A' as "
+      " inputDataTypes, 'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats,"
+      " TASK.connectionId as taskId"
+      "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
+      "       join nameIds on opName = nameIds.id group by info.opName), "
+      " main_hccl as ( select * from main_hccl_tmp " + filterSql + ") ";
+}
+
+// throw DatabaseException
+std::string DbKernelDetailHelper::GetKernelDetailSqlWithoutHCCL(const Protocol::KernelDetailsParams &requestParams,
+    const bool isLowCamel)
+{
+    const std::string blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
+    const std::string filterSql = GetKernelDetailFilterSqlWithoutHCCL(requestParams); // 绑定 filter.second
+    // 前置已有 with nameIds as (select id, value as realName from STRING_IDS)
+    return " main_other_tmp as ("
+      "select TASK.ROWID, nameIds.realName as name, opType as type, info.taskType as acceleratorCore,"
+      " startNs as startTime, round((endNs - startNs)/1000.0, 3) as duration, " + blockDimColumnName + " as blockDim,"
+      " round(waitNs/1000.0, 3) as waitTime, inputShapes, inputDataTypes, inputFormats, "
+      " outputShapes, outputDataTypes, outputFormats, TASK.connectionId as taskId "
+      "      from COMPUTE_TASK_INFO info JOIN TASK ON info.globalTaskId = TASK.globalTaskId "
+      "      join nameIds on name = nameIds.id where deviceId = ?), "
+      " main_other as (select * from main_other_tmp " + filterSql + ") ";
+}
+} // namespace Dic::Module::FullDb
