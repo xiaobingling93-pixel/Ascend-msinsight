@@ -826,5 +826,138 @@ std::string VirtualClusterDatabase::FindValueByKey(const std::map<std::string, s
     }
     return info.at(key);
 }
+
+sqlite3_stmt *VirtualClusterDatabase::InitExpertHotspotInsertStmt(uint64_t paramLen)
+{
+    if (paramLen == 0) {
+        return nullptr;
+    }
+    std::string sql = "INSERT INTO " + TABLE_EXPERT_HOTSPOT_INTO + " (localExpertId, modelStage, rankId, visits, layer,"
+        " version) VALUES (?,?,?,?,?,?)";
+    for (size_t i = 0; i < paramLen - 1; ++i) {
+        sql.append(",(?,?,?,?,?,?)");
+    }
+    sqlite3_stmt *stmt = nullptr;
+    int stmtResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (stmtResult != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare insert expert hotspot statement. error:", sqlite3_errmsg(db));
+        return nullptr;
+    }
+    return stmt;
+}
+
+sqlite3_stmt *VirtualClusterDatabase::GetExpertHotspotInsertStmt(uint64_t paramLen)
+{
+    if (paramLen == CACHE_SIZE) {
+        if (insertHotspotStmt == nullptr) {
+            // 初始化
+            insertHotspotStmt = InitExpertHotspotInsertStmt(paramLen);
+        } else {
+            sqlite3_reset(insertHotspotStmt);
+        }
+        return insertHotspotStmt;
+    } else {
+        sqlite3_stmt *stmt = InitExpertHotspotInsertStmt(paramLen);
+        return stmt;
+    }
+}
+
+void VirtualClusterDatabase::InsertExpertHotspotDataForCache(const ExpertHotspotStruct &info)
+{
+    expertHotspotCache.emplace_back(info);
+    if (expertHotspotCache.size() == CACHE_SIZE) {
+        BatchInsertExpertHotspotData(expertHotspotCache);
+        expertHotspotCache.clear();
+    }
+}
+
+void VirtualClusterDatabase::SaveExpertHotspot()
+{
+    if (expertHotspotCache.size() > 0) {
+        BatchInsertExpertHotspotData(expertHotspotCache);
+        expertHotspotCache.clear();
+    }
+}
+
+bool VirtualClusterDatabase::BatchInsertExpertHotspotData(const std::vector<ExpertHotspotStruct> &expertHotspotInfos)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    sqlite3_stmt *stmt = GetExpertHotspotInsertStmt(expertHotspotInfos.size());
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get insert expert hotspot statement.");
+        return false;
+    }
+    int idx = bindStartIndex;
+    for (const auto &info : expertHotspotInfos) {
+        sqlite3_bind_int64(stmt, idx++, info.localExpertId);
+        sqlite3_bind_text(stmt, idx++, info.modelStage.c_str(), info.modelStage.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, info.rankId.c_str(), info.rankId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, idx++, info.visits);
+        sqlite3_bind_int64(stmt, idx++, info.layer);
+        sqlite3_bind_text(stmt, idx++, info.version.c_str(), info.version.length(), SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    if (expertHotspotInfos.size() != CACHE_SIZE) {
+        sqlite3_finalize(stmt);
+    }
+    return result == SQLITE_DONE;
+}
+
+bool VirtualClusterDatabase::DeleteExpertHotspot(const std::string &modelStage, const std::string &version)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string sql = "DELETE FROM " + TABLE_EXPERT_HOTSPOT_INTO + " WHERE 1 = 1";
+    if (!modelStage.empty()) {
+        sql += " AND modelStage = ? ";
+    }
+    if (!version.empty()) {
+        sql += " AND version = ? ";
+    }
+    sqlite3_stmt *stmt = nullptr;
+    int stmtResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (stmtResult != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare delete expert hotspot statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    int idx = bindStartIndex;
+    if (!modelStage.empty()) {
+        sqlite3_bind_text(stmt, idx++, modelStage.c_str(), modelStage.length(), SQLITE_TRANSIENT);
+    }
+    if (!version.empty()) {
+        sqlite3_bind_text(stmt, idx++, version.c_str(), version.length(), SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return result == SQLITE_DONE;
+}
+
+std::vector<ExpertHotspotStruct> VirtualClusterDatabase::QueryExpertHotspotData(const std::string &modelStage,
+                                                                                const std::string &version)
+{
+    std::string sql = "SELECT localExpertId, modelStage, rankId, visits, layer FROM " + TABLE_EXPERT_HOTSPOT_INTO +
+        " WHERE modelStage = ? and version = ?";
+    sqlite3_stmt *stmt = nullptr;
+    int stmtResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (stmtResult != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare query expert hotspot statement. error:", sqlite3_errmsg(db));
+        return {};
+    }
+    int idx = bindStartIndex;
+    sqlite3_bind_text(stmt, idx++, modelStage.c_str(), modelStage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, version.c_str(), version.length(), SQLITE_TRANSIENT);
+    std::vector<ExpertHotspotStruct> res;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        ExpertHotspotStruct info{};
+        info.localExpertId = sqlite3_column_int(stmt, col++);
+        info.modelStage = sqlite3_column_string(stmt, col++);
+        info.rankId = sqlite3_column_string(stmt, col++);
+        info.visits = sqlite3_column_int64(stmt, col++);
+        info.version = sqlite3_column_string(stmt, col++);
+        info.layer = sqlite3_column_int(stmt, col++);
+        res.emplace_back(info);
+    }
+    return res;
+}
 }
 }

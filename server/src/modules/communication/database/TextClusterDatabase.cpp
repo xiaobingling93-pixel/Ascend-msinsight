@@ -71,6 +71,7 @@ bool TextClusterDatabase::CreateTable()
             "transport_type VARCHAR(50), transit_size double, transit_time double, bandwidth double);" +
             "CREATE TABLE " + TABLE_GROUP_ID +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100));";
+    sql += commonSql;
     return ExecSql(sql);
 }
 

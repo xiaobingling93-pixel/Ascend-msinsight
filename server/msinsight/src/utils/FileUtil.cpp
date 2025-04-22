@@ -375,19 +375,64 @@ bool FileUtil::ModifyFilePermissions(const std::string &filePath, const mode_t &
 bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path)
 {
     for (auto it = path.begin(); it != path.end(); ++it) {
-        if (!FileUtil::CheckDirValid(*it)) {
-            errorMsg = *it + "is invalid path";
+        if (!ConvertToRealPath(errorMsg, *it)) {
             return false;
         }
-        std::string realPath = GetRealPath(*it);
-        if (realPath.empty()) {
-            errorMsg = "The conversion of the " + *it +
-                        "test path to an absolute path has failed.";
-            return false;
-        }
-        *it = realPath;
     }
     return true;
+}
+
+bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::string &path)
+{
+    if (!FileUtil::CheckDirValid(path)) {
+        errorMsg = path + "is invalid path";
+        return false;
+    }
+    std::string realPath = GetRealPath(path);
+    if (realPath.empty()) {
+        errorMsg = "The conversion of the " + path +
+                   "test path to an absolute path has failed.";
+        return false;
+    }
+    path = realPath;
+    return true;
+}
+
+void FileUtil::RecursionFindFilesByRegex(std::vector<std::string> &result, const std::string &path, int depth,
+                                         const std::regex &fileRegex)
+{
+    std::string error;
+    if (!IsWithinRecursionLimit(result, depth, error)) {
+        return;
+    }
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(path, folders, files)) {
+        return;
+    }
+    for (const auto &folder: folders) {
+        std::string tmpPath = FileUtil::SplicePath(path, folder);
+        RecursionFindFilesByRegex(result, tmpPath, depth + 1, fileRegex);
+    }
+    for (const auto &file : files) {
+        std::string tmpPath = SplicePath(path, file);
+        if (!std::regex_match(file, fileRegex)) {
+            continue;
+        }
+        result.push_back(tmpPath);
+    }
+}
+std::vector<std::string> FileUtil::FindAllFilesByRegex(const std::string &path, const std::regex &fileRegex)
+{
+    std::vector<std::string> matchedFiles = {};
+    if (!FileUtil::IsFolder(path)) {
+        if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
+            matchedFiles.emplace_back(path);
+        }
+        return matchedFiles;
+    }
+    RecursionFindFilesByRegex(matchedFiles, path, 0, fileRegex);
+    return matchedFiles;
 }
 
 bool FileUtil::FindIfDbTypeByRegex(const std::string &path, const std::regex &jsonRegex,

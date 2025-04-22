@@ -17,6 +17,7 @@
 #include "SummaryProtocolRequest.h"
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
+#include "TableDefs.h"
 
 namespace Dic {
 namespace Module {
@@ -69,10 +70,21 @@ public:
         std::string &level, std::string &msg) = 0;
     virtual bool QueryAllPerformanceDataByStep(const std::string &step,
                                                std::unordered_map<std::uint32_t, StepStatistic> &data) = 0;
+    bool BatchInsertExpertHotspotData(const std::vector<ExpertHotspotStruct> &expertHotspotInfos);
+    void InsertExpertHotspotDataForCache(const ExpertHotspotStruct &info);
+    void SaveExpertHotspot();
+    bool DeleteExpertHotspot(const std::string &modelStage, const std::string &version);
+    std::vector<ExpertHotspotStruct> QueryExpertHotspotData(const std::string &modelStage, const std::string &version);
 
 protected:
     const std::string totalOpInfo = "Total Op Info";
     const std::string clusterParseStatus = "Cluster files parsing status";
+    const std::string commonSql = "CREATE TABLE IF NOT EXISTS " + TABLE_EXPERT_HOTSPOT_INTO +
+        " (id INTEGER PRIMARY KEY AUTOINCREMENT, localExpertId INTEGER, modelStage TEXT, rankId INTEGER,"
+        " visits INTEGER, layer INTEGER, version TEXT);"
+        "CREATE INDEX IF NOT EXISTS idx_ms ON " + TABLE_EXPERT_HOTSPOT_INTO + "(modelStage, version);";
+    sqlite3_stmt *insertHotspotStmt = nullptr;
+    std::vector<ExpertHotspotStruct> expertHotspotCache;
     const double overlapThreshold = 0.05;
     bool HasColumn(const std::string &tableName, const std::string &columnName);
     bool ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo, std::string sql);
@@ -121,6 +133,8 @@ protected:
         const std::string &key, const std::string defaultValue);
     void GetStepsOrRanksObject(const std::string &jsonStr,
                                std::vector<Protocol::IterationsOrRanksObject> &responseBody);
+    sqlite3_stmt *GetExpertHotspotInsertStmt(uint64_t paramLen);
+    sqlite3_stmt *InitExpertHotspotInsertStmt(uint64_t paramLen);
 };
 } // end of namespace Module
 } // end of namespace Dic

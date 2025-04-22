@@ -398,6 +398,10 @@ public:
 
     static void CalculateDirSize(const std::string &path, long long &size, int depth);
 
+    static void RecursionFindFilesByRegex(std::vector<std::string> &result, const std::string &path, int depth,
+                                          const std::regex &fileRegex);
+    static std::vector<std::string> FindAllFilesByRegex(const std::string &path, const std::regex &fileRegex);
+
     // 遍历目录，最大不超过5层，优先遍历ASCEND_PROFILER_OUTPUT/mindstudio_profiler_output目录，其存在则跳过其他文件夹
     static inline std::vector<std::string> FindFilesWithFilter(const std::string &path, const std::regex &fileRegex)
     {
@@ -507,6 +511,7 @@ public:
                                                         const std::string& sourceFilePath);
     static bool ModifyFilePermissions(const std::string &filePath, const mode_t &mode);
     static bool ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path);
+    static bool ConvertToRealPath(std::string &errorMsg, std::string &path);
     // 寻找目录下的第一份符合条件的Db或Json数据，Db: true Json: false，集群数据仅需找到一份文件来判断
     static bool FindIfDbTypeByRegex(const std::string &path, const std::regex &jsonRegex,
                                     const std::regex &dbRegex);

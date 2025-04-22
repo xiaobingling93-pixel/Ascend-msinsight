@@ -450,6 +450,24 @@ struct DistributedArgs {
 const std::vector<std::string> DISTRIBUTED_ARGS_INT_KEY{"tensor_model_parallel_size", "pipeline_model_parallel_size",
     "data_parallel_size", "context_parallel_size", "expert_model_parallel_size", "world_size"};
 const std::vector<std::string> DISTRIBUTED_ARGS_BOOL_KEY{"sequence_parallel"};
+
+struct ExpertHotspotStruct {
+    // 模型阶段：prefill和decode两种
+    std::string modelStage;
+    // 卡号，从0开始计数
+    std::string rankId;
+    // 访问数
+    uint64_t visits = 0;
+    // 层级，从0开始计数
+    int layer = 0;
+    // 本地专家号，专家号在本地的顺序
+    int localExpertId = 0;
+    // 版本号（重置前、重置后）
+    std::string version;
+};
+
+const int CACHE_SIZE = 1000;
+const std::string ExpertHotspotFileReg = R"((prefill|decode)_([0-9]{1,4})\.csv)";
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

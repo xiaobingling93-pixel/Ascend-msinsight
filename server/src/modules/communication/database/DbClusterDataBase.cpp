@@ -20,6 +20,7 @@ bool DbClusterDataBase::CreateTable()
         return false;
     }
     std::string sql = "CREATE TABLE " + TABLE_CLUSTER_BASE_INFO + " (key VARCHAR(50) PRIMARY KEY, value TEXT); ";
+    sql += commonSql;
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }

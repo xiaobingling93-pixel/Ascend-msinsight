@@ -58,6 +58,9 @@ namespace Dic {
     const static std::string TABLE_COMM_GROUP = "CommunicationGroupMapping";
     const static std::string TABLE_CLUSTER_BASE_INFO = "ClusterBaseInfo";
 
+    // 集群公共表（text和db共有）
+    const static std::string TABLE_EXPERT_HOTSPOT_INTO = "ExpertHotspotInfo";
+
     // database version
 #ifndef DATABASE_VERSION
 #define DATABASE_VERSION 0
