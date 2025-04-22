@@ -18,6 +18,7 @@
     "TheoreticalStallCycles": "预期阻塞时钟周期",
     "RegisterNum": "寄存器数",
     "Gpr Count": "通用寄存器数",
+    "GPR Count": "通用寄存器数",
     "L2Cache Hit Rate": "L2Cache命中率",
     "No Result": "无结果",
     "Find In Selection": "在选中区域查找",
