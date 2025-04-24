@@ -79,7 +79,7 @@ export const TimeMakerAxis = observer(({ session, laneInfoWidth, showRecommendat
             message.error(err);
         });
     };
-    return <ChartRow className="timeMakerAxis" leftWidth={laneInfoWidth} rightWidth={`calc(100% - ${laneInfoWidth}px)`}>
+    return <ChartRow className="timeMakerAxis" leftWidth={laneInfoWidth} rightWidth={`calc(100% - ${laneInfoWidth + theme.scrollBarWidth}px)`}>
         { session.isPending
             ? <StartParseButton
                 type="primary"

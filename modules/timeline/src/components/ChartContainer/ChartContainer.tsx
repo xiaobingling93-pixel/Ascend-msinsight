@@ -225,10 +225,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
     const clickPos = useRef<undefined | Pos>(undefined); const lastPos = useRef<Pos | undefined>(undefined);
     const [interactorMouseState, setInteractorMouseState] = React.useState<InteractorMouseState>({ clickPos, lastPos });
     const onMouseMove = (e: React.MouseEvent): void => {
-        if (!chartInteractorRef.current) {
-            return;
-        }
-        chartInteractorRef.current.mouseMoveAction(interactorMouseState, e);
+        if (!chartInteractorRef.current) { return; }
         const rect = e.currentTarget.getBoundingClientRect();
         const offsetX = e.nativeEvent.x - rect.left - LANE_INFO_WIDTH_PX.value;
         const offsetY = e.nativeEvent.y - rect.top;
@@ -236,9 +233,11 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
             interactorMouseState.lastPos.current = interactorMouseState.clickPos.current
                 ? { x: 0, y: offsetY, absoluteX: e.nativeEvent.x, absoluteY: e.nativeEvent.y }
                 : undefined;
+            chartInteractorRef.current.mouseMoveAction(interactorMouseState, e);
             return;
         }
         interactorMouseState.lastPos.current = { x: offsetX, y: offsetY, absoluteX: e.nativeEvent.x, absoluteY: e.nativeEvent.y };
+        chartInteractorRef.current.mouseMoveAction(interactorMouseState, e);
     };
     const onMouseDown = (e: React.MouseEvent): void => {
         const disabled = !isTargetElement(e) || !chartInteractorRef.current || !interactive ||
@@ -253,16 +252,12 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         }
     };
     const onWheel = (e: React.WheelEvent<HTMLDivElement>): void => {
-        if (!chartInteractorRef.current) {
-            return;
-        }
+        if (!chartInteractorRef.current) { return; }
         chartInteractorRef.current.mouseWheelAction(interactorMouseState);
         setInteractorMouseState({ ...interactorMouseState, wheelEvent: { ctrlKey: e.ctrlKey, deltaY: e.deltaY } });
     };
     const onMouseUp = (e: MouseEvent): void => {
-        if (!chartInteractorRef.current || !interactive) {
-            return;
-        }
+        if (!chartInteractorRef.current || !interactive) { return; }
         chartInteractorRef.current.mouseUpAction(interactorMouseState, e);
     };
     const onMouseLeave = (): void => {

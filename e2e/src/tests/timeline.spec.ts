@@ -4,7 +4,7 @@
 
 import { test as baseTest, expect } from '@playwright/test';
 import { TimelinePage, SystemView, CommunicationPage } from '@/page-object';
-import { clearAllData, importData } from '@/utils';
+import { clearAllData, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { InputHelpers, SelectHelpers } from '@/components';
 import { FilePath } from '@/utils/constants';
 
@@ -17,9 +17,11 @@ const test = baseTest.extend<TestFixtures>({
         await use(timelinePage);
     },
 });
-
+let allPagesSuccessRes: Promise<unknown>;
 test.describe('Timeline', () => {
     test.beforeEach(async ({ page, timelinePage }) => {
+        setupWebSocketListener(page);
+        allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         const { timelineFrame } = timelinePage;
         await timelinePage.goto();
         await clearAllData(page);
@@ -169,6 +171,7 @@ test.describe('Timeline', () => {
 
     // 算子搜索
     test('test_operatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
+        await allPagesSuccessRes;
         const { searchBtn, timelineFrame } = timelinePage;
         await searchBtn.click();
         const inputLocator = timelineFrame.locator('.insight-category-search-overlay input');
@@ -182,6 +185,7 @@ test.describe('Timeline', () => {
 
     // 算子搜索在泳道较深的位置时能显示在div中
     test('test_deepOperatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
+        await allPagesSuccessRes;
         const { searchBtn, timelineFrame } = timelinePage;
         await searchBtn.click();
         const inputLocator = timelineFrame.locator('.insight-category-search-overlay input');
@@ -216,6 +220,7 @@ test.describe('Timeline', () => {
 
     // 泳道(unit)过滤
     test('test_unitFilter', async ({ page, timelinePage }) => {
+        await allPagesSuccessRes;
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
         const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
         const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
@@ -285,13 +290,13 @@ test.describe('Timeline', () => {
         const { markerBtn, timelineFrame } = timelinePage;
         const mainContainer = timelineFrame.locator('#main-container');
 
-        await timelineFrame.locator('canvas:nth-child(6)').click({
+        await timelineFrame.locator('canvas:nth-child(4)').click({
             position: {
                 x: 233,
                 y: 4,
             },
         });
-        await timelineFrame.locator('canvas:nth-child(6)').click({
+        await timelineFrame.locator('canvas:nth-child(4)').click({
             position: {
                 x: 449,
                 y: 8,

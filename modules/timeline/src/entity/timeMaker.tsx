@@ -27,7 +27,7 @@ export interface TimeLineMaker {
 
 export const TIME_MAKER_DEFAULT: TimeLineMaker = {
     timelineFlagList: [],
-    timelineFlagColorList: ['#EF372B', '#6456E6', '#24B0A0'],
+    timelineFlagColorList: ['#D92C21', '#6456E6', '#1D978A'],
     refreshTrigger: 0,
     selectedFlag: undefined,
     oldMarkedRange: undefined,
