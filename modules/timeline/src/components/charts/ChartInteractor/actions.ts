@@ -74,8 +74,9 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         session.selectedDetails = [];
     });
 
-    if (Math.abs(lastPos.x - clickPos.x) >= MIN_BRUSH_SIZE) {
-        const mouseRange: [number, number] = [xScale(clickPos.x), xScale(lastPos.x)];
+    const clickPosX = xReverseScaleRef.current(clickPos.timeAxisX);
+    if (Math.abs(lastPos.x - clickPosX) >= MIN_BRUSH_SIZE) {
+        const mouseRange: [number, number] = [clickPos.timeAxisX, xScale(lastPos.x)];
         const newSelected = mouseRange.sort((a, b) => a - b);
 
         if (newSelected[0] < session.endTimeAll && session.endTimeAll < newSelected[1]) { newSelected[1] = session.endTimeAll; }
@@ -210,8 +211,17 @@ const isSingleLine = (session: Session): boolean => {
     );
 };
 
-export const mouseDownAction = (session: Session, xReverseScaleRef: XReverseScaleRef, interactorMouseState: InteractorMouseState,
-    e: React.MouseEvent, splitLineRef?: React.RefObject<HTMLDivElement>): MouseDownActionResult => {
+interface MouseActionParams {
+    session: Session;
+    xReverseScaleRef: XReverseScaleRef;
+    interactorMouseState: InteractorMouseState;
+    e: React.MouseEvent;
+    splitLineRef: React.RefObject<HTMLDivElement>;
+    interactorParams: InteractorParams;
+}
+export const mouseDownAction = ({
+    session, xReverseScaleRef, interactorMouseState, e, splitLineRef, interactorParams,
+}: MouseActionParams): MouseDownActionResult => {
     const lastPos = interactorMouseState.lastPos.current;
     const isPressingKey = (isMac && e.metaKey) || (!isMac && e.ctrlKey);
     // 点击context menu选项时屏蔽mouseDownAction
@@ -242,28 +252,30 @@ export const mouseDownAction = (session: Session, xReverseScaleRef: XReverseScal
         return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
     let needDragOneSide = false;
+    let timeAxisX;
     if (session.selectedRange !== undefined && isOnSideline(lastPos, session.selectedRange, xReverseScaleRef)) {
         const isOnLeftSide = offsetX <= xReverseScaleRef.current(session.selectedRange[0]) + SINGLE_DRAG_OFFSET &&
             offsetX >= xReverseScaleRef.current(session.selectedRange[0]) - SINGLE_DRAG_OFFSET;
-        interactorMouseState.clickPos.current = {
-            x: xReverseScaleRef.current(isOnLeftSide ? session.selectedRange[1] : session.selectedRange[0]),
-            y: lastPos.y,
-            absoluteX: lastPos.absoluteX,
-            absoluteY: lastPos.absoluteY,
-        };
+        timeAxisX = isOnLeftSide ? session.selectedRange[1] : session.selectedRange[0];
         needDragOneSide = true;
     } else {
-        interactorMouseState.clickPos.current = { x: offsetX, y: lastPos.y, absoluteX: lastPos.absoluteX, absoluteY: lastPos.absoluteY };
+        timeAxisX = interactorParams.xScale(offsetX);
         session.timelineMaker.oldMarkedRange = undefined;
     }
+    interactorMouseState.clickPos.current = {
+        x: xReverseScaleRef.current(timeAxisX),
+        y: lastPos.y,
+        absoluteX: lastPos.absoluteX,
+        absoluteY: lastPos.absoluteY,
+        timeAxisX,
+    };
     runInAction(() => { session.selectedRange = undefined; });
     return needDragOneSide ? MouseDownActionResult.NEED_DRAG_ONE_SIDE : MouseDownActionResult.NO_NEED_TO_DRAG_ONE_SIDE;
 };
 
 export const mouseMoveAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {
-    const { hoverCanvas: canvas, session, xReverseScaleRef, xScale, theme } = interactorParams;
+    const { hoverCanvas: canvas, session } = interactorParams;
     if (canvas.current === null) { return; }
-    const lastPos = interactorMouseState.lastPos.current;
     const canDrag = ((isMac && e.metaKey) || (!isMac && e.ctrlKey)) && dragData.isDragging;
     if (canDrag) {
         moveDomainByDragging(session, dragData.xPos - e.clientX, canvas.current?.clientWidth ?? INTERACTOR_WIDTH);
@@ -271,10 +283,21 @@ export const mouseMoveAction = (interactorParams: InteractorParams, interactorMo
         canvas.current.style.pointerEvents = 'initial';
         return;
     }
+    handleMousePosChange(interactorParams, interactorMouseState);
+};
+
+export const handleMousePosChange = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState): void => {
+    const { hoverCanvas: canvas, session, xReverseScaleRef, xScale, theme } = interactorParams;
+    if (canvas.current === null) { return; }
+    const lastPos = interactorMouseState.lastPos.current;
     if (isOnSideline(lastPos, session.selectedRange, xReverseScaleRef)) {
-        canvas.current.style.cursor = 'e-resize';
+        document.querySelectorAll('canvas.drawCanvas').forEach(canvasItem => {
+            (canvasItem as HTMLElement).style.cursor = 'e-resize';
+        });
     } else {
-        canvas.current.style.cursor = 'default';
+        document.querySelectorAll('canvas.drawCanvas').forEach(canvasItem => {
+            (canvasItem as HTMLElement).style.cursor = 'default';
+        });
     }
     drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScaleRef, xScale, interactorMouseState }));
 };

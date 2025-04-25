@@ -10,6 +10,11 @@ export interface Pos {
     absoluteX: number;
     absoluteY: number;
 };
+
+export interface ExtendPos extends Pos {
+    timeAxisX: number;
+}
+
 const TEXT_WIDTH = 70;
 const FONT_SIZE = 12;
 

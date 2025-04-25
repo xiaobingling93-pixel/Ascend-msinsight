@@ -21,7 +21,7 @@ import { RefUnits } from './Units';
 import ChartHeader from './ChartHeader';
 import HorizontalScroller from './HorizontalScrollbar';
 import type { ChartInteractorHandles, InteractorMouseState } from '../charts/ChartInteractor/ChartInteractor';
-import type { Pos } from '../charts/ChartInteractor/common';
+import type { Pos, ExtendPos } from '../charts/ChartInteractor/common';
 import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
@@ -222,7 +222,7 @@ function isTargetElement(event: React.MouseEvent): boolean {
 
 const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartInteractorHandles>, scrollerRef: React.RefObject<HTMLDivElement>,
     session: Session, interactive?: boolean): InteractorMouseHandlers => {
-    const clickPos = useRef<undefined | Pos>(undefined); const lastPos = useRef<Pos | undefined>(undefined);
+    const clickPos = useRef<undefined | ExtendPos>(undefined); const lastPos = useRef<Pos | undefined>(undefined);
     const [interactorMouseState, setInteractorMouseState] = React.useState<InteractorMouseState>({ clickPos, lastPos });
     const onMouseMove = (e: React.MouseEvent): void => {
         if (!chartInteractorRef.current) { return; }
@@ -233,10 +233,9 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
             interactorMouseState.lastPos.current = interactorMouseState.clickPos.current
                 ? { x: 0, y: offsetY, absoluteX: e.nativeEvent.x, absoluteY: e.nativeEvent.y }
                 : undefined;
-            chartInteractorRef.current.mouseMoveAction(interactorMouseState, e);
-            return;
+        } else {
+            interactorMouseState.lastPos.current = { x: offsetX, y: offsetY, absoluteX: e.nativeEvent.x, absoluteY: e.nativeEvent.y };
         }
-        interactorMouseState.lastPos.current = { x: offsetX, y: offsetY, absoluteX: e.nativeEvent.x, absoluteY: e.nativeEvent.y };
         chartInteractorRef.current.mouseMoveAction(interactorMouseState, e);
     };
     const onMouseDown = (e: React.MouseEvent): void => {
@@ -247,8 +246,9 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
             return;
         }
         const needDragOneSide = chartInteractorRef.current.mouseDownAction(interactorMouseState, e);
-        if (needDragOneSide === MouseDownActionResult.NO_NEED_TO_DRAG_ONE_SIDE) {
-            interactorMouseState.clickPos.current = interactorMouseState.lastPos.current;
+        if (needDragOneSide === MouseDownActionResult.NEED_DRAG_ONE_SIDE) {
+            // 拖拽
+            onMouseMove(e);
         }
     };
     const onWheel = (e: React.WheelEvent<HTMLDivElement>): void => {

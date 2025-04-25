@@ -14,7 +14,7 @@ import type { Session } from '../../../entity/session';
 import { traceEnd } from '../../../utils/traceLogger';
 import { useWatchDomResize } from '../../../utils/useWatchDomResize';
 import { type CustomCrossRenderer, registerCrossUnitRenderer, useCustomRenderers } from './custom';
-import type { Pos } from './common';
+import type { Pos, ExtendPos } from './common';
 import { draw, drawMEventMask } from './draw';
 import type { DrawCanvasArgs } from './draw';
 import {
@@ -24,7 +24,7 @@ import {
     mouseLeaveAction,
     mouseWheelAction,
     mouseMoveAction,
-    type MouseDownActionResult,
+    type MouseDownActionResult, handleMousePosChange,
 } from './actions';
 import type { TimeStamp } from '../../../entity/common';
 registerCrossUnitRenderer({
@@ -96,7 +96,7 @@ export interface ChartInteractorHandles {
 }
 
 export interface InteractorMouseState {
-    clickPos: React.MutableRefObject<Pos | undefined>;
+    clickPos: React.MutableRefObject<ExtendPos | undefined>;
     lastPos: React.MutableRefObject<Pos | undefined>;
     wheelEvent?: { ctrlKey: boolean; deltaY: number };
 };
@@ -140,7 +140,7 @@ const handleInteractorEvent = ({
             mouseMoveAction(interactorParams, interactorMouseState, e);
         },
         mouseDownAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent) =>
-            mouseDownAction(session, xReverseScaleRef, interactorMouseState, e, splitLineRef),
+            mouseDownAction({ session, xReverseScaleRef, interactorMouseState, e, splitLineRef, interactorParams }),
         mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
             mouseUpAction(interactorParams, interactorMouseState, e);
         },
@@ -236,6 +236,9 @@ const Interactor = ({
             draw(drawArgs);
         }, 10);
     }, [normalRect]);
+    useEffect(() => {
+        handleMousePosChange(interactorParams, interactorMouseState);
+    }, [domainStart, domainEnd]);
 
     useImperativeHandle(ref, handleInteractorEvent({ interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef }));
     return <>

@@ -318,7 +318,7 @@ test.describe('Timeline', () => {
     });
 
     // 右键菜单--Fit to screen
-    test('test_fitToScreen_when_rightClickOperator', async ({ timelinePage }) => {
+    test('test_fitToScreen_when_rightClickOperator', async ({ timelinePage, page }) => {
         const { timelineFrame, mainContainer, unitWrapperScroller } = timelinePage;
         const secondLayerUnit = mainContainer.getByText('Python (2045554)');
 
@@ -334,6 +334,7 @@ test.describe('Timeline', () => {
                 },
             });
         await timelineFrame.getByText('Fit to screen').click();
+        await page.mouse.move(0, 0);
 
         await expect(mainContainer).toHaveScreenshot('fit-to-screen.png', { maxDiffPixels: 100 });
     });

@@ -223,7 +223,7 @@ const drawMaskRange = ({
     } else if (clickPos !== undefined && mousePosNow !== undefined && clickPos.x !== mousePosNow.x) {
         // 1st priority
         // is brushing
-        maskRange = [clickPos.x, mousePosNow.x];
+        maskRange = [xReverseScaleRef.current(clickPos.timeAxisX), mousePosNow.x];
     } else if (selectedRange !== undefined) {
         // 2nd priority
         // not brushing now but has selected range
@@ -296,10 +296,11 @@ export const drawOnMove = ({
 
     // draw hoverline and timeaxis highlight
     if (clickPos !== undefined) {
+        const startX = xReverseScaleRef.current(clickPos.timeAxisX);
         ctx.strokeStyle = '#3778ED';
         ctx.beginPath();
-        ctx.moveTo(clickPos.x, 0);
-        ctx.lineTo(clickPos.x, height);
+        ctx.moveTo(startX, 0);
+        ctx.lineTo(startX, height);
         ctx.stroke();
     }
 
@@ -401,10 +402,11 @@ export const draw = (props: DrawCanvasArgs): void => {
     }
     // clear all
     ctx.clearRect(0, 0, width, height);
-    drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScaleRef, xScale, selectedRange, session, isNsMode, theme });
-
-    // should filter on data type
-    drawSelectedRange(ctx, selectedRange, xReverseScaleRef);
+    if (selectedRange !== undefined) {
+        drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScaleRef, xScale, selectedRange, session, isNsMode, theme });
+        // should filter on data type
+        drawSelectedRange(ctx, selectedRange, xReverseScaleRef);
+    }
 
     heightMap.clear();
     threadIsCol.clear();
