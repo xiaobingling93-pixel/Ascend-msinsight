@@ -75,6 +75,7 @@ TEST(NumberUtil, TimestampUsToNsWithLongDoubleWithNormalInputReturnValid) {
     EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNs(stold("1695297849996490.053011100000")));
     EXPECT_EQ(1695297849996490054, NumberUtil::TimestampUsToNs(stold("1695297849996490.0535")));
     EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs(1695297849996490));
+    EXPECT_EQ(0, NumberUtil::TimestampUsToNs(16952978499964900));
 }
 
 TEST(NumberUtil, TestConvetUsStrToNanoseconds) {
@@ -94,6 +95,7 @@ TEST(NumberUtil, TestConvetUsStrToNanoseconds) {
     EXPECT_EQ(1732274952602387700, NumberUtil::ConvertUsStrToNanoseconds("1.7322749526023877e+15"));
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("-1.7322749526023877e+15"));
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("null"));
+    EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("16952978499964900"));
 }
 
 TEST(NumberUtil, TimestampUsToNsWithStringWithNormalInputReturnValid) {
@@ -101,6 +103,7 @@ TEST(NumberUtil, TimestampUsToNsWithStringWithNormalInputReturnValid) {
     EXPECT_EQ(1695297849996489984, llround(a * 1000));
 
     EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs("1695297849996490"));
+    EXPECT_EQ(0, NumberUtil::TimestampUsToNs("16952978499964900"));
 }
 
 TEST(NumberUtil, StringToDoubleWithNormalStringReturnValidNumber) {

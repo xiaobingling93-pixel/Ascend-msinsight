@@ -180,7 +180,11 @@ public:
             str.insert(index + THOUSAND_SUFFIX.length(), ".");
         }
         try {
-            return llroundl(std::stold(str));
+            long double tempValue = std::stold(str);
+            if (tempValue < INT64_MIN || tempValue > INT64_MAX) {
+                return 0;
+            }
+            return llroundl(tempValue);
         } catch (std::exception &) {
             return 0;
         }
