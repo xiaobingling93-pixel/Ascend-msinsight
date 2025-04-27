@@ -341,6 +341,7 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath, 
     }
     std::ifstream file = OpenReadFileSafely(selectedFilePath, std::ios::binary);
     if (!file) {
+        file.close();
         ServerLog::Error("Failed to open file, file is invalid!");
         return false;
     }
@@ -354,6 +355,7 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath, 
     file.read(reinterpret_cast<char *>(&reverse), sizeof(reverse));
 
     if (!file) {
+        file.close();
         ServerLog::Error("Can't read contentLength and reverse.");
         return false;
     }
