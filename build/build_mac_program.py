@@ -58,6 +58,14 @@ class Arch(Enum):
     x86_64 = 'x86_64'
 
 
+class BuildException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
 def read_config_file():
     """
     读取执行机ssh配置
@@ -136,7 +144,8 @@ def execute_cmd(ssh_client, cmd, timeout: int = 3*60, sensitive: bool = False, *
             cmd = cmd % args
         except TypeError as e:
             logging.error("[Sensitive Cmd] Usage error: %s" % e)
-            return
+            raise BuildException("Cmd init failed") from e
+
 
     logging.info('Start to execute cmd: %s', log_cmd)
 
@@ -149,7 +158,7 @@ def execute_cmd(ssh_client, cmd, timeout: int = 3*60, sensitive: bool = False, *
     if exit_status != 0:
         stderr_output = stderr.read().decode('utf-8')
         logging.error('Failed to execute cmd: %s, and exit: %s, detail: %s', log_cmd, exit_status, stderr_output)
-        raise SSHException
+        raise BuildException("Command execute failed")
     else:
         logging.info('Finish to execute cmd: %s', log_cmd)
 
@@ -212,6 +221,9 @@ def copy_file_back(ssh_client, workspace):
     local_dir = os.path.join(PROJECT_PATH, 'out')
     output_dir = workspace + SLASH + MINDSTUDIO_INSIGHT + SLASH + 'out'
     sftp = ssh_client.open_sftp()
+    if len(sftp.listdir(output_dir)) == 0:
+        logging.error("Remote product file not found")
+        raise BuildException("No product file found")
     for file in sftp.listdir(output_dir):
         remote_path = output_dir + SLASH + file
         local_path = os.path.join(local_dir, file)
@@ -278,7 +290,7 @@ def build_mac(arch, ssh_config, result_queue):
         copy_file_back(ssh, ssh_config.workspace)
         clean_remote_workspace(ssh, ssh_config.workspace)
         logging.info('Finish to build Ascend Insight for %s on %s.', arch, ssh_config.host)
-    except SSHException as e:
+    except (SSHException, BuildException) as e:
         logging.error('Failed to build Ascend Insight for %s on %s : %s', arch, ssh_config.host, e)
         result = -1
     finally:
