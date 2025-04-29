@@ -37,8 +37,6 @@ class Const:
     MANIFEST_DIR = 'manifest'
     DEPENDENCY_DIR = 'dependency'
     CONFIG_INI = 'config.ini'
-    VSCODE_PLUGINS_DIR = os.path.join('plugins', 'vscode')
-    INTELLIJ_PLUGINS_DIR = os.path.join('plugins', 'intellij')
     JUPYTERLAB_PLUGINS_DIR = os.path.join('plugins', 'jupyterlab')
     PLATFORM_DIR = os.path.join(PROJECT_PATH, 'platform')
     PLATFORM_PREVIEW_DIR = os.path.join(PLATFORM_DIR, 'preview')
@@ -175,81 +173,6 @@ def set_npm_config():
     os.putenv('npm_config_strict_ssl', 'false')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
     os.putenv('npm_config_@cloudsop:registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm')
-
-
-def build_vscode(vscode_version, os_name):
-    # Linux和MacOS上默认不编译vscode插件
-    if platform.system() != Const.WINDOWS_OS and os.getenv('NO_BUILD_VSCODE'):
-        logging.info('The VSCode plugin is not compiled because NO_BUILD_VSCODE is set.')
-        return 0
-
-    set_npm_config()
-
-    plugin_path = os.path.join(PROJECT_PATH, Const.VSCODE_PLUGINS_DIR)
-    result = exec_command([Const.NPM, 'install', '--force'], plugin_path, 'vscode_plugin')
-    if result != 0:
-        return 1
-
-    result = exec_command([Const.NPM, 'run', 'vsce:package'], plugin_path, 'vscode_plugin')
-    if result != 0:
-        return 1
-
-    # copy vscode plugin to out directory
-    plugin_name = 'mindstudio-insight-extension_' + vscode_version + '_' + os_name + '.vsix'
-    dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
-    for file in os.listdir(plugin_path):
-        if file.endswith('.vsix'):
-            shutil.copy(os.path.join(plugin_path, file), dst_file)
-
-    # zip server and frontend files for huaweicloud
-    zip_name = 'mindstudio-insight_' + vscode_version + '_' + os_name
-    dst_file = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR, zip_name)
-    profiler_path = os.path.join(plugin_path, 'dist', 'profiler')
-    shutil.make_archive(dst_file, 'zip', profiler_path)
-    return 0
-
-
-def build_intellij(idea_version, os_name):
-    # MacOS上不编译intellij插件
-    if platform.system() == Const.MAC_OS:
-        return 0
-
-    module_name = 'intellij_plugin'
-    plugins_path = os.path.join(PROJECT_PATH, Const.INTELLIJ_PLUGINS_DIR)
-    url = os.getenv('GRADLE_URL')
-    if url is None:
-        result = exec_command([Const.GRADLE, 'wrapper'], plugins_path, module_name)
-    else:
-        result = exec_command([Const.GRADLE, 'wrapper', '--gradle-distribution-url', url], plugins_path, module_name)
-    if result != 0:
-        return 1
-
-    gradlew = os.path.join(plugins_path, Const.GRADLEW)
-    if platform.system() != Const.WINDOWS_OS:
-        result = exec_command(['chmod', 'a+x', 'gradlew'], plugins_path, module_name)
-        if result != 0:
-            return 1
-
-    result = exec_command([gradlew, 'clean'], plugins_path, module_name)
-    if result != 0:
-        return 1
-
-    result = exec_command([gradlew, 'mindstudio-insight:copyFrontendBuild'], plugins_path, module_name)
-    if result != 0:
-        return 1
-
-    result = exec_command([gradlew, 'buildPlugin'], plugins_path, module_name)
-    if result != 0:
-        return 1
-
-    distributions_path = os.path.join(PROJECT_PATH, Const.INTELLIJ_PLUGINS_DIR, Const.BUILD_DIR, 'distributions')
-    plugin_name = 'mindstudio-insight-plugin_' + idea_version + '_' + os_name + '.zip'
-    dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
-    for file in os.listdir(distributions_path):
-        if file.endswith('.zip'):
-            shutil.copy(os.path.join(distributions_path, file), dst_file)
-
-    return 0
 
 
 def update_jupyterlab_plugin_version(jupyterlab_version, plugin_path):
@@ -602,12 +525,6 @@ def build_product_parallel(vscode_version, idea_version, os_name):
         (idea_version, os_name),
         (vscode_version, os_name)
     ]
-    if os.getenv('BUILD_INTELLIJ'):
-        funcs.append(build_intellij)
-        args_list.append((idea_version, os_name))
-    if os.getenv('BUILD_VSCODE'):
-        funcs.append(build_vscode)
-        args_list.append((vscode_version, os_name))
 
     pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), len(funcs)))
     results = []
@@ -639,11 +556,6 @@ def replace_placeholders_in_file(file_path, placeholder, replacement):
 
 
 def update_plugins_version(version):
-    # 替换gradle.properties中的版本信息
-    gradle_properties = os.path.join(PROJECT_PATH, Const.INTELLIJ_PLUGINS_DIR, 'foundation',
-                                     'ideaplugin', 'gradle.properties')
-    replace_placeholders_in_file(gradle_properties, Const.PLUGINS_VERSION_PLACEHOLDER, version)
-
     # 替换installer.nsi中的版本信息
     installer_nsi_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle', 'installer.nsi')
     replace_placeholders_in_file(installer_nsi_path, Const.PLUGINS_VERSION_PLACEHOLDER, version)

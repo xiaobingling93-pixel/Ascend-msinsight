@@ -1,9 +1,0 @@
-pluginManagement {
-    repositories {
-        maven {
-            url 'https://cmc.centralrepo.rnd.huawei.com/maven/'
-        }
-    }
-}
-rootProject.name = 'mindstudio-insight'
-
