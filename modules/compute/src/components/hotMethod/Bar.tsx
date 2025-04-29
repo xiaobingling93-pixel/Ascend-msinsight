@@ -66,12 +66,6 @@ export function StallBar({ real, theoretical }: Record<string, number | undefine
     return isWrongNumber
         ? <></>
         : <Tooltip placement="topLeft" title={<div>
-            <div>
-
-            </div>
-            <div>
-
-            </div>
             <div>{i18n.t('TheoreticalStallCycles', { ns: 'source' })}: {theoretical} </div>
             <div>{i18n.t('RealStallCycles', { ns: 'source' })}: {real} </div>
         </div>}>

@@ -44,6 +44,8 @@ export interface InstrsColumnType {
     [ADDESS]: string ;
     [SOURCE]: string ;
     [PIPE]: string ;
+    [REAL_STALL_CYCLES]: number;
+    [THEORETICAL_STALL_CYCLES]: number;
     maxCycles: number;
     cycles: number;
 };

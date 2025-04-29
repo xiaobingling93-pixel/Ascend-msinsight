@@ -50,7 +50,7 @@ const getFilters = (curInstrData: InstrsColumnType[], dataIndex: string): any[] 
 
 // 更新指令表的显示列
 export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[]): ColumnsType<InstrsColumnType> => {
-    const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields);
+    const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields, curInstrData);
     // 没有有筛选功能的列
     const unfilterableCols = ['index', 'RealStallCycles'];
     columns.forEach((col: ColumnType<InstrsColumnType>) => {
@@ -144,8 +144,18 @@ export const getColConfig = <T extends object>({ colName, fieldType, presetCols,
         };
 };
 
-// 固定显示列
-const fixedCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
+const checkHasStallCycles = (curInstrData: InstrsColumnType[]): boolean => {
+    for (let i = 0; i < curInstrData.length; i++) {
+        if (curInstrData[i].RealStallCycles <= 0 && curInstrData[i].TheoreticalStallCycles <= 0) {
+            continue;
+        }
+        return curInstrData[i].RealStallCycles >= 0 && curInstrData[i].TheoreticalStallCycles >= 0;
+    }
+    return false;
+};
+
+// 默认显示列
+const defaultCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
 // 如果存在放在前面
 const headerCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed'];
 // 如果存在放在最后的列
@@ -153,18 +163,18 @@ const endCols = ['Cycles', 'StallCycles'];
 // 不显示的列
 const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles'];
 
-export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}): ColumnsType<InstrsColumnType> => {
+export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}, curInstrData: InstrsColumnType[] = []):
+ColumnsType<InstrsColumnType> => {
     const dynamicCols = Object.keys(dynamicFields).filter(col => dynamicFields[col] !== FieldType.SKIP);
-    const allCols = ['#', ...dynamicCols];
-    if (allCols.includes('RealStallCycles')) {
+    // 兼容无动态列版本
+    const allCols = dynamicCols.length === 0 ? [...defaultCols] : ['#', ...dynamicCols];
+    if ((dynamicCols.length === 0 && checkHasStallCycles(curInstrData)) || dynamicCols.includes('RealStallCycles')) {
         allCols.push('StallCycles');
     }
-    const cols = dynamicCols.length === 0
-        ? fixedCols
-        : [...headerCols.filter(colName => allCols.includes(colName)),
-            ...allCols.filter(colName => !headerCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),
-            ...endCols.filter(colName => allCols.includes(colName)),
-        ];
+    const cols = [...headerCols.filter(colName => allCols.includes(colName)),
+        ...allCols.filter(colName => !headerCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),
+        ...endCols.filter(colName => allCols.includes(colName)),
+    ];
     return cols.map(colName => getColConfig<InstrsColumnType>(
         { colName, fieldType: dynamicFields[colName], presetCols: instrsColsConfig, t }));
 };
