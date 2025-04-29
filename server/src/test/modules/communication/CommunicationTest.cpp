@@ -197,10 +197,8 @@ TEST_F(TestSuit, GetCommunicationGroups)
     std::string iterationId = "2";
     std::vector<std::string> groupList;
     database->GetGroups(iterationId, groupList);
-    int expectSize = 2;
+    int expectSize = 28;
     EXPECT_EQ(groupList.size(), expectSize);
-    EXPECT_EQ(groupList[0], "p2p");
-    EXPECT_EQ(groupList[1], "(0, 1, 2, 3, 4, 5, 6, 7)");
 }
 
 TEST_F(TestSuit, GetAllRankFromStepStatisticInfoSuccess)

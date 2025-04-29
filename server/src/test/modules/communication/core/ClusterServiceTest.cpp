@@ -14,6 +14,7 @@ using namespace Dic::Module::Communication;
 const int NUMBER_ZERO = 0;
 const int NUMBER_ONE = 1;
 const int NUMBER_TWO = 2;
+const int NUMBER_TWENTY_EIGHT = 28;
 
 class ClusterServiceTest : public ::testing::Test {
 protected:
@@ -106,7 +107,7 @@ TEST_F(ClusterServiceTest, QueryGroupInfoAllSuccess)
     request.params.isCompare = true;
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
-    EXPECT_EQ(response.body.groupList.size(), NUMBER_TWO);
+    EXPECT_EQ(response.body.groupList.size(), NUMBER_TWENTY_EIGHT);
     EXPECT_EQ(response.body.groupList[0].type, "common");
     Clear();
 }
@@ -120,7 +121,7 @@ TEST_F(ClusterServiceTest, QueryGroupInfoOnlyCompareSuccess)
     request.params.isCompare = true;
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
-    EXPECT_EQ(response.body.groupList.size(), NUMBER_TWO);
+    EXPECT_EQ(response.body.groupList.size(), NUMBER_TWENTY_EIGHT);
     EXPECT_EQ(response.body.groupList[0].type, "compare");
     Clear();
 }

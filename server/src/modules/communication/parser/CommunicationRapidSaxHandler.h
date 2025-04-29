@@ -38,6 +38,7 @@ public:
     bool EndArray(rapidjson::SizeType elementCount);
     CommunicationBandWidth MapToBandwidth(const rapidjson::Document &json);
     CommunicationTimeInfo MapToTimeInfo(const rapidjson::Document &json);
+    std::string GetIndexByStage(const std::string &stage);
 private:
     double tempTransitSize = 0;
     int tempInt = 0;

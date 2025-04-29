@@ -326,6 +326,16 @@ struct GetPerformanceIndicatorParam {
     ParallelStrategyConfig config;
 };
 
+struct CommGroupParallelInfo {
+    uint64_t id;
+    std::string type; // p2p、collective
+    std::string groupIdHash; // groupId的hash值
+    std::string groupId; // 全局唯一
+    std::vector<std::string> rankSet;
+    std::string rankSetStr;
+    std::string pgName; // tp、dp、pp...
+};
+
 // Summary性能数据
 const std::string KEY_PREPARING_TIME = "preparing";
 const std::string KEY_TOTAL_COMPUTING_TIME = "computing";

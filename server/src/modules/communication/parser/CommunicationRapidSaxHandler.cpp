@@ -109,7 +109,14 @@ bool CommunicationRapidSaxHandler::StartObject()
 bool CommunicationRapidSaxHandler::Key(const char *str, rapidjson::SizeType length, bool copy)
 {
     currentKey = str;
-    if (currentDepth == stageIdDepth) { stageId = str; }
+    if (currentDepth == stageIdDepth) {
+        if (currentKey == "p2p") {
+            stageId = str;
+        } else {
+            std::vector<std::string> rankList = StringUtil::SplitStringWithParenthesesByComma(str);
+            stageId = StringUtil::JoinNumberStrWithParenthesesByOrder(rankList);
+        }
+    }
     if (currentDepth == stepIdDepth) { stepId = str; }
     if (currentDepth == tempOpNameDepth) { tempOpName = str; }
     if (currentDepth == rankIdDepth) { rankId = str; }
@@ -174,10 +181,24 @@ bool CommunicationRapidSaxHandler::EndArray(rapidjson::SizeType elementCount)
     return true;
 }
 
+std::string CommunicationRapidSaxHandler::GetIndexByStage(const std::string &stage)
+{
+    if (groupIdsMap.count(stageId) == 0) {
+        uint64_t curIndex = 0;
+        CommGroupParallelInfo info;
+        info.rankSetStr = stageId;
+        info.type = "collective";
+        if (database->InsertGroupInfoReturnIndex(info, curIndex)) {
+            groupIdsMap.insert({stageId, curIndex});
+        }
+    }
+    return std::to_string(groupIdsMap[stageId]);
+}
+
 CommunicationBandWidth CommunicationRapidSaxHandler::MapToBandwidth(const rapidjson::Document &json)
 {
     CommunicationBandWidth bandWidth;
-    bandWidth.stageId = std::to_string(groupIdsMap[stageId]);
+    bandWidth.stageId = GetIndexByStage(stageId);
     bandWidth.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
     if (std::strcmp(stepId.c_str(), "step") == 0) {
         bandWidth.iterationId = "0";
@@ -207,7 +228,7 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
     if (std::strcmp(stepId.c_str(), "step") == 0) {
         timeInfo.iterationId = "0";
     }
-    timeInfo.stageId = std::to_string(groupIdsMap[stageId]);
+    timeInfo.stageId = GetIndexByStage(stageId);
     size_t index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
     if (index != std::string::npos) {
         timeInfo.opName = tempOpName.substr(0, index);

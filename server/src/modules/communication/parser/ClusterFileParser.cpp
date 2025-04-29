@@ -14,6 +14,7 @@
 #include "DbClusterDataBase.h"
 #include "TraceTime.h"
 #include "CollectionUtil.h"
+#include "CommunicationGroupParser.h"
 #include "MetaDataCacheManager.h"
 #include "ClusterFileParser.h"
 
@@ -127,7 +128,6 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     auto now = std::chrono::system_clock::now();
     // 转换为毫秒数
     baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-    ParseCommunicationGroup(selectedPath, baseInfo);
     std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
     if (textDb == nullptr) {
         ServerLog::Error("Can't get cluster database when sava cluster base info.");
@@ -148,30 +148,68 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
                     baseInfo.collectStartTime);
 }
 
+bool ClusterFileParser::InitCommunicationGroupInfo(std::vector<CommGroupParallelInfo> &groupInfos)
+{
+    // 先解析communication group文件
+    std::vector<std::string> communicationGroupList =
+            FileUtil::FindFirstFileByRegex(selectedFilePath, std::regex(R"(communication_group.json)"));
+    if (communicationGroupList.empty()) {
+        ServerLog::Error("Failed to get communicationGroup files");
+        return false;
+    }
+    groupInfos = Communication::CommunicationGroupParser::ParseCommunicationGroup(communicationGroupList[0]);
+    if (groupInfos.empty()) {
+        return false;
+    }
+    return true;
+}
+
 bool ClusterFileParser::ParseClusterFiles()
 {
     ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::INIT);
+    // 初始化集群
     if (!InitClusterDatabase()) {
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         ServerLog::Error("Init cluster database occur an err");
         return false;
     }
+
+    // 判断是跳过解析
+    if (!needClearDb) {
+        bool skipStatus = SkipClusterParse();
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
+        return skipStatus;
+    }
+    // 正常解析
+    ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::RUNNING);
+    bool parseRes = InitBaseInfoAndMatrixData();
+    return parseRes;
+}
+
+bool ClusterFileParser::SkipClusterParse()
+{
     std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
     if (textDb == nullptr) {
-        ServerLog::Error("Can't get cluster database when parse cluster files.");
+        ServerLog::Error("Fail to skip cluster parse, can't get cluster database when parse cluster files.");
         return false;
     }
-    if (!needClearDb) {
-        ServerLog::Info("cluster db file is already exist, skip parse ");
-        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
-        uint64_t min = UINT64_MAX;
-        uint64_t max = 0;
-        textDb->QueryExtremumTimestamp(min, max);
-        if (min != UINT64_MAX && max != 0) {
-            Timeline::TraceTime::Instance().UpdateTime(min, max);
-        }
-        return true;
+    ServerLog::Info("cluster db file is already exist, skip parse ");
+    uint64_t min = UINT64_MAX;
+    uint64_t max = 0;
+    textDb->QueryExtremumTimestamp(min, max);
+    if (min != UINT64_MAX && max != 0) {
+        Timeline::TraceTime::Instance().UpdateTime(min, max);
     }
-    ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::RUNNING);
+    return true;
+}
+
+bool ClusterFileParser::InitBaseInfoAndMatrixData()
+{
+    std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
+    if (textDb == nullptr) {
+        ServerLog::Error("Fail to init base info and matrixData, can't get cluster database when parse cluster files.");
+        return false;
+    }
     // parse communication file
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
@@ -180,6 +218,12 @@ bool ClusterFileParser::ParseClusterFiles()
     if (communicationMatrixFileList.empty() && !AttAnalyze(selectedFilePath, ATT_MODEL_MATRIX, AttDataType::TEXT)) {
         return false;
     }
+    // 解析group数据并进行落库，解析失败不阻塞进程
+    std::vector<CommGroupParallelInfo> groupInfos;
+    if (!InitCommunicationGroupInfo(groupInfos) || !textDb->InsertGroupInfos(groupInfos)) {
+        ServerLog::Warn("Fail to parse communication group file.");
+    }
+    // 解析矩阵数据
     std::vector<std::string> communicationMatrixList =
             FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunicationMatrix);
     if (!communicationMatrixList.empty()) {
@@ -306,64 +350,6 @@ bool ClusterFileParser::InitClusterDatabase()
         }
     }
     return true;
-}
-
-void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo)
-{
-    std::vector<std::string> communicationGroupList =
-            FileUtil::FindFirstFileByRegex(selectedPath, std::regex(R"(communication_group.json)"));
-    if (communicationGroupList.empty()) {
-        ServerLog::Error("Failed to get communicationGroup files");
-        return;
-    }
-    const std::string &filePath = FileUtil::PathPreprocess(communicationGroupList[0].c_str());
-    auto start = std::chrono::high_resolution_clock::now();
-    std::ifstream communicationGroup = OpenReadFileSafely(filePath, std::ios::binary);
-    if (communicationGroup.good()) {
-        Document doc;
-        std::string fileContent;
-        std::copy(std::istream_iterator<unsigned char>(communicationGroup), std::istream_iterator<unsigned char>(),
-                  back_inserter(fileContent));
-        doc.Parse(fileContent.c_str());
-        if (!CheckDocumentValid(doc)) {
-            return;
-        }
-        auto p2p = doc.FindMember("p2p")->value.GetArray();
-        auto collective = doc.FindMember("collective")->value.GetArray();
-        std::sort(p2p.Begin(), p2p.End(), OrderByLenDesAndNumAsc);
-        std::sort(collective.Begin(), collective.End(), OrderByLenDesAndNumAsc);
-        std::for_each(p2p.begin(), p2p.end(), [&collective](auto& item) {
-            auto pos = std::find(collective.begin(), collective.end(), item);
-            if (pos != collective.end()) {
-                collective.Erase(pos);
-            }
-        });
-        auto endIt = std::unique(collective.begin(), collective.end()); // 去重
-        if (!collective.Empty()) {
-            collective.Erase(endIt, collective.End());
-        }
-        baseInfo.ppStages = JsonUtil::JsonDump(p2p);
-        baseInfo.stages = JsonUtil::JsonDump(collective);
-        auto end = std::chrono::high_resolution_clock::now();
-        ServerLog::Info("end parseCommunicationGroupFile data into db ,file:", filePath, ",cost time:",
-                        (end - start).count());
-    } else {
-        ServerLog::Error("parseCommunicationGroupFile fail, path:", filePath);
-    }
-}
-
-bool ClusterFileParser::OrderByLenDesAndNumAsc(const Value& a, const Value& b)
-{
-    if (!a.IsArray() || !b.IsArray()) {
-        return true;
-    }
-    if (a.Size() == b.Size() && a.Size() > 0) {
-        if (!a[0].IsInt() || !b[0].IsInt()) {
-            return true;
-        }
-        return a[0].GetInt() < b[0].GetInt();
-    }
-    return a.Size() > b.Size();
 }
 
 bool ClusterFileParser::CheckDocumentValid(const Document &doc)

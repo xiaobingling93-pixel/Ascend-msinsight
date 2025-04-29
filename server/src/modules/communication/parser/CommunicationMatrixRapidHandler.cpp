@@ -82,7 +82,15 @@ bool CommunicationMatrixRapidHandler::StartObject()
 bool CommunicationMatrixRapidHandler::Key(const char *str, rapidjson::SizeType length, bool copy)
 {
     currentKey = str;
-    if (currentDepth == groupDepth) { groupId = str; }
+    if (currentDepth == groupDepth) {
+        // groupId内容可能为乱序，需要重新进行排序
+        if (currentKey == "p2p") {
+            groupId = str;
+        } else {
+            std::vector<std::string> rankList = StringUtil::SplitStringWithParenthesesByComma(str);
+            groupId = StringUtil::JoinNumberStrWithParenthesesByOrder(rankList);
+        }
+    }
     if (currentDepth == stepDepth) { iterationId = str; }
     if (currentDepth == opNameDepth) { tempOpName = str; }
     if (currentDepth == ranksDepth) { tempRank = str; }
@@ -98,14 +106,14 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
         ServerLog::Error("Can't get cluster database.");
         return false;
     }
+    if (groupIdsMap.empty()) {
+        groupIdsMap = database->GetAllGroupMap();
+    }
     currentDepth--;
     if (currentDepth == ranksDepth) {
         CommunicationMatrixInfo matrix = MapToMatrixInfo(currentObject);
         database->InsertCommunicationMatrix(matrix);
         currentObject.RemoveAllMembers();
-    }
-    if (currentDepth == 0) {
-        database->InsertGroupId(groupIdsMap);
     }
     return true;
 }
@@ -123,9 +131,16 @@ bool CommunicationMatrixRapidHandler::EndArray(rapidjson::SizeType elementCount)
 CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const rapidjson::Document &json)
 {
     CommunicationMatrixInfo matrixInfo;
-    auto it = groupIdsMap.insert(std::make_pair(groupId, groupIdNumber));
-    if (it.second) {
-        groupIdNumber++;
+    if (groupIdsMap.count(groupId) == 0) {
+        uint64_t curIndex = 0;
+        CommGroupParallelInfo info;
+        info.rankSetStr = groupId;
+        info.type = "collective";
+        if (database->InsertGroupInfoReturnIndex(info, curIndex)) {
+            groupIdsMap.insert({groupId, curIndex});
+        } else {
+            ServerLog::Warn("Fail to add group id when parse matrix data, group id:", groupId);
+        }
     }
     matrixInfo.groupId = std::to_string(groupIdsMap[groupId]);
     matrixInfo.iterationId = iterationId;

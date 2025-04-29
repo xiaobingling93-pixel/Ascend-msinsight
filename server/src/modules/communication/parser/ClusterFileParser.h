@@ -28,7 +28,6 @@ public:
     void ParseStepStatisticsFile(const std::vector<std::string> &filePathList);
     void SaveClusterBaseInfo(const std::string& selectedPath);
     void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
-    static void ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo);
     bool ParserClusterOfDb();
     std::string GetClusterDbPath();
     ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> database,
@@ -53,10 +52,12 @@ private:
                            const std::string &mode,
                            AttDataType dataType = AttDataType::TEXT);
     bool TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication);
+    bool InitCommunicationGroupInfo(std::vector<CommGroupParallelInfo> &groupInfos);
     static bool CheckDocumentValid(const Document &doc);
     static std::string GetStrValue(std::map<std::string, size_t> &dataMap, const std::vector<std::string> &tokens,
                                    const std::string &key);
-    static bool OrderByLenDesAndNumAsc(const Value &a, const Value &b);
+    bool SkipClusterParse();
+    bool InitBaseInfoAndMatrixData();
 };
 } // end of namespace Timeline
 } // end of namespace Module

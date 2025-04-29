@@ -35,7 +35,8 @@ public:
     void InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
     void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
     void InsertClusterBaseInfo(ClusterBaseInfo &baseInfo);
-    void InsertGroupId(const std::unordered_map<std::string, int64_t> &groupIds);
+    bool InsertGroupInfos(const std::vector<CommGroupParallelInfo> &groupInfos);
+    bool InsertGroupInfoReturnIndex(const CommGroupParallelInfo &groupInfo, uint64_t &index);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
     void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &matrixInfos);
 

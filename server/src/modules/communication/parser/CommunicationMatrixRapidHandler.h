@@ -46,7 +46,6 @@ private:
     std::string iterationId;
     std::string tempOpName;
     std::string tempRank;
-    int64_t groupIdNumber = 1;
     std::unordered_map<std::string, int64_t> groupIdsMap;
     uint32_t groupDepth = 1;
     uint32_t stepDepth = 2;

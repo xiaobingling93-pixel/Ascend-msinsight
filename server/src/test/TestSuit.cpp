@@ -45,8 +45,9 @@ public:
         MemoryParse::Instance().Parse({testDataPath});
         WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
+        std::string clusterPath = testDataPath + R"(/cluster_analysis_output)";
         auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::TEXT);
-        ClusterFileParser clusterFileParser(testDataPath, clusterDatabase, COMPARE + TimeUtil::Instance().NowStr());
+        ClusterFileParser clusterFileParser(clusterPath, clusterDatabase, COMPARE + TimeUtil::Instance().NowStr());
         clusterFileParser.ParseClusterFiles();
         clusterFileParser.ParseClusterStep2Files();
         WaitParseEnd({"0", "1", KERNEL_PREFIX + "0",

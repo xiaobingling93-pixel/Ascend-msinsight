@@ -430,6 +430,14 @@ static std::vector<std::string> SplitStringWithParenthesesByComma(std::string st
     return subStr;
 }
 
+static std::string JoinNumberStrWithParenthesesByOrder(const std::vector<std::string> &input)
+{
+    std::vector<std::string> sortList = input;
+    std::sort(sortList.begin(), sortList.end(),
+        [](const std::string &a, const std::string &b) { return StringToInt(a) < StringToInt(b);});
+    return "(" + join(sortList, ", ") + ")";
+}
+
 private:
 #ifdef _WIN32
     static inline char injectList[] = {

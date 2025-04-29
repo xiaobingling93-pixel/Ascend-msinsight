@@ -70,7 +70,8 @@ bool TextClusterDatabase::CreateTable()
             "dst_rank VARCHAR(50), "
             "transport_type VARCHAR(50), transit_size double, transit_time double, bandwidth double);" +
             "CREATE TABLE " + TABLE_GROUP_ID +
-            "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100));";
+            "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_set VARCHAR(100), type VARCHAR(50), "
+            "group_id_hash VARCHAR(100), group_id VARCHAR(100), pg_name VARCHAR(50));";
     sql += commonSql;
     return ExecSql(sql);
 }
@@ -245,31 +246,60 @@ void TextClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
     }
 }
 
-void TextClusterDatabase::InsertGroupId(const std::unordered_map<std::string, int64_t> &groupIds)
+bool TextClusterDatabase::InsertGroupInfoReturnIndex(const CommGroupParallelInfo &groupInfo, uint64_t &index)
 {
-    if (groupIds.empty()) {
-        ServerLog::Error("Group id is empty");
-        return;
-    }
+    std::string sql = "INSERT INTO " + TABLE_GROUP_ID +
+         " (rank_set, type, group_id_hash, group_id, pg_name) VALUES (?, ?, ?, ?, ?) RETURNING id;";
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "INSERT INTO " + TABLE_GROUP_ID + " (id, group_id) VALUES (?, ?)";
-    for (size_t i = 0; i < groupIds.size() - 1; ++i) {
-        sql.append(",(?, ?)");
-    }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare inserting GroupId statement. error:", sqlite3_errmsg(db));
-        return;
+        ServerLog::Error("Failed to prepare inserting group info statement. error:", sqlite3_errmsg(db));
+        return false;
     }
     int idx = bindStartIndex;
-    for (const auto &groupId: groupIds) {
-        sqlite3_bind_int64(stmt, idx++, groupId.second);
-        sqlite3_bind_text(stmt, idx++, groupId.first.c_str(), groupId.first.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, groupInfo.rankSetStr.c_str(), groupInfo.rankSetStr.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, groupInfo.type.c_str(), groupInfo.type.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, groupInfo.groupIdHash.c_str(), groupInfo.groupIdHash.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, groupInfo.groupId.c_str(), groupInfo.groupId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, groupInfo.pgName.c_str(), groupInfo.pgName.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int coll = resultStartIndex;
+        index = sqlite3_column_int64(stmt, coll++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool TextClusterDatabase::InsertGroupInfos(const std::vector<CommGroupParallelInfo> &groupInfos)
+{
+    if (groupInfos.empty()) {
+        ServerLog::Error("Group info is empty");
+        return false;
+    }
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "INSERT INTO " + TABLE_GROUP_ID +
+        " (rank_set, type, group_id_hash, group_id, pg_name) VALUES (?, ?, ?, ?, ?)";
+    for (size_t i = 0; i < groupInfos.size() - 1; ++i) {
+        sql.append(",(?, ?, ?, ?, ?)");
+    }
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare inserting group infos statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    int idx = bindStartIndex;
+    for (const auto &info: groupInfos) {
+        sqlite3_bind_text(stmt, idx++, info.rankSetStr.c_str(), info.rankSetStr.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, info.type.c_str(), info.type.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, info.groupIdHash.c_str(), info.groupIdHash.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, info.groupId.c_str(), info.groupId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, info.pgName.c_str(), info.pgName.length(), SQLITE_TRANSIENT);
     }
     auto result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert GroupId data fail. ", sqlite3_errmsg(db));
+        return false;
     }
+    return true;
 }
 
 void TextClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList)
@@ -567,13 +597,13 @@ std::vector<std::string> TextClusterDatabase::GetAllRankFromStepStatisticInfo()
 
 bool TextClusterDatabase::GetGroups(const std::string &iterationId, std::vector<std::string> &groupList)
 {
-    std::string sql = "SELECT DISTINCT group_id as groupId FROM " + TABLE_GROUP_ID;
+    std::string sql = "SELECT DISTINCT rank_set as groupId FROM " + TABLE_GROUP_ID;
     return ExecuteGetGroups(iterationId, groupList, sql);
 }
 
 std::unordered_map<std::string, int64_t> TextClusterDatabase::GetAllGroupMap()
 {
-    std::string sql = "SELECT id, group_id FROM " + TABLE_GROUP_ID;
+    std::string sql = "SELECT id, rank_set FROM " + TABLE_GROUP_ID;
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -604,7 +634,7 @@ bool TextClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                       "op_name as opName "
                       "FROM " + TABLE_COMMUNICATION_MATRIX + " CM"
                       " LEFT JOIN " + TABLE_GROUP_ID + " g ON cm.group_id = g.id";
-    std::string collectiveCondition = " WHERE g.group_id = ? AND iteration_id = ? AND op_sort = ? ";
+    std::string collectiveCondition = " WHERE g.rank_set = ? AND iteration_id = ? AND op_sort = ? ";
     auto collectiveRes = ExecuteQueryMatrixList(param, collectiveMatrixInfoDoList, sql + collectiveCondition);
     // 符合两种情况直接返回：1.如果不是pp通信域；2.是pp通信域但非send receive算子
     if (param.pgName != ppVal || !CheckIsPpOp(param.operatorName)) {
@@ -616,7 +646,7 @@ bool TextClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
     Protocol::MatrixBandwidthParam paramTemp{p2pVal, param.operatorName, param.iterationId};
     std::vector<MatrixInfoDo> ppMatrixInfoDoList;
     std::string rankSqlCondition = GetRankStrForSql(param.stage);
-    std::string ppCondition = " WHERE g.group_id = ? AND iteration_id = ? AND op_sort = ? AND src_rank in "
+    std::string ppCondition = " WHERE g.rank_set = ? AND iteration_id = ? AND op_sort = ? AND src_rank in "
         + rankSqlCondition + " AND dst_rank in " + rankSqlCondition;
     auto ppRes = ExecuteQueryMatrixList(paramTemp, ppMatrixInfoDoList, sql + ppCondition);
     if (param.operatorName == totalOpInfo) {
@@ -688,7 +718,7 @@ bool TextClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 bool TextClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,
                                                               Protocol::CommunicationKernelBody &responseBody)
 {
-    std::string sql = "select iteration_id, tg.group_id as stage_id from " + TABLE_TIME_INFO + " t"
+    std::string sql = "select iteration_id, tg.rank_set as stage_id from " + TABLE_TIME_INFO + " t"
         " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
         " where op_name = ? and rank_id = ?";
     return ExecuteQueryIterationAndCommunicationGroup(sql, params.name, params.rankId, responseBody.step,
@@ -824,7 +854,7 @@ bool TextClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param
                       "ROUND(large_package_ratio, 4)  as large_package_ratio from "
                       + TABLE_BANDWIDTH + " b "
                       " LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
-                      " WHERE iteration_id = ? AND rank_id = ? AND g.group_id = ? AND op_name = ? ";
+                      " WHERE iteration_id = ? AND rank_id = ? AND g.rank_set = ? AND op_name = ? ";
     Protocol::BandwidthDataResBody collective;
     bool collectiveRes = ExecuteQueryBandwidthData(param, collective, sql);
     // 符合两种情况直接返回：1.如果不是pp通信域；2.是pp通信域但非send receive算子
@@ -923,7 +953,7 @@ bool TextClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam 
                       " LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
                       " WHERE iteration_id = ? "
                       "AND rank_id = ? "
-                      "AND g.group_id = ? "
+                      "AND g.rank_set = ? "
                       "AND op_name = ? "
                       "AND transport_type = ? ;";
     Protocol::DistributionResBody collective;
@@ -984,14 +1014,14 @@ bool TextClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &
     std::vector<Protocol::OperatorNamesObject> collectiveOpNameList;
     std::string sql = "SELECT DISTINCT op_sort  FROM " + TABLE_COMMUNICATION_MATRIX + " cm"
             " LEFT JOIN " + TABLE_GROUP_ID + " g ON cm.group_id = g.id";
-    std::string collectiveCondition = " WHERE iteration_id = ? AND g.group_id = ? ORDER BY op_sort";
+    std::string collectiveCondition = " WHERE iteration_id = ? AND g.rank_set = ? ORDER BY op_sort";
     auto collectiveRes = ExecuteQueryMatrixSortOpNames(requestParams, collectiveOpNameList, sql + collectiveCondition);
     if (requestParams.pgName != ppVal) {
         responseBody = collectiveOpNameList;
         return collectiveRes;
     }
     std::string rankCondition = GetRankStrForSql(requestParams.stage);
-    std::string p2pCondition = " WHERE iteration_id = ? AND g.group_id = ? AND src_rank in "
+    std::string p2pCondition = " WHERE iteration_id = ? AND g.rank_set = ? AND src_rank in "
        + rankCondition + " AND dst_rank in " + rankCondition;
     std::vector<Protocol::OperatorNamesObject> p2pOpNameList;
     Protocol::OperatorNamesParams paramsTemp;
@@ -1138,7 +1168,7 @@ std::string TextClusterDatabase::GetStageIdByGroupId(const std::string &groupId)
     if (groupId.empty()) {
         return "";
     }
-    std::string sql = "SELECT id From " + TABLE_GROUP_ID + " WHERE group_id = ?";
+    std::string sql = "SELECT id From " + TABLE_GROUP_ID + " WHERE rank_set = ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Get stage id by group id failed to prepare sql.");
@@ -1282,11 +1312,11 @@ std::vector<CommInfoUnderRank> TextClusterDatabase::GetCommTimeForRankDim(const 
 {
     std::string sql;
     if (stepId.empty() || stepId == "All") {
-        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapse_time) * 1000, 3) as commTime, g.group_id as rankSet FROM "
+        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapse_time) * 1000, 3) as commTime, g.rank_set as rankSet FROM "
             + TABLE_TIME_INFO + " as t LEFT JOIN " + TABLE_GROUP_ID + " as g ON t.stage_id = g.id "
-            "WHERE op_name = 'Total Op Info' group by t.rank_id, g.group_id";
+            "WHERE op_name = 'Total Op Info' group by t.rank_id, g.rank_set";
     } else {
-        sql = "SELECT t.rank_id as rankId, ROUND(t.elapse_time * 1000, 3) as commTime, g.group_id as rankSet FROM "
+        sql = "SELECT t.rank_id as rankId, ROUND(t.elapse_time * 1000, 3) as commTime, g.rank_set as rankSet FROM "
             + TABLE_TIME_INFO + " as t LEFT JOIN " + TABLE_GROUP_ID + " as g ON t.stage_id = g.id "
             "WHERE op_name = 'Total Op Info' AND iteration_id = ?";
     }

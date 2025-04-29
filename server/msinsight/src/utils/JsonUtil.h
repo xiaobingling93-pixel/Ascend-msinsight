@@ -249,13 +249,21 @@ public:
     {
         rapidjson::Document document;
         document.Parse(jsonStr.c_str());
-        if (!document.IsArray()) {
+        return JsonToVector(document);
+    }
+
+    static std::vector<std::string> JsonToVector(const json_t &json)
+    {
+        if (!json.IsArray()) {
+            Server::ServerLog::Error("Fail to convert json data to vector, invalid json type.");
             return {};
         }
         std::vector<std::string> result;
-        for (rapidjson::SizeType i = 0; i < document.Size(); i++) {
-            if (document[i].IsString()) {
-                result.emplace_back(document[i].GetString());
+        for (rapidjson::SizeType i = 0; i < json.Size(); i++) {
+            if (json[i].IsString()) {
+                result.emplace_back(json[i].GetString());
+            } else {
+                Server::ServerLog::Warn("Unsupported type when transfer json to vector.");
             }
         }
         return result;
