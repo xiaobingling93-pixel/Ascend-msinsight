@@ -299,6 +299,39 @@ template <> std::optional<document_t> ToResponseJson<MatrixListResponse>(const M
     return std::optional<document_t>{std::move(json)};
 }
 
+template <> std::optional<document_t> ToResponseJson<CommunicationAdvisorResponse>(
+    const CommunicationAdvisorResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t items(kArrayType);
+    for (const auto &item : response.body.items) {
+        json_t singleAdvisor(kObjectType);
+        JsonUtil::AddMember(singleAdvisor, "name", item.name, allocator);
+        json_t statistics(kObjectType);
+        for (const auto &column : item.statistics) {
+            json_t values(kArrayType);
+            std::string_view columnName = column.first;
+            for (const auto &columnValue : column.second) {
+                values.PushBack(json_t().SetString(columnValue.c_str(), columnValue.length(), allocator), allocator);
+            }
+            JsonUtil::AddMember(statistics, columnName, values, allocator);
+        }
+        JsonUtil::AddMember(singleAdvisor, "statistics", statistics, allocator);
+        json_t suggestions(kArrayType);
+        for (const auto &suggestion : item.suggestions) {
+            suggestions.PushBack(json_t().SetString(suggestion.c_str(), suggestion.length(), allocator), allocator);
+        }
+        JsonUtil::AddMember(singleAdvisor, "suggestions", suggestions, allocator);
+        items.PushBack(singleAdvisor, allocator);
+    }
+    JsonUtil::AddMember(body, "items", items, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

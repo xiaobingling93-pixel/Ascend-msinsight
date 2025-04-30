@@ -23,7 +23,6 @@ private:
     static std::unique_ptr<Request> ToOperatorDetailsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToBandwidthDataRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDistributionRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToCommunicatorRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToIterationsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDurationRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToRanksRequest(const json_t &json, std::string &error);
@@ -31,11 +30,11 @@ private:
     static std::unique_ptr<Request> ToMatrixOpNamesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMatrixGroupRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMatrixListRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToCommunicationAdvisorRequest(const json_t &json, std::string &error);
 
     static std::optional<document_t> ToOperatorDetailsResponse(const Response &response);
     static std::optional<document_t> ToBandwidthDataResponse(const Response &response);
     static std::optional<document_t> ToDistributionResponse(const Response &response);
-    static std::optional<document_t> ToCommunicatorResponse(const Response &response);
     static std::optional<document_t> ToIterationsResponse(const Response &response);
     static std::optional<document_t> ToOperatorNamesResponse(const Response &response);
     static std::optional<document_t> ToMatrixOpNamesResponse(const Response &response);
@@ -44,6 +43,7 @@ private:
     static std::optional<document_t> ToRanksResponse(const Response &response);
     static std::optional<document_t> ToMatrixGroupResponse(const Response &response);
     static std::optional<document_t> ToMatrixListResponse(const Response &response);
+    static std::optional<document_t> ToCommunicationAdvisorResponse(const Response &response);
     // response to json
 };
 } // namespace Protocol

@@ -23,6 +23,7 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS, ToDurationRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_ADVISOR, ToCommunicationAdvisorRequest);
 }
 
 void CommunicationProtocol::RegisterResponseToJsonFuncs()
@@ -38,6 +39,7 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_ADVISOR, ToCommunicationAdvisorResponse);
 }
 
 void CommunicationProtocol::RegisterEventToJsonFuncs()
@@ -212,6 +214,17 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixOpNamesRequest(const jso
     }
     return reqPtr;
 }
+
+std::unique_ptr<Request> CommunicationProtocol::ToCommunicationAdvisorRequest(
+    const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<CommunicationAdvisorRequest> reqPtr = std::make_unique<CommunicationAdvisorRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info of communication advisor request.";
+        return nullptr;
+    }
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -270,6 +283,10 @@ std::optional<document_t> CommunicationProtocol::ToMatrixListResponse(const Resp
     return ToResponseJson<MatrixListResponse>(dynamic_cast<const MatrixListResponse &>(response));
 }
 
+std::optional<document_t> CommunicationProtocol::ToCommunicationAdvisorResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<CommunicationAdvisorResponse>(dynamic_cast<const CommunicationAdvisorResponse &>(response));
+}
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic

@@ -92,6 +92,7 @@ const std::string REQ_RES_COMMUNICATION_RANKS = "communication/duration/ranks";
 const std::string REQ_RES_COMMUNICATION_OPERATORNAMES = "communication/duration/operatorNames";
 const std::string REQ_RES_COMMUNICATION_SORT_OP = "communication/matrix/sortOpNames";
 const std::string REQ_RES_COMMUNICATION_LIST = "communication/duration/list";
+const std::string REQ_RES_COMMUNICATION_ADVISOR = "communication/advisor";
 
 // summary
 const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";

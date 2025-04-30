@@ -27,6 +27,9 @@ template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksR
 template <> std::optional<document_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response);
 template <> std::optional<document_t> ToResponseJson<MatrixListResponse>(const MatrixListResponse &response);
 
+template <> std::optional<document_t> ToResponseJson<CommunicationAdvisorResponse>(
+    const CommunicationAdvisorResponse &response);
+
 std::optional<document_t> MatrixDataToJson(const MatrixData &matrixData, Document::AllocatorType &allocator);
 
 } // end of namespace Protocol

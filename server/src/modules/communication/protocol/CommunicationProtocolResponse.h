@@ -421,6 +421,21 @@ struct MatrixGroupResponse : public Response {
     MatrixGroupResponseBody body;
 };
 
+struct CommunicationAdvisorInfo {
+    std::string name;
+    std::map<std::string, std::vector<std::string>> statistics;
+    std::vector<std::string> suggestions;
+};
+
+struct CommunicationAdvisorResponseBody {
+    std::vector<CommunicationAdvisorInfo> items;
+};
+
+struct CommunicationAdvisorResponse : public Response {
+    CommunicationAdvisorResponse() : Response(REQ_RES_COMMUNICATION_ADVISOR) {}
+    CommunicationAdvisorResponseBody body;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

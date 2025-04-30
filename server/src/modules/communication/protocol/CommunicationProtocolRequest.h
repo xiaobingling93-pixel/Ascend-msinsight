@@ -350,6 +350,10 @@ struct MatrixBandwidthRequest : public Request {
     MatrixBandwidthRequest() : Request(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH) {};
     MatrixBandwidthParam params;
 };
+
+struct CommunicationAdvisorRequest : public Request {
+    CommunicationAdvisorRequest() : Request(REQ_RES_COMMUNICATION_ADVISOR) {};
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

@@ -15,6 +15,7 @@
 #include "MatrixSortOpNamesHandler.h"
 #include "OperatorNamesHandler.h"
 #include "RanksHandler.h"
+#include "CommunicationAdvisorHandler.h"
 
 
 using namespace Dic::Module;
@@ -205,4 +206,12 @@ TEST_F(HandlerTest, RanksHandlerWithExeSqlFail)
     RanksHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, AdvisorHandlerNormalTest)
+{
+    std::unique_ptr<CommunicationAdvisorRequest> request = std::make_unique<CommunicationAdvisorRequest>();
+    CommunicationAdvisorHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_TRUE(result);
 }

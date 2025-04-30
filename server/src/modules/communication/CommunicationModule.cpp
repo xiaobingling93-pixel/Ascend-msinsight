@@ -14,6 +14,7 @@
 #include "RanksHandler.h"
 #include "GroupHandler.h"
 #include "MatrixListHandler.h"
+#include "CommunicationAdvisorHandler.h"
 #include "ProtocolDefs.h"
 
 namespace Dic {
@@ -46,6 +47,7 @@ void CommunicationModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, std::make_unique<MatrixListHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS,
                               std::make_unique<CommunicationOperatorListsHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_ADVISOR, std::make_unique<CommunicationAdvisorHandler>());
 }
 
 void CommunicationModule::OnRequest(std::unique_ptr<Protocol::Request> request)
