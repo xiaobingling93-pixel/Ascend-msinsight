@@ -34,8 +34,8 @@ template <>
 std::optional<document_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowCategoryEventsResponse &response);
 template <> std::optional<document_t> ToResponseJson<UnitCounterResponse>(const UnitCounterResponse &response);
 template<> std::optional<document_t> ToResponseJson<SystemViewResponse>(const SystemViewResponse &response);
-template <> std::optional<document_t> ToResponseJson<SystemViewAICoreFreqResponse>
-        (const SystemViewAICoreFreqResponse &response);
+template <> std::optional<document_t> ToResponseJson<ExpAnaAICoreFreqResponse>
+        (const ExpAnaAICoreFreqResponse &response);
 template<> std::optional<document_t> ToResponseJson<EventsViewResponse>(const EventsViewResponse &response);
 template<> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(const KernelDetailsResponse &response);
 template<> std::optional<document_t> ToResponseJson<OneKernelResponse>(const OneKernelResponse &response);

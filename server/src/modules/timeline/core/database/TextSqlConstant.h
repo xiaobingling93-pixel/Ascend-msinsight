@@ -245,6 +245,16 @@ public:
             orderBy + " limit ? offset ?";
         return sql;
     }
+
+    static std::string GetAICoreViewDataSql()
+    {
+        std::string orderBy = " ORDER BY timestamp ASC";
+ 
+        std::string sql = "SELECT timestamp, args "
+            "FROM counter WHERE name = 'AI Core Freq' " + orderBy;
+        return sql;
+    }
+
     static std::string GetKernelDetailSql(const std::string &order, const std::string &orderByField,
         const std::string &coreType, const std::vector<std::pair<std::string, std::string>>& filters)
     {

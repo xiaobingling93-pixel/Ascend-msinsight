@@ -28,7 +28,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, ToFlowCategoryEventsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_COUNTER, ToUnitCounterRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToSystemViewRequest);
-    jsonToReqFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToSystemViewAICoreFreqRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToExpAnaAICoreFreqRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_EVENTS_VIEW, ToEventsViewRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelRequest);
@@ -37,6 +37,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesRequest);
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallRequest);
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToSystemViewOverallMoreDetailsRequest);
+    jsonToReqFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -56,7 +57,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, ToFlowCategoryEventsResponse);
     resToJsonFactory.emplace(REQ_RES_UNIT_COUNTER, ToUnitCounterResponse);
     resToJsonFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToSystemViewResponseJson);
-    resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_AICORE_FREQ, ToSystemViewAICoreFreqResponseJson);
+    resToJsonFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_EVENTS_VIEW, ToEventsViewResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelResponseJson);
@@ -66,6 +67,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsResponseJson);
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallResponseJson);
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToOverallMoreDetailsResponseJson);
+    resToJsonFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -385,16 +387,14 @@ std::unique_ptr<Request> TimelineProtocol::ToSystemViewRequest(const Dic::json_t
     return reqPtr;
 }
 
-std::unique_ptr<Request> TimelineProtocol::ToSystemViewAICoreFreqRequest(const Dic::json_t &json, std::string &error)
+std::unique_ptr<Request> TimelineProtocol::ToExpAnaAICoreFreqRequest(const Dic::json_t &json, std::string &error)
 {
-    std::unique_ptr<SystemViewAICoreFreqRequest> reqPtr = std::make_unique<SystemViewAICoreFreqRequest>();
+    std::unique_ptr<ExpAnaAICoreFreqRequest> reqPtr = std::make_unique<ExpAnaAICoreFreqRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     return reqPtr;
 }
 
@@ -645,11 +645,11 @@ std::optional<document_t> TimelineProtocol::ToSystemViewResponseJson(const Dic::
     return ToResponseJson<SystemViewResponse>(dynamic_cast<const SystemViewResponse &>(response));
 }
 
-std::optional<document_t> TimelineProtocol::ToSystemViewAICoreFreqResponseJson(
+std::optional<document_t> TimelineProtocol::ToExpAnaAICoreFreqResponseJson(
     const Dic::Protocol::Response &response)
 {
-    return ToResponseJson<SystemViewAICoreFreqResponse>
-        (dynamic_cast<const SystemViewAICoreFreqResponse &>(response));
+    return ToResponseJson<ExpAnaAICoreFreqResponse>
+        (dynamic_cast<const ExpAnaAICoreFreqResponse &>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToEventsViewResponseJson(const Dic::Protocol::Response &response)

@@ -41,6 +41,8 @@ protected:
         "startNs integer, endNs integer, type integer);";
     const std::string schedulerTable = "CREATE table COMMUNICATION_SCHEDULE_TASK_INFO("
          "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, opType INTEGER);";
+    std::string AICoreFreq = "CREATE TABLE AICORE_FREQ (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
+        "startNs integer, endNs integer, type integer);";
 };
 class MockDatabase : public Dic::Module::FullDb::DbTraceDataBase {
 public:

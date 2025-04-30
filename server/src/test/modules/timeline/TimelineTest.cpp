@@ -32,6 +32,17 @@ TEST_F(TestSuit, QuerySystemViewData)
     EXPECT_EQ(responseBody.systemViewDetail.size(), expectSize);
 }
 
+TEST_F(TestSuit, QuerySystemViewAICoreFreqData)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    std::vector<std::pair<uint64_t, uint64_t>> freqs;
+    uint64_t maxFreq = 0;
+    uint64_t minFreq = UINT64_MAX;
+    database->QueryExpAnaAICoreFreqData(freqs, maxFreq, minFreq);
+    int expectSize = 0;
+    EXPECT_EQ(freqs.size(), expectSize);
+}
+
 TEST_F(TestSuit, QueryPythonViewWithTotalNum)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");

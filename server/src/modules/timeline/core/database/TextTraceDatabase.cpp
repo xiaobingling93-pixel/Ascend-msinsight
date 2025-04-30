@@ -1289,9 +1289,40 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
     return true;
 }
 
-bool TextTraceDatabase::QuerySystemViewAICoreFreqData(
-    const Protocol::SystemViewAICoreFreqParams &requestParams, Protocol::SystemViewAICoreFreqBody &responseBody)
+bool TextTraceDatabase::QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t, uint64_t>> &freqs,
+                                                  uint64_t &maxFreq, uint64_t &minFreq)
 {
+    std::string sql = TextSqlConstant::GetAICoreViewDataSql();
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query system view AI core freq data, fail to prepare sql.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query system view AI core freq data. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        std::pair<uint64_t, uint64_t> detail;
+        int col = resultStartIndex;
+        detail.first = resultSet->GetUint64(col++);
+        rapidjson::Document jsonArgs;
+        if (jsonArgs.Parse(resultSet->GetString(col++).c_str()).HasParseError()) {
+            ServerLog::Error("Parse AI core freq data Failed.");
+            break;
+        }
+        // 确保 "MHz" 键存在且类型正确
+        if (jsonArgs.HasMember("MHz") && jsonArgs["MHz"].IsString()) {
+            detail.second = NumberUtil::StringToDouble(jsonArgs["MHz"].GetString());
+        } else {
+            ServerLog::Error("Invalid AI core freq data structure detected.");
+            break;
+        }
+        maxFreq = std::max(maxFreq, detail.second);
+        minFreq = std::min(minFreq, detail.second);
+        freqs.emplace_back(detail);
+    }
     return true;
 }
 

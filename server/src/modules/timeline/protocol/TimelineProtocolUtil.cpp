@@ -383,24 +383,15 @@ template <> std::optional<document_t> ToResponseJson<SystemViewResponse>(const S
     return std::optional<document_t>{std::move(json)};
 }
 
-template <> std::optional<document_t> ToResponseJson<SystemViewAICoreFreqResponse>
-    (const SystemViewAICoreFreqResponse &response)
+template <> std::optional<document_t> ToResponseJson<ExpAnaAICoreFreqResponse>
+    (const ExpAnaAICoreFreqResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    json_t details(kArrayType);
-    for (const SystemViewAICoreFreqDetail &systemView : response.body.AICoreDetails) {
-        json_t itemJson(kObjectType);
-        JsonUtil::AddMember(itemJson, "frequency", systemView.frequency, allocator);
-        JsonUtil::AddMember(itemJson, "timestamp", systemView.timestamp, allocator);
-        details.PushBack(itemJson, allocator);
-    }
-    JsonUtil::AddMember(body, "AICoreDetails", details, allocator);
-    JsonUtil::AddMember(body, "count", response.body.total, allocator);
-    JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
-    JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(body, "hasProblem", response.body.hasProblem, allocator);
+    JsonUtil::AddMember(body, "percent", response.body.percent, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

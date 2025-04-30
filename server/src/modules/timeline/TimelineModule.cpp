@@ -26,6 +26,7 @@
 #include "QueryCommunicationKernelHandler.h"
 #include "QuerySystemViewOverallHandler.h"
 #include "QueryOverallMoreDetailsHandler.h"
+#include "QueryExpAnaAICoreFreqHandler.h"
 #include "ParseCardsHandler.h"
 #include "RenderEngine.h"
 #include "DataEngine.h"
@@ -89,6 +90,8 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, std::make_unique<QuerySystemViewOverallHandler>());
     requestHandlerMap.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS,
                               std::make_unique<QueryOverallMoreDetailsHandler>());
+    requestHandlerMap.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ,
+                              std::make_unique<QueryExpAnaAICoreFreqHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

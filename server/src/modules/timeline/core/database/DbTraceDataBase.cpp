@@ -402,9 +402,31 @@ bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requ
     return true;
 }
 
-bool DbTraceDataBase::QuerySystemViewAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
-                                                    Protocol::SystemViewAICoreFreqBody &responseBody)
+bool DbTraceDataBase::QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t, uint64_t>> &freqs,
+                                                uint64_t &maxFreq, uint64_t &minFreq)
 {
+    std::unique_ptr<SqliteResultSet> resultSet;
+    std::string sql = "select timestampNs, freq from AICORE_FREQ "
+                      " ORDER BY timestampNs ASC;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query system view AI core freq data failed!.");
+        return false;
+    }
+    resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set to query AI core freq.", stmt->GetErrorMessage());
+        return 0;
+    }
+    while (resultSet->Next()) {
+        std::pair<uint64_t, uint64_t> detail;
+        int col = resultStartIndex;
+        detail.first = resultSet->GetUint64(col++);
+        detail.second = resultSet->GetUint64(col++);
+        maxFreq = std::max(maxFreq, detail.second);
+        minFreq = std::min(minFreq, detail.second);
+        freqs.emplace_back(detail);
+    }
     return true;
 }
 

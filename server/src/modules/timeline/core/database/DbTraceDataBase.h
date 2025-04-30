@@ -80,8 +80,8 @@ public:
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) override;
     bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
                              Protocol::SystemViewBody &responseBody) override;
-    bool QuerySystemViewAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
-                                       Protocol::SystemViewAICoreFreqBody &responseBody) override;
+    bool QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t, uint64_t>> &freqs,
+                                   uint64_t &maxFreq, uint64_t &minFreq) override;
     LayerStatData QueryLayerData(const std::string &layer, const std::string &name) override;
     std::vector<std::string> QueryCoreType() override;
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,

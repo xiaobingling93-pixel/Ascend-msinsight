@@ -341,16 +341,14 @@ struct SystemViewAICoreFreqDetail {
     double timestamp;  // 时间戳
 };
 
-struct SystemViewAICoreFreqBody {
-    std::vector<SystemViewAICoreFreqDetail> AICoreDetails;
-    uint64_t total = 0;
-    uint64_t pageSize{};
-    uint64_t currentPage{};
+struct ExpAnaAICoreFreqBody {
+    bool hasProblem = false;
+    uint64_t percent = 0;
 };
 
-struct SystemViewAICoreFreqResponse : public Response {
-    SystemViewAICoreFreqResponse() : Response(REQ_RES_SYSTEM_VIEW_AICORE_FREQ) {}
-    SystemViewAICoreFreqBody body;
+struct ExpAnaAICoreFreqResponse : public Response {
+    ExpAnaAICoreFreqResponse() : Response(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ) {}
+    ExpAnaAICoreFreqBody body;
 };
 
 struct SystemViewOverallRes {

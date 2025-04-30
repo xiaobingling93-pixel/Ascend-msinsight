@@ -396,17 +396,11 @@ struct SystemViewRequest : public Request {
 };
 
 struct SystemViewAICoreFreqParams {
-    uint64_t current = 0;
-    uint64_t pageSize = 0;
     std::string rankId;
-    bool CheckParams(std::string &warnMsg) const
-    {
-        return CheckUnsignPageValid(pageSize, current, warnMsg);
-    }
 };
 
-struct SystemViewAICoreFreqRequest : public Request {
-    SystemViewAICoreFreqRequest() : Request(REQ_RES_SYSTEM_VIEW_AICORE_FREQ){};
+struct ExpAnaAICoreFreqRequest : public Request {
+    ExpAnaAICoreFreqRequest() : Request(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ){};
     SystemViewAICoreFreqParams params;
 };
 
