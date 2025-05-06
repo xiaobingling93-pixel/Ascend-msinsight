@@ -73,8 +73,11 @@ public:
     virtual bool QueryAllPerformanceDataByStep(const std::string &step,
                                                std::unordered_map<std::uint32_t, StepStatistic> &data) = 0;
     bool BatchInsertExpertHotspotData(const std::vector<ExpertHotspotStruct> &expertHotspotInfos);
+    bool BatchInsertExpertDeployment(const std::vector<ExpertDeploymentStruct> &expertDeploymentInfos);
     void InsertExpertHotspotDataForCache(const ExpertHotspotStruct &info);
+    void InsertExpertDeploymentForCache(const ExpertDeploymentStruct &info);
     void SaveExpertHotspot();
+    void SaveExpertDeployment();
     bool DeleteExpertHotspot(const std::string &modelStage, const std::string &version);
     std::vector<ExpertHotspotStruct> QueryExpertHotspotData(const std::string &modelStage, const std::string &version);
     void ReleaseStmt();
@@ -84,9 +87,14 @@ protected:
     const std::string commonSql = "CREATE TABLE IF NOT EXISTS " + TABLE_EXPERT_HOTSPOT_INTO +
         " (id INTEGER PRIMARY KEY AUTOINCREMENT, localExpertId INTEGER, modelStage TEXT, rankId INTEGER,"
         " visits INTEGER, layer INTEGER, version TEXT);"
-        " CREATE INDEX IF NOT EXISTS idx_ms ON " + TABLE_EXPERT_HOTSPOT_INTO + "(modelStage, version);";
+        " CREATE INDEX IF NOT EXISTS idx_ms ON " + TABLE_EXPERT_HOTSPOT_INTO + "(modelStage, version);"
+        " CREATE TABLE IF NOT EXISTS " + TABLE_EXPERT_DEPLOYMENT_INFO + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " modelStage TEXT, rankId INTEGER, layer INTEGER, expertList TEXT, version TEXT);"
+        " CREATE INDEX IF NOT EXISTS idx_ms ON " + TABLE_EXPERT_DEPLOYMENT_INFO + "(modelStage, version)";
     sqlite3_stmt *insertHotspotStmt = nullptr;
+    sqlite3_stmt *insertDeploymentStmt = nullptr;
     std::vector<ExpertHotspotStruct> expertHotspotCache;
+    std::vector<ExpertDeploymentStruct> expertDeploymentCache;
     const double overlapThreshold = 0.05;
     bool HasColumn(const std::string &tableName, const std::string &columnName);
     bool ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo, std::string sql);
@@ -139,6 +147,8 @@ protected:
                                std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     sqlite3_stmt *GetExpertHotspotInsertStmt(uint64_t paramLen);
     sqlite3_stmt *InitExpertHotspotInsertStmt(uint64_t paramLen);
+    sqlite3_stmt *GetExpertDeploymentInsertStmt(uint64_t paramLen);
+    sqlite3_stmt *InitExpertDeploymentInsertStmt(uint64_t paramLen);
 };
 } // end of namespace Module
 } // end of namespace Dic

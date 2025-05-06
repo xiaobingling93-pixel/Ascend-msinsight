@@ -898,6 +898,25 @@ sqlite3_stmt *VirtualClusterDatabase::InitExpertHotspotInsertStmt(uint64_t param
     return stmt;
 }
 
+sqlite3_stmt *VirtualClusterDatabase::InitExpertDeploymentInsertStmt(uint64_t paramLen)
+{
+    if (paramLen == 0) {
+        return nullptr;
+    }
+    std::string sql = "INSERT INTO " + TABLE_EXPERT_DEPLOYMENT_INFO + " (modelStage, rankId, layer, expertList "
+        " version) VALUES (?,?,?,?,?)";
+    for (size_t i = 0; i < paramLen - 1; ++i) {
+        sql.append(",(?,?,?,?,?)");
+    }
+    sqlite3_stmt *stmt = nullptr;
+    int stmtResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (stmtResult != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare insert expert deployment statement. error:", sqlite3_errmsg(db));
+        return nullptr;
+    }
+    return stmt;
+}
+
 sqlite3_stmt *VirtualClusterDatabase::GetExpertHotspotInsertStmt(uint64_t paramLen)
 {
     if (paramLen == CACHE_SIZE) {
@@ -914,12 +933,45 @@ sqlite3_stmt *VirtualClusterDatabase::GetExpertHotspotInsertStmt(uint64_t paramL
     }
 }
 
+sqlite3_stmt *VirtualClusterDatabase::GetExpertDeploymentInsertStmt(uint64_t paramLen)
+{
+    if (paramLen == CACHE_SIZE) {
+        if (insertDeploymentStmt == nullptr) {
+            // 初始化
+            insertDeploymentStmt = InitExpertDeploymentInsertStmt(paramLen);
+        } else {
+            sqlite3_reset(insertDeploymentStmt);
+        }
+        return insertDeploymentStmt;
+    } else {
+        sqlite3_stmt *stmt = InitExpertDeploymentInsertStmt(paramLen);
+        return stmt;
+    }
+}
+
 void VirtualClusterDatabase::InsertExpertHotspotDataForCache(const ExpertHotspotStruct &info)
 {
     expertHotspotCache.emplace_back(info);
     if (expertHotspotCache.size() == CACHE_SIZE) {
         BatchInsertExpertHotspotData(expertHotspotCache);
         expertHotspotCache.clear();
+    }
+}
+
+void VirtualClusterDatabase::InsertExpertDeploymentForCache(const ExpertDeploymentStruct &info)
+{
+    expertDeploymentCache.emplace_back(info);
+    if (expertDeploymentCache.size() == CACHE_SIZE) {
+        BatchInsertExpertDeployment(expertDeploymentCache);
+        expertDeploymentCache.clear();
+    }
+}
+
+void VirtualClusterDatabase::SaveExpertDeployment()
+{
+    if (expertDeploymentCache.size() > 0) {
+        BatchInsertExpertDeployment(expertDeploymentCache);
+        expertDeploymentCache.clear();
     }
 }
 
@@ -950,6 +1002,31 @@ bool VirtualClusterDatabase::BatchInsertExpertHotspotData(const std::vector<Expe
     }
     auto result = sqlite3_step(stmt);
     if (expertHotspotInfos.size() != CACHE_SIZE) {
+        sqlite3_finalize(stmt);
+    }
+    return result == SQLITE_DONE;
+}
+
+bool VirtualClusterDatabase::BatchInsertExpertDeployment(
+    const std::vector<ExpertDeploymentStruct> &expertDeploymentInfos)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    sqlite3_stmt *stmt = GetExpertDeploymentInsertStmt(expertDeploymentInfos.size());
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get insert expert deployment statement.");
+        return false;
+    }
+    int idx = bindStartIndex;
+    for (const auto &info: expertDeploymentInfos) {
+        sqlite3_bind_text(stmt, idx++, info.modelStage.c_str(), info.modelStage.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, idx++, info.deviceId);
+        sqlite3_bind_int(stmt, idx++, info.layer);
+        std::string expertListStr = StringUtil::join(info.expertList, ",");
+        sqlite3_bind_text(stmt, idx++, expertListStr.c_str(), expertListStr.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, info.version.c_str(), info.version.length(), SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    if (expertDeploymentInfos.size() != CACHE_SIZE) {
         sqlite3_finalize(stmt);
     }
     return result == SQLITE_DONE;

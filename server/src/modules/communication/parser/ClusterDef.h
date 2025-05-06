@@ -413,7 +413,7 @@ struct ExpertHotspotStruct {
 
 struct ExpertDeploymentStruct {
     int deviceId = 0;
-    std::vector<int> deviceDeviceExpertList;
+    std::vector<int> expertList;
     int layer = 0;
     std::string modelStage;
     std::string version;
@@ -436,6 +436,7 @@ const std::string KEY_RANK_NUMBER = "rankNumber";
 const std::string KEY_EXPERT_NUMBER = "expertNumber";
 const int CACHE_SIZE = 1024;
 const std::string expertHotspotFileReg = R"((prefill|decode)_([0-9]{1,4})\.csv$)";
+const std::string expertDeploymentFileReg = R"((prefill|decode)_global_deployment\.json$)";
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H
