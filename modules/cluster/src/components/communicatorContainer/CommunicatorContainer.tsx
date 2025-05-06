@@ -3,35 +3,59 @@
  */
 import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, InputNumber, InputGroup, InputSplit, Button, Select, CheckboxGroup, Tabs } from 'ascend-components';
+import { Form, InputNumber, InputGroup, InputSplit, Button, Select, Tabs, Tooltip } from 'ascend-components';
 import { message, Popconfirm, Spin } from 'antd';
-import type { CheckboxValueType } from 'antd/es/checkbox/Group';
 import eventBus from '../../utils/eventBus';
 import styled from '@emotion/styled';
 import { FormInstance } from 'antd/lib/form';
 import { Loading, ParallelismGraph } from './ParallelismGraph';
 import { getParallelStrategy, setParallelStrategy } from '../../utils/RequestUtils';
-import { ErrorInfo, ParallelismArrangementParams, ParallelismType } from '../../utils/interface';
+import { ErrorInfo, ParallelismArrangementParams } from '../../utils/interface';
 import { ParallelSwitchConditionsProvider, useParallelSwitchConditions } from './Context';
 import type { TFunction } from 'i18next';
 import { COLOR } from '../Common';
+import cls from 'classnames';
 
 const Legend = styled.div`
     .legendContainer {
         display: flex;
         justify-content: center;
         padding: 20px 0 10px;
+        user-select: none;
         .legendItem {
             display: flex;
             height: 12px;
             line-height: 12px;
             margin: 0 12px;
+            cursor: pointer;
+            color: ${(props): string => props.theme.textColor};
+
+            &.disabled {
+                cursor: not-allowed;
+                color: ${(props): string => props.theme.textColorDisabled};
+
+                .legendColor {
+                    opacity: 0.2;
+                }
+            }
+
+            &:not(.disabled):hover {
+                opacity: 0.9;
+            }
+
             .legendColor {
+                padding: 2px;
                 flex: none;
-                width: 12px;
+                width: 24px;
                 margin-right: 4px;
+                border: 2px solid;
+                border-radius: 2px;
+
+                .legendColorContent {
+                    height: 100%
+                }
             }
             .legendLabel {
                 flex: none;
@@ -100,6 +124,12 @@ export const CommunicatorContainer = observer(({ session, generateConditions, on
     );
 });
 
+const DimensionTabExtraContent = (): JSX.Element => {
+    const { t } = useTranslation('summary');
+
+    return <Form.Item style={{ marginBottom: 0 }} colon={false} label={t(' ')} tooltip={t('DimensionTooltipContent')}></Form.Item>;
+};
+
 export type GenerateConditions = ParallelismArrangementParams;
 interface CommunicatorHeaderProps {
     session: Session;
@@ -128,7 +158,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     }, [generateConditions.cpSize, t]);
 
     const init = async (): Promise<void> => {
-        const { dpSize, tpSize, ppSize, cpSize, epSize, level, algorithm } = await getParallelStrategy();
+        const { dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize = 1, level, algorithm } = await getParallelStrategy();
         const equal = dpSize === 1 && tpSize === 1 && tpSize === 1 && cpSize === 1;
         if (level === 'collected') {
             setIsCollectedConfiguration(true);
@@ -140,8 +170,8 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
         } else {
             setShowRank(true);
         }
-        form.setFieldsValue({ dpSize, tpSize, ppSize, cpSize, epSize, algorithm });
-        setGenerateConditions({ algorithm, dimension: activeTab, ppSize, tpSize, cpSize, dpSize, epSize });
+        form.setFieldsValue({ dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize, algorithm });
+        setGenerateConditions({ algorithm, dimension: activeTab, ppSize, tpSize, cpSize, dpSize, epSize, moeTpSize });
         eventBus.emit('activeCommunicator', undefined);
     };
 
@@ -150,11 +180,20 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     }, []);
 
     const clickGenerate = async (): Promise<void> => {
-        const values: GenerateConditions = form.getFieldsValue();
+        const formData: GenerateConditions = form.getFieldsValue();
+
+        // 由于选择不同 algorithm，moeTpSize 或 cpSize 可能隐藏，导致获取不到对应的值，此处单独处理
+        const values: GenerateConditions = {
+            ...formData,
+            moeTpSize: formData.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)' ? formData.moeTpSize : 1,
+            cpSize: formData.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)' ? 1 : formData.cpSize,
+        };
         // 设置的并行策略乘积需要>=导入的卡数
-        if (values.dpSize * values.tpSize * values.ppSize * values.cpSize < session.rankCount) {
-            message.error('The product of DP, CP, TP and PP size must be greater than the Device Count');
-            return;
+        if (values.algorithm !== 'mindie-llm(tp-dp-ep-pp-moetp)') {
+            if (values.dpSize * values.tpSize * values.ppSize * values.cpSize < session.rankCount) {
+                message.error('The product of DP, CP, TP and PP size must be greater than the Device Count');
+                return;
+            }
         }
         try {
             await setParallelStrategy({ ...values });
@@ -181,6 +220,10 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     return <>
         <FormDom isCollectedConfiguration={isCollectedConfiguration} onClickGenerate={clickGenerate} form={form}/>
         {showRank && <Tabs
+            type="card"
+            size="small"
+            tabBarGutter={4}
+            tabBarExtraContent={{ left: <DimensionTabExtraContent /> }}
             activeKey={activeTab}
             onChange={handleTabChange}
             items={dimensionOptions}
@@ -190,62 +233,91 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
 
 const PARALLEL_STRATEGY_INPUT_PROPS = { min: 1, max: 10000, style: { width: '80px' } };
 const selectOptions = [
-    { value: 'megatron-lm(tp-cp-ep-dp-pp)', label: 'Megatron-LM(tp-cp-ep-dp-pp)' },
-    { value: 'megatron-lm(tp-cp-pp-ep-dp)', label: 'Megatron-LM(tp-cp-pp-ep-dp)' },
-    { value: 'mindspeed(tp-cp-ep-dp-pp)', label: 'MindSpeed(tp-cp-ep-dp-pp)' },
+    { value: 'megatron-lm(tp-cp-ep-dp-pp)', label: 'Megatron-LM (tp-cp-ep-dp-pp)' },
+    { value: 'megatron-lm(tp-cp-pp-ep-dp)', label: 'Megatron-LM (tp-cp-pp-ep-dp)' },
+    { value: 'mindspeed(tp-cp-ep-dp-pp)', label: 'MindSpeed (tp-cp-ep-dp-pp)' },
+    { value: 'mindie-llm(tp-dp-ep-pp-moetp)', label: 'MindIE-LLM (tp-dp-ep-pp-moetp)' },
 ];
-const getDimensionOptions = (t: TFunction, generateConditions: GenerateConditions): Array<{key: string; label: string}> => {
+const getDimensionOptions = (t: TFunction, generateConditions: GenerateConditions): Array<{key: string; label: ReactNode}> => {
     const { cpSize } = generateConditions;
     return [
-        { key: 'ep-dp', label: `DP ${t('Dimension')} >` },
-        { key: 'ep-dp-pp', label: `DP + PP ${t('Dimension')} >` },
-        { key: 'ep-dp-pp-cp', label: `DP + PP + CP  ${t('Dimension')} >` },
-        { key: 'ep-dp-pp-cp-tp', label: cpSize === 1 ? `DP + PP + TP ${t('Dimension')}` : `DP + PP + CP + TP ${t('Dimension')}` },
+        { key: 'ep-dp', label: <Tooltip title={t('DPDimensionTooltip')}>{'DP >'}</Tooltip> },
+        { key: 'ep-dp-pp', label: <Tooltip title={t('PPDimensionTooltip')}>{'DP + PP >'}</Tooltip> },
+        { key: 'ep-dp-pp-cp', label: <Tooltip title={t('CPDimensionTooltip')}>{'DP + PP + CP >'}</Tooltip> },
+        {
+            key: 'ep-dp-pp-cp-tp',
+            label: cpSize === 1
+                ? <Tooltip title={t('TPDimensionTooltip')}>{'DP + PP + TP'}</Tooltip>
+                : <Tooltip title={t('TPDimensionTooltip')}>{'DP + PP + CP + TP'}</Tooltip>,
+        },
     ];
 };
 
-const FormDom = ({ isCollectedConfiguration, onClickGenerate, form }:
-{isCollectedConfiguration: boolean; onClickGenerate: () => void; form: FormInstance<any> }): JSX.Element => {
+const FormDom = (
+    {
+        isCollectedConfiguration,
+        onClickGenerate,
+        form,
+    }:
+    {
+        isCollectedConfiguration: boolean;
+        onClickGenerate: () => void;
+        form: FormInstance<any>;
+    },
+): JSX.Element => {
     const { t } = useTranslation('summary');
+    const algorithm = Form.useWatch('algorithm', form);
 
-    return (
-        <>
-            <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
-                <Form.Item name={'algorithm'} label={t('Algorithm')} style={{ margin: '10px 24px 10px 0' }} initialValue={'megatron-lm(tp-cp-ep-dp-pp)'}>
-                    <Select defaultValue="megatron-lm(tp-cp-ep-dp-pp)" style={{ width: 220 }} options={selectOptions}/>
-                </Form.Item>
-                <Form.Item name={'ppSize'} label={t('PPSize')} style={{ margin: '10px 24px 10px 0' }}>
+    return <Form
+        form={form}
+        layout="inline"
+        initialValues={{
+            algorithm: 'megatron-lm(tp-cp-ep-dp-pp)',
+        }}
+        onFinish={onClickGenerate}
+    >
+        <Form.Item name={'algorithm'} label={t('Algorithm')}>
+            <Select defaultValue="megatron-lm(tp-cp-ep-dp-pp)" style={{ width: 220 }} options={selectOptions}/>
+        </Form.Item>
+        <Form.Item name={'ppSize'} label={t('PPSize')}>
+            <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
+        </Form.Item>
+        <Form.Item name={'tpSize'} label={t('TPSize')}>
+            <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
+        </Form.Item>
+        {
+            algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)'
+                ? <Form.Item name={'moeTpSize'} label={t('MOE-TP Size')}>
                     <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
                 </Form.Item>
-                <Form.Item name={'tpSize'} label={t('TPSize')} style={{ margin: '10px 24px 10px 0' }}>
+                : <Form.Item name={'cpSize'} label={t('CPSize')}>
                     <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
                 </Form.Item>
-                <Form.Item name={'cpSize'} label={t('CPSize')} style={{ margin: '10px 24px 10px 0' }}>
-                    <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
-                </Form.Item>
-                <Form.Item name={'dpSize'} label={t('DPSize')} style={{ margin: '10px 24px 10px 0' }}>
-                    <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
-                </Form.Item>
-                <Form.Item name={'epSize'} label={t('EPSize')} style={{ margin: '10px 24px 10px 0' }}>
-                    <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
-                </Form.Item>
-                <Popconfirm
-                    placement="right"
-                    disabled={!isCollectedConfiguration}
-                    title={<div style={{ maxWidth: 400 }}>{t('GenerateConfirm')}</div>}
-                    onConfirm={onClickGenerate}
+        }
+
+        <Form.Item name={'dpSize'} label={t('DPSize')}>
+            <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
+        </Form.Item>
+        <Form.Item name={'epSize'} label={t('EPSize')}>
+            <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
+        </Form.Item>
+        <Form.Item>
+            <Popconfirm
+                placement="right"
+                disabled={!isCollectedConfiguration}
+                title={<div style={{ maxWidth: 400 }}>{t('GenerateConfirm')}</div>}
+                onConfirm={onClickGenerate}
+            >
+                <Button
+                    type="primary"
+                    htmlType="submit"
+                    onClick={isCollectedConfiguration ? undefined : onClickGenerate}
                 >
-                    <Button
-                        type="primary"
-                        style={{ margin: '10px 32px 10px 0' }}
-                        onClick={isCollectedConfiguration ? undefined : onClickGenerate}
-                    >
-                        {t('Generate')}
-                    </Button>
-                </Popconfirm>
-            </Form>
-        </>
-    );
+                    {t('Generate')}
+                </Button>
+            </Popconfirm>
+        </Form.Item>
+    </Form>;
 };
 
 interface CommunicatorContentProps {
@@ -256,9 +328,9 @@ interface CommunicatorContentProps {
 const CommunicatorContent = observer(({ session, generateConditions }: CommunicatorContentProps) => {
     return (
         <ParallelSwitchConditionsProvider>
-            <ParallelSwitch session={session} generateConditions={generateConditions} dimension={generateConditions?.dimension} />
+            <ParallelSwitch session={session} />
+            <LegendContainer generateConditions={generateConditions} />
             <ParallelismGraph session={session} generateConditions={generateConditions} />
-            <LegendContainer/>
         </ParallelSwitchConditionsProvider>
     );
 });
@@ -275,47 +347,94 @@ const ColorScale = ({ min, max }: { min: number | null; max: number | null }): J
     ;
 };
 
-const LegendContainer = (): JSX.Element => {
+interface LegendItem {
+    label: string;
+    value: 'ep' | 'dp' | 'cp' | 'pp' | 'tp' | 'moeTp';
+    color: string;
+    checked: boolean;
+    visible: boolean;
+    disabled: boolean;
+}
+
+const defaultLegendItemList: LegendItem[] = [
+    { value: 'pp', label: 'Pipeline Parallel', color: '#0277FF', checked: true, disabled: false, visible: true },
+    { value: 'tp', label: 'Tensor Parallel', color: '#01CEB0', checked: true, disabled: false, visible: true },
+    { value: 'cp', label: 'Context Parallel', color: '#FD2F2F', checked: true, disabled: false, visible: true },
+    { value: 'dp', label: 'Data Parallel', color: '#6948C9', checked: true, disabled: false, visible: true },
+    { value: 'ep', label: 'Expert Parallel', color: '#EE891D', checked: true, disabled: false, visible: true },
+    { value: 'moeTp', label: 'MOE Tensor Parallel', color: '#D53F78', checked: true, disabled: false, visible: true },
+];
+
+interface LegendContainerProps {
+    generateConditions: GenerateConditions | null;
+}
+
+const LegendContainer = ({ generateConditions }: LegendContainerProps): JSX.Element => {
     const { t } = useTranslation('summary');
-    const legendList = [
-        { label: 'Pipeline Parallel', color: '#0277FF' },
-        { label: 'Tensor Parallel', color: '#01CEB0' },
-        { label: 'Data Parallel', color: '#6948C9' },
-        { label: 'Context Parallel', color: '#FD2F2F' },
-        { label: 'Expert Parallel', color: '#EE891D' },
-    ];
+    const { parallelTypeList, setParallelTypeList } = useParallelSwitchConditions();
+    const [parallelTypeOptions, setParallelTypeOptions] = useState<LegendItem[]>(defaultLegendItemList);
+    const { cpSize } = generateConditions ?? {};
+
+    useEffect(() => {
+        const { dimension = '', algorithm = '' } = generateConditions ?? {};
+        const ppDisabled = ['ep-dp'].includes(dimension);
+        const tpDisabled = ['ep-dp', 'ep-dp-pp', 'ep-dp-pp-cp'].includes(dimension);
+        const cpDisabled = ['ep-dp', 'ep-dp-pp'].includes(dimension);
+        const epDisabled = ['ep-dp', 'ep-dp-pp'].includes(dimension) && algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)';
+
+        const options = parallelTypeOptions.map((option) => {
+            const disabled = (option.value === 'pp' && ppDisabled) ||
+                (option.value === 'tp' && tpDisabled) ||
+                (option.value === 'cp' && cpDisabled) ||
+                (option.value === 'ep' && epDisabled) ||
+                option.value === 'moeTp';
+            return {
+                ...option,
+                checked: parallelTypeList.includes(option.value),
+                disabled,
+                visible: option.value !== 'cp' || (option.value === 'cp' && cpSize !== 1),
+            };
+        });
+
+        setParallelTypeOptions(options);
+    }, [JSON.stringify(generateConditions), parallelTypeList]);
+
+    const handleClickLegend = (item: LegendItem): void => {
+        if (item.disabled) {
+            return;
+        }
+
+        item.checked = !item.checked;
+        const list = parallelTypeOptions.filter(option => option.checked).map(option => option.value);
+
+        setParallelTypeOptions(parallelTypeOptions);
+        setParallelTypeList(list);
+    };
+
     return (
         <Legend>
             <div className="legendContainer">
                 {
-                    legendList.map(item => (
-                        <div className="legendItem" key={item.label}>
-                            <div className="legendColor" style={{ backgroundColor: item.color }}></div>
-                            <div className="legendLabel">{t(item.label)}</div>
-                        </div>
-                    ))
+                    parallelTypeOptions.filter(item => item.visible)
+                        .map(item => (
+                            <div
+                                className={cls('legendItem', {
+                                    checked: item.checked,
+                                    disabled: item.disabled,
+                                })}
+                                key={item.label}
+                                onClick={(): void => handleClickLegend(item)}
+                            >
+                                <div className="legendColor" style={{ borderColor: item.color }}>
+                                    <div className="legendColorContent" style={{ backgroundColor: item.checked ? item.color : 'unset' }}></div>
+                                </div>
+                                <div className="legendLabel">{t(item.label)}</div>
+                            </div>
+                        ))
                 }
             </div>
         </Legend>
     );
-};
-
-const useParallelTypeOptions = (dimension: ParallelSwitchProps['dimension'], generateConditions: GenerateConditions | null):
-Array<{label: string;value: string; disabled?: boolean}> => {
-    const { t } = useTranslation('summary');
-    const { cpSize } = generateConditions ?? {};
-    const val = dimension ?? '';
-    const ppDisabled = ['ep-dp'].includes(val);
-    const tpDisabled = ['ep-dp', 'ep-dp-pp', 'ep-dp-pp-cp'].includes(val);
-    const cpDisabled = ['ep-dp', 'ep-dp-pp'].includes(val);
-
-    return [
-        { value: 'pp', label: t('Pipeline Parallel'), disabled: ppDisabled, visible: true },
-        { value: 'tp', label: t('Tensor Parallel'), disabled: tpDisabled, visible: true },
-        { value: 'cp', label: t('Context Parallel'), disabled: cpDisabled, visible: cpSize !== 1 },
-        { value: 'dp', label: t('Data Parallel'), visible: true },
-        { value: 'ep', label: t('Expert Parallel'), visible: true },
-    ].filter(option => option.visible);
 };
 
 const getDefaultDataTypeOptions = (t: TFunction): Array<{label: string;value: string}> => {
@@ -324,14 +443,11 @@ const getDefaultDataTypeOptions = (t: TFunction): Array<{label: string;value: st
 
 interface ParallelSwitchProps {
     session: Session;
-    dimension?: GenerateConditions['dimension'] | null;
-    generateConditions: GenerateConditions | null;
 }
 
-const ParallelSwitch = observer(({ session, dimension, generateConditions }: ParallelSwitchProps): JSX.Element => {
+const ParallelSwitch = observer(({ session }: ParallelSwitchProps): JSX.Element => {
     const { t } = useTranslation('summary');
-    const { parallelTypeList, setParallelTypeList, setDyeingMode, dyeingMode, startVal, endVal, setStartVal, setEndVal } = useParallelSwitchConditions();
-    const parallelTypeOptions = useParallelTypeOptions(dimension, generateConditions);
+    const { setDyeingMode, dyeingMode, startVal, endVal, setStartVal, setEndVal } = useParallelSwitchConditions();
     const [range, setRange] = useState<number[]>([]);
     const [unit, setUnit] = useState('');
 
@@ -358,14 +474,7 @@ const ParallelSwitch = observer(({ session, dimension, generateConditions }: Par
     return (
         <>
             <Form layout="inline" data-testid="parallelSwitch">
-                <Form.Item>
-                    <CheckboxGroup
-                        value={parallelTypeList}
-                        options={parallelTypeOptions}
-                        onChange={(checkedValues: CheckboxValueType[]): void => { setParallelTypeList(checkedValues as ParallelismType[]); }}
-                    ></CheckboxGroup>
-                </Form.Item>
-                <Form.Item label={t('Data Type')}>
+                <Form.Item label={t('Performance Metric')}>
                     <Select id="dataType" defaultValue={dyeingMode} value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
                 </Form.Item>
                 {

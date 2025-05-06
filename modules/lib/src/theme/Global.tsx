@@ -43,7 +43,7 @@ const formatterCss = css`
     .formatter{
         .row {
             display: flex;
-            align-items: center;
+            align-items: start;
             justify-content: space-between;
             padding: 2px 0;
 
@@ -51,6 +51,8 @@ const formatterCss = css`
                 margin-right: 16px;
             }
             .value {
+                max-width: 240px;
+                white-space: normal;
                 font-weight: bold;
             }
         }
@@ -87,6 +89,10 @@ export const GlobalStyles = (): JSX.Element => {
             }
             .ant-form-item-label > label {
                 color: ${theme.textColorPrimary};
+
+                .ant-form-item-tooltip {
+                    color: ${theme.textColorTertiary};
+                }
             }
             .ant-tabs {
                 color: ${theme.textColorSecondary};

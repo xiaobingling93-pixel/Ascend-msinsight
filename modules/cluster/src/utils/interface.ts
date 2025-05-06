@@ -35,19 +35,20 @@ export interface FormatterParams {
 }
 
 export interface GetParallelStrategyRes {
-    algorithm: 'megatron-lm(tp-cp-ep-dp-pp)' | 'megatron-lm(tp-cp-pp-dp-ep)' | 'mindspeed(tp-cp-ep-dp-pp)';
+    algorithm: 'megatron-lm(tp-cp-ep-dp-pp)' | 'megatron-lm(tp-cp-pp-dp-ep)' | 'mindspeed(tp-cp-ep-dp-pp)' | 'mindie-llm(tp-dp-ep-pp-moetp)';
     level: string;
     dpSize: number;
     ppSize: number;
     tpSize: number;
     epSize: number;
     cpSize: number;
+    moeTpSize: number | null;
 }
 
 export type SetParallelStrategyParams = Omit<GetParallelStrategyRes, 'level'>;
 
-export type ParallelismType = 'ep' | 'dp' | 'cp' | 'pp' | 'tp';
-export type ConnectionType = 'exp' | 'dp' | 'cp' | 'pp' | 'tp';
+export type ParallelismType = 'ep' | 'dp' | 'cp' | 'pp' | 'tp' | 'moeTp';
+export type ConnectionType = 'exp' | 'dp' | 'cp' | 'pp' | 'tp' | 'moeTp';
 export interface ParallelismArrangementParams extends SetParallelStrategyParams {
     dimension: 'ep-dp' | 'ep-dp-pp' | 'ep-dp-pp-cp' | 'ep-dp-pp-cp-tp';
 }
@@ -75,6 +76,7 @@ export interface ArrangementItem {
     name: string;
     position: { x: number; y: number };
     indicator: Record<string, number>;
+    formattedRanks: string;
     attribute: {
         [K in ParallelismType as `${K}Index`]: number;
     };

@@ -44,6 +44,7 @@ const colorsMap = {
     ep: '#EE891D',
     exp: '#EE891D',
     cp: '#FD2F2F',
+    moeTp: '#D53F78',
 };
 
 export abstract class Shape {
@@ -116,7 +117,7 @@ export class Rectangle extends Shape {
         let val = this.rowIndex * this.gap;
 
         if (this.attribute !== undefined) {
-            const { cpIndex, dpIndex, epIndex = 0, cpSize } = this.attribute;
+            const { cpIndex = 0, dpIndex, epIndex = 0, cpSize } = this.attribute;
             const epGaps = epIndex * this.epGap;
             const dpGaps = dpIndex * (this.dpGap + ((cpSize - 1) * this.cpGap));
             const cpGaps = cpIndex * this.cpGap;
@@ -222,13 +223,15 @@ export class Line extends Shape {
     rectList: FrameGroupItem['list'] = [];
     lineList: LinePosition[] = [];
     parallelismSize: ParallelismSize;
-    ppOffset = -9;
-    expOffsetX = -3;
-    expOffsetY = 6;
-    dpOffsetX = 3;
-    dpOffsetY = 0;
-    cpOffsetX = 9;
-    cpOffsetY = -8;
+    offset = {
+        pp: [-9, 0],
+        dp: [3, 0],
+        cp: [9, -8],
+        tp: [0, -4],
+        exp: [-3, 6],
+        moeTp: [0, 4],
+    };
+
     scrollLeft: number = 0;
     scrollTop: number = 0;
     constructor(type: ConnectionType, list: FrameGroupItem['list'], parallelismSize: ParallelismSize) {
@@ -253,46 +256,22 @@ export class Line extends Shape {
     getLineDetails(): void {
         const len = this.rectList.length;
         const horizontalLine: number[] = [];
-        this.rectList.forEach(({ index: rectIndex, position, attribute }, index) => {
-            const rect = new Rectangle({
-                index: rectIndex,
-                rowAndCol: position,
-                attribute: {
-                    ...attribute,
-                    ...this.parallelismSize,
-                },
-            });
+        this.rectList.forEach((rectDetail, index) => {
+            const rect = this.newRectangle(rectDetail, this.parallelismSize);
             switch (this.type) {
                 case 'pp':
-                    if (index === len - 1) { return; }
-                    this.lineList.push([
-                        rect.x + (rect.width / 2) + this.ppOffset, rect.y + rect.height,
-                        rect.x + (rect.width / 2) + this.ppOffset, rect.y + rect.height + rect.textHeight + rect.yGap]);
+                    this.handlePPLinePoints(rect, index, len);
                     break;
                 case 'tp':
-                    if (index === len - 1) { return; }
-                    this.lineList.push([
-                        rect.x + rect.width, rect.y + (rect.height / 2),
-                        rect.x + rect.width + rect.gap, rect.y + (rect.height / 2),
-                    ]);
-                    break;
-                case 'dp':
-                case 'cp':
-                case 'exp': {
-                    const offsetX = this[`${this.type}OffsetX`];
-                    const offsetY = this[`${this.type}OffsetY`];
-                    this.lineList.push([
-                        rect.x + (rect.width / 2) + offsetX, rect.y + rect.height,
-                        rect.x + (rect.width / 2) + offsetX, rect.y + rect.height + rect.textHeight + (rect.yGap / 2) + offsetY,
-                    ]);
-                    if (index === 0 || index === len - 1) {
-                        horizontalLine.push(rect.x + (rect.width / 2) + offsetX, rect.y + rect.height + rect.textHeight + (rect.yGap / 2) + offsetY);
-                        if (index === len - 1) {
-                            this.lineList.push(horizontalLine as LinePosition);
-                        }
-                    }
+                case 'moeTp': {
+                    this.handleTPLinePoints(rect, index, len);
                     break;
                 }
+                case 'dp':
+                case 'cp':
+                case 'exp':
+                    this.handleDP_CP_EXPLinePoints(rect, index, len, horizontalLine);
+                    break;
                 default:
                     break;
             }
@@ -332,6 +311,65 @@ export class Line extends Shape {
 
         return false;
     };
+
+    private newRectangle(rectDetail: FrameGroupItem['list'][number], parallelismSize: ParallelismSize): Rectangle {
+        const { index, position, attribute } = rectDetail;
+        return new Rectangle({
+            index,
+            rowAndCol: position,
+            attribute: {
+                ...attribute,
+                ...parallelismSize,
+            },
+        });
+    };
+
+    private handlePPLinePoints(rect: Rectangle, index: number, rectListLength: number): void {
+        if (index === rectListLength - 1) {
+            return;
+        }
+
+        this.lineList.push([
+            rect.x + (rect.width / 2) + this.offset.pp[0],
+            rect.y + rect.height,
+            rect.x + (rect.width / 2) + this.offset.pp[0],
+            rect.y + rect.height + rect.textHeight + rect.yGap,
+        ]);
+    }
+
+    private handleTPLinePoints(rect: Rectangle, index: number, rectListLength: number): void {
+        if (index === rectListLength - 1) {
+            return;
+        }
+
+        const offsetY = this.offset[this.type][1];
+        const nextRectDetail = this.rectList[index + 1];
+        const nextRect = this.newRectangle(nextRectDetail, this.parallelismSize);
+
+        this.lineList.push([
+            rect.x + rect.width,
+            rect.y + (rect.height / 2) + offsetY,
+            nextRect.x,
+            nextRect.y + (nextRect.height / 2) + offsetY,
+        ]);
+    }
+
+    private handleDP_CP_EXPLinePoints(rect: Rectangle, index: number, rectListLength: number, horizontalLine: number[]): void {
+        const offsetX = this.offset[this.type][0];
+        const offsetY = this.offset[this.type][1];
+        const x = rect.x + (rect.width / 2) + offsetX;
+        const yStart = rect.y + rect.height;
+        const yEnd = yStart + rect.textHeight + (rect.yGap / 2) + offsetY;
+
+        this.lineList.push([x, yStart, x, yEnd]);
+
+        if (index === 0 || index === rectListLength - 1) {
+            horizontalLine.push(x, yEnd);
+            if (index === rectListLength - 1) {
+                this.lineList.push(horizontalLine as LinePosition);
+            }
+        }
+    }
 }
 
 // 框（并行组）(domain)
@@ -341,11 +379,14 @@ export class Frame extends Shape {
     rectList: FrameGroupItem['list'];
     parallelismSize: ParallelismSize;
     boundingBox: {x: number;y: number;width: number; height: number} | null = null;
-    tpOffset = 8;
-    ppOffset = 3;
-    cpOffset = 10;
-    dpOffset = 14;
-    epOffset = 18;
+    offset = {
+        tp: [8, 8],
+        pp: [3, 3],
+        cp: [10, 10],
+        dp: [14, 14],
+        ep: [18, 18],
+        moeTp: [0, 0],
+    };
 
     constructor(type: FrameGroupItem['type'], frameList: FrameGroupItem['list'], parallelismSize: ParallelismSize) {
         super();
@@ -380,7 +421,7 @@ export class Frame extends Shape {
                 ...this.parallelismSize,
             },
         });
-        const offset = this[`${this.type}Offset`];
+        const offset = this.offset[this.type][0];
         const frameX = firstX - offset;
         const frameY = firstY - offset;
         const frameWidth = lastX - frameX + width + offset;

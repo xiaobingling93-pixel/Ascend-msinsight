@@ -90,6 +90,7 @@ const defaultGenerateConditions: GenerateConditions = {
     tpSize: 1,
     epSize: 1,
     cpSize: 1,
+    moeTpSize: 1,
 };
 
 export const Index = observer(({ session }: { session: Session }): JSX.Element => {

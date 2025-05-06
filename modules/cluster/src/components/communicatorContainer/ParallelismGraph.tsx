@@ -136,7 +136,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 return null;
             }
 
-            const { name, index } = data.arrangements[hoveredRectIndex];
+            const { name, index, formattedRanks } = data.arrangements[hoveredRectIndex];
             const currentData = session.performanceDataMap?.get(hoveredRectIndex);
             if (currentData === undefined) {
                 return null;
@@ -166,6 +166,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             return {
                 [t('Index')]: index,
                 [t('Name')]: name,
+                [t('Included Ranks')]: formattedRanks,
                 ...updatedData,
             };
         },

@@ -22,20 +22,6 @@
     background: rgba(0, 0, 0, 0.7);
 }
 
-/*Communicator相关的配置*/
-.CommunicatorHeader {
-    min-width: 600px;
-    align-items: center;
-}
-
-.CommunicatorHeader .ant-form-item-control {
-    width: calc(100% - 100px);
-}
-
-.CommunicatorHeader .ant-select-disabled {
-    pointer-events: none;
-}
-
 .CommunicatorContainer .ant-divider {
     border-top: 2px dashed var(--grey50);
 }
