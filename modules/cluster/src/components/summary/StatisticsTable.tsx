@@ -270,6 +270,7 @@ const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
     return <div>
         <ResizeTable
             dataSource={dataSource}
+            allowCopy
             columns={columns}
             rowKey={rowKey}
             size="small"

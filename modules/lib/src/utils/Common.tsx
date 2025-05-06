@@ -7,9 +7,10 @@ import BaseContainer from '../container/BaseContainer';
 import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
 import { chartVisbilityListener, getAdaptiveEchart, disposeAdaptiveEchart, getDefaultChartOptions, getLegendStyle } from './EchartUtils';
-import { Empty } from '../components/index';
+import { Empty, message } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
+import { t as i18nextT } from 'i18next';
 import { AlarmIcon, BulbIcon } from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
 import { KEYS, getShortcutKey, isMac } from './key';
@@ -31,7 +32,7 @@ export {
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 export const StyledEmpty = ({ descriptor, style }:
-{ descriptor?: string; style?: object; translation?: any}): JSX.Element => {
+    { descriptor?: string; style?: object; translation?: any }): JSX.Element => {
     const theme = useTheme();
     const { t } = useTranslation();
     return (
@@ -73,12 +74,12 @@ const StyledAdvice = styled.div`
 interface IHitProps {
     title?: React.ReactNode;
     text: React.ReactNode | React.ReactNode[];
-    style?: React.CSSProperties ;
+    style?: React.CSSProperties;
     type?: string;
 }
 export function Hit(props: IHitProps): JSX.Element {
     const { type, title, text, style, ...restProps } = props;
-    const icon = type === 'alarm' ? <AlarmIcon/> : <BulbIcon/>;
+    const icon = type === 'alarm' ? <AlarmIcon /> : <BulbIcon />;
     const splitText = (str: React.ReactNode): React.ReactNode => {
         if (typeof str !== 'string') {
             return str;
@@ -96,7 +97,7 @@ export function Hit(props: IHitProps): JSX.Element {
 }
 export function Advice(props: IHitProps): JSX.Element {
     const { t } = useTranslation();
-    return <Hit type={'advice'} title={`${t('Advice')}:`} {...props}/>;
+    return <Hit type={'advice'} title={`${t('Advice')}:`} {...props} />;
 }
 
 export function limitInput(maxlength?: string): void {
@@ -116,7 +117,7 @@ export function log(...param: unknown[]): void {
     logRecord[logindex++ % 1000] = param;
 }
 
-export function Label({ name, style }: {name: React.ReactNode;style?: object }): JSX.Element {
+export function Label({ name, style }: { name: React.ReactNode; style?: object }): JSX.Element {
     return <span style={{ marginRight: 10, ...(style ?? {}) }}>{name}{name !== undefined && ':'} </span>;
 };
 
@@ -129,7 +130,7 @@ export function firstLetterUpper(word: string): string {
     return list.map(item => item.charAt(0).toUpperCase() + item.slice(1)).join(' ');
 }
 
-export function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T, func?: (inputArray: Array<{value: T}>) => T): T {
+export function getUsableVal<T>(val: T, options: Array<{ value: T }>, defaultVal: T, func?: (inputArray: Array<{ value: T }>) => T): T {
     if (options.length === 0) {
         return defaultVal;
     }
@@ -207,7 +208,7 @@ export const safeStr = (val: string | number, ignore?: string): string => {
 };
 
 export function FormItem({ name, style, content, nameStyle }:
-{name: React.ReactNode;nameStyle?: React.CSSProperties;style?: React.CSSProperties;content: React.ReactElement}): JSX.Element {
+    { name: React.ReactNode; nameStyle?: React.CSSProperties; style?: React.CSSProperties; content: React.ReactElement }): JSX.Element {
     return (<div style={{
         display: 'inline-block',
         height: '30px',
@@ -215,7 +216,7 @@ export function FormItem({ name, style, content, nameStyle }:
         margin: '0 20px 10px 0',
         ...style ?? {},
     }}>
-        <Label name={name} style={{ width: '80px', display: 'inline-block', ...nameStyle ?? {} }}/>
+        <Label name={name} style={{ width: '80px', display: 'inline-block', ...nameStyle ?? {} }} />
         {content}
     </div>);
 };
@@ -428,7 +429,7 @@ const CompareDiv = styled.div`
     }
 `;
 
-export const CompareNumber = ({ data }: {data: string | number}): JSX.Element => {
+export const CompareNumber = ({ data }: { data: string | number }): JSX.Element => {
     const dataNum = Number(data);
     if (isNaN(dataNum)) {
         return <>{data}</>;
@@ -538,4 +539,91 @@ export const createCancelableApi = <TArgs extends any[], TResult>(
     }
 
     return { invoke, cancel };
+};
+
+interface TableHeaderAndData {
+    header: Array<{ title: string; key: string }>;
+    data: Array<{ [key: string]: number | string }>;
+};
+
+interface ObjectKeyString {
+    [key: string]: any;
+};
+
+export const copyToClipboard = async (columns: any[], dataSource: any[]): Promise<void> => {
+    if (navigator.clipboard === undefined && document.execCommand === undefined) {
+        message.warning(i18nextT('NotSupportCopy'));
+        return;
+    }
+    const header = getTableHeader(columns);
+    const data = getTableData(columns, dataSource);
+    const formatStr = dataFormat({ header, data });
+    try {
+        if (navigator.clipboard !== undefined) {
+            await navigator.clipboard.writeText(formatStr);
+        } else {
+            const input = document.createElement('textarea');
+            input.value = formatStr;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+        }
+        message.success({ content: i18nextT('CopySuccessful'), key: 'copyToClipboard' });
+    } catch (err) {
+        message.error({ content: i18nextT('CopyFailed', { err }), key: 'copyToClipboard' });
+    }
+};
+
+const getTableHeader = (columns: any[]): TableHeaderAndData['header'] => {
+    const header = columns.map(col => {
+        return {
+            title: col.title,
+            key: col.dataIndex ?? col.key,
+        };
+    });
+    return header;
+};
+
+const getTableData = (columns: any[], dataSource: any[]): TableHeaderAndData['data'] => {
+    const data = dataSource?.map(item => {
+        const obj: ObjectKeyString = {};
+
+        columns.forEach(col => {
+            getColData(obj, item, col);
+        });
+        return obj;
+    });
+    return data;
+};
+
+const getColData = (obj: ObjectKeyString, data: ObjectKeyString, col: any): void => {
+    const dataKey = col.dataIndex ?? col.key;
+    if (col.render === undefined || col.render.name === 'useTextColor') {
+        obj[dataKey] = data[dataKey];
+    } else {
+        const itemData = col.render(data[dataKey], data, 0);
+        if (typeof itemData !== 'object') {
+            obj[dataKey] = itemData;
+        } else {
+            const { content = undefined, children = [] } = { ...itemData, ...(itemData.props ?? {}) };
+            obj[dataKey] = content ?? (
+                Array.isArray(children) ? children.map(colData => typeof colData !== 'object' ? colData : '').join('') : children);
+        }
+    }
+};
+
+const dataFormat = ({ header, data }: TableHeaderAndData): string => {
+    let result: string = '';
+    header.forEach(headerItem => {
+        result = `${result}${headerItem.title}\t`;
+    });
+    result = `${result}\n`;
+    data.forEach(item => {
+        header.forEach(headerItem => {
+            result = `${result}${item[headerItem.key]}\t`;
+        });
+        result = `${result}\n`;
+    });
+    return result;
 };

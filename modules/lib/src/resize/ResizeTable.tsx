@@ -8,14 +8,14 @@ import type { ColumnsType, TablePaginationConfig, TableProps } from 'antd/es/tab
 import { isArray } from 'lodash';
 import { Resizor } from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
-import { limitInput, StyledEmpty } from '../utils/Common';
+import { copyToClipboard, limitInput, StyledEmpty } from '../utils/Common';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
-import { CaretDownIcon, CaretRightIcon } from '../icon/Icon';
+import { CaretDownIcon, CaretRightIcon, CopyOutlinedIcon } from '../icon/Icon';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
 const Support = React.forwardRef(
     (props: ResizeTableProps<any>) => {
-        return <Table { ...props } />;
+        return <Table {...props} />;
     },
 );
 Support.displayName = 'table';
@@ -229,7 +229,31 @@ const StyledTable = styled(Support)`
     }
 `;
 
-interface ExtendsColumnType {minWidth?: number};
+const ResizeTableContainer = styled.div`
+    .exportTableBtn {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        right: 10px;
+        top: 34px;
+        z-index: 10;
+        cursor: pointer;
+        background-color: ${(p): string => p.theme.borderColorLight};
+        color: ${(p): string => p.theme.textColorSecondary};
+        display: none;
+        &:hover {
+            color: ${(p): string => p.theme.radioSelectedColor};
+        }
+    }
+    &:hover {
+        .exportTableBtn {
+            display: block;
+        }
+    }
+`;
+
+interface ExtendsColumnType { minWidth?: number };
 
 interface IResizableTitleProps extends React.ReactElement {
     index?: number;
@@ -239,13 +263,13 @@ interface IResizableTitleProps extends React.ReactElement {
 }
 const resizableTitle: React.FC<IResizableTitleProps> = (props) => {
     const { onResize, resizable, index, ...restProps } = props;
-    const th: React.ReactElement = <th {...restProps}/> as React.ReactElement;
+    const th: React.ReactElement = <th {...restProps} /> as React.ReactElement;
     if (props?.className?.includes('ant-table-row-expand-icon-cell') || !resizable) {
         return th;
     }
     return cloneElement(th, {},
         [...th.props.children,
-            <Resizor key={th.props.children.length} onResize={onResize}/>]);
+        <Resizor key={th.props.children.length} onResize={onResize} />]);
 };
 
 interface ResizeTableProps<T> extends TableProps<T> {
@@ -254,8 +278,9 @@ interface ResizeTableProps<T> extends TableProps<T> {
     minThWidth?: number;
     style?: object;
     virtual?: boolean;
-    scroll?: {x?: number;y?: number;rowHeight?: number;scrollToFirstRowOnChange?: boolean};
+    scroll?: { x?: number; y?: number; rowHeight?: number; scrollToFirstRowOnChange?: boolean };
     rowHoverable?: boolean;
+    allowCopy?: boolean;
 }
 type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
@@ -277,7 +302,7 @@ const resizeColumns = ({ columns, setColumns, index, width, nextWidth, minThWidt
     setColumns(newColumns);
 };
 const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variableTotalWidth }:
-{columns: any[];index: number; width: number; nextWidth?: number;minThWidth: number;variableTotalWidth: boolean}): any[] => {
+    { columns: any[]; index: number; width: number; nextWidth?: number; minThWidth: number; variableTotalWidth: boolean }): any[] => {
     const newColumns = [...columns];
     newColumns[index] = {
         ...newColumns[index],
@@ -294,7 +319,7 @@ const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variab
 
 // ============================ virtual ============================
 const getVirtualElement = (dom: Element, boxRef: React.RefObject<HTMLElement>, targetRef: React.RefObject<HTMLElement>):
-[Element | null, Element | null] => {
+    [Element | null, Element | null] => {
     const box = dom.querySelector('.ant-table-body');
     const target = dom.querySelector('.ant-table-body table');
     if (box !== null && target !== null) {
@@ -320,13 +345,13 @@ const getFullExpandable = (expandable?: any): any => {
     if (expandable === null || expandable === undefined || typeof expandable !== 'object') {
         return null;
     }
-    const expandIcon = <T extends {children?: unknown[]}>({ expanded, onExpand, record }:
-    {expanded: boolean;onExpand: (record: T, event: React.MouseEvent<any>) => void;record: T}): React.ReactNode => {
+    const expandIcon = <T extends { children?: unknown[] }>({ expanded, onExpand, record }:
+        { expanded: boolean; onExpand: (record: T, event: React.MouseEvent<any>) => void; record: T }): React.ReactNode => {
         if (record.children !== null && record.children !== undefined && record.children.length > 0) {
             return <CaretRightIcon onClick={(e): void => {
                 e.stopPropagation();
                 onExpand(record, e);
-            }} style={{ cursor: 'pointer', transform: `rotate(${expanded ? '90deg' : 0})` }}/>;
+            }} style={{ cursor: 'pointer', transform: `rotate(${expanded ? '90deg' : 0})` }} />;
         } else {
             return <></>;
         }
@@ -336,7 +361,7 @@ const getFullExpandable = (expandable?: any): any => {
 
 // ============================ 安全防护 ============================
 const handleChangeSafe = (onChange?: (...p: any) => void, ...params: any): void => {
-    const [,,,action] = params;
+    const [, , , action] = params;
     if (['paginate', 'filter'].includes(action?.action)) {
         limitInput();
     }
@@ -350,7 +375,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, rowHoverable = true,
-        className, locale, ...restProps
+        className, locale, allowCopy = false, ...restProps
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
     const marginTop = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
@@ -386,26 +411,26 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
     // ============================ expandable ============================
     const fullExpandable = useMemo(() => getFullExpandable(expandable), [expandable]);
 
+    const copyTable = async (): Promise<void> => {
+        await copyToClipboard(columns, dataSource as any[]);
+    };
+
     // 出现分页跳转输入框
     useEffect(() => {
         limitInput();
     }, [dataSource?.length, fullPagination]);
 
     return (
-        <div id={id} style={{ ...(style ?? {}) }} ref={ref}>
-            <StyledTable
-                { ...restProps }
-                onChange={(...params: any): void => { handleChangeSafe(onChange, ...params); }}
-                pagination={virtual ? false : fullPagination}
-                expandable={fullExpandable}
-                rowHoverable={rowHoverable}
-                scroll={scroll}
-                dataSource={virtual ? renderList : dataSource}
-                className={`${className ?? ''} ${variableTotalWidth ? 'variableTotalWidth' : ''}`}
-                columns={mergeColumns}
-                components={{ header: { cell: resizableTitle } }}
-                locale={ { emptyText: () => prop.loading ? null : <StyledEmpty style={{ marginTop }}></StyledEmpty>, ...(locale ?? {}) } }
+        <ResizeTableContainer id={id} style={{ ...(style ?? {}), position: 'relative' }} ref={ref}>
+            {(allowCopy && (dataSource ?? []).length > 0) && <div className='exportTableBtn' onClick={copyTable}>
+                <CopyOutlinedIcon style={{ width: '100%', height: '100%', lineHeight: '32px', display: 'inline-block' }} />
+            </div>}
+            <StyledTable {...restProps} onChange={(...params: any): void => { handleChangeSafe(onChange, ...params); }}
+                pagination={virtual ? false : fullPagination} expandable={fullExpandable} rowHoverable={rowHoverable} scroll={scroll}
+                dataSource={virtual ? renderList : dataSource} components={{ header: { cell: resizableTitle } }}
+                className={`${className ?? ''} ${variableTotalWidth ? 'variableTotalWidth' : ''}`} columns={mergeColumns}
+                locale={{ emptyText: () => prop.loading ? null : <StyledEmpty style={{ marginTop }}></StyledEmpty>, ...(locale ?? {}) }}
             />
-        </div>
+        </ResizeTableContainer>
     );
 };

@@ -52,7 +52,10 @@
     "Baseline": "Baseline",
     "Comparison": "Comparison",
     "Difference": "Difference",
-    "NotFoundJumpTargetWarn": "Jump target not found"
+    "NotFoundJumpTargetWarn": "Jump target not found",
+    "NotSupportCopy": "Copying is not supported",
+    "CopySuccessful": "Copy successful!",
+    "CopyFailed": "Copy failed: {{err}}"
   },
   "sessionList": {
     "Template": "Template",

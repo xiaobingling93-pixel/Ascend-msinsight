@@ -122,6 +122,9 @@ const getTableColumns = function (
     isCompare: boolean,
     setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>,
 ): TableColumnsType<RenderExpandRecord> {
+    const useTextColor = (data: string | number, record: RenderExpandRecord): JSX.Element | number | string => {
+        return (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data;
+    };
     const dataColumns: TableColumnsType<RenderExpandRecord> = columns.map((col: MemoryTableColumn) => {
         return {
             dataIndex: col.key,
@@ -132,8 +135,7 @@ const getTableColumns = function (
             showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === ''
                 ? true
                 : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
-            render: (data: string | number, record: RenderExpandRecord) =>
-                (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data,
+            render: useTextColor,
         };
     });
     if (isCompare) {
@@ -142,7 +144,7 @@ const getTableColumns = function (
             title: t('Details', { keyPrefix: 'tableHead' }),
             sorter: false,
             fixed: 'right',
-            render: (record: RenderExpandRecord): JSX.Element => {
+            render: (_: any, record: RenderExpandRecord): JSX.Element => {
                 return renderExpandColomn(record, t, setExpandedKeys);
             },
         });
@@ -256,6 +258,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             <div>
                 <ResizeTable
                     columns={columns as TableColumnsType<OperatorDetail>}
+                    allowCopy
                     dataSource={tableData.rows.length === 0 ? defaultDataSource : tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
                     onChange={onTableChange}
                     scroll={{

@@ -55,7 +55,7 @@ import { ReactComponent as FullTextDarkSvg } from './img/full_text_dark.svg';
 import { ReactComponent as FullTextActiveSvg } from './img/full_text_active.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
-import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
+import { CaretUpOutlined, CaretDownOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTheme } from '@emotion/react';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
@@ -255,6 +255,10 @@ export function ColumnSorterIcon(): JSX.Element {
         <CaretDownOutlined className={'sorter-down'} style={{ marginTop: '-.3em' }}/>
     </span>;
 }
+export function CopyOutlinedIcon({ style }: { style?: React.CSSProperties }): JSX.Element {
+    return <CopyOutlined style={style} />;
+}
+
 export function ColumnFilterIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'columnFilter'} {...props }/>;
 }

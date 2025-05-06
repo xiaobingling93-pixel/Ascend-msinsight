@@ -218,7 +218,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     return (
         <Dropdown menu={{ items }} trigger={['contextMenu']}>
             <div>
-                <ResizeTable columns={columns} dataSource={dataSource} size="small"
+                <ResizeTable columns={columns} dataSource={dataSource} size="small" allowCopy
                     loading={loading}
                     pagination={getPageConfigWithPageData(page, setPage)}
                     onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
@@ -265,7 +265,7 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: ConditionDataT
         {
             title: t('tableHead.Source'),
             ...commonColumnConfig,
-            render: (data: DataType): React.ReactNode => (<div>
+            render: (_: any, data: DataType): React.ReactNode => (<div>
                 {tableLevel === TableLevel.DIFF_SOURCE && <ExpandIcon expanded={data.expanded} onClick={(): void => { handleExpand(data); }}/>}
                 {i18n.t(data.source)} </div>),
             display: [TableLevel.DIFF, TableLevel.DIFF_SOURCE].includes(tableLevel),
@@ -378,6 +378,7 @@ const CommunicationTimeTable = observer(({ dataSource, showOperator, conditions,
 
     return <ResizeTable
         data-testid={'dataAnalysisTable'}
+        allowCopy
         loading={!session.durationFileCompleted}
         dataSource={tableData}
         columns={columns}

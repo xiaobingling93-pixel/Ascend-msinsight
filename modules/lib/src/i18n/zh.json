@@ -53,7 +53,10 @@
     "Baseline": "基线数据",
     "Comparison": "比对数据",
     "Difference": "差值",
-    "NotFoundJumpTargetWarn": "未找到跳转的目标"
+    "NotFoundJumpTargetWarn": "未找到跳转的目标",
+    "NotSupportCopy": "不支持复制",
+    "CopySuccessful": "复制成功！",
+    "CopyFailed": "复制失败：{{err}}"
   },
   "headerButtonTooltip": {
     "Title": "选择性能分析类型",
