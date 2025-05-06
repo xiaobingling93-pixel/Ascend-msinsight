@@ -11,13 +11,15 @@ const std::unordered_map<std::string, std::string> MindIELLMParallelStrategyAlgo
 const std::unordered_map<std::string, std::string> MindIELLMParallelStrategyAlgorithm::tokenWithEp = {
     {MOE_TP_GROUP, MOE_TP_GROUP_NAME}, {EP_GROUP, EP_GROUP_NAME}};
 
-MindIELLMParallelStrategyAlgorithm::MindIELLMParallelStrategyAlgorithm() = default;
+MindIELLMParallelStrategyAlgorithm::MindIELLMParallelStrategyAlgorithm()
+{
+    commInfoHandlers[DIMENSIONS_TP] =
+        std::bind(&MindIELLMParallelStrategyAlgorithm::ReduceCommTpDimensionDef, this, std::placeholders::_1);
+    commInfoHandlers[DIMENSIONS_PP] =
+        std::bind(&MindIELLMParallelStrategyAlgorithm::ReduceCommPpDimensionDef, this, std::placeholders::_1);
+}
 
 MindIELLMParallelStrategyAlgorithm::~MindIELLMParallelStrategyAlgorithm() = default;
-
-void MindIELLMParallelStrategyAlgorithm::SetStrategyConfig(const ParallelStrategyConfig& config)
-{
-}
 
 bool MindIELLMParallelStrategyAlgorithm::UpdateParallelDimension(const std::string& tmpDimension,
     const ParallelStrategyConfig &tmpConfig, std::string &err)
@@ -181,7 +183,6 @@ bool MindIELLMParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &
     if (!GetConnectionsByToken(err, ParaMode::TP_DP_PP)) {
         return false;
     }
-    //
     // 计算并行通信域, 处理moeTp/ep/pp, pp connections不重复添加, 目前仅支持全展开视图下生成moe相关连线
     if (dimension == DIMENSIONS_TP && paraDetailsMap[EP_PARA].isShown &&
         !GetConnectionsByToken(err, ParaMode::MOE_TP_EP_PP)) {
@@ -206,7 +207,9 @@ bool MindIELLMParallelStrategyAlgorithm::GenerateArrangementByDimension(std::str
     }
     // moeTp/ep
     indexAttributes[MOE_TP_INDEX] = 0;
-    indexAttributes[PP_INDEX] = 0;
+    indexAttributes[EP_INDEX] = 0;
+    // 与其余算法保持统一，返回cpIndex=0
+    indexAttributes[CP_INDEX] = 0;
     // get arrangements
     for (uint32_t index = 0; index < elementSize; index++) {
         GetPerArrangement(index, indexAttributes);
@@ -223,16 +226,64 @@ bool MindIELLMParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
     std::vector<IndicatorDataStruct> &indicatorData, std::string& err)
 {
-    return true;
+    if (!(strategyConfig == performanceParams.config)) {
+        err = "Failed to get parallelism performance indicator for the MOE Algorithm. Unexpected parallel config.";
+        return false;
+    }
+    tpSize = strategyConfig.tpSize;
+    wordSize = strategyConfig.tpSize * strategyConfig.ppSize * strategyConfig.dpSize;
+    if (performanceParams.dimension == DIMENSIONS_TP) {
+        CalculatePerformanceDataWithTpDimension(statistic, indicatorData);
+        return true;
+    }
+    // 折叠TP
+    ReduceTpPerformance(statistic);
+    if (performanceParams.dimension == DIMENSIONS_PP) {
+        // DP+PP视图时，折叠TP，计算最大值、最小值、极差等统计值, 此处因CP Size必为1，复用以往CP维度逻辑
+        CalculatePerformanceDataWithCpDimension(indicatorData);
+        return true;
+    }
+    // CP恒为1，无需折叠，但需把reduceTpMax reduceTpMin传递给reduceCpMax reduceCpMin
+    ReduceCpPerformance();
+    // 折叠PP
+    ReducePpPerformanceForPpLast();
+    if (performanceParams.dimension == DIMENSIONS_DP) {
+        GetPerformanceResponseDataWithDpDimension(reducePpStatistic, indicatorData);
+        return true;
+    }
+    err = "Failed to get parallelism performance indicator for the MOE Algorithm. Unexpected dimension.";
+    return false;
 }
 
 void MindIELLMParallelStrategyAlgorithm::CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
     std::vector<IndicatorDataStruct> &indicatorData)
 {
+    BaseParallelStrategyAlgorithm::CalAdviceInfo(dimension, advices, indicatorData);
 }
 
 std::vector<Connection> MindIELLMParallelStrategyAlgorithm::GetAllCommunicationGroups(std::string &err)
 {
-    return {};
+    if (allCommunicationGroups.empty() && !GetConnectionsByTokenList(err)) {
+        return {};
+    }
+    return allCommunicationGroups;
+}
+
+CommInfoMap MindIELLMParallelStrategyAlgorithm::GetCommInfoByDimension(const CommInfoMap &expandCommInfos,
+    const std::string &dimension)
+{
+    auto res =  BaseParallelStrategyAlgorithm::GetCommInfoByDimension(expandCommInfos, dimension);
+    if (dimension == DIMENSIONS_TP) {
+        return res;
+    }
+    // 折叠场景暂不展示按moeTP/ep拆解通信时间结果
+    for (auto& item : res) {
+        auto& commInfo = item.second;
+        commInfo.erase(std::remove_if(commInfo.begin(), commInfo.end(),
+            [](const CommInfoUnderRank& info) {
+                return (info.pgName == MOE_TP_GROUP_NAME) || (info.pgName == EP_GROUP_NAME);
+            }), commInfo.end());
+    }
+    return res;
 }
 }

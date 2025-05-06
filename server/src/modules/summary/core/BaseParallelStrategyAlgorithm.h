@@ -38,7 +38,7 @@ public:
     virtual void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
                                std::vector<IndicatorDataStruct> &indicatorData);
     virtual std::vector<Connection> GetAllCommunicationGroups(std::string &err) = 0;
-    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> GetCommInfoByDimension(
+    virtual std::unordered_map<std::string, std::vector<CommInfoUnderRank>> GetCommInfoByDimension(
         const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &expandCommInfos,
         const std::string &dimension);
 

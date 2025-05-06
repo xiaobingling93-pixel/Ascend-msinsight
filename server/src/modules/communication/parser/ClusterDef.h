@@ -248,6 +248,7 @@ struct IndicatorAttr {
     std::string name;
     // 是否需要在2D排布图上按色域渲染
     bool renderHeatMap = false;
+    // 是否需要在下方"计算/通信概览"图中显示
     bool renderChart = false;
     // 计算/通信概览 是否默认显示
     bool visible = false;

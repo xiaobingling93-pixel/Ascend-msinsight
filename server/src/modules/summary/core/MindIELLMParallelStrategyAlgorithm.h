@@ -10,14 +10,13 @@
 #include "ParallelStrategyAlgorithmDef.h"
 
 namespace Dic::Module::Summary {
+using CommInfoMap = std::unordered_map<std::string, std::vector<CommInfoUnderRank>>;
 class MindIELLMParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
     static const std::unordered_map<std::string, std::string> tokenExceptEp;
     static const std::unordered_map<std::string, std::string> tokenWithEp;
     MindIELLMParallelStrategyAlgorithm();
     ~MindIELLMParallelStrategyAlgorithm() override;
-
-    void SetStrategyConfig(const ParallelStrategyConfig& config) override;
     bool UpdateParallelDimension(const std::string& tmpDimension,
                                  const ParallelStrategyConfig& tmpConfig, std::string& err) override;
     bool GenerateArrangementByDimension(std::string &err) override;
@@ -27,6 +26,7 @@ public:
     void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
                        std::vector<IndicatorDataStruct> &indicatorData) override;
     std::vector<Connection> GetAllCommunicationGroups(std::string &err) override;
+    CommInfoMap GetCommInfoByDimension(const CommInfoMap &expandCommInfos, const std::string &dimension) override;
 private:
     enum class ParaMode {
         TP_DP_PP,

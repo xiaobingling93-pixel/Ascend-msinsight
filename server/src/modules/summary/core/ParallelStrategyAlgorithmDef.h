@@ -32,7 +32,7 @@ const std::string MP_EP_GROUP_NAME = "mp_exp";
 
 // Token list for MindIE-LLM
 const std::string MOE_TP_GROUP = "moeTp";
-const std::string MOE_TP_GROUP_NAME = "moe_tp";
+const std::string MOE_TP_GROUP_NAME = "moeTp";
 
 // Token list for MindSpeed
 // CP

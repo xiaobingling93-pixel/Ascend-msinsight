@@ -145,6 +145,9 @@ std::string BaseParallelStrategyAlgorithm::GetElementName(
 {
     std::string name;
     for (const auto& para : LAYOUT) {
+        if (paraDetailsMap.find(para) == paraDetailsMap.end()) {
+            continue;
+        }
         if (paraDetailsMap[para].isShown && GetParallelSizeByType(para) > 1) {
             name += para;
             name += std::to_string(indexAttributes[para + STR_INDEX]);
@@ -247,7 +250,7 @@ void BaseParallelStrategyAlgorithm::SetCpIndicatorAttr()
 
     // 通信掩盖、通信未掩盖
     data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS});
+        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS});
     data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
         VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS});
 }
@@ -286,7 +289,7 @@ void BaseParallelStrategyAlgorithm::SetPpIndicatorAttr()
 
     // 通信掩盖、通信未掩盖
     data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS});
+        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS});
     data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
         VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS});
 }
