@@ -109,7 +109,7 @@ export const CommunicatorContainer = observer(({ session, generateConditions, on
                     ? <div style={{ position: 'relative' }}>
                         {
                             loading &&
-                            <Loading>
+                            <Loading style={{ paddingTop: 100 }}>
                                 <Spin spinning={loading} />
                             </Loading>
                         }

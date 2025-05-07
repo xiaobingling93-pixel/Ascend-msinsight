@@ -60,7 +60,7 @@ export class Rectangle extends Shape {
     yGap = 40;
     cpGap = 10;
     dpGap = 20;
-    epGap = 10;
+    epGap = 12;
     rowIndex: number;
     colIndex: number;
     textHeight = 0; // 底部文字
@@ -403,25 +403,20 @@ export class Frame extends Shape {
         ctx.strokeStyle = colorsMap[this.type];
         ctx.lineWidth = bold ? Frame.FRAME_TOLERANCE : 2;
 
-        const { index: firstRankIndex, position: firstRankPosition, attribute: firstRankAttribute } = this.rectList[0];
-        const { index: lastRankIndex, position: lastRankPosition, attribute: lastRankAttribute } = this.rectList[this.rectList.length - 1];
-        const { x: firstX, y: firstY, width, height, textHeight } = new Rectangle({
-            index: firstRankIndex,
-            rowAndCol: firstRankPosition,
-            attribute: {
-                ...firstRankAttribute,
-                ...this.parallelismSize,
-            },
-        });
-        const { x: lastX, y: lastY } = new Rectangle({
-            index: lastRankIndex,
-            rowAndCol: lastRankPosition,
-            attribute: {
-                ...lastRankAttribute,
-                ...this.parallelismSize,
-            },
-        });
-        const offset = this.offset[this.type][0];
+        const { x: firstX, y: firstY, width, height, textHeight } = this.newRectangle(this.rectList[0], this.parallelismSize);
+        const { x: lastX, y: lastY } = this.newRectangle(this.rectList[this.rectList.length - 1], this.parallelismSize);
+
+        let offset = this.offset[this.type][0];
+        const { dpSize, epSize } = this.parallelismSize;
+        // 当 epSize > dpSize 时，dp 框与 ep 框位置互换（offset 互换），由 dp 框 包裹 ep 框
+        if (['dp', 'ep'].includes(this.type) && epSize > dpSize) {
+            if (this.type === 'dp') {
+                offset = this.offset.ep[0];
+            } else {
+                offset = this.offset.dp[0];
+            }
+        }
+
         const frameX = firstX - offset;
         const frameY = firstY - offset;
         const frameWidth = lastX - frameX + width + offset;
@@ -464,6 +459,18 @@ export class Frame extends Shape {
         }
 
         return false;
+    }
+
+    private newRectangle(rectDetail: FrameGroupItem['list'][number], parallelismSize: ParallelismSize): Rectangle {
+        const { index, position, attribute } = rectDetail;
+        return new Rectangle({
+            index,
+            rowAndCol: position,
+            attribute: {
+                ...attribute,
+                ...parallelismSize,
+            },
+        });
     }
 }
 
