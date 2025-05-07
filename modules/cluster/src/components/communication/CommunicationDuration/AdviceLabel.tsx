@@ -1,11 +1,14 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 */
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { Tooltip } from 'ascend-components';
 import { HelpIcon } from 'ascend-icon';
+import { type TableColumnsType } from 'antd';
+import { ResizeTable } from 'ascend-resize';
+import { DataType } from '../CommunicationTimeTable';
 
 export interface CommunicationAdvice {
     type: string;
@@ -16,9 +19,17 @@ export interface CommunicationAdvice {
     time: number;
 }
 
-const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element => {
+export interface CommunicationExpertAdvice {
+    name: string;
+    statistics: object;
+    suggestions: string[];
+}
+
+const AdviceLabel = (props: {adviceData: CommunicationAdvice[]; expertAdviceData: CommunicationExpertAdvice}): JSX.Element => {
     const { t } = useTranslation('communication');
-    const { adviceData } = props;
+    const { adviceData, expertAdviceData } = props;
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [columns, setColumns] = useState<TableColumnsType<DataType>>([]);
     let overAllText = '';
     const issueList: Array<{title: string; content: string }> = [];
     const sdmaData = adviceData.find(item => item.type === 'SDMA');
@@ -32,6 +43,30 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
             content: t('CommunicationAdvice', { ...data, issue: isBandwidthIssue ? t('BandwidthIssue') : t('CommunicationIssue') }),
         });
     });
+    const expertAdviceList: Array<{title: string;content: string[] }> = [];
+    Object.values(expertAdviceData).forEach(data => {
+        data.forEach((obj: { name: string; statistics: any; suggestions: string[] }) => {
+            const tableColumns: TableColumnsType<DataType> = Object.keys(obj.statistics).map((key) => ({
+                title: key,
+                dataIndex: key,
+                key,
+            }));
+            const tableDataSource: any[] = obj.statistics.Category.map((_: any, index: string | number) => {
+                const rowData: Record<string, string | number> = { key: index };
+                Object.keys(obj.statistics).forEach((key) => {
+                    rowData[key] = obj.statistics[key][index]; // 按索引填充数据
+                });
+                return rowData;
+            });
+            setColumns(tableColumns);
+            setDataSource(tableDataSource);
+            expertAdviceList.push({
+                title: obj.name,
+                content: obj.suggestions,
+            });
+        });
+    });
+
     if (sdmaData && rdmaData) {
         overAllText += t('MoreFocus', { type: sdmaData.time >= rdmaData.time ? sdmaData.type : rdmaData.type });
     }
@@ -57,6 +92,17 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                             <>
                                 <div className="communication-advice-header">{item.title}</div>
                                 <div className="communication-advice-content">{item.content}</div>
+                            </>
+                        );
+                    })
+                }
+                {
+                    expertAdviceList.map(item => {
+                        return (
+                            <>
+                                <div className="communication-advice-header">{item.title}</div>
+                                <div className="communication-advice-content">{item.content}</div>
+                                <ResizeTable columns={columns} dataSource={dataSource} size="small"></ResizeTable>
                             </>
                         );
                     })

@@ -75,6 +75,15 @@ export const queryCommunication = async(param: { iterationId: string ; operatorN
 };
 
 /**
+ * 查询本张卡的通信耗时分析中的专家建议
+ * 无参
+ * @return {[]} 返回数组
+ */
+export const queryCommunicationExpertAdvisor = async(): Promise<any> => {
+    return window.requestData('communication/advisor', {});
+};
+
+/**
  * 查询通信算子时间列表
  *
  * @param {string} iterationId 迭代ID
