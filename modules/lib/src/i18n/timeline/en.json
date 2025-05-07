@@ -93,6 +93,7 @@
       "Communication Summary": "Communication Summary",
       "Overlap Analysis": "Overlap Analysis",
       "Kernel Details": "Kernel Details",
+      "Expert Analysis": "Expert Analysis",
       "Affinity API": "Affinity API",
       "Affinity Optimizer": "Affinity Optimizer",
       "AICPU Operators": "AICPU Operators",
@@ -143,6 +144,12 @@
       "FileSizeLimitWarning": "Please select a file smaller than 10GB",
       "Error": "Error",
       "Warn": "Warn"
+    },
+    "expertSummary": {
+      "AI Core Request Error": "Failed to request the AICore frequency Analysis",
+      "AI Core Frequency": "AI Core Frequency",
+      "AI Core unproblematic": "The maximum frequency reduction does not exceed {{percent}}%",
+      "AI Core reduction": "The maximum frequency reduction exceeds {{percent}}%, which may lead to longer computation time. Please refer to the AI Core Freq lane for details"
     },
     "RenderError": "Rendering failed. Please check if the data is correct"
   }

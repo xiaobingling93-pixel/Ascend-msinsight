@@ -25,6 +25,12 @@ import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import { BaseSummary } from './SystemView';
+import { ExpertSummary } from './ExpertSummary';
+import { queryExpertAnalysis } from '../../api/request';
+
+const ExpertAnalysis = observer((props: any) => {
+    return <ExpertSummary request={queryExpertAnalysis} {...props} />;
+});
 
 const AffinityAPI = observer((props: any) => {
     return <BaseSummary request={queryAffinityAPI} columns={affinityAPIColumns} {...props} />;
@@ -85,4 +91,4 @@ export const handleAdvisorSelected = async(rowData: any, props: any): Promise<vo
     });
 };
 
-export const ExpertSystemView = [AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator];
+export const ExpertSystemView = [ExpertAnalysis, AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator];

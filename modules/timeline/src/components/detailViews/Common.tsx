@@ -183,6 +183,7 @@ export const statsSystemViewItems: SystemViewItem[] = [
 export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'HCCL', 'Overlap Analysis'];
 
 export const expertSystemViewItems: SystemViewItem[] = [
+    { name: 'Expert Analysis' },
     { name: 'Affinity API' },
     { name: 'Affinity Optimizer' },
     { name: 'AICPU Operators' },

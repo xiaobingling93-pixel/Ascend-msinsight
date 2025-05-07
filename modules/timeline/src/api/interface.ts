@@ -81,3 +81,12 @@ export interface SetCardAliasParams {
     rankId: string;
     cardAlias: string;
 }
+
+export interface GetAICoreParams {
+    rankId: string;
+}
+
+export interface GetAICoreParamsResult {
+    hasProblem: boolean;
+    percent: number;
+}

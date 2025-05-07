@@ -3,6 +3,8 @@
  */
 
 import {
+    GetAICoreParams,
+    GetAICoreParamsResult,
     GetOverallMetricsMoreListParams, GetOverallMetricsMoreListResult,
     GetOverallMetricsParams,
     GetOverallMetricsResult, GetOverallMetricsResultItem,
@@ -44,4 +46,9 @@ export const getOverallMetricsMoreList = async (params: GetOverallMetricsMoreLis
 // 设置卡级别别名
 export const setCardAliasReq = async (params: SetCardAliasParams): Promise<any> => {
     return window.requestData('unit/setCardAlias', params, 'timeline');
+};
+
+// 获取ExpertSummary中的AI Core降频分析
+export const queryExpertAnalysis = async (params: GetAICoreParams): Promise<GetAICoreParamsResult> => {
+    return window.requestData('expertAnalysis/AICoreFreq', params, 'timeline');
 };

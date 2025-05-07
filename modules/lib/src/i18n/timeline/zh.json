@@ -93,6 +93,7 @@
       "Communication Summary": "通信汇总",
       "Overlap Analysis": "覆盖分析",
       "Kernel Details": "算子详情",
+      "Expert Analysis": "专家分析",
       "Affinity API": "亲和 API",
       "Affinity Optimizer": "亲和优化器",
       "AICPU Operators": "AICPU 算子",
@@ -143,6 +144,12 @@
       "FileSizeLimitWarning": "请选择小于10GB的文件",
       "Error": "错误",
       "Warn": "警告"
+    },
+    "expertSummary": {
+      "AI Core Request Error": "请求AICore频率分析失败",
+      "AI Core Frequency": "AI Core 频率分析",
+      "AI Core unproblematic": "频率最大降频不超过{{percent}}%",
+      "AI Core reduction" :"频率最大降频超过{{percent}}%，可能会导致计算时间变长，具体请查看AI Core Freq泳道"
     },
     "RenderError": "渲染失败，请检查数据是否正确"
   }
