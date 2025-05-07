@@ -80,6 +80,9 @@ public:
     void SaveExpertHotspot();
     void SaveExpertDeployment();
     bool DeleteExpertHotspot(const std::string &modelStage, const std::string &version);
+    bool DeleteDeployment(const std::string &modelStage, const std::string &version);
+    std::vector<ExpertDeploymentStruct> QueryExpertDeployment(const std::string &modelStage,
+                                                              const std::string &version);
     std::vector<ExpertHotspotStruct> QueryExpertHotspotData(const std::string &modelStage, const std::string &version);
     void ReleaseStmt();
 protected:

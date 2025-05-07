@@ -29,7 +29,7 @@ bool ExpertDeploymentParser::Parse(const std::string &filePath, const std::strin
     std::string fileContent;
     std::copy(std::istream_iterator<unsigned char>(expertDeployment), std::istream_iterator<unsigned char>(),
               back_inserter(fileContent));
-    if (!fileContent.empty()) {
+    if (fileContent.empty()) {
         return false;
     }
     // 将文件内容转换为json

@@ -27,6 +27,7 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PARALLELISM_PERFORMANCE_DATA, ToQueryParallelismPerformanceRequest);
     jsonToReqFactory.emplace(REQ_RES_IMPORT_EXPERT_DATA, ToImportExpertDataRequest);
     jsonToReqFactory.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, ToQueryExpertHotspotRequest);
+    jsonToReqFactory.emplace(REQ_RES_QUERY_MODEL_INFO, ToQueryModelInfoRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -46,6 +47,7 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PARALLELISM_PERFORMANCE_DATA, ToQueryParallelismPerformanceResponse);
     resToJsonFactory.emplace(REQ_RES_IMPORT_EXPERT_DATA, ToImportExpertDataResponse);
     resToJsonFactory.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, ToQueryExpertHotspotResponse);
+    resToJsonFactory.emplace(REQ_RES_QUERY_MODEL_INFO, ToQueryModelInfoResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -302,6 +304,25 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryExpertHotspotRequest(const json
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.modelStage, json["params"], "modelStage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.version, json["params"], "version");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.layerNum, json["params"], "layerNum");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.expertNum, json["params"], "expertNum");
+    if (json["params"].HasMember("denseLayerList") && json["params"]["denseLayerList"].IsArray()) {
+        for (const auto &denseLayer : json["params"]["denseLayerList"].GetArray()) {
+            if (denseLayer.IsInt()) {
+                reqPtr->params.denseLayerList.emplace_back(denseLayer.GetInt());
+            }
+        }
+    }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SummaryProtocol::ToQueryModelInfoRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<QueryModelInfoRequest> reqPtr = std::make_unique<QueryModelInfoRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info of query model info request.";
+        return nullptr;
+    }
     return reqPtr;
 }
 
@@ -385,6 +406,11 @@ std::optional<document_t> SummaryProtocol::ToImportExpertDataResponse(const Resp
 std::optional<document_t> SummaryProtocol::ToQueryExpertHotspotResponse(const Response &response)
 {
     return ToResponseJson<QueryExpertHotspotResponse>(dynamic_cast<const QueryExpertHotspotResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToQueryModelInfoResponse(const Response &response)
+{
+    return ToResponseJson<QueryModelInfoResponse>(dynamic_cast<const QueryModelInfoResponse &>(response));
 }
 #pragma endregion
 } // namespace Protocol

@@ -255,12 +255,32 @@ TEST_F(HandlerTest, ImportExpertDataHandlerRequestReturnFalse)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(HandlerTest, QueryExpertHotspotHandlerRequestReturnTrue)
+TEST_F(HandlerTest, QueryExpertHotspotHandlerRequestLayerAbnormal)
 {
     auto request = std::make_unique<QueryExpertHotspotRequest>();
     request->params.modelStage = "prefill";
     request->params.version = "1";
+    request->params.denseLayerList = {0, 1};
+    const int layerNum = -1;
+    const int expertNum = 256;
+    request->params.layerNum = layerNum;
+    request->params.expertNum = expertNum;
     QueryExpertHotspotHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, true);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryExpertHotspotHandlerRequestDenseAbnormal)
+{
+    auto request = std::make_unique<QueryExpertHotspotRequest>();
+    request->params.modelStage = "prefill";
+    request->params.version = "1";
+    request->params.denseLayerList = {0, 61};
+    const int layerNum = 60;
+    const int expertNum = 256;
+    request->params.layerNum = layerNum;
+    request->params.expertNum = expertNum;
+    QueryExpertHotspotHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
 }

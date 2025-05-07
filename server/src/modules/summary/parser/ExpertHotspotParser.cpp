@@ -47,7 +47,7 @@ namespace Dic::Module::Summary {
         return true;
     }
 
-    std::map<std::string, ModelInfo> ExpertHotspotParser::GetModelInfoList()
+    std::map<std::string, ModelInfo> ExpertHotspotParser::GetModelInfoMap()
     {
         return modelInfoMap;
     }

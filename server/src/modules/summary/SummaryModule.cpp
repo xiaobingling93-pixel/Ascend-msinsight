@@ -17,6 +17,7 @@
 #include "QueryParallelismPerformanceHandler.h"
 #include "ImportExpertDataHandler.h"
 #include "QueryExpertHotspotHandler.h"
+#include "QueryModelInfoHandler.h"
 #include "ProtocolDefs.h"
 #include "SummaryModule.h"
 
@@ -55,6 +56,7 @@ void SummaryModule::RegisterRequestHandlers()
                               std::make_unique<QueryParallelismPerformanceHandler>());
     requestHandlerMap.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, std::make_unique<QueryExpertHotspotHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_EXPERT_DATA, std::make_unique<ImportExpertDataHandler>());
+    requestHandlerMap.emplace(REQ_RES_QUERY_MODEL_INFO, std::make_unique<QueryModelInfoHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

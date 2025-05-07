@@ -19,6 +19,14 @@ bool QueryExpertHotspotHandler::HandleRequest(std::unique_ptr<Protocol::Request>
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
+    ModelInfo modelInfo;
+    modelInfo.denseLayerList = request.params.denseLayerList;
+    modelInfo.expertNumber = request.params.expertNum;
+    modelInfo.modelLayer = request.params.layerNum;
+    if (!ExpertHotspotManager::UpdateModelInfo(modelInfo, errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     response.body.hotspotInfos = ExpertHotspotManager::QueryExpertHotspotData(request.params.modelStage,
                                                                               request.params.version);
     SendResponse(std::move(responsePtr), true, "");

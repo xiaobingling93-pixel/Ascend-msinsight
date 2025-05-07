@@ -65,6 +65,8 @@ public:
         for (const T &item: value) {
             if constexpr (std::is_same_v<T, std::string>) {
                 temp.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+            } else if constexpr (std::is_same_v<T, int>) {
+                temp.PushBack(item, allocator);
             } else {
                 temp.PushBack(json_t().SetString(std::to_string(item).c_str(), allocator), allocator);
             }
@@ -114,6 +116,8 @@ public:
                 vec.push_back(item.GetString());
             } else if constexpr (std::is_same_v<T, float>) {
                 vec.push_back(item.GetFloat());
+            } else if constexpr (std::is_same_v<T, int>) {
+                vec.push_back(item.GetInt());
             } else {
                 Server::ServerLog::Error("Get vector from json error: unsupported type!");
             }

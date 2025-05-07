@@ -903,7 +903,7 @@ sqlite3_stmt *VirtualClusterDatabase::InitExpertDeploymentInsertStmt(uint64_t pa
     if (paramLen == 0) {
         return nullptr;
     }
-    std::string sql = "INSERT INTO " + TABLE_EXPERT_DEPLOYMENT_INFO + " (modelStage, rankId, layer, expertList "
+    std::string sql = "INSERT INTO " + TABLE_EXPERT_DEPLOYMENT_INFO + " (modelStage, rankId, layer, expertList, "
         " version) VALUES (?,?,?,?,?)";
     for (size_t i = 0; i < paramLen - 1; ++i) {
         sql.append(",(?,?,?,?,?)");
@@ -1060,6 +1060,34 @@ bool VirtualClusterDatabase::DeleteExpertHotspot(const std::string &modelStage, 
     return result == SQLITE_DONE;
 }
 
+bool VirtualClusterDatabase::DeleteDeployment(const std::string &modelStage, const std::string &version)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string sql = "DELETE FROM " + TABLE_EXPERT_DEPLOYMENT_INFO + " WHERE 1 = 1";
+    if (!modelStage.empty()) {
+        sql += " AND modelStage = ? ";
+    }
+    if (!version.empty()) {
+        sql += " AND version = ? ";
+    }
+    sqlite3_stmt *stmt = nullptr;
+    int stmtResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (stmtResult != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare delete expert hotspot statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    int idx = bindStartIndex;
+    if (!modelStage.empty()) {
+        sqlite3_bind_text(stmt, idx++, modelStage.c_str(), modelStage.length(), SQLITE_TRANSIENT);
+    }
+    if (!version.empty()) {
+        sqlite3_bind_text(stmt, idx++, version.c_str(), version.length(), SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return result == SQLITE_DONE;
+}
+
 std::vector<ExpertHotspotStruct> VirtualClusterDatabase::QueryExpertHotspotData(const std::string &modelStage,
                                                                                 const std::string &version)
 {
@@ -1084,6 +1112,40 @@ std::vector<ExpertHotspotStruct> VirtualClusterDatabase::QueryExpertHotspotData(
         info.visits = sqlite3_column_int64(stmt, col++);
         info.version = sqlite3_column_string(stmt, col++);
         info.layer = sqlite3_column_int(stmt, col++);
+        res.emplace_back(info);
+    }
+    sqlite3_finalize(stmt);
+    return res;
+}
+
+std::vector<ExpertDeploymentStruct> VirtualClusterDatabase::QueryExpertDeployment(const std::string &modelStage,
+                                                                                  const std::string &version)
+{
+    std::string sql = "SELECT modelStage, rankId, layer, expertList, version FROM " +
+        TABLE_EXPERT_DEPLOYMENT_INFO + " WHERE modelStage = ? and version = ?";
+    sqlite3_stmt *stmt = nullptr;
+    int stmtResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (stmtResult != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare query expert hotspot statement. error:", sqlite3_errmsg(db));
+        return {};
+    }
+    int idx = bindStartIndex;
+    sqlite3_bind_text(stmt, idx++, modelStage.c_str(), modelStage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, version.c_str(), version.length(), SQLITE_TRANSIENT);
+    std::vector<ExpertDeploymentStruct> res;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        ExpertDeploymentStruct info{};
+        info.modelStage = sqlite3_column_string(stmt, col++);
+        info.deviceId = sqlite3_column_int(stmt, col++);
+        info.layer = sqlite3_column_int(stmt, col++);
+        std::string expertListStr = sqlite3_column_string(stmt, col++);
+        if (!expertListStr.empty()) {
+            for (const auto &item: StringUtil::Split(expertListStr, ",")) {
+                info.expertList.push_back(StringUtil::StringToInt(item));
+            }
+        }
+        info.version = sqlite3_column_string(stmt, col++);
         res.emplace_back(info);
     }
     sqlite3_finalize(stmt);

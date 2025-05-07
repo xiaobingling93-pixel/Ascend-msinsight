@@ -105,6 +105,7 @@ const std::string REQ_RES_COMPUTE_DETAIL = "summary/queryComputeDetail";
 const std::string REQ_RES_COMMUNICATION_DETAIL = "summary/queryCommunicationDetail";
 const std::string REQ_RES_IMPORT_EXPERT_DATA = "summary/importExpertData";
 const std::string REQ_RES_QUERY_EXPERT_HOTSPOT = "summary/queryExpertHotspot";
+const std::string REQ_RES_QUERY_MODEL_INFO = "summary/queryModelInfo";
 
 // pipeline
 const std::string REQ_RES_PIPELINE_GET_ALL_STEPS = "parallelism/pipeline/getAllSteps";

@@ -305,6 +305,10 @@ struct ImportExpertDataRequest : public Request {
     ImportExpertDataParams params;
 };
 
+struct QueryModelInfoRequest : public Request {
+    QueryModelInfoRequest() : Request(REQ_RES_QUERY_MODEL_INFO) {};
+};
+
 struct QueryExpertHotspotParams {
     std::string modelStage;
     std::string version;
@@ -322,6 +326,16 @@ struct QueryExpertHotspotParams {
         if (!CheckStrParamValid(this->version, paramError)) {
             errorMsg = "[Summary] Failed to check version." + paramError;
             return false;
+        }
+        if (layerNum <= 0 || expertNum <= 0) {
+            errorMsg = "[Summary] The number of layer and the number of expert must be greater than zero.";
+            return false;
+        }
+        for (const auto &item: denseLayerList) {
+            if (item >= layerNum) {
+                errorMsg = "[Summary] The range of dense layer is out of layer number.";
+                return false;
+            }
         }
         return true;
     }

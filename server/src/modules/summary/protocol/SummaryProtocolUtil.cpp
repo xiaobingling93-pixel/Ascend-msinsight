@@ -254,16 +254,28 @@ std::optional<document_t> ToResponseJson<QueryExpertHotspotResponse>(const Query
     json_t hotspotInfosArray(kArrayType);
     for (const auto &item: response.body.hotspotInfos) {
         json_t hotspot(kObjectType);
-        JsonUtil::AddMember(hotspot, "modelStage", item.modelStage, allocator);
         JsonUtil::AddMember(hotspot, "rankId", item.rankId, allocator);
         JsonUtil::AddMember(hotspot, "visits", item.visits, allocator);
         JsonUtil::AddMember(hotspot, "layer", item.layer, allocator);
         JsonUtil::AddMember(hotspot, "expertId", item.expertId, allocator);
-        JsonUtil::AddMember(hotspot, "version", item.version, allocator);
         JsonUtil::AddMember(hotspot, "expertIndex", item.expertIndex, allocator);
         hotspotInfosArray.PushBack(hotspot, allocator);
     }
     JsonUtil::AddMember(body, "hotspotInfos", hotspotInfosArray, allocator);
+    JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template <>
+std::optional<document_t> ToResponseJson<QueryModelInfoResponse>(const QueryModelInfoResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "expertNum", response.body.expertNum, allocator);
+    JsonUtil::AddMember(body, "layerNum", response.body.layerNum, allocator);
+    JsonUtil::AddMember(body, "denseLayerList", response.body.denseLayerList, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

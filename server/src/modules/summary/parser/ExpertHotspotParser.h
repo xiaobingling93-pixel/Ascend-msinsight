@@ -14,7 +14,7 @@ class ExpertHotspotParser {
 public:
     explicit ExpertHotspotParser(std::shared_ptr<VirtualClusterDatabase> &database) : db(database) {}
     bool Parse(const std::string &filePath, const std::string &version);
-    std::map<std::string, ModelInfo> GetModelInfoList();
+    std::map<std::string, ModelInfo> GetModelInfoMap();
 private:
     const static int regexMatchNumber = 3;
     std::shared_ptr<VirtualClusterDatabase> db = nullptr;

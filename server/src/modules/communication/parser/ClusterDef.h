@@ -399,17 +399,6 @@ struct ExpertHotspotStruct {
     int expertId = 0;
     // 索引
     int expertIndex = 0;
-
-    bool operator<(const ExpertHotspotStruct &other) const
-    {
-        if (this->layer != other.layer) {
-            return this->layer < other.layer;
-        }
-        if (this->rankId != other.rankId) {
-            return this->rankId < other.rankId;
-        }
-        return this->localExpertId < other.localExpertId;
-    }
 };
 
 struct ExpertDeploymentStruct {
@@ -429,12 +418,15 @@ struct ModelInfo {
     int rankNumber = 0;
     // 专家数量（专家序号的最大值）
     int expertNumber = 0;
+    // 模型总层数
+    int modelLayer = 0;
 };
 
 const std::string KEY_DENSE_LAYER_LIST = "denseLayerList";
 const std::string KEY_MOE_LAYER = "moeLayer";
 const std::string KEY_RANK_NUMBER = "rankNumber";
 const std::string KEY_EXPERT_NUMBER = "expertNumber";
+const std::string KEY_MODEL_LAYER = "modelLayer";
 const int CACHE_SIZE = 1024;
 const std::string expertHotspotFileReg = R"((prefill|decode)_([0-9]{1,4})\.csv$)";
 const std::string expertDeploymentFileReg = R"((prefill|decode)_global_deployment\.json$)";

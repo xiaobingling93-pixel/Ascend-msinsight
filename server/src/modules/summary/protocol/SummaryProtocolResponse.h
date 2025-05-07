@@ -245,6 +245,17 @@ struct QueryExpertHotspotResponse : public Response {
     QueryExpertHotspotBody body;
 };
 
+struct QueryModelInfoBody {
+    int layerNum = 0;
+    std::vector<int> denseLayerList;
+    int expertNum = 0;
+};
+
+struct QueryModelInfoResponse : public Response {
+    QueryModelInfoResponse() : Response(REQ_RES_QUERY_MODEL_INFO) {}
+    QueryModelInfoBody body;
+};
+
 struct ParallelismArrangementResponse : public Response {
     ParallelismArrangementResponse() : Response(REQ_RES_PARALLELISM_ARRANGEMENT_ALL) {}
     Module::ArrangementAndConnectionData arrangeData;
