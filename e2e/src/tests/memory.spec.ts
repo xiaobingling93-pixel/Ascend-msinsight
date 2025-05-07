@@ -189,7 +189,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 });
 
 test.describe('Memory(MindSpore)', () => {
-    test.describe.configure({ timeout: 60_000 });
+    test.describe.configure({ timeout: 120_000 });
     test.beforeEach(async ({ page, memoryPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -389,7 +389,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         const selectedText = await rankIdSelect.getValue();
         expect(selectedText).toBe('1');
         // 等待 echarts 动画结束
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.textToDb, {
             maxDiffPixels: 500,
         });

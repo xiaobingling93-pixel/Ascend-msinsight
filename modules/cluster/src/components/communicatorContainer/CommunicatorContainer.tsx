@@ -269,6 +269,7 @@ const FormDom = (
     const algorithm = Form.useWatch('algorithm', form);
 
     return <Form
+        data-testId="form-generate-parallelism"
         form={form}
         layout="inline"
         initialValues={{

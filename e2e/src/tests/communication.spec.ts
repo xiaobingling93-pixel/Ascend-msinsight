@@ -148,8 +148,8 @@ test.describe('Communication', () => {
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table');
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
-        await page.mouse.move(0, 0);
         await dataAnalysisTable.sortTableHead('Elapse Time(ms)');
+        await page.mouse.move(0, 0);
         await expect(tableLocator).toHaveScreenshot('data-analysis-table-sort.png');
     });
 

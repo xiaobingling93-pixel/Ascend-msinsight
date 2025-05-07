@@ -51,7 +51,7 @@ test.describe('Summary', () => {
     // 配置并行策略，生成排布数据
     test('test_generateRanks', async ({ page, summaryPage }) => {
         const { parallelismGraph } = summaryPage;
-        await summaryPage.configureParallel({ algorithm: 'Megatron-LM(tp-cp-ep-dp-pp)', ppSize: 2, tpSize: 2, dpSize: 2, cpSize: 2, epSize: 2 });
+        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 2, tpSize: 2, dpSize: 2, cpSize: 2, epSize: 2 });
 
         await page.mouse.move(0, 0);
         await expect(parallelismGraph).toHaveScreenshot('arrangement.png', { maxDiffPixels: 300 });
@@ -60,16 +60,16 @@ test.describe('Summary', () => {
     // 切换不同维度视图
     test('test_dimensionViews_when_changeDimensionTab', async ({ page, summaryPage }) => {
         const { summaryFrame, parallelismGraph, parallelismGraphLoading } = summaryPage;
-        const dimensionTabs = ['DP Dimension >', 'DP + PP Dimension >', 'DP + PP + CP Dimension >', 'DP + PP + CP + TP Dimension'];
+        const dimensionTabs = ['DP >', 'DP + PP >', 'DP + PP + CP >', 'DP + PP + CP + TP'];
 
         for (const tab of dimensionTabs) {
             await summaryFrame.getByRole('tab', { name: tab }).click();
-            if (tab !== 'DP Dimension >') {
+            if (tab !== 'DP >') {
                 await parallelismGraphLoading.waitFor({ state: 'hidden' });
             }
 
             await page.mouse.move(0, 0);
-            await expect(parallelismGraph).toHaveScreenshot(`${tab}.png`, { maxDiffPixels: 300 });
+            await expect(parallelismGraph).toHaveScreenshot(`dimension-${tab}.png`, { maxDiffPixels: 300 });
         }
     });
 

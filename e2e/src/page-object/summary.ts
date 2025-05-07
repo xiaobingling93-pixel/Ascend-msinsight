@@ -6,7 +6,7 @@ import type { FrameLocator, Page, Locator } from '@playwright/test';
 import { FrameworkPage } from './framework';
 
 interface ParallelValue {
-    algorithm: 'Megatron-LM(tp-cp-ep-dp-pp)' | 'Megatron-LM(tp-cp-pp-ep-dp)';
+    algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)' | 'Megatron-LM (tp-cp-pp-ep-dp)';
     ppSize: number;
     tpSize: number;
     dpSize: number;
@@ -52,7 +52,7 @@ export class SummaryPage {
     }
 
     async configureParallel(value: ParallelValue): Promise<void> {
-        const config = this.summaryFrame.locator('.CommunicatorHeader');
+        const config = this.summaryFrame.getByTestId('form-generate-parallelism');
         const algorithmInput = config.locator('.ant-select-selector');
         const ppSizeInput = config.locator('#ppSize');
         const tpSizeInput = config.locator('#tpSize');
@@ -74,7 +74,7 @@ export class SummaryPage {
     }
 
     async changeDimensionTo(dimension: DimensionType): Promise<void> {
-        await this.summaryFrame.getByRole('tab', { name: `${dimension.toLocaleUpperCase()} Dimension` }).click();
+        await this.summaryFrame.getByRole('tab', { name: `${dimension.toLocaleUpperCase()}` }).click();
     }
 
     async goto(): Promise<void> {
