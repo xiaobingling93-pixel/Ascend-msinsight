@@ -7,13 +7,12 @@
 #include "pch.h"
 #include "SystemMemoryDatabase.h"
 #include "SystemMemoryDatabaseDef.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "TimeUtil.h"
 #include "ProjectExplorerManager.h"
 
-namespace Dic {
-namespace Module {
-namespace Global {
+
+namespace Dic::Module::Global {
 
 ProjectExplorerManager &ProjectExplorerManager::Instance()
 {
@@ -51,12 +50,13 @@ std::vector<ProjectExplorerInfo> ProjectExplorerManager::QueryProjectExplorer(
     for (const auto &item: projectExplorerList) {
         projectExplorerIdList.push_back(item.id);
     }
-    std::map<int64_t, std::vector<ParseFileInfo>> parseFileInfoMap = db->QueryParseFileInfo(projectExplorerIdList,
-                                                                                            dataPathList);
+    std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>> parseFileInfoMap = db->QueryParseFileInfo(
+        projectExplorerIdList,
+        dataPathList);
     std::vector<ProjectExplorerInfo> res;
     for (auto &item: projectExplorerList) {
         if (parseFileInfoMap.find(item.id) != parseFileInfoMap.end()) {
-            item.parseFilePathInfos = parseFileInfoMap[item.id];
+            RebuildParseFileInfo(item, parseFileInfoMap[item.id]);
             res.push_back(item);
         }
     }
@@ -116,16 +116,16 @@ bool ProjectExplorerManager::SaveProjectExplorerToDb(const std::string &projectN
         ukIdMap[item.projectName + item.fileName] = item.id;
     }
 
-    std::vector<ParseFileInfo> parseFileInfos;
+    std::vector<std::shared_ptr<ParseFileInfo>> parseFileInfos;
     for (auto &project: projectExplorerInfos) {
         std::string uk = project.projectName + project.fileName;
         if (ukIdMap.find(uk) == ukIdMap.end()) {
             return false;
         }
         int64_t id = ukIdMap[project.projectName + project.fileName];
-        for (auto &item: project.parseFilePathInfos) {
-            item.projectExplorerId = id;
-            parseFileInfos.push_back(item);
+        for (auto &item: project.fileInfoMap) {
+            item.second->projectExplorerId = id;
+            parseFileInfos.push_back(item.second);
         }
     }
     return db->InsertDuplicateUpdateParsedFile(parseFileInfos);
@@ -179,9 +179,9 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
     for (const auto &project: infos) {
         projectIdList.push_back(project.id);
         bool isNeedDeleteImportData = true;
-        for (const auto &item: project.parseFilePathInfos) {
-            if (std::find(filePathList.begin(), filePathList.end(), item.parseFilePath) != filePathList.end()) {
-                needDeleteParseFileIdList.push_back(item.id);
+        for (const auto &item: project.subParseFileInfo) {
+            if (std::find(filePathList.begin(), filePathList.end(), item->parseFilePath) != filePathList.end()) {
+                needDeleteParseFileIdList.push_back(item->id);
             } else if (!filePathList.empty()) {
                 // 如果出现了一个导入记录下，有文件没有被删除干净，则不删除该记录
                 isNeedDeleteImportData = false;
@@ -210,7 +210,7 @@ ProjectErrorType ProjectExplorerManager::CheckProjectConflict(const std::string 
 
     std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(filePathList);
     ParserType allocType = parserType.second;
-    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
+    std::shared_ptr<ProjectParserBase> factory = ParserFactory::ParserImport(allocType);
     ProjectTypeEnum projectTypeEnum = factory->GetProjectType(filePathList);
 
     if (!InitSystemMemoryDb()) {
@@ -375,6 +375,20 @@ std::string ProjectExplorerManager::GetClusterFilePath(const std::vector<Project
     return "";
 }
 
+void ProjectExplorerManager::RebuildParseFileInfo(ProjectExplorerInfo &projectInfo,
+                                                  std::vector<std::shared_ptr<ParseFileInfo>> &parseFileInfos)
+{
+    if (parseFileInfos.empty()) {
+        return;
+    }
+    std::sort(parseFileInfos.begin(), parseFileInfos.end(), [](const auto &lh, const auto &rh) {
+        return lh->type < rh->type;
+    });
+    std::for_each(parseFileInfos.begin(), parseFileInfos.end(), [&projectInfo](const auto &fileInfo) {
+        fileInfo->curDirName = FileUtil::GetFileName(fileInfo->parseFilePath);
+        projectInfo.AddSubParseFileInfo(fileInfo);
+    });
 }
+
 }
-}
+

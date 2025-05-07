@@ -8,7 +8,7 @@
 #include "FullDbParser.h"
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "WsSessionImpl.h"
 #include "WsSessionManager.h"
 #include "SystemViewOverallRepoFactory.h"
@@ -38,22 +38,22 @@ public:
         DataBaseManager::Instance().CreatConnectionPool("0", dbPath3);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
         ParserType allocType = parserType.second;
-        std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
+        std::shared_ptr<ProjectParserBase> factory = ParserFactory::ParserImport(allocType);
         // 路径列表不为空，需要进行文件目录的新增、覆盖
         ProjectTypeEnum projectType = factory->GetProjectType({ dbPath3 });
         std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;
 
         std::string warn;
         // 获取文件列表
-        std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(dbPath3, projectType, warn);
+        std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(dbPath3, warn);
         Global::ProjectExplorerInfo projectExplorerInfo;
         projectExplorerInfo.fileName = dbPath3;
         projectExplorerInfo.projectName = dbPath3;
         projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
         projectExplorerInfo.importType = "import";
-        Global::ParseFileInfo parseFileInfo;
-        parseFileInfo.parseFilePath = dbPath3;
-        projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+        auto parseFileInfo = std::make_shared<ParseFileInfo>();
+        parseFileInfo->parseFilePath = dbPath3;
+        projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
         projectExplorerInfoList.push_back(projectExplorerInfo);
 
         if (allocType != ParserType::JSON) {

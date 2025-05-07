@@ -21,19 +21,14 @@ bool GetProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> reque
             .QueryProjectExplorer("", std::vector<std::string>());
 
     std::map<std::string, std::vector<std::string>> res;
-    for (auto &info : infos) {
-        for (const auto &item: info.parseFilePathInfos) {
-            res[info.projectName].push_back(item.parseFilePath);
-        }
-    }
-
     for (const auto &info: infos) {
-        if (res.count(info.projectName) == 0) {
+        if (info.subParseFileInfo.empty()) {
             continue;
         }
         Protocol::ProjectDirectoryInfo temp;
         temp.projectName = info.projectName;
-        temp.fileName = res[info.projectName];
+        temp.fileName = info.subParseFileInfo;
+        temp.projectTree = info.projectFileTree;
         res.erase(info.projectName);
         response.body.projectDirectoryList.push_back(temp);
     }

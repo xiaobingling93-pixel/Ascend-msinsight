@@ -92,12 +92,42 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     }
     auto &threadPool = FullDbParser::Instance().threadPool;
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
-    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitStringsCache(); }));
-    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitMetaDataInfo(); }));
-    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->UpdateAllDepth(); }));
-    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->UpdateWaitTime(); }));
-    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitConnectionCats(); }));
-    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->GenerateOverlapAnalysis(); }));
+    futures->emplace_back(threadPool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->InitStringsCache();
+    }));
+    futures->emplace_back(threadPool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->InitMetaDataInfo();
+    }));
+    futures->emplace_back(threadPool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->UpdateAllDepth();
+    }));
+    futures->emplace_back(threadPool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->UpdateWaitTime();
+    }));
+    futures->emplace_back(threadPool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->InitConnectionCats();
+    }));
+    futures->emplace_back(threadPool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->GenerateOverlapAnalysis();
+    }));
 
     threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
 

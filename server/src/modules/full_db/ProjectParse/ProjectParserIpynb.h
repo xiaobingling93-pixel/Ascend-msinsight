@@ -5,25 +5,26 @@
 #ifndef PROFILER_SERVER_PARSERIPYNB_H
 #define PROFILER_SERVER_PARSERIPYNB_H
 
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
+#include "SystemMemoryDatabaseDef.h"
 
 namespace Dic {
 namespace Module {
-class ParserIpynb : public ParserAlloc {
+class ProjectParserIpynb : public ProjectParserBase {
 public:
-    ParserIpynb();
-    virtual ~ParserIpynb();
+    ProjectParserIpynb() = default;
+    ~ProjectParserIpynb() override = default;
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
-    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
-            Dic::ProjectTypeEnum projectTypeEnum,
-            std::string &error) override
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) override
     {
         return {importFile};
     }
+    static void BuildProjectExploreInfo(ProjectExplorerInfo& projectInfo, const std::vector<std::string>& parsedFiles);
 private:
-    static void IpynbImportResponse(ImportActionRequest &request, const std::string &fileName, bool isDisplay);
+    static void IpynbImportResponse(ImportActionRequest &request, const ProjectExplorerInfo &projectInfo,
+                                    bool isDisplay);
     static void JupyterProcess(const std::string &file);
     static void SendJupyterInfo(std::string url);
 };

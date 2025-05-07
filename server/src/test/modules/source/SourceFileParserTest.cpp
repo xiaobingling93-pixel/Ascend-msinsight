@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include "SourceFileParser.h"
 #include "SourceProtocolRequest.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "../../TestSuit.cpp"
 
 using namespace std;

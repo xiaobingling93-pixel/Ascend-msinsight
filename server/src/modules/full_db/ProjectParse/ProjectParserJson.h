@@ -5,27 +5,32 @@
 #ifndef PROFILER_SERVER_PARSERJSON_H
 #define PROFILER_SERVER_PARSERJSON_H
 
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "TimelineRequestHandler.h"
 #include "ClusterFileParser.h"
 #include "FileParser.h"
 
 namespace Dic {
 namespace Module {
-class ParserJson : public ParserAlloc {
+class ProjectParserJson : public ProjectParserBase {
 public:
-    ParserJson();
-    virtual ~ParserJson();
+    ProjectParserJson();
+    ~ProjectParserJson() override = default;
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
     void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         Global::BaselineInfo &baselineInfo) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
-    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, ProjectTypeEnum projectTypeEnum,
-        std::string &error) final;
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) final;
     static bool ExistJsonFormatFile(const std::string &file);
+
+    static void BuildProjectExploreInfo(ProjectExplorerInfo& info, const std::vector<std::string>& parsedFiles);
+
+    static void BuildProjectFromParseFile(ProjectExplorerInfo &info, const std::string &parseFile);
+
 protected:
-    bool CheckParseFileInfoSize(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles) const;
+    bool CheckParseFileInfoSize(const std::shared_ptr<Global::ParseFileInfo> &parseFileInfo,
+                                std::vector<std::string> &jsonFiles) const;
     static std::tuple<bool, bool, bool> CheckHasTraceJsonMemoryDataOperatorData(
         const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 

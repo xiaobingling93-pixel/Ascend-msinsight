@@ -5,25 +5,24 @@
 #ifndef PROFILER_SERVER_PARSERDB_H
 #define PROFILER_SERVER_PARSERDB_H
 
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "TimelineRequestHandler.h"
 
 namespace Dic {
 namespace Module {
 using HostInfo = std::map<std::string, std::vector<std::string>>;
 
-class ParserDb : public ParserAlloc {
+class ProjectParserDb : public ProjectParserBase {
 public:
-    ParserDb();
-    virtual ~ParserDb();
+    ProjectParserDb() = default;
+    ~ProjectParserDb() override = default;
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
     void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         Global::BaselineInfo &baselineInfo) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
-    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, ProjectTypeEnum projectTypeEnum,
-        std::string &error) final;
-
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) final;
+    static void BuildProjectExploreInfo(ProjectExplorerInfo& info, const std::vector<std::string>& parsedFiles);
 private:
     std::map<std::string, HostInfo> GetReportFiles(const std::vector<std::string> &reportFiles);
     void SetParseCallBack();

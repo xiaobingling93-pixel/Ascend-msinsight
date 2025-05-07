@@ -15,12 +15,13 @@
 #include "SystemMemoryDatabaseDef.h"
 #include "TimelineProtocolEvent.h"
 
-namespace Dic {
-namespace Module {
-class ParserAlloc {
+
+namespace Dic::Module {
+using namespace Dic::Module::Global;
+class ProjectParserBase {
 public:
-    ParserAlloc() = default;
-    virtual ~ParserAlloc() = default;
+    ProjectParserBase() = default;
+    virtual ~ProjectParserBase() = default;
     virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
     {
         // 需要返回应答
@@ -28,7 +29,7 @@ public:
         ImportActionResponse& response  = *responsePtr;
         responsePtr->body.isCluster = false;
         ModuleRequestHandler::SetBaseResponse(request, response);
-        response.body.subdirectoryList = {};
+        response.body.subParseFileInfo = {};
         response.command = Protocol::REQ_RES_IMPORT_ACTION;
         response.moduleName  = MODULE_TIMELINE;
         response.body.reset = false;
@@ -44,8 +45,7 @@ public:
     {
         return  ProjectTypeEnum::OTHER;
     };
-    virtual std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
-        ProjectTypeEnum projectTypeEnum, std::string &error)
+    virtual std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error)
     {
         std::vector<std::string> res = { importFile };
         // other默认弹窗,存在以下场景:由于存在非法路径, DB JSON等格式会判断异常走到other下
@@ -59,6 +59,16 @@ public:
     static void SendAllParseSuccess();
     static bool CheckIsOpenClusterTag(ProjectActionEnum action, ProjectTypeEnum curType,
                                       const std::string &projectName);
+    static bool IsParsedFile(const std::string& file);
+    static void BuildProjectExploreInfo(ProjectExplorerInfo& projectInfo, const std::vector<std::string>& parsedFiles);
+
+    /**
+     * @brief 用于构造项目工程目录时获取上层目录的遍历结果
+     */
+    static std::vector<std::string> GetParentFileList(const std::string& prefix, const std::string& filePath);
+
+    static std::tuple<std::string, std::string> GetHostInfo(const std::vector<std::string>& folders);
+    static std::tuple<std::string, std::string> GetClusterInfo(const std::vector<std::string>& folders);
 
 protected:
     std::string curScene;
@@ -82,7 +92,7 @@ protected:
 
 class ParserFactory {
 public:
-    static std::shared_ptr<ParserAlloc> ParserImport(ParserType allocType);
+    static std::shared_ptr<ProjectParserBase> ParserImport(ParserType allocType);
     static std::pair<std::string, ParserType> GetImportType(const std::vector<std::string> &pathList);
     static void Reset();
 
@@ -90,7 +100,7 @@ private:
     static std::mutex mutex;
 };
 } // end of namespace Module
-} // end of namespace Dic
+// end of namespace Dic
 
 
 #endif // PROFILER_SERVER_PARSERFACTORY_H

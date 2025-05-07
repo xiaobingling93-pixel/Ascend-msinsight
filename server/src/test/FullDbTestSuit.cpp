@@ -10,7 +10,7 @@
 #include "FullDbParser.h"
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "WsSessionManager.h"
 #include "WsSessionImpl.h"
 
@@ -40,7 +40,7 @@ public:
         DataBaseManager::Instance().SetDataType(DataType::DB);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
         ParserType allocType = parserType.second;
-        std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
+        std::shared_ptr<ProjectParserBase> factory = ParserFactory::ParserImport(allocType);
         // 路径列表不为空，需要进行文件目录的新增、覆盖
         ProjectTypeEnum projectType = factory->GetProjectType(dbPathes);
         std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;
@@ -48,15 +48,15 @@ public:
         for (const auto& path : dbPathes) {
             std::string warn;
             // 获取文件列表
-            std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(path, projectType, warn);
+            std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(path, warn);
             Global::ProjectExplorerInfo projectExplorerInfo;
             projectExplorerInfo.fileName = path;
             projectExplorerInfo.projectName = path;
             projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
             projectExplorerInfo.importType = "import";
-            Global::ParseFileInfo parseFileInfo;
-            parseFileInfo.parseFilePath = path;
-            projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+            auto parseFileInfo = std::make_shared<ParseFileInfo>();
+            parseFileInfo->parseFilePath = path;
+            projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
             projectExplorerInfoList.push_back(projectExplorerInfo);
         }
 

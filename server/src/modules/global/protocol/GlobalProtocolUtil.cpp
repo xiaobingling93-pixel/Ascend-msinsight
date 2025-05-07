@@ -94,9 +94,14 @@ std::optional<document_t> ToResponseJson<ProjectExplorerInfoGetResponse>(const P
         JsonUtil::AddMember(temp, "projectName", item.projectName, allocator);
         json_t fileNameListJson(kArrayType);
         for (const auto &fileNameItem: item.fileName) {
-            fileNameListJson.PushBack(json_t().SetString(fileNameItem.c_str(), allocator), allocator);
+            fileNameListJson.PushBack(json_t().SetString(fileNameItem->parseFilePath.c_str(), allocator), allocator);
         }
         JsonUtil::AddMember(temp, "fileName", fileNameListJson, allocator);
+        json_t children(kArrayType);
+        for (const auto& fileItem : item.projectTree) {
+            children.PushBack(fileItem->SerializeToJson(allocator), allocator);
+        }
+        JsonUtil::AddMember(temp, "children", children, allocator);
         projectDirectoryJson.PushBack(temp, allocator);
     }
     JsonUtil::AddMember(body, "projectDirectoryList", projectDirectoryJson, allocator);

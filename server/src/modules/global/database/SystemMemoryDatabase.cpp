@@ -27,7 +27,10 @@ bool SystemMemoryDatabase::CreateTable()
          "projectName TEXT, fileName TEXT, projectType INTEGER, importType TEXT, dbPath Text, accessTime TEXT, "
          "UNIQUE (projectName, fileName) );"
          "CREATE TABLE " + parseFileInfoTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
-         "projectExplorerId INTEGER, parseFilePath TEXT, dbPath Text, UNIQUE (projectExplorerId, parseFilePath));";
+                                                "projectExplorerId INTEGER, parseFilePath TEXT, dbPath Text, "
+                                                "subId TEXT,type INTEGER, clusterId TEXT, "
+                                                "host TEXT, rankId TEXT, deviceId TEXT, "
+                                                "UNIQUE (projectExplorerId, parseFilePath, subId));";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
@@ -74,24 +77,26 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateProject(std::vector<ProjectExplo
     return true;
 }
 
-bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<ParseFileInfo> &parseFileInfoList)
+bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<std::shared_ptr<ParseFileInfo>>
+                                                            &parseFileInfoList)
 {
     if (parseFileInfoList.empty()) {
         return true;
     }
     for (const auto &item: parseFileInfoList) {
-        if (item.projectExplorerId == 0 || item.parseFilePath.empty()) {
+        if (item->projectExplorerId == 0) {
             ServerLog::Error("Failed to save FileMenuData, params is invalid.");
             return false;
         }
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    std::string sql = "INSERT INTO " + parseFileInfoTable + "(projectExplorerId, parseFilePath, dbPath)"
-                                                              " VALUES(?, ?, ?)";
+    std::string sql = "INSERT INTO " + parseFileInfoTable +
+                        "(projectExplorerId, parseFilePath, dbPath, subId, type, clusterId, host, rankId, deviceId)"
+                        " VALUES(?, ?, ?, ? ,? ,? ,? , ? ,?)";
     for (size_t i = 1; i < parseFileInfoList.size(); ++i) {
-        sql += ",(?, ?, ?)";
+        sql += ",(?, ?, ?, ? ,? ,? ,? , ? ,?)";
     }
-    sql += " ON CONFLICT(projectExplorerId, parseFilePath) DO UPDATE SET"
+    sql += " ON CONFLICT(projectExplorerId, parseFilePath, subId) DO UPDATE SET"
            " dbPath = EXCLUDED.dbPath;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -99,7 +104,8 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<Par
         return false;
     }
     for (const auto &item: parseFileInfoList) {
-        stmt->BindParams(item.projectExplorerId, item.parseFilePath, item.dbPath);
+        stmt->BindParams(item->projectExplorerId, item->parseFilePath, item->dbPath, item->subId, item->type,
+                         item->clusterId, item->host, item->rankId, item->deviceId);
     }
     if (!stmt->Execute()) {
         ServerLog::Error("Failed to save FileMenuData, stmt execute failed.");
@@ -266,16 +272,16 @@ bool SystemMemoryDatabase::UpdateProjectDbPath(const std::string &projectName, c
     return true;
 }
 
-std::map<int64_t, std::vector<ParseFileInfo>> SystemMemoryDatabase::QueryParseFileInfo(
+std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>> SystemMemoryDatabase::QueryParseFileInfo(
     const std::vector<int64_t>& projectExplorerIdList, const std::vector<std::string>& parsePathList)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    std::map<int64_t, std::vector<ParseFileInfo>> res;
+    std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>> res;
     if (projectExplorerIdList.empty()) {
         return res;
     }
     std::string projectExplorerIdListStr = StringUtil::join(projectExplorerIdList, ", ");
-    std::string sql = "SELECT id, projectExplorerId, parseFilePath, dbPath FROM " + parseFileInfoTable +
+    std::string sql = "SELECT * FROM " + parseFileInfoTable +
                       " WHERE projectExplorerId IN (" + projectExplorerIdListStr + ")";
     if (!parsePathList.empty()) {
         std::string parsePathListStr = StringUtil::Join4SqlGroup(parsePathList);
@@ -294,12 +300,18 @@ std::map<int64_t, std::vector<ParseFileInfo>> SystemMemoryDatabase::QueryParseFi
     }
 
     while (resultSet->Next()) {
-        ParseFileInfo info{};
-        info.id = resultSet->GetUint64("id");
-        info.projectExplorerId = resultSet->GetUint64("projectExplorerId");
-        info.parseFilePath = resultSet->GetString("parseFilePath");
-        info.dbPath = resultSet->GetString("dbPath");
-        res[info.projectExplorerId].push_back(info);
+        auto info = std::make_shared<ParseFileInfo>();
+        info->id = resultSet->GetUint64("id");
+        info->projectExplorerId = resultSet->GetUint64("projectExplorerId");
+        info->parseFilePath = resultSet->GetString("parseFilePath");
+        info->dbPath = resultSet->GetString("dbPath");
+        info->subId = resultSet->GetString("subId");
+        info->type = static_cast<ParseFileType>(resultSet->GetInt64("type"));
+        info->clusterId = resultSet->GetString("clusterId");
+        info->host = resultSet->GetString("host");
+        info->rankId = resultSet->GetString("rankId");
+        info->deviceId = resultSet->GetString("deviceId");
+        res[info->projectExplorerId].push_back(info);
     }
     return res;
 }

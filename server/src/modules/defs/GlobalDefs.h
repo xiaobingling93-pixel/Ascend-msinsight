@@ -27,6 +27,21 @@ enum class ParserType {
     OTHER = 20
 };
 
+inline std::string CastParserTypeToStr(ParserType type)
+{
+    switch (type) {
+        case ParserType::DB:
+            return "DB";
+        case ParserType::BIN:
+            return "BIN";
+        case ParserType::JSON:
+            return "JSON";
+        case ParserType::IPYNB:
+            return "IPYNB";
+        case ParserType::OTHER:
+            return "OTHER";
+    }
+}
 enum class ProjectTypeEnum {
     DB = 0,
     BIN = 1,

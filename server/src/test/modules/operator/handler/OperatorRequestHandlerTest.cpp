@@ -103,9 +103,11 @@ protected:
         info.importType = importType;
         info.projectType = static_cast<int64_t>(projectType);
         for (const auto &item: parseFileList) {
-            ParseFileInfo parseFileInfo;
-            parseFileInfo.parseFilePath = item;
-            info.parseFilePathInfos.push_back(parseFileInfo);
+            auto parseFileInfo = std::make_shared<ParseFileInfo>();
+            parseFileInfo->parseFilePath = item;
+            parseFileInfo->type = ParseFileType::RANK;
+            parseFileInfo->subId = item;
+            info.AddSubParseFileInfo(parseFileInfo);
         }
         return info;
     }

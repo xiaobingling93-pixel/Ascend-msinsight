@@ -15,8 +15,7 @@
 #include "GetModuleConfigHandler.h"
 #include "ClearProjectExplorerHandler.h"
 
-namespace Dic {
-namespace Module {
+using namespace Dic::Module;
 using namespace Dic::Server;
 using namespace Dic::Module::Global;
 GlobalModule::GlobalModule() : BaseModule()
@@ -51,6 +50,4 @@ void GlobalModule::RegisterRequestHandlers()
 void GlobalModule::OnRequest(std::unique_ptr<Protocol::Request> request)
 {
     BaseModule::OnRequest(std::move(request));
-};
-} // end of namespace Module
-} // end of namespace Dic
+}

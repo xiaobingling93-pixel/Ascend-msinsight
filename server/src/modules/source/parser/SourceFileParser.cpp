@@ -433,7 +433,7 @@ bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody &resp
 {
     DetailsMemoryParser parser;
     std::string curFilePath = isBaseline ? baselineFilePath : filePath;
-    std::map<int, std::vector<Position>> curBlockMap = isBaseline ? baselineDataBlockMap : dataBlockMap;
+    std::map<int, std::vector<Position>>& curBlockMap = isBaseline ? baselineDataBlockMap : dataBlockMap;
     return parser.GetDetailsLoadInfo(responseBody, curFilePath, curBlockMap);
 }
 

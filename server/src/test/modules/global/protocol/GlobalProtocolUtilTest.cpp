@@ -5,6 +5,7 @@
 #include "GlobalProtocolResponse.h"
 #include "JsonUtil.h"
 #include "GlobalProtocolUtil.h"
+#include "SystemMemoryDatabaseDef.h"
 class GlobalProtocolUtilTest : public ::testing::Test {};
 
 TEST_F(GlobalProtocolUtilTest, TestTokenHeartCheckResponse)
@@ -40,14 +41,17 @@ TEST_F(GlobalProtocolUtilTest, TestProjectExplorerInfoGetResponseToJson)
 {
     Dic::Protocol::ProjectExplorerInfoGetResponse response;
     Dic::Protocol::ProjectDirectoryInfo projectDirectoryInfo;
-    projectDirectoryInfo.fileName.emplace_back("llllllll");
+    auto fileInfo = std::make_shared<Dic::Module::Global::ParseFileInfo>();
+    fileInfo->parseFilePath = "lllll";
+    projectDirectoryInfo.fileName.emplace_back(fileInfo);
     response.body.projectDirectoryList.emplace_back(projectDirectoryInfo);
     auto jsonOp = Dic::Protocol::ToResponseJson(response);
     EXPECT_EQ(jsonOp.has_value(), true);
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
-    const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"files/"
-        "getProjectExplorer\",\"moduleName\":\"unknown\",\"body\":{\"projectDirectoryList\":[{"
-        "\"projectName\":\"\",\"fileName\":[\"llllllll\"]}]}}";
+    const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,"
+                                "\"command\":\"files/getProjectExplorer\",\"moduleName\":\"unknown\","
+                                "\"body\":{\"projectDirectoryList\":"
+                                "[{\"projectName\":\"\",\"fileName\":[\"lllll\"],\"children\":[]}]}}";
     EXPECT_EQ(json, jsonStr);
 }
 

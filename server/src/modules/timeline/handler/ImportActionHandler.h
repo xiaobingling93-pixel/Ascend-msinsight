@@ -8,12 +8,10 @@
 #include <set>
 #include <regex>
 #include "TimelineRequestHandler.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "FileParser.h"
 
-namespace Dic {
-namespace Module {
-namespace Timeline {
+namespace Dic::Module::Timeline {
 class ImportActionHandler : public TimelineRequestHandler {
 public:
     ImportActionHandler()
@@ -30,8 +28,6 @@ private:
     static bool TransferProject(ImportActionRequest &request);
     static bool ImportFile(ImportActionRequest &request, std::string &warnMsg);
 };
-} // end of namespace Timeline
-} // end of namespace Module
-} // end of namespace Dic
+} // end of namespace Dic::Module::Global
 
 #endif // PROFILER_SERVER_IMPORT_ACTION_HANDLER_H

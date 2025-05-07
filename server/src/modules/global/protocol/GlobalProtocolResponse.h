@@ -10,9 +10,11 @@
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "SystemMemoryDatabaseDef.h"
 
 namespace Dic {
 namespace Protocol {
+using namespace Dic::Module::Global;
 // token.heartCheck
 struct TokenHeartCheckResponse : public Response {
     TokenHeartCheckResponse() : Response(REQ_RES_HEART_CHECK) {};
@@ -70,7 +72,8 @@ struct ProjectExplorerInfoUpdateResponse : public Response {
 
 struct ProjectDirectoryInfo {
     std::string projectName;
-    std::vector<std::string> fileName;
+    std::vector<std::shared_ptr<ParseFileInfo>> fileName;
+    std::vector<std::shared_ptr<ParseFileInfo>> projectTree;
 };
 
 struct ProjectExplorerInfoGetBody {

@@ -8,7 +8,7 @@
 #include <set>
 #include <regex>
 #include "TimelineRequestHandler.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "FileParser.h"
 
 namespace Dic {

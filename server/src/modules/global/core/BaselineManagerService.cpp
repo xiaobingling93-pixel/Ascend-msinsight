@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "ProjectExplorerManager.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "DataBaseManager.h"
 #include "BaselineManager.h"
 #include "SourceFileParser.h"
@@ -33,7 +33,7 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     }
     std::vector<ProjectExplorerInfo> projectExplorerList =
         ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, filePathList);
-    if (projectExplorerList.empty() || projectExplorerList[0].parseFilePathInfos.empty()) {
+    if (projectExplorerList.empty() || projectExplorerList[0].subParseFileInfo.empty()) {
         baselineInfo.errorMessage = "The project does not exist, baseline setting failed.";
         return false;
     }
@@ -52,7 +52,7 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     Timeline::DataType type = parserType == ParserType::DB ? Timeline::DataType::DB : Timeline::DataType::TEXT;
     Timeline::DataBaseManager::Instance().SetBaselineDataType(type);
     // 调用工厂进行内容解析
-    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(parserType);
+    std::shared_ptr<ProjectParserBase> factory = ParserFactory::ParserImport(parserType);
     factory->ParserBaseline(projectExplorerList, baselineInfo);
     // 集群场景 初始化并行策略
     if (baselineInfo.isCluster) {

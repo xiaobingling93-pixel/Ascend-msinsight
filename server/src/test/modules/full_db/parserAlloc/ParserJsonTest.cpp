@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include "../../defaultMock/MockFileReader.h"
 #include "ParserJson_mock_data.h"
-#include "ParserJson.h"
+#include "ProjectParserJson.h"
 using namespace Dic::Module;
 using namespace Dic::Module::ParserJsonMock;
 class ParserJsonTest : public ::testing::Test {};
@@ -14,13 +14,14 @@ class ParserJsonTest : public ::testing::Test {};
  */
 TEST_F(ParserJsonTest, TestJsonFileIsEmptyThenReturnFalse)
 {
-    class MockParserJson : public Dic::Module::ParserJson {
+    class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
         }
-        bool CheckParseFileInfoSizeTest(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles)
+        bool CheckParseFileInfoSizeTest(const std::shared_ptr<Global::ParseFileInfo> parseFileInfo,
+                                        std::vector<std::string> &jsonFiles)
         {
             return CheckParseFileInfoSize(parseFileInfo, jsonFiles);
         }
@@ -28,7 +29,7 @@ TEST_F(ParserJsonTest, TestJsonFileIsEmptyThenReturnFalse)
     MockParserJson parserJson;
     std::unique_ptr<IFileReader> fileReaderPtr = std::make_unique<MockFileReader>();
     parserJson.SetIFileReader(std::move(fileReaderPtr));
-    Global::ParseFileInfo parseFileInfo;
+    auto parseFileInfo = std::make_shared<Global::ParseFileInfo>();
     std::vector<std::string> jsonFiles;
     bool result = parserJson.CheckParseFileInfoSizeTest(parseFileInfo, jsonFiles);
     EXPECT_EQ(result, false);
@@ -39,13 +40,14 @@ TEST_F(ParserJsonTest, TestJsonFileIsEmptyThenReturnFalse)
  */
 TEST_F(ParserJsonTest, TestJsonFileCountExceed100ThenReturnFalse)
 {
-    class MockParserJson : public Dic::Module::ParserJson {
+    class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
         }
-        bool CheckParseFileInfoSizeTest(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles)
+        bool CheckParseFileInfoSizeTest(const std::shared_ptr<Global::ParseFileInfo> parseFileInfo,
+                                        std::vector<std::string> &jsonFiles)
         {
             return CheckParseFileInfoSize(parseFileInfo, jsonFiles);
         }
@@ -53,7 +55,7 @@ TEST_F(ParserJsonTest, TestJsonFileCountExceed100ThenReturnFalse)
     std::unique_ptr<IFileReader> fileReaderPtr = std::make_unique<MockFileReader>();
     MockParserJson parserJson;
     parserJson.SetIFileReader(std::move(fileReaderPtr));
-    Global::ParseFileInfo parseFileInfo;
+    auto parseFileInfo = std::make_shared<Global::ParseFileInfo>();
     std::vector<std::string> jsonFiles;
     const uint8_t fileCount = 100;
     for (int i = 0; i < fileCount; ++i) {
@@ -78,13 +80,14 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenOneFileIs20GThenReturnFalse
             return CheckParseFileInfoSizeWhenOneFileIs20GThenReturnFalseMock(filePath);
         }
     };
-    class MockParserJson : public Dic::Module::ParserJson {
+    class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
         }
-        bool CheckParseFileInfoSizeTest(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles)
+        bool CheckParseFileInfoSizeTest(const std::shared_ptr<Global::ParseFileInfo> parseFileInfo,
+                                        std::vector<std::string> &jsonFiles)
         {
             return CheckParseFileInfoSize(parseFileInfo, jsonFiles);
         }
@@ -92,7 +95,7 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenOneFileIs20GThenReturnFalse
     std::unique_ptr<IFileReader> fileReaderPtr = std::make_unique<MockParserJsonFileReader>();
     MockParserJson parserJson;
     parserJson.SetIFileReader(std::move(fileReaderPtr));
-    Global::ParseFileInfo parseFileInfo;
+    auto parseFileInfo = std::make_shared<Global::ParseFileInfo>();
     std::vector<std::string> jsonFiles;
     const uint8_t fileCount = 50;
     for (int i = 0; i < fileCount; ++i) {
@@ -114,13 +117,14 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenTotalFileSizeExceed20GThenR
             return CheckParseFileInfoSizeWhenTotalFileSizeExceed20GThenReturnFalseMock(filePath);
         }
     };
-    class MockParserJson : public Dic::Module::ParserJson {
+    class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
         }
-        bool CheckParseFileInfoSizeTest(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles)
+        bool CheckParseFileInfoSizeTest(const std::shared_ptr<Global::ParseFileInfo> parseFileInfo,
+                                        std::vector<std::string> &jsonFiles)
         {
             return CheckParseFileInfoSize(parseFileInfo, jsonFiles);
         }
@@ -128,7 +132,7 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenTotalFileSizeExceed20GThenR
     std::unique_ptr<IFileReader> fileReaderPtr = std::make_unique<MockParserJsonFileReader>();
     MockParserJson parserJson;
     parserJson.SetIFileReader(std::move(fileReaderPtr));
-    Global::ParseFileInfo parseFileInfo;
+    auto parseFileInfo = std::make_shared<Global::ParseFileInfo>();
     std::vector<std::string> jsonFiles;
     const uint8_t fileCount = 21;
     for (int i = 0; i < fileCount; ++i) {
@@ -140,16 +144,16 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenTotalFileSizeExceed20GThenR
 
 TEST_F(ParserJsonTest, TestCheckHasTraceJsonMemoryDataOperatorData)
 {
-    class MockParserJson : public Dic::Module::ParserJson {
+    class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
         static void CheckHasTraceJsonMemeoryDataOpDataFailTest()
         {
             Global::ProjectExplorerInfo projectExplorerInfo;
             std::vector<std::string> parseFileList = {"a.a", "invaild.csv"};
             for (const auto &parseFile: parseFileList) {
-                Global::ParseFileInfo parseFileInfo;
-                parseFileInfo.parseFilePath = parseFile;
-                projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+                auto parseFileInfo = std::make_shared<Global::ParseFileInfo>();
+                parseFileInfo->parseFilePath = parseFile;
+                projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
             }
             auto [hasJson, hasMemory, hasOp] = CheckHasTraceJsonMemoryDataOperatorData({projectExplorerInfo});
             EXPECT_EQ(hasJson, false);
@@ -162,9 +166,9 @@ TEST_F(ParserJsonTest, TestCheckHasTraceJsonMemoryDataOperatorData)
             Global::ProjectExplorerInfo projectExplorerInfo;
             std::vector<std::string> parseFileList = {"a.json", "memory_record.csv", "kernel_details.csv"};
             for (const auto &parseFile: parseFileList) {
-                Global::ParseFileInfo parseFileInfo;
-                parseFileInfo.parseFilePath = parseFile;
-                projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+                auto parseFileInfo = std::make_shared<Global::ParseFileInfo>();
+                parseFileInfo->parseFilePath = parseFile;
+                projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
             }
             auto [hasJson, hasMemory, hasOp] = CheckHasTraceJsonMemoryDataOperatorData({projectExplorerInfo});
             EXPECT_EQ(hasJson, true);

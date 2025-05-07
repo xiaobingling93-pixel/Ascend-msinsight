@@ -43,6 +43,8 @@ private:
     bool InitSystemMemoryDb();
     bool SaveProjectExplorerToDb(const std::string &projectName,
                                  std::vector<ProjectExplorerInfo> &projectExplorerInfos);
+    static void RebuildParseFileInfo(ProjectExplorerInfo& projectInfo,
+                                     std::vector<std::shared_ptr<ParseFileInfo>> &parseFileInfos);
     std::string eventDir;
 };
 }

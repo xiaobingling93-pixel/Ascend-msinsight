@@ -3,7 +3,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "ParserBin.h"
+#include "ProjectParserBin.h"
 #include "../../source/mockUtils/BinFileGenerator.h"
 #include "../../source/DetailsComputeLoadJson.h"
 
@@ -25,20 +25,20 @@ TEST_F(ParserBinTest, ParserWithValidData)
     generator.AddDataBlock(std::make_unique<NormalDataBlock>(baseInfoDataBlock));
     generator.Generate(fileName);
 
-    std::vector<ParseFileInfo> filePathInfos = {
-            {
-                1,
-                1,
-                filePath,
-                ""
-            }
-    };
+    std::vector<std::shared_ptr<ParseFileInfo>> filePathInfos;
+    auto fileInfo = std::make_shared<ParseFileInfo>();
+    fileInfo->id = 1;
+    fileInfo->projectExplorerId = 1;
+    fileInfo->clusterId = filePath;
+    fileInfo->parseFilePath = "";
+    filePathInfos.emplace_back(fileInfo);
     ProjectExplorerInfo info = {
         1,
         "testProject",
         filePath,
         filePathInfos,
-        0,
+        {},
+        {},
         "",
         {""},
         ""
@@ -51,7 +51,7 @@ TEST_F(ParserBinTest, ParserWithValidData)
         false
     };
 
-    ParserBin parserBin;
+    ProjectParserBin parserBin;
     parserBin.Parser({info}, request);
     BaselineInfo baselineInfo = {
         "localhost",

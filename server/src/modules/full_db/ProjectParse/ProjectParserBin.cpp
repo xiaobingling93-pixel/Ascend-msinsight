@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+#include <algorithm>
 #include "TimelineRequestHandler.h"
 #include "ModuleRequestHandler.h"
 #include "CommonDefs.h"
@@ -9,19 +10,16 @@
 #include "SourceFileParser.h"
 #include "TraceTime.h"
 #include "BaselineManager.h"
-#include "ParserBin.h"
+#include "ProjectAnalyze.h"
+#include "ProjectParserBin.h"
 
-namespace Dic {
-namespace Module {
+using namespace Dic::Module;
 using namespace Dic::Server;
-ParserBin::ParserBin() {}
-
-ParserBin::~ParserBin() {}
-
-void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+using namespace Dic::Module::Global;
+void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr.get();
+    ImportActionResponse &response = *responsePtr;
     ModuleRequestHandler::SetBaseResponse(request, response);
     if (std::empty(projectInfos)) {
         SendParseFailEvent("", "Project explorer info is not existed.");
@@ -35,7 +33,8 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
     response.body.reset = true;
-    response.body.subdirectoryList.push_back(projectInfos[0].fileName);
+    response.body.subParseFileInfo = projectInfos[0].subParseFileInfo;
+    response.body.projectFileTree = projectInfos[0].projectFileTree;
 
     std::string selectedFolder = projectInfos[0].fileName;
 
@@ -61,7 +60,7 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
     }
 }
 
-void ParserBin::HandleCompute(ImportActionResponse &response, const std::string &selectedFolder)
+void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::string &selectedFolder)
 {
     ServerLog::Info("Start parser source binary.");
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
@@ -69,7 +68,7 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
     SetParseCallBack(sourceFileParser);
     std::vector<std::string> empty;
     auto files = GetSimulationTraceFiles(selectedFolder, response.body);
-    std::string fileId = "";
+    std::string fileId;
     if (!files.empty()) {
         fileId = files.front().second;
     } else {
@@ -94,7 +93,8 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
     response.body.version = sourceFileParser.GetInstrVersion();
 }
 
-std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFiles(const std::string &selectFilePath,
+std::vector<std::pair<std::string, std::string>> ProjectParserBin::GetSimulationTraceFiles(
+    const std::string &selectFilePath,
     ImportActionResBody &body)
 {
     body.isCluster = false;
@@ -108,7 +108,7 @@ std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFi
     return files;
 }
 
-void ParserBin::SetParseCallBack(FileParser &fileParser)
+void ProjectParserBin::SetParseCallBack(FileParser &fileParser)
 {
     std::function<void(const std::string, bool, const std::string)> func =
         std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -121,18 +121,18 @@ void ParserBin::SetParseCallBack(FileParser &fileParser)
     fileParser.SetParseProgressCallBack(progressFunc);
 }
 
-ProjectTypeEnum ParserBin::GetProjectType(const std::vector<std::string> &dataPath)
+ProjectTypeEnum ProjectParserBin::GetProjectType(const std::vector<std::string> &dataPath)
 {
     return ProjectTypeEnum::BIN;
 }
 
-void ParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
-                               Global::BaselineInfo &baselineInfo)
+void ProjectParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                                      Global::BaselineInfo &baselineInfo)
 {
-    if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
+    if (projectInfos.empty() || projectInfos[0].subParseFileInfo.empty()) {
         return;
     }
-    std::string filePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
+    std::string filePath = projectInfos[0].subParseFileInfo[0]->parseFilePath;
     std::string fileId = GetFileId(filePath, filePath);
     std::string dbPath = FileUtil::GetDbPath(filePath, fileId);
     baselineInfo.rankId = fileId;
@@ -157,5 +157,24 @@ void ParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &p
         ServerLog::Error("Failed to parse baseline bin file cause ", message);
     }
 }
-} // Module
-} // Dic
+
+void ProjectParserBin::BuildProjectExploreInfo(Dic::Module::Global::ProjectExplorerInfo &projectInfo,
+                                               const std::vector<std::string> &parsedFiles)
+{
+    ProjectParserBase::BuildProjectExploreInfo(projectInfo, parsedFiles);
+    std::for_each(parsedFiles.begin(), parsedFiles.end(), [&projectInfo](const std::string &parseFile) {
+        ProjectParserBin::BuildProjectInfoFromParseFile(projectInfo, parseFile);
+    });
+}
+void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projectInfo, const std::string &parsedFile)
+{
+    // bin类型没有上层结构
+    auto parseFileInfo = std::make_shared<ParseFileInfo>();
+    parseFileInfo->parseFilePath = parsedFile;
+    parseFileInfo->type = ParseFileType::COMPUTE;
+    parseFileInfo->curDirName = FileUtil::GetFileName(parsedFile);
+    parseFileInfo->subId = parsedFile;
+    projectInfo.AddSubParseFileInfo(projectInfo.fileName, ParseFileType::PROJECT, parseFileInfo);
+}
+
+ProjectAnalyzeRegister<ProjectParserBin> pRegBIN(ParserType::BIN);

@@ -2,29 +2,27 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include "ExecUtil.h"
 #include "WsSessionManager.h"
-#include "OperatorProtocolEvent.h"
 #include "ProjectExplorerManager.h"
-#include "SourceFileParser.h"
 #include "JupyterServerManager.h"
 #include "TimeUtil.h"
 #include "ClusterFileParser.h"
+#include "ProjectParserFactory.h"
+#include "ProjectAnalyze.h"
 #include "ImportActionHandler.h"
 
-namespace Dic {
-namespace Module {
-namespace Timeline {
+
 using namespace Dic;
 using namespace Dic::Server;
-
+using namespace Dic::Module::Global;
+using namespace Dic::Module::Timeline;
 bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ImportActionRequest &request = dynamic_cast<ImportActionRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<ImportActionRequest &>(*requestPtr);
     ServerLog::Info("Import action request handler start");
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr.get();
+    ImportActionResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     std::string warnMsg;
     if (!request.params.CommonCheck(warnMsg)) {
@@ -72,7 +70,7 @@ void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExp
     if (!projectExplorerInfo.empty() && projectExplorerInfo[0].importType == "drag") {
         return;
     }
-    for (auto file: projectExplorerInfo) {
+    for (const auto& file: projectExplorerInfo) {
         if (!FileUtil::CheckFilePathExist(file.fileName)) {
             std::string message = "paths do not exist: " + file.fileName;
             SendParseFailEvent(message);
@@ -98,7 +96,7 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
     }
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
     ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
-    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(parserType);
+    std::shared_ptr<ProjectParserBase> factory = ParserFactory::ParserImport(parserType);
     ParserFactory::Reset();
     factory->Parser(projectExplorerInfo, request);
     return true;
@@ -109,14 +107,14 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
     // 如果入参的文件内容不为空，则通过文件判断文件类型获取工厂
     std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(request.params.path);
     ParserType allocType = parserType.second;
-    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
+    std::shared_ptr<ProjectParserBase> projectParser = ParserFactory::ParserImport(allocType);
     // 路径列表不为空，需要进行文件目录的新增、覆盖
-    ProjectTypeEnum projectType = factory->GetProjectType(request.params.path);
+    ProjectTypeEnum projectType = projectParser->GetProjectType(request.params.path);
     std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;
 
     // 获取文件列表
     for (const auto &item : request.params.path) {
-        std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(item, projectType, warnMsg);
+        std::vector<std::string> parseFileList = projectParser->GetParseFileByImportFile(item, warnMsg);
         bool isNotCluster = parseFileList.size() == 1 && !ClusterFileParser::CheckIsCluster(parseFileList[0]);
         // 如果没有找到文件（warnMag不为空），并且不是集群数据，则需要发送错误提示给前端
         if (!warnMsg.empty() && isNotCluster) {
@@ -128,11 +126,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
         projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
         projectExplorerInfo.importType = "import";
         projectExplorerInfo.accessTime = TimeUtil::Instance().NowStr();
-        for (const auto &parseFile: parseFileList) {
-            Global::ParseFileInfo parseFileInfo;
-            parseFileInfo.parseFilePath = parseFile;
-            projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
-        }
+        ProjectAnalyze::Instance().ProjectExportInfoBuild(allocType, parseFileList, projectExplorerInfo);
         projectExplorerInfoList.push_back(projectExplorerInfo);
     }
     if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer(projectExplorerInfoList,
@@ -145,10 +139,6 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
     if (allocType != ParserType::JSON && allocType != ParserType::DB) {
         ParserFactory::Reset();
     }
-    factory->Parser(projectExplorerInfoList, request);
+    projectParser->Parser(projectExplorerInfoList, request);
     return true;
 }
-
-} // Timeline
-} // Module
-} // Dic

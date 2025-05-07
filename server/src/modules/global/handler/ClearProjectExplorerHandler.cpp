@@ -5,7 +5,7 @@
 #include "WsSessionManager.h"
 #include "ProjectExplorerManager.h"
 #include "BaselineManager.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 #include "ClearProjectExplorerHandler.h"
 
 namespace Dic {

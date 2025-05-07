@@ -14,19 +14,17 @@
 #include "BaselineManager.h"
 #include "TimeUtil.h"
 #include "ProjectExplorerManager.h"
-#include "ParserDb.h"
+#include "ProjectParserJson.h"
+#include "ProjectAnalyze.h"
+#include "ProjectParserDb.h"
 
 namespace Dic {
 namespace Module {
 using namespace Timeline;
-ParserDb::ParserDb() {}
-
-ParserDb::~ParserDb() {}
-
-void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr.get();
+    ImportActionResponse &response = *responsePtr;
     ModuleRequestHandler::SetBaseResponse(request, response);
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
     response.body.reset = IsNeedReset(request);
@@ -35,13 +33,14 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     }
     std::vector<std::string> reportFiles = {};
     for (const auto &projectInfo : projectInfos) {
-        for (const auto &item : projectInfo.parseFilePathInfos) {
-            reportFiles.push_back(item.parseFilePath);
+        for (const auto &item : projectInfo.subParseFileInfo) {
+            reportFiles.push_back(item->parseFilePath);
+            response.body.subParseFileInfo.push_back(item);
         }
     }
+    response.body.projectFileTree = projectInfos[0].projectFileTree;
     auto hostInfoMap = GetReportFiles(reportFiles);
     SetHostInfo(hostInfoMap, response);
-    response.body.subdirectoryList = reportFiles;
     SetParseCallBack();
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
@@ -69,7 +68,7 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
-void ParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response)
+void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response)
 {
     uint32_t rankSize = 0;
     for (auto &hostInfo : hostInfoMap) {
@@ -89,8 +88,10 @@ void ParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportA
     response.body.isPending = isPendingParse;
 }
 
-void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster, ProjectTypeEnum curProjectTypeEnum,
-    std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName)
+void ProjectParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
+                                     ProjectTypeEnum curProjectTypeEnum,
+                                     std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
+                                     const std::string &projectName)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (curProjectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
@@ -107,7 +108,7 @@ void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
     }
     SaveDbPath(projectName, dataPathToDbMap);
     // send event
-    ParserAlloc::ParseClusterEndProcess(parseClusterResult, isCluster);
+    ProjectParserBase::ParseClusterEndProcess(parseClusterResult, isCluster);
     // 全量db也必须发step2完成事件，否则通信耗时分析会卡住
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
     event->moduleName = MODULE_TIMELINE;
@@ -116,7 +117,7 @@ void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
     SendEvent(std::move(event));
 }
 
-std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)
+std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)
 {
     std::vector<std::string> dbFiles = {};
     for (const auto &file : reportFiles) {
@@ -162,14 +163,14 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
     return hostMap;
 }
 
-void ParserDb::SetParseCallBack()
+void ProjectParserDb::SetParseCallBack()
 {
     std::function<void(const std::string, bool, const std::string)> func =
         std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     FullDb::FullDbParser::Instance().SetParseEndCallBack(func);
 }
 
-void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
+void ProjectParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
     const std::string &host, const std::string &dbFile)
 {
     Action action;
@@ -184,7 +185,7 @@ void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std
     response.body.result.emplace_back(action);
 }
 
-ProjectTypeEnum ParserDb::GetProjectType(const std::vector<std::string> &dataPath)
+ProjectTypeEnum ProjectParserDb::GetProjectType(const std::vector<std::string> &dataPath)
 {
     if (dataPath.empty()) {
         return ProjectTypeEnum::DB;
@@ -201,8 +202,7 @@ ProjectTypeEnum ParserDb::GetProjectType(const std::vector<std::string> &dataPat
     return isCluster ? ProjectTypeEnum::DB_CLUSTER : ProjectTypeEnum::DB;
 }
 
-std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &importFile,
-    ProjectTypeEnum projectTypeEnum, std::string &error)
+std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::string &importFile, std::string &error)
 {
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
@@ -231,17 +231,17 @@ std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &i
     return res;
 }
 
-void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+void ProjectParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
     Global::BaselineInfo &baselineInfo)
 {
-    if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
+    if (projectInfos.empty() || projectInfos[0].subParseFileInfo.empty()) {
         return;
     }
     if (baselineInfo.isCluster) {
-        ParserDb::ParseClusterBaselineInfo(projectInfos);
+        ProjectParserDb::ParseClusterBaselineInfo(projectInfos);
         return;
     }
-    std::string parseFilePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
+    std::string parseFilePath = projectInfos[0].subParseFileInfo[0]->parseFilePath;
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
         frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(mindsporeDBReg));
@@ -282,7 +282,7 @@ void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &pr
     FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ rankId }, file);
 }
 
-void ParserDb::ParseClusterBaselineInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+void ProjectParserDb::ParseClusterBaselineInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos)
 {
     std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
     auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::DB);
@@ -291,5 +291,12 @@ void ParserDb::ParseClusterBaselineInfo(const std::vector<Global::ProjectExplore
         ServerLog::Warn("Failed to parse cluster db files");
     }
 }
+
+void ProjectParserDb::BuildProjectExploreInfo(ProjectExplorerInfo &info, const std::vector<std::string> &parsedFiles)
+{
+    return ProjectParserJson::BuildProjectExploreInfo(info, parsedFiles);
+}
+
+ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);
 } // Module
 } // Dic

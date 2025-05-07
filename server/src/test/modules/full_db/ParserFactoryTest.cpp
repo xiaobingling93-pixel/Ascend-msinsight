@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "GlobalDefs.h"
-#include "ParserFactory.h"
+#include "ProjectParserFactory.h"
 
 using namespace Dic;
 using namespace Dic::Module;

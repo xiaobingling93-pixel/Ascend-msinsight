@@ -37,9 +37,11 @@ protected:
         info.projectType = static_cast<int64_t>(projectType);
         info.dbPath = dbPath;
         info.accessTime = "2000-01-01 00:00:00.000";
-        ParseFileInfo parseFileInfo;
-        parseFileInfo.parseFilePath = "test";
-        info.parseFilePathInfos.push_back(parseFileInfo);
+        auto parseFileInfo = std::make_shared<ParseFileInfo>();
+        parseFileInfo->parseFilePath = "test";
+        parseFileInfo->subId = "test";
+        parseFileInfo->type = ParseFileType::RANK;
+        info.AddSubParseFileInfo(parseFileInfo);
         return info;
     }
     void InitProjectExplorerData()

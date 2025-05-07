@@ -45,11 +45,15 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     JsonUtil::AddMember(body, "sourceList", sourceList, allocator);
 
     json_t subdirectoryList(kArrayType);
-    for (const auto &subdirectory : response.body.subdirectoryList) {
-        subdirectoryList.PushBack(json_t().SetString(subdirectory.c_str(), allocator), allocator);
+    for (const auto &subdirectory : response.body.subParseFileInfo) {
+        subdirectoryList.PushBack(json_t().SetString(subdirectory->parseFilePath.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "subdirectoryList", subdirectoryList, allocator);
-
+    json_t projectFileTree(kArrayType);
+    for (const auto& fileTree : response.body.projectFileTree) {
+        projectFileTree.PushBack(fileTree->SerializeToJson(allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "children", projectFileTree, allocator);
     json_t result(kArrayType);
     for (const Action &action : response.body.result) {
         json_t actionJson(kObjectType);
