@@ -80,6 +80,6 @@
     },
     "Or": "Or",
     "Documentation": "Documentation",
-    "ImportExpertHotspotDataTips": "Please select the directory or file containing MoE expert hotspot data"
+    "ImportExpertHotspotDataTips": "Please select the directory or file containing MoE expert heatmap data"
   }
 }

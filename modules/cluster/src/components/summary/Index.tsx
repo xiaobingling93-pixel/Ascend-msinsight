@@ -27,6 +27,7 @@ import { Communicator, partitionMode } from '../communicatorContainer/ContainerU
 import connector from '../../connection';
 import { IndicatorsItem, PerformanceDataItem } from '../../utils/interface';
 import { isEqual } from 'lodash';
+import { ExpertLoadBalancingBox } from './expert-load-balancing';
 
 const FlowChartContainer = styled.div`
     margin-top: 24px;
@@ -283,6 +284,10 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 }
             </CollapsiblePanel>
             }
+        </CollapsiblePanel>
+
+        <CollapsiblePanel title={t('MOE Expert Load Balancing Analysis')}>
+            <ExpertLoadBalancingBox />
         </CollapsiblePanel>
     </Layout>;
 });
