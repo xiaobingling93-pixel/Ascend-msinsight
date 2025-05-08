@@ -253,7 +253,7 @@ const Contents = observer(({ session }: {session: Session}) => {
     const handleNodeClick = (keys: React.Key[],
         { selectedNodes, node }: { selectedNodes: ProjectTreeDataNode[]; node: EventDataNode<ProjectTreeDataNode> }): void => {
         const { activeDataSource, dataSources } = session;
-        if (node.pos.split('-').length <= 2 || selectedNodes.length < 1) { return; }
+        if (node.pos.split('-').length < 2 || selectedNodes.length < 1) { return; }
         const [,projectIndex] = node.pos.split('-').map(index => Number(index));
         const dataSource: DataSource = dataSources[projectIndex];
         // 如果点击其它工程或者其它工程下文件
