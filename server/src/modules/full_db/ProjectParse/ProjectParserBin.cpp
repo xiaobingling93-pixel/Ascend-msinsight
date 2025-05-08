@@ -173,8 +173,8 @@ void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projec
     parseFileInfo->parseFilePath = parsedFile;
     parseFileInfo->type = ParseFileType::COMPUTE;
     parseFileInfo->curDirName = FileUtil::GetFileName(parsedFile);
-    parseFileInfo->subId = parsedFile;
-    projectInfo.AddSubParseFileInfo(projectInfo.fileName, ParseFileType::PROJECT, parseFileInfo);
+    parseFileInfo->subId = FileUtil::GetFileName(parsedFile);
+    projectInfo.AddSubParseFileInfo(parseFileInfo);
 }
 
 ProjectAnalyzeRegister<ProjectParserBin> pRegBIN(ParserType::BIN);

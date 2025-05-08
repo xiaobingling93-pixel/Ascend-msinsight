@@ -90,10 +90,10 @@ void ProjectParserIpynb::BuildProjectExploreInfo(ProjectExplorerInfo &projectInf
     ProjectParserBase::BuildProjectExploreInfo(projectInfo, parsedFiles);
     for (const auto &file: parsedFiles) {
         auto parsedFileInfo = std::make_shared<ParseFileInfo>();
-        parsedFileInfo->subId = file;
+        parsedFileInfo->subId = FileUtil::GetFileName(file);
         parsedFileInfo->type = ParseFileType::IPYNB;
         parsedFileInfo->curDirName = FileUtil::GetFileName(file);
-        projectInfo.AddSubParseFileInfo(projectInfo.fileName, ParseFileType::PROJECT, parsedFileInfo);
+        projectInfo.AddSubParseFileInfo(parsedFileInfo);
     }
 }
 
