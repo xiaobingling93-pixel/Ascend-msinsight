@@ -450,15 +450,25 @@ export const mergeProjects = (projectA: Project, projectB: Project): Project => 
 };
 
 export const deleteProjectDataPath = (project: Project, dataPath: string): void => {
-    recursiveSearchSomeProjectFileThen(project, (file) => file.path === dataPath, (__, foundIdx, files) => {
-        files.splice(foundIdx, 1);
+    recursiveSearchSomeProjectFileThen(project, (file) => file.path === dataPath, (__, foundIdx, files, parentInfo) => {
+        if (files.length === 1 && parentInfo.parent !== null && parentInfo.grandParent !== null) {
+            parentInfo.grandParent.children.splice(parentInfo.parentIndex, 1);
+        } else {
+            files.splice(foundIdx, 1);
+        }
     });
 };
 
+interface ParentInfo {
+    parent: FileOrDirectory | null;
+    parentIndex: number;
+    grandParent: FileOrDirectory | null;
+}
+
 const recursiveSearchSomeProjectFileThen = (project: Project,
     searcher: (file: FileOrDirectory) => boolean,
-    action?: (file: FileOrDirectory, index: number, foundFiles: FileOrDirectory[]) => void): boolean => {
-    const searchFilesThen = (files: FileOrDirectory[], depth: number): boolean => {
+    action?: (file: FileOrDirectory, index: number, foundFiles: FileOrDirectory[], parentInfo: ParentInfo) => void): boolean => {
+    const searchFilesThen = (files: FileOrDirectory[], parentInfo: ParentInfo, depth: number): boolean => {
         if (depth >= 5) {
             console.error('over 5 layers of file，deleting fail!');
             return false;
@@ -466,18 +476,22 @@ const recursiveSearchSomeProjectFileThen = (project: Project,
         if (files.length === 0) { return false; }
         const foundIdx: number = files.findIndex((file: FileOrDirectory): boolean => searcher(file));
         if (foundIdx !== -1) {
-            action?.(files[foundIdx], foundIdx, files);
+            action?.(files[foundIdx], foundIdx, files, parentInfo);
             return true;
         }
         for (let i = 0; i < files.length; i++) {
-            if (searchFilesThen(files[i].children, depth + 1)) {
+            if (searchFilesThen(files[i].children, {
+                parent: files[i],
+                parentIndex: i,
+                grandParent: parentInfo.parent,
+            }, depth + 1)) {
                 return true;
             }
         }
         return false;
     };
 
-    return searchFilesThen(project.children, 0);
+    return searchFilesThen(project.children, { parent: project as unknown as FileOrDirectory, parentIndex: -1, grandParent: null }, 0);
 };
 
 const recursiveSearchEveryProjectFileThen = (project: Project, action?: (file: FileOrDirectory, index: number) => void): void => {

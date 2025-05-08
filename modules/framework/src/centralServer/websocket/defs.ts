@@ -79,7 +79,7 @@ export interface FileOrDirectory {
     children: FileOrDirectory[];
 }
 
-export interface Project {
+export interface Project extends Pick<FileOrDirectory, 'children'> {
     projectName: string;
     projectPath: string[];
     children: FileOrDirectory[];

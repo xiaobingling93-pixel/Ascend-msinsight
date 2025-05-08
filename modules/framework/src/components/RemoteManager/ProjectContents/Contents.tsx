@@ -39,11 +39,10 @@ const ContentsContainer = styled.div`
     }
     // 目录名
     .ant-tree-node-content-wrapper {
-        display: inline-block;
-        width: calc(100% - 48px);
-        &.ant-tree-node-content-wrapper-open, &.ant-tree-node-content-wrapper-close {
-            width: calc(100% - 24px);
-        }
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        padding: 0;
         &:hover {
             background: none;
         }
@@ -52,16 +51,11 @@ const ContentsContainer = styled.div`
         }
     }
     // 勾选状态
-    .ant-tree-checkbox {
-        & + .ant-tree-node-content-wrapper-open, &.ant-tree-node-content-wrapper-close {
-            width: calc(100% - 48px);
-        }
-    }
     .ant-tree-title {
         display: inline-block;
-        width: calc(100% - 24px);
         justify-content: space-between;
         flex: 1;
+        min-width: 0;
         color: ${(props): string => props.theme.textColorMenu};
     }
     .content-body {
@@ -94,6 +88,9 @@ const ContentsContainer = styled.div`
         justify-content: end;
         width: 30px;
         display: none;
+    }
+    .btn-box.leaf {
+        width: 16px;
     }
     // 选中效果/鼠标滑动效果
     .ant-tree-treenode-selected, .ant-tree-treenode:hover {
@@ -161,9 +158,9 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
                 }}>
                     {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, filePath: data.path })}
                 </span>
-                <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
-                    {data.type === 'CLUSTER' || (<DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path}/>)}
-                </div>
+                {data.type === 'CLUSTER' || (<div className={`btn-box ${isLeaf ? 'leaf' : ''}`} onClick={(e): void => e.stopPropagation()}>
+                    <DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path}/>
+                </div>)}
             </span>
         </Tooltip>,
     };
@@ -251,7 +248,7 @@ const Contents = observer(({ session }: {session: Session}) => {
 
     // 点击项目
     const handleNodeClick = (keys: React.Key[],
-        { selectedNodes, node }: { selectedNodes: ProjectTreeDataNode[]; node: EventDataNode<ProjectTreeDataNode> }): void => {
+        { selected, selectedNodes, node }: { selected: boolean; selectedNodes: ProjectTreeDataNode[]; node: EventDataNode<ProjectTreeDataNode> }): void => {
         const { activeDataSource, dataSources } = session;
         if (node.pos.split('-').length < 2 || selectedNodes.length < 1) { return; }
         const [,projectIndex] = node.pos.split('-').map(index => Number(index));
@@ -267,6 +264,7 @@ const Contents = observer(({ session }: {session: Session}) => {
         }
         // 如果点击的是文件
         if (node.isLeaf) {
+            if (!selected) { return; } // 如果是取消选中文件
             runInAction(() => {
                 session.activeDataSource = {
                     ...GLOBAL_HOST,
@@ -282,10 +280,10 @@ const Contents = observer(({ session }: {session: Session}) => {
     };
 
     const handleSingleClick = (keys: React.Key[],
-        nodeEvent: { selectedNodes: ProjectTreeDataNode[]; node: EventDataNode<ProjectTreeDataNode>; nativeEvent: MouseEvent}): void => {
+        nodeEvent: { selected: boolean; selectedNodes: ProjectTreeDataNode[]; node: EventDataNode<ProjectTreeDataNode>; nativeEvent: MouseEvent}): void => {
         // 区分正常点击项目或文件还是点击Tooltip中的内容
-        const targrt = nodeEvent.nativeEvent.target as HTMLElement;
-        if (targrt.className === 'ant-tooltip-inner') {
+        const target = nodeEvent.nativeEvent.target as HTMLElement;
+        if (target.className === 'ant-tooltip-inner') {
             return;
         }
         // React不区分单击、双击
