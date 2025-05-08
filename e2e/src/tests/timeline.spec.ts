@@ -159,7 +159,7 @@ test.describe('Timeline', () => {
         await systemViewSelector.open();
         await systemViewSelector.selectOption('Expert System View');
 
-        const expertSystemViewOptions = ['Affinity API', 'Affinity Optimizer', 'AICPU Operators', 'ACLNN Operators', 'Operators Fusion'];
+        const expertSystemViewOptions = ['Expert Analysis', 'Affinity API', 'Affinity Optimizer', 'AICPU Operators', 'ACLNN Operators', 'Operators Fusion'];
 
         for (const item of expertSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
