@@ -26,6 +26,7 @@ test.describe('Communication', () => {
     test.beforeEach(async ({ page, communicationPage }) => {
         ws = setupWebSocketListener(page);
         requestDurationListResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/duration/list');
+        requestTableDataResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/operatorDetails');
         allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
 
         const { loadingDialog } = new FrameworkPage(page);
