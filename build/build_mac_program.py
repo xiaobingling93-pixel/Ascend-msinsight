@@ -225,7 +225,7 @@ def copy_file_back(ssh_client, workspace):
         logging.error("Remote product file not found")
         raise BuildException("No product file found")
     for file in sftp.listdir(output_dir):
-        remote_path = output_dir + SLASH + file
+        remote_path = f"{output_dir}{SLASH}{file}"
         local_path = os.path.join(local_dir, file)
         sftp.get(remote_path, local_path)
         logging.info('Copy remote file %s to local %s', remote_path, local_path)

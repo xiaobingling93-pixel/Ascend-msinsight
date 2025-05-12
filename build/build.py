@@ -637,8 +637,25 @@ def set_mac_app_signature_certificate_id(framework: str):
         if 'aarch64' in framework else Const.MAC_X86_SIGNATURE_CERTIFICATE_ID
 
 
+def clean_backend_build_cache():
+    build_path = os.path.join(PROJECT_PATH, Const.SERVER_DIR, Const.BUILD_DIR)
+    result = exec_command([Const.PYTHON, 'build.py', 'clean'], build_path, Const.SERVER_DIR)
+    if result < 0:
+        logging.error("Clean backend build cache failed")
+        return
+    output_path = os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output')
+    shutil.rmtree(output_path)
+
+
+def clean_build_cache():
+    clean_backend_build_cache()
+    return 0
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
+    if len(sys.argv) > 1 and sys.argv[1].lower() == 'clean':
+        return clean_build_cache()
     idea_version = load_version_info('7.0.RC3')
     update_plugins_version(idea_version)
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉

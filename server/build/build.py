@@ -178,6 +178,11 @@ def build_test():
     return 0
 
 
+def clean():
+    build_dir = os.path.join(CMAKE_BUILD_DIR)
+    shutil.rmtree(build_dir)
+
+
 def main():
     """build entry"""
     parser = argparse.ArgumentParser(description='build dic server project')
@@ -187,6 +192,9 @@ def main():
 
     parser_test = subparsers.add_parser('test', help='test build')
     parser_test.set_defaults(func=build_test)
+
+    parser_clean = subparsers.add_parser('clean', help='make clean')
+    parser_clean.set_defaults(func=clean)
 
     args = parser.parse_args()
     if not hasattr(args, 'func'):
