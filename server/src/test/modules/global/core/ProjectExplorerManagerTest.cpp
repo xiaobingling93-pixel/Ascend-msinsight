@@ -6,6 +6,7 @@
 #include "FileUtil.h"
 #include "ProjectExplorerManager.h"
 #include "GlobalDefs.h"
+#include "ProjectParserJson.h"
 
 const int64_t NUMBER_ZERO = 0;
 const int64_t NUMBER_THREE = 3;
@@ -25,7 +26,9 @@ public:
     static void TearDownTestSuite() {}
 
 protected:
-    static std::string curServerPath;
+    inline static std::string currPath = FileUtil::GetCurrPath();
+    inline static auto index = currPath.find_last_of("server");
+    inline static std::string curServerPath = currPath.substr(0, index + 1) + R"(src/test/test_data)";
     ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
                                           const std::string &importType, Dic::ProjectTypeEnum projectType,
                                           const std::vector<std::string> dbPath)
@@ -147,4 +150,20 @@ TEST_F(ProjectExplorerManagerTest, GetProjectTypeWithOnlyMulitDbType)
     projectInfoList.push_back(info2);
     Dic::ProjectTypeEnum type = ProjectExplorerManager::GetProjectType(projectInfoList);
     EXPECT_EQ(type, Dic::ProjectTypeEnum::DB_CLUSTER);
+}
+
+TEST_F(ProjectExplorerManagerTest, DeleteFileNode)
+{
+    std::string importPath =  + R"(/test_rank_1)";
+    ProjectExplorerInfo projectInfo;
+    projectInfo.fileName = importPath;
+    projectInfo.projectName = "testDeleteFile";
+    projectInfo.id = 1;
+    std::string parsedFilePath = importPath + R"(ASCEND_PROFILER_OUTPUT)";
+    Dic::Module::ProjectParserJson::BuildProjectExploreInfo(projectInfo, {parsedFilePath});
+    std::vector<ProjectExplorerInfo> projectList {projectInfo};
+    ProjectExplorerManager::Instance().SaveProjectExplorer(projectList, false);
+    ProjectExplorerManager::Instance().DeleteProjectAndFilePath("testDeleteFile", {parsedFilePath});
+    auto result = ProjectExplorerManager::Instance().QueryProjectExplorer("testDeleteFile", {});
+    EXPECT_EQ(result.size(), 0);
 }

@@ -23,6 +23,11 @@ TEST_F(ProjectParserTest, GetParentFolders)
     EXPECT_EQ(ProjectParserBase().GetParentFileList(prefix, path).size(), 1); // expect parent folders of path is  2
 }
 
+TEST_F(ProjectParserTest, GetParentFoldersPathEqualPrefix)
+{
+    EXPECT_EQ(ProjectParserBase().GetParentFileList("/home/user", "/home/user").empty(), true);
+}
+
 TEST_F(ProjectParserTest, GetClusterInfo)
 {
     std::vector<std::string> folders = ProjectParserBase().GetParentFileList("/home/user/name/profiling",

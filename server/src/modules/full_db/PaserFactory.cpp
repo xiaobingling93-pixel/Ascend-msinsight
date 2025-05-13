@@ -334,6 +334,9 @@ bool ProjectParserBase::IsParsedFile(const std::string &file)
 std::vector<std::string> ProjectParserBase::GetParentFileList(const std::string &prefix, const std::string &filePath)
 {
     std::vector<std::string> res;
+    if (prefix == filePath) {
+        return res;
+    }
     std::string curPath = FileUtil::GetParentPath(filePath);
     while (!curPath.empty() && curPath != prefix) {
         res.emplace_back(curPath);

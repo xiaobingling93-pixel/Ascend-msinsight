@@ -83,8 +83,12 @@ void ProjectParserJson::FillBaseResponseInfo(const ImportActionRequest &request,
                                              const std::vector<ProjectExplorerInfo> &projectInfos)
 {
     ModuleRequestHandler::SetBaseResponse(request, response);
-    response.body.subParseFileInfo = projectInfos[0].subParseFileInfo;
-    response.body.projectFileTree = projectInfos[0].projectFileTree;
+    std::for_each(projectInfos.begin(), projectInfos.end(), [&response](const ProjectExplorerInfo &info) {
+        std::copy(info.subParseFileInfo.begin(), info.subParseFileInfo.end(),
+                  std::back_inserter(response.body.subParseFileInfo));
+        std::copy(info.projectFileTree.begin(), info.projectFileTree.end(),
+                  std::back_inserter(response.body.projectFileTree));
+    });
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
     response.body.reset = IsNeedReset(request);
@@ -626,7 +630,9 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
     parseFileInfoRank->type = ParseFileType::RANK;
     parseFileInfoRank->subId = parseFile;
     parseFileInfoRank->curDirName = FileUtil::GetFileName(parseFile);
-    if (parentFolders.empty()) {
+    // import single file
+    if (FileUtil::IsRegularFile(parseFile) || parseFileInfoRank->subId == info.fileName) {
+        parseFileInfoRank->subId = FileUtil::GetFileName(parseFile);
         info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
         return;
     }

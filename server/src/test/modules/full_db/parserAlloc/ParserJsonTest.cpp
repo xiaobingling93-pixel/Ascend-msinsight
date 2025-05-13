@@ -7,7 +7,16 @@
 #include "ProjectParserJson.h"
 using namespace Dic::Module;
 using namespace Dic::Module::ParserJsonMock;
-class ParserJsonTest : public ::testing::Test {};
+class ParserJsonTest : public ::testing::Test {
+protected:
+    inline std::string GetTestDataDir()
+    {
+        static std::string currPath = FileUtil::GetCurrPath();
+        static auto index = currPath.find_last_of("server");
+        static std::string testDataDir = currPath.substr(0, index + 1) + R"(src/test/test_data)";
+        return testDataDir;
+    }
+};
 
 /**
  * 如果json文件个数为空则校验不通过
@@ -179,4 +188,40 @@ TEST_F(ParserJsonTest, TestCheckHasTraceJsonMemoryDataOperatorData)
 
     MockParserJson::CheckHasTraceJsonMemeoryDataOpDataFailTest();
     MockParserJson::CheckHasTraceJsonMemeoryDataOpDataSuccessTest();
+}
+
+TEST_F(ParserJsonTest, BuildProjectInfoWithSingleFile)
+{
+    ProjectExplorerInfo projectInfo;
+    std::string projectPath = GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)";
+    projectInfo.fileName = projectPath;
+    Dic::Module::ProjectParserJson::BuildProjectExploreInfo(projectInfo, {projectPath});
+    EXPECT_EQ(projectInfo.projectFileTree.size(), 1);
+    EXPECT_EQ(projectInfo.subParseFileInfo.size(), 1);
+    EXPECT_EQ(projectInfo.fileInfoMap.size(), 2);  // expect has 2 elements
+    auto file = projectInfo.projectFileTree[0];
+    EXPECT_EQ(file->type, ParseFileType::PROJECT);
+    EXPECT_EQ(file->subId, projectPath);
+    EXPECT_EQ(file->subParseFile.size(), 1);
+    file = file->subParseFile[0];
+    EXPECT_EQ(file->type, ParseFileType::RANK);
+    EXPECT_EQ(file->subId, "trace_view.json");
+}
+
+TEST_F(ParserJsonTest, BuildProjectInfoWithAscendProfilerOutputDir)
+{
+    ProjectExplorerInfo projectInfo;
+    std::string projectPath = GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT)";
+    projectInfo.fileName = projectPath;
+    Dic::Module::ProjectParserJson::BuildProjectExploreInfo(projectInfo, {projectPath});
+    EXPECT_EQ(projectInfo.projectFileTree.size(), 1);
+    EXPECT_EQ(projectInfo.subParseFileInfo.size(), 1);
+    EXPECT_EQ(projectInfo.fileInfoMap.size(), 2);  // expect has 2 elements
+    auto file = projectInfo.projectFileTree[0];
+    EXPECT_EQ(file->type, ParseFileType::PROJECT);
+    EXPECT_EQ(file->subId, projectPath);
+    EXPECT_EQ(file->subParseFile.size(), 1);
+    file = file->subParseFile[0];
+    EXPECT_EQ(file->type, ParseFileType::RANK);
+    EXPECT_EQ(file->subId, "ASCEND_PROFILER_OUTPUT");
 }

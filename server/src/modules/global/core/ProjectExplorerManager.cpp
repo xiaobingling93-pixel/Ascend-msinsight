@@ -176,12 +176,13 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
     std::vector<int64_t> projectIdList;
     std::vector<std::string> needDeleteImportFileList;
     std::vector<int64_t> needDeleteParseFileIdList;
-    for (const auto &project: infos) {
+    for (auto &project: infos) {
         projectIdList.push_back(project.id);
         bool isNeedDeleteImportData = true;
         for (const auto &item: project.subParseFileInfo) {
             if (std::find(filePathList.begin(), filePathList.end(), item->parseFilePath) != filePathList.end()) {
-                needDeleteParseFileIdList.push_back(item->id);
+                auto deleteList = project.GetFileIdsToDelete(item);
+                std::copy(deleteList.begin(), deleteList.end(), std::back_inserter(needDeleteParseFileIdList));
             } else if (!filePathList.empty()) {
                 // 如果出现了一个导入记录下，有文件没有被删除干净，则不删除该记录
                 isNeedDeleteImportData = false;

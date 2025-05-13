@@ -11,6 +11,10 @@
 #include <unordered_map>
 #include <memory>
 #include <algorithm>
+#include <stack>
+#include <queue>
+#include <cstdint>
+#include <set>
 #include "FileUtil.h"
 #include "JsonUtil.h"
 namespace Dic::Module::Global {
@@ -75,6 +79,24 @@ struct ParseFileInfo {
         JsonUtil::AddMember(res, "children", children, allocator);
         return res;
     }
+
+    std::vector<std::shared_ptr<ParseFileInfo>> GetChildren()
+    {
+        std::queue<std::shared_ptr<ParseFileInfo>> que;
+        std::for_each(subParseFile.begin(), subParseFile.end(), [&que](const auto &item) {
+            que.push(item);
+        });
+        std::vector<std::shared_ptr<ParseFileInfo>> res;
+        while (!que.empty()) {
+            auto item = que.front();
+            que.pop();
+            res.push_back(item);
+            std::for_each(item->subParseFile.begin(), item->subParseFile.end(), [&que](const auto &it) {
+                que.push(it);
+            });
+        }
+        return res;
+    }
 };
 
 struct ProjectExplorerInfo {
@@ -121,7 +143,7 @@ struct ProjectExplorerInfo {
             }
             bool flag = true;
             for (const auto &file: *curLevel) {
-                if (StringUtil::StartWith(fileInfo->subId, file->subId)) {  // contains
+                if (IsSubFile(file, fileInfo)) {  // contains
                     curLevel = &file->subParseFile;
                     flag = false;
                     break;
@@ -148,6 +170,85 @@ struct ProjectExplorerInfo {
             return nullptr;
         }
         return it->second;
+    }
+
+    inline void MergeProjectExploreInfo(const ProjectExplorerInfo &projectInfo)
+    {
+        if (projectInfo.projectName != projectName) {
+            return;
+        }
+        std::copy(projectInfo.subParseFileInfo.begin(), projectInfo.subParseFileInfo.end(),
+                  std::back_inserter(subParseFileInfo));
+        std::copy(projectInfo.projectFileTree.begin(), projectInfo.projectFileTree.end(),
+                  std::back_inserter(projectFileTree));
+        std::for_each(projectInfo.fileInfoMap.begin(), projectInfo.fileInfoMap.end(), [this](const auto &item) {
+            fileInfoMap.emplace(item.first, item.second);
+        });
+    }
+
+    std::vector<int64_t> GetFileIdsToDelete(std::shared_ptr<ParseFileInfo> fileInfo)
+    {
+        std::set<int64_t> deleteFileId{fileInfo->id};
+        std::stack<std::shared_ptr<ParseFileInfo>> stack;  // record the path
+        // tree search
+        auto curLevel = &projectFileTree;
+        while (!curLevel->empty()) {
+            bool flag = false;
+            for (const auto &file: *curLevel) {
+                if (fileInfo->subId == file->subId) {
+                    DeleteFileChildren(file, deleteFileId);
+                    flag = true;
+                    break;
+                }
+                if (IsSubFile(file, fileInfo)) {
+                    curLevel = &file->subParseFile;
+                    stack.push(file);  // record the path node
+                }
+            }
+            if (flag) {
+                break;
+            }
+        }
+        while (!stack.empty()) {
+            auto cur = stack.top();
+            stack.pop();
+            cur->subParseFile.erase(std::remove_if(cur->subParseFile.begin(), cur->subParseFile.end(),
+                                                   [&deleteFileId](const auto &item) {
+                                                       return deleteFileId.count(item->id) != 0;
+                                                   }),
+                                    cur->subParseFile.end());
+            if (cur->subParseFile.empty()) {
+                deleteFileId.insert(cur->id);
+            }
+        }
+        return std::vector<int64_t>{deleteFileId.begin(), deleteFileId.end()};
+    }
+
+    static bool IsSubFile(std::shared_ptr<ParseFileInfo> parent, std::shared_ptr<ParseFileInfo> children)
+    {
+        return (StringUtil::StartWith(children->subId, parent->subId) ||
+                StringUtil::EndWith(parent->subId, children->subId));
+    }
+
+    void DeleteFile(std::shared_ptr<ParseFileInfo> file)
+    {
+        auto it = std::find(subParseFileInfo.begin(), subParseFileInfo.end(), file);
+        if (it != subParseFileInfo.end()) {
+            subParseFileInfo.erase(it);
+        }
+        auto it2 = std::find(projectFileTree.begin(), projectFileTree.end(), file);
+        if (it2 != projectFileTree.end()) {
+            projectFileTree.erase(it2);
+        }
+        fileInfoMap.erase(file->subId);
+    }
+
+    void DeleteFileChildren(std::shared_ptr<ParseFileInfo> file, std::set<int64_t> &deleteFileIds)
+    {
+        auto children = file->GetChildren();
+        std::for_each(children.begin(), children.end(), [&deleteFileIds](const auto &item) {
+            deleteFileIds.insert(item->id);
+        });
     }
 };
 
