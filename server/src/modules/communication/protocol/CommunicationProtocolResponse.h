@@ -424,7 +424,6 @@ struct MatrixGroupResponse : public Response {
 struct CommunicationAdvisorInfo {
     std::string name;
     std::map<std::string, std::vector<std::string>> statistics;
-    std::vector<std::string> suggestions;
 };
 
 struct CommunicationAdvisorResponseBody {

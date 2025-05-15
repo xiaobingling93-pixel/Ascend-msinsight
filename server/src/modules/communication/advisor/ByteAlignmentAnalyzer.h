@@ -22,10 +22,6 @@ struct ByteAlignmentAnalyzerStatistics {
     uint64_t abnormalOperatorCount = 0;
 };
 
-const std::vector<std::string> ByteAlignmentAnalyzerSuggestions = {"Adjusting the data size:"
-    " Please adjust data size to align the data volume of the communication operator."
-    " For details, contact related hccl engineers."};
-
 class ByteAlignmentAnalyzer {
 public:
     ByteAlignmentAnalyzer() = default;

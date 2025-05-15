@@ -94,8 +94,7 @@ TEST_F(CommunicationProtocolUtilTest, ToCommunicationAdvisorResponseNormalDataTe
         {"Category", {"SDMA", "RDMA"}},
         {"Min Size", {"16MB", "1MB"}},
         {"Packet Size <= Min Size Percentage", {"2.1", "0.5"}}
-        },
-        {"Suggestion A", "Suggestion B", "Suggestion C"}};
+        }};
     response.body.items.push_back(info);
     std::string err;
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
@@ -124,10 +123,4 @@ TEST_F(CommunicationProtocolUtilTest, ToCommunicationAdvisorResponseNormalDataTe
     ASSERT_EQ(jsonOptional.value()["body"]["items"][0]["statistics"]["Packet Size <= Min Size Percentage"].Size(), two);
     EXPECT_EQ(jsonOptional.value()["body"]["items"][0]["statistics"]["Packet Size <= Min Size Percentage"][0], "2.1");
     EXPECT_EQ(jsonOptional.value()["body"]["items"][0]["statistics"]["Packet Size <= Min Size Percentage"][1], "0.5");
-    ASSERT_TRUE(jsonOptional.value()["body"]["items"][0].HasMember("suggestions"));
-    ASSERT_TRUE(jsonOptional.value()["body"]["items"][0]["suggestions"].IsArray());
-    ASSERT_EQ(jsonOptional.value()["body"]["items"][0]["suggestions"].Size(), three);
-    EXPECT_EQ(jsonOptional.value()["body"]["items"][0]["suggestions"][0], "Suggestion A");
-    EXPECT_EQ(jsonOptional.value()["body"]["items"][0]["suggestions"][1], "Suggestion B");
-    EXPECT_EQ(jsonOptional.value()["body"]["items"][0]["suggestions"][two], "Suggestion C");
 }

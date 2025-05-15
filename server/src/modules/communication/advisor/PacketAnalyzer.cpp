@@ -80,7 +80,6 @@ void PacketAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorInfo &in
         {std::to_string(statistics.smallSdmaDuration), std::to_string(statistics.smallRdmaDuration)}});
     info.statistics.insert({"Issue",
         {statistics.sdmaIssue ? "Yes" : "No", statistics.rdmaIssue ? "Yes" : "No"}});
-    info.suggestions = PacketAnalyzerSuggestions;
 }
 }
 }

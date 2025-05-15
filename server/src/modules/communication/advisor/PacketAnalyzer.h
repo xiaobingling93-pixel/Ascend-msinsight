@@ -32,15 +32,6 @@ struct PacketAnalyzerStatistics {
     bool rdmaIssue{false};
 };
 
-const std::vector<std::string> PacketAnalyzerSuggestions = {"Data parallelism suggestion:\n"
-    " If abnormal communication is centralized in data parallelism domain, please\n"
-    " 1.increase batch size; 2.increase gradient accumulation.",
-    "Check the memory optimization policy:\n"
-    " If the memory optimization policy is Zero3,"
-    " it is recommended to set it to Zero2/Zero1 if memory conditions allow.",
-    "Adopt fusion operators of affinity optimizers:\n"
-    " using the affinity optimizers or fusion operators may reduce the number of communication operators."};
-
 class PacketAnalyzer {
 public:
     PacketAnalyzer() = default;

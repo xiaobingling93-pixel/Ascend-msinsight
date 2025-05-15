@@ -320,11 +320,6 @@ template <> std::optional<document_t> ToResponseJson<CommunicationAdvisorRespons
             JsonUtil::AddMember(statistics, columnName, values, allocator);
         }
         JsonUtil::AddMember(singleAdvisor, "statistics", statistics, allocator);
-        json_t suggestions(kArrayType);
-        for (const auto &suggestion : item.suggestions) {
-            suggestions.PushBack(json_t().SetString(suggestion.c_str(), suggestion.length(), allocator), allocator);
-        }
-        JsonUtil::AddMember(singleAdvisor, "suggestions", suggestions, allocator);
         items.PushBack(singleAdvisor, allocator);
     }
     JsonUtil::AddMember(body, "items", items, allocator);
