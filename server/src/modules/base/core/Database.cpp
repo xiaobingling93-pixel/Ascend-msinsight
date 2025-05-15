@@ -743,5 +743,98 @@ bool Database::UpdateMetaDataTableWithNoPrimaryKey(const std::string &name, cons
     return true;
 }
 
-} // end of namespace Module
-} // end of namespace Dic
+std::vector<ColumnAtt> Database::QueryTableInfoByName(const std::string& tableName)
+{
+    if (!StringUtil::CheckSqlValid(tableName)) {
+        return {};
+    }
+    const std::string sql = "PRAGMA table_info(" + tableName + ");";
+    auto stmt = CreatPreparedStatement(sql);
+    if (!TryOpt(stmt, "Query table info failed to prepare sql!")) {
+        return {};
+    }
+    auto result = stmt->ExecuteQuery();
+    if (!TryOpt(result, "Query table info failed to get result!")) {
+        return {};
+    }
+    std::vector<ColumnAtt> res;
+    while (result->Next()) {
+        ColumnAtt columnAtt;
+        columnAtt.name = result->GetString("name");
+        columnAtt.type = result->GetString("type");
+        columnAtt.key = columnAtt.name;
+        res.emplace_back(columnAtt);
+    }
+    return res;
+}
+
+uint64_t Database::QueryCountByTableName(const std::string& tableName)
+{
+    if (!StringUtil::CheckSqlValid(tableName)) {
+        return 0;
+    }
+    std::string sql = "SELECT COUNT(*) as count FROM " + tableName + " WHERE 1 = 1 ";
+    auto stmt = CreatPreparedStatement(sql);
+    if (!TryOpt(stmt, "Query count by table name failed to prepare sql!")) {
+        return 0;
+    }
+    auto result = stmt->ExecuteQuery();
+    if (!TryOpt(result, "Query count by table name failed to get result!")) {
+        return 0;
+    }
+    if (result->Next()) {
+        return result->GetUint64("count");
+    }
+    return 0;
+}
+
+std::vector<std::map<std::string, std::string>> Database::QueryDataByPage(const PageQuery& query,
+                                                                          const std::vector<ColumnAtt>& columns)
+{
+    if (columns.empty()) {
+        return {};
+    }
+    std::vector<std::string> columnName;
+    for (const auto& item : columns) {
+        if (!StringUtil::CheckSqlValid(item.key)) {
+            return {};
+        }
+        columnName.emplace_back(item.key);
+    }
+    if (!StringUtil::CheckSqlValid(query.viewName)) {
+        return {};
+    }
+    const std::string columnNames = StringUtil::join(columnName, ",");
+    std::string sql = "SELECT " + columnNames + " FROM " + query.viewName + " WHERE 1=1 ";
+    std::string orderBySql;
+    if (!std::empty(query.order) && !std::empty(query.orderBy) && StringUtil::CheckSqlValid(query.orderBy)) {
+        orderBySql = query.order == "descend" ? " ORDER BY " + query.orderBy + " DESC " :
+                                                " ORDER BY " + query.orderBy + " ASC ";
+    }
+    sql += orderBySql;
+    const std::string limitSql =
+        " LIMIT " + std::to_string(query.size) + " OFFSET " + std::to_string(query.ComputeOffset());
+    sql += limitSql;
+    auto stmt = CreatPreparedStatement(sql);
+    if (!TryOpt(stmt, "Query data by page failed to prepare sql!")) {
+        return {};
+    }
+    auto result = stmt->ExecuteQuery();
+    if (!TryOpt(result, "Query data by page failed to get result!")) {
+        return {};
+    }
+    std::vector<std::map<std::string, std::string>> res;
+    while (result->Next()) {
+        std::map<std::string, std::string> data;
+        for (const auto& item : columns) {
+            data[item.key] = result->GetString(item.key);
+            if (std::empty(data[item.key])) {
+                data[item.key] = "0";
+            }
+        }
+        res.emplace_back(data);
+    }
+    return res;
+}
+}  // end of namespace Module
+}  // end of namespace Dic

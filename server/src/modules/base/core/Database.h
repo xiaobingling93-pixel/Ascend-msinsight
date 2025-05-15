@@ -10,6 +10,8 @@
 #include <mutex>
 #include "ServerLog.h"
 #include "sqlite3.h"
+#include "BaseDomain.h"
+#include "TryOpt.h"
 #include "SqlitePreparedStatement.h"
 
 namespace Dic {
@@ -69,6 +71,10 @@ public:
     bool CreateMetaDataTableForText();
     bool UpdateMetaDataTable(const std::string &name, const std::string &value);
     bool UpdateMetaDataTableWithNoPrimaryKey(const std::string &name, const std::string &value);
+    virtual std::vector<ColumnAtt> QueryTableInfoByName(const std::string &tableName);
+    virtual uint64_t QueryCountByTableName(const std::string &tableName);
+    virtual std::vector<std::map<std::string, std::string>> QueryDataByPage(const PageQuery& query,
+                                                                            const std::vector<ColumnAtt>& columns);
 
 protected:
     bool CheckTableContainData(const std::string& tableName);
