@@ -22,8 +22,8 @@ const webpackCfg = {
   clusterConfigure: (webpackConfig) => {
     webpackConfig.entry = {
       main: webpackConfig.entry,
-      summary: './src/SummaryIndex.ts',
-      communication: './src/CommunicationIndex.ts',
+      summary: './src/SummaryIndex.tsx',
+      communication: './src/CommunicationIndex.tsx',
     };
     webpackConfig.output.filename = 'static/js/[name].bundle.js';
     webpackConfig.plugins.push(...htmllist);

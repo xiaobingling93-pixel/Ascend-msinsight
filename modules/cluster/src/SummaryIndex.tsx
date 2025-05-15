@@ -6,7 +6,6 @@ import { SharedConfigProvider } from 'ascend-shared-config-provider';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@emotion/react';
 import { RootStoreContext, useRootStore } from './context/context';
-import './Summary.css';
 import { store } from './store';
 import connector from './connection';
 import { observer } from 'mobx-react';
