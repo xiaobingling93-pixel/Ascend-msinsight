@@ -107,8 +107,8 @@ bool JupyterServerManager::Start(const std::string& path)
         return false;
     }
     // 获取路径的根目录，在根目录下启动
-    std::string cmd = "jupyter-lab " + path +
-                " --ServerApp.tornado_settings=\"{'headers': {'Content-Security-Policy': 'frame-ancestors "
+    std::string cmd = "jupyter-lab " + path + " --ip=localhost "
+                "--ServerApp.tornado_settings=\"{'headers': {'Content-Security-Policy': 'frame-ancestors "
                 "\"self\" * wry://localhost'}}\" ";
 #ifdef WIN32
     cmd += " --ServerApp.cookie_options=\"{'SameSite': 'None', 'Secure': True}\"";
