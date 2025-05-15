@@ -126,6 +126,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 return {
                     key: item,
                     name: curName,
+                    unit: 'μs',
                 } as IndicatorsItem;
             });
         }

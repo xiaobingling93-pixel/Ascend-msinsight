@@ -71,6 +71,14 @@ export class Session {
         return map;
     }
 
+    get dynamicsIndicatorMap(): Map<string, IndicatorsItem> {
+        const map: Map<string, IndicatorsItem> = new Map();
+        this.dynamicsIndicatorList.forEach(item => {
+            map.set(item.key, item);
+        });
+        return map;
+    }
+
     // 设置着色数据图例
     setRankDyeingData(): void {
         const data: Record<string, { min: number; max: number }> = {};

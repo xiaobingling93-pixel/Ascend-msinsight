@@ -486,7 +486,9 @@ const ParallelSwitch = observer(({ session }: ParallelSwitchProps): JSX.Element 
 
     useEffect(() => {
         const { min = null, max = null } = session.rankDyeingData[dyeingMode] ?? {};
-        setUnit(session.indicatorMap.get(dyeingMode)?.unit ?? '');
+        const activeUnit = session.indicatorMap.get(dyeingMode)?.unit ?? session.dynamicsIndicatorMap.get(dyeingMode)?.unit ?? '';
+
+        setUnit(activeUnit);
         if (min !== null && max !== null) {
             setStartVal(min);
             setEndVal(max);
