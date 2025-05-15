@@ -574,6 +574,26 @@ TEST_F(EventParserTest, TestSMParseModifyThreadSortIndex)
     EXPECT_EQ(expectIndex, threadPOS[first].threadSortIndex);
 }
 
+
+/**
+ * 测试解析type为SC的json,修改thread_sort_index
+ */
+TEST_F(EventParserTest, TestSCParseModifyThreadSortIndex)
+{
+    std::string jsonContent =
+        "[{\"name\": \"bbbbbb\", \"pid\": 2094647552, \"tid\": 8, \"args\": {\"sort_index\": \"333\"}, \"ph\": "
+        "\"C\"}]";
+    sqlite3 *dbPtr = nullptr;
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::RUNNING);
+    EXPECT_CALL(*mockFileReader, ReadJsonArray(filePath, startPosition, endPosition)).WillOnce(Return(jsonContent));
+    Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    mockDatabase->SetDbPtr(dbPtr);
+    mockDatabase->CreateTable();
+    EventParserMock eventParserMock(filePath, fileId, mockDatabase);
+    eventParserMock.SetFileReaderAndDatabase(std::move(mockFileReader));
+    EXPECT_NO_THROW(eventParserMock.Parse(startPosition, endPosition));
+}
+
 /**
  * 测试系统调优解析type为s,f,t的json
  */

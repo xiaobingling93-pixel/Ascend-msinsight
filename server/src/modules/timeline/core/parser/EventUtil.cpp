@@ -34,6 +34,7 @@ void EventUtil::Register()
     jsonToEventFactory.emplace("f", ToFlowEvent);
     jsonToEventFactory.emplace("t", ToFlowEvent);
     jsonToEventFactory.emplace("C", ToCounterEvent);
+    jsonToEventFactory.emplace("SC", ToCounterEvent);
 }
 
 void EventUtil::UnRegister()

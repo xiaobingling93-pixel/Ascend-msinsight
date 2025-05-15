@@ -39,6 +39,7 @@ void EventParser::InitEventHandle()
     eventHandleMap.emplace("Ss", std::bind(&EventParser::SimulationFlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("St", std::bind(&EventParser::SimulationFlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("SM", std::bind(&EventParser::MetaDataHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("SC", std::bind(&EventParser::CounterEventsHandle, this, std::placeholders::_1));
 }
 
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
