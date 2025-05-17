@@ -127,8 +127,10 @@ export const CommunicatorContainer = observer(({ session, generateConditions, on
 
 const DimensionTabExtraContent = (): JSX.Element => {
     const { t } = useTranslation('summary');
+    const content = t('DimensionTooltipContent', { returnObjects: true }) as string[];
+    const tooltip = content.map((item, index) => <div style={{ padding: '6px 0' }} key={index}>{item}</div>);
 
-    return <Form.Item style={{ marginBottom: 0 }} colon={false} label={t(' ')} tooltip={t('DimensionTooltipContent')}></Form.Item>;
+    return <Form.Item style={{ marginBottom: 0 }} label={t('Parallel Dimension')} tooltip={<div>{tooltip}</div>}></Form.Item>;
 };
 
 export type GenerateConditions = ParallelismArrangementParams;
@@ -251,9 +253,9 @@ const selectOptions = [
 const getDimensionOptions = (t: TFunction, generateConditions: GenerateConditions): Array<{key: string; label: ReactNode}> => {
     const { cpSize } = generateConditions;
     return [
-        { key: 'ep-dp', label: <Tooltip title={t('DPDimensionTooltip')}>{'DP >'}</Tooltip> },
-        { key: 'ep-dp-pp', label: <Tooltip title={t('PPDimensionTooltip')}>{'DP + PP >'}</Tooltip> },
-        { key: 'ep-dp-pp-cp', label: <Tooltip title={t('CPDimensionTooltip')}>{'DP + PP + CP >'}</Tooltip> },
+        { key: 'ep-dp', label: <Tooltip title={t('DPDimensionTooltip')}>{'DP'}</Tooltip> },
+        { key: 'ep-dp-pp', label: <Tooltip title={t('PPDimensionTooltip')}>{'DP + PP'}</Tooltip> },
+        { key: 'ep-dp-pp-cp', label: <Tooltip title={t('CPDimensionTooltip')}>{'DP + PP + CP'}</Tooltip> },
         {
             key: 'ep-dp-pp-cp-tp',
             label: cpSize === 1
@@ -299,7 +301,7 @@ const FormDom = (
         onValuesChange={handleValueChange}
         onFinish={onClickGenerate}
     >
-        <Form.Item name={'algorithm'} label={t('Algorithm')}>
+        <Form.Item name={'algorithm'} label={t('Algorithm')} tooltip={t('AlgorithmTooltip')}>
             <Select defaultValue="megatron-lm(tp-cp-ep-dp-pp)" style={{ width: 220 }} options={selectOptions}/>
         </Form.Item>
         <Form.Item name={'ppSize'} label={t('PPSize')}>
@@ -380,12 +382,12 @@ interface LegendItem {
 }
 
 const defaultLegendItemList: LegendItem[] = [
-    { value: 'pp', label: 'Pipeline Parallel', color: '#0277FF', checked: true, disabled: false, visible: true },
-    { value: 'tp', label: 'Tensor Parallel', color: '#01CEB0', checked: true, disabled: false, visible: true },
-    { value: 'cp', label: 'Context Parallel', color: '#FD2F2F', checked: true, disabled: false, visible: true },
-    { value: 'dp', label: 'Data Parallel', color: '#6948C9', checked: true, disabled: false, visible: true },
-    { value: 'ep', label: 'Expert Parallel', color: '#EE891D', checked: true, disabled: false, visible: true },
-    { value: 'moeTp', label: 'MOE Tensor Parallel', color: '#D53F78', checked: true, disabled: false, visible: true },
+    { value: 'pp', label: 'Pipeline Parallelism', color: '#0277FF', checked: true, disabled: false, visible: true },
+    { value: 'tp', label: 'Tensor Parallelism', color: '#01CEB0', checked: true, disabled: false, visible: true },
+    { value: 'cp', label: 'Context Parallelism', color: '#FD2F2F', checked: true, disabled: false, visible: true },
+    { value: 'dp', label: 'Data Parallelism', color: '#6948C9', checked: true, disabled: false, visible: true },
+    { value: 'ep', label: 'Expert Parallelism', color: '#EE891D', checked: true, disabled: false, visible: true },
+    { value: 'moeTp', label: 'MOE Tensor Parallelism', color: '#D53F78', checked: true, disabled: false, visible: true },
 ];
 
 interface LegendContainerProps {
@@ -445,7 +447,7 @@ const LegendContainer = ({ generateConditions }: LegendContainerProps): JSX.Elem
                                     checked: item.checked,
                                     disabled: item.disabled,
                                 })}
-                                key={item.label}
+                                key={item.value}
                                 onClick={(): void => handleClickLegend(item)}
                             >
                                 <div className="legendColor" style={{ borderColor: item.color }}>
