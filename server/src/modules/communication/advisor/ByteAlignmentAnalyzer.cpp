@@ -75,7 +75,7 @@ void ByteAlignmentAnalyzer::ComputeStatistics()
 void ByteAlignmentAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
 {
     info.name = BYTEALIGNMENT_ANALYZER_TITLE;
-    info.statistics.insert({"Small Size", {std::to_string(statistics.smallSize)}});
+    info.statistics.insert({"Small Size(Byte)", {std::to_string(statistics.smallSize)}});
     info.statistics.insert({"Abnormal Operator Count", {std::to_string(statistics.abnormalOperatorCount)}});
 }
 }

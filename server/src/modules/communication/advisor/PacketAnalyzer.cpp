@@ -67,16 +67,18 @@ void PacketAnalyzer::ComputeStatistics()
 
 void PacketAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
 {
+    const int hundred = 100;
     info.name = PACKET_ANALYZER_TITLE;
     info.statistics.insert({"Category", {"SDMA", "RDMA"}});
-    info.statistics.insert({"Small Size Standard",
+    info.statistics.insert({"Small Size Standard(MB)",
         {std::to_string(statistics.smallSdmaSizeStandard), std::to_string(statistics.smallRdmaSizeStandard)}});
-    info.statistics.insert({"Small Size Proportion Standard",
-        {std::to_string(statistics.smallSdmaProportionStandard),
-        std::to_string(statistics.smallRdmaProportionStandard)}});
-    info.statistics.insert({"Small Size Proportion",
-        {std::to_string(statistics.smallSdmaProportion), std::to_string(statistics.smallRdmaProportion)}});
-    info.statistics.insert({"Small Size Duration",
+    info.statistics.insert({"Small Size Proportion Standard(%)",
+        {std::to_string(statistics.smallSdmaProportionStandard * hundred),
+        std::to_string(statistics.smallRdmaProportionStandard * hundred)}});
+    info.statistics.insert({"Small Size Proportion(%)",
+        {std::to_string(statistics.smallSdmaProportion * hundred),
+         std::to_string(statistics.smallRdmaProportion * hundred)}});
+    info.statistics.insert({"Small Size Duration(ms)",
         {std::to_string(statistics.smallSdmaDuration), std::to_string(statistics.smallRdmaDuration)}});
     info.statistics.insert({"Issue",
         {statistics.sdmaIssue ? "Yes" : "No", statistics.rdmaIssue ? "Yes" : "No"}});
