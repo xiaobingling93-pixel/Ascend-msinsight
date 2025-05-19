@@ -26,6 +26,7 @@ const std::string MODULE_OPERATOR = "operator";
 const std::string MODULE_SOURCE = "source";
 const std::string MODULE_ADVISOR = "advisor";
 const std::string MODULE_JUPYTER = "jupyter";
+const std::string MODULE_IE = "IE";
 #pragma endregion
 
 #pragma region << Event Name>>
@@ -37,6 +38,7 @@ const std::string EVENT_PARSE_CLUSTER_COMPLETED = "parse/clusterCompleted";
 const std::string EVENT_ALL_SUCCESS = "allPagesSuccess";
 const std::string EVENT_PARSE_CLUSTER_STEP2_COMPLETED = "parse/clusterStep2Completed";
 const std::string EVENT_PARSE_MEMORY_COMPLETED = "parse/memoryCompleted";
+const std::string EVENT_PARSE_IE_COMPLETED = "parse/statisticCompleted";
 const std::string EVENT_MODULE_RESET = "module.reset";
 const std::string EVENT_PARSE_PROGRESS = "parse/progress";
 #pragma endregion
@@ -81,6 +83,8 @@ const std::string REQ_RES_SAME_OPERATORS_DURATION = "query/all/same/operators/du
 const std::string REQ_RES_SYSTEM_VIEW_OVERALL = "systemView/overall";
 const std::string REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS = "systemView/overall/more/details";
 const std::string REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ = "expertAnalysis/AICoreFreq";
+const std::string REQ_RES_TABLE_DATA_NAME_LIST = "tableData/nameList";
+const std::string REQ_RES_TABLE_DATA_DETAIL = "tableData/detail";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";
@@ -166,6 +170,11 @@ const std::string REQ_RES_ADVISOR_OPERATOR_DISPATCH = "advisor/operatorDispatch"
 
 // jupyter
 const std::string EVENT_PARSE_JUPYTER_COMPLETED = "parse/jupyterCompleted";
+
+// IE
+const std::string REQ_RES_IE_VIEW = "IE/usage/view";
+const std::string REQ_RES_IE_TABLE_VIEW = "IE/table/view";
+const std::string REQ_RES_IE_DATA_GROUP = "IE/group";
 
 const std::string KEY_BODY = "body";
 #pragma endregion

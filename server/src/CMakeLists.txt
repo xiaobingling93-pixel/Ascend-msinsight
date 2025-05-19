@@ -101,6 +101,14 @@ include_directories(${SRC_HOME_DIR}/modules/jupyter)
 include_directories(${SRC_HOME_DIR}/modules/jupyter/parser)
 include_directories(${SRC_HOME_DIR}/modules/jupyter/protocol)
 
+# servitization
+include_directories(${SRC_HOME_DIR}/modules/servitization)
+include_directories(${SRC_HOME_DIR}/modules/servitization/api)
+include_directories(${SRC_HOME_DIR}/modules/servitization/context)
+include_directories(${SRC_HOME_DIR}/modules/servitization/handler)
+include_directories(${SRC_HOME_DIR}/modules/servitization/protocol)
+include_directories(${SRC_HOME_DIR}/modules/servitization/repo)
+
 # modules for server
 aux_source_directory(${SRC_HOME_DIR}/modules DIC_MODULES_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/base DIC_MODULES_BASE_SRC)
@@ -178,6 +186,14 @@ aux_source_directory(${SRC_HOME_DIR}/modules/jupyter DIC_MODULES_JUPYTER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/jupyter/parser DIC_MODULES_JUPYTER_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/jupyter/protocol DIC_MODULES_JUPYTER_PROTOCOL_SRC)
 
+# IE
+aux_source_directory(${SRC_HOME_DIR}/modules/servitization DIC_MODULES_IE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/servitization/api DIC_MODULES_IE_API_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/servitization/context DIC_MODULES_IE_CONTEXT_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/servitization/handler DIC_MODULES_IE_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/servitization/protocol DIC_MODULES_IE_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/servitization/repo DIC_MODULES_IE_REPO_SRC)
+
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}
@@ -241,8 +257,16 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SOURCE_HANDLER_SRC}
         ${DIC_MODULES_SOURCE_PROTOCOL_SRC}
         ${DIC_MODULES_SOURCE_CORE_SRC}
-        ${DIC_MODULES_ADVISOR_SRC} ${DIC_MODULES_ADVISOR_HANDLER_SRC}
-        ${DIC_MODULES_ADVISOR_PROTOCOL_SRC} ${DIC_MODULES_ADVISOR_PROCESS_SRC})
+        ${DIC_MODULES_ADVISOR_SRC}
+        ${DIC_MODULES_ADVISOR_HANDLER_SRC}
+        ${DIC_MODULES_ADVISOR_PROTOCOL_SRC}
+        ${DIC_MODULES_ADVISOR_PROCESS_SRC}
+        ${DIC_MODULES_IE_SRC}
+        ${DIC_MODULES_IE_API_SRC}
+        ${DIC_MODULES_IE_CONTEXT_SRC}
+        ${DIC_MODULES_IE_HANDLER_SRC}
+        ${DIC_MODULES_IE_PROTOCOL_SRC}
+        ${DIC_MODULES_IE_REPO_SRC})
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test|fuzz")
     enable_testing()

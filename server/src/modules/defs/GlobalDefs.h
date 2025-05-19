@@ -25,6 +25,7 @@ enum class ParserType {
     BIN = 1,
     JSON = 2,
     IPYNB = 3,
+    IE = 4,
     OTHER = 20
 };
 
@@ -54,7 +55,8 @@ enum class ProjectTypeEnum {
     SIMULATION = 4,
     TRACE = 5,
     DB_CLUSTER = 6,
-    OTHER = 7
+    IE = 7,
+    OTHER = 8
 };
 
 inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {
@@ -95,6 +97,8 @@ static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTyp
             return ParserType::BIN;
         case ProjectTypeEnum::IPYNB:
             return ParserType::IPYNB;
+        case ProjectTypeEnum::IE:
+            return ParserType::IE;
         default:
             return ParserType::JSON;
     }
