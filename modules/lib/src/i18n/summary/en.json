@@ -36,6 +36,8 @@
     "Expert Parallelism": "Expert Parallelism",
     "Tensor/Data Parallelism": "Tensor/Data Parallelism",
     "Generate": "Generate",
+    "Target Index": "Target Index",
+    "Find": "Find",
     "Computation/CommunicationOverview": "Computation/Communication Overview",
     "Computation/CommunicationDescribe": [
       "Computing = Sum of kernel time on NPU",

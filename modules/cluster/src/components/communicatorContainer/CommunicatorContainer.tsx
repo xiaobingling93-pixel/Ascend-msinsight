@@ -18,18 +18,29 @@ import type { TFunction } from 'i18next';
 import { COLOR } from '../Common';
 import cls from 'classnames';
 import { isEqual } from 'lodash';
+import { AimOutlined } from '@ant-design/icons';
+
+const ParallelismGraphHeader = styled.div`
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0 10px;
+`;
 
 const Legend = styled.div`
     .legendContainer {
         display: flex;
         justify-content: center;
-        padding: 20px 0 10px;
+        flex-wrap: wrap;
+        gap: 8px;
         user-select: none;
+
         .legendItem {
             display: flex;
             height: 12px;
             line-height: 12px;
-            margin: 0 12px;
+            margin: 0 4px;
             cursor: pointer;
             color: ${(props): string => props.theme.textColor};
 
@@ -67,13 +78,12 @@ const Legend = styled.div`
 `;
 
 const ColorScaleContainer = styled.div<{ equal: boolean }>`
-    height: 20px;
-    line-height: 20px;
     display: flex;
-    margin-top: 5px;
+    align-items: center;
     color: ${(props): string => props.theme.svgPlayBackgroundColor};
     .colorScale {
         width: 200px;
+        height: 16px;
         background: ${(props): string => props.equal
         ? COLOR.BAND_1
         : `linear-gradient(to right, ${COLOR.BAND_3}, ${COLOR.BAND_2},${COLOR.BAND_1},${COLOR.BAND_0})`}
@@ -114,10 +124,12 @@ export const CommunicatorContainer = observer(({ session, generateConditions, on
                                 <Spin spinning={loading} />
                             </Loading>
                         }
-                        <CommunicatorContent
-                            session={session}
-                            generateConditions={generateConditions}
-                        />
+                        <ParallelSwitchConditionsProvider>
+                            <CommunicatorContent
+                                session={session}
+                                generateConditions={generateConditions}
+                            />
+                        </ParallelSwitchConditionsProvider>
                     </div>
                     : <div className={'noDataTip'}>{t('NoDataTip')}</div>
             }
@@ -351,12 +363,31 @@ interface CommunicatorContentProps {
 }
 
 const CommunicatorContent = observer(({ session, generateConditions }: CommunicatorContentProps) => {
+    const { dyeingMode, startVal, endVal } = useParallelSwitchConditions();
+    const [targetRankIndex, setTargetRankIndex] = useState<number | null>(null);
+    const [targetTrigger, setTargetTrigger] = useState<boolean>(false);
+
+    const handleChange = useCallback((index: number | null): void => {
+        setTargetRankIndex(index);
+        setTargetTrigger((prevState) => !prevState);
+    }, []);
+
     return (
-        <ParallelSwitchConditionsProvider>
-            <ParallelSwitch session={session} />
-            <LegendContainer generateConditions={generateConditions} />
-            <ParallelismGraph session={session} generateConditions={generateConditions} />
-        </ParallelSwitchConditionsProvider>
+        <>
+            <ParallelSwitch session={session} onTargetRankIndexChange={handleChange} />
+            <ParallelismGraphHeader>
+                <LegendContainer generateConditions={generateConditions} />
+                <div>
+                    {dyeingMode !== 'None' && <ColorScale min={startVal} max={endVal}/>}
+                </div>
+            </ParallelismGraphHeader>
+            <ParallelismGraph
+                session={session}
+                generateConditions={generateConditions}
+                targetRankIndex={targetRankIndex}
+                targetTrigger={targetTrigger}
+            />
+        </>
     );
 });
 
@@ -468,11 +499,12 @@ const getDefaultDataTypeOptions = (t: TFunction): Array<{label: string;value: st
 
 interface ParallelSwitchProps {
     session: Session;
+    onTargetRankIndexChange: (rankIndex: number | null) => void;
 }
 
-const ParallelSwitch = observer(({ session }: ParallelSwitchProps): JSX.Element => {
+const ParallelSwitch = observer(({ session, onTargetRankIndexChange }: ParallelSwitchProps): JSX.Element => {
     const { t } = useTranslation('summary');
-    const { setDyeingMode, dyeingMode, startVal, endVal, setStartVal, setEndVal } = useParallelSwitchConditions();
+    const { setDyeingMode, dyeingMode, startVal, endVal, setStartVal, setEndVal, rankIndex, setRankIndex } = useParallelSwitchConditions();
     const [range, setRange] = useState<number[]>([]);
     const [unit, setUnit] = useState('');
 
@@ -485,6 +517,13 @@ const ParallelSwitch = observer(({ session }: ParallelSwitchProps): JSX.Element 
         });
         return getDefaultDataTypeOptions(t).concat(options).concat(commOptions);
     }, [t, session.indicatorList, session.dynamicsIndicatorList]);
+
+    const handleFindRank = useCallback((targetIndex: number | null) => {
+        if (targetIndex === null) {
+            return;
+        }
+        onTargetRankIndexChange(targetIndex);
+    }, [onTargetRankIndexChange]);
 
     useEffect(() => {
         const { min = null, max = null } = session.rankDyeingData[dyeingMode] ?? {};
@@ -499,45 +538,63 @@ const ParallelSwitch = observer(({ session }: ParallelSwitchProps): JSX.Element 
     }, [dyeingMode]);
 
     return (
-        <>
+        <div className="flex items-center">
             <Form layout="inline" data-testid="parallelSwitch">
                 <Form.Item label={t('Performance Metric')}>
                     <Select id="dataType" defaultValue={dyeingMode} value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
                 </Form.Item>
                 {
                     dyeingMode !== 'None' &&
-                <>
-                    <Form.Item label={`${t('VisibleRange')} (${unit})`}>
-                        <InputGroup compact>
-                            <InputNumber
-                                data-testid="input-dyeing-minimum"
-                                value={startVal}
-                                min={range[0]}
-                                max={Math.min(range[1], endVal ?? range[1])}
-                                step={1}
-                                center
-                                style={{ width: 100 }}
-                                placeholder={t('Minimum')}
-                                onChange={(value): void => { setStartVal(value as number); }}
-                            />
-                            <InputSplit placeholder="~" disabled />
-                            <InputNumber
-                                data-testid="input-dyeing-maximum"
-                                value={endVal}
-                                min={Math.max(range[0], startVal ?? range[0])}
-                                max={range[1]}
-                                step={1}
-                                center
-                                style={{ width: 100, borderLeft: 0 }}
-                                placeholder={t('Maximum')}
-                                onChange={(value): void => { setEndVal(value as number); }}
-                            />
-                        </InputGroup>
-                    </Form.Item>
-                    <ColorScale min={startVal} max={endVal} />
-                </>
+                        <Form.Item label={`${t('VisibleRange')} (${unit})`}>
+                            <InputGroup compact>
+                                <InputNumber
+                                    data-testid="input-dyeing-minimum"
+                                    value={startVal}
+                                    min={range[0]}
+                                    max={Math.min(range[1], endVal ?? range[1])}
+                                    step={1}
+                                    center
+                                    style={{ width: 100 }}
+                                    placeholder={t('Minimum')}
+                                    onChange={(value): void => { setStartVal(value as number); }}
+                                />
+                                <InputSplit placeholder="~" disabled />
+                                <InputNumber
+                                    data-testid="input-dyeing-maximum"
+                                    value={endVal}
+                                    min={Math.max(range[0], startVal ?? range[0])}
+                                    max={range[1]}
+                                    step={1}
+                                    center
+                                    style={{ width: 100, borderLeft: 0 }}
+                                    placeholder={t('Maximum')}
+                                    onChange={(value): void => { setEndVal(value as number); }}
+                                />
+                            </InputGroup>
+                        </Form.Item>
                 }
             </Form>
-        </>
+            <Form layout="inline" onFinish={(): void => handleFindRank(rankIndex)}>
+                <Form.Item label={t('Target Index')}>
+                    <InputNumber
+                        value={rankIndex}
+                        min={0}
+                        step={1}
+                        style={{ width: 80 }}
+                        onChange={(value): void => { setRankIndex(value as number); }}
+                    />
+                </Form.Item>
+                <Form.Item>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        icon={<AimOutlined />}
+                        disabled={rankIndex === null}
+                    >
+                        {t('Find')}
+                    </Button>
+                </Form.Item>
+            </Form>
+        </div>
     );
 });

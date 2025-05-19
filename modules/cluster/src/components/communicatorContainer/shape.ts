@@ -476,7 +476,7 @@ export class Frame extends Shape {
 
 export class CanvasDrawer {
     static PADDING = 40;
-    private readonly rectangles: Rectangle[] = [];
+    readonly rectangles: Rectangle[] = [];
     private readonly lines: Line[] = [];
     private readonly frames: Frame[] = [];
     private readonly mainCtx: CanvasRenderingContext2D | null = null;

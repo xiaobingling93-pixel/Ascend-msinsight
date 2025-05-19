@@ -18,7 +18,7 @@ import { useTheme } from '@emotion/react';
 import { throttle } from 'lodash';
 import { DynamicTooltip, Responsive } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
-import { Spin } from 'antd';
+import { message, Spin } from 'antd';
 
 const CanvasContainer = styled.div`
     max-height: 720px;
@@ -48,6 +48,33 @@ export const Loading = styled.div`
         margin: auto;
     }
 `;
+
+export const useLocateAnim = (containerRef: React.RefObject<HTMLElement>): (pos: [number, number]) => void => {
+    return useCallback(([left, top]: [number, number]) => {
+        const animBox = document.createElement('div');
+        animBox.className = 'zoom-anim';
+
+        Object.assign(animBox.style, {
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: `${containerRef.current?.clientWidth ?? 0}px`,
+            height: `${containerRef.current?.clientHeight ?? 0}px`,
+            border: '2px solid #1677ff',
+            pointerEvents: 'none',
+            zIndex: '999999',
+            animation: 'zoomToTarget 1s ease-out forwards',
+        });
+
+        animBox.style.setProperty('--tx', `${left}px`);
+        animBox.style.setProperty('--ty', `${top}px`);
+        containerRef.current?.appendChild(animBox);
+
+        setTimeout((): void => {
+            animBox.remove();
+        }, 1500);
+    }, [containerRef]);
+};
 
 const resetPerformanceConditions = (): void => {
     eventBus.emit('resetPerformanceConditions');
@@ -97,8 +124,10 @@ const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns =>
 interface ParallelismGraphProps {
     session: Session;
     generateConditions: GenerateConditions | null;
+    targetRankIndex: number | null;
+    targetTrigger: boolean;
 }
-export const ParallelismGraph = observer(({ session, generateConditions }: ParallelismGraphProps): JSX.Element => {
+export const ParallelismGraph = observer(({ session, generateConditions, targetRankIndex, targetTrigger }: ParallelismGraphProps): JSX.Element => {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const mainCanvasRef = useRef<HTMLCanvasElement>(null);
     const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -113,6 +142,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const { data, loading, isUpdated } = useFetchData(generateConditions);
     const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1, dimension } = generateConditions ?? {};
     const { t } = useTranslation('summary');
+    const locateTargetAnim = useLocateAnim(canvasContainerRef);
 
     const canvasSize = useMemo(() => {
         let width = 200;
@@ -258,6 +288,29 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         }
     };
 
+    const handleScrollToTarget = useCallback(() => {
+        if (targetRankIndex === null) {
+            return;
+        }
+
+        const targetRank = canvasDrawer?.rectangles[targetRankIndex];
+
+        if (!targetRank) {
+            message.warning('Target not found');
+            return;
+        }
+
+        const { originalX, originalY } = targetRank;
+        const xCoord = Math.floor(originalX - (responsiveSize.width / 2));
+        const yCoord = Math.floor(originalY - (responsiveSize.height / 2));
+
+        canvasContainerRef.current?.scrollTo(xCoord, yCoord);
+
+        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef.current ?? {};
+
+        locateTargetAnim([originalX - scrollLeft, originalY - scrollTop]);
+    }, [canvasDrawer, targetRankIndex]);
+
     useEffect(() => {
         if (mainCanvasRef.current && data !== undefined) {
             const drawer = new CanvasDrawer(mainCanvasRef, hoverCanvasRef);
@@ -321,6 +374,10 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     useEffect(() => {
         render();
     }, [responsiveSize.width, responsiveSize.height, canvasSize.width, canvasSize.height]);
+
+    useEffect(() => {
+        handleScrollToTarget();
+    }, [targetTrigger]);
 
     const onClickCanvas: React.MouseEventHandler<HTMLDivElement> = (event): void => {
         const { offsetX, offsetY } = event.nativeEvent;

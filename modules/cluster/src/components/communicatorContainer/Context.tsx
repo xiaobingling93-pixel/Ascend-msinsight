@@ -10,10 +10,12 @@ interface ParallelSwitchConditionsContextType {
     startVal: number | null;
     endVal: number | null;
     parallelTypeList: ParallelismType[];
+    rankIndex: number | null;
     setDyeingMode: (value: string) => void;
     setStartVal: (value: number | null) => void;
     setEndVal: (value: number | null) => void;
     setParallelTypeList: (values: ParallelismType[]) => void;
+    setRankIndex: (value: number | null) => void;
     reset: () => void;
 }
 const ParallelSwitchConditionsContext = createContext<ParallelSwitchConditionsContextType | undefined>(undefined);
@@ -22,12 +24,14 @@ export function ParallelSwitchConditionsProvider({ children }: { children: React
     const [startVal, setStartVal] = useState<ParallelSwitchConditionsContextType['startVal']>(null);
     const [endVal, setEndVal] = useState<ParallelSwitchConditionsContextType['endVal']>(null);
     const [parallelTypeList, setParallelTypeList] = useState<ParallelismType[]>(['dp']);
+    const [rankIndex, setRankIndex] = useState<ParallelSwitchConditionsContextType['rankIndex']>(null);
 
     const reset = (): void => {
         setDyeingMode('None');
         setParallelTypeList(['dp']);
         setStartVal(null);
         setEndVal(null);
+        setRankIndex(null);
     };
     return (
         <ParallelSwitchConditionsContext.Provider value={{
@@ -39,6 +43,8 @@ export function ParallelSwitchConditionsProvider({ children }: { children: React
             setEndVal,
             parallelTypeList,
             setParallelTypeList,
+            rankIndex,
+            setRankIndex,
             reset,
         }}>
             {children}

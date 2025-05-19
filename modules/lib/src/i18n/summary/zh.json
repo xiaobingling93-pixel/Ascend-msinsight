@@ -36,6 +36,8 @@
     "Expert Parallelism": "专家并行",
     "Tensor/Data Parallelism": "张量/数据并行",
     "Generate": "生成",
+    "Target Index": "目标编号",
+    "Find": "查找",
     "Computation/CommunicationOverview": "计算/通信概览",
     "Computation/CommunicationDescribe": [
       "计算时间 = NPU上的内核时间总和",
