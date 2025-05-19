@@ -103,6 +103,22 @@ struct AclnnOperatorResponse : public Response {
     AclnnOperatorResponse() : Response(REQ_RES_ADVISOR_ACLNN_OPERATORS) {};
     AclnnOperatorResBody body;
 };
+
+struct OperatorDispatchData {
+    BaseInfo baseInfo;
+    std::string opName;
+    std::string note;
+};
+
+struct OperatorDispatchResBody {
+    uint32_t size{};
+    std::vector<OperatorDispatchData> data;
+};
+
+struct OperatorDispatchResponse : public Response {
+    OperatorDispatchResponse() : Response(REQ_RES_ADVISOR_OPERATOR_DISPATCH) {};
+    OperatorDispatchResBody body;
+};
 }
 
 

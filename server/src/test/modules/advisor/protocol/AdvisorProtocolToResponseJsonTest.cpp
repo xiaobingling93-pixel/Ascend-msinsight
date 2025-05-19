@@ -16,6 +16,8 @@ public:
 
 protected:
     uint32_t refSize = 15;
+    std::string operatorDispatchNote = "Please use `torch_npu.npu.set_compile_mode(jit_compile=False)` "
+                                       "to disable jit compile in dynamic shape usage.";
 };
 
 TEST_F(AdvisorProtocolToResponseJsonTest, ToAffinityOptimizerResponseTest)
@@ -210,4 +212,39 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToOperatorFusionResponseTest)
         EXPECT_EQ(item["fusedOp"].GetString(), response.body.datas[i++].fusedOp);
     }
     EXPECT_EQ(i, response.body.datas.size());
+}
+
+TEST_F(AdvisorProtocolToResponseJsonTest, ToOperatorDispatchResponseTest)
+{
+    Dic::Protocol::AdvisorProtocolUtil advisorProtocol;
+    advisorProtocol.Register();
+    Dic::Protocol::OperatorDispatchResponse response;
+    response.body = {.size = 0, .data = {}};
+    std::string error;
+    std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    response.body = {
+        .size = refSize,
+        .data = {
+        {{"0", "0", 1, 1, "pid1", "tid1", 1}, "AscendCL@aclopCompileAndExecute", operatorDispatchNote},
+        {{"1", "1", 2, 2, "pid2", "tid2", 2}, "AscendCL@aclopCompileAndExecute", operatorDispatchNote}
+        }
+    };
+    jsonOptional = advisorProtocol.ToJson(response, error);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("count"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["count"].GetUint(), refSize);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("data"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["data"].IsArray(), true);
+    int i = 0;
+    for (const auto &item : jsonOptional.value()["body"]["data"].GetArray()) {
+        EXPECT_EQ(item.HasMember("rankId"), true);
+        EXPECT_EQ(item["rankId"].GetString(), response.body.data[i].baseInfo.rankId);
+        EXPECT_EQ(item.HasMember("name"), true);
+        EXPECT_EQ(item["name"].GetString(), response.body.data[i].opName);
+        EXPECT_EQ(item.HasMember("note"), true);
+        EXPECT_EQ(item["note"].GetString(), response.body.data[i++].note);
+    }
+    EXPECT_EQ(i, response.body.data.size());
 }

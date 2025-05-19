@@ -71,6 +71,11 @@ static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqliteP
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                             const Protocol::SystemViewParams &requestParams,
                                                             const std::string& rankId);
+static bool QueryFusibleOpDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, const FuseableOpRule &rule,
+                                    std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp);
+static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t minTimestamp,
+                                     uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data,
+                                     const std::string filePath);
 
 static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
         const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);

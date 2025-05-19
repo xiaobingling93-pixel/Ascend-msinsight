@@ -51,4 +51,10 @@ std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToAclnnOperatorRequest(
 {
     return ToRequest<AclnnOperatorRequest>(json, error);
 }
+
+std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToOperatorDispatchRequest(
+    const json_t &json, std::string &error)
+{
+    return ToRequest<OperatorDispatchRequest>(json, error);
+}
 }

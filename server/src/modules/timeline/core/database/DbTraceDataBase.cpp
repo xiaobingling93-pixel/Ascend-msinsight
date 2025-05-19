@@ -578,6 +578,10 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " UNION all "
           " select info.ROWID as id, (globalTid & 0xFFFFFFFF) AS tid, message as name, (globalTid / 4294967296) AS pid,"
           " depth from MSTX_EVENTS info"
+          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+          " UNION all "
+          " select ca.ROWID as id, ca.type AS tid, ca.name as name, ca.globalTid AS pid,"
+          " depth from CANN_API ca"
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -586,7 +590,8 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     uint64_t timestamp = params.timestamp + minTimestamp;
-    resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp, params.name, timestamp);
+    resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp, params.name, timestamp,
+                                   params.name, timestamp);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
         return false;
@@ -1946,32 +1951,23 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
     std::string sql = TextSqlConstant::GenerateFuseableOpFilterDbSql(params, rule);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
+        ServerLog::Error("Failed to prepare sql for query Fusible Operator.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query Fuseable Operator.", stmt->GetErrorMessage());
-        return false;
-    }
-
-    while (resultSet->Next()) {
-        Protocol::FlowLocation one{};
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.timestamp = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
-        one.type = StringUtil::join(rule.opList, ", ");
-        one.metaType = rule.fusedOp;
-        one.note = rule.note;
-        data.emplace_back(one);
-    }
-
-    return true;
+    return TraceDatabaseHelper::QueryFusibleOpDataForDB(stmt, rule, data, minTimestamp);
 }
+
+bool DbTraceDataBase::QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
+    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold, const std::string filePath)
+{
+    auto stmt = CreatPreparedStatement(TraceDatabaseSqlConst::GenerateOperatorDispatchQueryDbSql(params));
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for Operator Dispatch data.");
+        return false;
+    }
+    return TraceDatabaseHelper::QueryOpDispatchDataForDB(stmt, minTimestamp, threshold, data, filePath);
+}
+
 // LCOV_EXCL_BR_STOP
 bool DbTraceDataBase::QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
     uint64_t minTimestamp)

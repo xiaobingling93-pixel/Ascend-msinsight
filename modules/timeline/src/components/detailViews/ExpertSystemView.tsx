@@ -17,6 +17,7 @@ import {
     affinityAPIColumns,
     queryOperatorFusion,
     fusionOperatorColumns,
+    operatorDispatchColumns,
 } from './Common';
 import type { ThreadMetaData } from '../../entity/data';
 import { calculateDomainRange } from '../CategorySearch';
@@ -26,7 +27,7 @@ import { hashToNumber } from '../../utils/colorUtils';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import { BaseSummary } from './SystemView';
 import { ExpertSummary } from './ExpertSummary';
-import { queryExpertAnalysis } from '../../api/request';
+import { queryExpertAnalysis, queryOperatorDispatch } from '../../api/request';
 
 const ExpertAnalysis = observer((props: any) => {
     return <ExpertSummary request={queryExpertAnalysis} {...props} />;
@@ -50,6 +51,10 @@ const ACLNNOperator = observer((props: any) => {
 
 const FusedOperator = observer((props: any) => {
     return <BaseSummary request={queryOperatorFusion} columns={fusionOperatorColumns} {...props} />;
+});
+
+const OperatorDispatch = observer((props: any) => {
+    return <BaseSummary request={queryOperatorDispatch} columns={operatorDispatchColumns} {...props} />;
 });
 
 export const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => {
@@ -91,4 +96,4 @@ export const handleAdvisorSelected = async(rowData: any, props: any): Promise<vo
     });
 };
 
-export const ExpertSystemView = [ExpertAnalysis, AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator];
+export const ExpertSystemView = [ExpertAnalysis, AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator, OperatorDispatch];

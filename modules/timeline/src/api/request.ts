@@ -10,6 +10,7 @@ import {
     GetOverallMetricsResult, GetOverallMetricsResultItem,
     ParseCardsParam,
     SetCardAliasParams,
+    QueryOperatorDispatchParams, OperatorDispatchResult,
 } from './interface';
 
 // 根据cardId集合解析timeline
@@ -51,4 +52,9 @@ export const setCardAliasReq = async (params: SetCardAliasParams): Promise<any> 
 // 获取ExpertSummary中的AI Core降频分析
 export const queryExpertAnalysis = async (params: GetAICoreParams): Promise<GetAICoreParamsResult> => {
     return window.requestData('expertAnalysis/AICoreFreq', params, 'timeline');
+};
+
+// 获取算子下发路径问题列表
+export const queryOperatorDispatch = async (params: QueryOperatorDispatchParams): Promise<OperatorDispatchResult> => {
+    return window.requestData('advisor/operatorDispatch', params, 'advisor');
 };

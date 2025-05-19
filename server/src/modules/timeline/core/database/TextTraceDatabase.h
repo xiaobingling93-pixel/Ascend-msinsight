@@ -119,6 +119,9 @@ public:
         std::map<uint64_t, std::vector<uint32_t>> &indexes) override;
     bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
         std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) override;
+    bool QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
+        std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp,
+        uint64_t threshold, const std::string filePath) override;
     bool UpdateParseStatus(const std::string &status);
     bool HasFinishedParseLastTime(const std::string &statuInfo);
 

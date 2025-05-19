@@ -13,6 +13,7 @@
 #include "QueryAffinityOptimizerAdvice.h"
 #include "QueryAiCpuOpAdviceHandler.h"
 #include "QueryFusedOpAdviceHandler.h"
+#include "QueryOperatorDispatchHandler.h"
 
 using namespace Dic::Module::Advisor;
 using namespace Dic::Protocol;
@@ -220,6 +221,87 @@ TEST_F(AdvisorHandlerTest, QueryFusedOpAdviceHandlerReturnFalseWhenNotExistRankI
     auto request = std::make_unique<OperatorFusionRequest>();
     SetDefaultAPITypeParamsWithNotExistRankId(request->params);
     QueryFusedOpAdviceHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenMinPageSize)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    request->params.pageSize = Dic::MIN_PAGESIZE;
+    QueryOperatorDispatchHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenMaxPageSize)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    request->params.pageSize = Dic::MAX_PAGESIZE + 1;
+    QueryOperatorDispatchHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenMinCurrentPage)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    request->params.pageSize = Dic::MAX_PAGESIZE;
+    request->params.currentPage = Dic::MIN_CURRENT_PAGE;
+    QueryOperatorDispatchHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenMaxCurrentPage)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    request->params.pageSize = Dic::MAX_PAGESIZE;
+    request->params.currentPage = (uint32_t)Dic::MAX_CURRENT_PAGE + 1;
+    QueryOperatorDispatchHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenEmptyRankId)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    request->params.pageSize = Dic::DEFAULT_PAGESIZE;
+    request->params.currentPage = 1;
+    request->params.rankId = "";
+    QueryOperatorDispatchHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenInjectRankId)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    request->params.pageSize = Dic::DEFAULT_PAGESIZE;
+    request->params.currentPage = 1;
+    request->params.rankId = "0&";
+    QueryOperatorDispatchHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenLongRankId)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    request->params.pageSize = Dic::DEFAULT_PAGESIZE;
+    request->params.currentPage = 1;
+    std::string str(501, 'a'); // 501 > 500
+    request->params.rankId = str;
+    QueryOperatorDispatchHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandlerTest, QueryOperatorDispatchAdvisorHandlerTestReturnFalseWhenNotExistRankId)
+{
+    auto request = std::make_unique<OperatorDispatchRequest>();
+    SetDefaultAPITypeParamsWithNotExistRankId(request->params);
+    QueryOperatorDispatchHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
 }

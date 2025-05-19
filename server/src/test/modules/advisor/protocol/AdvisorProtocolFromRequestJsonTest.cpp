@@ -125,3 +125,18 @@ TEST_F(AdvisorProtocolFromRequestJsonTest, ToAclnnOperatorRequestTestSuccess)
     EXPECT_EQ(params.pageSize, result.pageSize);
     EXPECT_EQ(params.currentPage, result.currentPage);
 }
+
+TEST_F(AdvisorProtocolFromRequestJsonTest, ToOperatorDispatchRequestTestSuccess)
+{
+    Dic::Protocol::AdvisorProtocolUtil advisorProtocol;
+    advisorProtocol.Register();
+    APITypeParams params = {
+        .rankId = "1", .currentPage = 2, .pageSize = 20, // 20 record per page, and now page 2
+        .orderBy = "duration", .orderType = "ascend"
+    };
+    Dic::document_t json = GenerateRequestJson(params, REQ_RES_ADVISOR_OPERATOR_DISPATCH);
+    std::string error;
+    APITypeParams result = dynamic_cast<OperatorDispatchRequest &>(*(advisorProtocol.FromJson(json, error))).params;
+    EXPECT_EQ(params.pageSize, result.pageSize);
+    EXPECT_EQ(params.currentPage, result.currentPage);
+}

@@ -99,6 +99,7 @@
       "AICPU Operators": "AICPU 算子",
       "ACLNN Operators": "ACLNN 算子",
       "Operators Fusion": "算子融合",
+      "Operators Dispatch": "算子下发",
       "Events View": "事件视图",
       "Overall Metrics": "综合指标",
       "OverallMetricsTips": "要得到计算时间的子层级分类，性能数据采集时需设置为以下特定模式：Level等级为L1及以上，且aic_metrics取值为PipeUtilization"

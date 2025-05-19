@@ -61,5 +61,10 @@ struct AclnnOperatorRequest : public Request {
     APITypeParams params;
 };
 
+struct OperatorDispatchRequest : public Request {
+    OperatorDispatchRequest() : Request(REQ_RES_ADVISOR_OPERATOR_DISPATCH) {};
+    APITypeParams params;
+};
+
 }
 #endif // PROFILER_SERVER_ADVISORPROTOCOLREQUEST_H

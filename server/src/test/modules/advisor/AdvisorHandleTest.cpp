@@ -8,6 +8,7 @@
 #include "QueryAffinityOptimizerAdvice.h"
 #include "QueryAiCpuOpAdviceHandler.h"
 #include "QueryFusedOpAdviceHandler.h"
+#include "QueryOperatorDispatchHandler.h"
 #include "AdvisorProtocolRequest.h"
 #include "WsSessionManager.h"
 #include "WsSessionImpl.h"
@@ -138,5 +139,12 @@ TEST_F(AdvisorHandleTest, QueryFusedOpAdviceHandler)
 {
     QueryFusedOpAdviceHandler handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<OperatorFusionRequest>();
+    handler.HandleRequest(std::move(requestPtr));
+}
+
+TEST_F(AdvisorHandleTest, QueryOperatorDispatchHandler)
+{
+    QueryOperatorDispatchHandler handler;
+    std::unique_ptr<Request> requestPtr = std::make_unique<OperatorDispatchRequest>();
     handler.HandleRequest(std::move(requestPtr));
 }

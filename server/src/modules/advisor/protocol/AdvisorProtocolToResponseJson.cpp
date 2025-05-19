@@ -149,6 +149,32 @@ template <> std::optional<document_t> ToResponseJson<AclnnOperatorResponse>(cons
     return std::optional<document_t>{std::move(json)};
 }
 
+template <> std::optional<document_t> ToResponseJson<OperatorDispatchResponse>(const OperatorDispatchResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "count", response.body.size, allocator);
+    json_t dataList(kArrayType);
+    for (auto item : response.body.data) {
+        json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "id", item.baseInfo.id, allocator);
+        JsonUtil::AddMember(dataJson, "rankId", item.baseInfo.rankId, allocator);
+        JsonUtil::AddMember(dataJson, "startTime", item.baseInfo.startTime, allocator);
+        JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
+        JsonUtil::AddMember(dataJson, "pid", item.baseInfo.pid, allocator);
+        JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
+        JsonUtil::AddMember(dataJson, "depth", item.baseInfo.depth, allocator);
+        JsonUtil::AddMember(dataJson, "name", item.opName, allocator);
+        JsonUtil::AddMember(dataJson, "note", item.note, allocator);
+        dataList.PushBack(dataJson, allocator);
+    }
+    JsonUtil::AddMember(body, "data", dataList, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
 std::optional<document_t> AdvisorProtocolToResponseJson::ToAffinityOptimizerResponse(const Response &response)
 {
     return ToResponseJson<AffinityOptimizerResponse>(dynamic_cast<const AffinityOptimizerResponse &>(response));
@@ -172,5 +198,10 @@ std::optional<document_t> AdvisorProtocolToResponseJson::ToAICpuOperatorResponse
 std::optional<document_t> AdvisorProtocolToResponseJson::ToAclnnOperatorResponse(const Response &response)
 {
     return ToResponseJson<AclnnOperatorResponse>(dynamic_cast<const AclnnOperatorResponse &>(response));
+}
+
+std::optional<document_t> AdvisorProtocolToResponseJson::ToOperatorDispatchResponse(const Response &response)
+{
+    return ToResponseJson<OperatorDispatchResponse>(dynamic_cast<const OperatorDispatchResponse &>(response));
 }
 }

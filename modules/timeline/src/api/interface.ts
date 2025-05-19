@@ -90,3 +90,25 @@ export interface GetAICoreParamsResult {
     hasProblem: boolean;
     percent: number;
 }
+
+export interface QueryOperatorDispatchParams extends PaginationParams {
+    rankId: string;
+    orderBy: string;
+    order: string;
+};
+
+interface OperatorDispatchResultItem {
+    id: string;
+    rankId: string;
+    startTime: number;
+    duration: number;
+    pid: string;
+    tid: string;
+    depth: number;
+    name: string;
+    note: string;
+}
+
+export interface OperatorDispatchResult extends OperatorDispatchResultItem {
+    count: number;
+};

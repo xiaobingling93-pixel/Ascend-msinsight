@@ -11,6 +11,7 @@
 #include "AclnnOpAdvisor.h"
 #include "AICpuOpAdvisor.h"
 #include "FusedOpAdvisor.h"
+#include "OperatorDispatchAdvisor.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Advisor;
@@ -85,4 +86,16 @@ TEST_F(TestSuit, QueryFusedOperatorAdvisorSuccessText)
     auto result = db->QueryFuseableOpData(params, FUSEABLE_OPERATER_RULE_LIST.at(0), data, startTime);
     EXPECT_TRUE(result);
     EXPECT_EQ(data.size(), 0);
+}
+
+TEST_F(TestSuit, QueryOperatorDispatchAdvisorSuccessOnText)
+{
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EXPECT_NE(db, nullptr);
+    uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
+    Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
+    std::vector<Protocol::KernelBaseInfo> data{};
+    auto result = db->QueryOperatorDispatchData(params, data, startTime, OPERATOR_COMPILE_CNT_THRESHOLD, "");
+    EXPECT_TRUE(result);
+    EXPECT_EQ(data.size(), 529); // The size of data is 529
 }

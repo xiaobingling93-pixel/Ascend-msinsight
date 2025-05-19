@@ -7,6 +7,7 @@
 #include "QueryAiCpuOpAdviceHandler.h"
 #include "QueryAclnnOpAdvisorHandler.h"
 #include "QueryFusedOpAdviceHandler.h"
+#include "QueryOperatorDispatchHandler.h"
 #include "ProtocolDefs.h"
 #include "AdvisorModule.h"
 
@@ -29,6 +30,7 @@ void AdvisorModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_ADVISOR_AICPU_OPERATORS, std::make_unique<QueryAiCpuOpAdviceHandler>());
     requestHandlerMap.emplace(REQ_RES_ADVISOR_ACLNN_OPERATORS, std::make_unique<QueryAclnnOpAdvisorHandler>());
     requestHandlerMap.emplace(REQ_RES_ADVISOR_OPERATORS_FUSION, std::make_unique<QueryFusedOpAdviceHandler>());
+    requestHandlerMap.emplace(REQ_RES_ADVISOR_OPERATOR_DISPATCH, std::make_unique<QueryOperatorDispatchHandler>());
 }
 
 void AdvisorModule::OnRequest(std::unique_ptr<Protocol::Request> request)

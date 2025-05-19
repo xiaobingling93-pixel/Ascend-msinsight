@@ -99,6 +99,7 @@
       "AICPU Operators": "AICPU Operators",
       "ACLNN Operators": "ACLNN Operators",
       "Operators Fusion": "Operators Fusion",
+      "Operators Dispatch": "Operators Dispatch",
       "Events View": "Events View",
       "Overall Metrics": "Overall Metrics",
       "OverallMetricsTips": "To obtain the sub-level categories of computation time, the profiling data must be configured with the following specific mode: the level should be L1 or higher, and the aic_metrics value must be set to PipeUtilization"

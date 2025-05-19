@@ -162,6 +162,66 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
                         requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
 }
 
+bool TraceDatabaseHelper::QueryFusibleOpDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                  const Dic::Module::Timeline::FuseableOpRule &rule,
+                                                  std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
+{
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query Fusible Operator.", stmt->GetErrorMessage());
+        return false;
+    }
+
+    while (resultSet->Next()) {
+        Protocol::FlowLocation one{};
+        one.id = resultSet->GetString("id");
+        one.name = resultSet->GetString("name");
+        one.timestamp = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+        one.depth = resultSet->GetUint64("depth");
+        one.type = StringUtil::join(rule.opList, ", ");
+        one.metaType = rule.fusedOp;
+        one.note = rule.note;
+        data.emplace_back(one);
+    }
+
+    return true;
+}
+
+bool TraceDatabaseHelper::QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                   uint64_t minTimestamp, uint64_t threshold,
+                                                   std::vector<Protocol::KernelBaseInfo> &data,
+                                                   const std::string filePath)
+{
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Operator Dispatch data.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::KernelBaseInfo one{};
+        one.id = resultSet->GetString("id");
+        one.name = resultSet->GetString("name");
+        one.startTime = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+        one.depth = resultSet->GetUint64("depth");
+        one.rankId = filePath;
+        data.emplace_back(one);
+    }
+    if (data.size() < threshold) {
+        ServerLog::Error(
+            "Failed to get Operator Dispatch data because the total count should greater than or equal to "
+            + std::to_string(threshold) + " ."
+        );
+        return false;
+    }
+    return true;
+}
+
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId)
 {

@@ -1941,6 +1941,40 @@ bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
     return true;
 }
 
+bool TextTraceDatabase::QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
+    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold, const std::string filePath)
+{
+    auto stmt = CreatPreparedStatement(TextSqlConstant::GenerateOperatorDispatchQueryTextSql(params));
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for Operator Dispatch data.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Operator Dispatch data.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::KernelBaseInfo one{};
+        one.id = resultSet->GetString("id");
+        one.name = resultSet->GetString("name");
+        one.startTime = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+        one.rankId = params.rankId;
+        data.emplace_back(one);
+    }
+    if (data.size() < threshold) {
+        ServerLog::Error(
+            "Failed to get Operator Dispatch data because the total count should greater than or equal to "
+            + std::to_string(threshold) + " ."
+        );
+        return false;
+    }
+    return true;
+}
+
 std::string TextTraceDatabase::QueryHostInfo()
 {
     std::string host;

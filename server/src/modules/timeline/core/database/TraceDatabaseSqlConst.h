@@ -189,6 +189,25 @@ public:
             ") ORDER BY " + params.orderBy + " " + params.order;
         return sql;
     }
+
+    static std::string GenerateOperatorDispatchQueryDbSql(const Protocol::KernelDetailsParams &params)
+    {
+        std::string sql =
+            "SELECT"
+            "  ca.ROWID as id, "
+            "  s.value as name, "
+            "  ca.startNs - ? as startTime, "
+            "  (ca.endNs - ca.startNs) / 1000 as duration, "
+            "  ca.globalTid as pid, "
+            "  ca.type as tid, "
+            "  ca.depth as depth "
+            "FROM " + TABLE_CANN_API + " ca "
+            "JOIN " + TABLE_ENUM_API_TYPE + " enum ON ca.type = enum.id "
+            "JOIN " + TABLE_STRING_IDS + " s ON ca.name = s.id "
+            "WHERE s.value LIKE '%aclopCompileAndExecute' "
+            "ORDER BY " + params.orderBy + " " + params.order;
+        return sql;
+    }
 };
 }
 #endif // PROFILER_SERVER_TRACEDATABASESQLCONST_H

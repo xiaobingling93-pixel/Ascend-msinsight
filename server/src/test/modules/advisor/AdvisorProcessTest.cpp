@@ -9,6 +9,7 @@
 #include "AffinityOptimizerAdvisor.h"
 #include "AICpuOpAdvisor.h"
 #include "FusedOpAdvisor.h"
+#include "OperatorDispatchAdvisor.h"
 #include "DataBaseManager.h"
 
 using namespace Dic::Protocol;
@@ -75,4 +76,14 @@ TEST_F(AdvisorProcessTest, FusedOpAdvisorProcessSuccessfulWithSpecificParam)
     auto res = FusedOpAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);
     EXPECT_EQ(resBody.size, 0);
+}
+
+TEST_F(AdvisorProcessTest, OperatorDispatchAdvisorProcessSuccessfulWithSpecificParam)
+{
+    Dic::Module::Timeline::DataBaseManager::Instance().SetDataType(DataType::TEXT);
+
+    OperatorDispatchResBody resBody = {};
+    auto res = OperatorDispatchAdvisor::Process(params, resBody);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(resBody.size, 529); // The size of resBody is 529
 }

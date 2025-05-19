@@ -333,6 +333,20 @@ public:
         return sql;
     }
 
+    static std::string GenerateOperatorDispatchQueryTextSql(const Protocol::KernelDetailsParams &params)
+    {
+        std::string sql =
+            "SELECT s.id AS id, s.name AS name, s.timestamp - ? AS startTime, s.duration / 1000 AS duration, "
+            "  t.pid AS pid, t.tid AS tid, t.track_id AS track_id "
+            "FROM " + SLICE_TABLE + " s "
+            "  JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
+            "WHERE "
+            "  t.thread_name LIKE 'Thread%' "
+            "  AND s.name LIKE '%aclopCompileAndExecute' "
+            "ORDER BY " + params.orderBy + " " + params.order;
+        return sql;
+    }
+
     static std::string GenerateAICpuQueryTextSql(const std::vector<std::string> &replace,
         const Protocol::KernelDetailsParams &params,
         const std::map<std::string, Timeline::AICpuCheckDataType> &dataTypeMap)

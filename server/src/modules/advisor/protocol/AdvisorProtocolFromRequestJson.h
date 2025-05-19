@@ -18,6 +18,7 @@ static std::unique_ptr<Request> ToAffinityAPIRequest(const json_t &json, std::st
 static std::unique_ptr<Request> ToOperatorFusionRequest(const json_t &json, std::string &error);
 static std::unique_ptr<Request> ToAICpuOperatorRequest(const json_t &json, std::string &error);
 static std::unique_ptr<Request> ToAclnnOperatorRequest(const json_t &json, std::string &error);
+static std::unique_ptr<Request> ToOperatorDispatchRequest(const json_t &json, std::string &error);
 };
 }
 

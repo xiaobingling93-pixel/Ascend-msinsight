@@ -166,6 +166,12 @@ export const fusionOperatorColumns: ColumData[] = [
     { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
 ];
 
+export const operatorDispatchColumns: ColumData[] = [
+    { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
+    ...commonExpertColums,
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
+];
+
 export interface SystemViewItem {
     name: string;
     tips?: string;
@@ -189,6 +195,7 @@ export const expertSystemViewItems: SystemViewItem[] = [
     { name: 'AICPU Operators' },
     { name: 'ACLNN Operators' },
     { name: 'Operators Fusion' },
+    { name: 'Operators Dispatch' },
 ];
 
 export interface PageType {
