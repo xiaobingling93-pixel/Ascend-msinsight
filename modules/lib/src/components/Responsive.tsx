@@ -13,11 +13,30 @@ interface ResponsiveProps {
 }
 
 export const Responsive: React.FC<ResponsiveProps> = ({ children, onChange }) => {
+    const [ResizeObserverImpl, setResizeObserverImpl] = useState<typeof ResizeObserver | null>(null);
     const [size, setSize] = useState({ width: 0, height: 0 });
     const ref = useRef<HTMLDivElement | null>(null);
 
+    // resize-observer-polyfill
     useEffect(() => {
-        const resizeObserver = new ResizeObserver(([entry]) => {
+        async function loadPolyfill(): Promise<void> {
+            if (typeof window !== 'undefined' && typeof window.ResizeObserver === 'undefined') {
+                // 动态导入 polyfill
+                const module = await import('resize-observer-polyfill');
+                setResizeObserverImpl(() => module.default);
+            } else {
+                setResizeObserverImpl(() => window.ResizeObserver);
+            }
+        }
+        loadPolyfill();
+    }, []);
+
+    useEffect(() => {
+        if (!ResizeObserverImpl) {
+            return () => {};
+        }
+
+        const resizeObserver = new ResizeObserverImpl(([entry]) => {
             if (entry.target instanceof HTMLElement) {
                 const newSize = {
                     width: entry.contentRect.width,
@@ -41,7 +60,7 @@ export const Responsive: React.FC<ResponsiveProps> = ({ children, onChange }) =>
                 resizeObserver.disconnect();
             }
         };
-    }, []);
+    }, [ResizeObserverImpl]);
 
     return (
         <div ref={ref}>
