@@ -222,6 +222,17 @@ export const querySystemViewDetails = async (param: {
     return window.requestData('unit/systemView', param, 'timeline');
 };
 
+export const queryTableDataNameList = async (param: { rankId: string }): Promise<any> => {
+    return window.requestData('tableData/nameList', param, 'timeline');
+};
+
+export const queryTableDataDetails = async (param: {
+    rankId: string; pageSize: number; currentPage: number; orderBy?: string; order?: string;
+    selectKey: number;
+}): Promise<any> => {
+    return window.requestData('tableData/detail', param, 'timeline');
+};
+
 export const queryKernelDetails = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
     coreType: string; filterCondition: string[];

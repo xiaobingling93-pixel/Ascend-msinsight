@@ -13,7 +13,7 @@ import {
     statsSystemViewItems,
     expertSystemViewItems,
     type IQueryCondition,
-    SystemViewItem,
+    SystemViewItem, queryTableDataNameList,
 } from './Common';
 import { ResizeTable } from 'ascend-resize';
 import { limitInput, GroupRankIdsByHost, StyledEmpty } from 'ascend-utils';
@@ -25,6 +25,7 @@ import { HelpIcon } from 'ascend-icon';
 import { StatsSystemView } from './StatsSystemView';
 import { ExpertSystemView, handleAdvisorSelected } from './ExpertSystemView';
 import { EventView } from './EventsView';
+import { TableDataView } from './TableDataView';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
 const Container = styled.div`
@@ -106,7 +107,14 @@ interface ConditionType {
 export const SystemView = observer((props: any) => {
     const [viewOption, setViewOption] = useState(0);
     const [key, setKey] = useState(0);
-    const SelectContent = useMemo(() => contentList[viewOption][key], [viewOption, key]);
+    // eslint-disable-next-line camelcase
+    const SelectContent = useMemo(() => {
+        // 第四个tab的特殊逻辑
+        if (viewOption === 3) {
+            return null;
+        }
+        return contentList[viewOption][key];
+    }, [viewOption, key]);
     const [conditions, setConditions] = useState<{ rankId: string }>({ rankId: '' });
     const handleChange = (rankId: string): void => {
         setConditions({ rankId });
@@ -125,11 +133,15 @@ export const SystemView = observer((props: any) => {
         <AsideSelectContainer>
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
-            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey}></SelectList>
+            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} rankId={conditions.rankId}></SelectList>
         </AsideSelectContainer>
         <ChartErrorBoundary>
             <SelectContentContainer>
-                <SelectContent key={key} rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}></SelectContent>
+                {viewOption === 3
+                    ? <TableDataView key={key} selectKey={key} rankId={conditions.rankId} session={props.session}
+                        bottomHeight={props.bottomHeight}></TableDataView>
+                    : <SelectContent key={key} rankId={conditions.rankId} session={props.session}
+                        bottomHeight={props.bottomHeight}></SelectContent>}
             </SelectContentContainer>
         </ChartErrorBoundary>
     </Container>);
@@ -138,7 +150,7 @@ export const SystemView = observer((props: any) => {
 const ViewSelect = observer((props: any) => {
     const { viewOption, handleViewChange } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
-    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }, { label: t('Table Data'), value: 3 }];
     return (
         <div className={'view-select'}>
             <Select id={'select-system-view'} width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>
@@ -205,10 +217,12 @@ export const RankFilter = observer((props: any): JSX.Element => {
         </FormItem>
     </div>);
 });
-
 const SelectList = observer((props: any) => {
     const [selectedKey, setSelectedKey] = useState(0);
+    const [systemViewItems, setSystemViewItems] = useState<SystemViewItem[]>([]);
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
+    const rankId = props.rankId as string;
+    const param = { rankId };
     const handleClick = (key: number): void => {
         props.setKey(key);
         setSelectedKey(key);
@@ -216,19 +230,30 @@ const SelectList = observer((props: any) => {
     useEffect(() => {
         setSelectedKey(props.selectKey);
     }, [props.selectKey]);
-    let systemViewItems: SystemViewItem[] = [];
-    switch (props.viewOption) {
-        case 0:
-            systemViewItems = statsSystemViewItems;
-            break;
-        case 1:
-            systemViewItems = expertSystemViewItems;
-            break;
-        case 2:
-            break;
-        default:
-            break;
-    }
+    useEffect(() => {
+        switch (props.viewOption) {
+            case 0:
+                setSystemViewItems(statsSystemViewItems);
+                break;
+            case 1:
+                setSystemViewItems(expertSystemViewItems);
+                break;
+            case 2:
+                setSystemViewItems([]);
+                break;
+            case 3:
+                queryTableDataNameList(param).then((res) => {
+                    const names = res.layers as string[];
+                    const layers = names.map((item) => {
+                        return { name: item };
+                    });
+                    setSystemViewItems(layers);
+                });
+                break;
+            default:
+                break;
+        }
+    }, [props.viewOption]);
     return (<AsideSelectList>
         {
             systemViewItems.map((item, index) =>
@@ -237,7 +262,7 @@ const SelectList = observer((props: any) => {
                     key={index}
                     onClick={(): void => handleClick(index)}
                 >
-                    <div>{t(item.name)}</div>
+                    <div>{props.viewOption === 3 ? item.name : t(item.name)}</div>
                     {
                         item.tips !== undefined &&
                             <Tooltip title={t(item.tips)}>
