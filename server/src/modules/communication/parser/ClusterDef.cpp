@@ -45,9 +45,9 @@ bool ParallelStrategyConfig::CheckParams(std::string &errorMsg) const
         }
     }
     uint64_t tmpProduct = static_cast<uint64_t>(dpSize) * cpSize * tpSize * ppSize;
-    if (tmpProduct > UINT32_MAX) {
+    if (tmpProduct > MAX_WORLD_SIZE) {
         errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
-            std::to_string(UINT32_MAX);
+            std::to_string(MAX_WORLD_SIZE);
         return false;
     }
     return CheckParamForMindSpeed(errorMsg);

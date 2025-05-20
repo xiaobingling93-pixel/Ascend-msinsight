@@ -67,14 +67,14 @@ TEST_F(ClusterDefTest, TestDPSizeEvenlyDividedByEPSize)
     EXPECT_EQ(error, "[Summary] DP size must be evenly divided by EP Size.");
 }
 
-// Test for product of PP, TP, DP, CP sizes being less than UINT32_MAX
+// Test for product of PP, TP, DP, CP sizes being less than MAX_WORLD_SIZE
 TEST_F(ClusterDefTest, TestProductOfPPAndTPAndDPAndCPSizesLessThanUINT32Max)
 {
     ParallelStrategyConfig config = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 10000, 10000, 10000, 10000, 100 };
     std::string error;
     EXPECT_EQ(config.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
-                     std::to_string(UINT32_MAX));
+        std::to_string(MAX_WORLD_SIZE));
 }
 
 // Test for DP and CP sizes being evenly divided by EP size

@@ -175,8 +175,9 @@ void MindSpeedParallelStrategyAlgorithm::UpdateIndexAttributes(
             indexAttributes[curPara + STR_INDEX] = 0;
         }
     }
-    if (strategyConfig.epSize > strategyConfig.dpSize && !paraDetailsMap[CP_PARA].isShown) {
-        // epSize > dpSize时，ep框只在cp不被折叠的情况下有意义，则若cp被折叠，ep也应被折叠, 后端不返回epIndex
+    // 若对CP进行折叠, 当且仅当DP Size能被EP Size整除时，返回EP框信息
+    if (dimension != DIMENSIONS_TP && dimension != DIMENSIONS_CP &&
+        strategyConfig.dpSize % strategyConfig.epSize != 0) {
         return;
     }
     // 添加epIndex, 前端入参已校验，分母不可能为零, dpSize * cpSize 一定能被epSize整除

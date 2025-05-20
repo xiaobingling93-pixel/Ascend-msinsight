@@ -24,6 +24,7 @@ private:
     ParallelStrategyAlgorithmManager() = default;
     ~ParallelStrategyAlgorithmManager() = default;
     static bool IsSameAlgorithm(const std::string& algorithm1, const std::string& algorithm2);
+    static std::shared_ptr<BaseParallelStrategyAlgorithm> CreateAlgorithm(const std::string& algorithm);
 
     std::recursive_mutex mutex;
     std::map<std::string, std::shared_ptr<BaseParallelStrategyAlgorithm>> algorithmMap;

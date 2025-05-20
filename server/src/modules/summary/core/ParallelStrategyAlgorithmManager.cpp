@@ -7,6 +7,7 @@
 #include "MegatronParallelStrategyAlgorithm.h"
 #include "MindSpeedParallelStrategyAlgorithm.h"
 #include "MindIELLMParallelStrategyAlgorithm.h"
+#include "VLLMParallelStrategyAlgorithm.h"
 #include "ParallelStrategyAlgorithmManager.h"
 using namespace Dic::Server;
 namespace Dic::Module::Summary {
@@ -31,6 +32,35 @@ bool ParallelStrategyAlgorithmManager::IsSameAlgorithm(const std::string& algori
     return false;
 }
 
+// algorithmFactoryTable算法映射表，用于按照算法名称创建对应类型算法实例 key: matcher, value: creator
+using AlgorithmCreator = std::function<std::shared_ptr<BaseParallelStrategyAlgorithm>()>;
+const std::vector<std::pair<std::function<bool(const std::string&)>, AlgorithmCreator>> algorithmFactoryTable = {
+    { [](const std::string& alg) {
+        return alg == MEGATRON_LM_TP_CP_EP_DP_PP_ALG || alg == MEGATRON_LM_TP_CP_PP_EP_DP_ALG; },
+        []() { return std::make_shared<MegatronParallelStrategyAlgorithm>(); } },
+
+    { [](const std::string& alg) { return alg == MINDSPEED_TP_CP_EP_DP_PP_ALG; },
+        []() { return std::make_shared<MindSpeedParallelStrategyAlgorithm>(); } },
+
+    { [](const std::string& alg) { return alg == MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG; },
+        []() { return std::make_shared<MindIELLMParallelStrategyAlgorithm>(); } },
+
+    { [](const std::string& alg) { return alg == VLLM_TP_PP_DP_EP_ALG; },
+        []() { return std::make_shared<VLLMParallelStrategyAlgorithm>(); } }
+};
+
+std::shared_ptr<BaseParallelStrategyAlgorithm> ParallelStrategyAlgorithmManager::CreateAlgorithm(
+    const std::string& algorithm)
+{
+    std::string lowerAlg = StringUtil::ToLower(algorithm);
+    for (const auto& [matcher, creator] : algorithmFactoryTable) {
+        if (matcher(lowerAlg)) {
+            return creator();
+        }
+    }
+    return nullptr;
+}
+
 bool ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& projectName,
     const ParallelStrategyConfig& config, std::string& errMsg)
 {
@@ -48,16 +78,12 @@ bool ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& p
         DeleteAlgorithm(projectName);
     }
     // 若不存在, 或算法类不同，则添加相应算法类
-    if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
-        algorithmMap.emplace(projectName, std::make_shared<MegatronParallelStrategyAlgorithm>());
-    } else if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MINDSPEED_ALG)) {
-        algorithmMap.emplace(projectName, std::make_shared<MindSpeedParallelStrategyAlgorithm>());
-    } else if (StringUtil::ToLower(config.algorithm) == MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG) {
-        algorithmMap.emplace(projectName, std::make_shared<MindIELLMParallelStrategyAlgorithm>());
-    } else {
-        errMsg = "Failed to add algorithm to manager when set parallel config. Unexpected algorithm.";
+    auto algorithm = CreateAlgorithm(config.algorithm);
+    if (!algorithm) {
+        errMsg = "Failed to add algorithm to manager. Unexpected algorithm.";
         return false;
     }
+    algorithmMap.emplace(projectName, algorithm);
     algorithmMap.at(projectName)->SetStrategyConfig(config);
     return true;
 }

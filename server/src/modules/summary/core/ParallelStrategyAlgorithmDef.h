@@ -37,6 +37,8 @@ const std::string MOE_TP_GROUP_NAME = "moeTp";
 // Token list for vLLM
 const std::string INNER_DP_GROUP = "innerDp";
 const std::string EXTERNAL_DP_GROUP = "externalDp";
+const std::string VLLM_EP_GROUP = "tp-innerDp";
+const std::string VLLM_EP_GROUP_NAME = "exp";
 
 // Token list for MindSpeed
 // CP

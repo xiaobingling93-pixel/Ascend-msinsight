@@ -134,6 +134,7 @@ const std::string TP_INDEX = "tpIndex";
 const std::string EP_INDEX = "epIndex";
 const std::string MOE_TP_INDEX = "moeTpIndex";
 const int64_t MAX_PARALLEL_SIZE = 10000;
+const int64_t MAX_WORLD_SIZE = 1000000;
 
 struct ParallelStrategyConfigForMindSpeed {
     bool useTp2D = false;
