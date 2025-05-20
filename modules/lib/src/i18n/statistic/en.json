@@ -1,0 +1,13 @@
+{
+  "statistic": {
+    "Find in Timeline": "Find in Timeline",
+    "No Data": "No Data",
+    "Loading": "loading...",
+    "Curve Data": "Curve Data",
+    "Table Data Details": "Table Data Details",
+    "searchCriteria": {
+      "RankId": "Rank ID",
+      "GroupBy": "Group By"
+    }
+  }
+}
