@@ -117,6 +117,11 @@ export const findDPOrEPFrame = (arrangements: ArrangementItem[], type: Paralleli
         groupMap.get(indexKey)?.push({ index, position, attribute });
     });
 
+    // DPSize 或 EPSize 配置为 1 时，不显示框
+    if (groupMap.size < 2) {
+        return [];
+    }
+
     groupMap.forEach((list) => {
         groupList.push({
             type,

@@ -429,26 +429,35 @@ const LegendContainer = ({ generateConditions }: LegendContainerProps): JSX.Elem
     const { t } = useTranslation('summary');
     const { parallelTypeList, setParallelTypeList } = useParallelSwitchConditions();
     const [parallelTypeOptions, setParallelTypeOptions] = useState<LegendItem[]>(defaultLegendItemList);
-    const { cpSize } = generateConditions ?? {};
+    const { tpSize, ppSize, cpSize, dpSize, epSize, moeTpSize } = generateConditions ?? {};
 
     useEffect(() => {
         const { dimension = '', algorithm = '' } = generateConditions ?? {};
-        const ppDisabled = ['ep-dp'].includes(dimension);
-        const tpDisabled = ['ep-dp', 'ep-dp-pp', 'ep-dp-pp-cp'].includes(dimension);
-        const cpDisabled = ['ep-dp', 'ep-dp-pp'].includes(dimension);
-        const epDisabled = ['ep-dp', 'ep-dp-pp'].includes(dimension) && algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)';
+
+        const disableMap: Record<string, boolean> = {
+            pp: ['ep-dp'].includes(dimension),
+            tp: ['ep-dp', 'ep-dp-pp', 'ep-dp-pp-cp'].includes(dimension),
+            cp: ['ep-dp', 'ep-dp-pp'].includes(dimension),
+            ep: ['ep-dp', 'ep-dp-pp'].includes(dimension) && algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)',
+            moeTp: true,
+        };
+
+        const visibleMap: Record<string, boolean> = {
+            pp: ppSize !== 1,
+            tp: tpSize !== 1,
+            cp: cpSize !== 1,
+            ep: epSize !== 1,
+            dp: dpSize !== 1,
+            moeTp: moeTpSize !== 1,
+        };
 
         const options = parallelTypeOptions.map((option) => {
-            const disabled = (option.value === 'pp' && ppDisabled) ||
-                (option.value === 'tp' && tpDisabled) ||
-                (option.value === 'cp' && cpDisabled) ||
-                (option.value === 'ep' && epDisabled) ||
-                option.value === 'moeTp';
+            const { value } = option;
             return {
                 ...option,
-                checked: parallelTypeList.includes(option.value),
-                disabled,
-                visible: option.value !== 'cp' || (option.value === 'cp' && cpSize !== 1),
+                checked: parallelTypeList.includes(value),
+                disabled: disableMap[value] ?? false,
+                visible: visibleMap[value] ?? true,
             };
         });
 
