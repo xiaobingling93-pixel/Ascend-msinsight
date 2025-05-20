@@ -17,9 +17,14 @@ using namespace Dic::Server;
 
 bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    SummaryTopRankRequest &request = dynamic_cast<SummaryTopRankRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<SummaryTopRankRequest &>(*requestPtr);
     std::unique_ptr<SummaryTopRankResponse> responsePtr = std::make_unique<SummaryTopRankResponse>();
-    SummaryTopRankResponse &response = *responsePtr.get();
+    SummaryTopRankResponse &response = *responsePtr;
+    std::string errMsg;
+    if (!request.params.CheckParams(errMsg)) {
+        SendResponse(std::move(responsePtr), false, errMsg);
+        return true;
+    }
     WsSession &session = *WsSessionManager::Instance().GetSession();
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
     SetBaseResponse(request, response);

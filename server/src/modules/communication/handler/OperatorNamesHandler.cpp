@@ -16,10 +16,10 @@ using namespace Dic::Server;
 
 bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    OperatorNamesRequest &request = dynamic_cast<OperatorNamesRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<OperatorNamesRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorNamesResponse> responsePtr = std::make_unique<OperatorNamesResponse>();
-    OperatorNamesResponse &response = *responsePtr.get();
+    OperatorNamesResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // check request parameters
     std::string errorMsg;
@@ -27,7 +27,7 @@ bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryOperatorNames(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get operator names response data.");

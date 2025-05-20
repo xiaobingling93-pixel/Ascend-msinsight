@@ -93,7 +93,7 @@ bool ExpertHotspotManager::MergeAndSaveModelInfo(const std::map<std::string, Mod
 }
 
 bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, const std::string &version,
-                                                 std::string &errorMsg)
+                                                 std::string &errorMsg, const std::string &clusterPath)
 {
     // 参数校验，ConvertToRealPath方法中会调用CheckDirValid方法对文件进行校验
     std::string realFilePath = filePath;
@@ -101,7 +101,7 @@ bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, co
         return false;
     }
     // 获取db
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (database == nullptr) {
         errorMsg = "Cluster database is not exist.";
         return false;
@@ -145,10 +145,11 @@ bool ExpertHotspotManager::SaveModelInfo(const ModelInfo &modelInfo, std::shared
     return db->InsertDuplicateUpdateBaseInfo(modelInfoMap);
 }
 
-bool ExpertHotspotManager::UpdateModelInfo(ModelInfo &newModelInfo, std::string &errorMsg)
+bool ExpertHotspotManager::UpdateModelInfo(const std::string &clusterPath, ModelInfo &newModelInfo,
+                                           std::string &errorMsg)
 {
     // 获取db
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (database == nullptr) {
         errorMsg = "Fail to update model info, database not exist.";
         return false;
@@ -172,10 +173,10 @@ bool ExpertHotspotManager::UpdateModelInfo(ModelInfo &newModelInfo, std::string 
     return SaveModelInfo(curModelInfo, database);
 }
 
-ModelInfo ExpertHotspotManager::GetModelInfo()
+ModelInfo ExpertHotspotManager::GetModelInfo(const std::string &clusterPath)
 {
      // 获取db
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (database == nullptr) {
         ServerLog::Error("Fail to get model info, database not exist.");
         return {};
@@ -288,7 +289,8 @@ void ExpertHotspotManager::FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &
 }
 
 bool ExpertHotspotManager::FillExpertInfo(std::vector<ExpertHotspotStruct> &hotspotInfos,
-    const ModelInfo &modelInfo, const std::vector<ExpertDeploymentStruct> &deployment)
+                                          const ModelInfo &modelInfo,
+                                          const std::vector<ExpertDeploymentStruct> &deployment)
 {
     // 获取每个rank的专家数，以及热力图的列数目
     int expertNumberPerRank = 0;
@@ -334,10 +336,11 @@ bool ExpertHotspotManager::FillExpertInfo(std::vector<ExpertHotspotStruct> &hots
     return true;
 }
 
-std::vector<ExpertHotspotStruct> ExpertHotspotManager::QueryExpertHotspotData(const std::string &modelStage,
+std::vector<ExpertHotspotStruct> ExpertHotspotManager::QueryExpertHotspotData(const std::string &clusterPath,
+                                                                              const std::string &modelStage,
                                                                               const std::string &version)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (database == nullptr) {
         return {};
     }

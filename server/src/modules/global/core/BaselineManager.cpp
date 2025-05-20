@@ -57,9 +57,20 @@ void BaselineManager::Reset()
     baselineRankId.clear();
     baselineHost.clear();
     baselineCardName.clear();
-    if (isCluster) {
-        Timeline::ParserStatusManager::Instance().EraseClusterParserStatusByKeyWord(BASELINE);
+    if (isCluster && !baselineClusterPath.empty()) {
+        Timeline::ParserStatusManager::Instance().EraseClusterParserStatusByKeyWord(baselineClusterPath);
+        baselineClusterPath.clear();
     }
     isCluster = false;
+}
+
+void BaselineManager::SetBaselineClusterPath(const std::string &clusterPath)
+{
+    baselineClusterPath = clusterPath;
+}
+
+std::string BaselineManager::GetBaseLineClusterPath()
+{
+    return baselineClusterPath;
 }
 }

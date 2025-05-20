@@ -16,6 +16,16 @@ namespace Dic {
 namespace Protocol {
 struct SummaryTopRankParams {
     bool isCompare = false;
+    std::string clusterPath;
+    inline bool CheckParams(std::string &errMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errMsg = "[Summary] Failed to check cluster";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct SummaryTopRankRequest : public Request {
@@ -52,6 +62,17 @@ struct SummaryStatisticRequest : public Request {
 };
 
 struct PipelineStepParam {
+    std::string clusterPath;
+
+    inline bool CheckParams(std::string& errMsg) const
+    {
+        std::string paramErr;
+        if (!CheckStrParamValid(clusterPath, paramErr)) {
+            errMsg = "[Summary] Failed to check cluster" + paramErr;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct PipelineStepRequest : public Request {
@@ -61,11 +82,16 @@ struct PipelineStepRequest : public Request {
 
 struct PipelineStageParam {
     std::string stepId;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
         if (!CheckStrParamValidEmptyAllowed(this->stepId, paramError)) {
             errorMsg = "[Summary] Failed to check step id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Summary] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -80,6 +106,7 @@ struct PipelineStageRequest : public Request {
 struct PipelineStageTimeParam {
     std::string stepId;
     std::string stageId;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -89,6 +116,10 @@ struct PipelineStageTimeParam {
         }
         if (!CheckStrParamValidWithoutLenLimit(this->stageId, paramError)) {
             errorMsg = "[Summary] Failed to check stage id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Summary] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -103,6 +134,7 @@ struct PipelineStageTimeRequest : public Request {
 struct PipelineRankTimeParam {
     std::string stepId;
     std::string stageId;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -112,6 +144,10 @@ struct PipelineRankTimeParam {
         }
         if (!CheckStrParamValidWithoutLenLimit(this->stageId, paramError)) {
             errorMsg = "[Summary] Failed to check stage id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Summary] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -131,6 +167,7 @@ struct PipelineFwdBwdTimelineRequest : public Request {
 struct ParallelismArrangement {
     Module::ParallelStrategyConfig config;
     std::string dimension;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         if (!config.CheckParams(errorMsg)) {
@@ -139,6 +176,11 @@ struct ParallelismArrangement {
         if (std::find(Module::DIMENSIONS_ALLOWED.begin(), Module::DIMENSIONS_ALLOWED.end(), dimension) ==
             Module::DIMENSIONS_ALLOWED.end()) {
             errorMsg = "[Summary] Dimension is not allowed.";
+            return false;
+        }
+        std::string paramErr;
+        if (!CheckStrParamValid(clusterPath, paramErr)) {
+            errorMsg = "[Summary] Failed to check cluster." + paramErr;
             return false;
         }
         return true;
@@ -158,6 +200,7 @@ struct ParallelismPerformance {
     bool isCompare = false;
     std::string baselineStep;
     std::vector<uint32_t> indexList;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         if (!config.CheckParams(errorMsg)) {
@@ -179,6 +222,10 @@ struct ParallelismPerformance {
         }
         if (!CheckStrParamValidEmptyAllowed(this->baselineStep, paramError)) {
             errorMsg = "[Summary] Failed to check baselineStep." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Summary] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -272,18 +319,51 @@ struct CommunicationDetailRequest : public Request {
     CommunicationDetailParams params;
 };
 
-struct QueryParallelStrategyRequest : public Request {
-    QueryParallelStrategyRequest() : Request(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {};
+struct ParallelStrategyParam {
+    std::string clusterPath;
+
+    inline bool CheckParams(std::string &errMsg) const
+    {
+        std::string paramErr;
+        if (!CheckStrParamValid(clusterPath, paramErr)) {
+            errMsg = "[Summary] Failed to check cluster." + paramErr;
+            return false;
+        }
+        return true;
+    }
 };
 
+struct QueryParallelStrategyRequest : public Request {
+    QueryParallelStrategyRequest() : Request(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {};
+    ParallelStrategyParam params;
+};
+
+struct SetParallelStrategyParam {
+    Module::ParallelStrategyConfig config;
+    std::string clusterPath;
+    bool CheckParams(std::string& errMsg) const
+    {
+        std::string paramErr;
+        if (!config.CheckParams(paramErr)) {
+            errMsg = "[Summary] Failed to check parallel strategy config." + paramErr;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramErr)) {
+            errMsg = "[Summary] Failed to check cluster." + paramErr;
+            return false;
+        }
+        return true;
+    }
+};
 struct SetParallelStrategyRequest : public Request {
     SetParallelStrategyRequest() : Request(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY) {};
-    Module::ParallelStrategyConfig config;
+    SetParallelStrategyParam params;
 };
 
 struct ImportExpertDataParams {
     std::string filePath;
     std::string version;
+    std::string clusterPath;
 
     bool CheckParams(std::string &errorMsg) const
     {
@@ -296,6 +376,10 @@ struct ImportExpertDataParams {
             errorMsg = "[Summary] Failed to check version." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Summary] Failed to check cluster." + paramError;
+            return false;
+        }
         return true;
     }
 };
@@ -305,8 +389,22 @@ struct ImportExpertDataRequest : public Request {
     ImportExpertDataParams params;
 };
 
+struct ModelInfoParam {
+    std::string clusterPath;
+    inline bool CheckParams(std::string& errMsg) const
+    {
+        std::string paramErr;
+        if (!CheckStrParamValid(clusterPath, paramErr)) {
+            errMsg = "[Summary] Failed to check cluster." + paramErr;
+            return false;
+        }
+        return true;
+    }
+};
+
 struct QueryModelInfoRequest : public Request {
     QueryModelInfoRequest() : Request(REQ_RES_QUERY_MODEL_INFO) {};
+    ModelInfoParam params;
 };
 
 struct QueryExpertHotspotParams {
@@ -315,6 +413,7 @@ struct QueryExpertHotspotParams {
     std::vector<int> denseLayerList;
     int layerNum = 0;
     int expertNum = 0;
+    std::string clusterPath;
 
     bool CheckParams(std::string &errorMsg) const
     {
@@ -336,6 +435,10 @@ struct QueryExpertHotspotParams {
                 errorMsg = "[Summary] The range of dense layer is out of layer number.";
                 return false;
             }
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Summary] Failed to check cluster." + paramError;
+            return false;
         }
         return true;
     }

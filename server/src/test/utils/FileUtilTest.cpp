@@ -17,6 +17,7 @@ TEST_F(TestSuit, BasicAssertions)
 {
 #ifdef _WIN32
     EXPECT_EQ(FileUtil::SplicePath("a", "b"), "a\\b");
+    EXPECT_EQ(FileUtil::SplicePath("a", "b", "c"), "a\\b\\c");
 #else
     EXPECT_EQ(FileUtil::SplicePath("a", "b"), "a/b");
 #endif
@@ -455,4 +456,9 @@ TEST(TestUtil, TestSplitFilePathSuccess)
     std::vector<std::string> expected1 = { "D:", "GUI_TEST_DATA", "deepseek_32B",
         "actor worker", "ma-job_ascend_pt", "ASCEND_PROFILER_OUTPUT" };
     EXPECT_EQ(result1, expected1);
+}
+
+TEST(TestUtil, SplicePath)
+{
+    EXPECT_EQ("/home/user/test", FileUtil::SplicePath("/home", "user", "test"));
 }

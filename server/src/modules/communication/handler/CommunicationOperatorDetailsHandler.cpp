@@ -6,6 +6,7 @@
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "BaselineManager.h"
 #include "CommunicationOperatorDetailsHandler.h"
 
 namespace Dic {
@@ -13,11 +14,12 @@ namespace Module {
 namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
+using namespace Dic::Module::Global;
 
 bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    Protocol::OperatorDetailsRequest &request =
-            dynamic_cast<Protocol::OperatorDetailsRequest &>(*requestPtr.get());
+    auto &request =
+            dynamic_cast<Protocol::OperatorDetailsRequest &>(*requestPtr);
     std::unique_ptr<Protocol::OperatorDetailsResponse> responsePtr =
             std::make_unique<Protocol::OperatorDetailsResponse>();
     // check request parameters
@@ -26,13 +28,14 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    OperatorDetailsResponse &response = *responsePtr.get();
+    OperatorDetailsResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data
-    std::string type = request.params.queryType == "Comparison" ? COMPARE : BASELINE;
+    std::string type = request.params.queryType == "Comparison" ? request.params.clusterPath
+                                                                : BaselineManager::Instance().GetBaseLineClusterPath();
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(type);
     if (database == nullptr || !database->QueryOperatorsCount(request.params, response.body) ||
         !database->QueryAllOperators(request.params, response.body)) {

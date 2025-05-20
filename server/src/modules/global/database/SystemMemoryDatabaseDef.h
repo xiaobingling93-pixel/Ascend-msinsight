@@ -65,7 +65,7 @@ struct ParseFileInfo {
     inline json_t SerializeToJson(RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {
         json_t res(rapidjson::kObjectType);
-        JsonUtil::AddMember(res, "clusterId", clusterId, allocator);
+        JsonUtil::AddMember(res, "clusterPath", clusterId, allocator);
         JsonUtil::AddMember(res, "rankId", rankId, allocator);
         JsonUtil::AddMember(res, "host", host, allocator);
         JsonUtil::AddMember(res, "filePath", parseFilePath, allocator);
@@ -250,6 +250,33 @@ struct ProjectExplorerInfo {
             deleteFileIds.insert(item->id);
         });
     }
+
+    inline std::vector<std::shared_ptr<ParseFileInfo>> GetClusterInfos() const
+    {
+        if (projectFileTree.empty()) {
+            return {};
+        }
+        std::queue<std::shared_ptr<ParseFileInfo>> que;
+        std::for_each(projectFileTree.begin(), projectFileTree.end(), [&que](const auto &item) {
+            que.push(item);
+        });
+        std::vector<std::shared_ptr<ParseFileInfo>> res;
+        while (!que.empty()) {
+            auto fileInfo = que.front();
+            que.pop();
+            if (fileInfo->type < ParseFileType::CLUSTER) {
+                std::for_each(fileInfo->subParseFile.begin(), fileInfo->subParseFile.end(), [&que](const auto &item) {
+                    que.push(item);
+                });
+                continue;
+            }
+            if (fileInfo->type == ParseFileType::CLUSTER) {
+                res.emplace_back(fileInfo);
+                continue;
+            }
+        }
+        return res;
+    }
 };
 
 
@@ -259,6 +286,7 @@ struct BaselineInfo {
     std::string cardName;
     std::string errorMessage;
     bool isCluster = false;
+    std::string clusterBaseLine;
 };
 }
 #endif // PROFILER_SERVER_FILEMENUDATABASEDEF_H

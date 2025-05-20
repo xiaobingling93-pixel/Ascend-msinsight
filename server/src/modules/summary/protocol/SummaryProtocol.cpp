@@ -64,6 +64,7 @@ std::unique_ptr<Request> SummaryProtocol::ToTopNRequest(const json_t &json, std:
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -103,6 +104,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStepRequest(const json_t &json, std:
         error = "Failed to set request base info of step request.";
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -114,6 +116,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStagesRequest(const json_t &json, st
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -126,6 +129,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStageTimeRequest(const json_t &json,
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -138,6 +142,7 @@ std::unique_ptr<Request> SummaryProtocol::ToRankTimeRequest(const json_t &json, 
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -164,6 +169,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelStrategyRequest(const j
         error = "Failed to set request base info of query parallel strategy request.";
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -181,19 +187,20 @@ std::unique_ptr<Request> SummaryProtocol::ToSetParallelStrategyRequest(const jso
             return nullptr;
         }
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->config.algorithm, json["params"], KEY_ALGORITHM);
-    JsonUtil::SetByJsonKeyValue(reqPtr->config.tpSize, json["params"], KEY_TP_SIZE);
-    JsonUtil::SetByJsonKeyValue(reqPtr->config.ppSize, json["params"], KEY_PP_SIZE);
-    JsonUtil::SetByJsonKeyValue(reqPtr->config.dpSize, json["params"], KEY_DP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.algorithm, json["params"], KEY_ALGORITHM);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.tpSize, json["params"], KEY_TP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.ppSize, json["params"], KEY_PP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.dpSize, json["params"], KEY_DP_SIZE);
     if (json["params"].HasMember(KEY_CP_SIZE.c_str())) {
-        JsonUtil::SetByJsonKeyValue(reqPtr->config.cpSize, json["params"], KEY_CP_SIZE);
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
     }
     if (json["params"].HasMember(KEY_EP_SIZE.c_str())) {
-        JsonUtil::SetByJsonKeyValue(reqPtr->config.epSize, json["params"], KEY_EP_SIZE);
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.config.epSize, json["params"], KEY_EP_SIZE);
     }
     if (json["params"].HasMember(KEY_MOE_TP_SIZE.c_str())) {
-        JsonUtil::SetByJsonKeyValue(reqPtr->config.moeTpSize, json["params"], KEY_MOE_TP_SIZE);
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.config.moeTpSize, json["params"], KEY_MOE_TP_SIZE);
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -210,6 +217,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryFwdBwdTimelineRequest(const jso
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -239,6 +247,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismArrangementRequest(c
         JsonUtil::SetByJsonKeyValue(reqPtr->params.config.moeTpSize, json["params"], KEY_MOE_TP_SIZE);
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dimension, json["params"], KEY_DIMENSION);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -272,6 +281,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(c
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], KEY_IS_COMPARE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineStep, json["params"], KEY_BASELINE_STEP);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.step, json["params"], KEY_STEP);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -288,6 +298,7 @@ std::unique_ptr<Request> SummaryProtocol::ToImportExpertDataRequest(const json_t
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.filePath, json["params"], "filePath");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.version, json["params"], "version");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -313,6 +324,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryExpertHotspotRequest(const json
             }
         }
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -323,6 +335,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryModelInfoRequest(const json_t &
         error = "Failed to set request base info of query model info request.";
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 

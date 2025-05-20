@@ -15,6 +15,7 @@
 #include "MatrixSortOpNamesHandler.h"
 #include "OperatorNamesHandler.h"
 #include "RanksHandler.h"
+#include "DurationListHandler.h"
 #include "CommunicationAdvisorHandler.h"
 
 
@@ -39,6 +40,7 @@ TEST_F(HandlerTest, QueryCommunicationOperatorListsWithExeSqlFail)
     request->params.iterationId = "1";
     request->params.operatorName = "opName";
     request->params.stage = "1";
+    request->params.clusterPath = "test";
     CommunicationOperatorListsHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
@@ -61,6 +63,8 @@ TEST_F(HandlerTest, QueryBandwidthHandlerWithExeSqlFail)
     request->params.iterationId = "1";
     request->params.operatorName = "opName";
     request->params.stage = "1";
+    request->params.clusterPath = "test";
+    request->params.rankId = "0";
     BandwidthHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -85,6 +89,9 @@ TEST_F(HandlerTest, CommunicationOperatorDetailsWithExeSqlFail)
     request->params.orderBy = "orderBy";
     request->params.order = "order";
     request->params.stage = "1";
+    request->params.clusterPath = "test";
+    request->params.pageSize = 1; // pageSize set to 1
+    request->params.currentPage = 1; // curPage set to 1
     CommunicationOperatorDetailsHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -109,6 +116,8 @@ TEST_F(HandlerTest, DistributionHandlerWithExeSqlFail)
     request->params.operatorName = "name";
     request->params.transportType = "type";
     request->params.stage = "1";
+    request->params.clusterPath = "test";
+    request->params.rankId = "0";
     DistributionHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -127,6 +136,7 @@ TEST_F(HandlerTest, GroupHandlerWithExeSqlFail)
 {
     auto request = std::make_unique<MatrixGroupRequest>();
     request->params.iterationId = "1";
+    request->params.clusterPath = "test";
     GroupHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
@@ -135,6 +145,7 @@ TEST_F(HandlerTest, GroupHandlerWithExeSqlFail)
 TEST_F(HandlerTest, IterationsHandlerWithExeSqlFail)
 {
     auto request = std::make_unique<IterationsRequest>();
+    request->params.clusterPath = "test";
     IterationsHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
@@ -157,6 +168,7 @@ TEST_F(HandlerTest, MatrixListHandlerWithExeSqlFail)
     request->params.iterationId = "1";
     request->params.operatorName = "name";
     request->params.stage = "1";
+    request->params.clusterPath = "test";
     MatrixListHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
@@ -165,6 +177,9 @@ TEST_F(HandlerTest, MatrixListHandlerWithExeSqlFail)
 TEST_F(HandlerTest, MatrixSortOpNamesHandlerWithExeSqlFail)
 {
     auto request = std::make_unique<MatrixSortOpNamesRequest>();
+    request->params.clusterPath = "test";
+    request->params.stage = "0";
+    request->params.iterationId = "0";
     MatrixSortOpNamesHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -185,6 +200,7 @@ TEST_F(HandlerTest, OperatorNamesHandlerWithExeSqlFail)
     auto request = std::make_unique<OperatorNamesRequest>();
     request->params.iterationId = "1";
     request->params.stage = "1";
+    request->params.clusterPath = "test";
     OperatorNamesHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -203,6 +219,7 @@ TEST_F(HandlerTest, RanksHandlerWithExeSqlFail)
 {
     auto request = std::make_unique<RanksRequest>();
     request->params.iterationId = "1";
+    request->params.clusterPath = "test";
     RanksHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -211,7 +228,20 @@ TEST_F(HandlerTest, RanksHandlerWithExeSqlFail)
 TEST_F(HandlerTest, AdvisorHandlerNormalTest)
 {
     std::unique_ptr<CommunicationAdvisorRequest> request = std::make_unique<CommunicationAdvisorRequest>();
+    request->params.clusterPath = "COMPARE";
     CommunicationAdvisorHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_TRUE(result);
+}
+
+TEST_F(HandlerTest, DurationListHandlerExecSqlFailed)
+{
+    auto request = std::make_unique<DurationListRequest>();
+    request->params.clusterPath = "test";
+    request->params.iterationId = "0";
+    request->params.operatorName = "op detail";
+    request->params.stage = "0";
+    DurationListHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_TRUE(result);
 }

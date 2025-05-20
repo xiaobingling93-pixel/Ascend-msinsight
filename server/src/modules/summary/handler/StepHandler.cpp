@@ -11,13 +11,13 @@ namespace Summary {
 using namespace Dic::Server;
 bool StepHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    PipelineStepRequest &request = dynamic_cast<PipelineStepRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<PipelineStepRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<PipelineStepResponse> responsePtr = std::make_unique<PipelineStepResponse>();
-    PipelineStepResponse &response = *responsePtr.get();
+    PipelineStepResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->GetStepIdList(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get step response data.");

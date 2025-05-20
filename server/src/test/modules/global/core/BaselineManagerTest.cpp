@@ -122,3 +122,15 @@ TEST_F(BaselineManagerTest, TestFileNotExist)
     EXPECT_FALSE(result);
     EXPECT_EQ(baselineInfo.errorMessage, "The project does not exist, baseline setting failed.");
 }
+
+TEST_F(BaselineManagerTest, SetGetBaselineClusterPath)
+{
+    BaselineManager::Instance().SetBaselineClusterPath("baseline");
+    EXPECT_EQ(BaselineManager::Instance().GetBaseLineClusterPath(), "baseline");
+}
+
+TEST_F(BaselineManagerTest, GetCompareClusterPath)
+{
+    BaselineManager::Instance().SetCompareClusterPath("compare");
+    EXPECT_EQ(BaselineManager::Instance().GetCompareClusterPath(), "compare");
+}

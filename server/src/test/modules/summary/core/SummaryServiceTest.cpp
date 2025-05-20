@@ -8,6 +8,7 @@
 #include "ClusterFileParser.h"
 #include "DataBaseManager.h"
 #include "TimeUtil.h"
+#include "BaselineManager.h"
 
 using namespace Dic::Module::Summary;
 const int NUMBER_ZERO = 0;
@@ -63,6 +64,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoAllSuccess)
     InitParser(filePath, Dic::BASELINE);
     SummaryTopRankRequest request;
     request.params.isCompare = true;
+    request.params.clusterPath = Dic::COMPARE;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     SummaryTopRankResponse response;
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
     EXPECT_EQ(response.body.baseInfo.compare.rankCount, NUMBER_SIXTEEN);
@@ -76,6 +79,7 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoOnlyCompareSuccess)
     InitParser(filePath, Dic::COMPARE);
     SummaryTopRankRequest request;
     request.params.isCompare = true;
+    request.params.clusterPath = Dic::COMPARE;
     SummaryTopRankResponse response;
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
     EXPECT_EQ(response.body.baseInfo.compare.rankCount, NUMBER_SIXTEEN);
@@ -89,6 +93,7 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoOnlyBaselineSuccess)
     InitParser(filePath, Dic::BASELINE);
     SummaryTopRankRequest request;
     request.params.isCompare = true;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     SummaryTopRankResponse response;
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
     EXPECT_EQ(response.body.baseInfo.compare.rankCount, NUMBER_ZERO);
@@ -103,6 +108,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategyWithAlgIsNull)
     InitParser(filePath, Dic::COMPARE);
     ParallelismPerformance params;
     params.isCompare = true;
+    params.clusterPath = Dic::COMPARE;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::COMPARE);
     PerformanceIndicatorData indicatorData;
     SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
     EXPECT_EQ(indicatorData.indicators.size(), NUMBER_ZERO);
@@ -127,6 +134,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccess)
     params.step = "2";
     params.isCompare = true;
     params.config = config;
+    params.clusterPath = Dic::COMPARE;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     PerformanceIndicatorData indicatorData;
     SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
     EXPECT_EQ(indicatorData.performanceData.size(), NUMBER_SIXTEEN);

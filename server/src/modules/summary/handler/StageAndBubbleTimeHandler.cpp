@@ -12,10 +12,10 @@ namespace Summary {
 using namespace Dic::Server;
 bool StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    PipelineStageTimeRequest &request = dynamic_cast<PipelineStageTimeRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<PipelineStageTimeRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<PipelineStageTimeResponse> responsePtr = std::make_unique<PipelineStageTimeResponse>();
-    PipelineStageTimeResponse &response = *responsePtr.get();
+    PipelineStageTimeResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // check request parameters
@@ -24,7 +24,7 @@ bool StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request>
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->GetStageAndBubble(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get time response data.");

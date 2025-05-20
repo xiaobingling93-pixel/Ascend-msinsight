@@ -21,6 +21,7 @@ struct OperatorDetailsParam {
     std::string stage;
     std::string queryType = "Comparison";
     std::string pgName;
+    std::string clusterPath;
     int pageSize{};
     int currentPage{};
     bool CheckParams(std::string &errorMsg) const
@@ -57,6 +58,10 @@ struct OperatorDetailsParam {
             errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
+            return false;
+        }
         return true;
     }
 
@@ -86,6 +91,7 @@ struct BandwidthDataParam {
     std::string operatorName;
     std::string stage;
     std::string pgName;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -109,6 +115,10 @@ struct BandwidthDataParam {
             errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
+            return false;
+        }
         return true;
     }
 };
@@ -125,6 +135,7 @@ struct DistributionDataParam {
     std::string transportType;
     std::string stage;
     std::string pgName;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -152,6 +163,10 @@ struct DistributionDataParam {
             errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
+            return false;
+        }
         return true;
     }
 };
@@ -163,11 +178,16 @@ struct DistributionDataRequest : public Request {
 
 struct RanksParams {
     std::string iterationId;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
         if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
             errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -181,6 +201,17 @@ struct RanksRequest  : public Request {
 
 struct IterationsParams {
     bool isCompare = false;
+    std::string clusterPath;
+
+    inline bool CheckParams(std::string& errMsg) const
+    {
+        std::string paramErr;
+        if (!CheckStrParamValid(clusterPath, paramErr)) {
+            errMsg = "[Communication] Failed to check cluster." + paramErr;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct IterationsRequest  : public Request {
@@ -193,6 +224,7 @@ struct OperatorNamesParams {
     std::vector<std::string> rankList = {};
     std::string stage;
     std::string pgName;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -206,6 +238,10 @@ struct OperatorNamesParams {
         }
         if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
             errorMsg = "[Communication] Failed to check pg name." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -242,6 +278,7 @@ struct DurationListParams {
     bool isCompare = false;
     std::string baselineIterationId;
     std::string pgName;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -263,6 +300,10 @@ struct DurationListParams {
         }
         if (!CheckStrParamValidEmptyAllowed(this->pgName, paramError)) {
             errorMsg = "[Communication] Failed to check pg name." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -292,6 +333,7 @@ struct MatrixGroupParam {
     std::string iterationId;
     std::string baselineIterationId;
     bool isCompare = false;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -301,6 +343,10 @@ struct MatrixGroupParam {
         }
         if (!CheckStrParamValidEmptyAllowed(this->baselineIterationId, paramError)) {
             errorMsg = "[Communication] Failed to check baseline iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
         return true;
@@ -319,6 +365,7 @@ struct MatrixBandwidthParam {
     std::string pgName;
     bool isCompare = false;
     std::string baselineIterationId;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -342,6 +389,10 @@ struct MatrixBandwidthParam {
             errorMsg = "[Communication] Failed to check pg name." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(clusterPath, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
+            return false;
+        }
         return true;
     }
 };
@@ -351,8 +402,22 @@ struct MatrixBandwidthRequest : public Request {
     MatrixBandwidthParam params;
 };
 
+struct CommunicationAdvisorParam {
+    std::string clusterPath;
+
+    inline bool CheckParams(std::string &errMsg) const
+    {
+        std::string paramErr;
+        if (!CheckStrParamValid(clusterPath, paramErr)) {
+            errMsg = "[Communication] Failed to check cluster." + paramErr;
+            return false;
+        }
+        return true;
+    }
+};
 struct CommunicationAdvisorRequest : public Request {
     CommunicationAdvisorRequest() : Request(REQ_RES_COMMUNICATION_ADVISOR) {};
+    CommunicationAdvisorParam params;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

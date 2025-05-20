@@ -15,10 +15,10 @@ using namespace Dic;
 using namespace Dic::Server;
 bool RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    RanksRequest &request = dynamic_cast<RanksRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<RanksRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<RanksResponse> responsePtr = std::make_unique<RanksResponse>();
-    RanksResponse &response = *responsePtr.get();
+    RanksResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // check request parameters
     std::string errorMsg;
@@ -26,7 +26,7 @@ bool RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryRanksHandler(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get ranks response data.");

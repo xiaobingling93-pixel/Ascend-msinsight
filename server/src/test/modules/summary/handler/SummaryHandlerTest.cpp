@@ -19,6 +19,7 @@
 #include "SummaryTopRankHandler.h"
 #include "ImportExpertDataHandler.h"
 #include "QueryExpertHotspotHandler.h"
+#include "QueryModelInfoHandler.h"
 
 using namespace Dic::Module;
 using namespace Dic::Module::Summary;
@@ -42,9 +43,21 @@ TEST_F(HandlerTest, QueryFwdBwdTimelineHandlerHandleRequestReturnTrueWhenNormalP
     auto request = std::make_unique<PipelineFwdBwdTimelineRequest>();
     request->params.stageId = "(0)";
     request->params.stepId = "1";
+    request->params.clusterPath = "test";
     QueryFwdBwdTimelineHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
+}
+
+TEST_F(HandlerTest, QueryFwdBwdTimelineHandlerHandleRequestStageIdEmty)
+{
+    auto request = std::make_unique<PipelineFwdBwdTimelineRequest>();
+    request->params.stageId = "()";
+    request->params.stepId = "1";
+    request->params.clusterPath = "test";
+    QueryFwdBwdTimelineHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
 }
 
 TEST_F(HandlerTest, QueryCommunicationDetailHandlerWithExecuteSqlFail)
@@ -77,6 +90,7 @@ TEST_F(HandlerTest, QueryComputeDetailInfoHandlerWithExecuteSqlFail)
 TEST_F(HandlerTest, QueryParallelStrategyConfigHandlerWithExecuteSqlFail)
 {
     auto request = std::make_unique<QueryParallelStrategyRequest>();
+    request->params.clusterPath = "test";
     QueryParallelStrategyConfigHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -87,6 +101,7 @@ TEST_F(HandlerTest, RankAndBubbleTimeHandlerWithStepIdError)
     auto request = std::make_unique<PipelineRankTimeRequest>();
     request->params.stepId = ";";
     request->params.stageId = "1";
+    request->params.clusterPath = "test";
     RankAndBubbleTimeHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -97,6 +112,7 @@ TEST_F(HandlerTest, RankAndBubbleTimeHandlerWithStageIdError)
     auto request = std::make_unique<PipelineRankTimeRequest>();
     request->params.stepId = "1";
     request->params.stageId = ";";
+    request->params.clusterPath = "test";
     RankAndBubbleTimeHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -107,6 +123,7 @@ TEST_F(HandlerTest, RankAndBubbleTimeHandlerWithExecuteSqlFail)
     auto request = std::make_unique<PipelineRankTimeRequest>();
     request->params.stepId = "1";
     request->params.stageId = "1";
+    request->params.clusterPath = "test";
     RankAndBubbleTimeHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -115,11 +132,12 @@ TEST_F(HandlerTest, RankAndBubbleTimeHandlerWithExecuteSqlFail)
 TEST_F(HandlerTest, SetParallelStrategyConfigHandlerWithParamError)
 {
     auto request = std::make_unique<SetParallelStrategyRequest>();
-    request->config.tpSize = NUMBER_FIVE_HUNDRED;
-    request->config.dpSize = NUMBER_TEN;
-    request->config.cpSize = NUMBER_TEN;
-    request->config.ppSize = NUMBER_TEN;
-    request->config.epSize = NUMBER_TEN;
+    request->params.config.tpSize = NUMBER_FIVE_HUNDRED;
+    request->params.config.dpSize = NUMBER_TEN;
+    request->params.config.cpSize = NUMBER_TEN;
+    request->params.config.ppSize = NUMBER_TEN;
+    request->params.config.epSize = NUMBER_TEN;
+    request->params.clusterPath = "test";
     SetParallelStrategyConfigHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -128,11 +146,12 @@ TEST_F(HandlerTest, SetParallelStrategyConfigHandlerWithParamError)
 TEST_F(HandlerTest, SetParallelStrategyConfigHandlerWithExecuteSqlError)
 {
     auto request = std::make_unique<SetParallelStrategyRequest>();
-    request->config.tpSize = NUMBER_TEN;
-    request->config.dpSize = NUMBER_TEN;
-    request->config.cpSize = NUMBER_TEN;
-    request->config.ppSize = NUMBER_TEN;
-    request->config.epSize = NUMBER_TEN;
+    request->params.config.tpSize = NUMBER_TEN;
+    request->params.config.dpSize = NUMBER_TEN;
+    request->params.config.cpSize = NUMBER_TEN;
+    request->params.config.ppSize = NUMBER_TEN;
+    request->params.config.epSize = NUMBER_TEN;
+    request->params.clusterPath = "test";
     SetParallelStrategyConfigHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -146,6 +165,7 @@ TEST_F(HandlerTest, QueryParallelismArrangementHandlerShouldReturnFalseWithParam
     request->params.config.cpSize = 2; // 2
     request->params.config.ppSize = 2; // 2
     request->params.config.epSize = 0; // 0
+    request->params.clusterPath = "test";
     QueryParallelismArrangementHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -159,6 +179,8 @@ TEST_F(HandlerTest, QueryParallelismArrangementHandlerShouldReturnFalseWithDataB
     request->params.config.cpSize = 2; // 2
     request->params.config.ppSize = 2; // 2
     request->params.config.epSize = 1; // 1
+    request->params.dimension = "ep-dp";
+    request->params.clusterPath = "test";
     QueryParallelismArrangementHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -172,6 +194,7 @@ TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnFalseWithParam
     request->params.config.cpSize = 2; // 2
     request->params.config.ppSize = 2; // 2
     request->params.config.epSize = 0; // 0
+    request->params.clusterPath = "test";
     QueryParallelismPerformanceHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -186,6 +209,7 @@ TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnTrue)
     request->params.config.ppSize = 2; // 2
     request->params.config.epSize = 1; // 1
     request->params.dimension = "ep-dp";
+    request->params.clusterPath = "test";
     QueryParallelismPerformanceHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
@@ -196,6 +220,7 @@ TEST_F(HandlerTest, StageAndBubbleTimeHandlerWithParamError)
     auto request = std::make_unique<PipelineStageTimeRequest>();
     request->params.stepId = ";";
     request->params.stageId = "1";
+    request->params.clusterPath = "test";
     StageAndBubbleTimeHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -206,6 +231,7 @@ TEST_F(HandlerTest, StageAndBubbleTimeHandlerWithExecuteSqlFail)
     auto request = std::make_unique<PipelineStageTimeRequest>();
     request->params.stepId = "1";
     request->params.stageId = "1";
+    request->params.clusterPath = "test";
     StageAndBubbleTimeHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -224,6 +250,7 @@ TEST_F(HandlerTest, StageHandlerWithExecuteSqlFail)
 {
     auto request = std::make_unique<PipelineStageRequest>();
     request->params.stepId = "100";
+    request->params.clusterPath = "test";
     StageHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -233,6 +260,7 @@ TEST_F(HandlerTest, StepHandlerWithExecuteSqlFail)
 {
     auto request = std::make_unique<PipelineStepRequest>();
     StepHandler handler;
+    request->params.clusterPath = "test";
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
 }
@@ -241,6 +269,7 @@ TEST_F(HandlerTest, SummaryTopRankHandlerHandleRequestReturnTrue)
 {
     auto request = std::make_unique<SummaryTopRankRequest>();
     SummaryTopRankHandler handler;
+    request->params.clusterPath = "test";
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
 }
@@ -250,6 +279,18 @@ TEST_F(HandlerTest, ImportExpertDataHandlerRequestReturnFalse)
     auto request = std::make_unique<ImportExpertDataRequest>();
     request->params.version = "1";
     request->params.filePath = "filePath";
+    request->params.clusterPath = "test";
+    ImportExpertDataHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, ImportExpertDataHandlerRequestErrorParams)
+{
+    auto request = std::make_unique<ImportExpertDataRequest>();
+    request->params.version = "1";
+    request->params.filePath = "filePath";
+    request->params.clusterPath = "test";
     ImportExpertDataHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -265,6 +306,7 @@ TEST_F(HandlerTest, QueryExpertHotspotHandlerRequestLayerAbnormal)
     const int expertNum = 256;
     request->params.layerNum = layerNum;
     request->params.expertNum = expertNum;
+    request->params.clusterPath = "test";
     QueryExpertHotspotHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
@@ -280,7 +322,33 @@ TEST_F(HandlerTest, QueryExpertHotspotHandlerRequestDenseAbnormal)
     const int expertNum = 256;
     request->params.layerNum = layerNum;
     request->params.expertNum = expertNum;
+    request->params.clusterPath = "test";
     QueryExpertHotspotHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryExpertHotspotHandlerRequestLayerNormal)
+{
+    auto request = std::make_unique<QueryExpertHotspotRequest>();
+    request->params.modelStage = "prefill";
+    request->params.version = "1";
+    request->params.denseLayerList = {0, 1};
+    const int layerNum = 60;
+    const int expertNum = 256;
+    request->params.layerNum = layerNum;
+    request->params.expertNum = expertNum;
+    request->params.clusterPath = "test";
+    QueryExpertHotspotHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryModelInfoHandlerNormal)
+{
+    auto request = std::make_unique<QueryModelInfoRequest>();
+    request->params.clusterPath = "test";
+    QueryModelInfoHandler handler;
+    bool res = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(res, true);
 }

@@ -21,11 +21,12 @@ struct FillExpertDataParams {
 };
 class ExpertHotspotManager {
 public:
-    static bool InitExpertHotspotData(const std::string &filePath, const std::string &version, std::string &errorMsg);
-    static std::vector<ExpertHotspotStruct> QueryExpertHotspotData(const std::string &modelStage,
-                                                                    const std::string &version);
-    static ModelInfo GetModelInfo();
-    static bool UpdateModelInfo(ModelInfo &newModelInfo, std::string &errorMsg);
+    static bool InitExpertHotspotData(const std::string &filePath, const std::string &version,
+            std::string &errorMsg, const std::string &clusterPath);
+    static std::vector<ExpertHotspotStruct> QueryExpertHotspotData(const std::string &clusterPath,
+            const std::string &modelStage, const std::string &version);
+    static ModelInfo GetModelInfo(const std::string &clusterPath);
+    static bool UpdateModelInfo(const std::string &clusterPath, ModelInfo &newModelInfo, std::string &errorMsg);
 private:
     static bool FillExpertInfo(std::vector<ExpertHotspotStruct> &hotspotInfos, const ModelInfo &modelInfo,
                                const std::vector<ExpertDeploymentStruct> &deployment);

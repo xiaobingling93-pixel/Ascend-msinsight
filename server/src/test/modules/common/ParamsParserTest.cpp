@@ -77,3 +77,22 @@ TEST_F(ParamsParserTest, testWsSession)
         Dic::Server::WsSessionManager::Instance().RemoveSession();
     }
 }
+
+TEST_F(ParamsParserTest, testServerStart)
+{
+    std::vector<std::string> args = {"exe", "--wsPort=9003", "--wsHost=127.0.0.1", "--scan=3000",
+                                     "--logSize=10", "--logLevel=INFO", "--sid=sid"};
+    Dic::Server::ParamsParser::Instance().Parse(args);
+    const Dic::Server::ParamsOption &option = Dic::Server::ParamsParser::Instance().GetOption();
+    Dic::Server::ServerLog::Initialize(option.logPath, option.logSize, option.logLevel,
+                                       std::to_string(option.wsPort));
+    Dic::Server::WsServer server(option.host, option.wsPort, option.sid);
+    server.Start();
+    const int checkInterval = 1000;
+    if (server.IsStart()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(checkInterval));
+    }
+    EXPECT_EQ(server.IsStart(), true);
+    server.Stop();
+    EXPECT_EQ(server.IsStart(), false);
+}

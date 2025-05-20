@@ -64,6 +64,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorDetailsRequest(const j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.queryType, json["params"], "queryType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -80,6 +81,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToDistributionRequest(const json
     JsonUtil::SetByJsonKeyValue(reqPtr->params.transportType, json["params"], "transportType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -95,6 +97,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToBandwidthDataRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -108,6 +111,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixGroupRequest(const json_
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineIterationId, json["params"], "baselineIterationId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -124,6 +128,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixListRequest(const json_t
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineIterationId, json["params"], "baselineIterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -135,6 +140,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToIterationsRequest(const json_t
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -161,6 +167,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &
             }
         }
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -172,6 +179,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToRanksRequest(const json_t &jso
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -192,6 +200,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
             }
         }
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -212,6 +221,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixOpNamesRequest(const jso
             }
         }
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -223,6 +233,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToCommunicationAdvisorRequest(
         error = "Failed to set request base info of communication advisor request.";
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 #pragma endregion

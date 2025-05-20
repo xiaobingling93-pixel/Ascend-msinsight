@@ -4,12 +4,13 @@
 
 #include <gtest/gtest.h>
 #include "SummaryProtocolRequest.h"
-
+using namespace Dic::Protocol;
 class SummaryProtocolRequestTest : public ::testing::Test {};
 
 TEST_F(SummaryProtocolRequestTest, SummaryStatisticParamsTestTimeFlagInvaild)
 {
     Dic::Protocol::SummaryStatisticParams params;
+    params.rankId = "0";
     params.timeFlag = ";";
     std::string msg;
     EXPECT_EQ(params.CheckParams(msg), false);
@@ -18,8 +19,18 @@ TEST_F(SummaryProtocolRequestTest, SummaryStatisticParamsTestTimeFlagInvaild)
 TEST_F(SummaryProtocolRequestTest, SummaryStatisticParamsTestStepIdInvaild)
 {
     Dic::Protocol::SummaryStatisticParams params;
+    params.rankId = "0";
     params.timeFlag = "time";
     params.stepId = ";";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, SummaryStatisticParamsTestRankIdInvaild)
+{
+    Dic::Protocol::SummaryStatisticParams params;
+    params.timeFlag = "time";
+    params.stepId = "0";
     std::string msg;
     EXPECT_EQ(params.CheckParams(msg), false);
 }
@@ -132,4 +143,90 @@ TEST_F(SummaryProtocolRequestTest, QueryExpertHotspotParamsTestVersionInvaild)
     params.version = ";";
     std::string msg;
     EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ParallelismArrangementParamTestClusterEmpty)
+{
+    ParallelismArrangement params;
+    params.clusterPath = "";
+    params.config.ppSize = 2; // set ppSize 2
+    params.config.tpSize = 2; // set tpSize 2
+    params.config.dpSize = 2; // set dpSize  2
+    params.dimension = "test";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ParallelismPerformanceParamTestDimenInvaild)
+{
+    ParallelismPerformance params;
+    params.dimension = "test";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ParallelismPerformanceParamTestOderbyInvaild)
+{
+    ParallelismPerformance params;
+    params.dimension = "ep-dp";
+    params.orderBy = ";";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ParallelismPerformanceParamTestStepInvaild)
+{
+    ParallelismPerformance params;
+    params.dimension = "ep-dp";
+    params.orderBy = "test";
+    params.step = "0";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ParallelismPerformanceParamTestBaselineStepInvaild)
+{
+    ParallelismPerformance params;
+    params.dimension = "ep-dp";
+    params.orderBy = "test";
+    params.step = "0";
+    params.baselineStep = ";";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ParallelismPerformanceParamTestClusterPathInvaild)
+{
+    ParallelismPerformance params;
+    params.dimension = "ep-dp";
+    params.orderBy = "test";
+    params.step = "0";
+    params.baselineStep = "1";
+    params.clusterPath = ";";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ParallelStrategyParamTestClusterPathEmpty)
+{
+    ParallelStrategyParam params;
+    params.clusterPath = ";";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, SetParallelStrategyParamTestConfigErr)
+{
+    SetParallelStrategyParam params;
+    params.config.dpSize = 1000; // set dpSize to 1000
+    std::string msg;
+    EXPECT_FALSE(params.CheckParams(msg));
+}
+
+TEST_F(SummaryProtocolRequestTest, SetParallelStrategyParamTestClusterPathErr)
+{
+    SetParallelStrategyParam params;
+    params.clusterPath = ";";
+    std::string msg;
+    EXPECT_FALSE(params.CheckParams(msg));
 }

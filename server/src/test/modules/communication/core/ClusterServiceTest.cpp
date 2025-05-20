@@ -8,6 +8,7 @@
 #include "ClusterFileParser.h"
 #include "DataBaseManager.h"
 #include "TimeUtil.h"
+#include "BaselineManager.h"
 
 using namespace Dic::Module::Communication;
 
@@ -65,6 +66,8 @@ TEST_F(ClusterServiceTest, QueryIterationsAllSuccess)
     InitParser(filePath, Dic::BASELINE);
     Dic::Protocol::IterationsRequest request;
     request.params.isCompare = true;
+    request.params.clusterPath = Dic::COMPARE;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     Dic::Protocol::IterationsOrRanksResponse response;
     ClusterService::QueryIterations(request, response);
     EXPECT_EQ(response.body.compare.size(), NUMBER_ONE);
@@ -79,6 +82,7 @@ TEST_F(ClusterServiceTest, QueryIterationsOnlyCompareSuccess)
     InitParser(filePath, Dic::COMPARE);
     Dic::Protocol::IterationsRequest request;
     request.params.isCompare = true;
+    request.params.clusterPath = Dic::COMPARE;
     Dic::Protocol::IterationsOrRanksResponse response;
     ClusterService::QueryIterations(request, response);
     EXPECT_EQ(response.body.compare.size(), NUMBER_ONE);
@@ -105,6 +109,8 @@ TEST_F(ClusterServiceTest, QueryGroupInfoAllSuccess)
     request.params.iterationId = "2";
     request.params.baselineIterationId = "2";
     request.params.isCompare = true;
+    request.params.clusterPath = Dic::COMPARE;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
     EXPECT_EQ(response.body.groupList.size(), NUMBER_TWENTY_EIGHT);
@@ -119,6 +125,7 @@ TEST_F(ClusterServiceTest, QueryGroupInfoOnlyCompareSuccess)
     request.params.iterationId = "2";
     request.params.baselineIterationId = "1";
     request.params.isCompare = true;
+    request.params.clusterPath = Dic::COMPARE;
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
     EXPECT_EQ(response.body.groupList.size(), NUMBER_TWENTY_EIGHT);
@@ -131,7 +138,8 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoSuccess)
     InitParser(filePath, Dic::COMPARE);
     InitParser(filePath, Dic::BASELINE);
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
-                                                  "2", "", true, "2"};
+                                                  "2", "", true, "2", Dic::COMPARE};
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
     EXPECT_EQ(body.matrixList.size(), NUMBER_TWO);
@@ -143,7 +151,7 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoFailOfDatabaseNotExist)
 {
     Clear();
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
-                                                  "2", "", true, "2"};
+                                                  "2", "", true, "2", Dic::COMPARE};
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
     EXPECT_EQ(body.matrixList.size(), NUMBER_ZERO);
@@ -159,6 +167,8 @@ TEST_F(ClusterServiceTest, QueryOperatorListSuccess)
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
     params.baselineIterationId = "2";
     params.isCompare = true;
+    params.clusterPath = Dic::COMPARE;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     Dic::Protocol::OperatorListsResponseBody body;
     ClusterService::QueryOperatorList(params, body);
     const uint64_t expectMaxTime = 11229980;
@@ -179,6 +189,7 @@ TEST_F(ClusterServiceTest, QueryOperatorListFailWithoutDb)
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
     params.isCompare = true;
+    params.clusterPath = Dic::COMPARE;
     Dic::Protocol::OperatorListsResponseBody body;
     ClusterService::QueryOperatorList(params, body);
     EXPECT_EQ(body.opLists.size(), NUMBER_ZERO);
@@ -194,6 +205,8 @@ TEST_F(ClusterServiceTest, QueryDurationListSuccess)
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
     params.baselineIterationId = "2";
     params.isCompare = true;
+    params.clusterPath = Dic::COMPARE;
+    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     Dic::Protocol::DurationListsResponseBody body;
     ClusterService::QueryDurationList(params, body);
     const double expectStartTime = 10.6855;
@@ -214,6 +227,7 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
     params.baselineIterationId = "2";
     params.isCompare = true;
+    params.clusterPath = Dic::COMPARE;
     Dic::Protocol::DurationListsResponseBody body;
     ClusterService::QueryDurationList(params, body);
     EXPECT_EQ(body.durationList.size(), NUMBER_ZERO);

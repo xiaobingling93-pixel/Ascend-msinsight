@@ -34,6 +34,9 @@ bool WsServer::Start()
 bool WsServer::Stop()
 {
     listenStart = false;
+    if (wsApp) {
+        wsApp->close();
+    }
     return true;
 }
 

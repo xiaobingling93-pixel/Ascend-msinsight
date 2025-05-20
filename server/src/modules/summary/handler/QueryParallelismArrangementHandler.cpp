@@ -21,7 +21,7 @@ bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol:
         SendResponse(std::move(responsePtr), false, err);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr) {
         SendResponse(std::move(responsePtr), false, "Failed to get connection for query parallelism arrangement.");
         return false;

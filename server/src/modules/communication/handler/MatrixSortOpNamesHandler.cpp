@@ -16,10 +16,10 @@ using namespace Dic::Server;
 
 bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    MatrixSortOpNamesRequest &request = dynamic_cast<MatrixSortOpNamesRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<MatrixSortOpNamesRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MatrixSortOpNamesResponse> responsePtr = std::make_unique<MatrixSortOpNamesResponse>();
-    MatrixSortOpNamesResponse &response = *responsePtr.get();
+    MatrixSortOpNamesResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // check request parameters
     std::string errorMsg;
@@ -27,7 +27,7 @@ bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryMatrixSortOpNames(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix sort op names response data.");

@@ -110,6 +110,7 @@ struct ProjectCheckValidResponse : public Response {
 struct BaselineSettingBody {
     std::string rankId;
     std::string host;
+    std::string cluster;
     std::string cardName;
     std::string errorMessage;
     bool isCluster = false;

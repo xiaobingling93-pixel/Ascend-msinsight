@@ -13,7 +13,7 @@ using namespace Global;
 
 bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
-    auto &request = dynamic_cast<BaselineSettingRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<BaselineSettingRequest &>(*requestPtr);
     std::unique_ptr<BaselineSettingResponse> responsePtr = std::make_unique<BaselineSettingResponse>();
     BaselineSettingResponse &response = *responsePtr;
     SetBaseResponse(request, response);
@@ -30,6 +30,7 @@ bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     response.body.errorMessage = baselineInfo.errorMessage;
     response.body.cardName = baselineInfo.cardName;
     response.body.isCluster = baselineInfo.isCluster;
+    response.body.cluster = baselineInfo.clusterBaseLine;
     SendResponse(std::move(responsePtr), res);
     return res;
 }

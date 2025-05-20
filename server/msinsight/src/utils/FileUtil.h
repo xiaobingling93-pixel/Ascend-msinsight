@@ -72,23 +72,25 @@ public:
         return true;
     }
 
-    static inline std::string SplicePath(const std::string &path, const std::string &fileName)
+    static inline std::string SplicePath(const std::string &path)
     {
-        if (path.empty()) {
-            return fileName;
-        }
-        std::string res(path);
+        return path;
+    }
+
+    template<typename... Args>
+    static inline std::string SplicePath(const std::string &first, Args... args)
+    {
+        std::string res(first);
 #ifdef _WIN32
-        if (path[path.size() - 1] != '/' && path[path.size() - 1] != '\\') {
-            res.append("\\");
+        if (!first.empty() && first[first.size() - 1] != '/' && first[first.size() - 1] != '\\') {
+            return first + "\\" + SplicePath(args...);
         }
 #else
-        if (path[path.size() - 1] != '/') {
-            res.append("/");
+        if (!first.empty() && first[first.size() - 1] != '/') {
+            return first + "/" + SplicePath(args...);
         }
 #endif
-        res.append(fileName);
-        return res;
+        return res + SplicePath(args...);
     }
 
     static inline std::string GetRealPath(const std::string &path)
@@ -491,6 +493,14 @@ public:
             return matchedFiles;
         }
         return FileUtil::FindFirstByRegex(path, 0, fileRegex);
+    }
+
+    inline static std::string StemFile(const std::string& fileName)
+    {
+        if (fileName.empty()) {
+            return "";
+        }
+        return fileName.substr(0, fileName.find_last_of('.'));
     }
 
     // 切分路径

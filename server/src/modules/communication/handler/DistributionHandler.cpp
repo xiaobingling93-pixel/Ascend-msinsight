@@ -16,11 +16,11 @@ using namespace Dic::Server;
 
 bool DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    Protocol::DistributionDataRequest &request =
-            dynamic_cast<Protocol::DistributionDataRequest &>(*requestPtr.get());
+    auto &request =
+            dynamic_cast<Protocol::DistributionDataRequest &>(*requestPtr);
     std::unique_ptr<Protocol::DistributionResponse> responsePtr =
             std::make_unique<Protocol::DistributionResponse>();
-    DistributionResponse &response = *responsePtr.get();
+    DistributionResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -30,7 +30,7 @@ bool DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryDistributionData(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication distribution data.");

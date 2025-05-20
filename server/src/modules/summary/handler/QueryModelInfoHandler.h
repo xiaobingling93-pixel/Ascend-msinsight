@@ -14,7 +14,7 @@ class QueryModelInfoHandler : public SummaryRequestHandler {
 public:
     QueryModelInfoHandler()
     {
-        command = Protocol::REQ_RES_IMPORT_EXPERT_DATA;
+        command = Protocol::REQ_RES_QUERY_MODEL_INFO;
     }
     ~QueryModelInfoHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;

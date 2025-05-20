@@ -24,6 +24,17 @@ public:
     std::string GetBaselineId();
     bool IsBaselineId(const std::string &rankId);
     void SetBaselineInfo(const BaselineInfo &baselineInfo);
+    std::string GetCompareClusterPath()
+    {
+        return compareClusterPath;
+    }
+
+    void SetCompareClusterPath(const std::string& clusterPath)
+    {
+        compareClusterPath = clusterPath;
+    }
+    void SetBaselineClusterPath(const std::string& clusterPath);
+    std::string GetBaseLineClusterPath();
     void Reset();
 
 private:
@@ -32,6 +43,8 @@ private:
     std::string baselineRankId;
     std::string baselineHost;
     std::string baselineCardName;
+    std::string baselineClusterPath;
+    std::string compareClusterPath;
     bool isCluster = false;
     std::shared_mutex sharedMutex;
 };

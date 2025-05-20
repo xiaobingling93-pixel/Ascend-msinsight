@@ -62,8 +62,8 @@ TEST_F(ExpertHotspotManagerTest, InitExpertHotspotDataSuccess)
 {
     InitParser(filePath, Dic::COMPARE);
     std::string error;
-    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData("decode", "1");
+    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error, COMPARE);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "decode", "1");
     const int exceptSize = 232;
     EXPECT_EQ(res.size(), exceptSize);
     Clear();
@@ -73,10 +73,10 @@ TEST_F(ExpertHotspotManagerTest, UpdateModelInfoSuccess)
 {
     InitParser(filePath, Dic::COMPARE);
     std::string error;
-    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error);
+    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error, COMPARE);
     Dic::Module::ModelInfo modelInfo{{0, 2}, 0, 0, 4, 61};
-    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(modelInfo, error);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData("decode", "1");
+    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(COMPARE, modelInfo, error);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "decode", "1");
     const int exceptSize = 244;
     const int numberZero = 0;
     const int exceptVisits = 35661;
@@ -96,8 +96,8 @@ TEST_F(ExpertHotspotManagerTest, QueryWithoutHotspotData)
     InitParser(filePath, Dic::COMPARE);
     std::string error;
     Dic::Module::ModelInfo modelInfo{{0, 2}, 0, 0, 4, 61};
-    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(modelInfo, error);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData("decode", "1");
+    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(COMPARE, modelInfo, error);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "decode", "1");
     const int exceptSize = 244;
     const int numberZero = 0;
     EXPECT_EQ(res.size(), exceptSize);
@@ -109,8 +109,8 @@ TEST_F(ExpertHotspotManagerTest, InitExpertDeploymentDataSuccess)
 {
     InitParser(filePath, Dic::COMPARE);
     std::string error;
-    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(deploymentPath, "1", error);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData("prefill", "1");
+    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(deploymentPath, "1", error, COMPARE);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "prefill", "1");
     const int exceptSize = 18560;
     EXPECT_EQ(res.size(), exceptSize);
     Clear();

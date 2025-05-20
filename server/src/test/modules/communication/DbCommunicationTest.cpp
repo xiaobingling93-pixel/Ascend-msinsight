@@ -8,10 +8,12 @@
 #include "DbClusterDataBase.h"
 #include "ClusterDomainObject.h"
 #include "ParamsParser.h"
-
+#include "PacketAnalyzer.h"
+#include "ByteAlignmentAnalyzer.h"
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
 using namespace Dic;
+using namespace Dic::Module::Communication;
 
 class DbCommunicationTest : public ::testing::Test {
 public:
@@ -405,4 +407,32 @@ TEST_F(DbCommunicationTest, QueryPacketAnalyzerDataTest)
     ASSERT_EQ(data.size(), expectSize);
     EXPECT_EQ(data[0].type, "SDMA");
     EXPECT_EQ(data[1].type, "SDMA");
+}
+
+TEST_F(DbCommunicationTest, PacketAnalyzerTest)
+{
+    PacketAnalyzer analyzer;
+    analyzer.QueryAdvisorData();
+    analyzer.ComputeStatistics();
+    CommunicationAdvisorInfo info;
+    analyzer.GenerateAdvisor(info);
+    EXPECT_EQ(info.name, "Packet Analysis");
+    EXPECT_EQ(info.statistics.size(), 6); // expect size 6
+    analyzer.AssembleAdvisor(info);
+    EXPECT_EQ(info.name, "Packet Analysis");
+    EXPECT_EQ(info.statistics.size(), 6); // expect size 6
+}
+
+TEST_F(DbCommunicationTest, ByteAlignmentAnalyzerTest)
+{
+    ByteAlignmentAnalyzer analyzer;
+    analyzer.QueryAdvisorData();
+    analyzer.ComputeStatistics();
+    CommunicationAdvisorInfo info;
+    analyzer.AssembleAdvisor(info);
+    EXPECT_EQ(info.name, "Byte Alignment Analysis");
+    EXPECT_EQ(info.statistics.size(), 2); // expect size 2
+    analyzer.GenerateAdvisor(info);
+    EXPECT_EQ(info.name, "Byte Alignment Analysis");
+    EXPECT_EQ(info.statistics.size(), 2); // expect size 2
 }

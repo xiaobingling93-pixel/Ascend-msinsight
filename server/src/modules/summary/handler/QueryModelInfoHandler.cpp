@@ -9,13 +9,17 @@
 namespace Dic::Module::Summary {
     bool QueryModelInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
-        QueryModelInfoRequest &request = dynamic_cast<QueryModelInfoRequest &>(*requestPtr.get());
+        auto &request = dynamic_cast<QueryModelInfoRequest &>(*requestPtr);
         std::unique_ptr<QueryModelInfoResponse> responsePtr = std::make_unique<QueryModelInfoResponse>();
-        QueryModelInfoResponse &response = *responsePtr.get();
+        QueryModelInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
         std::string errorMsg;
+        if (!request.params.CheckParams(errorMsg)) {
+            SendResponse(std::move(responsePtr), false, errorMsg);
+            return true;
+        }
         // 查询模型信息
-        ModelInfo modelInfo = ExpertHotspotManager::GetModelInfo();
+        ModelInfo modelInfo = ExpertHotspotManager::GetModelInfo(request.params.clusterPath);
         response.body.expertNum = modelInfo.expertNumber;
         response.body.denseLayerList = modelInfo.denseLayerList;
         response.body.layerNum = modelInfo.modelLayer;

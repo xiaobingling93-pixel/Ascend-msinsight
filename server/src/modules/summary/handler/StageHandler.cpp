@@ -11,10 +11,10 @@ namespace Summary {
 using namespace Dic::Server;
 bool StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    PipelineStageRequest &request = dynamic_cast<PipelineStageRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<PipelineStageRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<PipelineStageResponse> responsePtr = std::make_unique<PipelineStageResponse>();
-    PipelineStageResponse &response = *responsePtr.get();
+    PipelineStageResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // check request parameters
@@ -23,7 +23,7 @@ bool StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->GetStages(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get stage response data.");

@@ -6,6 +6,7 @@
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
+#include "WsSender.h"
 #include "CommunicationAdvisor.h"
 
 namespace Dic {
@@ -16,11 +17,16 @@ using namespace Dic::Server;
 
 bool CommunicationAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    Protocol::CommunicationAdvisorRequest &request =
-        dynamic_cast<Protocol::CommunicationAdvisorRequest &>(*requestPtr.get());
+    auto &request =
+        dynamic_cast<Protocol::CommunicationAdvisorRequest &>(*requestPtr);
     std::unique_ptr<Protocol::CommunicationAdvisorResponse> responsePtr =
         std::make_unique<Protocol::CommunicationAdvisorResponse>();
-    CommunicationAdvisorResponse &response = *responsePtr.get();
+    CommunicationAdvisorResponse &response = *responsePtr;
+    std::string errMsg;
+    if (!request.params.CheckParams(errMsg)) {
+        SendResponse(std::move(responsePtr), false, errMsg);
+        return false;
+    }
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     CommunicationAdvisor advisor;

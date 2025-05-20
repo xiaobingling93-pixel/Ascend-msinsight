@@ -16,10 +16,15 @@ using namespace Dic;
 using namespace Dic::Server;
 bool IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    IterationsRequest &request = dynamic_cast<IterationsRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<IterationsRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<IterationsOrRanksResponse> responsePtr = std::make_unique<IterationsOrRanksResponse>();
-    IterationsOrRanksResponse &response = *responsePtr.get();
+    IterationsOrRanksResponse &response = *responsePtr;
+    std::string errMsg;
+    if (!request.params.CheckParams(errMsg)) {
+        SendResponse(std::move(responsePtr), false, errMsg);
+        return false;
+    }
     SetBaseResponse(request, response);
     ClusterService::QueryIterations(request, response);
     SetResponseResult(response, true);

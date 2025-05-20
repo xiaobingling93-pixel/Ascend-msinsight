@@ -11,10 +11,10 @@ namespace Summary {
 using namespace Dic::Server;
 bool RankAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    PipelineRankTimeRequest &request = dynamic_cast<PipelineRankTimeRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<PipelineRankTimeRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<PipelineRankTimeResponse> responsePtr = std::make_unique<PipelineRankTimeResponse>();
-    PipelineRankTimeResponse &response = *responsePtr.get();
+    PipelineRankTimeResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // check request parameters
@@ -23,7 +23,7 @@ bool RankAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->GetRankAndBubble(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get time response data.");

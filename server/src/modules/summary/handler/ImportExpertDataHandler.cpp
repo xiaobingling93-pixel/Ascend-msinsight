@@ -11,9 +11,9 @@ namespace Module {
 namespace Summary {
 bool ImportExpertDataHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ImportExpertDataRequest &request = dynamic_cast<ImportExpertDataRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<ImportExpertDataRequest &>(*requestPtr);
     std::unique_ptr<ImportExpertDataResponse> responsePtr = std::make_unique<ImportExpertDataResponse>();
-    ImportExpertDataResponse &response = *responsePtr.get();
+    ImportExpertDataResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
@@ -21,7 +21,8 @@ bool ImportExpertDataHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
         return false;
     }
 
-    if (!ExpertHotspotManager::InitExpertHotspotData(request.params.filePath, request.params.version, errorMsg)) {
+    if (!ExpertHotspotManager::InitExpertHotspotData(request.params.filePath, request.params.version, errorMsg,
+                                                     request.params.clusterPath)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }

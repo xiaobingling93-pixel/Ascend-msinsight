@@ -10,16 +10,18 @@
 #include "CollectionUtil.h"
 #include "ClusterCovert.h"
 #include "NumberUtil.h"
+#include "BaselineManager.h"
 #include "ClusterService.h"
 
 namespace Dic {
 namespace Module {
 namespace Communication {
 using namespace Dic::Server;
+using namespace Dic::Module::Global;
 void ClusterService::QueryIterations(const Protocol::IterationsRequest &request,
                                      Protocol::IterationsOrRanksResponse &response)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryIterations(response.body.compare)) {
         ServerLog::Warn("Fail to query compare iterations info.");
     }
@@ -28,7 +30,8 @@ void ClusterService::QueryIterations(const Protocol::IterationsRequest &request,
         return;
     }
 
-    auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+    auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(
+        BaselineManager::Instance().GetBaseLineClusterPath());
     if (baselineDatabase == nullptr || !baselineDatabase->QueryIterations(response.body.baseline)) {
         ServerLog::Warn("Fail to query baseline iterations info.");
     }
@@ -37,13 +40,14 @@ void ClusterService::QueryIterations(const Protocol::IterationsRequest &request,
 void ClusterService::QueryGroupInfo(const Protocol::MatrixGroupRequest &request,
                                     Protocol::MatrixGroupResponse &response)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     std::vector<std::string> compareGroupList;
     if (database == nullptr || !database->GetGroups(request.params.iterationId, compareGroupList)) {
         ServerLog::Warn("Fail to query compare group info.");
     }
 
-    auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+    auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(
+        BaselineManager::Instance().GetBaseLineClusterPath());
     std::vector<std::string> baselineGroupList;
     if (request.params.isCompare) {
         if (baselineDatabase == nullptr ||
@@ -120,7 +124,7 @@ void ClusterService::MergeMatrixInfo(Protocol::MatrixListResponseBody &body, con
 
 void ClusterService::QueryMatrixInfo(Protocol::MatrixBandwidthParam &params, Protocol::MatrixListResponseBody &body)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(params.clusterPath);
     std::vector<MatrixInfoDo> compareMatrixList;
     std::vector<MatrixInfoDo> baselineMatrixList;
     Protocol::MatrixBandwidthParam compareParams{params.stage, params.operatorName, params.iterationId, params.pgName};
@@ -131,7 +135,8 @@ void ClusterService::QueryMatrixInfo(Protocol::MatrixBandwidthParam &params, Pro
     if (params.isCompare) {
         Protocol::MatrixBandwidthParam baselineParams{params.stage, params.operatorName,
                                                       params.baselineIterationId, params.pgName};
-        auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+        auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(
+            BaselineManager::Instance().GetBaseLineClusterPath());
         if (baselineDatabase == nullptr || !baselineDatabase->QueryMatrixList(baselineParams, baselineMatrixList)) {
             ServerLog::Error("Failed to get baseline matrix response data.");
         }
@@ -183,7 +188,7 @@ void ClusterService::MergeOperatorList(Protocol::OperatorListsResponseBody &body
 
 void ClusterService::QueryOperatorList(Protocol::DurationListParams &params, Protocol::OperatorListsResponseBody &body)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(params.clusterPath);
     std::vector<OperatorTimeDo> compareOperatorTimeList;
     std::vector<OperatorTimeDo> baselineOperatorTimeList;
     Protocol::DurationListParams compareParams(params);
@@ -194,7 +199,8 @@ void ClusterService::QueryOperatorList(Protocol::DurationListParams &params, Pro
     if (params.isCompare) {
         Protocol::DurationListParams baselineParams(params);
         baselineParams.iterationId = params.baselineIterationId;
-        auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+        auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(
+            BaselineManager::Instance().GetBaseLineClusterPath());
         if (baselineDatabase == nullptr ||
             !baselineDatabase->QueryOperatorList(baselineParams, baselineOperatorTimeList)) {
             ServerLog::Error("Failed to get baseline operator response data.");
@@ -284,7 +290,7 @@ void ClusterService::CalBandwidthData(Protocol::DurationListsResponseBody &body,
 
 void ClusterService::QueryDurationList(Protocol::DurationListParams &params, Protocol::DurationListsResponseBody &body)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(params.clusterPath);
     std::vector<DurationDo> compareDurationDoList;
     std::vector<DurationDo> baselineDurationDoList;
     Protocol::DurationListParams compareParams(params);
@@ -295,7 +301,8 @@ void ClusterService::QueryDurationList(Protocol::DurationListParams &params, Pro
     if (params.isCompare) {
         Protocol::DurationListParams baselineParams(params);
         baselineParams.iterationId = params.baselineIterationId;
-        auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+        auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(
+            BaselineManager::Instance().GetBaseLineClusterPath());
         if (baselineDatabase == nullptr ||
             !baselineDatabase->QueryDurationList(baselineParams, baselineDurationDoList)) {
             ServerLog::Error("Failed to get baseline during response data.");

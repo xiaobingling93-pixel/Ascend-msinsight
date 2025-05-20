@@ -17,7 +17,7 @@ using namespace Dic::Server;
 
 bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    Protocol::BandwidthDataRequest &request = dynamic_cast<Protocol::BandwidthDataRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<Protocol::BandwidthDataRequest &>(*requestPtr);
     std::unique_ptr<Protocol::BandwidthDataResponse> responsePtr =
             std::make_unique<Protocol::BandwidthDataResponse>();
     // check request parameters
@@ -26,11 +26,11 @@ bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    BandwidthDataResponse &response = *responsePtr.get();
+    BandwidthDataResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryBandwidthData(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication bandwidth data.");

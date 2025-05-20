@@ -6,10 +6,12 @@
 #include "TraceTime.h"
 #include "DataBaseManager.h"
 #include "CollectionUtil.h"
+#include "BaselineManager.h"
 
-namespace Dic {
-namespace Module {
-namespace Summary {
+using namespace Dic::Module::Summary;
+using namespace Dic::Module::Global;
+using namespace Dic::Protocol;
+using namespace Dic::Module;
 bool SummaryService::QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db)
 {
     // db在外层进行校验 必不为空
@@ -32,7 +34,7 @@ bool SummaryService::QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared
 }
 void SummaryService::QueryCompareSummaryBaseInfo(const SummaryTopRankRequest &request, SummaryTopRankResponse &response)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !QuerySummaryBaseInfo(response.body.baseInfo.compare, database)) {
         ServerLog::Warn("Fail to query compare summary base info");
     }
@@ -41,7 +43,8 @@ void SummaryService::QueryCompareSummaryBaseInfo(const SummaryTopRankRequest &re
         return;
     }
 
-    auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+    auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(
+        BaselineManager::Instance().GetBaseLineClusterPath());
     if (baselineDatabase == nullptr || !QuerySummaryBaseInfo(response.body.baseInfo.baseline, baselineDatabase)) {
         ServerLog::Warn("Fail to query baseline summary base info");
     }
@@ -130,7 +133,7 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
                                                      PerformanceIndicatorData &indicatorData)
 {
     // 查询compare数据
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(params.clusterPath);
     GetPerformanceIndicatorParam indicatorParam{params.step,  params.dimension, params.config};
     std::vector<IndicatorDataStruct> compareIndicatorData = GetPerformanceDataByDimension(database,
                                                                                           indicatorParam);
@@ -140,7 +143,8 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
     std::vector<IndicatorDataStruct> baselineIndicatorData;
     std::unordered_map<std::string, std::vector<CommInfoUnderRank>> baselineCommInfo;
     if (params.isCompare) {
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetClusterDatabase(
+            BaselineManager::Instance().GetBaseLineClusterPath());
         GetPerformanceIndicatorParam baselineParams{params.baselineStep, params.dimension, params.config};
         baselineIndicatorData = GetPerformanceDataByDimension(databaseBaseline, baselineParams);
         baselineCommInfo = QueryParallelismCommTime(databaseBaseline, baselineParams);
@@ -267,7 +271,4 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
         }
     }
     return res;
-}
-}
-}
 }
