@@ -27,6 +27,7 @@ const std::vector<std::string> componentTableColumn = {
 const std::vector<std::string> staticOperatorTableColumn = {
     "device_id", "op_name", "node_index_start", "node_index_end", "size"
 };
+const uint64_t MAX_LEAKS_MEMORY_BLOCK_SIZE = 1 * 1024 * 1024 * 1024;
 
 struct MemoryOperatorParams {
     std::string rankId;
@@ -283,6 +284,72 @@ struct MemoryFindSliceParams {
         }
         return true;
     }
+};
+
+// leaks部分
+struct LeaksMemoryBlockParams {
+    uint64_t startTimestamp;
+    uint64_t endTimestamp;
+    uint64_t minSize;
+    uint64_t maxSize;
+    std::string deviceId;
+    bool relativeTime;
+
+    LeaksMemoryBlockParams()
+        : startTimestamp(0), endTimestamp(0), minSize(0), maxSize(0), relativeTime(false) {}
+
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (minSize > maxSize) {
+            errorMsg = "[minSize] must be less than [maxSize].";
+            return false;
+        }
+        if (maxSize > MAX_LEAKS_MEMORY_BLOCK_SIZE) {
+            errorMsg = "The maximum size (maxSize = " + std::to_string(maxSize) + ") exceeds "
+                    + std::to_string(MAX_LEAKS_MEMORY_BLOCK_SIZE) + ".";
+            return false;
+        }
+        if (startTimestamp > endTimestamp) {
+            errorMsg = "[startTimestamp] must be preceed [endTimestamp].";
+            return false;
+        }
+        if (!CheckStrParamValid(deviceId, errorMsg)) {
+            return false;
+        }
+        return true;
+    }
+};
+
+struct LeaksMemoryAllocationParams {
+    uint64_t startTimestamp;
+    uint64_t endTimestamp;
+    std::string deviceId;
+    bool optimized;
+    bool relativeTime;
+
+    LeaksMemoryAllocationParams() : startTimestamp(0), endTimestamp(0), optimized(false), relativeTime(false) {}
+
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (startTimestamp > endTimestamp) {
+            errorMsg = "The start timestamp (startTimestamp) should be less than the end timestamp (endTimestamp).";
+            return false;
+        }
+        if (!CheckStrParamValid(deviceId, errorMsg)) {
+            return false;
+        }
+        return true;
+    }
+};
+
+struct LeaksMemoryBlockRequest : public Request {
+    LeaksMemoryBlockRequest() : Request(REQ_RES_LEAKS_MEMORY_BLOCKS){};
+    LeaksMemoryBlockParams params;
+};
+
+struct LeaksMemoryAllocationRequest : public Request {
+    LeaksMemoryAllocationRequest() : Request(REQ_RES_LEAKS_MEMORY_ALLOCATIONS){};
+    LeaksMemoryAllocationParams params;
 };
 
 struct MemoryFindSliceRequest : public Request {

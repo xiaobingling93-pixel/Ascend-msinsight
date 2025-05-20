@@ -227,6 +227,9 @@ void DataBaseManager::Clear(DatabaseType type)
         case DatabaseType::MEMORY:
             memoryDatabaseMap.clear();
             break;
+        case DatabaseType::LEAKS:
+            leaksMemoryDatabaseMap.clear();
+            break;
         default:
             break;
     }
@@ -412,6 +415,26 @@ bool DataBaseManager::IsContainDatabasePath(const std::string &databasePath)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex);
     return (databasePathSet.count(databasePath) > 0);
+}
+
+std::shared_ptr<FullDb::LeaksMemoryDatabase> DataBaseManager::GetLeaksMemoryDatabase(const std::string &fileId)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (leaksMemoryDatabaseMap.count(fileId) == 0) {
+        std::recursive_mutex &dbMutex = GetDbMutex(fileId);
+        leaksMemoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::LeaksMemoryDatabase>(dbMutex));
+    }
+    return leaksMemoryDatabaseMap[fileId];
+}
+
+std::vector<FullDb::LeaksMemoryDatabase *> DataBaseManager::GetAllLeaksMemoryDatabase()
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::vector<FullDb::LeaksMemoryDatabase *> leaksDatabases;
+    for (auto &leaksDatabase : leaksMemoryDatabaseMap) {
+        leaksDatabases.emplace_back(leaksDatabase.second.get());
+    }
+    return leaksDatabases;
 }
 } // end of namespace Timeline
 } // end of namespace Module

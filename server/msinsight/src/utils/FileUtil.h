@@ -54,7 +54,7 @@ namespace fs = std::filesystem;
 namespace Dic {
 const std::string DB_REG =
         R"(((msprof_[0-9]{1,16}|((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1})|)"
-        R"(((ascend_mindspore_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis)\.db$))";
+        R"(((ascend_mindspore_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis|leaks_dump_\d+)\.db$))";
 class FileUtil {
 public:
     static inline bool CheckDirAccess(const std::string &path, const int &mode = 0)

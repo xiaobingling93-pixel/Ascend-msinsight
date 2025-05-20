@@ -63,10 +63,62 @@ struct Component {
     std::string device;
 };
 
+// leaks memory部分
+struct MemoryEvent {
+    uint64_t id;
+    std::string event;
+    std::string eventType;
+    std::string name;
+    uint64_t timestamp;
+    uint64_t processId;
+    uint64_t threadId;
+    std::string deviceId;
+    std::string ptr;
+    std::string attr;
+    int64_t size;
+};
+struct MemoryAllocation {
+    uint64_t id;
+    uint64_t timestamp;
+    uint64_t totalSize;
+    std::string deviceId;
+    bool optimized;
+
+    MemoryAllocation() = default;
+    MemoryAllocation(uint64_t timestamp, uint64_t totalSize, std::string deviceId, bool optimized)
+        : id(0),
+          timestamp(timestamp),
+          totalSize(totalSize),
+          deviceId(std::move(deviceId)),
+          optimized(optimized) {}
+};
+
+struct MemoryBlock {
+    uint64_t id;
+    std::string ptr;
+    std::string deviceId;
+    uint64_t size;
+    uint64_t startTimestamp;
+    uint64_t endTimestamp;
+    std::string owner;
+    std::string otherAttr;
+
+    MemoryBlock() = default;
+    MemoryBlock(std::string ptr, std::string deviceId, uint64_t size, uint64_t startTs, uint64_t endTs,
+                std::string owner, std::string otherAttr)
+        : id(0),
+          ptr(std::move(ptr)),
+          deviceId(std::move(deviceId)),
+          size(size),
+          startTimestamp(startTs),
+          endTimestamp(endTs),
+          owner(std::move(owner)),
+          otherAttr(std::move(otherAttr)) {}
+};
 // Type类型字段
-const std::string MEMORY_TYPE_DYNAMIC = "dynamic"; // 纯动态图数据
-const std::string MEMORY_TYPE_STATIC = "static"; // 纯静态图数据
-const std::string MEMORY_TYPE_MIX = "mix"; // 存在动态图数据以及静态子图数据
+const std::string MEMORY_TYPE_DYNAMIC = "dynamic";  // 纯动态图数据
+const std::string MEMORY_TYPE_STATIC = "static";    // 纯静态图数据
+const std::string MEMORY_TYPE_MIX = "mix";          // 存在动态图数据以及静态子图数据
 
 // Resource Type类型字段
 const std::string MEMORY_RESOURCE_TYPE_PYTORCH = "Pytorch";
@@ -137,6 +189,6 @@ const std::vector<std::string> OPERATOR_MEMORY_HEADER = {
 
 // default page size
 const uint64_t DEFAULT_PAGE_SIZE = 10;
-} // end of namespace Dic::Module::Memory
+}  // end of namespace Dic::Module::Memory
 
-#endif // PROFILER_SERVER_MEMORYDEF_H
+#endif  // PROFILER_SERVER_MEMORYDEF_H

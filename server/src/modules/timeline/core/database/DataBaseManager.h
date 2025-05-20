@@ -14,15 +14,18 @@
 #include "DbTraceDataBase.h"
 #include "TextClusterDatabase.h"
 #include "VirtualMemoryDataBase.h"
+#include "LeaksMemoryDatabase.h"
 #include "KernelParse.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
+using namespace Dic::Module::FullDb;
 enum class DatabaseType {
     TRACE,
     SUMMARY,
-    MEMORY
+    MEMORY,
+    LEAKS
 };
 enum class DataType {
     TEXT,
@@ -30,7 +33,8 @@ enum class DataType {
 };
 enum class FileType {
     MS_PROF,
-    PYTORCH
+    PYTORCH,
+    LEAKS
 };
 class DataBaseManager {
 public:
@@ -56,6 +60,8 @@ public:
     std::shared_ptr<Memory::VirtualMemoryDataBase> GetMemoryDatabase(const std::string &fileId);
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
 
+    std::shared_ptr<FullDb::LeaksMemoryDatabase> GetLeaksMemoryDatabase(const std::string &fileId);
+    std::vector<FullDb::LeaksMemoryDatabase *> GetAllLeaksMemoryDatabase();
     std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabase(const std::string &fileId);
     std::vector<Summary::VirtualSummaryDataBase *> GetAllSummaryDatabase();
 
@@ -94,6 +100,7 @@ private:
     std::map<std::string, std::shared_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
+    std::map<std::string, std::shared_ptr<FullDb::LeaksMemoryDatabase>> leaksMemoryDatabaseMap;
     std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
     FileType baselineFileType = FileType::PYTORCH;

@@ -133,6 +133,9 @@ const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH = "Memory/view/staticOpM
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST = "Memory/view/staticOpMemoryList";
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX = "Memory/view/staticOpMemorySize";
 const std::string REQ_RES_MEMORY_FIND_SLICE = "Memory/find/slice";
+// memory leaks
+const std::string REQ_RES_LEAKS_MEMORY_BLOCKS = "Memory/leaks/blocks";
+const std::string REQ_RES_LEAKS_MEMORY_ALLOCATIONS = "Memory/leaks/allocation";
 
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";
