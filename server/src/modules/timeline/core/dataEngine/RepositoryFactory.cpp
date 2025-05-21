@@ -5,6 +5,7 @@
 #include "OverlapAnsRepo.h"
 #include "CannApiRepo.h"
 #include "PythonApiRepo.h"
+#include "OSRTApiRepo.h"
 #include "MstxRepo.h"
 #include "PythonGcRepo.h"
 #include "TextRepository.h"
@@ -18,6 +19,7 @@ RepositoryFactory::RepositoryFactory()
     sliceRespoMap.emplace(PROCESS_TYPE::OVERLAP_ANALYSIS, std::make_unique<OverlapAnsRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::CANN_API, std::make_unique<CannApiRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::API, std::make_unique<PythonApiRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::OSRT_API, std::make_unique<OSRTApiRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::MS_TX, std::make_unique<MstxRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::PYTHON_GC, std::make_unique<PythonGcRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::TEXT, std::make_unique<TextRepository>());

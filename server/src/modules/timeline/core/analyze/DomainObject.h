@@ -148,6 +148,7 @@ enum class PROCESS_TYPE {
     HOST_DISK_USAGE,
     HOST_MEM_USAGE,
     HOST_NETWORK_USAGE,
+    OSRT_API,
     MS_TX,
     TEXT,
     NONE,

@@ -25,6 +25,7 @@ namespace Dic {
     const static std::string TABLE_API = "PYTORCH_API";
     const static std::string TABLE_PYTORCH_CALLCHAINS = "PYTORCH_CALLCHAINS";
     const static std::string TABLE_CANN_API = "CANN_API";
+    const static std::string TABLE_OSRT_API = "OSRT_API";
     const static std::string TABLE_MSTX_EVENTS = "MSTX_EVENTS";
     const static std::string GC_RECORD = "GC_RECORD";
     const static std::string TABLE_COMMUNICATION_SCHEDULE_TASK = "COMMUNICATION_SCHEDULE_TASK_INFO";

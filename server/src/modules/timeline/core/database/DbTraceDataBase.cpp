@@ -1313,7 +1313,7 @@ bool DbTraceDataBase::SetConfig()
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    PROCESS_TYPE types[] = {PROCESS_TYPE::CANN_API, PROCESS_TYPE::API, PROCESS_TYPE::MS_TX,
+    PROCESS_TYPE types[] = {PROCESS_TYPE::CANN_API, PROCESS_TYPE::API, PROCESS_TYPE::OSRT_API, PROCESS_TYPE::MS_TX,
                             PROCESS_TYPE::PYTHON_GC};
     std::map<std::string, std::vector<MetaDataDto>> threadMap;
     for (const auto &type : types) {
@@ -1321,22 +1321,19 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
         std::string sql;
         switch (type) {
             case PROCESS_TYPE::CANN_API:
-                sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from " + typeName +
-                    " a join ENUM_API_TYPE EAL on a.type = EAL.id "
-                    " group by type, globalTid order by globalTid, type desc";
+                sql = QUERY_HOST_METADATA_CANN_SQL;
                 break;
             case PROCESS_TYPE::API:
-                sql = " select 'pytorch' as name, globalTid, 'pytorch' as type,"
-                    " max(depth) as maxDepth from " +
-                    typeName + " a group by globalTid order by globalTid";
+                sql = QUERY_HOST_METADATA_PYTORCH_SQL;
+                break;
+            case PROCESS_TYPE::OSRT_API:
+                sql = QUERY_HOST_METADATA_OSRT_SQL;
                 break;
             case PROCESS_TYPE::MS_TX:
-                sql = "select 'MsTx' as name, globalTid,'MsTx' as type, max(depth) as maxDepth from MSTX_EVENTS a "
-                      " group by globalTid order by globalTid";
+                sql = QUERY_HOST_METADATA_MSTX_SQL;
                 break;
             case PROCESS_TYPE::PYTHON_GC:
-                sql = "select 'Python GC' as name, globalTid,'Python GC' as type,  0 as maxDepth from GC_RECORD a "
-                      " group by globalTid order by globalTid";
+                sql = QUERY_HOST_METADATA_PYTHONGC_SQL;
                 break;
             default:
                 return false;

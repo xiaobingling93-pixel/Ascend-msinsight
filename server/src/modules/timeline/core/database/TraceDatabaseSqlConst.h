@@ -100,6 +100,24 @@ const std::string QUERY_FWDBWD_FLOW_DATA_SQL =
     "FROM possibleData d1 JOIN possibleData d2 ON d2.rowNum = d1.rowNum + 1 \n"
     "WHERE d1.prevFpStart >= ? AND d1.prevFpStart <= ?";
 
+const std::string QUERY_HOST_METADATA_CANN_SQL =
+    " select EAL.name, globalTid, type, max(depth) as maxDepth from CANN_API"
+    " a join ENUM_API_TYPE EAL on a.type = EAL.id "
+    " group by type, globalTid order by globalTid, type desc";
+const std::string QUERY_HOST_METADATA_PYTORCH_SQL =
+    " select 'pytorch' as name, globalTid, 'pytorch' as type,"
+    " max(depth) as maxDepth from PYTORCH_API"
+    " a group by globalTid order by globalTid";
+const std::string QUERY_HOST_METADATA_OSRT_SQL =
+    "SELECT 'OS Runtime API' AS name, globalTid, 'OS Runtime API' AS type, 0 AS maxDepth FROM OSRT_API"
+    " a GROUP BY globalTid ORDER BY globalTid";
+const std::string QUERY_HOST_METADATA_MSTX_SQL =
+    "select 'MsTx' as name, globalTid,'MsTx' as type, max(depth) as maxDepth from MSTX_EVENTS a "
+    " group by globalTid order by globalTid";
+const std::string QUERY_HOST_METADATA_PYTHONGC_SQL =
+    "select 'Python GC' as name, globalTid,'Python GC' as type,  0 as maxDepth from GC_RECORD a "
+    " group by globalTid order by globalTid";
+
 // 兼容老版本（1.0.0）
     const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_1_0_SQL =
         "SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM " + TABLE_COMMUNICATION_TASK_INFO + " "

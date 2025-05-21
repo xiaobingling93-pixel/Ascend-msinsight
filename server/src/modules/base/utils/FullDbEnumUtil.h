@@ -21,6 +21,7 @@ const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWA
                                                    { PROCESS_TYPE::OVERLAP_ANALYSIS, "OVERLAP_ANALYSIS"},
                                                    { PROCESS_TYPE::CANN_API, "CANN_API" },
                                                    { PROCESS_TYPE::API, "PYTORCH_API" },
+                                                   { PROCESS_TYPE::OSRT_API, "OSRT_API"},
                                                    { PROCESS_TYPE::LLC, "LLC" },
                                                    { PROCESS_TYPE::PCIE, "PCIE" },
                                                    { PROCESS_TYPE::ROCE, "RoCE" },
