@@ -556,6 +556,32 @@ TEST_F(FullDbTestSuit, QueryInsightAsyncNpuFlowCategoryEvents)
     EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
 }
 
+TEST_F(FullDbTestSuit, QueryCANNSliceByNameListSuccess)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    std::vector<CompeteSliceDomain> res =
+        renderEngine->QuerySliceDetailByNameList("FullDb", DataType::DB, "CANN", {"aclrtGetDeviceCount"});
+    const int expectedSize = 1;
+    EXPECT_EQ(res.size(), expectedSize);
+}
+
+TEST_F(FullDbTestSuit, QueryHardwareSliceByNameListSuccess)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    std::vector<CompeteSliceDomain> res = renderEngine->QuerySliceDetailByNameList("FullDb", DataType::DB,
+        "Ascend Hardware", {"aclnnInplaceZero_ZerosLikeAiCore_ZerosLike"});
+    const int expectedSize = 1;
+    EXPECT_EQ(res.size(), expectedSize);
+}
+
 TEST_F(FullDbTestSuit, QueryUnitFLows)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");

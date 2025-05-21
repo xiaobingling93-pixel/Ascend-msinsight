@@ -52,6 +52,13 @@ struct SliceQuery {
     }
 };
 
+struct SliceQueryByNameList {
+    std::string rankId;
+    std::string processName;
+    std::vector<std::string> nameList;
+    PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
+};
+
 struct FlowQuery {
     uint64_t trackId = 0;
     /* *

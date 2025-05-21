@@ -7,6 +7,9 @@
 #include <string>
 #include "ClusterDef.h"
 #include "VirtualClusterDatabase.h"
+#include "ConnectionPool.h"
+#include "DataBaseManager.h"
+
 namespace Dic {
 namespace Module {
 namespace Summary {
@@ -27,6 +30,7 @@ public:
             const std::string &modelStage, const std::string &version);
     static ModelInfo GetModelInfo(const std::string &clusterPath);
     static bool UpdateModelInfo(const std::string &clusterPath, ModelInfo &newModelInfo, std::string &errorMsg);
+    static bool UpdateHeatMapFromProfiling();
 private:
     static bool FillExpertInfo(std::vector<ExpertHotspotStruct> &hotspotInfos, const ModelInfo &modelInfo,
                                const std::vector<ExpertDeploymentStruct> &deployment);
@@ -42,6 +46,7 @@ private:
     static bool FillHotspotData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
     static bool FillDeploymentData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
     static void FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
+    static bool ExtractHeatMapFromTraceDb(const std::string &fileId, const FullDb::DataType &dataType);
 };
 }
 }

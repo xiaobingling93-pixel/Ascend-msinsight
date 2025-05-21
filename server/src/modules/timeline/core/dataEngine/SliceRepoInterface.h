@@ -71,6 +71,17 @@ public:
     {
         return false;
     }
+
+    /**
+     * 根据算子名查询算子明细列表
+     * @param res
+     * @return
+     */
+    virtual bool QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                                std::vector<CompeteSliceDomain> &res)
+    {
+        return false;
+    }
 };
 }
 #endif // PROFILER_SERVER_SLICERESPOTERFACE_H

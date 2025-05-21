@@ -191,4 +191,18 @@ bool DataEngine::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, Comp
     }
     return sliceRespo->QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
 }
+
+bool DataEngine::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                                std::vector<CompeteSliceDomain> &res)
+{
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query slice by name list.The data engine is not assembled.");
+        return false;
+    }
+    auto sliceRespo = respotoryFactory->GetSliceRespo(params.metaType);
+    if (sliceRespo == nullptr) {
+        return false;
+    }
+    return sliceRespo->QuerySliceDetailInfoByNameList(params, res);
+}
 }

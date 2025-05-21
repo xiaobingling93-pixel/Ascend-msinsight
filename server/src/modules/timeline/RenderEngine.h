@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_RENDERENGINE_H
 #include <unordered_set>
 #include "RenderEngineInterface.h"
+#include "DataBaseManager.h"
 namespace Dic::Module::Timeline {
 class RenderEngine : public RenderEngineInterface {
 public:
@@ -29,6 +30,8 @@ public:
         Protocol::UnitThreadDetailBody &responseBody, uint64_t trackId) override;
     CompeteSliceDomain FindSliceByTimePoint(const std::string &fileId, const std::string &name, uint64_t timePoint,
         const std::string &metaType) override;
+    std::vector<CompeteSliceDomain> QuerySliceDetailByNameList(const std::string &fileId,
+        const DataType &type, const std::string &processName, const std::vector<std::string> &nameList);
 
 private:
     std::shared_ptr<DataEngineInterface> dataEngine = nullptr;

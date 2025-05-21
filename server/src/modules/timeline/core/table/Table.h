@@ -137,7 +137,7 @@ public:
             }
         }
         if (!sqlInject) {
-            std::string inputStr = StringUtil::join(inputs, ", ");
+            std::string inputStr = StringUtil::Join4SqlGroup(inputs);
             ConditionStr() += inputStr;
         }
         ConditionStr() += " ) ";

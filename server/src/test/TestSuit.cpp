@@ -14,6 +14,9 @@
 #include "MemoryParse.h"
 #include "TimeUtil.h"
 #include "WsSessionImpl.h"
+#include "RepositoryFactory.h"
+#include "DataEngine.h"
+#include "RenderEngine.h"
 
 
 using namespace Dic::Module::Timeline;
@@ -93,5 +96,15 @@ public:
     {
         ::testing::InitGoogleTest(&argc, argv);
         return RUN_ALL_TESTS();
+    }
+
+    static std::shared_ptr<RenderEngine> GetRenderEngine()
+    {
+        auto respotoryFactory = RepositoryFactory::Instance();
+        auto dataEngine = DataEngine::Instance();
+        dataEngine->SetRepositoryFactory(respotoryFactory);
+        auto renderEngine = RenderEngine::Instance();
+        renderEngine->SetDataEngineInterface(dataEngine);
+        return renderEngine;
     }
 };

@@ -74,6 +74,21 @@ template <> inline std::optional<PROCESS_TYPE> STR_TO_ENUM<PROCESS_TYPE>(const s
 {
     return TryGetEnum<PROCESS_TYPE>(PROCESS_TYPE_ES, s);
 }
+
+
+const std::map<std::string, PROCESS_TYPE> PROCESS_NAME_MAP_TO_PROCESS_TYPE = {
+    { "Ascend Hardware", PROCESS_TYPE::ASCEND_HARDWARE },
+    { "CANN", PROCESS_TYPE::CANN_API }
+};
+
+inline PROCESS_TYPE PROCESS_NAME_TO_TYPE(const std::string processName)
+{
+    if (PROCESS_NAME_MAP_TO_PROCESS_TYPE.count(processName) == 0) {
+        return PROCESS_TYPE::NONE;
+    }
+    return PROCESS_NAME_MAP_TO_PROCESS_TYPE.at(processName);
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

@@ -250,6 +250,15 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     EXPECT_EQ(flowDetailList[0]->to.tid, "0"); // to.tid = 0
 }
 
+TEST_F(TestSuit, QuerySliceDetailByNameListSuccess)
+{
+    auto renderEngine = GetRenderEngine();
+    std::vector<CompeteSliceDomain> res =
+        renderEngine->QuerySliceDetailByNameList("0", DataType::TEXT, "CANN", {"AscendCL@aclrtRecordEvent"});
+    const int expectedSize = 115;
+    EXPECT_EQ(res.size(), expectedSize);
+}
+
 TEST_F(TestSuit, QueryFlowCategoryEventsWithLockRange)
 {
     auto respotoryFactory = RepositoryFactory::Instance();

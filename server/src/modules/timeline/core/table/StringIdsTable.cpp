@@ -24,4 +24,18 @@ std::unordered_map<uint64_t, std::string> StringIdsTable::QueryStrMap(const std:
     }
     return res;
 }
+
+std::unordered_map<uint64_t, std::string> StringIdsTable::QueryStrMapByValues(const std::vector<std::string> &values,
+                                                                              const std::string &fileId)
+{
+    std::unordered_map<uint64_t, std::string> res;
+    std::vector<StringIdsPO> stringIdsPOs;
+    Select(StringIdsColumn::ID, StringIdsColumn::VALUE)
+        .In(StringIdsColumn::VALUE, values)
+        .ExcuteQuery(fileId, stringIdsPOs);
+    for (const auto &item : stringIdsPOs) {
+        res[item.id] = item.value;
+    }
+    return res;
+}
 }

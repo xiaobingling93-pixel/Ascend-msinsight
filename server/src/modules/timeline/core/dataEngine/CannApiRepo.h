@@ -23,6 +23,8 @@ public:
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
     void SetCannApiTable(std::unique_ptr<CannApiTable>);
+    bool QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                        std::vector<CompeteSliceDomain> &res) override;
 
 protected:
     std::unique_ptr<EnumApiTypeTable> apiTypeTable = std::make_unique<EnumApiTypeTable>();

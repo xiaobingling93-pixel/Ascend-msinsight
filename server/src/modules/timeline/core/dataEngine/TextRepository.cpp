@@ -1,10 +1,13 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+#include <algorithm>
+#include "ProcessTable.h"
 #include "SliceTable.h"
 #include "FlowTable.h"
 #include "ThreadTable.h"
 #include "KernelDetailTable.h"
 #include "TrackInfoManager.h"
 #include "TextRepository.h"
+
 namespace Dic::Module::Timeline {
 void TextRepository::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
     std::vector<SliceDomain> &sliceVec)
@@ -231,6 +234,53 @@ bool TextRepository::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteS
         QueryShapeInfoBySlice(sliceQuery, competeSliceDomain);
     }
     return success;
+}
+
+bool TextRepository::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                                    std::vector<CompeteSliceDomain> &res)
+{
+    // 从process表查询pid
+    ProcessTable processTable;
+    std::vector<ProcessPO> processPOS;
+    processTable.Select(ProcessColumn::PID)
+        .Eq(ProcessColumn::PROCESS_NAME, params.processName)
+        .ExcuteQuery(params.rankId, processPOS);
+    if (processPOS.empty()) {
+        return false;
+    }
+    std::vector<std::string> pidList;
+    std::transform(processPOS.begin(), processPOS.end(), std::back_inserter(pidList),
+        [](ProcessPO process) { return process.pid; });
+
+    // 根据pid去查询track_id列表
+    ThreadTable threadTable;
+    std::vector<ThreadPO> threadPOVec;
+    threadTable.Select(ThreadColumn::TRACK_ID)
+        .In(ThreadColumn::PID, pidList)
+        .ExcuteQuery(params.rankId, threadPOVec);
+    if (threadPOVec.empty()) {
+        return false;
+    }
+    std::vector<uint64_t> trackIdList;
+    std::transform(threadPOVec.begin(), threadPOVec.end(), std::back_inserter(trackIdList),
+                   [](ThreadPO thread) { return thread.trackId; });
+
+    // 根据track id和算子名查询结果数据
+    SliceTable sliceTable;
+    std::vector<SlicePO> slicePOVec;
+    sliceTable.Select(SliceColumn::TIMESTAMP, SliceColumn::DURATION, SliceColumn::NAME)
+        .In(SliceColumn::TRACKID, trackIdList)
+        .In(SliceColumn::NAME, params.nameList)
+        .OrderBy(SliceColumn::TIMESTAMP, TableOrder::ASC)
+        .ExcuteQuery(params.rankId, slicePOVec);
+    for (const auto &item: slicePOVec) {
+        CompeteSliceDomain domain;
+        domain.timestamp = item.timestamp;
+        domain.name = item.name;
+        domain.duration = item.duration;
+        res.push_back(domain);
+    }
+    return true;
 }
 
 bool TextRepository::QuerySliceDetailById(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) const

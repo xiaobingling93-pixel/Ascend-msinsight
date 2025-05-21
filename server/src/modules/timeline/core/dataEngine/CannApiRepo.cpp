@@ -99,4 +99,32 @@ bool CannApiRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSlic
     competeSliceDomain.args = JsonUtil::JsonDump(json);
     return true;
 }
+
+bool CannApiRepo::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                                 std::vector<CompeteSliceDomain> &res)
+{
+    // 根据名字查询stringId的内容
+    std::unordered_map<uint64_t, std::string> strMap =
+            stringIdsTable->QueryStrMapByValues(params.nameList, params.rankId);
+    if (strMap.empty()) {
+        return false;
+    }
+    std::vector<uint64_t> stringIds;
+    std::transform(strMap.begin(), strMap.end(), std::back_inserter(stringIds),
+        [](const std::pair<uint64_t, std::string>& pair) { return pair.first; });
+    // 根据stringIds查询算子
+    std::vector<CannApiPO> cannApipoVec;
+    cannApiTable->Select(CannApiColumn::NAME, CannApiColumn::TIMESTAMP, CannApiColumn::ENDTIME)
+            .In(CannApiColumn::NAME, stringIds)
+            .OrderBy(CannApiColumn::TIMESTAMP, TableOrder::ASC)
+            .ExcuteQuery(params.rankId, cannApipoVec);
+    for (const auto &item: cannApipoVec) {
+        CompeteSliceDomain domain;
+        domain.name = strMap[item.name];
+        domain.timestamp = item.timestamp;
+        domain.endTime = item.endTime;
+        res.push_back(domain);
+    }
+    return true;
+}
 }

@@ -39,7 +39,8 @@ public:
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
 
     bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
-
+    bool QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                        std::vector<CompeteSliceDomain> &res) override;
 private:
     std::shared_ptr<RepositoryFactoryInterface> respotoryFactory = nullptr;
 };

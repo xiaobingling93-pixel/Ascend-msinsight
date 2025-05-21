@@ -181,6 +181,20 @@ void RenderEngine::ComputeSimulationFlows(const FlowCategoryEventsParams &params
     ServerLog::Info("Query Simulation flow category events. size:", flowDetailList.size());
 }
 
+std::vector<CompeteSliceDomain> RenderEngine::QuerySliceDetailByNameList(const std::string &fileId,
+    const DataType &type, const std::string &processName, const std::vector<std::string> &nameList)
+{
+    if (processName.empty() || nameList.empty()) {
+        ServerLog::Warn("Fail to query slice detail by name list");
+        return {};
+    }
+    PROCESS_TYPE processType = type == DataType::TEXT ? PROCESS_TYPE::TEXT : PROCESS_NAME_TO_TYPE(processName);
+    SliceQueryByNameList sliceQuery{fileId, processName, nameList, processType};
+    std::vector<CompeteSliceDomain> res;
+    dataEngine->QuerySliceDetailInfoByNameList(sliceQuery, res);
+    return res;
+}
+
 void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, UnitThreadDetailBody &responseBody,
     uint64_t trackId)
 {

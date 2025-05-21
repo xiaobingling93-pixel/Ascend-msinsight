@@ -56,6 +56,7 @@ public:
     };
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
+    static void ParsePostProcess();
     static void SendAllParseSuccess();
     static bool CheckIsOpenClusterTag(ProjectActionEnum action, ProjectTypeEnum curType,
                                       const std::string &projectName);

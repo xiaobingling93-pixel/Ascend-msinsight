@@ -352,6 +352,38 @@ std::vector<ExpertHotspotStruct> ExpertHotspotManager::QueryExpertHotspotData(co
     }
     return hotspotRes;
 }
+
+bool ExpertHotspotManager::ExtractHeatMapFromTraceDb(const std::string &fileId, const FullDb::DataType &dataType)
+{
+    if (fileId.empty()) {
+        return false;
+    }
+    // 获取cann层数据内容
+
+    // 获取计算算子数据内容
+
+    // 映射
+    return true;
+}
+
+bool ExpertHotspotManager::UpdateHeatMapFromProfiling()
+{
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    // 集群db不存在则直接返回
+    if (database == nullptr) {
+        return false;
+    }
+    // todo-yqs:检查数据是否已经存在，已存在则不重复处理
+
+    FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataType();
+    for (const auto &fileId: Timeline::DataBaseManager::Instance().GetAllFileId()) {
+        if (!ExtractHeatMapFromTraceDb(fileId, dataType)) {
+            return false;
+        }
+    }
+    database->SaveExpertHotspot();
+    return true;
+}
 }
 }
 }

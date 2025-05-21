@@ -1,4 +1,5 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+#include <algorithm>
 #include "pch.h"
 #include "TableDefs.h"
 #include "TrackInfoManager.h"
@@ -230,5 +231,52 @@ std::string HardWareRepo::GetDbPath(const SliceQuery &sliceQuery)
         return "";
     }
     return database->GetDbPath();
+}
+
+bool HardWareRepo::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                                  std::vector<CompeteSliceDomain> &res)
+{
+    // 根据名字查询stringId的内容
+    std::unordered_map<uint64_t, std::string> strMap =
+        stringIdsTable->QueryStrMapByValues(params.nameList, params.rankId);
+    if (strMap.empty()) {
+        return false;
+    }
+    std::vector<uint64_t> stringIds;
+    std::transform(strMap.begin(), strMap.end(), std::back_inserter(stringIds),
+        [](const std::pair<uint64_t, std::string>& pair) { return pair.first; });
+    // 根据stringId列表查询算子表获取globalTaskId的内容
+    std::vector<ComputeTaskInfoPO> computePOS;
+    computeTaskInfoTable->Select(ComputeTaskInfoColumn::NAME, ComputeTaskInfoColumn::GLOBAL_TASK_ID)
+        .In(ComputeTaskInfoColumn::NAME, stringIds)
+        .ExcuteQuery(params.rankId, computePOS);
+    if (computePOS.empty()) {
+        return false;
+    }
+    std::vector<uint64_t> globalTaskIdList;
+    std::transform(computePOS.begin(), computePOS.end(), std::back_inserter(globalTaskIdList),
+        [](const ComputeTaskInfoPO& computeTaskInfoPo) { return computeTaskInfoPo.globalTaskId; });
+    // 根据globalTaskId查询Task表获取耗时信息，并按算子起始时间进行排序
+    std::vector<TaskPO> taskPOS;
+    taskTable->Select(TaskColumn::GLOBAL_TASK_ID, TaskColumn::TIMESTAMP, TaskColumn::ENDTIME)
+        .In(TaskColumn::GLOBAL_TASK_ID, globalTaskIdList)
+        .OrderBy(TaskColumn::TIMESTAMP, TableOrder::ASC)
+        .ExcuteQuery(params.rankId, taskPOS);
+
+    // 先获取globalTaskId和名字的映射关系，再进行结果组装
+    std::map<uint64_t, std::string> globalTaskIdMapName;
+    std::transform(computePOS.begin(), computePOS.end(),
+        std::inserter(globalTaskIdMapName, globalTaskIdMapName.begin()),
+        [&strMap](const ComputeTaskInfoPO &compute) {
+            return std::make_pair(compute.globalTaskId, strMap[compute.name]);
+    });
+    for (const auto &item: taskPOS) {
+        CompeteSliceDomain domain;
+        domain.name = globalTaskIdMapName[item.globalTaskId];
+        domain.timestamp = item.timestamp;
+        domain.duration = item.endTime - item.timestamp;
+        res.push_back(domain);
+    }
+    return true;
 }
 }

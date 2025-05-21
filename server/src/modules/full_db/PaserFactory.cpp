@@ -18,6 +18,7 @@
 #include "ParserStatusManager.h"
 #include "SystemMemoryDatabaseDef.h"
 #include "ProjectAnalyze.h"
+#include "ExpertHotspotManager.h"
 
 using namespace Dic;
 using namespace Dic::Server;
@@ -258,6 +259,15 @@ std::string ProjectParserBase::GetDbPath(const std::string &filePath, const int 
         path.append(suffix);
     }
     return path;
+}
+
+void ProjectParserBase::ParsePostProcess()
+{
+    // 发送解析成功消息
+    SendAllParseSuccess();
+
+    // 数据统计内容
+    bool res = Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling();
 }
 
 void ProjectParserBase::SendAllParseSuccess()
