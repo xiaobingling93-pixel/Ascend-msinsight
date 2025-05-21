@@ -3,6 +3,7 @@
  */
 #include <sstream>
 #include <algorithm>
+#include "CounterEventHelper.h"
 #include "NpuInfoRepo.h"
 #include "TraceDatabaseHelper.h"
 
@@ -267,6 +268,18 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::uniq
         default:
             throw DatabaseException("unsupported type!");
     }
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryHostUnitCounter(
+    std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp)
+{
+    CounterEventHelper helper;
+    helper.RegisterHostMap();
+    auto processType = GetProcessType(requestParams.metaType);
+    std::string sql = helper.GenerateCounterSQL(processType);
+    return ExecuteQuery(stmt, sql, minTimestamp,
+        requestParams.threadId, requestParams.startTime, requestParams.endTime);
 }
 
 std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsDetails(

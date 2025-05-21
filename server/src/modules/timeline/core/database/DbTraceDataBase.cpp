@@ -11,6 +11,7 @@
 #include "MetaDataParser.h"
 #include "MetaDataCacheManager.h"
 #include "DbKernelDetailHelper.h"
+#include "CounterEventHelper.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;
@@ -302,30 +303,6 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
     responseBody.startTime -= minTimestamp; // 业务上 minTimestamp 是最小的时间，一定有 item.timestamp > minTimestamp
     responseBody.depth = resultSet->GetUint32("depth");
     responseBody.id = resultSet->GetString("id");
-    return true;
-}
-
-bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
-    std::vector<Protocol::UnitCounterData> &dataList)
-{
-    auto stmt = CreatPreparedStatement();
-    if (stmt == nullptr) {
-        ServerLog::Error("Query_unit_counter. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    std::unique_ptr<SqliteResultSet> resultSet;
-    try {
-        resultSet = TraceDatabaseHelper::QueryUnitCounter(stmt, params, minTimestamp, GetDeviceId(params.rankId));
-    } catch (DatabaseException &e) {
-        ServerLog::Error("Query unit counter failed, ", e.What());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::UnitCounterData unitCounterData;
-        unitCounterData.timestamp = resultSet->GetUint64("startTime");
-        unitCounterData.valueJsonStr = resultSet->GetString("args");
-        dataList.emplace_back(unitCounterData);
-    }
     return true;
 }
 
@@ -1381,6 +1358,7 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
         }
     }
     DealHostMetadata(metaData, threadMap);
+    ProcessHostCounterEventsMetadata(metaData);
     return true;
 }
 

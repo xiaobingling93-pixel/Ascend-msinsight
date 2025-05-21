@@ -436,6 +436,14 @@ std::vector<FullDb::LeaksMemoryDatabase *> DataBaseManager::GetAllLeaksMemoryDat
     }
     return leaksDatabases;
 }
+
+std::string DataBaseManager::GetAnyTraceDatabaseId()
+{
+    if (traceDatabaseMap.empty()) {
+        return "";
+    }
+    return traceDatabaseMap.begin()->first;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

@@ -85,6 +85,8 @@ public:
         return {};
     }
 
+    std::string GetAnyTraceDatabaseId();
+
 private:
     DataBaseManager() = default;
     ~DataBaseManager() = default;

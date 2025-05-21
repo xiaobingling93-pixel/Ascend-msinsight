@@ -146,6 +146,8 @@ public:
         std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
     static std::string GetHostPath(const std::string &filePath);
 
+    void ProcessHostCounterEventsMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+
 private:
     const uint32_t cacheSize = 5000;
     bool initStmt = false;

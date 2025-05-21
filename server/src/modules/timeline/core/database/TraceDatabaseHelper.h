@@ -68,6 +68,8 @@ QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t start
 static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
       const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId);
 
+static std::unique_ptr<SqliteResultSet> QueryHostUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp);
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                             const Protocol::SystemViewParams &requestParams,
                                                             const std::string& rankId);

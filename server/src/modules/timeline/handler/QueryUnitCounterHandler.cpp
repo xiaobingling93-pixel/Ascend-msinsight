@@ -25,6 +25,10 @@ bool QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    const std::string hostString = "Host";
+    if (StringUtil::EndWith(request.params.rankId, hostString)) {
+        request.params.rankId = DataBaseManager::Instance().GetAnyTraceDatabaseId();
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query unit counter failed to get connection.");
