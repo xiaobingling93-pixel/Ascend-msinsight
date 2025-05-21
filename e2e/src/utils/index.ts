@@ -32,7 +32,7 @@ export async function importData(page: Page, filePath: FilePath = FilePath.TEXT)
         await input.press('Enter');
         // 点击“确认”按钮
         await confirmBtn.click();
-        await mainDialog.waitFor({ state: 'hidden', timeout: 2000 });
+        await mainDialog.waitFor({ state: 'hidden', timeout: 3000 });
         const currentProject = projectList.getByText(filePath, { exact: true }).first();
         await currentProject.waitFor({ state: 'visible' });
         await expect(currentProject).toBeVisible();

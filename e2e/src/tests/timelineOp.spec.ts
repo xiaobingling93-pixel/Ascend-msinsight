@@ -1,0 +1,85 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+
+import { test as baseTest, expect } from '@playwright/test';
+import { TimelinePage } from '@/page-object';
+import { clearAllData, importData } from '@/utils';
+import { FilePath } from '@/utils/constants';
+import { InputHelpers } from '@/components';
+
+interface TestFixtures {
+    timelinePage: TimelinePage;
+}
+
+const test = baseTest.extend<TestFixtures>({
+    timelinePage: async ({ page }, use) => {
+        const timelinePage = new TimelinePage(page);
+        await use(timelinePage);
+    },
+});
+
+test.describe('Timeline(Operator)', () => {
+    test.beforeEach(async ({ page, timelinePage }) => {
+        await timelinePage.goto();
+        await clearAllData(page);
+        await importData(page, FilePath.SOURCE);
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
+    });
+
+    // 算子调优-框选
+    test('test_compute_timeline_selectUnitsRange', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const boundingBox = await chart.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.move(startX + 50, startY + 50);
+        await page.mouse.down();
+        await page.mouse.move(startX + 200, startX - 200);
+        await page.mouse.up();
+        await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
+        await expect(timelineFrame.getByText('Self Time')).not.toBeVisible();
+        await expect(timelineFrame.getByText('Average Wall Duration')).toBeVisible();
+        const rows = await timelineFrame.locator('.ant-table-row').count();
+        expect(rows).toBeGreaterThan(0);
+    });
+
+    // 算子调优-点击算子
+    test('test_compute_timeline_operator_click', async ({ timelinePage }) => {
+        const { timelineFrame } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+
+        const canvas = timelineFrame.locator('#unitWrapperScroller canvas').nth(1);
+        await canvas.click({
+            position: {
+                x: 29,
+                y: 13,
+            },
+        });
+        await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
+        await expect(timelineFrame.getByText('Title')).toBeVisible();
+        await expect(timelineFrame.getByText('Start')).toBeVisible();
+    });
+
+    // 搜索
+    test('test_Search_when_EnterInstr', async ({ page, timelinePage }) => {
+        const { searchBtn, timelineFrame, openInWindows } = timelinePage;
+        await searchBtn.click();
+        const inputLocator = timelineFrame.locator('.insight-category-search-overlay input');
+        const input = new InputHelpers(page, inputLocator, timelineFrame);
+        await input.setValue('add');
+        await input.press('Enter');
+        await openInWindows.waitFor({ state: 'attached' });
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-instr.png', { maxDiffPixels: 100 });
+    });
+});

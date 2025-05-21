@@ -6,7 +6,6 @@ import { test as baseTest, expect } from '@playwright/test';
 import { TimelinePage, SystemView, CommunicationPage } from '@/page-object';
 import { clearAllData, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { InputHelpers, SelectHelpers } from '@/components';
-import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     timelinePage: TimelinePage;
@@ -131,6 +130,7 @@ test.describe('Timeline', () => {
         await systemView.goto();
 
         const statsSystemViewOptions = [
+            'Overall Metrics',
             'Python API Summary',
             'CANN API Summary',
             'Ascend HardWare Task Summary',
@@ -516,56 +516,24 @@ test.describe('Timeline', () => {
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-add-marker.png', { maxDiffPixels: 100 });
     });
+
+    // 测试直方图的显示 如NPU_MEM
+    test('test_npu_mem', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const npuMemLayerUnit = timelineFrame.locator('#main-container').getByText('NPU_MEM (2094647712)');
+        await npuMemLayerUnit.click();
+        await page.mouse.wheel(0, 250);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-npu-mem.png', { maxDiffPixels:100 });
+    });
+
+    // 测试快捷键 Q
+    test('test_q', async ({ timelinePage, page }) => {
+        const { bottomPanel, timelineFrame } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await page.mouse.move(0, 0);
+        await secondUnitInfo.click();
+        await page.keyboard.press('q');
+        await expect(bottomPanel).toHaveScreenshot('test-keyword-q.png', { maxDiffPixels:100 });
+    });
 });
 
-test.describe('Timeline(Operator)', () => {
-    test.beforeEach(async ({ page, timelinePage }) => {
-        await timelinePage.goto();
-        await clearAllData(page);
-        await importData(page, FilePath.SOURCE);
-    });
-
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
-    });
-
-    // 算子调优-框选
-    test('test_compute_timeline_selectUnitsRange', async ({ timelinePage, page }) => {
-        const { timelineFrame } = timelinePage;
-        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
-        await secondUnitInfo.click();
-        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
-        const boundingBox = await chart.boundingBox();
-        if (!boundingBox) {
-            return;
-        }
-        const { x: startX, y: startY } = boundingBox;
-        await page.mouse.move(startX + 50, startY + 50);
-        await page.mouse.down();
-        await page.mouse.move(startX + 200, startX - 200);
-        await page.mouse.up();
-        await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
-        await expect(timelineFrame.getByText('Self Time')).not.toBeVisible();
-        await expect(timelineFrame.getByText('Average Wall Duration')).toBeVisible();
-        const rows = await timelineFrame.locator('.ant-table-row').count();
-        expect(rows).toBeGreaterThan(0);
-    });
-
-    // 算子调优-点击算子
-    test('test_compute_timeline_operator_click', async ({ timelinePage }) => {
-        const { timelineFrame } = timelinePage;
-        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
-        await secondUnitInfo.click();
-
-        const canvas = timelineFrame.locator('#unitWrapperScroller canvas').nth(1);
-        await canvas.click({
-            position: {
-                x: 29,
-                y: 13,
-            },
-        });
-        await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
-        await expect(timelineFrame.getByText('Title')).toBeVisible();
-        await expect(timelineFrame.getByText('Start')).toBeVisible();
-    });
-});

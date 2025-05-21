@@ -23,6 +23,7 @@ export class TimelinePage {
     readonly selectFilterType: Locator;
     readonly selectOptionFilterType: Locator;
     readonly selectFilterContent: Locator;
+    readonly openInWindows: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -42,6 +43,7 @@ export class TimelinePage {
         this.selectFilterType = this.timelineFrame.locator('#select-filter-type');
         this.selectOptionFilterType = this.timelineFrame.getByTestId('select-options-filter-type');
         this.selectFilterContent = this.timelineFrame.locator('#select-filter-content');
+        this.openInWindows = this.timelineFrame.getByRole('button', { name: 'Open in Find Window' });
     }
 
     async goto(): Promise<void> {
