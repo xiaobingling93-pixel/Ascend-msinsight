@@ -63,7 +63,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
         }
     }
     // 执行集群数据解析
-    ParseClusterInfo(projectInfos, false, curProjectTypeEnum);
+    ParseClusterInfo(projectInfos, isCluster, curProjectTypeEnum);
 }
 
 void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response)
