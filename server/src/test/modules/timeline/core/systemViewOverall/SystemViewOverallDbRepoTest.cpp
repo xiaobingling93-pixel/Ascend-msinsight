@@ -38,7 +38,7 @@ public:
         DataBaseManager::Instance().CreatConnectionPool("0", dbPath3);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
         ParserType allocType = parserType.second;
-        std::shared_ptr<ProjectParserBase> factory = ParserFactory::ParserImport(allocType);
+        std::shared_ptr<ProjectParserBase> factory = ParserFactory::GetProjectParser(allocType);
         // 路径列表不为空，需要进行文件目录的新增、覆盖
         ProjectTypeEnum projectType = factory->GetProjectType({ dbPath3 });
         std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;

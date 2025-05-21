@@ -36,12 +36,12 @@ public:
         ModuleRequestHandler::SetResponseResult(response, true);
         SendResponse(std::move(responsePtr), true);
     };
-    virtual void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    virtual void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
         Global::BaselineInfo &baselineInfo)
     {
         return;
     }
-    virtual ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath)
+    virtual ProjectTypeEnum GetProjectType(const std::string &dataPath)
     {
         return  ProjectTypeEnum::OTHER;
     };
@@ -69,12 +69,23 @@ public:
 
     static std::tuple<std::string, std::string> GetClusterInfo(const std::vector<std::string>& folders);
 
+    static std::string GetSubId(const std::string &str, [[maybe_unused]] ParseFileType type)
+    {
+        if (str.empty()) {
+            return "";
+        }
+        if (FileUtil::IsFolder(str)) {
+            return str;
+        }
+        return FileUtil::GetFileName(str);
+    }
+
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;
     std::unique_ptr<IFileReader> fileReader = nullptr;
 
-    static void ParseClusterEndProcess(std::string result, bool isShowCluster);
+    static void ParseClusterEndProcess(std::string result, bool isShowCluster, const std::string &clusterId);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static void ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::string GetFileId(const std::string &filePath, const std::string &importPath);
@@ -84,15 +95,15 @@ protected:
     static bool IsNeedReset(const ImportActionRequest &request);
 
     void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId, const std::string &cardPath,
-        std::vector<std::string> dataPath);
+                                 std::vector<std::string> dataPath);
     static void SaveDbPath(const std::string &curProjectName,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 };
 
 class ParserFactory {
 public:
-    static std::shared_ptr<ProjectParserBase> ParserImport(ParserType allocType);
-    static std::pair<std::string, ParserType> GetImportType(const std::vector<std::string> &pathList);
+    static std::shared_ptr<ProjectParserBase> GetProjectParser(ParserType allocType);
+    static std::pair<std::string, ParserType> GetImportType(const std::string &path);
     static void Reset();
 
 private:

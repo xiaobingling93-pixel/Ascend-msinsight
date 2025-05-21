@@ -18,15 +18,17 @@ public:
     ~ProjectParserJson() override = default;
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
-    void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
         Global::BaselineInfo &baselineInfo) final;
-    ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
+    ProjectTypeEnum GetProjectType(const std::string &dataPath) final;
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) final;
     static bool ExistJsonFormatFile(const std::string &file);
 
     static void BuildProjectExploreInfo(ProjectExplorerInfo& info, const std::vector<std::string>& parsedFiles);
 
     static void BuildProjectFromParseFile(ProjectExplorerInfo &info, const std::string &parseFile);
+
+    static std::string GetSubId(const std::string& filePath, ParseFileType type);
 
 protected:
     bool CheckParseFileInfoSize(const std::shared_ptr<Global::ParseFileInfo> &parseFileInfo,
@@ -42,8 +44,11 @@ private:
             std::string &curScene);
     static void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     static bool IsJsonValid(const std::string &fileName);
-    static void ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType, bool isShowCluster,
-        std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
+    static void ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo,
+                               ProjectTypeEnum projectType,
+                               bool isShowCluster,
+                               std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
+                               const std::string &projectName);
     static void ClusterProcessAsyncStep(Timeline::ClusterFileParser clusterFileParser);
 
     void SetParseCallBack(FileParser &fileParser);
@@ -60,8 +65,8 @@ private:
                               const std::vector<Global::ProjectExplorerInfo> &projectInfos);
     static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         std::vector<std::string> &subdirectoryList);
-    static void ParserClusterBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
-    void ParserSingleCardBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    static void ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo);
+    void ParserSingleCardBaseline(const Global::ProjectExplorerInfo &projectInfos,
                                   Global::BaselineInfo &baselineInfo);
     static void ParserMetaData(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 };

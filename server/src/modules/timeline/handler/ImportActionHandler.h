@@ -24,7 +24,7 @@ public:
 
 private:
     static void SendParseFailEvent(const std::string &message);
-    static void LogIfFileNotExist(const std::vector<Global::ProjectExplorerInfo> &projectExplorerInfo);
+    static void LogIfFileNotExist(const Global::ProjectExplorerInfo &projectExplorerInfo);
     static bool TransferProject(ImportActionRequest &request);
     static bool ImportFile(ImportActionRequest &request, std::string &warnMsg);
 };

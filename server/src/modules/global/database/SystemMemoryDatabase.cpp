@@ -28,7 +28,7 @@ bool SystemMemoryDatabase::CreateTable()
          "UNIQUE (projectName, fileName) );"
          "CREATE TABLE " + parseFileInfoTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
                                                 "projectExplorerId INTEGER, parseFilePath TEXT, dbPath Text, "
-                                                "subId TEXT,type INTEGER, clusterId TEXT, "
+                                                "subId TEXT,type INTEGER, clusterPath TEXT, "
                                                 "host TEXT, rankId TEXT, deviceId TEXT, "
                                                 "UNIQUE (projectExplorerId, parseFilePath, subId));";
     std::unique_lock<std::recursive_mutex> lock(mutex);
@@ -42,20 +42,15 @@ bool SystemMemoryDatabase::DropTable()
     return DropSomeTables(tables);
 }
 
-bool SystemMemoryDatabase::InsertDuplicateUpdateProject(std::vector<ProjectExplorerInfo> projectExplorerInfos)
+bool SystemMemoryDatabase::InsertDuplicateUpdateProject(const ProjectExplorerInfo &projectExplorerInfo)
 {
-    for (const auto &item: projectExplorerInfos) {
-        if (item.projectName.empty() || item.fileName.empty()) {
-            ServerLog::Error("Failed to save FileMenuData, params is invalid.");
-            return false;
-        }
+    if (projectExplorerInfo.projectName.empty() || projectExplorerInfo.fileName.empty()) {
+        ServerLog::Error("Failed to save FileMenuData, params is invalid.");
+        return false;
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT INTO " + projectExplorerTable +
         "(projectName, fileName, projectType, importType, dbPath, accessTime) VALUES(?, ?, ?, ?, ?, ?)";
-    for (size_t i = 1; i < projectExplorerInfos.size(); ++i) {
-        sql += ",(?, ?, ?, ?, ?, ?)";
-    }
     sql += " ON CONFLICT(projectName, fileName) DO UPDATE SET"
            " projectType = EXCLUDED.projectType,"
            " importType = EXCLUDED.importType,"
@@ -66,10 +61,9 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateProject(std::vector<ProjectExplo
         ServerLog::Error("Failed to save FileMenuData, prepared statement failed.");
         return false;
     }
-    for (const auto &item: projectExplorerInfos) {
-        std::string dbPath = StringUtil::join(item.dbPath, ",");
-        stmt->BindParams(item.projectName, item.fileName, item.projectType, item.importType, dbPath, item.accessTime);
-    }
+    std::string dbPath = StringUtil::join(projectExplorerInfo.dbPath, ",");
+    stmt->BindParams(projectExplorerInfo.projectName, projectExplorerInfo.fileName, projectExplorerInfo.projectType,
+                     projectExplorerInfo.importType, dbPath, projectExplorerInfo.accessTime);
     if (!stmt->Execute()) {
         ServerLog::Error("Failed to save FileMenuData, stmt execute failed.");
         return false;
@@ -91,7 +85,7 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<std
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT INTO " + parseFileInfoTable +
-                        "(projectExplorerId, parseFilePath, dbPath, subId, type, clusterId, host, rankId, deviceId)"
+                        "(projectExplorerId, parseFilePath, dbPath, subId, type, clusterPath, host, rankId, deviceId)"
                         " VALUES(?, ?, ?, ? ,? ,? ,? , ? ,?)";
     for (size_t i = 1; i < parseFileInfoList.size(); ++i) {
         sql += ",(?, ?, ?, ? ,? ,? ,? , ? ,?)";
@@ -307,7 +301,7 @@ std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>> SystemMemoryDatab
         info->dbPath = resultSet->GetString("dbPath");
         info->subId = resultSet->GetString("subId");
         info->type = static_cast<ParseFileType>(resultSet->GetInt64("type"));
-        info->clusterId = resultSet->GetString("clusterId");
+        info->clusterId = resultSet->GetString("clusterPath");
         info->host = resultSet->GetString("host");
         info->rankId = resultSet->GetString("rankId");
         info->deviceId = resultSet->GetString("deviceId");

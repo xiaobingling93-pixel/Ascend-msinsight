@@ -14,17 +14,16 @@ class ParserFactoryTest : public ::testing::Test {
 
 TEST_F(ParserFactoryTest, GetImportTypeBinTest)
 {
-    std::vector<std::string> pathList{"/home/user/data/visualize_data.bin"};
-    std::pair<std::string, ParserType> result = ParserFactory::GetImportType(pathList);
-    std::pair<std::string, ParserType> expect{pathList[0], ParserType::BIN};
+    std::pair<std::string, ParserType> result = ParserFactory::GetImportType("/home/user/data/visualize_data.bin");
+    std::pair<std::string, ParserType> expect{"/home/user/data/visualize_data.bin", ParserType::BIN};
     EXPECT_EQ(result, expect);
 }
 
 TEST_F(ParserFactoryTest, GetImportTypeIpynbTest)
 {
-    std::vector<std::string> pathList{"/home/user/data/test.ipynb"};
+    std::string pathList{"/home/user/data/test.ipynb"};
     std::pair<std::string, ParserType> result = ParserFactory::GetImportType(pathList);
-    std::pair<std::string, ParserType> expect{pathList[0], ParserType::IPYNB};
+    std::pair<std::string, ParserType> expect{pathList, ParserType::IPYNB};
     EXPECT_EQ(result, expect);
 }
 
@@ -40,14 +39,14 @@ TEST_F(ParserFactoryTest, GetImportTypeDbTest)
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::vector<std::string> pathList1{currPath.substr(0, index) + "test/data/test"};
+    std::string pathList1{currPath.substr(0, index) + "test/data/test"};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
-    std::pair<std::string, ParserType> expect1{pathList1[0], ParserType::DB};
+    std::pair<std::string, ParserType> expect1{pathList1, ParserType::DB};
     EXPECT_EQ(result1, expect1);
 
-    std::vector<std::string> pathList2{currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt"};
+    std::string pathList2{currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt"};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
-    std::pair<std::string, ParserType> expect2{pathList2[0], ParserType::DB};
+    std::pair<std::string, ParserType> expect2{pathList2, ParserType::DB};
     EXPECT_EQ(result2, expect2);
 
     const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/test";
@@ -67,14 +66,13 @@ TEST_F(ParserFactoryTest, GetImportTypeDbClusterTest)
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::vector<std::string> pathList1{currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output"};
+    std::string pathList1{currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output"};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
-    std::pair<std::string, ParserType> expect1{pathList1[0], ParserType::DB};
+    std::pair<std::string, ParserType> expect1{pathList1, ParserType::DB};
     EXPECT_EQ(result1, expect1);
-
-    std::vector<std::string> pathList2{currPath.substr(0, index) + "test/data/cluster"};
+    std::string pathList2{currPath.substr(0, index) + "test/data/cluster"};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
-    std::pair<std::string, ParserType> expect2{pathList2[0], ParserType::DB};
+    std::pair<std::string, ParserType> expect2{pathList2, ParserType::DB};
     EXPECT_EQ(result2, expect2);
 
     const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/cluster";
@@ -94,14 +92,14 @@ TEST_F(ParserFactoryTest, GetImportTypeTextTest)
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::vector<std::string> pathList1{currPath.substr(0, index) + "test/data/test"};
+    std::string pathList1{currPath.substr(0, index) + "test/data/test"};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
-    std::pair<std::string, ParserType> expect1{pathList1[0], ParserType::JSON};
+    std::pair<std::string, ParserType> expect1{pathList1, ParserType::JSON};
     EXPECT_EQ(result1, expect1);
 
-    std::vector<std::string> pathList2{currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt"};
+    std::string pathList2{currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt"};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
-    std::pair<std::string, ParserType> expect2{pathList2[0], ParserType::JSON};
+    std::pair<std::string, ParserType> expect2{pathList2, ParserType::JSON};
     EXPECT_EQ(result2, expect2);
 
     const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/test";
@@ -121,14 +119,14 @@ TEST_F(ParserFactoryTest, GetImportTypeTextClusterTest)
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::vector<std::string> pathList1{currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output"};
+    std::string pathList1{currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output"};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
-    std::pair<std::string, ParserType> expect1{pathList1[0], ParserType::JSON};
+    std::pair<std::string, ParserType> expect1{pathList1, ParserType::JSON};
     EXPECT_EQ(result1, expect1);
 
-    std::vector<std::string> pathList2{currPath.substr(0, index) + "test/data/cluster"};
+    std::string pathList2{currPath.substr(0, index) + "test/data/cluster"};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
-    std::pair<std::string, ParserType> expect2{pathList2[0], ParserType::JSON};
+    std::pair<std::string, ParserType> expect2{pathList2, ParserType::JSON};
     EXPECT_EQ(result2, expect2);
 
     const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/cluster";
@@ -148,14 +146,14 @@ TEST_F(ParserFactoryTest, GetImportTypeOtherTest)
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::vector<std::string> pathList1{currPath.substr(0, index) + "test/data/scalar"};
+    std::string pathList1{currPath.substr(0, index) + "test/data/scalar"};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
-    std::pair<std::string, ParserType> expect1{pathList1[0], ParserType::OTHER};
+    std::pair<std::string, ParserType> expect1{pathList1, ParserType::OTHER};
     EXPECT_EQ(result1, expect1);
 
-    std::vector<std::string> pathList2{currPath.substr(0, index) + "test/data/scalar_data"};
+    std::string pathList2{currPath.substr(0, index) + "test/data/scalar_data"};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
-    std::pair<std::string, ParserType> expect2{pathList2[0], ParserType::OTHER};
+    std::pair<std::string, ParserType> expect2{pathList2, ParserType::OTHER};
     EXPECT_EQ(result2, expect2);
 
     const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/scalar";

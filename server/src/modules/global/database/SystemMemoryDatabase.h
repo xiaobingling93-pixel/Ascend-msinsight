@@ -21,7 +21,7 @@ public:
     bool CreateTable();
     std::vector<ProjectExplorerInfo> QueryProjectExplorerData(const std::vector<std::string> &projectNameList,
                                                               const std::vector<std::string>& fileNameList);
-    bool InsertDuplicateUpdateProject(std::vector<ProjectExplorerInfo> projectExplorerInfos);
+    bool InsertDuplicateUpdateProject(const ProjectExplorerInfo &projectExplorerInfo);
     bool InsertDuplicateUpdateParsedFile(const std::vector<std::shared_ptr<ParseFileInfo>> &parseFileInfoList);
     bool UpdateProjectName(const std::string &oldProjectName, const std::string &newProjectName);
     bool UpdateProjectDbPath(const std::string &projectName, const std::string &fileName, const std::string &dbPath);

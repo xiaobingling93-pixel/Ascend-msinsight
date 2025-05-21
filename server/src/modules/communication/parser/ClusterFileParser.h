@@ -22,6 +22,8 @@ enum class AttDataType {
 };
 class ClusterFileParser {
 public:
+    ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> database,
+                      const std::string &uniqueKey);
     bool ParseClusterFiles();
     bool ParseClusterStep2Files();
     bool ParseCommunication(const std::vector<std::string> &filePathList);
@@ -30,9 +32,11 @@ public:
     void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
     bool ParserClusterOfDb();
     std::string GetClusterDbPath();
-    ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> database,
-                      const std::string &uniqueKey);
     static bool CheckIsCluster(const std::string &filePath);
+    inline std::string GetClusterPath()
+    {
+        return selectedFilePath;
+    }
 private:
     void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
     bool InitClusterDatabase();
@@ -44,7 +48,6 @@ private:
     std::string clusterDbPath;
     bool needClearDb = true;
     std::string selectedFilePath;
-    // 用于标识集群数据的key，格式为 cluster_路径
     std::string uniqueKey;
     const std::string CLUSTER_IDENTIFY = "cluster_";
     std::shared_ptr<VirtualClusterDatabase> database;

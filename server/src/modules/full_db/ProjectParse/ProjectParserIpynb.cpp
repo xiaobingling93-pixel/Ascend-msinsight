@@ -80,7 +80,7 @@ void ProjectParserIpynb::SendJupyterInfo(std::string url)
     SendEvent(std::move(event));
 }
 
-ProjectTypeEnum ProjectParserIpynb::GetProjectType(const std::vector<std::string> &dataPath)
+ProjectTypeEnum ProjectParserIpynb::GetProjectType(const std::string &dataPath)
 {
     return ProjectTypeEnum::IPYNB;
 }
@@ -92,7 +92,7 @@ void ProjectParserIpynb::BuildProjectExploreInfo(ProjectExplorerInfo &projectInf
     ProjectParserBase::BuildProjectExploreInfo(projectInfo, parsedFiles);
     for (const auto &file: parsedFiles) {
         auto parsedFileInfo = std::make_shared<ParseFileInfo>();
-        parsedFileInfo->subId = FileUtil::GetFileName(file);
+        parsedFileInfo->subId = GetSubId(file, DATA_FILE);
         parsedFileInfo->parseFilePath = file;
         parsedFileInfo->type = ParseFileType::IPYNB;
         parsedFileInfo->curDirName = FileUtil::GetFileName(file);

@@ -16,7 +16,7 @@ public:
     {
         command = Protocol::REQ_RES_PIPELINE_FWD_BWD_TIMELINE;
     }
-    ~QueryFwdBwdTimelineHandler() = default;
+    ~QueryFwdBwdTimelineHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
     static bool QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId);

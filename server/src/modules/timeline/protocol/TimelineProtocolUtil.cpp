@@ -791,6 +791,7 @@ template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(co
     JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
     JsonUtil::AddMember(body, "isAllPageParsed", event.body.isAllPageParsed, allocator);
     JsonUtil::AddMember(body, "isShowCluster", event.body.isShowCluster, allocator);
+    JsonUtil::AddMember(body, "clusterPath", event.body.clusterPath, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
@@ -824,6 +825,7 @@ std::optional<document_t> ToEventJson<ParseClusterStep2CompletedEvent>(const Par
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
     JsonUtil::AddMember(body, "isAllPageParsed", event.body.isAllPageParsed, allocator);
+    JsonUtil::AddMember(body, "clusterPath", event.body.clusterPath, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

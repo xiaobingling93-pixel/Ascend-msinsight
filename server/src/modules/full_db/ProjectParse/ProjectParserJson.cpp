@@ -192,9 +192,26 @@ void ProjectParserJson::ParserTraceData(const std::map<std::string, std::vector<
     }
 
     auto projectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
-    std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess,
-        clusterFilePath, projectTypeEnum, isShowCluster, dataPathToDbMap, projectInfos[0].projectName);
+    auto clusterInfos = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
+    if (clusterInfos.empty() && !rankListMap.empty()) {
+        std::for_each(projectInfos.begin(), projectInfos.end(), [&clusterInfos](const ProjectExplorerInfo& item) {
+            auto cluster = std::make_shared<ParseFileInfo>();
+            cluster->parseFilePath = item.fileName;
+            cluster->type = ParseFileType::CLUSTER;
+            cluster->clusterId = item.fileName;
+            clusterInfos.emplace_back(cluster);
+        });
+    }
+    auto clusterParse = [projectTypeEnum, isShowCluster, &projectInfos, this](const auto &item) {
+        Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(
+            ProjectParserJson::ClusterProcess,
+            item,
+            projectTypeEnum,
+            isShowCluster,
+            dataPathToDbMap,
+            projectInfos[0].projectName);
+    };
+    std::for_each(clusterInfos.begin(), clusterInfos.end(), clusterParse);
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
@@ -235,19 +252,28 @@ void ProjectParserJson::SetParseCallBack(FileParser &fileParser)
 }
 
 
-void ProjectParserJson::ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType,
+void ProjectParserJson::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo, ProjectTypeEnum projectType,
                                        bool isShowCluster,
                                        std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
                                        const std::string &projectName)
 {
+    if (clusterInfo == nullptr || clusterInfo->type != ParseFileType::CLUSTER || clusterInfo->parseFilePath.empty()) {
+        ServerLog::Warn("Invalid cluster to parsed, end process");
+        return;
+    }
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (projectType == ProjectTypeEnum::TEXT_CLUSTER) {
-        auto database = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::TEXT);
-        ClusterFileParser clusterFileParser(selectedFolder, database, COMPARE + TimeUtil::Instance().NowStr());
+        auto database = DataBaseManager::Instance().CreateClusterDatabase(clusterInfo->parseFilePath, DataType::TEXT);
+        if (!database) {
+            ServerLog::Warn("Failed to creat cluster db.path:" + clusterInfo->parseFilePath);
+            return;
+        }
+        ClusterFileParser clusterFileParser(clusterInfo->parseFilePath, database,
+                                            clusterInfo->clusterId + TimeUtil::Instance().NowStr());
         if (clusterFileParser.ParseClusterFiles()) {
             ServerLog::Info("The cluster file is parsed successfully.");
             parseClusterResult = PARSE_RESULT_OK;
-            dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
+            dataPathToDbMap[clusterInfo->parseFilePath].push_back(clusterFileParser.GetClusterDbPath());
             ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
                                                                                 clusterFileParser);
         } else {
@@ -256,7 +282,7 @@ void ProjectParserJson::ClusterProcess(const std::string &selectedFolder, Projec
         }
     }
     // send event
-    ProjectParserBase::ParseClusterEndProcess(parseClusterResult, isShowCluster);
+    ProjectParserBase::ParseClusterEndProcess(parseClusterResult, isShowCluster, clusterInfo->parseFilePath);
     SaveDbPath(projectName, dataPathToDbMap);
 }
 
@@ -275,6 +301,7 @@ void ProjectParserJson::ClusterProcessAsyncStep(ClusterFileParser clusterFilePar
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
+    event->body.clusterPath = clusterFileParser.GetClusterPath();
     event->body.parseResult = std::move(parseClusterResult);
     SendEvent(std::move(event));
 }
@@ -413,12 +440,12 @@ void ProjectParserJson::FindAscendFolder(const std::string &path, std::vector<st
     }
 }
 
-ProjectTypeEnum ProjectParserJson::GetProjectType(const std::vector<std::string> &dataPath)
+ProjectTypeEnum ProjectParserJson::GetProjectType(const std::string &dataPath)
 {
     std::string error;
-    std::vector<std::string> traceFiles = FindAllTraceFile(dataPath[0], error);
+    std::vector<std::string> traceFiles = FindAllTraceFile(dataPath, error);
     bool isCluster = (traceFiles.size() > 1 && (curScene == "train" || curScene == "infer")) ||
-                     ClusterFileParser::CheckIsCluster(dataPath[0]);
+                     ClusterFileParser::CheckIsCluster(dataPath);
     if (isCluster) {
         return ProjectTypeEnum::TEXT_CLUSTER;
     }
@@ -465,39 +492,41 @@ std::vector<std::string> ProjectParserJson::GetParseFileByImportFile(const std::
     return result;
 }
 
-void ProjectParserJson::ParserClusterBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+void ProjectParserJson::ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo)
 {
-    // 生成唯一键：COMPARE/BASELINE + YYYY-mm-DD HH:MM:SS.sss，作为一个集群解析任务的唯一标识，会根据这个标识来记录该解析任务的状态信息
-    // 增加时间戳是为了防止标识重复，避免在反复设置baseline时，不同的解析任务使用了同一标识互相影响
-    std::string uniqueKey = BASELINE + TimeUtil::Instance().NowStr();
     // 创建新的db连接对象
-    auto database = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::TEXT);
+    std::string clusterPath = BaselineManager::Instance().GetBaseLineClusterPath();
+    std::string uniqueKey = FileUtil::GetFileName(clusterPath) + TimeUtil::Instance().NowStr();
+    // 创建新的db连接对象
+    auto database = DataBaseManager::Instance().CreateClusterDatabase(
+        BaselineManager::Instance().GetBaseLineClusterPath(), DataType::TEXT);
     // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
-    std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
-    ClusterFileParser clusterFileParser(clusterFilePath, database, uniqueKey);
+    ClusterFileParser clusterFileParser(clusterPath, database, uniqueKey);
     if (clusterFileParser.ParseClusterFiles()) {
         ServerLog::Info("The cluster file is parsed successfully.");
-        ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask([](ClusterFileParser parser) -> bool {
-            return parser.ParseClusterStep2Files();
-            }, clusterFileParser);
+        ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(
+            [](ClusterFileParser parser) -> bool {
+                return parser.ParseClusterStep2Files();
+            },
+            clusterFileParser);
     }
 }
 // LCOV_EXCL_BR_STOP
 
-void ProjectParserJson::ParserSingleCardBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerInfo &projectInfos,
                                                  Global::BaselineInfo &baselineInfo)
 {
-    std::string filePath = projectInfos[0].subParseFileInfo[0]->parseFilePath;
+    std::string filePath = projectInfos.subParseFileInfo[0]->parseFilePath;
     std::vector<std::string> jsonFiles = GetJsonFileUnderFolder(filePath);
     if (std::empty(jsonFiles)) {
         return;
     }
     // 判断项目类型，如果是算子调优数据，则直接解析
-    auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
+    auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos.projectType);
     // 创建db连接池
     std::string dbPath = FileUtil::GetDbPath(jsonFiles[0]);
     std::map<std::string, std::vector<std::string>> rankToFoldersMap;
-    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(projectInfos, rankToFoldersMap);
+    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap({projectInfos}, rankToFoldersMap);
     if (std::empty(rankListMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         baselineInfo.errorMessage = "Json get rank id failed!";
@@ -533,17 +562,17 @@ void ProjectParserJson::ParserSingleCardBaseline(const std::vector<Global::Proje
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
-void ProjectParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+void ProjectParserJson::ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
     Global::BaselineInfo &baselineInfo)
 {
-    if (projectInfos.empty() || projectInfos[0].subParseFileInfo.empty()) {
+    if (projectInfo.fileInfoMap.empty()) {
         return;
     }
     // 判断是否为集群
     if (baselineInfo.isCluster) {
-        ParserClusterBaseline(projectInfos);
+        ParserClusterBaseline(projectInfo);
     } else {
-        ParserSingleCardBaseline(projectInfos, baselineInfo);
+        ParserSingleCardBaseline(projectInfo, baselineInfo);
     }
 }
 
@@ -657,13 +686,14 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
         }
         parentFolders.erase(parentFolders.begin());
     }
-    // add rank
+
     if (clusterPrefix.empty()) {
         info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
     } else {
         info.AddSubParseFileInfo(clusterPrefix, ParseFileType::CLUSTER, parseFileInfoRank);
     }
 }
+
 ProjectAnalyzeRegister<ProjectParserJson> pRegJson(ParserType::JSON);
 
 } // Module

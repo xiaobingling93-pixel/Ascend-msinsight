@@ -365,7 +365,7 @@ public:
         return (iss >> d) && (iss.eof());
     }
 
-    static bool IsStr2DoubleDesc(const std::string& a, const std::string& b)
+    inline static bool IsStr2DoubleDesc(const std::string& a, const std::string& b)
     {
         bool isADouble = IsDouble(a);
         bool isBDouble = IsDouble(b);

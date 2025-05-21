@@ -16,7 +16,7 @@ public:
     ~ProjectParserIpynb() override = default;
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
-    ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
+    ProjectTypeEnum GetProjectType(const std::string &dataPath) final;
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) override
     {
         return {importFile};

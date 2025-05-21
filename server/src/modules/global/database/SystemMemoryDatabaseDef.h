@@ -112,7 +112,7 @@ struct ProjectExplorerInfo {
     int64_t projectType;
 
     inline void AddSubParseFileInfo(const std::string &subId, ParseFileType type,
-                                    const std::shared_ptr<ParseFileInfo> &fileInfo)
+            const std::shared_ptr<ParseFileInfo> &fileInfo)
     {
         auto it = fileInfoMap.find(subId);
         if (it == fileInfoMap.end()) {

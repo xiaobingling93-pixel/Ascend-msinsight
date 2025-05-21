@@ -459,6 +459,7 @@ std::unique_ptr<Request> TimelineProtocol::ToCommunicationKernelRequest(const Di
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 

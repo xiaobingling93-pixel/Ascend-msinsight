@@ -63,7 +63,7 @@ bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheck
             return false;
         }
     }
-    error = ProjectExplorerManager::Instance().CheckProjectConflict(params.projectName, params.dataPath);
+    error = ProjectExplorerManager::Instance().CheckProjectConflict(params.projectName, params.dataPath[0]);
     if (error != ProjectErrorType::NO_ERRORS) {
         return false;
     }

@@ -121,18 +121,18 @@ void ProjectParserBin::SetParseCallBack(FileParser &fileParser)
     fileParser.SetParseProgressCallBack(progressFunc);
 }
 
-ProjectTypeEnum ProjectParserBin::GetProjectType(const std::vector<std::string> &dataPath)
+ProjectTypeEnum ProjectParserBin::GetProjectType(const std::string &dataPath)
 {
     return ProjectTypeEnum::BIN;
 }
 
-void ProjectParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
                                       Global::BaselineInfo &baselineInfo)
 {
-    if (projectInfos.empty() || projectInfos[0].subParseFileInfo.empty()) {
+    if (projectInfo.fileInfoMap.empty()) {
         return;
     }
-    std::string filePath = projectInfos[0].subParseFileInfo[0]->parseFilePath;
+    std::string filePath = projectInfo.subParseFileInfo[0]->parseFilePath;
     std::string fileId = GetFileId(filePath, filePath);
     std::string dbPath = FileUtil::GetDbPath(filePath, fileId);
     baselineInfo.rankId = fileId;
@@ -173,7 +173,7 @@ void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projec
     parseFileInfo->parseFilePath = parsedFile;
     parseFileInfo->type = ParseFileType::COMPUTE;
     parseFileInfo->curDirName = FileUtil::GetFileName(parsedFile);
-    parseFileInfo->subId = FileUtil::GetFileName(parsedFile);
+    parseFileInfo->subId = GetSubId(parsedFile, DATA_FILE);
     projectInfo.AddSubParseFileInfo(parseFileInfo);
 }
 

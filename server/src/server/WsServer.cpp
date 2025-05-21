@@ -234,8 +234,7 @@ void WsServer::PreLoadEventDir()
     fileInfo->dbPath = "";
     fileInfo->parseFilePath = eventDir;
     projectExplorerInfo.subParseFileInfo.emplace_back(fileInfo);
-    projectExplorerInfos.emplace_back(std::move(projectExplorerInfo));
-    Dic::Module::Global::ProjectExplorerManager::Instance().SaveProjectExplorer(projectExplorerInfos, false);
+    Dic::Module::Global::ProjectExplorerManager::Instance().SaveProjectExplorer(projectExplorerInfo, false);
 }
 } // end of namespace Server
 } // end of namespace Dic

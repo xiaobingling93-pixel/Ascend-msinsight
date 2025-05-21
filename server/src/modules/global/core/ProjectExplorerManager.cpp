@@ -63,20 +63,9 @@ std::vector<ProjectExplorerInfo> ProjectExplorerManager::QueryProjectExplorer(
     return res;
 }
 
-bool ProjectExplorerManager::SaveProjectExplorer(std::vector<ProjectExplorerInfo> &projectExplorerInfos,
+bool ProjectExplorerManager::SaveProjectExplorer(const ProjectExplorerInfo &projectExplorerInfo,
                                                  bool isConflict)
 {
-    // 前置校验：要保存的项目不能为空
-    if (projectExplorerInfos.empty()) {
-        return false;
-    }
-    // 前置校验：检查入参所有导入文件是否属于同一个项目下，如果不是，则直接返回
-    std::string projectName = projectExplorerInfos[0].projectName;
-    for (size_t i = 1; i < projectExplorerInfos.size(); ++i) {
-        if (projectExplorerInfos[i].projectName != projectName) {
-            return false;
-        }
-    }
     // db初始化
     if (!InitSystemMemoryDb()) {
         Server::ServerLog::Error("Failed to open database. path:", systemMemoryDbPath);
@@ -85,13 +74,14 @@ bool ProjectExplorerManager::SaveProjectExplorer(std::vector<ProjectExplorerInfo
     std::unique_lock<std::recursive_mutex> lock(mutex);
     db->StartTransaction();
     // 如果存在冲突，则需要清空老项目内容，如果处理失败，则事务回滚
-    if (isConflict && !db->DeleteFileMenu(std::vector<std::string>{projectName}, std::vector<std::string>())) {
+    if (isConflict &&
+        !db->DeleteFileMenu(std::vector<std::string>{projectExplorerInfo.projectName}, std::vector<std::string>())) {
         db->RollbackTransaction();
         return false;
     }
 
     // 将导入数据进行落盘，如果失败则回滚
-    if (!SaveProjectExplorerToDb(projectName, projectExplorerInfos)) {
+    if (!SaveProjectExplorerToDb(projectExplorerInfo.projectName, projectExplorerInfo)) {
         db->RollbackTransaction();
         return false;
     }
@@ -101,9 +91,9 @@ bool ProjectExplorerManager::SaveProjectExplorer(std::vector<ProjectExplorerInfo
 }
 
 bool ProjectExplorerManager::SaveProjectExplorerToDb(const std::string &projectName,
-                                                     std::vector<ProjectExplorerInfo> &projectExplorerInfos)
+                                                     const ProjectExplorerInfo &projectExplorerInfo)
 {
-    if (!db->InsertDuplicateUpdateProject(projectExplorerInfos)) {
+    if (!db->InsertDuplicateUpdateProject(projectExplorerInfo)) {
         return false;
     }
     std::vector<ProjectExplorerInfo> projectExplorerInfoData =
@@ -117,16 +107,14 @@ bool ProjectExplorerManager::SaveProjectExplorerToDb(const std::string &projectN
     }
 
     std::vector<std::shared_ptr<ParseFileInfo>> parseFileInfos;
-    for (auto &project: projectExplorerInfos) {
-        std::string uk = project.projectName + project.fileName;
-        if (ukIdMap.find(uk) == ukIdMap.end()) {
-            return false;
-        }
-        int64_t id = ukIdMap[project.projectName + project.fileName];
-        for (auto &item: project.fileInfoMap) {
-            item.second->projectExplorerId = id;
-            parseFileInfos.push_back(item.second);
-        }
+    std::string uk = projectExplorerInfo.projectName + projectExplorerInfo.fileName;
+    if (ukIdMap.find(uk) == ukIdMap.end()) {
+        return false;
+    }
+    int64_t id = ukIdMap[projectExplorerInfo.projectName + projectExplorerInfo.fileName];
+    for (auto &item: projectExplorerInfo.fileInfoMap) {
+        item.second->projectExplorerId = id;
+        parseFileInfos.push_back(item.second);
     }
     return db->InsertDuplicateUpdateParsedFile(parseFileInfos);
 }
@@ -203,16 +191,16 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
 }
 
 ProjectErrorType ProjectExplorerManager::CheckProjectConflict(const std::string &projectName,
-                                                              const std::vector<std::string>& filePathList)
+                                                              const std::string &filePath)
 {
-    if (projectName.empty() || filePathList.empty()) {
+    if (projectName.empty() || filePath.empty()) {
         return ProjectErrorType::OTHER;
     }
 
-    std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(filePathList);
+    std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(filePath);
     ParserType allocType = parserType.second;
-    std::shared_ptr<ProjectParserBase> factory = ParserFactory::ParserImport(allocType);
-    ProjectTypeEnum projectTypeEnum = factory->GetProjectType(filePathList);
+    std::shared_ptr<ProjectParserBase> factory = ParserFactory::GetProjectParser(allocType);
+    ProjectTypeEnum projectTypeEnum = factory->GetProjectType(filePath);
 
     if (!InitSystemMemoryDb()) {
         Server::ServerLog::Error("Failed to open database. path:", systemMemoryDbPath);
@@ -222,14 +210,11 @@ ProjectErrorType ProjectExplorerManager::CheckProjectConflict(const std::string 
             db->QueryProjectExplorerData(std::vector<std::string>{projectName}, std::vector<std::string>());
 
     // 校验是否导入的数据是否是历史导入过的
-    std::vector<std::string> curFilePathList;
+    std::set<std::string> curFilePathList;
     for (const auto &item: infos) {
-        curFilePathList.push_back(item.fileName);
+        curFilePathList.insert(item.fileName);
     }
-    std::vector<std::string> diff;
-    std::set_difference(filePathList.begin(), filePathList.end(), curFilePathList.begin(),
-                        curFilePathList.end(), std::back_inserter(diff));
-    if (diff.empty()) {
+    if (curFilePathList.count(filePath) != 0) {
         return ProjectErrorType::TRANSFER_PROJECT;
     }
     if (infos.empty()) {
@@ -365,15 +350,18 @@ ProjectTypeEnum ProjectExplorerManager::GetProjectType(const std::vector<Project
     return *projectTypeSet.begin();
 }
 
-std::string ProjectExplorerManager::GetClusterFilePath(const std::vector<ProjectExplorerInfo> &projectInfo)
+std::vector<std::shared_ptr<ParseFileInfo>> ProjectExplorerManager::GetClusterFilePath(
+    const std::vector<ProjectExplorerInfo> &projectInfo)
 {
+    std::vector<std::shared_ptr<ParseFileInfo>> res;
     for (const auto &item: projectInfo) {
         if (item.projectType == static_cast<int>(ProjectTypeEnum::TEXT_CLUSTER) ||
             item.projectType == static_cast<int>(ProjectTypeEnum::DB_CLUSTER)) {
-            return item.fileName;
+            auto clusters = item.GetClusterInfos();
+            std::copy(clusters.begin(), clusters.end(), std::back_inserter(res));
         }
     }
-    return "";
+    return res;
 }
 
 void ProjectExplorerManager::RebuildParseFileInfo(ProjectExplorerInfo &projectInfo,

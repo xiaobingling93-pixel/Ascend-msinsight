@@ -11,10 +11,10 @@ namespace Summary {
 using namespace Dic::Server;
 bool QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ComputeDetailRequest &request = dynamic_cast<ComputeDetailRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<ComputeDetailRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ComputeDetailResponse> responsePtr = std::make_unique<ComputeDetailResponse>();
-    ComputeDetailResponse &response = *responsePtr.get();
+    ComputeDetailResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // check request parameters
     std::string errorMsg;

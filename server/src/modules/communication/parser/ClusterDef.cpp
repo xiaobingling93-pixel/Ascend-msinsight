@@ -3,9 +3,11 @@
  */
 
 #include <utility>
+#include "ProtocolMessage.h"
 #include "ClusterDef.h"
 
 namespace Dic::Module {
+using namespace Dic::Protocol;
 bool ParallelStrategyConfig::CheckParams(std::string &errorMsg) const
 {
     // algorithm只允许为以下白名单之一

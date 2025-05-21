@@ -55,15 +55,12 @@ protected:
         std::vector<std::string> parseFileList {filePathText};
         ProjectExplorerInfo info = CreateProjectData("testProject", "projectFilePath",
                                                      "import", Dic::ProjectTypeEnum::TEXT_CLUSTER, parseFileList);
-        infos.push_back(info);
-        ProjectExplorerManager::Instance().SaveProjectExplorer(infos, false);
+        ProjectExplorerManager::Instance().SaveProjectExplorer(info, false);
 
-        std::vector<ProjectExplorerInfo> dbInfos;
         std::vector<std::string> parseDbFileList {filePathDb};
         ProjectExplorerInfo dbInfo = CreateProjectData("testProjectDb", "projectFilePathDb",
                                                        "import", Dic::ProjectTypeEnum::DB, parseDbFileList);
-        dbInfos.push_back(dbInfo);
-        ProjectExplorerManager::Instance().SaveProjectExplorer(dbInfos, false);
+        ProjectExplorerManager::Instance().SaveProjectExplorer(dbInfo, false);
     }
 
     static void ClearProjectExplorerData()
@@ -81,7 +78,7 @@ TEST_F(BaselineManagerTest, TestText)
     std::string filePathText = currPath.substr(0, index + 1) +
         R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
     BaselineInfo baselineInfo;
-    bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo);
+    bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo, COMPARE);
     std::string notFinishTask = "";
     int index = 0;
     while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -100,7 +97,7 @@ TEST_F(BaselineManagerTest, TestDb)
     std::string filePathDb = currPath.substr(0, index + 1) +
         R"(/src/test/test_data/full_db/ascend_pytorch_profiler.db)";
     BaselineInfo baselineInfo;
-    bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo);
+    bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo, COMPARE);
     std::string notFinishTask = "";
     int index = 0;
     while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -118,7 +115,7 @@ TEST_F(BaselineManagerTest, TestFileNotExist)
 {
     std::string filePathDb = "noData";
     BaselineInfo baselineInfo;
-    bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo);
+    bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo, COMPARE);
     EXPECT_FALSE(result);
     EXPECT_EQ(baselineInfo.errorMessage, "The project does not exist, baseline setting failed.");
 }

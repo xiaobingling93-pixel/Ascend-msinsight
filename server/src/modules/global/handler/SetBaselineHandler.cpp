@@ -23,8 +23,10 @@ bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
         return false;
     }
     BaselineInfo baselineInfo;
+    baselineInfo.clusterBaseLine = request.params.baselineClusterPath;
     bool res =
-        BaselineManagerService::InitBaselineData(request.params.projectName, request.params.filePath, baselineInfo);
+            BaselineManagerService::InitBaselineData(request.params.projectName, request.params.filePath, baselineInfo,
+                                                     request.params.currentClusterPath);
     response.body.rankId = baselineInfo.rankId;
     response.body.host = baselineInfo.host;
     response.body.errorMessage = baselineInfo.errorMessage;

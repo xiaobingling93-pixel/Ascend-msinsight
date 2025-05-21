@@ -23,6 +23,7 @@ using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
 using namespace Dic::Module::Global;
+using namespace Dic::Module::Operator;
 class OperatorRequestHandlerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
@@ -70,7 +71,8 @@ public:
         std::string filePathText = currPath.substr(0, index + 1) +
                                    R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
         BaselineInfo baselineInfo;
-        bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo);
+        bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo,
+                                                               COMPARE);
         std::string notFinishTask = "";
         int index = 0;
         while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -123,14 +125,18 @@ protected:
         ProjectExplorerInfo info = CreateProjectData("testProject", "projectFilePath",
                                                      "import", Dic::ProjectTypeEnum::TEXT_CLUSTER, parseFileList);
         infos.push_back(info);
-        ProjectExplorerManager::Instance().SaveProjectExplorer(infos, false);
+        std::for_each(infos.begin(), infos.end(), [](const auto& item) {
+            ProjectExplorerManager::Instance().SaveProjectExplorer(item, false);
+        });
 
         std::vector<ProjectExplorerInfo> dbInfos;
         std::vector<std::string> parseDbFileList {filePathDb};
         ProjectExplorerInfo dbInfo = CreateProjectData("testProjectDb", "projectFilePathDb",
                                                        "import", Dic::ProjectTypeEnum::DB, parseDbFileList);
         dbInfos.push_back(dbInfo);
-        ProjectExplorerManager::Instance().SaveProjectExplorer(dbInfos, false);
+        std::for_each(dbInfos.begin(), dbInfos.end(), [](const auto& item) {
+            ProjectExplorerManager::Instance().SaveProjectExplorer(item, false);
+        });
     }
 };
 
@@ -313,3 +319,4 @@ TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWhenBsesLineIsN
 
     EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
 }
+

@@ -23,17 +23,18 @@ public:
     bool UpdateProjectName(const std::string& oldProjectName, const std::string& newProjectName);
     std::vector<ProjectExplorerInfo> QueryProjectExplorer(const std::string &projectName,
                                                           const std::vector<std::string> &dataPathList);
-    bool SaveProjectExplorer(std::vector<ProjectExplorerInfo> &projectExplorerInfos, bool isConflict);
+    bool SaveProjectExplorer(const ProjectExplorerInfo &projectExplorerInfo, bool isConflict);
     bool DeleteProjectAndFilePath(const std::string &projectName, const std::vector<std::string>& filePathList);
     Dic::Protocol::ProjectErrorType CheckProjectConflict(const std::string &projectName,
-                                                         const std::vector<std::string>& filePathList);
+                                                         const std::string &filePath);
     void UpdateProjectDbPath(const std::string &projectName,
                              const std::map<std::string, std::vector<std::string>>& dataPathToDbMap);
     void InitSystemMemoryDbPath(const std::string &filePath);
     bool IsClusterData(const std::string &projectName);
     bool ClearProjectExplorer(const std::vector<std::string> &projectNameList);
     static ProjectTypeEnum GetProjectType(const std::vector<ProjectExplorerInfo> &projectInfo);
-    static std::string GetClusterFilePath(const std::vector<ProjectExplorerInfo> &projectInfo);
+    static std::vector<std::shared_ptr<ParseFileInfo>> GetClusterFilePath(
+        const std::vector<ProjectExplorerInfo> &projectInfo);
 
 private:
     std::string systemMemoryDbPath;
@@ -42,7 +43,7 @@ private:
 
     bool InitSystemMemoryDb();
     bool SaveProjectExplorerToDb(const std::string &projectName,
-                                 std::vector<ProjectExplorerInfo> &projectExplorerInfos);
+                                 const ProjectExplorerInfo &projectExplorerInfo);
     static void RebuildParseFileInfo(ProjectExplorerInfo& projectInfo,
                                      std::vector<std::shared_ptr<ParseFileInfo>> &parseFileInfos);
     std::string eventDir;

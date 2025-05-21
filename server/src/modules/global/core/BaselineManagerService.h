@@ -12,10 +12,11 @@ class BaselineManagerService {
 public:
     static void ResetBaseline();
     static bool InitBaselineData(const std::string &projectName, const std::string &filePath,
-        BaselineInfo &baselineInfo);
+                                 BaselineInfo &baselineInfo, const std::string &compareClusterPath);
 private:
-    static bool IsClusterBaseline(ProjectTypeEnum projectTypeEnum, const std::string &fileName);
-    static void InitBaselineParallelStrategy();
+    static bool IsClusterBaseline(ProjectTypeEnum projectTypeEnum,
+                                  const std::vector<ProjectExplorerInfo> &projectInfoList);
+    static void InitBaselineParallelStrategy(const std::string &compareClusterPath);
 };
 }
 }

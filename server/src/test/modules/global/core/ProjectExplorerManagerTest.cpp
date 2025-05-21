@@ -54,7 +54,9 @@ protected:
                                                      "import", Dic::ProjectTypeEnum::TEXT_CLUSTER,
                                                      std::vector<std::string>());
         infos.push_back(info);
-        ProjectExplorerManager::Instance().SaveProjectExplorer(infos, false);
+        std::for_each(infos.begin(), infos.end(), [](const auto& item) {
+            ProjectExplorerManager::Instance().SaveProjectExplorer(item, false);
+        });
     }
 
     void ClearProjectExplorerData()
@@ -96,18 +98,20 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
             currPath.substr(0, index + 1) + "/src/test/test_data/data.bin";
     filePathList.push_back(filePath);
     Dic::Protocol::ProjectErrorType result = ProjectExplorerManager::Instance().CheckProjectConflict(projectName,
-                                                                                                     filePathList);
+                                                                                                     filePathList[0]);
     bool isConflict = (result == Dic::Protocol::ProjectErrorType::PROJECT_NAME_CONFLICT);
     EXPECT_EQ(isConflict, true);
     std::vector<ProjectExplorerInfo> infos;
     ProjectExplorerInfo info = CreateProjectData(projectName, filePathList[0], "import",
                                                  Dic::ProjectTypeEnum::BIN, std::vector<std::string>());
     infos.push_back(info);
-    bool res = ProjectExplorerManager::Instance().SaveProjectExplorer(infos, true);
-    EXPECT_EQ(res, true);
+    std::for_each(infos.begin(), infos.end(), [](const auto& item) {
+        bool res = ProjectExplorerManager::Instance().SaveProjectExplorer(item, false);
+        EXPECT_EQ(res, true);
+    });
     std::vector<ProjectExplorerInfo> queryRes = ProjectExplorerManager::Instance()
             .QueryProjectExplorer(projectName, std::vector<std::string>());
-    EXPECT_EQ(queryRes.size(), 1);
+    EXPECT_EQ(queryRes.size(), 2); // expect size 2
     EXPECT_EQ(queryRes[0].importType, "import");
     EXPECT_EQ(queryRes[0].fileName, filePath);
     EXPECT_EQ(static_cast<Dic::ProjectTypeEnum>(queryRes[0].projectType), Dic::ProjectTypeEnum::BIN);
@@ -161,8 +165,7 @@ TEST_F(ProjectExplorerManagerTest, DeleteFileNode)
     projectInfo.id = 1;
     std::string parsedFilePath = importPath + R"(ASCEND_PROFILER_OUTPUT)";
     Dic::Module::ProjectParserJson::BuildProjectExploreInfo(projectInfo, {parsedFilePath});
-    std::vector<ProjectExplorerInfo> projectList {projectInfo};
-    ProjectExplorerManager::Instance().SaveProjectExplorer(projectList, false);
+    ProjectExplorerManager::Instance().SaveProjectExplorer(projectInfo, false);
     ProjectExplorerManager::Instance().DeleteProjectAndFilePath("testDeleteFile", {parsedFilePath});
     auto result = ProjectExplorerManager::Instance().QueryProjectExplorer("testDeleteFile", {});
     EXPECT_EQ(result.size(), 0);

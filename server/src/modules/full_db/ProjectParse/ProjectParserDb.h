@@ -18,9 +18,9 @@ public:
     ~ProjectParserDb() override = default;
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
-    void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
         Global::BaselineInfo &baselineInfo) final;
-    ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
+    ProjectTypeEnum GetProjectType(const std::string &dataPath) final;
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) final;
     static void BuildProjectExploreInfo(ProjectExplorerInfo& info, const std::vector<std::string>& parsedFiles);
 private:
@@ -29,9 +29,15 @@ private:
     static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
         const std::string &host, const std::string &dbFile);
     static void SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response);
-    static void ClusterProcess(const std::string &selectedFolder, bool isCluster, ProjectTypeEnum curProjectTypeEnum,
-        std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
-    static void ParseClusterBaselineInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
+
+    static void ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo,
+                               bool isCluster,
+                               ProjectTypeEnum curProjectTypeEnum,
+                               std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
+                               const std::string &projectName);
+    static void ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos);
+    void ParseClusterInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isCluster,
+                          ProjectTypeEnum projectType);
 };
 } // end of namespace Module
 } // end of namespace Dic

@@ -44,3 +44,34 @@ TEST_F(ProjectParserTest, GetClusterInfoEmpty)
     EXPECT_EQ(cluster, "");
     EXPECT_EQ(clusterPrefix, "");
 }
+
+TEST_F(ProjectParserTest, ParserBaseParser)
+{
+    ProjectParserBase parser;
+    ProjectExplorerInfo info;
+    ImportActionRequest request;
+    parser.Parser({info}, request);
+}
+
+TEST_F(ProjectParserTest, ParserBaseline)
+{
+    ProjectParserBase parser;
+    ProjectExplorerInfo info;
+    BaselineInfo baselineInfo;
+    parser.ParserBaseline(info, baselineInfo);
+}
+
+TEST_F(ProjectParserTest, GetParseFileByImportFile)
+{
+    ProjectParserBase parser;
+    std::string error;
+    auto res = parser.GetParseFileByImportFile("test", error);
+    EXPECT_EQ(res.size(), 1); // expect size 1
+    EXPECT_EQ(res[0], "test");
+}
+
+TEST_F(ProjectParserTest, ParseProgressCallBack)
+{
+    ProjectParserBase parser;
+    parser.ParseProgressCallBack("0", 40, 100, 40); // set 40/100, percent=40
+}

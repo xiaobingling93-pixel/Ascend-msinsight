@@ -15,10 +15,10 @@ namespace Communication {
 using namespace Dic::Server;
 bool CommunicationOperatorListsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    DurationListRequest &request = dynamic_cast<DurationListRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<DurationListRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorListsResponse> responsePtr = std::make_unique<OperatorListsResponse>();
-    OperatorListsResponse &response = *responsePtr.get();
+    OperatorListsResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // check request parameters
     std::string errorMsg;

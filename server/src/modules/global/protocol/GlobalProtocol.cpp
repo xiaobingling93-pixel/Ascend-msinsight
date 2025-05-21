@@ -149,6 +149,8 @@ std::unique_ptr<Request> GlobalProtocol::ToSetBaselineRequest(const json_t &json
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.filePath, json["params"], "filePath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineClusterPath, json["params"], "baselineClusterPath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentClusterPath, json["params"], "currentClusterPath");
     return reqPtr;
 }
 

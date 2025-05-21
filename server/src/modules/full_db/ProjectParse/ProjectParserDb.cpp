@@ -62,10 +62,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
         }
     }
     // 执行集群数据解析
-    std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, clusterFilePath,
-        isCluster, curProjectTypeEnum, dataPathToDbMap, projectInfos[0].projectName);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+    ParseClusterInfo(projectInfos, false, curProjectTypeEnum);
 }
 
 void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response)
@@ -89,18 +86,20 @@ void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, 
 }
 
 // LCOV_EXCL_BR_START
-void ProjectParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
+void ProjectParserDb::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo, bool isCluster,
                                      ProjectTypeEnum curProjectTypeEnum,
                                      std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
                                      const std::string &projectName)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (curProjectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
-        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
-        ClusterFileParser clusterFileParser(selectedFolder, clusterDatabase, COMPARE + TimeUtil::Instance().NowStr());
+        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(clusterInfo->parseFilePath,
+                                                                                 DataType::DB);
+        ClusterFileParser clusterFileParser(clusterInfo->parseFilePath, clusterDatabase,
+                                            clusterInfo->parseFilePath + TimeUtil::Instance().NowStr());
         if (clusterFileParser.ParserClusterOfDb()) {
             ServerLog::Info("The cluster db file is parsed successfully.");
-            dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
+            dataPathToDbMap[clusterInfo->parseFilePath].push_back(clusterFileParser.GetClusterDbPath());
             parseClusterResult = PARSE_RESULT_OK;
         } else {
             ServerLog::Warn("Failed to parse cluster db files");
@@ -109,12 +108,13 @@ void ProjectParserDb::ClusterProcess(const std::string &selectedFolder, bool isC
     }
     SaveDbPath(projectName, dataPathToDbMap);
     // send event
-    ProjectParserBase::ParseClusterEndProcess(parseClusterResult, isCluster);
+    ProjectParserBase::ParseClusterEndProcess(parseClusterResult, isCluster, clusterInfo->parseFilePath);
     // 全量db也必须发step2完成事件，否则通信耗时分析会卡住
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.parseResult = std::move(parseClusterResult);
+    event->body.clusterPath = clusterInfo->parseFilePath;
     SendEvent(std::move(event));
 }
 // LCOV_EXCL_BR_STOP
@@ -187,17 +187,17 @@ void ProjectParserDb::SetBaseActionOfResponse(ImportActionResponse &response, co
     response.body.result.emplace_back(action);
 }
 
-ProjectTypeEnum ProjectParserDb::GetProjectType(const std::vector<std::string> &dataPath)
+ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
 {
     if (dataPath.empty()) {
         return ProjectTypeEnum::DB;
     }
-    std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(pytorchDBReg));
+    std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
-        frameworkFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(mindsporeDBReg));
+        frameworkFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(mindsporeDBReg));
     }
-    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(msprofDBReg));
-    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(clusterDBReg));
+    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(msprofDBReg));
+    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(dataPath, std::regex(clusterDBReg));
     int rankCount = frameworkFiles.size() + msprofFiles.size();
     // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
     bool isCluster = (rankCount > 1) || (rankCount == 0 && (clusterPath.size() > 0));
@@ -234,17 +234,17 @@ std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::st
 }
 
 // LCOV_EXCL_BR_START
-void ProjectParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
     Global::BaselineInfo &baselineInfo)
 {
-    if (projectInfos.empty() || projectInfos[0].subParseFileInfo.empty()) {
+    if (projectInfo.fileInfoMap.empty()) {
         return;
     }
     if (baselineInfo.isCluster) {
-        ProjectParserDb::ParseClusterBaselineInfo(projectInfos);
+        ProjectParserDb::ParseBaselineClusterInfo(projectInfo);
         return;
     }
-    std::string parseFilePath = projectInfos[0].subParseFileInfo[0]->parseFilePath;
+    std::string parseFilePath = projectInfo.subParseFileInfo[0]->parseFilePath;
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
         frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(mindsporeDBReg));
@@ -285,22 +285,57 @@ void ProjectParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerIn
     FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ rankId }, file);
 }
 
-void ProjectParserDb::ParseClusterBaselineInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+void ProjectParserDb::ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos)
 {
-    std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
-    auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::DB);
-    ClusterFileParser clusterFileParser(clusterFilePath, clusterDatabase, BASELINE + TimeUtil::Instance().NowStr());
-    if (!clusterFileParser.ParserClusterOfDb()) {
-        ServerLog::Warn("Failed to parse cluster db files");
+    std::vector<std::shared_ptr<ParseFileInfo>> clusterInfos = projectInfos.GetClusterInfos();
+    if (clusterInfos.empty()) {
+        auto cluster = std::make_shared<ParseFileInfo>();
+        cluster->parseFilePath = projectInfos.fileName;
+        cluster->type = ParseFileType::CLUSTER;
+        cluster->clusterId = FileUtil::GetFileName(projectInfos.fileName);
+        clusterInfos.emplace_back(cluster);
     }
+    std::for_each(clusterInfos.begin(), clusterInfos.end(), [](const std::shared_ptr<ParseFileInfo>& item) {
+        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(item->parseFilePath, DataType::DB);
+        ClusterFileParser clusterFileParser(item->parseFilePath, clusterDatabase,
+                                            item->clusterId + TimeUtil::Instance().NowStr());
+        if (!clusterFileParser.ParserClusterOfDb()) {
+            ServerLog::Warn("Failed to parse cluster db files");
+        }
+    });
 }
 
 void ProjectParserDb::BuildProjectExploreInfo(ProjectExplorerInfo &info, const std::vector<std::string> &parsedFiles)
 {
     return ProjectParserJson::BuildProjectExploreInfo(info, parsedFiles);
 }
-// LCOV_EXCL_BR_STOP
 
+void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isCluster,
+                                       ProjectTypeEnum projectType)
+{
+    auto clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
+    if (clusterFilePath.empty()) {
+        std::for_each(projectInfos.begin(), projectInfos.end(), [&clusterFilePath](const ProjectExplorerInfo &item) {
+            auto cluster = std::make_shared<ParseFileInfo>();
+            cluster->parseFilePath = item.fileName;
+            cluster->type = ParseFileType::CLUSTER;
+            cluster->clusterId = item.fileName;
+            clusterFilePath.emplace_back(cluster);
+        });
+    }
+    auto clusterParse = [isCluster, projectType, this, &projectInfos](const std::shared_ptr<ParseFileInfo> &cluster) {
+        ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(
+            ClusterProcess,
+            cluster,
+            isCluster,
+            projectType,
+            dataPathToDbMap,
+            projectInfos[0].projectName);
+    };
+    std::for_each(clusterFilePath.begin(), clusterFilePath.end(), clusterParse);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+}
+// LCOV_EXCL_BR_STOP
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);
 } // Module
 } // Dic

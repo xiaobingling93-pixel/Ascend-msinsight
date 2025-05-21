@@ -458,6 +458,7 @@ struct KernelRequest : public Request {
 struct CommunicationKernelParams {
     std::string rankId;
     std::string name;
+    std::string clusterPath;
 };
 
 struct CommunicationKernelRequest : public Request {

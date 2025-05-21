@@ -153,6 +153,7 @@ struct ParallelStrategyConfig {
     int64_t cpSize = 1;
     int64_t epSize = 1;
     int64_t moeTpSize = 1;
+    std::string clusterPath;
     ParallelStrategyConfigForMindSpeed configForMindSpeed;
     bool CheckParams(std::string &errorMsg) const;
     bool CheckBaseParams(std::string &errorMsg) const;

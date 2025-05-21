@@ -82,6 +82,8 @@ struct ProjectCheckValidRequest : public Request {
 struct BaselineSettingParams {
     std::string projectName;
     std::string filePath;
+    std::string baselineClusterPath;
+    std::string currentClusterPath;
 };
 
 struct BaselineSettingRequest : public Request {

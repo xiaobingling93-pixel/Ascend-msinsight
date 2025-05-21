@@ -26,26 +26,26 @@ using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Global;
 // 静态变量 锁初始化
 std::mutex ParserFactory::mutex;
-std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::vector<std::string> &pathList)
+std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::string &path)
 {
-    if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
-        return std::make_pair(pathList[0], ParserType::BIN);
+    if (StringUtil::EndWith(path, computeBinSuffix)) {
+        return std::make_pair(path, ParserType::BIN);
     }
-    if (StringUtil::EndWith(pathList[0], ipynbSuffix)) {
-        return std::make_pair(pathList[0], ParserType::IPYNB);
+    if (StringUtil::EndWith(path, ipynbSuffix)) {
+        return std::make_pair(path, ParserType::IPYNB);
     }
     std::pair<std::string, ParserType> result;
-    if (FileUtil::FindIfDbTypeByRegex(pathList[0], std::regex(traceViewReg), std::regex(DB_REG))) {
-        result = std::make_pair(pathList[0], ParserType::DB);
-    } else if (ProjectParserJson::ExistJsonFormatFile(pathList[0]) || ClusterFileParser::CheckIsCluster(pathList[0])) {
-        result = std::make_pair(pathList[0], ParserType::JSON);
+    if (FileUtil::FindIfDbTypeByRegex(path, std::regex(traceViewReg), std::regex(DB_REG))) {
+        result = std::make_pair(path, ParserType::DB);
+    } else if (ProjectParserJson::ExistJsonFormatFile(path) || ClusterFileParser::CheckIsCluster(path)) {
+        result = std::make_pair(path, ParserType::JSON);
     } else {
-        result = std::make_pair(pathList[0], ParserType::OTHER);
+        result = std::make_pair(path, ParserType::OTHER);
     }
     return result;
 }
 
-std::shared_ptr<ProjectParserBase> ParserFactory::ParserImport(ParserType allocType)
+std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType allocType)
 {
     std::shared_ptr<ProjectParserBase> alloc;
     switch (allocType) {
@@ -92,7 +92,8 @@ void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response, 
     response.body.result.emplace_back(action);
 }
 
-void ProjectParserBase::ParseClusterEndProcess(std::string result, bool isShowCluster)
+void ProjectParserBase::ParseClusterEndProcess(std::string result, bool isShowCluster,
+                                               const std::string &clusterId)
 {
     ServerLog::Info("Parse Cluster File end, send event");
     auto event = std::make_unique<ParseClusterCompletedEvent>();
@@ -100,6 +101,7 @@ void ProjectParserBase::ParseClusterEndProcess(std::string result, bool isShowCl
     event->result = true;
     event->body.parseResult = std::move(result);
     event->body.isShowCluster = isShowCluster;
+    event->body.clusterPath = clusterId;
     SendEvent(std::move(event));
 }
 
