@@ -80,8 +80,9 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         return false;
     }
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
-    if (database->HasFinishedParseLastTime(statusInfo) &&
-        !Global::BaselineManager::Instance().IsBaselineId(fileId)) {
+    if ((database->HasFinishedParseLastTime(statusInfo) &&
+        !Global::BaselineManager::Instance().IsBaselineId(fileId)) ||
+        StringUtil::EndWith(filePathArr[0], "profiler.db")) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
         database->QueryExtremumTimestamp(min, max);

@@ -9,6 +9,7 @@
 #include "FullDbParser.h"
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
+#include "ServitizationOpenApi.h"
 #include "ResetWindowHandler.h"
 
 namespace Dic {
@@ -23,6 +24,8 @@ bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     ResetWindowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     DataType type = DataBaseManager::Instance().GetDataType();
+    std::shared_ptr<IE::ServitizationOpenApi> openApi = std::make_shared<IE::ServitizationOpenApi>();
+    openApi->Reset();
     if (type == DataType::TEXT) {
         TraceFileParser::Instance().Reset();
         Summary::KernelParse::Instance().Reset();

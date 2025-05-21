@@ -47,5 +47,7 @@ TEST_F(ServitizationContextTest, GetDatabaseTest)
 TEST_F(ServitizationContextTest, ExecuteScriptTest)
 {
     std::shared_ptr<ServitizationContext> context = std::make_shared<ServitizationContext>();
+    auto res = context->ExecuteScript("mmmmmm", "lll");
     context->Reset();
+    EXPECT_EQ(res, false);
 }

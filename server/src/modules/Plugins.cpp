@@ -8,6 +8,7 @@
 #include "TimelinePlugin.h"
 #include "JupyterPlugin.h"
 #include "CommunicationPlugin.h"
+#include "IEPlugin.h"
 namespace Dic::Module {
     Core::PluginRegister ADVISOR_PLUGIN(std::make_unique<Advisor::AdvisorPlugin>());
     Core::PluginRegister GLOBAL_PLUGIN(std::make_unique<Global::GlobalPlugin>());
@@ -18,4 +19,5 @@ namespace Dic::Module {
     Core::PluginRegister TIMELINE_PLUGIN(std::make_unique<Timeline::TimelinePlugin>());
     Core::PluginRegister JUPYTER_PLUGIN(std::make_unique<Jupyter::JupyterPlugin>());
     Core::PluginRegister COMM_PLUGIN(std::make_unique<Communication::CommunicationPlugin>());
+    Core::PluginRegister IE_PLUGIN(std::make_unique<IE::IEPlugin>());
 }

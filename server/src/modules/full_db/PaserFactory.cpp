@@ -7,6 +7,7 @@
 #include "ProjectParserJson.h"
 #include "ProjectParserIpynb.h"
 #include "ProjectParserDb.h"
+#include "ParserIE.h"
 #include "DataBaseManager.h"
 #include "ClusterFileParser.h"
 #include "TraceTime.h"
@@ -15,6 +16,7 @@
 #include "FullDbParser.h"
 #include "ProjectExplorerManager.h"
 #include "MetaDataCacheManager.h"
+#include "ServitizationOpenApi.h"
 #include "ParserStatusManager.h"
 #include "SystemMemoryDatabaseDef.h"
 #include "ProjectAnalyze.h"
@@ -38,6 +40,10 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::strin
     }
     if (StringUtil::EndWith(path, ipynbSuffix)) {
         return std::make_pair(path, ParserType::IPYNB);
+    }
+    std::unique_ptr<ParserIE> ie = std::make_unique<ParserIE>();
+    if (ie->ExistIEFile(path)) {
+        return std::make_pair(path, ParserType::IE);
     }
     std::pair<std::string, ParserType> result;
     if (FileUtil::FindIfDbTypeByRegex(path, std::regex(traceViewReg), std::regex(DB_REG))) {
@@ -66,6 +72,9 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
         case ParserType::IPYNB:
             alloc = std::make_shared<ProjectParserIpynb>();
             break;
+        case ParserType::IE:
+            alloc = std::make_shared<ParserIE>();
+            break;
         default:
             alloc = std::make_shared<ProjectParserBase>();
             break;
@@ -76,6 +85,8 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
 void ParserFactory::Reset()
 {
     std::lock_guard<std::mutex> lock(mutex);
+    std::shared_ptr<IE::ServitizationOpenApi> openApi = std::make_shared<IE::ServitizationOpenApi>();
+    openApi->Reset();
     TraceFileParser::Instance().Reset();
     Summary::KernelParse::Instance().Reset();
     Memory::MemoryParse::Instance().Reset();

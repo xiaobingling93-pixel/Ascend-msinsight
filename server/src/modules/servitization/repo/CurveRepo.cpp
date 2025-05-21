@@ -23,7 +23,10 @@ std::vector<std::string> CurveRepo::QueryAllViews(const std::string& fileId)
     }
     std::vector<std::string> res;
     while (result->Next()) {
-        res.emplace_back(result->GetString("name"));
+        std::string viewName = result->GetString("name");
+        if (StringUtil::EndWith(viewName, "_curve")) {
+            res.emplace_back(viewName);
+        }
     }
     return res;
 }
