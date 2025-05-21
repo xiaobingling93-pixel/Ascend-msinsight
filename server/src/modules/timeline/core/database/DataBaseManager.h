@@ -56,6 +56,7 @@ public:
     bool HasFileId(DatabaseType type, const std::string &fileId);
     std::shared_ptr<VirtualClusterDatabase> CreateClusterDatabase(const std::string &uniqueKey, DataType type);
     std::shared_ptr<VirtualClusterDatabase> GetClusterDatabase(const std::string &uniqueKey);
+    std::vector<std::shared_ptr<VirtualClusterDatabase>> GetAllClusterDatabase();
 
     std::shared_ptr<Memory::VirtualMemoryDataBase> GetMemoryDatabase(const std::string &fileId);
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();

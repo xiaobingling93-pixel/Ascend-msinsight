@@ -315,6 +315,15 @@ std::shared_ptr<VirtualClusterDatabase> DataBaseManager::GetClusterDatabase(cons
     return clusterDatabaseMap[uniqueKey];
 }
 
+std::vector<std::shared_ptr<VirtualClusterDatabase>> DataBaseManager::GetAllClusterDatabase()
+{
+    std::vector<std::shared_ptr<VirtualClusterDatabase>> res;
+    for (auto& [key, value]: clusterDatabaseMap) {
+        res.push_back(value);
+    }
+    return res;
+}
+
 std::vector<std::string> DataBaseManager::GetAllFileId()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);

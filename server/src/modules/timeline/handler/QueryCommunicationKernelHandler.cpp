@@ -38,14 +38,21 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
     }
 
     // 根据通信算子name,startTime查询step、group
-    auto clusterDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
-    if (clusterDatabase == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get cluster connection.");
-        return false;
-    }
     request.params.rankId = GetRealRankId(request.params.rankId);
-    if (!clusterDatabase->QueryIterationAndCommunicationGroup(request.params, response.body)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query the operator group and step response data.");
+    auto clusterDbList = Timeline::DataBaseManager::Instance().GetAllClusterDatabase();
+    bool flag = false;
+    for (auto &clusterDb: clusterDbList) {
+        if (clusterDb == nullptr) {
+            continue;
+        }
+        if (!clusterDb->QueryIterationAndCommunicationGroup(request.params, response.body)) {
+            continue;
+        }
+        flag = true;
+        break;
+    }
+    if (!flag) {
+        SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get cluster connection.");
         return false;
     }
     SendResponse(std::move(responsePtr), true);

@@ -22,8 +22,7 @@ type ParamsWithClusterPath<T> = T & {
 
 function withClusterPath<T>(params: ParamsWithClusterPath<T>): ParamsWithClusterPath<T> {
     const session = store.sessionStore.activeSession;
-    params.clusterPath = session?.selectedClusterPath;
-    return params;
+    return { ...params, clusterPath: session?.selectedClusterPath };
 }
 
 /**
