@@ -35,7 +35,7 @@ export interface FormatterParams {
 }
 
 export interface GetParallelStrategyRes {
-    algorithm: 'megatron-lm(tp-cp-ep-dp-pp)' | 'megatron-lm(tp-cp-pp-dp-ep)' | 'mindspeed(tp-cp-ep-dp-pp)' | 'mindie-llm(tp-dp-ep-pp-moetp)';
+    algorithm: 'megatron-lm(tp-cp-ep-dp-pp)' | 'megatron-lm(tp-cp-pp-dp-ep)' | 'mindspeed(tp-cp-ep-dp-pp)' | 'mindie-llm(tp-dp-ep-pp-moetp)' | 'vllm(tp-pp-dp-ep)';
     level: string;
     dpSize: number;
     ppSize: number;

@@ -211,12 +211,15 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
 
     const clickGenerate = async (): Promise<void> => {
         const formData: GenerateConditions = form.getFieldsValue();
+        const { algorithm } = formData;
+        const isEPSizeVisible = !['mindie-llm(tp-dp-ep-pp-moetp)', 'vllm(tp-pp-dp-ep)'].includes(algorithm);
+        const isMoETPSizeVisible = algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)';
 
         // 由于选择不同 algorithm，moeTpSize 或 cpSize 可能隐藏，导致获取不到对应的值，此处单独处理
         const values: GenerateConditions = {
             ...formData,
-            moeTpSize: formData.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)' ? formData.moeTpSize : 1,
-            cpSize: formData.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)' ? 1 : formData.cpSize,
+            moeTpSize: isMoETPSizeVisible ? formData.moeTpSize : 1,
+            cpSize: isEPSizeVisible ? formData.cpSize : 1,
         };
         // 设置的并行策略乘积需要>=导入的卡数
         if (values.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)') {
@@ -272,6 +275,7 @@ const selectOptions = [
     { value: 'megatron-lm(tp-cp-pp-ep-dp)', label: 'Megatron-LM (tp-cp-pp-ep-dp)' },
     { value: 'mindspeed(tp-cp-ep-dp-pp)', label: 'MindSpeed (tp-cp-ep-dp-pp)' },
     { value: 'mindie-llm(tp-dp-ep-pp-moetp)', label: 'MindIE-LLM (tp-dp-ep-pp-moetp)' },
+    { value: 'vllm(tp-pp-dp-ep)', label: 'vLLM (tp-pp-dp-ep)' },
 ];
 const getDimensionOptions = (t: TFunction, generateConditions: GenerateConditions): Array<{key: string; label: ReactNode}> => {
     const { cpSize } = generateConditions;
@@ -314,6 +318,9 @@ const FormDom = (
         setPopconfirmVisible(mismatchCollectedConfiguration);
     }, []);
 
+    const isEPSizeVisible = !['mindie-llm(tp-dp-ep-pp-moetp)', 'vllm(tp-pp-dp-ep)'].includes(algorithm);
+    const isMoETPSizeVisible = algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)';
+
     return <Form
         data-testId="form-generate-parallelism"
         form={form}
@@ -334,15 +341,17 @@ const FormDom = (
             <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
         </Form.Item>
         {
-            algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)'
-                ? <Form.Item name={'moeTpSize'} label={t('MOE-TP Size')}>
-                    <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
-                </Form.Item>
-                : <Form.Item name={'cpSize'} label={t('CPSize')}>
+            isMoETPSizeVisible &&
+                 <Form.Item name={'moeTpSize'} label={t('MoE-TP Size')}>
+                     <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
+                 </Form.Item>
+        }
+        {
+            isEPSizeVisible &&
+                <Form.Item name={'cpSize'} label={t('CPSize')}>
                     <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
                 </Form.Item>
         }
-
         <Form.Item name={'dpSize'} label={t('DPSize')}>
             <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
         </Form.Item>
@@ -429,7 +438,7 @@ const defaultLegendItemList: LegendItem[] = [
     { value: 'cp', label: 'Context Parallelism', color: '#FD2F2F', checked: true, disabled: false, visible: true },
     { value: 'dp', label: 'Data Parallelism', color: '#6948C9', checked: true, disabled: false, visible: true },
     { value: 'ep', label: 'Expert Parallelism', color: '#EE891D', checked: true, disabled: false, visible: true },
-    { value: 'moeTp', label: 'MOE Tensor Parallelism', color: '#D53F78', checked: true, disabled: false, visible: true },
+    { value: 'moeTp', label: 'MoE Tensor Parallelism', color: '#D53F78', checked: true, disabled: false, visible: true },
 ];
 
 interface LegendContainerProps {

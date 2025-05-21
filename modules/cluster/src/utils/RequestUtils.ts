@@ -240,21 +240,21 @@ export const getParallelismPerformanceDataCancelable = createCancelableApi(
 );
 
 /**
- * 导入 MOE 专家负载均衡数据
+ * 导入 MoE 专家负载均衡数据
  */
 export const importExpertData = async(params: ImportExpertDataParams): Promise<void> => {
     return await window.requestData('summary/importExpertData', withClusterPath(params), 'summary');
 };
 
 /**
- * 查询 MOE 专家负载均衡数据
+ * 查询 MoE 专家负载均衡数据
  */
 export const queryExpertHotspot = async(params: QueryExpertHotspotParams): Promise<QueryExpertHotspotResult> => {
     return await window.requestData('summary/queryExpertHotspot', withClusterPath(params), 'summary');
 };
 
 /**
- * 查询 MOE 专家负载均衡搜索条件
+ * 查询 MoE 专家负载均衡搜索条件
  */
 export const queryModelInfo = async(): Promise<QueryModelInfoResult> => {
     return await window.requestData('summary/queryModelInfo', withClusterPath({}), 'summary');
