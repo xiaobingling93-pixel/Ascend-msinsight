@@ -7,6 +7,7 @@ import { store } from '@/store';
 import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import { ThemeName, Language } from '@/utils/enum';
 import { getRankId } from '@/utils/Rank';
+import type { LayerType } from '@/centralServer/websocket/defs';
 
 export function sendTheme(to?: number): void {
     connector.send({
@@ -87,21 +88,27 @@ export const sendShortcutKeys = (key: {hasCtrl: boolean;key: string}): void => {
 
 export const sendDirectory = (to?: number): void => {
     const session = store.sessionStore.activeSession;
-    const { projectName, selectedFilePath } = session.activeDataSource;
+    const { projectName, selectedFileType, selectedFilePath } = session.activeDataSource;
     let rankId: string = '';
+    let fileType: LayerType;
+    let filePath: string;
     // 比对数据
     if (session.isCompareStatus) {
         rankId = session.compareSet.comparison.rankId;
+        fileType = session.compareSet.comparison.fileType;
+        filePath = session.compareSet.comparison.filePath;
     } else {
         // 切换目录
-        if (projectName !== '' && selectedFilePath !== undefined) {
+        if (projectName !== '' && selectedFilePath !== '') {
             rankId = getRankId({ projectName, filePath: selectedFilePath });
         }
+        fileType = selectedFileType;
+        filePath = selectedFilePath;
     }
     // 通知页签
     connector.send({
         event: 'switchDirectory',
-        body: { rankId, isCompare: session.isCompareStatus },
+        body: { rankId, fileType, filePath, isCompare: session.isCompareStatus },
         to,
     });
 };

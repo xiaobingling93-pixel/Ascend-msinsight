@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import { setBaselineData, setCompareData, cancelBaselineData, cancelCompareData } from '@/utils/Compare';
+import type { DataSource, LayerType } from '@/centralServer/websocket/defs';
 
 interface Position {
     x: number;
@@ -40,63 +41,92 @@ export const isSameFile = (one: File, anotherOne: File): boolean => {
     return one.projectName === anotherOne.projectName && one.filePath === anotherOne.filePath;
 };
 
+// 判断基线是否是集群可对比数据
+function checkProjectFileIsClusterComparable<T extends { fileType: LayerType; projectName: string }>(projectFile: T, dataSources: DataSource[]): boolean {
+    const project = dataSources.find((item) => item.projectName === projectFile.projectName);
+    let clusterListNum = project?.children?.filter((item) => item.type === 'CLUSTER')?.length ?? 0;
+    // 判断是否是 Project(Cluster) - Rank 的形式
+    if (clusterListNum === 0 && (project?.children?.every((child) => child.type === 'RANK') ?? false)) {
+        clusterListNum = 1;
+    }
+    if (clusterListNum <= 0) {
+        // 不是 Project - Cluster - Rank 或者 Project(Cluster) - Rank 形式
+        return false;
+    } else if (clusterListNum === 1) {
+        // 是 Project(Cluster) - Rank 形式
+        return projectFile.fileType === 'PROJECT';
+    } else {
+        // 是 Project - Cluster - Rank 形式
+        return projectFile.fileType === 'CLUSTER';
+    }
+}
+
+// 判断基线是否是其他可对比数据
+function checkProjectFileIsOtherComparable<T extends { fileType: LayerType; projectName: string }>(projectFile: T): boolean {
+    return projectFile.fileType !== 'PROJECT' && projectFile.fileType !== 'CLUSTER';
+}
+
 // 右键菜单
-const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element => {
-    const { selectedFile, compareSet: { baseline, comparison } } = session;
-    const { projectName: selectedProjectName, filePath: selectedFilePath } = selectedFile;
-    const { projectName: baselineProjectName, filePath: baselineFilePath, rankId: baselineRankId } = baseline;
-    const { projectName: compareProjectName, filePath: compareFilePath } = comparison;
-    // 右击的是项目名还是文件名
-    const isProject = selectedProjectName !== '' && selectedFilePath === '';
-    // 是否基线文件
-    const isBaseline = selectedProjectName === baselineProjectName && selectedFilePath === baselineFilePath;
-    const isBaselineSetted = baselineProjectName !== '';
-    const isBaselineCluster = baselineProjectName !== '' && baselineRankId === '';
-    const isComparison = selectedProjectName === compareProjectName && selectedFilePath === compareFilePath;
+const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element[] => {
+    const { dataSources, selectedFile, compareSet: { baseline, comparison } } = session;
+    if (selectedFile.fileType === 'UNKNOWN') { return []; }
+    // 选中的是否已被设为基线
+    const isBaseline = selectedFile.projectName === baseline.projectName && selectedFile.filePath === baseline.filePath;
+    // 选中的是否已被设为对比
+    const isComparison = selectedFile.projectName === comparison.projectName && selectedFile.filePath === comparison.filePath;
+    const hasBaseline = baseline.projectName !== '';
+
+    const isClusterComparableBaseline = checkProjectFileIsClusterComparable(baseline, dataSources);
+    const isClusterComparableSelected = checkProjectFileIsClusterComparable(selectedFile, dataSources);
+    const isOtherComparableBaseline = checkProjectFileIsOtherComparable(baseline);
+    const isOtherComparableSelected = checkProjectFileIsOtherComparable(selectedFile);
+    // 可比较的定义：（要么基线是集群可比较类型自己也是集群可比较类型，要么基线是其他可比较类型自己也是其他可比较类型）
+    const isComparable = (isClusterComparableBaseline && isClusterComparableSelected) || (isOtherComparableBaseline && isOtherComparableSelected);
+    // 可设置为基线的定义：自己不是基线且（要么自己是集群可比较类型，要么自己是其他可比较类型）
+    const isCanBeBaseline = !isBaseline && (isClusterComparableSelected || isOtherComparableSelected);
 
     const allMenuItems: MenuItemModel[] = [
         {
             label: t('Set as Baseline Data'),
             key: 'setAsBaselineData',
             action: (): void => { setBaselineData(selectedFile); },
-            // 此文件（项目）不是基线
-            visible: !isBaseline,
+            // 可设置为基线
+            visible: isCanBeBaseline,
         },
         {
             label: t('Unset as Baseline Data'),
             key: 'unsetAsBaselineData',
             action: cancelBaselineData,
             // 此文件（项目）是基线文件
-            visible: isBaseline,
+            visible: hasBaseline && isBaseline,
         },
         {
             label: t('Set as Comparison Data'),
             key: 'setAsComparisonData',
             action: (): void => { setCompareData(selectedFile); },
-            // 不是项目名、不是基线数据、不是对比数据，且基线文件已设置，基线不是集群数据
-            visible: !isProject && !isBaseline && !isComparison && isBaselineSetted && !isBaselineCluster,
+            // 有基线，且自己不是基线也不是比对，且基线和自己是可比较的
+            visible: hasBaseline && !isBaseline && !isComparison && isComparable,
         },
         {
             label: t('Unset as Comparison Data'),
             key: 'unsetAsComparisonData',
             action: cancelCompareData,
+            // 此文件（项目）是比对文件
             visible: isComparison,
         },
     ];
 
-    return <>
-        {allMenuItems.filter(menuItem => menuItem.visible !== false).map(item => (
-            <MenuItem className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key}
-                onClick={(): void => {
-                    if (item.disabled) {
-                        return;
-                    }
-                    item.action();
-                    closeMenu(session);
-                }}>
-                {item.label}
-            </MenuItem>))}
-    </>;
+    return allMenuItems.filter(menuItem => menuItem.visible !== false).map(item => (
+        <MenuItem className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key}
+            onClick={(): void => {
+                if (item.disabled) {
+                    return;
+                }
+                item.action();
+                closeMenu(session);
+            }}>
+            {item.label}
+        </MenuItem>));
 };
 
 function openMenu(session: Session): void {
@@ -189,10 +219,14 @@ const Menu = ({ session }: IProps): JSX.Element => {
         }
     }, [session.contextMenu.visible, mousePosition]);
 
+    const menuList = React.useMemo(() => {
+        return getMenuItems({ session }, t);
+    }, [session.dataSources, session.selectedFile, session.compareSet.baseline, session.compareSet.comparison, t]);
+
     return (
-        session.contextMenu.visible
+        session.contextMenu.visible && menuList.length > 0
             ? <MenuContainer ref={menuRef} style={{ left: `${menuPosition.x}px`, top: `${menuPosition.y}px` }} tabIndex={-1} onBlur={(): void => { closeMenu(session); }} >
-                {getMenuItems({ session }, t)}
+                {menuList}
             </MenuContainer>
             : <></>
     );

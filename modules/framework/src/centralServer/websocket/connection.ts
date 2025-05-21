@@ -21,7 +21,7 @@ const createRequestHead = function (
         moduleName: module,
         type: 'request',
         command,
-        projectName: store.sessionStore.activeSession?.activeDataSource.projectName ?? '',
+        projectName: store.sessionStore.activeSession?.activeDataSource?.projectName ?? '',
         params: { ...args },
     };
 };

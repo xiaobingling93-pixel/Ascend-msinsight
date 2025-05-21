@@ -145,18 +145,19 @@ const createCompareRankIdFuncWithProjectName = (projectName: string): (a: FileOr
 
 const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: number, session: Session, depth: number): ProjectTreeDataNode => {
     const isLeaf = depth >= 5 || data.children.length <= 0;
+    const layerType: LayerType = data.type as LayerType;
     const node: ProjectTreeDataNode = {
         key: `${projectName}-${data.path}`,
-        layerType: data.type as LayerType,
+        layerType,
         layerData: data,
         checkable: false,
         isLeaf,
         title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={data.path}>
-            <span className={`content-body ${getNodeClass(session, { projectName, filePath: data.path })}`}>
-                <span className={`content-text ${data.type === 'CLUSTER' ? '' : 'can-right-click'}`} onContextMenu={(): void => {
-                    handleRightClick({ projectName, filePath: data.path });
+            <span className={`content-body ${getNodeClass(session, { projectName, fileType: layerType, filePath: data.path })}`}>
+                <span className="content-text can-right-click" onContextMenu={(): void => {
+                    handleRightClick({ projectName, fileType: layerType, filePath: data.path });
                 }}>
-                    {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, filePath: data.path })}
+                    {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, fileType: layerType, filePath: data.path })}
                 </span>
                 {data.type === 'CLUSTER' || (<div className={`btn-box ${isLeaf ? 'leaf' : ''}`} onClick={(e): void => e.stopPropagation()}>
                     <DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path}/>
@@ -174,15 +175,18 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
 
 // 目录树数据
 const getTreeData = (session: Session): ProjectTreeDataNode[] => {
+    const layerType: LayerType = 'PROJECT';
     return session.dataSources.map((dataSource, dataSourceIndex) => ({
         key: dataSource.projectName,
-        layerType: 'PROJECT',
+        layerType,
         layerData: dataSource,
         isLeaf: false,
         icon: <LocalImportIcon/>,
         title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={dataSource.projectName}>
-            <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: '' })}`}>
-                <span className="content-name" onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: '' })}>
+            <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, fileType: layerType, filePath: '' })}`}>
+                <span className="content-name" onContextMenu={
+                    (): void => handleRightClick({ projectName: dataSource.projectName, fileType: layerType, filePath: '' })
+                }>
                     <EditableText text={dataSource.projectName}/></span>
                 <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
                     <ImportDataBtn projectName={dataSource.projectName} session={session}/>
@@ -217,6 +221,23 @@ const getFilePathName = (file: File): string => {
     return `${rankId}${rankId === '' ? '' : ' : '}${file.filePath}`;
 };
 
+const getSelectedTreePathList = (tree: ProjectTreeDataNode[], key: string): string[] => {
+    if (tree.length === 0 || key === '') { return []; }
+    const findPathList = (nodes: ProjectTreeDataNode[], depth: number): string[] => {
+        if (depth >= 5) { return []; }
+        for (const node of nodes) {
+            if (node.key === key) {
+                return [key];
+            }
+            const childrenPathList = findPathList((node.children as ProjectTreeDataNode[]) ?? [], depth + 1);
+            if (childrenPathList.length <= 0) { continue; }
+            return [node.key as string, ...childrenPathList];
+        }
+        return [];
+    };
+    return findPathList(tree, 0);
+};
+
 // 目录
 const Contents = observer(({ session }: {session: Session}) => {
     const treeData = useMemo<ProjectTreeDataNode[]>(() => getTreeData(session), [session.dataSources, JSON.stringify(session.compareSet), session.rankMap]);
@@ -231,10 +252,11 @@ const Contents = observer(({ session }: {session: Session}) => {
     const selectedKeys = useMemo(() => {
         if (session.activeDataSource.projectName !== '') {
             const { projectName, selectedFilePath } = session.activeDataSource;
-            return [projectName, `${projectName}-${selectedFilePath}`];
+            const key: string = `${projectName}-${selectedFilePath}`;
+            return getSelectedTreePathList(treeData, key);
         }
         return [];
-    }, [session.activeDataSource]);
+    }, [treeData, session.activeDataSource]);
 
     // 勾选目录
     const [checkedKeys, setCheckedKeys] = useState<React.Key[]>([]);
@@ -253,25 +275,36 @@ const Contents = observer(({ session }: {session: Session}) => {
         if (node.pos.split('-').length < 2 || selectedNodes.length < 1) { return; }
         const [,projectIndex] = node.pos.split('-').map(index => Number(index));
         const dataSource: DataSource = dataSources[projectIndex];
-        // 如果点击其它工程或者其它工程下文件
+        // 如果点击其它工程或者其它工程下的内容
         if (dataSource.projectName !== activeDataSource.projectName) {
             const selectedNodeData = selectedNodes[selectedNodes.length - 1].layerData;
             const isProject = (selectedNodeData as FileOrDirectory).type === undefined;
-            const selectedPath = isProject ? (selectedNodeData as Project).projectPath[0] : (selectedNodeData as FileOrDirectory).path;
+            let selectedPath;
+            let selectedType;
+            if (isProject) {
+                const file = getProjectFirstFile(dataSource);
+                selectedPath = file?.path ?? (selectedNodeData as Project).projectPath[0];
+                selectedType = file?.type ?? 'PROJECT';
+            } else {
+                selectedPath = (selectedNodeData as FileOrDirectory).path;
+                selectedType = (selectedNodeData as FileOrDirectory).type;
+            }
             handleProjectAction({
                 action: ProjectAction.SWITCH_PROJECT,
                 project: dataSource,
                 isConflict: false,
-                selectedFilePath: isProject ? getProjectFirstFile(dataSource) ?? selectedPath : selectedPath,
+                selectedFileType: selectedType,
+                selectedFilePath: selectedPath,
             });
         }
-        // 如果点击的是文件
-        if (node.isLeaf) {
-            if (!selected) { return; } // 如果是取消选中文件
+        // 如果点击的不是项目
+        if (node.layerType !== 'PROJECT') {
+            if (!selected) { return; } // 如果是取消选中，不做取消操作
             runInAction(() => {
                 session.activeDataSource = {
                     ...GLOBAL_HOST,
                     ...dataSource,
+                    selectedFileType: selectedNodes[selectedNodes.length - 1].layerType,
                     selectedFilePath: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).path,
                 };
             });

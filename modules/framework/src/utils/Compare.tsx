@@ -13,9 +13,7 @@ import { sendClusterBaselineStatus } from '@/connection/sendNotification';
 import { notNull } from 'ascend-utils';
 import { getRankInfo } from '@/utils/Rank';
 
-export interface CompareData {
-    projectName: string;
-    filePath: string;
+export interface CompareData extends File {
     rankId: string;
     host?: string;
     cardName?: string;
@@ -47,16 +45,17 @@ export const sendTabRemoveBaseline = function(dataSource: any, singleDataPath: s
 /**
  * 设置基线数据
  * @param projectName 工程名
+ * @param fileType 文件类型
  * @param filePath 路径
  */
-export const setBaselineData = async ({ projectName, filePath }: File): Promise<void> => {
+export const setBaselineData = async ({ projectName, fileType, filePath }: File): Promise<void> => {
     const session = store.sessionStore.activeSession;
     // 取消原来的基线数据
     cancelBaselineData();
 
     // 设置新的基线
     // 通知后台
-    const result: any = await setBaseline({ projectName, filePath });
+    const result: any = await setBaseline({ projectName, fileType, filePath });
     // 基线是工程或者集群文件(cluster_analysis_output)，进入集群对比
     const isProject = projectName !== '' && filePath === '';
     const isClusterCompare = isProject || result.isCluster === true;
@@ -78,7 +77,7 @@ export const setBaselineData = async ({ projectName, filePath }: File): Promise<
         sendTabAddBaseline(dataSourceForTimeline, [timelineCard]);
         // 选中基线
         runInAction(() => {
-            session.compareSet.baseline = { projectName, filePath, rankId };
+            session.compareSet.baseline = { projectName, fileType, filePath, rankId };
         });
     }
 };
@@ -105,7 +104,7 @@ const handleClusterCompare = async(data: CompareData): Promise<void> => {
     }
     // 选中基线
     runInAction(() => {
-        session.compareSet.baseline = { projectName: data.projectName, filePath: data.filePath, rankId: '' };
+        session.compareSet.baseline = { projectName: data.projectName, fileType: data.fileType, filePath: data.filePath, rankId: '' };
     });
     // 发送通知
     sendClusterBaselineStatus(true);
@@ -132,8 +131,8 @@ export const cancelBaselineData = async (): Promise<void> => {
     // 取消基线文件，同时也取消对比文件
     runInAction(() => {
         session.compareSet = {
-            baseline: { projectName: '', filePath: '', rankId: '' },
-            comparison: { projectName: '', filePath: '', rankId: '' },
+            baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
+            comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
         };
     });
 };
@@ -141,9 +140,10 @@ export const cancelBaselineData = async (): Promise<void> => {
 /**
  * 设置对比数据
  * @param projectName 工程名
+ * @param fileType 文件类型
  * @param filePath 路径
  */
-export const setCompareData = ({ projectName, filePath }: File): void => {
+export const setCompareData = ({ projectName, fileType, filePath }: File): void => {
     const session = store.sessionStore.activeSession;
     const { activeDataSource } = session;
     if (projectName !== activeDataSource.projectName) {
@@ -151,16 +151,30 @@ export const setCompareData = ({ projectName, filePath }: File): void => {
         return;
     };
     // 选中对比文件
-    runInAction(() => {
-        const rank = getRankInfo({ projectName, filePath });
-        session.compareSet.comparison = {
-            projectName,
-            filePath,
-            rankId: rank?.rankId ?? '',
-            host: rank?.host ?? '',
-            cardName: rank?.cardName ?? '',
-        };
-    });
+    if (fileType === 'PROJECT' || fileType === 'CLUSTER') {
+        runInAction(() => {
+            session.compareSet.comparison = {
+                projectName,
+                fileType,
+                filePath,
+                rankId: '',
+                host: '',
+                cardName: '',
+            };
+        });
+    } else {
+        runInAction(() => {
+            const rank = getRankInfo({ projectName, filePath });
+            session.compareSet.comparison = {
+                projectName,
+                fileType,
+                filePath,
+                rankId: rank?.rankId ?? '',
+                host: rank?.host ?? '',
+                cardName: rank?.cardName ?? '',
+            };
+        });
+    }
 };
 
 /**
@@ -169,7 +183,7 @@ export const setCompareData = ({ projectName, filePath }: File): void => {
 export const cancelCompareData = (): void => {
     const session = store.sessionStore.activeSession;
     runInAction(() => {
-        session.compareSet.comparison = { projectName: '', filePath: '', rankId: '' };
+        session.compareSet.comparison = { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' };
     });
     // 发送通知
     sendClusterBaselineStatus(false);

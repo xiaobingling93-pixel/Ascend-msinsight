@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { request } from '@/centralServer/server';
-import { ImportResultBody, Project, ProjectDirectory } from '@/centralServer/websocket/defs';
+import { ImportResultBody, LayerType, Project, ProjectDirectory } from '@/centralServer/websocket/defs';
 import { File } from '@/entity/session';
 import { ProjectAction } from '@/utils/enum';
 import { ErrorMsg } from '@/centralServer/websocket/connection';
@@ -10,6 +10,7 @@ import { ErrorMsg } from '@/centralServer/websocket/connection';
 export interface ImportProjectParams extends Record<string, unknown> {
     projectName: string;
     path: string[];
+    selectedFileType?: LayerType;
     selectedFilePath?: string;
     projectAction: ProjectAction;
     isConflict: boolean;

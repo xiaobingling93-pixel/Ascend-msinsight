@@ -136,7 +136,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, custom
 
     const onContinue = (): void => {
         const path = getTrimedPath(inputPath);
-        const project: Project = { projectName: currentProject, projectPath: [path], children: [] };
+        const project: Project = { projectName: currentProject === '' ? path : currentProject, projectPath: [path], children: [] };
         handleProjectAction({ action: ProjectAction.ADD_FILE, project, isConflict: true });
         setConflictModalVis(false);
         setTimeout(() => {

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { makeAutoObservable } from 'mobx';
-import { ActiveDataSource, type DataSource, GLOBAL_HOST } from '../centralServer/websocket/defs';
+import { ActiveDataSource, type DataSource, GLOBAL_HOST, LayerType } from '../centralServer/websocket/defs';
 import type { CompareData } from '@/utils/Compare';
 import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
@@ -15,6 +15,7 @@ interface ContextMenu {
 }
 export interface File {
     projectName: string;
+    fileType: LayerType;
     filePath: string;
     rankId?: string;
 }
@@ -25,6 +26,9 @@ export interface Rank extends File {
     cardPath: string;
     host?: string;
 }
+
+export const DEFAULT_ACTIVE_DATASOURCE: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [], selectedFileType: 'UNKNOWN', selectedFilePath: '' };
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     defaultConnected?: boolean;
@@ -60,10 +64,10 @@ export class Session {
     // 右键菜单
     contextMenu: ContextMenu = { visible: false };
     // 对比功能
-    selectedFile: File = { projectName: '', filePath: '' };
+    selectedFile: File = { projectName: '', fileType: 'UNKNOWN', filePath: '' };
     compareSet: {baseline: CompareData;comparison: CompareData} = {
-        baseline: { projectName: '', filePath: '', rankId: '' },
-        comparison: { projectName: '', filePath: '', rankId: '' },
+        baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
+        comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
     };
 
     // 需要下发给插件的url
@@ -75,7 +79,7 @@ export class Session {
     // 数据源/项目管理
     private _dataSources: DataSource[] = [];
 
-    private _activeDataSource: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [] };
+    private _activeDataSource: ActiveDataSource = DEFAULT_ACTIVE_DATASOURCE;
 
     constructor() {
         makeAutoObservable(this);

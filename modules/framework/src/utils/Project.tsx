@@ -14,8 +14,8 @@ import {
     ProjectDirectory,
     GLOBAL_HOST,
     FileOrDirectory,
-    ActiveDataSource,
     ImportTreeInfo,
+    LayerType,
 } from '@/centralServer/websocket/defs';
 import { addDataPath } from '@/centralServer/server';
 import {
@@ -29,17 +29,17 @@ import { sendReset, sendUpdateProjectName } from '@/connection/sendNotification'
 import { cancelBaselineData, updateProjectNameHandler } from '@/utils/Compare';
 import { updateRankMapByProjectName } from '@/utils/Rank';
 import { openLoading, closeLoading } from '@/utils/useLoading';
+import { DEFAULT_ACTIVE_DATASOURCE } from '@/entity/session';
 
 export interface UpdateProjectParam {
     projectAction: ProjectAction;
     projectName: string;
     projectPath: string[];
+    selectedFileType: LayerType;
     selectedFilePath: string;
     children: FileOrDirectory[];
     hasConflict: boolean;
 }
-
-const DEFAULT_ACTIVE_DATASOURCE: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [] };
 
 export const transformFile = (tree: ImportTreeInfo | undefined, depth: number): FileOrDirectory[] | undefined => {
     if (tree === undefined || depth >= 5) { return undefined; }
@@ -107,8 +107,8 @@ export const loadHistoryProject = async(): Promise<void> => {
 };
 
 // 导入数据、切换项目
-export async function handleProjectAction({ action, project, isConflict, selectedFilePath }:
-{action: ProjectAction;project: Project;isConflict: boolean;selectedFilePath?: string}): Promise<void> {
+export async function handleProjectAction({ action, project, isConflict, selectedFileType, selectedFilePath }:
+{action: ProjectAction;project: Project;isConflict: boolean;selectedFileType?: LayerType;selectedFilePath?: string}): Promise<void> {
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
@@ -127,7 +127,9 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {
             const firstFilePath = selectedFilePath ?? dataSources.find(data => data.projectName === newProject.projectName)?.projectPath[0];
+            const firstFileType: LayerType = selectedFileType ?? 'PROJECT';
             if (firstFilePath !== undefined) {
+                newProject.selectedFileType = firstFileType;
                 newProject.selectedFilePath = firstFilePath;
             }
         }
@@ -151,29 +153,27 @@ function arraysValueEqual<T>(a: T[], b: T[]): boolean {
 // 项目更新
 // 1、更新项目目录
 // 2、设置为打开(选中）项目
-export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath, selectedFilePath }: UpdateProjectParam): void => {
+export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath, selectedFileType, selectedFilePath }:
+UpdateProjectParam): void => {
     const session = store.sessionStore.activeSession;
     const dataSource: DataSource = { ...GLOBAL_HOST, projectName, projectPath, children };
     runInAction(() => {
-        try {
-            if (projectAction === ProjectAction.ADD_FILE) {
-                // 更新项目目录
-                session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
-                // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
-                if (hasConflict || children.length > 1) {
-                    session.activeDataSource = { ...dataSource, selectedFilePath: getProjectFirstFile(dataSource) };
-                }
-                // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
-                if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.selectedFilePath !== undefined) {
-                    session.activeDataSource = { ...dataSource, selectedFilePath };
-                    return;
-                }
+        if (projectAction === ProjectAction.ADD_FILE) {
+            // 更新项目目录
+            session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
+            // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
+            if (hasConflict || children.length > 1) {
+                const firstFile = getProjectFirstFile(dataSource);
+                session.activeDataSource = { ...dataSource, selectedFileType: firstFile?.type ?? 'UNKNOWN', selectedFilePath: firstFile?.path ?? '' };
             }
-            if (projectAction === ProjectAction.SWITCH_PROJECT) {
-                session.activeDataSource = { ...dataSource, selectedFilePath };
+            // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
+            if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.selectedFilePath !== '') {
+                session.activeDataSource = { ...dataSource, selectedFileType, selectedFilePath };
+                return;
             }
-        } catch {
-            console.error('Update Project Explorer Failed');
+        }
+        if (projectAction === ProjectAction.SWITCH_PROJECT) {
+            session.activeDataSource = { ...dataSource, selectedFileType, selectedFilePath };
         }
     });
 };
@@ -278,7 +278,8 @@ export const removeDataPath = (projectIndex: number, dataPath: string): void => 
             session.deleteDataPath(projectIndex, singleDataPath);
             // 如果移除的是当前选中文件，默认选中第一个文件
             if (session.activeDataSource.projectName === dataSource.projectName && session.activeDataSource.selectedFilePath === singleDataPath) {
-                session.activeDataSource = { ...dataSource, selectedFilePath: getProjectFirstFile(dataSource) };
+                const firstFile = getProjectFirstFile(dataSource);
+                session.activeDataSource = { ...dataSource, selectedFileType: firstFile?.type ?? 'UNKNOWN', selectedFilePath: firstFile?.path ?? '' };
             }
         } catch {
             console.error('removeSingle error');
@@ -311,15 +312,15 @@ export const updateProjectName = async (oldProjectName: string, newProjectName: 
     }
 };
 
-export const getProjectFirstFile = (project: Project): string | undefined => {
-    const getFirstFile = (files: FileOrDirectory[], depth: number): string | undefined => {
+export const getProjectFirstFile = (project: Project): FileOrDirectory | undefined => {
+    const getFirstFile = (files: FileOrDirectory[], depth: number): FileOrDirectory | undefined => {
         if (files.length === 0) { return undefined; }
         if (depth === 5) {
             console.error('over 5 layers of file，deleting fail!');
             return undefined;
         }
         if (files[0].children.length === 0) {
-            return files[0].path;
+            return files[0];
         } else {
             return getFirstFile(files[0].children, depth + 1);
         }

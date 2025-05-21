@@ -83,6 +83,7 @@ export interface Project extends Pick<FileOrDirectory, 'children'> {
     projectName: string;
     projectPath: string[];
     children: FileOrDirectory[];
+    selectedFileType?: LayerType;
     selectedFilePath?: string;
 }
 export interface DataSource extends ConnectHost, Project {
@@ -90,9 +91,11 @@ export interface DataSource extends ConnectHost, Project {
     baseLineCardId?: string;
 }
 export interface ActiveDataSource extends DataSource {
+    selectedFileType: LayerType;
+    selectedFilePath: string;
 }
 
-export type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB';
+export type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB' | 'UNKNOWN';
 
 export interface ImportResultBody {
     reset: boolean;

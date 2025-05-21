@@ -10,6 +10,7 @@ import {
     FileOrDirectory,
     ImportResultBody,
     DataSource,
+    LayerType,
 } from './websocket/defs';
 import { Connection, ErrorMsg } from './websocket/connection';
 import connector from '@/connection';
@@ -61,6 +62,7 @@ export const addDataPath = async function(project: Project, action: ProjectActio
         const params: ImportProjectParams = {
             projectName: project.projectName,
             path: project.projectPath,
+            selectedFileType: project.selectedFileType,
             selectedFilePath: project.selectedFilePath,
             projectAction: action,
             isConflict,
@@ -98,6 +100,7 @@ const afterImportProject = (params: ImportProjectParams, data: ImportResultBody)
         const projectName = params.projectName;
         const projectPath = params.path;
         const selectedFilePath = params.selectedFilePath ?? data.subdirectoryList[0];
+        const selectedFileType: LayerType = params.selectedFileType ?? 'RANK'; // 此处暂时用 RANK，实际应该和 data.subdirectoryList[0] 中应该带有的类型相同
         const children = data.children?.map((child) => transformFile(child, 0))
             ?.flat()?.filter((item) => item !== undefined) as FileOrDirectory[];
         // 更新场景
@@ -106,7 +109,7 @@ const afterImportProject = (params: ImportProjectParams, data: ImportResultBody)
         const rankInfoList = data.result;
         updateRankMap(projectAction, projectName, rankInfoList);
         // 更新项目目录
-        updateProject({ projectAction, projectName, children, hasConflict, projectPath, selectedFilePath });
+        updateProject({ projectAction, projectName, children, hasConflict, projectPath, selectedFileType, selectedFilePath });
     } catch (error) {
         console.error(error);
     }
