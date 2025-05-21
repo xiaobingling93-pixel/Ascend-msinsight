@@ -14,7 +14,7 @@ import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
 
 // Scene：数据场景：默认、集群、算子调优、Jupter、只trace.json文件
-export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson';
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson' | 'IE';
 
 interface ContextMenu {
     visible: boolean;
@@ -65,6 +65,7 @@ export class Session {
     isCluster: boolean | null = false;
     isBinary: boolean | null = false;
     isIpynb: boolean = false;
+    isIE: boolean | null = false;
     ipynbUrl: string = '';
     isReset: boolean = false;
     isFullDb: boolean = false;
@@ -80,6 +81,7 @@ export class Session {
     unitcount: number = 0;
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
+    iERankIds: string[] = [];
     // 模块数据-算子调优
     coreList: string[] = [];
     sourceList: string[] = [];
@@ -119,6 +121,8 @@ export class Session {
             scene = 'Cluster';
         } else if (this.isIpynb) {
             scene = 'Jupyter';
+        } else if (this.isIE) {
+            scene = 'IE';
         } else {
             scene = 'Default';
         }
@@ -184,6 +188,7 @@ export class Session {
         this.isIpynb = false;
         this.isCluster = remove ? false : null;
         this.isBinary = remove ? false : null;
+        this.isIE = remove ? false : null;
         this.hasCachelineRecords = false;
         this.toIframeUrl = '';
         this.startTime = -1;

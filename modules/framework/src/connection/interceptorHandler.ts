@@ -31,6 +31,10 @@ interface ParseMemoryNotification {
     memoryResult: MemoryResult[];
 }
 
+interface ParseStatisticNotification {
+    rankIds: string[];
+}
+
 export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotification> = (data): void => {
     const session = store.sessionStore.activeSession;
     const memoryRankIds: string[] = [...session.memoryRankIds];
@@ -40,4 +44,15 @@ export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotif
         }
     });
     updateSession({ memoryRankIds });
+};
+
+export const parseStatisticSuccessHandler: NotificationInterceptor<ParseStatisticNotification> = (data): void => {
+    const session = store.sessionStore.activeSession;
+    const iERankIds: Set<string> = new Set([...session.iERankIds]);
+    data.rankIds.forEach((item) => {
+        if (!iERankIds.has(item)) {
+            iERankIds.add(item);
+        }
+    });
+    updateSession({ iERankIds: [...iERankIds] });
 };

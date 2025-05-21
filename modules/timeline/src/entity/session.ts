@@ -81,6 +81,8 @@ export class Session {
     isParserLoading: boolean = false;
     // 是否是算子仿真图
     isSimulation: boolean = false;
+    // 是否是服务化场景
+    isIE: boolean = false;
     // 是否隐藏了算子调优flag事件
     areFlagEventsHidden: boolean = false;
     // 快捷键对齐触发渲染

@@ -50,9 +50,10 @@ interface DrawAreaParams {
     yScale: (n: number) => number;
     palette: string[];
     width: number;
+    isIE: boolean;
 }
 
-const drawArea = ({ context, datas, minHeight, maxHeight, xScale, yScale, palette, width }: DrawAreaParams): (undefined | number[]) => {
+const drawArea = ({ context, datas, minHeight, maxHeight, xScale, yScale, palette, width, isIE }: DrawAreaParams): (undefined | number[]) => {
     if (datas.length === 0) { return; }
 
     const x = [...datas.map(it => xScale(it[0])), 1 + xScale(datas[datas.length - 1][0])];
@@ -65,10 +66,16 @@ const drawArea = ({ context, datas, minHeight, maxHeight, xScale, yScale, palett
             context.lineTo(x[j], y);
             context.lineTo(x[j + 1], y);
         }
-        context.lineTo(x[datas.length], y0);
-        context.closePath();
-        context.fillStyle = palette[i - 1];
-        context.fill();
+        if (!isIE) {
+            context.lineTo(x[datas.length], y0);
+            context.closePath();
+            context.fillStyle = palette[i - 1];
+            context.fill();
+        } else {
+            context.lineTo(x[datas.length], y0);
+            context.strokeStyle = palette[i - 1];
+            context.stroke();
+        }
     };
 };
 
@@ -84,9 +91,10 @@ interface DrawParams {
     auxiliaryValue?: number;
     legend?: string[];
     valueFormat?: Readable;
+    isIE: boolean;
 }
 
-const draw = ({ ctx, datas, width, height, palette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat }: DrawParams):
+const draw = ({ ctx, datas, width, height, palette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat, isIE }: DrawParams):
 (HTMLCanvasElement | undefined) => {
     if (!ctx) { return; }
     if (datas.length === 0 || datas[0].length > palette.length + 1) { return; }
@@ -99,7 +107,7 @@ const draw = ({ ctx, datas, width, height, palette, rangeAndDomain, hideLayer, v
     const yScale = d3.scaleLinear().range([height, 0]).domain([minHeight, maxHeight]);
     if (auxiliaryValue !== undefined) { drawAuxiliaryLine(ctx, yScale, auxiliaryValue, width); }
     // draw line and area
-    drawArea({ context: ctx, datas: drawDatas, minHeight, maxHeight, xScale, yScale, palette: newPalette, width });
+    drawArea({ context: ctx, datas: drawDatas, minHeight, maxHeight, xScale, yScale, palette: newPalette, width, isIE });
 };
 
 const findDataByX = (mousePosX: number | undefined, datasState: number[][],
@@ -216,7 +224,21 @@ export const FilledLineChart = observer(({
         ctx?.setTransform(1, 0, 0, 1, 0, 0);
         ctx?.scale(devicePixelRatio, devicePixelRatio);
         ctx?.clearRect(0, 0, width, height);
-        draw({ ctx, datas: dataState, width, height, palette: colorPalette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat });
+        const param: DrawParams = {
+            ctx,
+            datas: dataState,
+            width,
+            height,
+            palette: colorPalette,
+            rangeAndDomain,
+            hideLayer,
+            valueRange,
+            auxiliaryValue,
+            legend,
+            valueFormat,
+            isIE: session.isIE,
+        };
+        draw(param);
     }, [dataState, rangeAndDomain, theme, valueRange, hideLayer, colorPalette]);
 
     const tooltipProp: TooltipProps<number[], number[][]> = {

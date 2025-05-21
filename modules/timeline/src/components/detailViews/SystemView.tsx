@@ -150,7 +150,7 @@ export const SystemView = observer((props: any) => {
 const ViewSelect = observer((props: any) => {
     const { viewOption, handleViewChange } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
-    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }, { label: t('Table Data'), value: 3 }];
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }, { label: t('Servitization View'), value: 3 }];
     return (
         <div className={'view-select'}>
             <Select id={'select-system-view'} width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>

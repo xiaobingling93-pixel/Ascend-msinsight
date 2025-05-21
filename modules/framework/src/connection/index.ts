@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { ServerConnector } from 'ascend-connection';
-import { INTERCEPTOR_HANDLERS, NOTIFICATION_INTERCEPTOR_HANDLERS } from './interceptor';
+import { INTERCEPTOR_HANDLERS, NOTIFICATION_INTERCEPTOR_HANDLERS, NOTIFICATION_STATISTIC_HANDLERS } from './interceptor';
 import { listenerMap } from './notification';
 import { store } from '@/store';
 import { request } from '@/centralServer/server';
@@ -26,6 +26,9 @@ const connector = new ServerConnector({
         }
         if (NOTIFICATION_INTERCEPTOR_HANDLERS[message?.event] !== undefined) {
             NOTIFICATION_INTERCEPTOR_HANDLERS[message.event](message.body);
+        }
+        if (NOTIFICATION_STATISTIC_HANDLERS[message?.event] !== undefined) {
+            NOTIFICATION_STATISTIC_HANDLERS[message.event](message.body);
         }
         return message;
     },

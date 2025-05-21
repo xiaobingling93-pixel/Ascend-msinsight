@@ -156,6 +156,7 @@ const initUnitSessionInfo = (session: Session, result: ImportResult, dataSource:
     session.isPending = result.isPending as boolean;
     session.isParserLoading = !(result.isPending as boolean);
     session.isSimulation = result.isSimulation;
+    session.isIE = result.isIE;
     session.isIpynb = result.isIpynb;
     session.isCluster = result.isCluster;
 };

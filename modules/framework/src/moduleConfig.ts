@@ -11,6 +11,7 @@ export interface ModuleConfig {
     isCluster?: boolean;
     isCompute?: boolean;
     isJupyter?: boolean;
+    isIE?: boolean;
     hasCachelineRecords?: boolean;
     isOnlyTraceJson?: boolean;
 };
@@ -28,6 +29,7 @@ export const modulesConfig: ModuleConfig[] = [
         isCompute: true,
         isJupyter: true,
         isOnlyTraceJson: true,
+        isIE: true,
     },
     {
         name: 'Memory',
@@ -96,5 +98,13 @@ export const modulesConfig: ModuleConfig[] = [
             src: isDev ? 'http://localhost:3005/' : './plugins/Jupyter/index.html',
         },
         isJupyter: true,
+    },
+    {
+        name: 'Statistic',
+        requestName: 'statistic',
+        attributes: {
+            src: isDev ? 'http://localhost:3006/' : './plugins/statistic/index.html',
+        },
+        isIE: true,
     },
 ];

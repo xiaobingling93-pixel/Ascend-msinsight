@@ -11,6 +11,7 @@ export interface ImportResult {
     reset: boolean;
     isPending: boolean;
     isSimulation: boolean;
+    isIE: boolean;
     isIpynb: boolean;
     isCluster: boolean;
     result: CardInfo[];

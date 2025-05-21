@@ -55,7 +55,8 @@
       "Communication": "Communication",
       "Source": "Source",
       "Details": "Details",
-      "Cache": "Cache"
+      "Cache": "Cache",
+      "Statistic": "Curve"
     },
     "Keyboard shortcuts": "Keyboard shortcuts",
     "shortcuts": {

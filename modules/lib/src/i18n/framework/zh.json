@@ -55,7 +55,8 @@
       "Communication": "通信",
       "Source": "源码",
       "Details": "详情",
-      "Cache": "缓存"
+      "Cache": "缓存",
+      "Statistic": "折线图"
     },
     "Keyboard shortcuts": "键盘快捷键",
     "shortcuts": {
