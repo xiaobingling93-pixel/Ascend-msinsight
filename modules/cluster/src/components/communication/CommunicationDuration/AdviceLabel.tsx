@@ -61,6 +61,14 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                     dataIndex: t(getInTableHead(key)),
                     key: t(getInTableHead(key)),
                 }));
+                if (Object.keys(obj.statistics).length === 0) {
+                    dataList.push({
+                        title: obj.name,
+                        tableColumns: tableColumns,
+                        tableDataSource: [],
+                    });
+                    return;
+                }
                 const firstKey = Object.keys(obj.statistics)[0];
                 const tableDataSource: any[] = obj.statistics[firstKey].map((_: any, index: string | number) => {
                     const rowData: Record<string, string | number> = { key: index };
@@ -129,7 +137,7 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
         if (item.title === 'Packet Analysis') {
             const dataParallelism = `${t('title.Data Parallelism')} ${t('index.Data Parallelism')}\n\n`;
             const memoryOptimization = `${t('title.Memory Optimization')} ${t('index.Memory Optimization')}\n\n`;
-            const adopt = `${t('title.Adopt')} ${t('index.Adopt')}\n\n`;
+            const adopt = `${t('title.Adopt')} ${t('index.Adopt')}\n`;
             content = (
                 <>
                     <CommunicationAdviceHeader title={item.title}/>
@@ -138,7 +146,7 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
                 </>
             );
         } else if (item.title === 'Byte Alignment Analysis') {
-            const byteAlignmentAnalysis = `${t('title.Byte Alignment Analysis')} ${t('index.Byte Alignment Analysis')}\n\n`;
+            const byteAlignmentAnalysis = `${t('title.Byte Alignment Analysis')} ${t('index.Byte Alignment Analysis')}\n`;
             content = (
                 <>
                     <CommunicationAdviceHeader title={item.title}/>
@@ -147,7 +155,7 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
                 </>
             );
         } else if (item.title === 'Bandwidth Contention Analysis') {
-            const bandwidthContention = `${t('title.Bandwidth Contention')} ${t('index.Bandwidth Contention')}\n\n`;
+            const bandwidthContention = `${t('title.Bandwidth Contention')} ${t('index.Bandwidth Contention')}\n`;
             content = (
                 <>
                     <CommunicationAdviceHeader title={item.title}/>
@@ -156,8 +164,8 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
                 </>
             );
         } else if (item.title === 'Communication Retransmission Analysis') {
-            const transmissionTime = `${t('title.RDMA Transmission Time')} ${t('index.RDMA Transmission Time')}\n\n`;
-            const networkConfiguration = `${t('title.Network Configuration')} ${t('index.Network Configuration')}\n\n`;
+            const transmissionTime = `${t('title.RDMA Transmission Time')} ${t('index.RDMA Transmission Time')}`;
+            const networkConfiguration = `${t('title.Network Configuration')} ${t('index.Network Configuration')}\n`;
             content = (
                 <>
                     <CommunicationAdviceHeader title={item.title}/>

@@ -91,7 +91,7 @@
       "Small Size(Byte)": "Small Size(Byte)",
       "bandwidth(GB/s)": "bandwidth(GB/s)",
       "duration(us)": "duration(us)",
-      "name ": "name",
+      "name": "name",
       "group name": "group name"
     },
     "tableHeadTooltip": {
@@ -124,7 +124,7 @@
       "Data Parallelism": "Data parallelism suggestion:",
       "Memory Optimization": "Check the memory optimization policy:",
       "Adopt": "Adopt fusion operators of affinity optimizer:",
-      "Byte Alignment Analysis": "Adjusting the Data Size",
+      "Byte Alignment Analysis": "Adjusting the Data Size:",
       "Bandwidth Contention": "Benchmark data comparison:",
       "RDMA Transmission Time": "Check RDMA transmission time:",
       "Network Configuration": "Check the network configuration:"

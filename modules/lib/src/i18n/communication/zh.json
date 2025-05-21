@@ -91,7 +91,7 @@
       "Small Size(Byte)": "数据量小值（Byte）",
       "bandwidth(GB/s)": "带宽（GB/s）",
       "duration(us)": "持续时间（微秒）",
-      "name ": "算子名称",
+      "name": "算子名称",
       "group name": "通信域名称"
     },
     "tableHeadTooltip": {
@@ -118,7 +118,7 @@
     "Different": "不同",
     "Packet Analysis": "小包分析",
     "Byte Alignment Analysis": "字节对齐分析",
-    "Bandwidth Contention Analysis": "带宽分析",
+    "Bandwidth Contention Analysis": "带宽抢占分析",
     "Communication Retransmission Analysis": "通信重传分析",
     "title": {
       "Data Parallelism": "数据并行建议:",
