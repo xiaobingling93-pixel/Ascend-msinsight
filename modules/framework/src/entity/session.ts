@@ -50,6 +50,10 @@ export interface ClusterPageInfo {
     selectedClusterPath: string;
 }
 
+export interface TimelinePageInfo {
+    unitCount: number;
+}
+
 export const DEFAULT_ACTIVE_DATASOURCE: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [], selectedFileType: 'UNKNOWN', selectedFilePath: '' };
 
 export class Session {
@@ -76,6 +80,7 @@ export class Session {
     // 解析状态
     parseCompleted: boolean = false;
     clusterPageInfo: ClusterPageInfo = { clusterList: [], selectedClusterPath: '' };
+    timelinePageInfo: TimelinePageInfo = { unitCount: 0 };
     // 模块数据
     startTime: number = -1;
     endTimeAll: number = -1;
@@ -198,6 +203,7 @@ export class Session {
         this.endTimeAll = -1;
         this.parseCompleted = false;
         this.clusterPageInfo = { clusterList: [], selectedClusterPath: '' };
+        this.timelinePageInfo = { unitCount: 0 };
         this.unitcount = 0;
         this.coreList = [];
         this.sourceList = [];

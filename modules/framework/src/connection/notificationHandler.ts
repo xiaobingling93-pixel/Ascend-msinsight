@@ -25,6 +25,10 @@ export const updateSessionHandler = (e: NotificationMessage): void => {
     }
     const updateState = updateSession(receiver);
 
+    if (updateState.unitcount) {
+        session.timelinePageInfo.unitCount = updateState.unitcount;
+    }
+
     setTimeout(() => {
         const isSend =
             (updateState.parseCompleted !== undefined ||

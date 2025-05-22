@@ -114,7 +114,10 @@ export const sendDirectory = (to?: number): void => {
             // 比对数据存在时，比对数据所属的项目就是 session.activeDataSource
             selectedProjectName: session.activeDataSource.projectName,
             // 比对数据存在时，比对数据所属的项目就是 session.activeDataSource，比对数据的 clusterPageInfo 就是 session.clusterPageInfo
-            pageInfo: { cluster: session.clusterPageInfo },
+            pageInfo: {
+                cluster: session.clusterPageInfo,
+                timeline: session.timelinePageInfo,
+            },
             isCompare: session.isCompareStatus,
         },
         to,

@@ -18,12 +18,17 @@ export interface ClusterPageInfo {
     selectedClusterPath: string;
 }
 
+export interface TimelinePageInfo {
+    unitCount: number;
+}
+
 interface ProjectCreateInfo extends Record<string, any> {
     selectedFileType: LayerType;
     selectedFilePath: string;
     selectedProjectName: string;
     pageInfo: {
         cluster: ClusterPageInfo;
+        timeline: TimelinePageInfo;
     };
 }
 
@@ -40,20 +45,21 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     }
 };
 
-function updateClusterListAndSelected(pageInfo: ClusterPageInfo, selectedProjectName: string): void {
+function updateClusterListAndSelectedAndTimelineStatus(pageInfo: ClusterPageInfo, selectedProjectName: string, unitCount: number): void {
     const session = store.sessionStore.activeSession;
     runInAction(() => {
         if (!session) { return; }
         session.clusterList = pageInfo.clusterList;
         session.selectedClusterPath = pageInfo.selectedClusterPath;
         session.selectedProjectName = selectedProjectName;
+        session.unitcount = unitCount;
     });
 }
 
 export const frameLoadedHandler: NotificationHandler<ProjectCreateInfo> = async (data: ProjectCreateInfo): Promise<void> => {
     try {
         resetStatus();
-        updateClusterListAndSelected(data.pageInfo.cluster, data.selectedProjectName);
+        updateClusterListAndSelectedAndTimelineStatus(data.pageInfo.cluster, data.selectedProjectName, data.pageInfo.timeline.unitCount);
     } catch (error) {
         console.error(error);
     }
@@ -67,7 +73,7 @@ export const switchDirectoryHandler: NotificationHandler<ProjectUpdateInfo> = (d
         } else {
             resetStatus('Project');
         }
-        updateClusterListAndSelected(data.pageInfo.cluster, data.selectedProjectName);
+        updateClusterListAndSelectedAndTimelineStatus(data.pageInfo.cluster, data.selectedProjectName, data.pageInfo.timeline.unitCount);
     } catch (error) {
         console.error(error);
     }

@@ -159,6 +159,7 @@ const Index = observer(({ session }: {session: Session}) => {
                 selectedProjectName: session.activeDataSource.projectName,
                 pageInfo: {
                     cluster: session.clusterPageInfo,
+                    timeline: session.timelinePageInfo,
                 },
             },
         };
