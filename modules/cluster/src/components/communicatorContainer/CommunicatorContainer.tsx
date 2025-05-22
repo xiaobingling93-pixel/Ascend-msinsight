@@ -222,7 +222,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
             cpSize: isEPSizeVisible ? formData.cpSize : 1,
         };
         // 设置的并行策略乘积需要>=导入的卡数
-        if (values.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)') {
+        if (['mindie-llm(tp-dp-ep-pp-moetp)', 'vllm(tp-pp-dp-ep)'].includes(values.algorithm)) {
             if (values.ppSize * values.tpSize * values.dpSize < session.rankCount) {
                 message.error(i18n.t('MindIE Size Validate Message', { ns: 'summary' }));
                 return;
