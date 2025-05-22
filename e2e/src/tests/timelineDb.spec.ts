@@ -17,14 +17,19 @@ const test = baseTest.extend<TestFixtures>({
         await use(timelinePage);
     },
 });
-let ws: Promise<WebSocket>;
-test.describe('Timeline', () => {
+let ws: WebSocket;
+let parseClusterCompletedRes;
+test.describe('Timeline(DB)', () => {
     test.beforeEach(async ({ page, timelinePage }) => {
-        ws = setupWebSocketListener(page);
+        const setupWebSocketListenerRes = setupWebSocketListener(page);
         const { timelineFrame } = timelinePage;
         await timelinePage.goto();
+        ws = await setupWebSocketListenerRes;
         await clearAllData(page);
+        const allPagesSuccessRes = waitForResponse(ws, (res) => res?.event === 'allPagesSuccess');
+        parseClusterCompletedRes = waitForResponse(ws, (res) => res?.event === 'parse/clusterCompleted');
         await importData(page, FilePath.DB_2025330);
+        await allPagesSuccessRes;
         const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Host', { exact: true });
         await expect(secondLayerUnit).toBeVisible();
     });
@@ -80,7 +85,7 @@ test.describe('Timeline', () => {
         }
     });
 
-    // 算子搜索
+    // 工具栏 - 算子搜索
     test('test_db_operatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
         const { searchBtn, timelineFrame, openInWindows } = timelinePage;
         await searchBtn.click();
@@ -93,7 +98,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-operator.png', { maxDiffPixels: 200 });
     });
 
-    // 算子搜索在泳道较深的位置时能显示在div中
+    // 工具栏 - 算子搜索在泳道较深的位置时能显示在div中
     test('test_db_deepOperatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
         const { searchBtn, timelineFrame, openInWindows } = timelinePage;
         await searchBtn.click();
@@ -106,7 +111,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-deep-operator.png', { maxDiffPixels: 200 });
     });
 
-    // 泳道(card)过滤
+    // 工具栏 - 泳道(card)过滤
     test('test_db_cardFilter', async ({ page, timelinePage }) => {
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
         const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
@@ -128,7 +133,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('card-filter.png', { maxDiffPixels: 200 });
     });
 
-    // 泳道(unit)过滤
+    // 工具栏 - 泳道(unit)过滤
     test('test_db_unitFilter', async ({ page, timelinePage }) => {
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
         const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
@@ -150,12 +155,14 @@ test.describe('Timeline', () => {
         await page.mouse.move(0, 0);
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
+        await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('units-filter.png', { maxDiffPixels: 100 });
     });
 
     // 右键菜单--右键点击通信算子跳转至通信页面
     test('test_db_redirectToCommunication_when_rightClickHCCLOperator', async ({ page, timelinePage }) => {
-        test.setTimeout(200_000);
+        await parseClusterCompletedRes;
+        test.setTimeout(30_000);
         const { communicationFrame } = new CommunicationPage(page);
         const { filterBtn, timelineFrame, selectFilterType,
             selectOptionFilterType, selectFilterContent, unitWrapperScroller,
@@ -200,7 +207,6 @@ test.describe('Timeline', () => {
                 y: 5,
             },
         });
-        await waitForResponse(await ws, (res) => res?.event === 'parse/clusterCompleted');
         await timelineFrame.getByText('Find in Communication').click({ force: true });
         const hcclChart = communicationFrame.locator('.panel-content').first();
         await hcclChart.waitFor({ state: 'visible' });

@@ -118,8 +118,7 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     // Operator Name
     const operatorOptions: optionDataType[] =
         await getOperatorOptions({ iterationId, stage, type, pgName });
-    const operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator).toString();
-
+    const operatorName = getUsableVal(initObj.operatorName === '' ? totalOperator : initObj.operatorName, operatorOptions, totalOperator).toString();
     return {
         optionMap: { iterationOptions, baselineIterationOptions, stageOptions, operatorOptions },
         condition: { iterationId, stage, pgName, type, operatorName, baselineIterationId },

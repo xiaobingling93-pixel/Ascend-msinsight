@@ -33,7 +33,7 @@ test.describe('Timeline', () => {
         await clearAllData(page);
     });
 
-    // 泳道展开收缩
+    // 树状图 - 泳道展开收缩
     test('test_unitsExpandAndCollapse_when_click', async ({ timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Python (2045554)');
@@ -44,7 +44,7 @@ test.describe('Timeline', () => {
         await expect(secondLayerUnit).toBeVisible();
     });
 
-    // 泳道置顶
+    // 树状图 - 泳道置顶
     test('test_unitsPinToTopAndUnpin', async ({ timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const firstUnitInfo = timelineFrame.locator('.unit-info').first();
@@ -62,7 +62,7 @@ test.describe('Timeline', () => {
         expect(await secondLayerUnit.count()).toBe(1);
     });
 
-    // 偏移量设置
+    // 树状图 - 偏移量设置
     test('test_offsetConfig', async ({ page, timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const firstUnitInfo = timelineFrame.locator('.unit-info').first();
@@ -81,7 +81,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('unit-offset.png', { maxDiffPixels: 100 });
     });
 
-    // 点击算子展示算子详情
+    // System View - 点击算子展示算子详情
     test('test_showSliceDetail_when_clickOperator', async ({ page, timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -101,7 +101,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.getByText('Title')).toBeVisible();
     });
 
-    // 框选泳道展示算子列表
+    // System View - 框选泳道展示算子列表
     test('test_showSliceList_when_selectUnitsRange', async ({ page, timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -170,7 +170,7 @@ test.describe('Timeline', () => {
         }
     });
 
-    // 算子搜索
+    // 工具栏 - 算子搜索
     test('test_operatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
         await allPagesSuccessRes;
         const { searchBtn, timelineFrame } = timelinePage;
@@ -180,11 +180,11 @@ test.describe('Timeline', () => {
         await input.setValue('add');
         await input.press('Enter');
         await page.mouse.move(0, 0);
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-operator.png', { maxDiffPixels: 50 });
     });
 
-    // 算子搜索在泳道较深的位置时能显示在div中
+    // 工具栏 - 算子搜索在泳道较深的位置时能显示在div中
     test('test_deepOperatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
         await allPagesSuccessRes;
         const { searchBtn, timelineFrame } = timelinePage;
@@ -198,7 +198,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-deep-operator.png', { maxDiffPixels: 50 });
     });
 
-    // 泳道(card)过滤
+    // 工具栏 - 泳道(card)过滤
     test('test_cardFilter', async ({ page, timelinePage }) => {
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
         const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
@@ -219,7 +219,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('card-filter.png', { maxDiffPixels: 100 });
     });
 
-    // 泳道(unit)过滤
+    // 工具栏 - 泳道(unit)过滤
     test('test_unitFilter', async ({ page, timelinePage }) => {
         await allPagesSuccessRes;
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
@@ -241,7 +241,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('units-filter.png', { maxDiffPixels: 100 });
     });
 
-    // 算子连线
+    // 工具栏 - 算子连线
     test('test_operatorLinkLine', async ({ page, timelinePage }) => {
         const { flowBtn, timelineFrame } = timelinePage;
         const hostToDeviceCheckbox = timelineFrame.getByLabel('HostToDevice');
@@ -255,7 +255,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('operator-link-line.png', { maxDiffPixels: 100 });
     });
 
-    // 缩放按钮、重置按钮
+    // 工具栏 - 缩放按钮、重置按钮
     test('test_zoomAndResetUnit', async ({ page, timelinePage }) => {
         const { resetBtn, zoomInBtn, zoomOutBtn, timelineFrame } = timelinePage;
 
@@ -286,7 +286,7 @@ test.describe('Timeline', () => {
         await expect(mainContainer).toHaveScreenshot('reset-unit.png', { maxDiffPixels: 100 });
     });
 
-    // 插入 2 个旗子标记，测试标记列表数据
+    // 工具栏 - 插入 2 个旗子标记，测试标记列表数据
     test('test_markerListData_when_insertTwoFlags', async ({ page, timelinePage }) => {
         const { markerBtn, timelineFrame } = timelinePage;
         const mainContainer = timelineFrame.locator('#main-container');
@@ -316,6 +316,22 @@ test.describe('Timeline', () => {
 
         await page.mouse.move(0, 0);
         await expect(mainContainer).toHaveScreenshot('marker-list-clear.png', { maxDiffPixels: 100 });
+    });
+
+    // 工具栏 - Marker小旗子
+    test('test_add_marker', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const flagCanvas = timelineFrame.locator('#timelineFlagCnvas');
+        const boundingBox = await flagCanvas.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.click(startX + 50, startY + 5);
+        await page.mouse.click(startX + 100, startY + 5);
+        await page.mouse.click(startX + 200, startY + 5);
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-add-marker.png', { maxDiffPixels: 100 });
     });
 
     // 右键菜单--Fit to screen
@@ -464,7 +480,7 @@ test.describe('Timeline', () => {
         }
     });
 
-    // 键盘 W、S、A、D、方向键
+    // 快捷键 - 键盘 W、S、A、D、方向键
     test('test_keyword', async ({ timelinePage, page }) => {
         const { timelineFrame, zoomOutBtn, resetBtn } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -501,32 +517,7 @@ test.describe('Timeline', () => {
         }
     });
 
-    // Marker小旗子
-    test('test_add_marker', async ({ timelinePage, page }) => {
-        const { timelineFrame } = timelinePage;
-        const flagCanvas = timelineFrame.locator('#timelineFlagCnvas');
-        const boundingBox = await flagCanvas.boundingBox();
-        if (!boundingBox) {
-            return;
-        }
-        const { x: startX, y: startY } = boundingBox;
-        await page.mouse.click(startX + 50, startY + 5);
-        await page.mouse.click(startX + 100, startY + 5);
-        await page.mouse.click(startX + 200, startY + 5);
-        await page.mouse.move(0, 0);
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-add-marker.png', { maxDiffPixels: 100 });
-    });
-
-    // 测试直方图的显示 如NPU_MEM
-    test('test_npu_mem', async ({ timelinePage, page }) => {
-        const { timelineFrame } = timelinePage;
-        const npuMemLayerUnit = timelineFrame.locator('#main-container').getByText('NPU_MEM (2094647712)');
-        await npuMemLayerUnit.click();
-        await page.mouse.wheel(0, 250);
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-npu-mem.png', { maxDiffPixels:100 });
-    });
-
-    // 测试快捷键 Q
+    // 快捷键 - 测试快捷键 Q
     test('test_q', async ({ timelinePage, page }) => {
         const { bottomPanel, timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -534,6 +525,15 @@ test.describe('Timeline', () => {
         await secondUnitInfo.click();
         await page.keyboard.press('q');
         await expect(bottomPanel).toHaveScreenshot('test-keyword-q.png', { maxDiffPixels:100 });
+    });
+
+    // 图形化窗格 - 测试直方图的显示 如NPU_MEM
+    test('test_npu_mem', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const npuMemLayerUnit = timelineFrame.locator('#main-container').getByText('NPU_MEM (2094647712)');
+        await npuMemLayerUnit.click();
+        await page.mouse.wheel(0, 250);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-npu-mem.png', { maxDiffPixels:100 });
     });
 });
 
