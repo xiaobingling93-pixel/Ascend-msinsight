@@ -193,7 +193,7 @@ void ProjectParserJson::ParserTraceData(const std::map<std::string, std::vector<
 
     auto projectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     auto clusterInfos = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
-    if (clusterInfos.empty() && !rankListMap.empty()) {
+    if (clusterInfos.empty()) {
         std::for_each(projectInfos.begin(), projectInfos.end(), [&clusterInfos](const ProjectExplorerInfo& item) {
             auto cluster = std::make_shared<ParseFileInfo>();
             cluster->parseFilePath = item.fileName;

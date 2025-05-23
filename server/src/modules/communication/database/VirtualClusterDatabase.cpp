@@ -484,11 +484,21 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorNames(Protocol::OperatorNamesPa
     }
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    bool flag = false;
+    Protocol::OperatorNamesObject totalOpInfo;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::OperatorNamesObject object;
         object.operatorName = sqlite3_column_string(stmt, col++);
+        if (object.operatorName == "Total Op Info" && !flag) {  // summary opName default select Total Op Info
+            totalOpInfo = object;
+            flag = true;
+            continue;
+        }
         responseBody.emplace_back(object);
+    }
+    if (!totalOpInfo.operatorName.empty()) {
+        responseBody.insert(responseBody.begin(), totalOpInfo);
     }
     sqlite3_finalize(stmt);
     return true;
