@@ -209,6 +209,10 @@ export class Session {
         this.sourceList = [];
         this.memoryRankIds = [];
         this.operatorRankIds = [];
+        this.compareSet = {
+            baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
+            comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
+        };
     }
 
     // 数据源管理
