@@ -171,3 +171,10 @@ TEST(StringUtil, StringToInt)
     auto result = StringUtil::StringToInt(inputStr);
     EXPECT_EQ(result, 0);
 }
+
+TEST(StringUtil, StrJoin)
+{
+    EXPECT_EQ(StringUtil::StrJoin("test"), "test");
+    EXPECT_EQ(StringUtil::StrJoin("test", "hello"), "testhello");
+    EXPECT_EQ(StringUtil::StrJoin("test", " hello", " world"), "test hello world");
+}

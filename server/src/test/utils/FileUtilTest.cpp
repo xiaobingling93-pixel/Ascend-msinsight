@@ -10,7 +10,7 @@
 
 using namespace Dic;
 
-class FileUtilTest : TestSuit {
+class FileUtilTest : public  TestSuit {
 };
 
 TEST_F(TestSuit, BasicAssertions)
@@ -91,9 +91,9 @@ TEST(TestUtil, TestGetDbPath)
     int index = currPath.find_last_of("server");
     currPath = currPath.substr(0, index + 1);
 #ifdef _WIN32
-    std::string dbPath = FileUtil::GetDbPath(
+    std::string fileId = FileUtil::GetDbPath(
             currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\trace_view.json", "1");
-    EXPECT_EQ(dbPath,
+    EXPECT_EQ(fileId,
             currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\mindstudio_insight_data.db");
 #else
     std::string dbPath = FileUtil::GetDbPath(
@@ -461,4 +461,12 @@ TEST(TestUtil, TestSplitFilePathSuccess)
 TEST(TestUtil, SplicePath)
 {
     EXPECT_EQ("/home/user/test", FileUtil::SplicePath("/home", "user", "test"));
+}
+
+TEST(TestUtil, StemFile)
+{
+    EXPECT_EQ(FileUtil::StemFile("test.excel"), "test");
+    EXPECT_EQ(FileUtil::StemFile("/home/user/test.tar"), "test");
+    EXPECT_EQ(FileUtil::StemFile("test_excel"), "test_excel");
+    EXPECT_EQ(FileUtil::StemFile("test.tar.gz"), "test");
 }

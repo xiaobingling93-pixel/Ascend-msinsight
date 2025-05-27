@@ -444,6 +444,19 @@ static std::string JoinNumberStrWithParenthesesByOrder(const std::vector<std::st
     return "(" + join(sortList, ", ") + ")";
 }
 
+// LCOV_EXCL_BR_START
+inline static std::string StrJoin(const std::string& str)
+{
+    return str;
+}
+
+template<typename... Args>
+inline static std::string StrJoin(const std::string& first, Args... args)
+{
+    return first + StrJoin(args...);
+}
+// LCOV_EXCL_BR_STOP
+
 private:
 #ifdef _WIN32
     static inline char injectList[] = {

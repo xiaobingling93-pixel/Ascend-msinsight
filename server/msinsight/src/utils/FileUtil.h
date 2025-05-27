@@ -495,12 +495,14 @@ public:
         return FileUtil::FindFirstByRegex(path, 0, fileRegex);
     }
 
-    inline static std::string StemFile(const std::string& fileName)
+    inline static std::string StemFile(const std::string& filePath)
     {
-        if (fileName.empty()) {
+        if (filePath.empty()) {
             return "";
         }
-        return fileName.substr(0, fileName.find_last_of('.'));
+        std::string fileName = GetFileName(filePath);
+        auto pos = fileName.find_first_of('.');
+        return pos != std::string::npos ? fileName.substr(0, pos) : fileName;
     }
 
     // 切分路径

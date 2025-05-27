@@ -151,6 +151,17 @@ TEST_F(OperatorRequestHandlerTest, QueryOpCategoryInfoHandlerNormalTest)
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
+TEST_F(OperatorRequestHandlerTest, QueryOpCategoryInfoHandleEmptyRankId)
+{
+    Dic::Module::Operator::QueryOpCategoryInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorCategoryInfoRequest>();
+    requestPtr.get()->params.rankId = "";
+    requestPtr.get()->params.group = "Operator";
+    requestPtr.get()->params.topK = -1;
+    std::string errMsg;
+    EXPECT_EQ(false, requestPtr->params.CommonCheck(errMsg));
+}
+
 TEST_F(OperatorRequestHandlerTest, QueryOpComputeUnitHandlerNormalTest)
 {
     Dic::Module::Operator::QueryOpComputeUnitHandler handler;

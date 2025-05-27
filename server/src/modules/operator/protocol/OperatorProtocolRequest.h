@@ -27,7 +27,8 @@ namespace Dic::Protocol {
         bool CommonCheck(std::string &errorMsg)
         {
             if (!CheckStrParamValid(this->rankId, errorMsg)) {
-                errorMsg = std::string("[Operator]Failed to check rankId in Query Compute Unit Info.") + errorMsg;
+                errorMsg = StringUtil::StrJoin("[Operator]Failed to check rankId in Query Compute Unit Info.",
+                                               errorMsg);
                 return false;
             }
             if (!CheckStrParamValid(this->group, errorMsg)) {
