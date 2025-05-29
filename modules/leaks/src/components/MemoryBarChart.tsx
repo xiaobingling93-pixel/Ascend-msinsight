@@ -179,7 +179,9 @@ const MemoryBarChart: any = (data: BarData) => {
                 other.unshift([item[0], item[1] + block.size]);
             });
             const arr = [...block.path, ...other];
-            const realSource = [index, block.path[0][0], block.path[0][1], block.path.at(-1)[0], block.path.at(-1)[1],
+            const length = block.path.length;
+            const realSource = [index, block.path[0][0], block.path[0][1],
+                block.path[length - 1][0], block.path[length - 1][1],
                 other[0][0], other[0][1], other[other.length - 1][0], other[other.length - 1][1]];
             blockSource.push([...realSource, ...arr].flat());
         });

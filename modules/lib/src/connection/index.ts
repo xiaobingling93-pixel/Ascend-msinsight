@@ -80,7 +80,7 @@ abstract class BaseConnector {
             if (body.event === 'parse/leaksMemoryCompleted') {
                 setTimeout(() => {
                     targetWindow.postMessage(postBody, this.getTargetOrigin());
-                }, 1000);
+                }, 2000);
             } else {
                 targetWindow.postMessage(postBody, this.getTargetOrigin());
             }
