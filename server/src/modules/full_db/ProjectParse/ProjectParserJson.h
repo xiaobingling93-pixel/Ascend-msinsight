@@ -36,6 +36,8 @@ protected:
     static std::tuple<bool, bool, bool> CheckHasTraceJsonMemoryDataOperatorData(
         const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 
+    static std::string GetFileIdWithDb(const std::string& filePath);
+
 private:
     std::vector<std::string> FindAllTraceFile(const std::string &path, std::string &error);
     static std::vector<std::string> FindTraceFile(const std::string &path, std::string &error, std::string &curScene);

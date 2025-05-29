@@ -94,13 +94,17 @@ void ParserFactory::Reset()
     MetaDataCacheManager::Instance().Clear();
 }
 
-void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
-    const std::string &cardPath, std::vector<std::string> dataPath)
+void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response,
+                                                const std::string &rankId,
+                                                const std::string &fileId,
+                                                const std::string &cardPath,
+                                                std::vector<std::string> dataPath)
 {
     Action action;
     action.cardName = rankId;
     action.rankId = rankId;
     action.result = true;
+    action.fileId = fileId;
     // 路径信息，与rankId对应，用于页面上删除时，能够正确找到要删除的甬道信息（目前只有导入单卡数据需要这个信息）
     action.dataPathList = std::move(dataPath);
     // 将文件所在路径的三级目录名称作为rank的tooltip信息
@@ -121,13 +125,16 @@ void ProjectParserBase::ParseClusterEndProcess(std::string result, bool isShowCl
     SendEvent(std::move(event));
 }
 
-void ProjectParserBase::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+void ProjectParserBase::ParseEndCallBack(const std::string &rankId,
+                                         const std::string &fileId,
+                                         bool result,
+                                         const std::string &message)
 {
-    ServerLog::Info("Parse end, fileId:", fileId, ", result:", result);
+    ServerLog::Info("Parse end, fileId:", rankId, ", result:", result);
     if (result) {
-        SendParseSuccessEvent(fileId);
+        SendParseSuccessEvent(rankId, fileId);
     } else {
-        SendParseFailEvent(fileId, message);
+        SendParseFailEvent(rankId, fileId, message);
     }
 }
 
@@ -144,18 +151,18 @@ void ProjectParserBase::ParseProgressCallBack(const std::string &fileId, uint64_
     SendEvent(std::move(event));
 }
 
-void ProjectParserBase::SendParseSuccessEvent(const std::string &fileId)
+void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const std::string &fileId)
 {
     auto event = std::make_unique<ParseSuccessEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.unit.type = "card";
-    event->body.unit.metadata.cardId = fileId;
+    event->body.unit.metadata.cardId = rankId;
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        ServerLog::Error("Failed to get connection. fileId:", rankId);
         return;
     }
     event->body.unit.metadata.cardAlias = database->QueryCardAlias();
@@ -165,21 +172,25 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &fileId)
     } else {
         event->body.startTimeUpdated = true;
         TraceTime::Instance().UpdateTime(min, max);
-        TraceTime::Instance().UpdateCardTimeDuration(fileId, min, max);
+        TraceTime::Instance().UpdateCardTimeDuration(rankId, min, max);
     }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
-    event->body.offset = TraceTime::Instance().GetOffsetByFileId(fileId);
-    SearchMetaData(fileId, event->body.unit.children);
+    event->body.offset = TraceTime::Instance().GetOffsetByFileId(rankId);
+    event->body.fileId = fileId;
+    SearchMetaData(rankId, event->body.unit.children);
     SendEvent(std::move(event));
 }
 
-void ProjectParserBase::SendParseFailEvent(const std::string &fileId, const std::string &message)
+void ProjectParserBase::SendParseFailEvent(const std::string &rankId,
+                                           const std::string &fileId,
+                                           const std::string &message)
 {
     auto event = std::make_unique<ParseFailEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
-    event->body.rankId = fileId;
+    event->body.rankId = rankId;
     event->body.error = message;
+    event->body.dbPath = fileId;
     SendEvent(std::move(event));
 }
 
@@ -250,14 +261,14 @@ std::string ProjectParserBase::GetFileId(const std::string &filePath, const std:
     std::string dbPath = FileUtil::GetDbPath(filePath, result);
     if (dbPath.length() >= FileUtil::GetFilePathLengthLimit()) {
         const std::string message = dbPath + " length exceed " + std::to_string(FileUtil::GetFilePathLengthLimit());
-        SendParseFailEvent("", message);
+        SendParseFailEvent("", dbPath, message);
     }
     if (!DataBaseManager::Instance().CreatConnectionPool(result, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", result);
         return "";
     }
     dataPathToDbMap[importPath].push_back(dbPath);
-    return result;
+    return fileId;
 }
 
 std::string ProjectParserBase::GetDbPath(const std::string &filePath, const int index)

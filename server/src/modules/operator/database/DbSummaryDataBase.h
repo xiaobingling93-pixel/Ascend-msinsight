@@ -34,7 +34,10 @@ public:
                                     std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level) override;
     bool QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
                                Protocol::OperatorMoreInfoResponse& response) override;
-    static void ParserEnd(const std::string &fileId, bool result, const std::string &msg);
+    static void ParserEnd(const std::string &rankId,
+                          const std::string &fileId,
+                          bool result,
+                          const std::string &msg);
     static void Reset();
 
     bool QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res);

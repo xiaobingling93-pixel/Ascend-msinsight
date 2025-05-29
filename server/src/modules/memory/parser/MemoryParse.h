@@ -55,8 +55,14 @@ private:
     std::map<std::string, MemoryFilePairs> GetMemoryFiles(const std::vector<std::string>& paths);
     std::vector<std::string> GetMemoryRecordFileLists(const std::vector<std::string>& paths);
     static void SetParseCallBack();
-    static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &message);
-    static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
+    static void ParseEndCallBack(const std::string &rankId,
+                                 const std::string &fileId,
+                                 bool result,
+                                 const std::string &message);
+    static void ParseCallBack(const std::string &rankId,
+                              const std::string &fileId,
+                              bool result,
+                              const std::string &msg);
 
     static void PreParseTask(const MemoryFilePairs& filePair, const std::string& fileId);
     static bool ParseTask(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message);

@@ -505,6 +505,11 @@ public:
         return pos != std::string::npos ? fileName.substr(0, pos) : fileName;
     }
 
+    /**
+    * @brief 获取一个目录下的子目录，如果路径类型不为目录，则返回空
+    */
+    static std::vector<std::string> GetSubDirs(const std::string &filePath);
+
     // 切分路径
     static std::vector<std::string> SplitFilePath(std::string &path);
     static bool IsSoftLink(const std::string &path);

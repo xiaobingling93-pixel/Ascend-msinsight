@@ -54,7 +54,7 @@ struct ParseFileInfo {
     int64_t projectExplorerId{-1};
     std::string clusterId;
     std::string parseFilePath;
-    std::string dbPath;
+    std::string fileId;
     std::string rankId;
     std::string deviceId;
     std::string host;
@@ -72,6 +72,7 @@ struct ParseFileInfo {
         JsonUtil::AddMember(res, "type", CastParseFileTypeToStr(type), allocator);
         JsonUtil::AddMember(res, "deviceId", deviceId, allocator);
         JsonUtil::AddMember(res, "fileDir", curDirName, allocator);
+        JsonUtil::AddMember(res, "fileId", fileId, allocator);
         json_t children(rapidjson::kArrayType);
         std::for_each(subParseFile.begin(), subParseFile.end(), [&children, &allocator](const auto &fileInfo) {
             children.PushBack(fileInfo->SerializeToJson(allocator), allocator);
@@ -105,7 +106,8 @@ struct ProjectExplorerInfo {
     std::string fileName;
     std::vector<std::shared_ptr<ParseFileInfo>> subParseFileInfo;   // 项目下待解析的文件路径,不包含非数据文件类型
     std::vector<std::shared_ptr<ParseFileInfo>> projectFileTree;    // 项目下文件树，包含非数据类型和数据文件类型
-    std::unordered_map<std::string, std::shared_ptr<ParseFileInfo>> fileInfoMap;   // subId->ParseFileInfo,用于快速检索
+    // subId->ParseFileInfo导入单文件时subId会有重复
+    std::unordered_multimap<std::string, std::shared_ptr<ParseFileInfo>> fileInfoMap;
     std::string importType;
     std::vector<std::string> dbPath;
     std::string accessTime;
@@ -114,17 +116,17 @@ struct ProjectExplorerInfo {
     inline void AddSubParseFileInfo(const std::string &subId, ParseFileType type,
             const std::shared_ptr<ParseFileInfo> &fileInfo)
     {
-        auto it = fileInfoMap.find(subId);
-        if (it == fileInfoMap.end()) {
-            return;
-        }
-        if (it->second->type != type) {
-            return;
-        }
-        it->second->subParseFile.emplace_back(fileInfo);
-        fileInfoMap.emplace(fileInfo->subId, fileInfo);
-        if (fileInfo->type > ParseFileType::DATA_FILE) {
-            subParseFileInfo.push_back(fileInfo);
+        auto [begin, end] = fileInfoMap.equal_range(subId);
+        for (; begin != end; begin++) {
+            if (begin->second->type != type) {
+                continue;
+            }
+            begin->second->subParseFile.emplace_back(fileInfo);
+            fileInfoMap.emplace(fileInfo->subId, fileInfo);
+            if (fileInfo->type > ParseFileType::DATA_FILE) {
+                subParseFileInfo.push_back(fileInfo);
+            }
+            break;
         }
     }
 
@@ -162,14 +164,13 @@ struct ProjectExplorerInfo {
 
     inline std::shared_ptr<ParseFileInfo> GetSubParseFileInfo(const std::string &subId, ParseFileType type)
     {
-        auto it = fileInfoMap.find(subId);
-        if (it == fileInfoMap.end()) {
-            return nullptr;
+        auto [begin, end] = fileInfoMap.equal_range(subId);
+        for (; begin != end; begin++) {
+            if (begin->second->type == type) {
+                return begin->second;
+            }
         }
-        if (it->second->type != type) {
-            return nullptr;
-        }
-        return it->second;
+        return nullptr;
     }
 
     inline void MergeProjectExploreInfo(const ProjectExplorerInfo &projectInfo)
@@ -240,7 +241,13 @@ struct ProjectExplorerInfo {
         if (it2 != projectFileTree.end()) {
             projectFileTree.erase(it2);
         }
-        fileInfoMap.erase(file->subId);
+        auto [begin, end] = fileInfoMap.equal_range(file->subId);
+        for (; begin != end; begin++) {
+            if (begin->second->type == file->type) {
+                fileInfoMap.erase(begin);
+                return;
+            }
+        }
     }
 
     void DeleteFileChildren(std::shared_ptr<ParseFileInfo> file, std::set<int64_t> &deleteFileIds)

@@ -1032,14 +1032,17 @@ bool DbSummaryDataBase::GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &
 }
 // LCOV_EXCL_BR_STOP
 
-void DbSummaryDataBase::ParserEnd(const std::string &fileId, bool result, const std::string &msg)
+void DbSummaryDataBase::ParserEnd(const std::string &rankId,
+                                  const std::string &fileId,
+                                  bool result,
+                                  const std::string &msg)
 {
     WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Error("Failed to get session for summary callback.");
         return;
     }
-    if (fileId.empty()) {
+    if (rankId.empty()) {
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = MODULE_OPERATOR;
         event->result = true;
@@ -1049,9 +1052,10 @@ void DbSummaryDataBase::ParserEnd(const std::string &fileId, bool result, const 
         auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
         event->moduleName = MODULE_OPERATOR;
         event->result = true;
-        event->data.rankId = fileId;
+        event->data.rankId = rankId;
         event->data.status = result;
         event->data.error = msg;
+        event->fileId = fileId;
         session->OnEvent(std::move(event));
     }
 }

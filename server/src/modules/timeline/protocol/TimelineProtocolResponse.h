@@ -28,6 +28,7 @@ struct Action {
     std::string rankId;
     std::string cardPath;
     std::string host;
+    std::string fileId;
     bool result = true;
     std::vector<std::string> dataPathList;
 };

@@ -102,6 +102,7 @@ void ServitizationOpenApi::ParseSingleFile(const std::string& filePath, const st
     std::vector<std::string> fileIds;
     fileIds.push_back(fileId);
     event->rankIds = fileIds;
+    event->fileId = filePath;
     SendEvent(std::move(event));
 }
 }  // namespace Dic::Module::IE

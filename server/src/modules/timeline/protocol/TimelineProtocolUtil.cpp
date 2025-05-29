@@ -25,6 +25,7 @@ static void BuildImportActionJson(const std::vector<Action> &actions,
         JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
         JsonUtil::AddMember(actionJson, "cardPath", action.cardPath, allocator);
         JsonUtil::AddMember(actionJson, "result", action.result, allocator);
+        JsonUtil::AddMember(actionJson, "dbPath", action.fileId, allocator);
         json_t dataPathList(kArrayType);
         for (const auto &item: action.dataPathList) {
             dataPathList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
@@ -773,6 +774,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     }
     JsonUtil::AddMember(unit, "children", children, allocator);
     JsonUtil::AddMember(body, "unit", unit, allocator);
+    JsonUtil::AddMember(body, "dbPath", event.body.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
@@ -839,6 +841,7 @@ template <> std::optional<document_t> ToEventJson<LeaksParseSuccessEvent>(const 
     }
     JsonUtil::AddMember(body, "errMsg", event.body.errMsg, allocator);
     JsonUtil::AddMember(body, "deviceIds", deviceIds, allocator);
+    JsonUtil::AddMember(body, "dbPath", event.body.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
 
     return std::optional<document_t>{std::move(json)};
@@ -873,6 +876,7 @@ template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(con
     }
     JsonUtil::AddMember(body, "isCluster", event.isCluster, allocator);
     JsonUtil::AddMember(body, "memoryResult", memoryResult, allocator);
+    JsonUtil::AddMember(body, "fileId", event.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

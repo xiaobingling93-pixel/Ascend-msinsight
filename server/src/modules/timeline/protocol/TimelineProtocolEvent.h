@@ -50,6 +50,7 @@ struct ParseSuccessEventBody {
     bool isFullDb = false;
     uint64_t maxTimeStamp = 0;
     uint64_t offset = 0;
+    std::string fileId;
 };
 
 struct ParseSuccessEvent : public Event {
@@ -60,6 +61,7 @@ struct ParseSuccessEvent : public Event {
 struct ParseFailEventBody {
     std::string rankId;
     std::string error;
+    std::string dbPath;
 };
 
 struct ParseFailEvent : public Event {
@@ -103,6 +105,7 @@ struct AllSuccessEvent : public Event {
 
 struct LeaksParseSuccessEventBody {
     std::set<std::string> deviceIds;
+    std::string fileId;
     std::string errMsg;
 };
 
@@ -121,6 +124,7 @@ struct ParseMemoryCompletedEvent : public Event {
     ParseMemoryCompletedEvent() : Event(EVENT_PARSE_MEMORY_COMPLETED) {}
     bool isCluster = false;
     std::vector<MemorySuccess> memoryResult;
+    std::string fileId;
 };
 
 struct ModuleResetEvent : public Event {

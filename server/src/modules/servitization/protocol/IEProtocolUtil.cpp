@@ -94,6 +94,7 @@ std::optional<document_t> ToEventJson<ParseStatisticCompletedEvent>(const ParseS
         rankIds.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "rankIds", rankIds, allocator);
+    JsonUtil::AddMember(body, "dbPath", event.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

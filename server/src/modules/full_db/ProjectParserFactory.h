@@ -54,7 +54,10 @@ public:
                 std::to_string(FileUtil::GetFilePathLengthLimit());
         return res;
     };
-    static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
+    static void ParseEndCallBack(const std::string &rankId,
+                                 const std::string &fileId,
+                                 bool result,
+                                 const std::string &message);
     static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
     static void ParsePostProcess(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos);
     static void SendAllParseSuccess();
@@ -91,11 +94,16 @@ protected:
     static void ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::string GetFileId(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);
-    static void SendParseSuccessEvent(const std::string &fileId);
-    static void SendParseFailEvent(const std::string &fileId, const std::string &message);
+    static void SendParseSuccessEvent(const std::string &rankId, const std::string &fileId);
+    static void SendParseFailEvent(const std::string &rankId,
+                                   const std::string &fileId,
+                                   const std::string &message);
     static bool IsNeedReset(const ImportActionRequest &request);
 
-    void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId, const std::string &cardPath,
+    void SetBaseActionOfResponse(ImportActionResponse &response,
+                                 const std::string &rankId,
+                                 const std::string &fileId,
+                                 const std::string &cardPath,
                                  std::vector<std::string> dataPath);
     static void SaveDbPath(const std::string &curProjectName,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap);

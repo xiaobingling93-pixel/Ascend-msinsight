@@ -11,6 +11,7 @@
 #include "TraceTime.h"
 #include "BaselineManager.h"
 #include "ProjectAnalyze.h"
+#include "DataBaseManager.h"
 #include "ProjectParserBin.h"
 
 using namespace Dic::Module;
@@ -22,7 +23,7 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
     ImportActionResponse &response = *responsePtr;
     ModuleRequestHandler::SetBaseResponse(request, response);
     if (std::empty(projectInfos)) {
-        SendParseFailEvent("", "Project explorer info is not existed.");
+        SendParseFailEvent("", "", "Project explorer info is not existed.");
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
         SendResponse(std::move(responsePtr), true);
         return;
@@ -52,7 +53,7 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
         if (!errorMessage.empty()) {
             Dic::Protocol::SendReadFileFailEvent(selectedFolder, errorMessage);
         } else {
-            SendParseFailEvent("", "Import file is invalid, path: " + selectedFolder);
+            SendParseFailEvent("", "", "Import file is invalid, path: " + selectedFolder);
         }
 
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
@@ -71,6 +72,8 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
     std::string fileId;
     if (!files.empty()) {
         fileId = files.front().second;
+        dataPathToDbMap[selectedFolder].push_back(fileId);
+        FullDb::DataBaseManager::Instance().CreatConnectionPool(fileId, fileId);
     } else {
         fileId = selectedFolder;
         ServerLog::Error("Simulation trace files is empty.");
@@ -83,7 +86,7 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
             continue;
         }
         std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
-        SetBaseActionOfResponse(response, rankEntry.first, cardPath, std::vector<std::string>{});
+        SetBaseActionOfResponse(response, rankEntry.first, fileId, cardPath, std::vector<std::string>{});
     }
     ModuleRequestHandler::SetResponseResult(response, true);
     response.body.isBinary = true;
@@ -99,7 +102,7 @@ std::vector<std::pair<std::string, std::string>> ProjectParserBin::GetSimulation
 {
     body.isCluster = false;
     std::vector<std::pair<std::string, std::string>> files;
-    std::string fileId = GetFileId(selectFilePath, selectFilePath);
+    std::string fileId = GetFileIdWithDb(selectFilePath);
     if (fileId.empty()) {
         ServerLog::Error("File id is empty");
         return files;
@@ -110,8 +113,10 @@ std::vector<std::pair<std::string, std::string>> ProjectParserBin::GetSimulation
 
 void ProjectParserBin::SetParseCallBack(FileParser &fileParser)
 {
-    std::function<void(const std::string, bool, const std::string)> func =
-        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    std::function<void(const std::string, const std::string, bool, const std::string)> func =
+            std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3,
+                      std::placeholders::_4);
     fileParser.SetParseEndCallBack(func);
 
     // 复用解析完成回调函数设置逻辑
@@ -133,7 +138,7 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
         return;
     }
     std::string filePath = projectInfo.subParseFileInfo[0]->parseFilePath;
-    std::string fileId = GetFileId(filePath, filePath);
+    std::string fileId = GetFileIdWithDb(filePath);
     std::string dbPath = FileUtil::GetDbPath(filePath, fileId);
     baselineInfo.rankId = fileId;
     baselineInfo.cardName = "baseline" + fileId;
@@ -173,8 +178,17 @@ void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projec
     parseFileInfo->parseFilePath = parsedFile;
     parseFileInfo->type = ParseFileType::COMPUTE;
     parseFileInfo->curDirName = FileUtil::GetFileName(parsedFile);
-    parseFileInfo->subId = GetSubId(parsedFile, DATA_FILE);
+    parseFileInfo->subId = parsedFile;
+    parseFileInfo->fileId = GetFileIdWithDb(parsedFile);
     projectInfo.AddSubParseFileInfo(parseFileInfo);
+}
+std::string ProjectParserBin::GetFileIdWithDb(const std::string &filePath)
+{
+    // 避免一个目录下有多个bin文件，这里通过文件名做区分
+    std::string fileNameWithoutEx = FileUtil::StemFile(filePath);
+    std::string dbFileName = StringUtil::StrJoin(fileNameWithoutEx, "_mindstudio_insight_data.db");
+    std::string dir = FileUtil::GetParentPath(filePath);
+    return FileUtil::SplicePath(dir, dbFileName);
 }
 
 ProjectAnalyzeRegister<ProjectParserBin> pRegBIN(ParserType::BIN);

@@ -160,7 +160,7 @@ TEST_F(IEProtocolTest, TestParseStatisticCompletedEventToJsonNormal)
     EXPECT_EQ(jsonOp.has_value(), true);
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr =
-        "{\"type\":\"event\",\"id\":0,\"event\":\"parse/"
-        "statisticCompleted\",\"moduleName\":\"unknown\",\"body\":{\"rankIds\":[\"mmmmmmmmmm\"]}}";
+            "{\"type\":\"event\",\"id\":0,\"event\":\"parse/statisticCompleted\",\"moduleName\":\"unknown\","
+            "\"body\":{\"rankIds\":[\"mmmmmmmmmm\"],\"dbPath\":\"\"}}";
     EXPECT_EQ(json, jsonStr);
 }

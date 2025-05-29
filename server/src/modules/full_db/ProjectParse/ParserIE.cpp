@@ -30,7 +30,7 @@ void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
             continue;
         }
         std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second);
-        SetBaseActionOfResponse(response, rankEntry.first, cardPath, { folders });
+        SetBaseActionOfResponse(response, rankEntry.first, rankEntry.second, cardPath, {folders});
     }
     // 解析内容
     SetParseCallBack(Timeline::TraceFileParser::Instance());
@@ -105,8 +105,9 @@ void ParserIE::ParserTraceData(const std::unordered_map<std::string, std::string
 
 void ParserIE::SetParseCallBack(FileParser &fileParser)
 {
-    std::function<void(const std::string, bool, const std::string)> func =
-        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    std::function<void(const std::string, const std::string, bool, const std::string)> func =
+        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2,
+                  std::placeholders::_3, std::placeholders::_4);
     fileParser.SetParseEndCallBack(func);
 
     // 复用解析完成回调函数设置逻辑

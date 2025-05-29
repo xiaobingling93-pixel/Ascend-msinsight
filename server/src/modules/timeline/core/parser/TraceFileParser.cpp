@@ -51,7 +51,7 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, 
 #if defined(__linux__) || defined(__APPLE__)
         msg += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
 #endif
-        ParseEndCallBack(fileId, false, msg);
+        ParseEndCallBack(fileId, "", false, msg);
     }
 }
 
@@ -90,7 +90,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         TrackInfoManager::Instance().UpdateTrackIdMap(fileId, threadMap);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
         Timeline::TraceTime::Instance().UpdateCardTimeDuration(fileId, min, max);
-        ParseEndCallBack(fileId, true, "");
+        ParseEndCallBack(fileId, database->GetDbPath(), true, "");
         ParserStatusManager::Instance().SetFinishStatus(fileId);
         return true;
     }
@@ -121,7 +121,7 @@ void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathAr
         instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
-            ParseEndCallBack(fileId, false, "Failed to split file: " + filePath);
+            ParseEndCallBack(fileId, "", false, "Failed to split file: " + filePath);
             continue;
         }
 
@@ -154,37 +154,37 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
     if (!eventParser.Parse(pos.first, pos.second)) {
         if (ParserStatusManager::Instance().SetTerminateStatus(fileId) == ParserStatus::RUNNING) {
             // 只发送一次解析失败事件
-            ParseEndCallBack(fileId, false, eventParser.GetError());
+            ParseEndCallBack(fileId, "", false, eventParser.GetError());
         }
     }
     // 发送单卡解析进度事件
     auto &instance = TraceFileParser::Instance();
     std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
     curFileProgress->AddToParsedSize(pos.second - pos.first);
-    instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
-        curFileProgress->GetProgressPercentage());
+    instance.parseProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+                                   curFileProgress->GetProgressPercentage());
 }
 
-void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
-    std::shared_ptr<std::vector<std::future<void>>> futures,
-    std::chrono::time_point<std::chrono::high_resolution_clock> start)
+void TraceFileParser::EndParseTask(const std::string &rankId, const std::vector<std::string> &filePathArr,
+                                   std::shared_ptr<std::vector<std::future<void>>> futures,
+                                   std::chrono::time_point<std::chrono::high_resolution_clock> start)
 {
-    if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
-        ParserStatusManager::Instance().SetFinishStatus(fileId);
-        ServerLog::Info("End parse task skip this file. ID:", fileId);
+    if (ParserStatusManager::Instance().GetParserStatus(rankId) != ParserStatus::RUNNING) {
+        ParserStatusManager::Instance().SetFinishStatus(rankId);
+        ServerLog::Info("End parse task skip this file. ID:", rankId);
         return;
     }
-    ServerLog::Info("Wait parse completed. ID:", fileId);
+    ServerLog::Info("Wait parse completed. ID:", rankId);
     for (const auto &future : *futures) {
         future.wait();
     }
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("Parse completed. ID:", fileId,
-        " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    ServerLog::Info("Parse completed. ID:", rankId,
+                    " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    auto db = DataBaseManager::Instance().GetTraceDatabase(rankId);
     if (db == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", fileId);
-        ParserStatusManager::Instance().SetFinishStatus(fileId);
+        ServerLog::Error("Failed to get connection. fileId:", rankId);
+        ParserStatusManager::Instance().SetFinishStatus(rankId);
         return;
     }
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
@@ -197,17 +197,20 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     database->DeleteEmptyFlow();
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
     database->UpdateParseStatus(statusInfo);
-    ServerLog::Info("Update depth completed. ID:", fileId);
-    ParseEndCallBack(fileId, true, "");
-    ParserStatusManager::Instance().SetFinishStatus(fileId);
+    ServerLog::Info("Update depth completed. ID:", rankId);
+    ParseEndCallBack(rankId, database->GetDbPath(), true, "");
+    ParserStatusManager::Instance().SetFinishStatus(rankId);
 }
 
-void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+void TraceFileParser::ParseEndCallBack(const std::string &rankId,
+                                       const std::string &fileId,
+                                       bool result,
+                                       const std::string &message)
 {
-    auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
+    auto oldStatus = ParserStatusManager::Instance().GetParserStatus(rankId);
     auto &instance = TraceFileParser::Instance();
-    if (instance.paserEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
-        instance.paserEndCallback(fileId, result, message);
+    if (instance.parseEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
+        instance.parseEndCallback(rankId, fileId, result, message);
     }
 }
 

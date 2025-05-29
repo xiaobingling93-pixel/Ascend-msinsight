@@ -31,15 +31,16 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     if (response.body.reset) {
         ParserFactory::Reset();
     }
-    std::vector<std::string> reportFiles = {};
+    // 待解析的数据文件单独处理
+    std::vector<std::string> dataFiles = {};
     for (const auto &projectInfo : projectInfos) {
         for (const auto &item : projectInfo.subParseFileInfo) {
-            reportFiles.push_back(item->parseFilePath);
+            dataFiles.push_back(item->parseFilePath);
             response.body.subParseFileInfo.push_back(item);
         }
     }
     response.body.projectFileTree = projectInfos[0].projectFileTree;
-    auto hostInfoMap = GetReportFiles(reportFiles);
+    auto hostInfoMap = GetReportFiles(dataFiles);
     SetHostInfo(hostInfoMap, response);
     SetParseCallBack();
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
@@ -131,19 +132,16 @@ std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vecto
             }
             continue;
         }
-        std::vector<std::string> leaksFiles = FileUtil::FindFilesWithFilter(file, std::regex(leaksMemDbReg));
-        if (!leaksFiles.empty()) {
-            dbFiles.insert(dbFiles.end(), leaksFiles.begin(), leaksFiles.end());
+        std::vector<std::string> dbFilesOneDir = GetDbFilesInDir(file);
+        if (dbFilesOneDir.empty()) {
+            continue;
+        }
+        if (RegexUtil::RegexSearch(dbFilesOneDir[0], leaksMemDbReg)) {
+            std::copy(dbFilesOneDir.begin(), dbFilesOneDir.end(), std::back_inserter(dbFiles));
             DataBaseManager::Instance().SetFileType(FileType::LEAKS);
             continue;
         }
-        std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(file, std::regex(pytorchDBReg));
-        if (frameworkFiles.empty()) {
-            frameworkFiles = FileUtil::FindFilesWithFilter(file, std::regex(mindsporeDBReg));
-        }
-        std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(file, std::regex(msprofDBReg));
-        dbFiles.insert(dbFiles.end(), frameworkFiles.begin(), frameworkFiles.end());
-        dbFiles.insert(dbFiles.end(), msprofFiles.begin(), msprofFiles.end());
+        std::copy(dbFilesOneDir.begin(), dbFilesOneDir.end(), std::back_inserter(dbFiles));
     }
     // 只解析找到的第一个report文件
     std::map<std::string, HostInfo> hostMap;
@@ -175,8 +173,10 @@ std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vecto
 
 void ProjectParserDb::SetParseCallBack()
 {
-    std::function<void(const std::string, bool, const std::string)> func =
-        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    std::function<void(const std::string, const std::string, bool, const std::string)> func =
+        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2,
+                  std::placeholders::_3,
+                  std::placeholders::_4);
     FullDb::FullDbParser::Instance().SetParseEndCallBack(func);
 }
 
@@ -188,6 +188,7 @@ void ProjectParserDb::SetBaseActionOfResponse(ImportActionResponse &response, co
     action.rankId = host + rankId;
     action.host = host.length() >= 1 ? host.substr(0, host.length() - 1) : "";
     action.result = true;
+    action.fileId = dbFile;
     if (!dbFile.empty()) {
         action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(dbFile);
         action.dataPathList.push_back(FileUtil::GetParentPath(dbFile));
@@ -344,7 +345,52 @@ void ProjectParserDb::ParseBaselineClusterInfo(const Global::ProjectExplorerInfo
 
 void ProjectParserDb::BuildProjectExploreInfo(ProjectExplorerInfo &info, const std::vector<std::string> &parsedFiles)
 {
-    return ProjectParserJson::BuildProjectExploreInfo(info, parsedFiles);
+    ProjectParserBase::BuildProjectExploreInfo(info, parsedFiles);
+    std::for_each(parsedFiles.begin(), parsedFiles.end(), [&info](const auto& parsedFile) {
+        ProjectParserDb::BuildProjectFromParseFile(info, parsedFile);
+    });
+}
+
+void ProjectParserDb::BuildProjectFromParseFile(Dic::Module::Global::ProjectExplorerInfo &info,
+                                                const std::string &parsedFile)
+{
+    std::vector<std::string> parentFolders = GetParentFileList(info.fileName, parsedFile);
+    // Db工程层次：project-cluster-host-rank
+    auto parseFileInfoRank = std::make_shared<ParseFileInfo>();
+    parseFileInfoRank->parseFilePath = parsedFile;
+    parseFileInfoRank->type = ParseFileType::RANK;
+    parseFileInfoRank->subId = parsedFile;
+    parseFileInfoRank->curDirName = FileUtil::GetFileName(parsedFile);
+    parseFileInfoRank->fileId = GetFileIdWithDb(parsedFile);
+    // import single file
+    if (FileUtil::IsRegularFile(parsedFile) || parseFileInfoRank->subId == info.fileName) {
+        parseFileInfoRank->subId = FileUtil::GetFileName(parsedFile);
+        info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
+        return;
+    }
+    // 设置cluster信息
+    std::string cluster;
+    std::string clusterPrefix;
+    constexpr uint64_t clusterFolderCount = 2;
+    if (parentFolders.size() >= clusterFolderCount) {
+        std::tie(cluster, clusterPrefix) = GetClusterInfo(parentFolders);
+        if (info.GetSubParseFileInfo(clusterPrefix, ParseFileType::CLUSTER) == nullptr) {
+            auto clusterInfo = std::make_shared<ParseFileInfo>();
+            clusterInfo->subId = clusterPrefix;
+            clusterInfo->type = ParseFileType::CLUSTER;
+            clusterInfo->clusterId = FileUtil::GetFileName(cluster);
+            clusterInfo->parseFilePath = clusterPrefix;
+            clusterInfo->curDirName = FileUtil::GetFileName(cluster);
+            info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, clusterInfo);
+        }
+        parentFolders.erase(parentFolders.begin());
+    }
+
+    if (clusterPrefix.empty()) {
+        info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
+    } else {
+        info.AddSubParseFileInfo(clusterPrefix, ParseFileType::CLUSTER, parseFileInfoRank);
+    }
 }
 
 void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isCluster,
@@ -373,6 +419,34 @@ void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorer
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ParsePostProcess, clusterFilePath);
 }
 // LCOV_EXCL_BR_STOP
+
+std::string ProjectParserDb::GetFileIdWithDb(const std::string &filePath)
+{
+    if (!FileUtil::IsFolder(filePath)) {
+        return filePath;
+    }
+    std::vector<std::string> dbFiles = GetDbFilesInDir(filePath);
+    if (dbFiles.empty()) {
+        return filePath;
+    }
+    return dbFiles[0]; // 以找到的第一个文件为准
+}
+
+std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &filePath)
+{
+    // 静态初始化，避免重复调用时正则编译开销
+    static std::vector<std::regex> dbRegex = {
+        std::regex{leaksMemDbReg}, std::regex{pytorchDBReg},
+        std::regex{mindsporeDBReg}, std::regex{msprofDBReg}};
+    for (const auto &dbRegx: dbRegex) {
+        std::vector<std::string> res = FileUtil::FindFilesWithFilter(filePath, dbRegx);
+        if (!res.empty()) {
+            return res;
+        }
+    }
+    return {};
+}
+
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);
 } // Module
 } // Dic

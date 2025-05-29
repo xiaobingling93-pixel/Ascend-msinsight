@@ -29,6 +29,7 @@ public:
     }
     static void BuildProjectExploreInfo(ProjectExplorerInfo &projectInfo, const std::vector<std::string> &parsedFiles);
     static void BuildProjectInfoFromParseFile(ProjectExplorerInfo &projectInfo, const std::string& parsedFile);
+    static std::string GetFileIdWithDb(const std::string& filePath);
 private:
     void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder);
     std::vector<std::pair<std::string, std::string>> GetSimulationTraceFiles(const std::string &selectFilePath,

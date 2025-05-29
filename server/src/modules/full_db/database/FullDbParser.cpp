@@ -106,7 +106,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
-            FullDb::DbMemoryDataBase::ParseCallBack(rankId, false, "");
+            FullDb::DbMemoryDataBase::ParseCallBack(rankId, filePath, false, "");
         }
         ServerLog::Error("There is no Memory Data in this db file");
     } else if (type == FileType::LEAKS && !database->CheckTableDataInvalid(TABLE_LEAKS_DUMP)) {
@@ -121,7 +121,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     }
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
         for (const auto& rankId: rankIds) {
-            FullDb::DbSummaryDataBase::ParserEnd(rankId, false, "");
+            FullDb::DbSummaryDataBase::ParserEnd(rankId, filePath, false, "");
         }
         ServerLog::Error("There is no Summery Data in this db file");
     } else {
@@ -203,6 +203,7 @@ void FullDbParser::SendHostEvent(const std::string &fileId)
     event->result = true;
     event->body.unit.type = "card";
     event->body.isFullDb = true;
+    event->body.fileId = fileId;
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:Host");
@@ -222,8 +223,8 @@ void FullDbParser::SendHostEvent(const std::string &fileId)
 void FullDbParser::ParserCallBack(std::string fileId, bool result)
 {
     auto &instance = FullDbParser::Instance();
-    if (instance.paserEndCallback != nullptr) {
-        instance.paserEndCallback(fileId, true, "");
+    if (instance.parseEndCallback != nullptr) {
+        instance.parseEndCallback(fileId, fileId, true, "");
     }
 }
 
@@ -239,7 +240,7 @@ void FullDbParser::InitSummary(const std::vector<std::string> &rankIds, const st
             ServerLog::Error("Failed to connect or open SummeryDatabase.");
         }
         if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
-            FullDb::DbSummaryDataBase::ParserEnd(id, result, "");
+            FullDb::DbSummaryDataBase::ParserEnd(id, path, result, "");
         }
     }
     ServerLog::Info("Init Summary finish");
@@ -264,7 +265,7 @@ void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std
             ServerLog::Error("Failed to connect or open memoryDatabase.");
         }
         if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
-            FullDb::DbMemoryDataBase::ParseCallBack(id, result, "");
+            FullDb::DbMemoryDataBase::ParseCallBack(id, path, result, "");
         }
     }
     ServerLog::Info("Init Memory finish");

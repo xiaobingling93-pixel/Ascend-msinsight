@@ -386,7 +386,7 @@ bool MemoryParse::ComponentParse(const std::string &filePath, const std::string 
 void MemoryParse::Reset()
 {
     ServerLog::Info("Memory reset. Wait task completed.");
-    ParseEndCallBack("", true, "");
+    ParseEndCallBack("", "", true, "");
     threadPool->Reset();
     ranks.clear();
     ServerLog::Info("Memory task completed.");
@@ -523,7 +523,7 @@ bool MemoryParse::Parse(const std::vector<std::string> &pathList)
     }
     SetParseCallBack();
     if (memoryFiles.size() > 1) {
-        ParseEndCallBack("", true, "");
+        ParseEndCallBack("", "", true, "");
     }
     for (const auto& memoryFile : memoryFiles) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + memoryFile.first,
@@ -538,7 +538,7 @@ void MemoryParse::PreParseTask(const MemoryFilePairs& filePair, const std::strin
     std::string message;
     if (!InitParser(filePair, fileId, message)) {
         ServerLog::Error("Failed to parse memory files for fileId:", fileId, ", reason: ", message);
-        ParseEndCallBack(fileId, false, message);
+        ParseEndCallBack(fileId, "", false, message);
     }
 }
 
@@ -589,8 +589,9 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
         message = "Failed to parse npu module mem file, path = " + componentFile;
         return false;
     }
-
-    ParseEndCallBack(fileId, true, "");
+    auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
+        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    ParseEndCallBack(fileId, memoryDatabase->GetDbPath(), true, "");
     Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
     return true;
 }
@@ -620,7 +621,7 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
         Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
         uint64_t minTimestamp = std::min(db->QueryMinRecordTimestamp(), db->QueryMinOperatorAllocationTime());
         Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
-        ParseEndCallBack(fileId, true, "");
+        ParseEndCallBack(fileId, dbPath, true, "");
         return true;
     }
 
@@ -639,34 +640,44 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
 
 void MemoryParse::SetParseCallBack()
 {
-    std::function<void(const std::string, bool, const std::string)> func =
-            std::bind(ParseCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    std::function<void(const std::string, const std::string, bool, const std::string)> func =
+        std::bind(ParseCallBack,
+                  std::placeholders::_1,
+                  std::placeholders::_2,
+                  std::placeholders::_3,
+                  std::placeholders::_4);
     MemoryParse::Instance().SetParseEndCallBack(func);
 }
 
-void MemoryParse::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+void MemoryParse::ParseEndCallBack(const std::string &rankId,
+                                   const std::string &fileId,
+                                   bool result,
+                                   const std::string &message)
 {
-    Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
+    Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + rankId);
     // 错误处理逻辑后续增加
     if (!result) {
         return;
     }
-    if (MemoryParse::Instance().ranks.count(fileId) == 0) {
+    if (MemoryParse::Instance().ranks.count(rankId) == 0) {
         return;
     } else {
-        MemoryParse::Instance().ranks[fileId].parseSuccess = true;
+        MemoryParse::Instance().ranks[rankId].parseSuccess = true;
     }
 
     auto &instance = MemoryParse::Instance();
-    if (instance.paserEndCallback != nullptr) {
-        instance.paserEndCallback(fileId, result, message);
+    if (instance.parseEndCallback != nullptr) {
+        instance.parseEndCallback(rankId, fileId, result, message);
     }
 }
 
-void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
+void MemoryParse::ParseCallBack(const std::string &rankId,
+                                const std::string &fileId,
+                                bool result,
+                                const std::string &msg)
 {
     // 如果输入fileId
-    if (fileId.empty()) {
+    if (rankId.empty()) {
         MemoryParse::Instance().ranks.clear();
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = Protocol::MODULE_MEMORY;
@@ -678,8 +689,9 @@ void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const st
         event->moduleName = Protocol::MODULE_TIMELINE;
         event->result = true;
         event->isCluster = MemoryParse::Instance().isCluster;
+        event->fileId =  fileId;
         std::vector<Protocol::MemorySuccess> memoryResult;
-        memoryResult.push_back(MemoryParse::Instance().ranks[fileId]);
+        memoryResult.push_back(MemoryParse::Instance().ranks[rankId]);
         event->memoryResult = memoryResult;
         SendEvent(std::move(event));
     }

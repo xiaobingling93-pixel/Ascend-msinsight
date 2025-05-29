@@ -121,7 +121,7 @@ void TraceFileSimulationParser::ParseTask(const std::string &filePath, const std
     auto &instance = TraceFileSimulationParser::Instance();
     std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
     curFileProgress->AddToParsedSize(pos.second - pos.first);
-    instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+    instance.parseProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
                                    curFileProgress->GetProgressPercentage());
 }
 
@@ -160,9 +160,9 @@ void TraceFileSimulationParser::ParseEndCallBack(const std::string &fileId, bool
     auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
     ParserStatusManager::Instance().SetFinishStatus(fileId);
     auto &instance = TraceFileSimulationParser::Instance();
-    if (instance.paserEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
+    if (instance.parseEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
         ServerLog::Info("TraceFileSimulationParser send Message");
-        instance.paserEndCallback(fileId, result, message);
+        instance.parseEndCallback(fileId, fileId, result, message);
     }
 }
 

@@ -23,8 +23,12 @@ public:
     ProjectTypeEnum GetProjectType(const std::string &dataPath) final;
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) final;
     static void BuildProjectExploreInfo(ProjectExplorerInfo& info, const std::vector<std::string>& parsedFiles);
+    static void BuildProjectFromParseFile(ProjectExplorerInfo& info, const std::string& parsedFile);
+    static std::string GetFileIdWithDb(const std::string& filePath);
+
 private:
     std::map<std::string, HostInfo> GetReportFiles(const std::vector<std::string> &reportFiles);
+    static std::vector<std::string> GetDbFilesInDir(const std::string& filePath);
     void SetParseCallBack();
     static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
         const std::string &host, const std::string &dbFile);

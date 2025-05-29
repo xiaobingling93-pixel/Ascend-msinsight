@@ -605,11 +605,7 @@ std::string FileUtil::GetDbPath(const std::string &filePath)
     if (grandparentPath.empty()) {
         return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
     }
-    std::vector<std::string> folders;
-    std::vector<std::string> files;
-    if (!FileUtil::FindFolders(grandparentPath, folders, files)) {
-        return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
-    }
+    std::vector<std::string> folders = FileUtil::GetSubDirs(filePath);
     if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
         // 如果是ASCEND_PROFILER_OUTPUT，则放在ASCEND_PROFILER_OUTPUT下
         auto directory = FileUtil::SplicePath(grandparentPath, ASCEND_PROFILER_OUTPUT);
@@ -681,5 +677,24 @@ bool FileUtil::CheckPathPermission(const std::string &filePath, fs::perms permis
         Server::ServerLog::Error("Get file permission failed, error:", e.what());
         return false;
     }
+}
+
+std::vector<std::string> FileUtil::GetSubDirs(const std::string &filePath)
+{
+    if (!FileUtil::IsFolder(filePath)) {
+        return {};
+    }
+    constexpr uint64_t maxCount = 50000;
+    std::vector<std::string> res;
+    uint64_t count = 0;
+    for (const auto &item: fs::directory_iterator(filePath)) {
+        if (count++ > maxCount) {
+            return res;
+        }
+        if (fs::is_directory(item) && CheckDirValid(item.path().string())) {
+            res.emplace_back(item.path().string());
+        }
+    }
+    return res;
 }
 } // Dic

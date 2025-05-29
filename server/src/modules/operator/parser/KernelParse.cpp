@@ -134,20 +134,22 @@ void KernelParse::PreParseTask(const std::vector<std::string>& filePathList, con
     std::string message;
     if (!InitParser(filePathList, fileId, message)) {
         ServerLog::Error("Failed to parse summary files for fileId:", fileId, "reason: ", message);
-        ParseEndCallBack(fileId, false, message);
+        ParseEndCallBack(fileId, "", false, message);
     }
 }
 
-void KernelParse::PostParseTask(const std::set<std::string>& devices, const std::string& fileId)
+void KernelParse::PostParseTask(const std::set<std::string> &devices,
+                                const std::string &rankId,
+                                const std::string &fileId)
 {
-    Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + fileId);
-    if (devices.size() == 1 && devices.count(fileId) == 1) {
-        ParseEndCallBack(fileId, true, "");
+    Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + rankId);
+    if (devices.size() == 1 && devices.count(rankId) == 1) {
+        ParseEndCallBack(rankId, fileId, true, "");
     } else {
         for (const std::string& device : devices) {
-            auto tmpFileId = std::string().append(MSPROF_PREFIX).append(fileId)
+            auto tmpFileId = std::string().append(MSPROF_PREFIX).append(rankId)
                     .append(MSPROF_CONNECT).append(device);
-            ParseEndCallBack(tmpFileId, true, "");
+            ParseEndCallBack(tmpFileId, fileId, true, "");
         }
     }
 }
@@ -171,7 +173,7 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
     }
     if (!database->OpenDb(dbPath, false)) {
         message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
-                filePathList[0] + " dbPath: " + dbPath;
+                filePathList[0] + " fileId: " + dbPath;
 #if defined(__linux__) || defined(__APPLE__)
         message += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
 #endif
@@ -181,13 +183,13 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
         uint64_t minTimestamp = database->QueryMinStartTime();
         Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
         std::set<std::string> devices = database->QueryRankIds();
-        PostParseTask(devices, fileId);
+        PostParseTask(devices, fileId, dbPath);
         return true;
     }
     if (!database->DropTable() or !database->CreateTable() or !database->SetConfig() or
         !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
         message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
-                  filePathList[0] + " dbPath: " + dbPath;
+                  filePathList[0] + " fileId: " + dbPath;
         return false;
     }
     if (!ParseTask(filePathList, fileId, message) or !database->UpdateParseStatus(FINISH_STATUS)) {
@@ -211,7 +213,7 @@ bool KernelParse::ParseTask(const std::vector<std::string>& filePathList, const 
         }
     }
     // 判断是否为训练场景
-    PostParseTask(devices, fileId);
+    PostParseTask(devices, fileId, FileUtil::GetDbPath(filePathList[0], fileId));
     return true;
 }
 
@@ -449,27 +451,33 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     return true;
 }
 
-void KernelParse::ParseEndCallBack(const std::string &fileId, bool result, const std::string &msg)
+void KernelParse::ParseEndCallBack(const std::string &rankId,
+                                   const std::string &fileId,
+                                   bool result,
+                                   const std::string &msg)
 {
-    ServerLog::Info("Parse kernel file end: ", fileId);
+    ServerLog::Info("Parse kernel file end: ", rankId);
     // 错误处理逻辑后续增加
     if (!result) {
         return;
     }
     auto &instance = KernelParse::Instance();
-    if (instance.paserEndCallback != nullptr) {
-        instance.paserEndCallback(fileId, result, msg);
+    if (instance.parseEndCallback != nullptr) {
+        instance.parseEndCallback(rankId, fileId, result, msg);
     }
 }
 
-void KernelParse::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
+void KernelParse::ParseCallBack(const std::string &rankId,
+                                const std::string &fileId,
+                                bool result,
+                                const std::string &msg)
 {
     auto *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Error("Failed to get session for summary callback.");
         return;
     }
-    if (fileId.empty()) {
+    if (rankId.empty()) {
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = MODULE_OPERATOR;
         event->result = true;
@@ -479,17 +487,22 @@ void KernelParse::ParseCallBack(const std::string &fileId, bool result, const st
         auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
         event->moduleName = MODULE_OPERATOR;
         event->result = true;
-        event->data.rankId = fileId;
+        event->data.rankId = rankId;
         event->data.status = result;
         event->data.error = msg;
+        event->fileId = fileId;
         session->OnEvent(std::move(event));
     }
 }
 
 void KernelParse::SetParseCallBack()
 {
-    std::function<void(const std::string, bool, const std::string)> func =
-            std::bind(ParseCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    std::function<void(const std::string, const std::string, bool, const std::string)> func =
+        std::bind(ParseCallBack,
+                  std::placeholders::_1,
+                  std::placeholders::_2,
+                  std::placeholders::_3,
+                  std::placeholders::_4);
     KernelParse::Instance().SetParseEndCallBack(func);
 }
 
@@ -518,7 +531,7 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
 void KernelParse::Reset()
 {
     ServerLog::Info("Summary reset. wait task completed.");
-    ParseCallBack("", true, "");
+    ParseCallBack("", "", true, "");
     if (threadPool != nullptr) {
         threadPool->Reset();
     }

@@ -231,7 +231,7 @@ void WsServer::PreLoadEventDir()
     projectExplorerInfo.projectType = 0;
     projectExplorerInfo.importType = "import";
     auto fileInfo = std::make_shared<Dic::Module::Global::ParseFileInfo>();
-    fileInfo->dbPath = "";
+    fileInfo->fileId = "";
     fileInfo->parseFilePath = eventDir;
     projectExplorerInfo.subParseFileInfo.emplace_back(fileInfo);
     Dic::Module::Global::ProjectExplorerManager::Instance().SaveProjectExplorer(projectExplorerInfo, false);

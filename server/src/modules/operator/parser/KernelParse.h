@@ -90,8 +90,14 @@ private:
     static void InitKernelParseMap();
 
     static void SetParseCallBack();
-    static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &msg);
-    static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
+    static void ParseEndCallBack(const std::string &rankId,
+                                 const std::string &fileId,
+                                 bool result,
+                                 const std::string &msg);
+    static void ParseCallBack(const std::string &rankId,
+                              const std::string &fileId,
+                              bool result,
+                              const std::string &msg);
 
     static void PreParseTask(const std::vector<std::string>& filePathList, const std::string &fileId);
     static bool ParseTask(const std::vector<std::string>& filePathList, const std::string &fileId,
@@ -99,7 +105,9 @@ private:
 
     static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
                            std::string &message);
-    static void PostParseTask(const std::set<std::string> &devices, const std::string &fileId);
+    static void PostParseTask(const std::set<std::string> &devices,
+                              const std::string &rankId,
+                              const std::string &fileId);
 
     static void ParsePyTorchOpBaseInfoData(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);

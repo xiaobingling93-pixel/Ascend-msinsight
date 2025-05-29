@@ -24,13 +24,13 @@ bool SystemMemoryDatabase::CreateTable()
         return true;
     }
     std::string sql = "CREATE TABLE " + projectExplorerTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
-         "projectName TEXT, fileName TEXT, projectType INTEGER, importType TEXT, dbPath Text, accessTime TEXT, "
+         "projectName TEXT, fileName TEXT, projectType INTEGER, importType TEXT, fileId Text, accessTime TEXT, "
          "UNIQUE (projectName, fileName) );"
          "CREATE TABLE " + parseFileInfoTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                                                "projectExplorerId INTEGER, parseFilePath TEXT, dbPath Text, "
+                                                "projectExplorerId INTEGER, parseFilePath TEXT, fileId Text, "
                                                 "subId TEXT,type INTEGER, clusterPath TEXT, "
                                                 "host TEXT, rankId TEXT, deviceId TEXT, "
-                                                "UNIQUE (projectExplorerId, parseFilePath, subId));";
+                                                "UNIQUE (projectExplorerId, parseFilePath, subId, type));";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
@@ -50,11 +50,11 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateProject(const ProjectExplorerInf
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT INTO " + projectExplorerTable +
-        "(projectName, fileName, projectType, importType, dbPath, accessTime) VALUES(?, ?, ?, ?, ?, ?)";
+        "(projectName, fileName, projectType, importType, fileId, accessTime) VALUES(?, ?, ?, ?, ?, ?)";
     sql += " ON CONFLICT(projectName, fileName) DO UPDATE SET"
            " projectType = EXCLUDED.projectType,"
            " importType = EXCLUDED.importType,"
-           " dbPath = EXCLUDED.dbPath,"
+           " fileId = EXCLUDED.fileId,"
            " accessTime = EXCLUDED.accessTime;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -85,20 +85,20 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<std
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT INTO " + parseFileInfoTable +
-                        "(projectExplorerId, parseFilePath, dbPath, subId, type, clusterPath, host, rankId, deviceId)"
+                        "(projectExplorerId, parseFilePath, fileId, subId, type, clusterPath, host, rankId, deviceId)"
                         " VALUES(?, ?, ?, ? ,? ,? ,? , ? ,?)";
     for (size_t i = 1; i < parseFileInfoList.size(); ++i) {
         sql += ",(?, ?, ?, ? ,? ,? ,? , ? ,?)";
     }
-    sql += " ON CONFLICT(projectExplorerId, parseFilePath, subId) DO UPDATE SET"
-           " dbPath = EXCLUDED.dbPath;";
+    sql += " ON CONFLICT(projectExplorerId, parseFilePath, subId, type) DO UPDATE SET"
+           " fileId = EXCLUDED.fileId;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to save FileMenuData, prepared statement failed.");
         return false;
     }
     for (const auto &item: parseFileInfoList) {
-        stmt->BindParams(item->projectExplorerId, item->parseFilePath, item->dbPath, item->subId, item->type,
+        stmt->BindParams(item->projectExplorerId, item->parseFilePath, item->fileId, item->subId, item->type,
                          item->clusterId, item->host, item->rankId, item->deviceId);
     }
     if (!stmt->Execute()) {
@@ -139,7 +139,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
     const std::vector<std::string> &projectNameList, const std::vector<std::string>& fileNameList)
 {
     std::vector<ProjectExplorerInfo> res;
-    std::string sql = "SELECT id, projectName, fileName, projectType, importType, dbPath, accessTime FROM "
+    std::string sql = "SELECT id, projectName, fileName, projectType, importType, fileId, accessTime FROM "
             + projectExplorerTable + " WHERE 1 = 1";
     if (!projectNameList.empty()) {
         sql += " and projectName in (" + StringUtil::CreateQuestionMarkString(projectNameList.size()) + ")";
@@ -172,7 +172,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
         info.fileName = resultSet->GetString("fileName");
         info.projectType = resultSet->GetInt64("projectType");
         info.importType = resultSet->GetString("importType");
-        info.dbPath = StringUtil::Split(resultSet->GetString("dbPath"), ",");
+        info.dbPath = StringUtil::Split(resultSet->GetString("fileId"), ",");
         info.accessTime = resultSet->GetString("accessTime");
         res.emplace_back(info);
     }
@@ -251,7 +251,7 @@ bool SystemMemoryDatabase::UpdateProjectDbPath(const std::string &projectName, c
         ServerLog::Error("Failed to update ProjectName failed, table is not exist.");
         return false;
     }
-    std::string sql = "Update " + projectExplorerTable + " SET dbPath = ? WHERE projectName = ? AND fileName = ?;";
+    std::string sql = "Update " + projectExplorerTable + " SET fileId = ? WHERE projectName = ? AND fileName = ?;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to create prepared stmt: projectName=", projectName, ", fileName=", fileName);
@@ -298,7 +298,7 @@ std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>> SystemMemoryDatab
         info->id = resultSet->GetUint64("id");
         info->projectExplorerId = resultSet->GetUint64("projectExplorerId");
         info->parseFilePath = resultSet->GetString("parseFilePath");
-        info->dbPath = resultSet->GetString("dbPath");
+        info->fileId = resultSet->GetString("fileId");
         info->subId = resultSet->GetString("subId");
         info->type = static_cast<ParseFileType>(resultSet->GetInt64("type"));
         info->clusterId = resultSet->GetString("clusterPath");

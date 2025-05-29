@@ -27,6 +27,7 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
         event->moduleName = Protocol::MODULE_MEMORY;
         event->result = true;
         event->reset = true;
+        event->body.fileId = fileId;
         SendEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::LeaksParseSuccessEvent>();
@@ -40,6 +41,7 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
             body.errMsg = msg;
         }
         event->body = body;
+        event->body.fileId = fileId;
         SendEvent(std::move(event));
     }
 }

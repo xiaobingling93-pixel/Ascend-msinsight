@@ -48,7 +48,8 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
             continue;
         }
         std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
-        SetBaseActionOfResponse(response, rankEntry.first, cardPath, folders);
+        std::string fileId = GetFileIdWithDb(folders[0]);
+        SetBaseActionOfResponse(response, rankEntry.first, fileId, cardPath, folders);
     }
     // 解析内容
     auto projectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
@@ -240,8 +241,12 @@ bool ProjectParserJson::isSimulation(std::string filePath)
 
 void ProjectParserJson::SetParseCallBack(FileParser &fileParser)
 {
-    std::function<void(const std::string, bool, const std::string)> func =
-        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    std::function<void(const std::string, const std::string, bool, const std::string)> func =
+        std::bind(ParseEndCallBack,
+                  std::placeholders::_1,
+                  std::placeholders::_2,
+                  std::placeholders::_3,
+                  std::placeholders::_4);
     fileParser.SetParseEndCallBack(func);
 
     // 复用解析完成回调函数设置逻辑
@@ -663,6 +668,7 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
     parseFileInfoRank->type = ParseFileType::RANK;
     parseFileInfoRank->subId = parseFile;
     parseFileInfoRank->curDirName = FileUtil::GetFileName(parseFile);
+    parseFileInfoRank->fileId = GetFileIdWithDb(parseFile);
     // import single file
     if (FileUtil::IsRegularFile(parseFile) || parseFileInfoRank->subId == info.fileName) {
         parseFileInfoRank->subId = FileUtil::GetFileName(parseFile);
@@ -694,6 +700,11 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
     }
 }
 
+std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
+{
+    std::string rankId = FileUtil::GetProfilerFileId(FileUtil::SplicePath(filePath, "mindstudio_data.db"));
+    return FileUtil::GetDbPath(FileUtil::SplicePath(filePath, "mindstudio_data.db"), rankId);
+}
 ProjectAnalyzeRegister<ProjectParserJson> pRegJson(ParserType::JSON);
 
 } // Module

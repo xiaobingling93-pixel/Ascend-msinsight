@@ -284,7 +284,7 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
         // 发送解析进度事件
         std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
         curFileProgress->AddToParsedSize(NumberSafe::Sub(pair.second, pair.first));
-        instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+        instance.parseProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
                                        curFileProgress->GetProgressPercentage());
     }
 }
@@ -295,8 +295,8 @@ void SourceFileParser::ParseEndCallBack(const std::string &fileId, bool result, 
         result = false;
     }
     auto &instance = SourceFileParser::Instance();
-    if (instance.paserEndCallback != nullptr) {
-        instance.paserEndCallback(fileId, result, message);
+    if (instance.parseEndCallback != nullptr) {
+        instance.parseEndCallback(fileId, fileId, result, message);
     }
 }
 

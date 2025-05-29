@@ -48,7 +48,10 @@ public:
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) override;
 
     static void ParserEnd(std::string rankId, bool result);
-    static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
+    static void ParseCallBack(const std::string &rankId,
+                              const std::string &fileId,
+                              bool result,
+                              const std::string &msg);
     std::map<std::string, Protocol::MemorySuccess> GetRanks();
     static void Reset();
 private:

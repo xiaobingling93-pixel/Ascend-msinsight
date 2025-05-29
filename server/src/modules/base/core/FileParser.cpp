@@ -10,22 +10,23 @@ std::string FileParser::GetError()
     return error;
 }
 
-void FileParser::SetParseEndCallBack(std::function<void(const std::string, bool result, const std::string)> &callback)
+void FileParser::SetParseEndCallBack(
+    std::function<void(const std::string, const std::string, bool result, const std::string)> &callback)
 {
-    paserEndCallback = callback;
+    parseEndCallback = callback;
 }
 
 void FileParser::SetParseProgressCallBack(
     std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> &callback)
 {
-    paserProgressCallback = callback;
+    parseProgressCallback = callback;
 }
 
 void FileParser::Reset()
 {
     error.clear();
-    paserEndCallback = nullptr;
-    paserProgressCallback = nullptr;
+    parseEndCallback = nullptr;
+    parseProgressCallback = nullptr;
     fileProgressMap.clear();
 }
 } // end of namespace Module

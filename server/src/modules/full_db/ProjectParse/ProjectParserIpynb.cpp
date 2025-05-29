@@ -22,7 +22,7 @@ void ProjectParserIpynb::Parser(const std::vector<ProjectExplorerInfo> &projectI
     Dic::Module::Jupyter::JupyterServerManager::Instance().InitJupyterLogPath(option.logPath);
     std::string path = projectInfos[0].fileName;
     if (!FileUtil::CheckDirValid(path)) {
-        SendParseFailEvent("", "Invalid ipynb file.");
+        SendParseFailEvent("", "", "Invalid ipynb file.");
         IpynbImportResponse(request, projectInfos[0], false);
         return;
     }
@@ -33,7 +33,7 @@ void ProjectParserIpynb::Parser(const std::vector<ProjectExplorerInfo> &projectI
         IpynbImportResponse(request, projectInfos[0], true);
         JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, path);
     } else {
-        SendParseFailEvent("", "Jupyter env is not ready.");
+        SendParseFailEvent("", "", "Jupyter env is not ready.");
         IpynbImportResponse(request, projectInfos[0], false);
     }
 }
@@ -92,12 +92,22 @@ void ProjectParserIpynb::BuildProjectExploreInfo(ProjectExplorerInfo &projectInf
     ProjectParserBase::BuildProjectExploreInfo(projectInfo, parsedFiles);
     for (const auto &file: parsedFiles) {
         auto parsedFileInfo = std::make_shared<ParseFileInfo>();
-        parsedFileInfo->subId = GetSubId(file, DATA_FILE);
+        parsedFileInfo->subId = file;
         parsedFileInfo->parseFilePath = file;
         parsedFileInfo->type = ParseFileType::IPYNB;
         parsedFileInfo->curDirName = FileUtil::GetFileName(file);
+        parsedFileInfo->fileId = GetFileIdWithDb(file);
         projectInfo.AddSubParseFileInfo(parsedFileInfo);
     }
+}
+
+std::string ProjectParserIpynb::GetFileIdWithDb(const std::string &filePath)
+{
+    // 避免一个目录下有多个jupyter文件，这里通过文件名做区分
+    std::string fileNameWithoutEx = FileUtil::StemFile(filePath);
+    std::string dbFileName = StringUtil::StrJoin(fileNameWithoutEx, "_mindstudio_insight_data.db");
+    std::string dir = FileUtil::GetParentPath(filePath);
+    return FileUtil::SplicePath(dir, dbFileName);
 }
 
 ProjectAnalyzeRegister<ProjectParserIpynb> pRegIPYNB(ParserType::IPYNB);

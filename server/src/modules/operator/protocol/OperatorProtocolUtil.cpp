@@ -211,6 +211,7 @@ std::optional<document_t> ToEventJson<OperatorParseStatusEvent>(const OperatorPa
     JsonUtil::AddMember(body, "rankId", event.data.rankId, allocator);
     JsonUtil::AddMember(body, "status", event.data.status, allocator);
     JsonUtil::AddMember(body, "error", event.data.error, allocator);
+    JsonUtil::AddMember(body, "dbPath", event.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

@@ -236,9 +236,9 @@ TEST_F(TimelineProtocolUtilTest, TestParseMemoryCompletedEventToJson)
     auto jsonOp = Dic::Protocol::ToEventJson(response);
     EXPECT_EQ(jsonOp.has_value(), true);
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
-    const std::string jsonStr = "{\"type\":\"event\",\"id\":0,\"event\":\"parse/"
-                                "memoryCompleted\",\"moduleName\":\"unknown\",\"body\":{\"isCluster\":false,"
-                                "\"memoryResult\":[{\"rankId\":\"\",\"hasMemory\":false}]}}";
+    const std::string jsonStr = "{\"type\":\"event\",\"id\":0,\"event\":\"parse/memoryCompleted\","
+                                "\"moduleName\":\"unknown\",\"body\":{\"isCluster\":false,"
+                                "\"memoryResult\":[{\"rankId\":\"\",\"hasMemory\":false}],\"fileId\":\"\"}}";
     EXPECT_EQ(json, jsonStr);
 }
 

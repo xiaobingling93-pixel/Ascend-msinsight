@@ -381,9 +381,12 @@ void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)
 }
 
 // 输入rankId为空时，会清空历史结果
-void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
+void DbMemoryDataBase::ParseCallBack(const std::string &rankId,
+                                     const std::string &fileId,
+                                     bool result,
+                                     const std::string &msg)
 {
-    if (fileId.empty()) {
+    if (rankId.empty()) {
         ranks.clear();
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = Protocol::MODULE_MEMORY;
@@ -395,8 +398,9 @@ void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, con
         event->moduleName = Protocol::MODULE_TIMELINE;
         event->result = result;
         event->isCluster = true;
+        event->fileId = fileId;
         std::vector<Protocol::MemorySuccess> memoryResult;
-        memoryResult.push_back(ranks[fileId]);
+        memoryResult.push_back(ranks[rankId]);
         event->memoryResult = memoryResult;
         SendEvent(std::move(event));
     }

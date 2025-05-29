@@ -12,6 +12,7 @@ namespace Dic::Protocol {
 struct ParseStatisticCompletedEvent : public Event {
     ParseStatisticCompletedEvent() : Event(EVENT_PARSE_IE_COMPLETED) {}
     std::vector<std::string> rankIds;
+    std::string fileId;
 };
 }
 

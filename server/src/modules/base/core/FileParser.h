@@ -66,7 +66,9 @@ public:
     virtual ~FileParser() = default;
     virtual bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
         const std::string &selectedFolder) = 0;
-    virtual void SetParseEndCallBack(std::function<void(const std::string, bool result, const std::string)> &callback);
+
+    virtual void SetParseEndCallBack(
+            std::function<void(const std::string, const std::string, bool result, const std::string)> &callback);
     virtual void SetParseProgressCallBack(
         std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> &callback);
 
@@ -75,8 +77,8 @@ public:
 
 protected:
     std::string error;
-    std::function<void(const std::string, bool result, const std::string)> paserEndCallback;
-    std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> paserProgressCallback;
+    std::function<void(const std::string, const std::string, bool result, const std::string)> parseEndCallback;
+    std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> parseProgressCallback;
     std::map<std::string, std::unique_ptr<FileProgress>> fileProgressMap;
 };
 } // end of namespace Module

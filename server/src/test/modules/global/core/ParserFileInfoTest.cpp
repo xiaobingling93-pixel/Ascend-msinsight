@@ -33,10 +33,11 @@ TEST_F(ParserFileInfoTest, SerializeToJson)
 {
     auto info = BuildHierarchicalFileInfo({"project", "cluster", "rank1"});
     std::string expect = "[{\"clusterPath\":\"\",\"rankId\":\"\",\"host\":\"\",\"filePath\":\"\",\"type\":\"PROJECT\","
-                         "\"deviceId\":\"\",\"fileDir\":\"\",\"children\":[{\"clusterPath\":\"\",\"rankId\":\"\","
-                         "\"host\":\"\",\"filePath\":\"\",\"type\":\"CLUSTER\",\"deviceId\":\"\",\"fileDir\":\"\","
-                         "\"children\":[{\"clusterPath\":\"\",\"rankId\":\"\",\"host\":\"\",\"filePath\":\"\","
-                         "\"type\":\"RANK\",\"deviceId\":\"\",\"fileDir\":\"\",\"children\":[]}]}]}]";
+                         "\"deviceId\":\"\",\"fileDir\":\"\",\"fileId\":\"\",\"children\":[{\"clusterPath\":\"\","
+                         "\"rankId\":\"\",\"host\":\"\",\"filePath\":\"\",\"type\":\"CLUSTER\",\"deviceId\":\"\","
+                         "\"fileDir\":\"\",\"fileId\":\"\",\"children\":[{\"clusterPath\":\"\",\"rankId\":\"\","
+                         "\"host\":\"\",\"filePath\":\"\",\"type\":\"RANK\",\"deviceId\":\"\","
+                         "\"fileDir\":\"\",\"fileId\":\"\",\"children\":[]}]}]}]";
     document_t json(rapidjson::kArrayType);
     auto &allocator = json.GetAllocator();
     json.PushBack(info->SerializeToJson(allocator), allocator);
