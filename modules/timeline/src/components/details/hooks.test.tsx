@@ -7,6 +7,7 @@ import { useDetailUpdater, useMoreUpdater, useSelectedParamsDetailUpdater, useEx
 import { EMPTY_TABLE_STATE } from './types';
 import type { ColumnDef, DetailDescriptor, InsightUnit, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
 import { FilterType, TabState } from '../../entity/tabDependency';
+import { MetaDataBase } from '../../entity/data';
 
 describe('hooks test', () => {
     const unit: InsightUnit = {
@@ -23,7 +24,7 @@ describe('hooks test', () => {
         shouldParse: false,
         progress: 0,
         showProgress: true,
-        metadata: {},
+        metadata: {} as MetaDataBase,
     };
     const expectedTablestate = {
         dataSource: [],

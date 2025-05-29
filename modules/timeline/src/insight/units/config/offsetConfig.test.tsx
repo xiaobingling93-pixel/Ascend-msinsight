@@ -34,7 +34,7 @@ beforeEach((): void => {
     session.selectedUnits = [
         { alignStartTimestamp: 123456789 } as InsightUnit,
     ];
-    session.units = [{ metadata: mockMetaData } as InsightUnit];
+    session.units = [{ metadata: mockMetaData } as unknown as InsightUnit];
 });
 
 describe('Function handleTimestampOffsetReassignment Check', () => {

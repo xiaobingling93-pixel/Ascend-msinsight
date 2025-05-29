@@ -4,7 +4,7 @@
 import { store } from '../store';
 import type { CardMetaData, ThreadMetaData, ThreadTrace, ThreadTraceRequest } from '../entity/data';
 import { runInAction } from 'mobx';
-import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
+import { updateDataSourceAndParentMetaDataMap, recursiveExpandUnit } from '../insight/units/unitFunc';
 import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight';
 import type { InsightUnit } from '../entity/insight';
 import { CardUnit, ROOT_UNIT, ThreadUnit } from '../insight/units/AscendUnit';
@@ -54,7 +54,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                         }
                     }
                     session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: unit.alignStartTimestamp };
-                    handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
+                    updateDataSourceAndParentMetaDataMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
                     recursiveExpandUnit(unitData.unit.children ?? [], unit);
                 }
             });
@@ -599,12 +599,13 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
                 session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 session.selectedData = {
                     id: slice.id,
+                    name: slice.name,
                     startTime,
                     duration: slice.duration,
                     depth: slice.depth,
                     threadId: slice.threadId,
-                    processId: slice.processId,
-                    cardId: slice.rankId,
+                    processId: slice.processId as string,
+                    cardId: slice.rankId as string,
                     metaType: (unit.metadata as ThreadMetaData).metaType,
                 };
             },
@@ -678,7 +679,7 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
                 if (unit.alignStartTimestamp !== undefined) {
                     if (unit.children !== undefined && unit.children.length > 0) {
                         for (const item of unit.children) {
-                            const key = getTimeOffsetKey(session, item.metadata as ThreadTraceRequest);
+                            const key = getTimeOffsetKey(session, item.metadata as unknown as ThreadTraceRequest);
                             item.alignStartTimestamp = unit.alignStartTimestamp;
                             session.unitsConfig.offsetConfig.timestampOffset[key] = unit.alignStartTimestamp;
                         }

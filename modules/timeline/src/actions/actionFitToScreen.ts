@@ -4,7 +4,6 @@
 
 import { register } from './register';
 import { runInAction } from 'mobx';
-import type { ThreadTrace } from '../entity/data';
 
 export const actionFitToScreen = register({
     name: 'fitToScreen',
@@ -13,7 +12,7 @@ export const actionFitToScreen = register({
     perform: (session): void => {
         runInAction(() => {
             if (session.selectedData !== undefined) {
-                const selectedData = session.selectedData as ThreadTrace;
+                const selectedData = session.selectedData;
                 session.domainRange = {
                     domainStart: selectedData.startTime,
                     domainEnd: selectedData.startTime + selectedData.duration,

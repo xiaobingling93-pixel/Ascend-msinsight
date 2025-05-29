@@ -110,7 +110,7 @@ export interface StatusData {
     duration: number;
     name: string;
     type: string;
-    color: string;
+    color?: keyof Theme['colorPalette'] | Array<[ number, keyof Theme['colorPalette'] ]>;
     subName?: string;
 };
 

@@ -16,7 +16,7 @@ import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
 import { useTranslation } from 'react-i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import type { ProcessMetaData, ThreadMetaData } from '../entity/data';
+import type { ProcessMetaData, SliceData, ThreadMetaData } from '../entity/data';
 import { generateFlowParam } from '../insight/units/details';
 import { getTimeOffset } from '../insight/units/utils';
 
@@ -68,16 +68,6 @@ interface RankCount {
 interface RemoteCount {
     dataSource: DataSource;
     countList: RankCount[];
-};
-
-interface SliceData {
-    rankId: string;
-    pid: string;
-    tid: number;
-    id?: string;
-    startTime: number;
-    duration: number;
-    depth: number;
 };
 
 let remoteCntArray: RemoteCount[] = [];
@@ -187,6 +177,7 @@ const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): voi
                         processId: slice.pid,
                         cardId: slice.rankId,
                         id: slice.id,
+                        name: slice.name,
                         metaType: (unit.metadata as ThreadMetaData).metaType,
                     };
                     session.linkFlow = generateFlowParam(unit.metadata as ThreadMetaData, slice);

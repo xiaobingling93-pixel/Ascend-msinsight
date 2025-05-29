@@ -6,12 +6,12 @@ import { register } from './register';
 import { KEYS } from 'ascend-utils';
 import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
-import { CardMetaData, SliceMeta, ThreadTrace } from '../entity/data';
+import { CardMetaData, SliceData, SliceMeta, ThreadTrace } from '../entity/data';
 import { getTimeOffsetKey } from '../insight/units/utils';
 
 const setBenchmarkSlice = (session: Session): void => {
     runInAction(() => {
-        session.benchMarkData = session.selectedData;
+        session.benchMarkData = { ...session.selectedData };
     });
 };
 
@@ -30,7 +30,7 @@ const isSetBaseSliceMenuVisible = (session: Session): boolean => {
     if (session.benchMarkData === undefined) {
         return true;
     }
-    const selectedData = session.selectedData as ThreadTrace;
+    const selectedData = session.selectedData;
     const benchMarkData = session.benchMarkData as ThreadTrace;
     if (selectedData.id === benchMarkData.id && selectedData.threadId === benchMarkData.threadId) {
         return false;
@@ -80,7 +80,7 @@ const processOffsetEvent = (session: Session, isLeft: boolean): void => {
     if (session.benchMarkData === undefined || session.selectedData === undefined) {
         return;
     }
-    const selectSliceMeta = session.selectedData as SliceMeta;
+    const selectSliceMeta = session.selectedData as unknown as SliceMeta;
     const benchSliceMeta = session.benchMarkData as SliceMeta;
     const selectOffsetKey = getTimeOffsetKey(session, selectSliceMeta);
     const benchSliceOffsetKey = getTimeOffsetKey(session, benchSliceMeta);
@@ -102,12 +102,12 @@ const processOffsetEvent = (session: Session, isLeft: boolean): void => {
         if (session.selectedData === undefined) {
             return;
         }
-        const temp = session.selectedData as ThreadTrace;
+        const temp = session.selectedData as unknown as SliceData;
         temp.startTime -= offsetDiff;
-        const newAlignSliceData: Array<Record<string, unknown>> = [];
+        const newAlignSliceData: SliceData[] = [];
         newAlignSliceData.push(temp);
         session.alignSliceData.forEach((item) => {
-            const itemTemp = item as SliceMeta;
+            const itemTemp = item as unknown as SliceMeta;
             if (itemTemp.cardId === selectSliceMeta.cardId && itemTemp.processId === selectSliceMeta.processId) {
                 return;
             }

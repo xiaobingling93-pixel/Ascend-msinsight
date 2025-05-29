@@ -13,6 +13,7 @@ import type { Session } from '../../entity/session';
 import { Canvas, CanvasContainer, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
+import type { ThreadMetaData } from '../../entity/data';
 
 type StackStatusChartProps = ChartProps<'stackStatus'>;
 type OverflowType = 'hidden' | 'ellipsis';
@@ -233,7 +234,9 @@ interface MouseUpFuncParams {
 const mouseUpFunc = ({ e, datasState, rangeAndDomain, rowHeight, session, metadata, onClick }: MouseUpFuncParams): void => {
     const clickedData = findDataByXY({ x: e.offsetX, y: e.offsetY }, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0);
     runInAction(() => {
-        session.selectedData = clickedData;
+        session.selectedData = clickedData
+            ? { ...clickedData, threadId: (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' }
+            : undefined;
         onClick?.(clickedData, session, metadata);
         session.selectedRangeData = undefined;
     });

@@ -112,3 +112,48 @@ interface OperatorDispatchResultItem {
 export interface OperatorDispatchResult extends OperatorDispatchResultItem {
     count: number;
 };
+
+export interface QueryAllSameOperatorsDurationParams {
+    rankId: string;
+    tid: string[];
+    pid: string;
+    startTime: number;
+    endTime: number;
+    name: string;
+    wallDuration: number;
+    metaType: string;
+    count: number;
+    field: string;
+    order: string;
+    current: number;
+    pageSize: number;
+    total: number;
+    orderBy: string;
+}
+
+export interface OpData {
+    startTime: string;
+    timestamp: number;
+    duration: number;
+    id: string;
+    depth: number;
+    tid: string;
+    pid: string;
+    metaType?: string;
+}
+
+export interface QueryAllSameOperatorsDurationResult {
+    currentPage: number;
+    pageSize: number;
+    sameOperatorsDetails: OpData[];
+}
+
+export interface QueryCommunicationKernelDetailParams {
+    rankId?: string;
+    name: string;
+}
+
+export interface QueryCommunicationKernelDetailResult {
+    step: string;
+    group: string;
+}

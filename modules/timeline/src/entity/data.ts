@@ -655,66 +655,77 @@ export interface CpuSliceWakeType {
     schedulingLatency: number;
 };
 
-export interface MetaData {
+export interface MetaDataEnumType {
     card: CardMetaData;
     process: ProcessMetaData;
     thread: ThreadMetaData;
-};
+    counter: CounterMetaData;
+    label: LabelMetaData;
+}
 
-export interface InsightMetaData <T extends keyof MetaData> {
+export interface InsightMetaData <T extends keyof MetaDataEnumType> {
     type: T;
-    metadata: MetaData[T];
-    children?: Array<InsightMetaData<keyof MetaData>>;
+    metadata: MetaDataEnumType[T];
+    children?: Array<InsightMetaData<keyof MetaDataEnumType>>;
     dataSource: DataSource;
-};
+}
 
-export interface CounterMetaData {
+export type MetaDataBase = { dataSource: DataSource } & Record<string, unknown>;
+
+export interface MetaDataInnerBase extends MetaDataBase {
     cardId: string;
+    filePath: string; // 卡对应信息所在 DB 的文件路径
+    metaType: string; // db 格式数据下有效, text 格式数据下始终是 TEXT
+    processId?: string;
+    processName?: string;
+    threadName?: string;
+    threadId?: string;
+}
+
+export interface LabelMetaData extends MetaDataInnerBase {
+    label: string;
+}
+
+export interface CounterMetaData extends MetaDataInnerBase {
     processId: string;
     processName?: string;
     threadName: string;
     threadId?: string;
     dataType: string[];
-    metaType?: string;
-    dataSource: DataSource;
-};
+}
 
-export interface ThreadMetaData {
-    cardId?: string;
+export interface ThreadMetaData extends MetaDataInnerBase {
     processId?: string;
     processName?: string;
     threadId?: string;
     threadName: string;
     groupNameValue: string;
     maxDepth?: number;
-    metaType?: string;
-    dataSource: DataSource;
     rankList: string[];
-};
+}
 
-export interface ProcessMetaData {
-    cardId?: string;
+export interface ProcessMetaData extends MetaDataInnerBase {
     processId: string;
     processName: string;
     label?: string;
-    metaType?: string;
-    dataSource: DataSource;
-};
+}
 
-export interface CardMetaData {
+export interface CardMetaData extends MetaDataBase {
     cardId: string;
     cardName: string;
     cardPath: string;
-    dataSource: DataSource;
     label?: string;
-};
+}
 
-export interface HostMetaData {
+export interface HostMetaData extends MetaDataBase {
     host: string;
-    dataSource: DataSource;
-};
+}
 
-export interface ThreadTrace {
+export interface EmptyMetaData extends MetaDataBase {
+    count: number;
+}
+
+export interface ThreadTrace extends Omit<SliceData, 'rankId' | 'pid' | 'tid'> {
     [x: string]: unknown;
     name: string;
     duration: number;
@@ -726,7 +737,7 @@ export interface ThreadTrace {
     cname: string;
 };
 
-export interface SliceMeta {
+export interface SliceMeta extends MetaDataBase {
     [x: string]: unknown;
     cardId: string;
     processId: string;
@@ -735,7 +746,18 @@ export interface SliceMeta {
     duration: number;
     threadId: string;
     label: string;
-};
+}
+
+export interface SliceData {
+    rankId: string;
+    pid: string;
+    tid: number;
+    id?: string;
+    name: string;
+    startTime: number;
+    duration: number;
+    depth: number;
+}
 
 export interface ProcessData {
     duration: number;

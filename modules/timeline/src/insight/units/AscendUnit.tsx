@@ -21,7 +21,7 @@ import type {
     ProcessData,
     ProcessMetaData,
     ThreadMetaData,
-    ThreadTrace, HostMetaData, SliceMeta,
+    ThreadTrace, HostMetaData, SliceMeta, SliceData, LabelMetaData,
 } from '../../entity/data';
 import { createCounterParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
@@ -43,6 +43,8 @@ import { getDefaultColumData, getPageData, PageType } from '../../components/det
 import { calculateDomainRange } from '../../components/CategorySearch';
 import { safeJSONParse } from 'ascend-utils';
 import { SorterResult } from 'antd/lib/table/interface';
+import { queryAllSameOperatorsDuration } from '../../api/request';
+import type { OpData } from '../../api/interface';
 
 const MAX_UNIT_CANVAS_HEIGHT = 50_000; // 画布高度上限
 const MAX_UNIT_DEPTH = Math.floor(MAX_UNIT_CANVAS_HEIGHT / UnitHeight.STANDARD); // 泳道深度上限
@@ -122,7 +124,7 @@ const singleSliceDetail = singleData({
         ['Attr Info', (data: AscendSliceDetail): string => getDisplay(data.attrInfo), (data: AscendSliceDetail): boolean => isHidden(data.attrInfo)],
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
-        const selectedSliceData = session.selectedData as ThreadTrace;
+        const selectedSliceData = session.selectedData as unknown as ThreadTrace;
         const timestampOffset = getTimeOffset(session, metadata);
         // 因为泳道chart数据减去了偏移，所有点选的时候得把偏移加回来
         const params = {
@@ -175,7 +177,7 @@ interface CategoryFlows {
     flows: FlowEvent[];
 }
 
-const drawRectBorder = (selectedData: ThreadTrace,
+const drawRectBorder = (selectedData: SliceData,
     session: Session, xScale: (num: number) => number, yScale: (num: number) => number, ctx: CanvasRenderingContext2D): void => {
     const duration = selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration;
     const bottomRight = xScale(duration) - xScale(selectedData.startTime);
@@ -190,7 +192,7 @@ const drawRectBorder = (selectedData: ThreadTrace,
 };
 
 interface DrawBorderArgs {
-    item: Record<string, unknown>;
+    item?: SliceData;
     threadMetaData: ThreadMetaData;
     session: Session;
     xScale: (num: number) => number;
@@ -199,11 +201,11 @@ interface DrawBorderArgs {
 };
 
 const drawSingleAlignSlice = ({ item, threadMetaData, session, xScale, yScale, ctx }: DrawBorderArgs): void => {
-    const singleSliceData = item as ThreadTrace | undefined;
+    const singleSliceData = item;
     if (singleSliceData === undefined) {
         return;
     }
-    const singleMeta = item as SliceMeta;
+    const singleMeta = item as unknown as SliceMeta;
     const alignCheck = singleMeta.cardId === threadMetaData.cardId &&
         singleMeta.processId === threadMetaData.processId &&
         singleMeta.threadId === threadMetaData.threadId;
@@ -296,8 +298,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     maskedNotSelectData(session, handle, xScale, yScale);
                     // click
                     const ctx = handle.context;
-                    const selectedData = session.selectedData as ThreadTrace | undefined;
-                    const selectedUnitMetaData = session.selectedData as ThreadMetaData | undefined;
+                    const selectedData = session.selectedData as unknown as SliceData;
+                    const selectedUnitMetaData = session.selectedData;
                     const threadMetaData = metaData as ThreadMetaData;
                     if (ctx === null) {
                         return;
@@ -311,7 +313,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     if (check) {
                         drawRectBorder(selectedData, session, xScale, yScale, ctx);
                     }
-                    const benchMarkData = session.benchMarkData as ThreadTrace | undefined;
+                    const benchMarkData = session.benchMarkData as SliceData | undefined;
                     if (benchMarkData === undefined) {
                         return;
                     }
@@ -325,7 +327,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     if (session.alignSliceData === undefined) {
                         return;
                     }
-                    session.alignSliceData.forEach((item: Record<string, unknown>) => {
+                    session.alignSliceData.forEach((item: SliceData) => {
                         drawSingleAlignSlice({ item, threadMetaData, session, xScale, yScale, ctx });
                     });
                 },
@@ -362,7 +364,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 newLines[cat] = singleCatLinkLine;
             }
             runInAction(() => {
-                session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId, processId: (metadata as ThreadMetaData).processId };
+                session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' };
                 session.linkLines = newLines;
                 session.singleLinkLine = newLines;
                 session.renderTrigger = !session.renderTrigger;
@@ -498,7 +500,6 @@ const SummaryChart = chart({
                     duration: data.duration,
                     name: '',
                     type: '',
-                    color: '',
                 });
             });
             return res;
@@ -529,11 +530,11 @@ export const ProcessUnit = unit<ProcessMetaData>({
     },
 });
 
-export const LabelUnit = unit<ProcessMetaData>({
+export const LabelUnit = unit<LabelMetaData>({
     name: 'Label',
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: ProcessMetaData, thisUnit) => {
+    renderInfo: (session: Session, metadata: LabelMetaData, thisUnit) => {
         return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName}`;
     },
 });
@@ -691,17 +692,6 @@ export const SliceRight = observer(({ session, detail, metadata }: { session: Se
     return <SelectedDataBase renderer={renderFields} hasTitle />;
 });
 
-interface OpData {
-    startTime: string;
-    timestamp: number;
-    duration: number;
-    id: string;
-    depth: number;
-    tid: string;
-    pid: string;
-    metaType?: string;
-}
-
 const useColumns = (): any => {
     const { t } = useTranslation('timeline', { keyPrefix: 'sliceList' });
     return [
@@ -747,7 +737,7 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
             ...page,
             orderBy: sorter.field === 'startTime' ? 'timestamp' : sorter.field,
         };
-        const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
+        const res = await queryAllSameOperatorsDuration(params);
         const { currentPage, pageSize, sameOperatorsDetails } = res;
         const data = sameOperatorsDetails as OpData[];
         const timestampoffset = getTimeOffset(session, metadata as ThreadMetaData);
@@ -795,7 +785,7 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
                         depth: record.depth,
                         threadId: record.tid,
                         processId: record.pid,
-                        cardId: (metadata as MetaData).cardId,
+                        cardId: (metadata as MetaData).cardId as string,
                         startRecordTime: session.startRecordTime,
                         showSelectedData: true,
                     };

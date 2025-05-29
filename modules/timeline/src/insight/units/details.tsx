@@ -9,7 +9,7 @@ import styled from '@emotion/styled';
 import React, { ReactNode } from 'react';
 import { action, runInAction } from 'mobx';
 import type { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
-import type { Session } from '../../entity/session';
+import type { SelectedDataType, Session } from '../../entity/session';
 import { getSliceTimeDisplay, ThreadUnit } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
 import { colorPalette, getTimeOffset } from './utils';
@@ -150,7 +150,7 @@ const doSummary = (datas: ReadonlyArray<AutoKey<object>>): ReactNode[] => {
     return ['Totals', ...tmp, totalOccurrences];
 };
 
-const generateFlowData = function (data: any, timeOffset: number): any {
+const generateFlowData = function (data: any, timeOffset: number): SelectedDataType {
     return {
         startTime: data.timestamp - timeOffset,
         duration: data.duration,
@@ -158,6 +158,7 @@ const generateFlowData = function (data: any, timeOffset: number): any {
         type: data.name,
         color: colorPalette[hashToNumber(data.name, colorPalette.length)],
         depth: data.depth,
+        processId: data.pid,
         threadId: data.tid,
         id: data.id,
         metaType: data.metaType,

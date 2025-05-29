@@ -5,12 +5,17 @@
 import {
     GetAICoreParams,
     GetAICoreParamsResult,
-    GetOverallMetricsMoreListParams, GetOverallMetricsMoreListResult,
+    GetOverallMetricsMoreListParams,
+    GetOverallMetricsMoreListResult,
     GetOverallMetricsParams,
-    GetOverallMetricsResult, GetOverallMetricsResultItem,
+    GetOverallMetricsResult,
+    GetOverallMetricsResultItem,
     ParseCardsParam,
     SetCardAliasParams,
-    QueryOperatorDispatchParams, OperatorDispatchResult,
+    QueryOperatorDispatchParams,
+    OperatorDispatchResult,
+    QueryAllSameOperatorsDurationResult,
+    QueryAllSameOperatorsDurationParams, QueryCommunicationKernelDetailParams, QueryCommunicationKernelDetailResult,
 } from './interface';
 
 // 根据cardId集合解析timeline
@@ -58,3 +63,11 @@ export const queryExpertAnalysis = async (params: GetAICoreParams): Promise<GetA
 export const queryOperatorDispatch = async (params: QueryOperatorDispatchParams): Promise<OperatorDispatchResult> => {
     return window.requestData('advisor/operatorDispatch', params, 'advisor');
 };
+
+export async function queryAllSameOperatorsDuration(params: QueryAllSameOperatorsDurationParams): Promise<QueryAllSameOperatorsDurationResult> {
+    return window.requestData('query/all/same/operators/duration', params, 'timeline');
+}
+
+export async function queryCommunicationKernelDetail(params: QueryCommunicationKernelDetailParams): Promise<QueryCommunicationKernelDetailResult> {
+    return window.requestData('unit/kernelDetail', params, 'timeline');
+}

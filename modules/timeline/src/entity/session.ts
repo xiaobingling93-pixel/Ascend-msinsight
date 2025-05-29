@@ -3,20 +3,21 @@
  */
 import { makeAutoObservable, runInAction, when } from 'mobx';
 import type { FC } from 'react';
+import type { Theme } from '@emotion/react';
+import { debounce, omit } from 'lodash';
+import i18n from 'ascend-i18n';
 import { type Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { type TimeStamp } from './common';
 import { Domain, DomainRange } from './domain';
 import type { InsightUnit, UnitMatcher, LinkLines, LinkDataDesc } from './insight';
 import { type TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
-import { debounce, omit } from 'lodash';
 import { platform } from '../platforms';
-import i18n from 'ascend-i18n';
 import { type Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
 import { InsightUnitSet } from '../utils/PageSetting';
 import { getTimeOffsetKey } from '../insight/units/utils';
-import type { CardMetaData, ThreadTraceRequest } from './data';
+import { CardMetaData, SliceData, SliceMeta, ThreadMetaData, ThreadTrace, ThreadTraceRequest } from './data';
 
 export const MAX_ZOOM_COUNT = 10000;
 
@@ -67,6 +68,20 @@ interface UnitsConfig {
     filterConfig: {
         pythonFunction: Record<string, boolean>;
     };
+}
+
+export interface SelectedDataType extends Pick<ThreadTrace, 'duration' | 'startTime' | 'name'> {
+    id?: SliceData['id'] | number;
+    type?: string;
+    depth?: ThreadTrace['depth'];
+    threadId: SliceMeta['threadId'] | SliceData['tid'];
+    processId: SliceMeta['processId'];
+    cardId?: SliceMeta['cardId'];
+    metaType?: ThreadMetaData['metaType'];
+    color?: keyof Theme['colorPalette'] | Array<[ number, keyof Theme['colorPalette'] ]>;
+    startRecordTime?: number;
+    showSelectedData?: boolean;
+    showDetail?: boolean;
 }
 
 export class Session {
@@ -216,9 +231,9 @@ export class Session {
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];
     private _availableUnits: InsightUnit[] = [];
-    private _selectedData?: Record<string, unknown>;
+    private _selectedData?: SelectedDataType;
     private _benchMarkData?: Record<string, unknown>;
-    private _alignSliceData: Array<Record<string, unknown>> = [];
+    private _alignSliceData: SliceData[] = [];
     private _selectedRangeData?: Array<Record<string, unknown>>;
     private _interval: number;
     private _selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
@@ -309,7 +324,7 @@ export class Session {
         return this._availableUnits;
     }
 
-    get selectedData(): Record<string, unknown> | undefined {
+    get selectedData(): SelectedDataType | undefined {
         return this._selectedData;
     }
 
@@ -317,7 +332,7 @@ export class Session {
         return this._benchMarkData;
     }
 
-    get alignSliceData(): Array<Record<string, unknown>> {
+    get alignSliceData(): SliceData[] {
         return this._alignSliceData;
     }
 
@@ -377,7 +392,7 @@ export class Session {
         this._availableUnits = availableUnits;
     }
 
-    set selectedData(data: Record<string, unknown> | undefined) {
+    set selectedData(data: SelectedDataType | undefined) {
         this._selectedData = data;
         this.linkFlow = undefined;
         this.linkData = undefined;
@@ -388,7 +403,7 @@ export class Session {
         this._benchMarkData = data;
     }
 
-    set alignSliceData(data: Array<Record<string, unknown>>) {
+    set alignSliceData(data: SliceData[]) {
         this._alignSliceData = data;
     }
 
@@ -423,13 +438,13 @@ export class Session {
         const prevObj = { ...this.unitsConfig.offsetConfig.timestampOffset };
         if (unit.children !== undefined && unit.children.length > 0) {
             for (const item of unit.children) {
-                const key = getTimeOffsetKey(this, item.metadata as ThreadTraceRequest);
+                const key = getTimeOffsetKey(this, item.metadata as unknown as ThreadTraceRequest);
                 prevObj[key] = value;
             }
         }
         this.unitsConfig.offsetConfig.timestampOffset = {
             ...prevObj,
-            [(unit.metadata as CardMetaData).cardId]: (value),
+            [(unit.metadata as unknown as CardMetaData).cardId]: (value),
         };
         if (shouldUpdate) { this.updateEndTimeAll(); }
     }

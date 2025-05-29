@@ -6,6 +6,7 @@ import { register } from './register';
 import type { Session } from '../entity/session';
 import connector from '../connection';
 import { calculateSelectedUnitListStatus } from './actionPinUnits';
+import { queryCommunicationKernelDetail } from '../api/request';
 
 async function findInCommunication(session: Session): Promise<void> {
     if (!session.selectedData) {
@@ -16,7 +17,7 @@ async function findInCommunication(session: Session): Promise<void> {
         rankId,
         name,
     };
-    const res = await window.requestData('unit/kernelDetail', params, 'timeline');
+    const res = await queryCommunicationKernelDetail(params);
     connector.send({
         event: 'switchModule',
         body: {

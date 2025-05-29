@@ -27,7 +27,7 @@ import { useJumpTarget } from './hooks';
 import type { OrderOptions } from './hooks';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
-import { ThreadMetaData } from '../../../entity/data';
+import { MetaDataBase, ThreadMetaData } from '../../../entity/data';
 import { PAGE_PADDING } from '../../charts/ChartInteractor/draw';
 import { MouseButton } from '../../charts/ChartInteractor/actions';
 
@@ -311,14 +311,14 @@ const updateSession = (session: Session, totalHeight: number, cardIdSet: Set<str
     }
 };
 
-interface CardId {
+interface MetaDataWithCardId extends MetaDataBase {
     cardId: string;
 }
 
 const computeOnScreenCardIdSet = (flattenUnits: InsightUnit[], first: number, last: number): Set<string> => {
     return new Set(
         flattenUnits
-            .map(unit => (unit?.metadata as CardId)?.cardId)
+            .map(unit => (unit?.metadata as MetaDataWithCardId)?.cardId)
             .filter((id, i) => first <= i && i < last && id !== undefined && !id.endsWith('Host')),
     );
 };

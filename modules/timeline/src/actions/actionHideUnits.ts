@@ -5,15 +5,10 @@
 import { register } from './register';
 import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
-import type { InsightUnit } from '../entity/insight';
-import type { CardMetaData } from '../entity/data';
+import { InsightUnit } from '../entity/insight';
+import { EmptyMetaData } from '../entity/data';
 import { EmptyUnit } from '../components/ContextMenu';
 import { isPinned, switchPinned } from '../components/ChartContainer/unitPin';
-
-interface EmptyMetaData {
-    count: number;
-    dataSource: DataSource;
-}
 
 const MAX_RECURSIVE_COUNT = 10;
 
@@ -93,7 +88,7 @@ const hideUnits = (session: Session, selectUnits: InsightUnit[]): void => {
             } else {
                 session.units.push(new EmptyUnit({
                     count: 1,
-                    dataSource: (insightUnit.metadata as CardMetaData).dataSource,
+                    dataSource: insightUnit.metadata.dataSource,
                 } as EmptyMetaData));
             }
         } else {

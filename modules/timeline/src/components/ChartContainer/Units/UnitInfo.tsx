@@ -36,6 +36,7 @@ import { useDeselectUnits, useSelectUnits } from './hooks/useSelectUnit';
 import { parseCards } from '../../../api/request';
 import type { ParseCardsParam } from '../../../api/interface';
 import { useComplexMouseEvent } from './mouseEvent';
+import { CardMetaData } from '../../../entity/data';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -298,7 +299,7 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
         />;
     }
     const tooltip = (children: JSX.Element): JSX.Element => unit.name === 'Card'
-        ? <Tooltip placement="leftBottom" title={(unit.metadata as { cardPath: string }).cardPath}>{children}</Tooltip>
+        ? <Tooltip placement="leftBottom" title={(unit.metadata as CardMetaData).cardPath}>{children}</Tooltip>
         : children;
     React.useEffect(() => {
         if (session.isParserLoading) {

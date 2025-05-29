@@ -125,7 +125,9 @@ export const StatusChart = observer(({
     const handleMouseUp = (e: MouseEvent): void => {
         const clickedData = findDataByX(e.offsetX, datasState, rangeAndDomain);
         runInAction(() => {
-            session.selectedData = clickedData;
+            session.selectedData = clickedData
+                ? { ...clickedData, threadId: (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' }
+                : undefined;
             onClick?.(clickedData, session, metadata);
         });
     };

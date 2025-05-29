@@ -8,7 +8,7 @@ import type { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartCon
 import type { ElementType, TreeNode } from './common';
 import type { Session } from './session';
 import type { TabState } from './tabDependency';
-import type { CardMetaData } from './data';
+import { MetaDataBase } from './data';
 
 // #region chart desc
 /**
@@ -74,7 +74,6 @@ export interface SorterDef<DataType extends Record<string, unknown>> {
     sorter?: (a: DataType, b: DataType) => number | boolean;
 };
 
-export type MetaDataBase = Record<string, unknown> & { dataSource: DataSource };
 export { type MetaDataBase as MetaData };
 
 interface TabularClickCacallbackArgs<CommonState extends CommonStateProto, DataType> {
@@ -183,7 +182,7 @@ export interface MenuType {
 }; // #endregion
 
 export interface InsightUnitParams<
-    MetaData,
+    MetaData extends MetaDataBase,
     DetailType extends Record<string, unknown>,
     ExtraDataType extends Record<string, unknown>,
     MoreDataType extends Record<string, unknown>,
@@ -225,7 +224,7 @@ export enum UnitHeight {
 /**
  * Defines some runtime states that are kept in insight unit instances.
  */
-export interface InsightUnit extends InsightUnitParams<unknown, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>> {
+export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>> {
     expandable: boolean;
     isExpanded: boolean;
     height: () => number;
@@ -292,7 +291,7 @@ const wrapSpread = (original?: SpreadDesc): SpreadDesc | undefined => {
 };
 
 // eslint-disable-next-line max-lines-per-function
-export const unitBase = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
+export const unitBase = <T extends MetaDataBase = MetaDataBase>(params:
 Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'metadata'>): typeof basicUnitClass => {
     const basicUnitClass = class implements InsightUnit {
         parent?: InsightUnit;
@@ -362,8 +361,8 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
 
 export { unitBase as unit };
 
-export const transparentUnit = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
-Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
+export const transparentUnit = <T extends MetaDataBase = MetaDataBase>(params:
+Pick<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
     const transparentUnitClass = class implements InsightUnit {
         isUnitVisible = true;
         isParseLoading = false; // 是否正在解析
@@ -507,7 +506,7 @@ export function setUnitPhase(unit: InsightUnit, phase: UnitPhase): void {
  */
 export function setUnitPhaseByCardId(cardId: string, session: Session, phase: UnitPhase): void {
     session.units.forEach(unit => {
-        if ((unit.metadata as CardMetaData).cardId !== cardId) {
+        if (unit.metadata.cardId !== cardId) {
             return unit;
         }
         setUnitPhase(unit, phase);
@@ -522,7 +521,7 @@ export function setUnitPhaseByCardId(cardId: string, session: Session, phase: Un
  */
 export function setUnitProgressByFileId(unitData: any, session: Session): void {
     session.units.forEach((sessionUnit) => {
-        if ((sessionUnit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
+        if (sessionUnit.metadata.cardId === unitData.unit.metadata.cardId) {
             sessionUnit.progress = 100;
             sessionUnit.showProgress = false;
         }

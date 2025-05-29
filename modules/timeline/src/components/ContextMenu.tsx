@@ -43,6 +43,7 @@ import {
 } from '../actions';
 import { Action } from '../actions/types';
 import { getShortcutFromShortcutName, ShortcutName } from '../actions/shortcuts';
+import { EmptyMetaData } from '../entity/data';
 
 interface Position {
     left: string;
@@ -119,11 +120,6 @@ export const EmptyUnit = unit<EmptyMetaData>({
             {metadata.count}{' units hidden'}
         </span>,
 });
-
-interface EmptyMetaData {
-    count: number;
-    dataSource: DataSource;
-}
 
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu: HTMLDivElement;
