@@ -95,6 +95,18 @@ void PythonGcRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
 
 bool PythonGcRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
 {
+    std::vector<PythonGCPO> pythonGCPOs;
+    table->Select(PythonGCColumn::ID, PythonGCColumn::TIMESTAMP)
+            .Select(PythonGCColumn::ENDTIME)
+            .ExcuteQuery(sliceQuery.rankId, pythonGCPOs);
+    if (std::empty(pythonGCPOs)) {
+        ServerLog::Warn("Failed to query pythonGC slice detail by id. id is: %", sliceQuery.sliceId);
+        return false;
+    }
+    competeSliceDomain.id = pythonGCPOs[0].id;
+    competeSliceDomain.timestamp = pythonGCPOs[0].timestamp;
+    competeSliceDomain.endTime = pythonGCPOs[0].endTime;
+    competeSliceDomain.name = "PythonGC";
     return true;
 }
 }

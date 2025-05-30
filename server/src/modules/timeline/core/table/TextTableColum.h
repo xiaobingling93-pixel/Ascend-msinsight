@@ -212,6 +212,14 @@ constexpr std::string_view CONNECTION_ID = "connectionId";
 constexpr std::string_view DEPTH = "depth";
 }
 
+namespace PythonGCColumn {
+constexpr std::string_view ID = "rowid";
+//    host侧tx打点数据开始时间
+constexpr std::string_view TIMESTAMP = "startNs";
+//    host侧tx打点数据结束时间
+constexpr std::string_view ENDTIME = "endNs";
+}
+
 namespace EnumHcclDataTypeClumn {
 constexpr std::string_view ID = "id";
 // hccl data type类型

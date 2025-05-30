@@ -18,6 +18,7 @@
 #include "ComputeTaskInfoTable.h"
 #include "PytorchApiTable.h"
 #include "PytorchCallchainsTable.h"
+#include "PythonGCTable.h"
 using namespace Dic::Module::Timeline;
 namespace Dic::TimeLine::Table::Default::Mock {
 class TableDefaultMock {
@@ -119,11 +120,11 @@ protected:
     }
 };
 
-class PythonGCTableMock : public PytorchApiTable, public TableDefaultMock {
+class PythonGCTableMock : public PythonGCTable, public TableDefaultMock {
 protected:
-    void ExcuteQuery(const std::string &fileId, std::vector<PytorchApiPO> &result) override
+    void ExcuteQuery(const std::string &fileId, std::vector<PythonGCPO> &result) override
     {
-        PytorchApiTable::ExcuteQuery(db, result);
+        PythonGCTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
 };
@@ -190,6 +191,10 @@ struct MstxDependency {
     std::unique_ptr<MstxEventsTableMock> mstxEventsTableMock = std::make_unique<MstxEventsTableMock>();
     std::unique_ptr<EnumMstxEventTypeTableMock> enumMstxEventTypeTableMock =
         std::make_unique<EnumMstxEventTypeTableMock>();
+};
+
+struct PythonGcDependency {
+        std::unique_ptr<PythonGCTableMock> tableMock = std::make_unique<PythonGCTableMock>();
 };
 
 struct HcclDependency {
