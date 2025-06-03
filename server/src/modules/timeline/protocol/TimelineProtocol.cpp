@@ -139,6 +139,11 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesRequest(const json_
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    if (json["params"].HasMember("threadIdList") && json["params"]["threadIdList"].IsArray()) {
+        for (const auto &threadId : json["params"]["threadIdList"].GetArray()) {
+            reqPtr->params.threadIdList.emplace_back(JsonUtil::GetStringWithoutKey(threadId));
+        }
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.cardId, json["params"], "cardId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.processId, json["params"], "processId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.threadId, json["params"], "threadId");
@@ -410,6 +415,11 @@ std::unique_ptr<Request> TimelineProtocol::ToEventsViewRequest(const Dic::json_t
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
+    }
+    if (json["params"].HasMember("threadIdList") && json["params"]["threadIdList"].IsArray()) {
+        for (const auto &threadId : json["params"]["threadIdList"].GetArray()) {
+            reqPtr->params.threadIdList.emplace_back(JsonUtil::GetStringWithoutKey(threadId));
+        }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");

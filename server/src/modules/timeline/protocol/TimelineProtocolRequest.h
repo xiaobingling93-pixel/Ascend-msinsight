@@ -83,6 +83,7 @@ struct UnitThreadTracesParams {
     std::string cardId;
     std::string processId;
     std::string threadId;
+    std::vector<std::string> threadIdList;
     std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
@@ -407,6 +408,7 @@ struct EventsViewParams {
     std::string tid;
     std::string threadName;
     std::string metaType;
+    std::vector<std::string> threadIdList;
     bool CheckParams(std::string &warnMsg) const
     {
         return CheckUnsignPageValid(pageSize, currentPage, warnMsg);

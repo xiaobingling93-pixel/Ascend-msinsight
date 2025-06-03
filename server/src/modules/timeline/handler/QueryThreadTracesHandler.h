@@ -18,6 +18,9 @@ public:
     };
     ~QueryThreadTracesHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+
+    void
+    QueryTracesByTrackIds(UnitThreadTracesRequest &request, UnitThreadTracesResponse &response, uint64_t minTimestamp);
 };
 } // end of namespace Timeline
 } // end of namespace Module
