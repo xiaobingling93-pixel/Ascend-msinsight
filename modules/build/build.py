@@ -34,8 +34,11 @@ def clean():
     modules = list(MODULES_MAP.keys())
     for module in modules:
         plugin_dir = os.path.join(PLUGIN_DIR, MODULES_MAP.get(module))
-        if os.path.exists(plugin_dir):
-            shutil.rmtree(plugin_dir)
+        try:
+            if os.path.exists(plugin_dir):
+                shutil.rmtree(plugin_dir)
+        except OSError as e:
+            logging.info("Remove %s failed： %s", plugin_dir, e.strerror)
 
 
 def execute_cmd(module, module_dir, cmd):

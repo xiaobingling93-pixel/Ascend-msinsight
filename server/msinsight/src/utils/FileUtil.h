@@ -231,8 +231,7 @@ public:
 
     static inline bool RemoveFile(const std::string &path)
     {
-        std::string tmpPath(path);
-        return std::remove(tmpPath.c_str()) == 0;
+        return std::remove(path.c_str()) == 0;
     }
 
     static inline bool RemoveFileExDb(const std::string &path)
@@ -330,8 +329,11 @@ public:
         for (const auto &file: files) {
             std::regex rankIdFileRegex(PROFILER_INFO_FILE_REG);
             if (std::regex_match(file, rankIdFileRegex)) {
-                int index = file.find_last_of('_');
-                int index2 = file.find_last_of('.');
+                auto index = file.find_last_of('_');
+                auto index2 = file.find_last_of('.');
+                if (index == std::string::npos || index2 == std::string::npos) {
+                    return file;
+                }
                 return file.substr(index + 1, index2 - index - 1);
             }
         }
@@ -513,6 +515,7 @@ public:
     // 切分路径
     static std::vector<std::string> SplitFilePath(std::string &path);
     static bool IsSoftLink(const std::string &path);
+    static bool IsFilePathExist(const std::string &filePath);
     static bool IsAbsolutePath(const std::string &path);
     static bool IsRegularFile(const std::string &filePath);
     static bool CheckDirValid(const std::string &path);

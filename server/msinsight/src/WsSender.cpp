@@ -6,11 +6,12 @@
 namespace Dic {
 void SendEvent(std::unique_ptr<Dic::Protocol::Event> eventPtr)
 {
-    if (!Dic::Server::WsSessionManager::Instance().CheckSession()) {
+    auto& wsSessionManager = Dic::Server::WsSessionManager::Instance();
+    if (!wsSessionManager.CheckSession()) {
         Server::ServerLog::Warn("SendEvent failed. Can't get session");
         return;
     }
-    Dic::Server::WsSession *session = Dic::Server::WsSessionManager::Instance().GetSession();
+    Dic::Server::WsSession *session = wsSessionManager.GetSession();
     session->OnEvent(std::move(eventPtr));
 }
 void SendResponse(std::unique_ptr<Protocol::Response> responsePtr, bool result,

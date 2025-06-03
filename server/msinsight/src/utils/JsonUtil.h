@@ -10,6 +10,7 @@
 #include <optional>
 #include <vector>
 #include <algorithm>
+#include <cfloat>
 #include "rapidjson.h"
 #include "document.h"
 #include "writer.h"
@@ -139,13 +140,20 @@ public:
         if (!json.HasMember(key.data())) {
             return 0;
         }
-        if (json[key.data()].IsNumber()) {
-            return json[key.data()].GetDouble();
+        const auto &value = json[key.data()];
+        if (value.IsNumber()) {
+            return value.GetDouble();
         }
-        if (json[key.data()].IsString()) {
+        if (value.IsString()) {
             try {
-                return std::stod(json[key.data()].GetString());
-            } catch (std::exception &e) {
+                return std::stod(value.GetString());
+            } catch (std::invalid_argument &e) {
+                // 处理无效参数异常
+                Server::ServerLog::Error("Invalid argument: ", e.what());
+                return 0;
+            } catch (std::out_of_range &e) {
+                // 处理超出范围异常
+                Server::ServerLog::Error("Out of range: ", e.what());
                 return 0;
             }
         }
@@ -157,13 +165,20 @@ public:
         if (!json.HasMember(key.data())) {
             return 0;
         }
-        if (json[key.data()].IsNumber()) {
-            return json[key.data()].GetDouble();
+        const auto &value = json[key.data()];
+        if (value.IsNumber()) {
+            return value.GetDouble();
         }
-        if (json[key.data()].IsString()) {
+        if (value.IsString()) {
             try {
-                return std::stold(json[key.data()].GetString());
-            } catch (std::exception &e) {
+                return std::stold(value.GetString());
+            } catch (std::invalid_argument &e) {
+                // 处理无效参数异常
+                Server::ServerLog::Error("Invalid argument: ", e.what());
+                return 0;
+            } catch (std::out_of_range &e) {
+                // 处理超出范围异常
+                Server::ServerLog::Error("Out of range: ", e.what());
                 return 0;
             }
         }
@@ -175,16 +190,28 @@ public:
         if (!json.HasMember(key.data())) {
             return 0;
         }
-        if (json[key.data()].IsInt()) {
-            return json[key.data()].GetInt64();
+        const auto &value = json[key.data()];
+        if (value.IsInt()) {
+            return value.GetInt64();
         }
-        if (json[key.data()].IsDouble()) {
-            return static_cast<int64_t>(json[key.data()].GetDouble());
+        if (value.IsDouble()) {
+            double dValue = value.GetDouble();
+            if (dValue >= INT64_MIN && dValue <= INT64_MAX) {
+                return static_cast<int64_t>(dValue);
+            }
+            Server::ServerLog::Error("Value out of range: ", dValue);
+            return 0;
         }
-        if (json[key.data()].IsString()) {
+        if (value.IsString()) {
             try {
-                return std::stoll(json[key.data()].GetString());
-            } catch (std::exception &e) {
+                return std::stoll(value.GetString());
+            } catch (std::invalid_argument &e) {
+                // 处理无效参数异常
+                Server::ServerLog::Error("Invalid argument: ", e.what());
+                return 0;
+            } catch (std::out_of_range &e) {
+                // 处理超出范围异常
+                Server::ServerLog::Error("Out of range: ", e.what());
                 return 0;
             }
         }
@@ -193,8 +220,12 @@ public:
 
     static inline std::string GetString(const json_t &json, std::string_view key)
     {
-        if (json.HasMember(key.data()) && json[key.data()].IsString()) {
-            return json[key.data()].GetString();
+        if (!json.HasMember(key.data())) {
+            return "";
+        }
+        const auto &value = json[key.data()];
+        if (value.IsString()) {
+            return value.GetString();
         }
         return "";
     }
@@ -212,12 +243,19 @@ public:
         if (!json.HasMember(key.data())) {
             return 0;
         }
-        if (json[key.data()].IsFloat()) {
-            return json[key.data()].GetFloat();
+        auto const &value = json[key.data()];
+        if (value.IsFloat()) {
+            return value.GetFloat();
         }
-        if (json[key.data()].IsString()) {
+        if (value.IsString()) {
             try {
-                return std::stof(json[key.data()].GetString());
+                std::string str = value.GetString();
+                double data = std::stod(str);
+                if (data > FLT_MAX || data < -FLT_MAX) {
+                    Server::ServerLog::Error("Value out of range.");
+                    return 0;
+                }
+                return static_cast<float>(data);
             } catch (std::exception &e) {
                 return 0;
             }
@@ -230,10 +268,11 @@ public:
         if (!json.HasMember(key.data())) {
             return std::nullopt;
         }
-        if (json[key.data()].IsString()) {
-            return json[key.data()].GetString();
+        const auto &value = json[key.data()];
+        if (value.IsString()) {
+            return value.GetString();
         } else {
-            return JsonDump(json[key.data()]);
+            return JsonDump(value);
         }
     }
 
@@ -242,17 +281,21 @@ public:
         if (!json.HasMember(key.data())) {
             return "";
         }
-        if (json[key.data()].IsString()) {
-            return json[key.data()].GetString();
+        const auto &value = json[key.data()];
+        if (value.IsString()) {
+            return value.GetString();
         } else {
-            return JsonDump(json[key.data()]);
+            return JsonDump(value);
         }
     }
 
     static std::vector<std::string> JsonToVector(const std::string& jsonStr)
     {
         rapidjson::Document document;
-        document.Parse(jsonStr.c_str());
+        if (document.Parse(jsonStr.c_str()).HasParseError()) {
+            Server::ServerLog::Error("Fail to parse json");
+            return {};
+        }
         return JsonToVector(document);
     }
 

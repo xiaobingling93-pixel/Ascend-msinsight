@@ -397,8 +397,7 @@ private:
 
     template <typename T> inline void LogT(const T &t)
     {
-        std::string str = GetString(t);
-        LogStr(str);
+        LogStr(GetString(t));
     }
 
     int maxSize = 10 * 1024 * 1024;

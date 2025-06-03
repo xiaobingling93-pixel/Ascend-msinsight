@@ -36,7 +36,7 @@ public:
                 return std::nullopt;
             }
             return result;
-        } catch (std::exception &e) {
+        } catch (const std::regex_error &e) {
             return std::nullopt;
         }
     }

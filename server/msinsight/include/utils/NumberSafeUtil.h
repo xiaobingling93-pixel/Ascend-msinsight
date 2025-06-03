@@ -50,42 +50,67 @@ bool IsSignBitZero(T &&a)
 }
 
 /**
+ * @brief 检查整型转浮点类型是否成功
+ */
+template<typename S, typename D>
+bool IsIntegralFloatConversionSafe(const S &&src)
+{
+    using SS = BaseType_t<S>;
+    using DD = BaseType_t<D>;
+    if constexpr (std::is_integral_v<SS> && std::is_floating_point_v<DD>) {
+        return static_cast<D>(src) >= -std::numeric_limits<D>::max()
+               && static_cast<D>(src) <= std::numeric_limits<D>::max();
+    }
+    return false;
+}
+
+/**
+ * @brief 检查浮点类型之间的转换
+ */
+template<typename S, typename D>
+bool IsFloatFloatConversionSafe(const S &&src)
+{
+    using SS = BaseType_t<S>;
+    using DD = BaseType_t<D>;
+    if constexpr (std::is_floating_point_v<SS> && std::is_floating_point_v<DD>) {
+        if (std::isnan(src) || std::isinf(src)) return false;
+        if (std::numeric_limits<SS>::digits < std::numeric_limits<DD>::digits
+            && std::numeric_limits<SS>::max_exponent < std::numeric_limits<DD>::max_exponent)
+            return true;
+        if (sizeof(SS) > sizeof(DD))
+            return src <= (std::numeric_limits<DD>::max()) || src >= std::numeric_limits<DD>::min();
+    }
+    return false;
+}
+
+/**
  * @brief 检查S类型的参数能否被安全转换为T类型, 安全指不发生溢出，回绕，其它未定义行为，精度损失不在此列
  */
 template<typename F, typename T>
 bool IsSafeCast(const F &s)
 {
     using S = BaseType_t<F>;
-    auto src = static_cast<S>(s);
-    (void) src; // 去除编译告警
     using D = BaseType_t<T>;
-    if constexpr (std::is_same_v<S, D>) {  // 相同类型
-        return true;
-    }
+    auto src = static_cast<S>(s);
+    (void) src;
+    if constexpr (std::is_same_v<S, D>) return true;
     if constexpr (std::is_unsigned_v<S> && std::is_unsigned_v<D>) {   // 两个类型都为非负整型
         if (sizeof(S) < sizeof(D)) return true;     // 源数据类型大小小于模板大小,必定安全转换
         return !bitUpper<S, D>(std::forward<S>(src));   // 检查是否有超出目标类型大小范围的非0位，检查是否会丢失数据
     }
     if constexpr ((std::is_integral_v<S> && std::is_unsigned_v<D>)       // 整型和非负整型
-                         || (std::is_unsigned_v<S> && std::is_integral_v<D>)) {
+                  || (std::is_unsigned_v<S> && std::is_integral_v<D>)) {
         if (sizeof(S) < sizeof(D)) return true;         //  同上
         if (!IsSignBitZero<S>(std::forward<S>(src))) return false;  // 符号位/最高位为1, 转换失败
         return !bitUpper<S, D>(std::forward<S>(src));   // 检查是否有超出目标类型大小的非0位
     }
-    if constexpr (std::is_floating_point_v<S> && std::is_floating_point_v<D>) {
-        // 浮点数，需要检查数据类型范围是否包括，精度损失仍能转换成功
-        if (std::numeric_limits<S>::digits < std::numeric_limits<D>::digits
-            && std::numeric_limits<S>::max_exponent < std::numeric_limits<D>::max_exponent)
-            return true;
-        if (sizeof(S) > sizeof(D)) return (s > (std::numeric_limits<D>::max()) || s < std::numeric_limits<D>::min());
+    if (IsFloatFloatConversionSafe<S, D>(std::forward<S>(src))) {
+        return true;
     }
-    if constexpr (std::is_integral_v<S> && std::is_floating_point_v<D>) {   // 整型到浮点型，检查数据类型范围
-        if (static_cast<D>(src) >= -std::numeric_limits<D>::max()
-            && static_cast<D>(src) <= std::numeric_limits<D>::max())
-            return true;
-        return false;
+    if (IsIntegralFloatConversionSafe<S, D>(std::forward<S>(src))) {
+        return true;
     }
-    return std::is_convertible_v<S, D>;   // 默认情况，调用STL库函数判断
+    return std::is_convertible_v<S, D>; // 默认情况，调用STL库函数判断
 }
 
 /**

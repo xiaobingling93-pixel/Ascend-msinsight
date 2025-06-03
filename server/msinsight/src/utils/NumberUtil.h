@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdint>
+#include "ServerLog.h"
 #include "cmath"
 #include "algorithm"
 #include "NumberSafeUtil.h"
@@ -210,7 +211,11 @@ public:
         }
         try {
             return std::stold(usStr);
-        } catch (std::exception &) {
+        } catch (std::invalid_argument& e) {
+            Server::ServerLog::Error("Value out of range: ", e.what());
+            return 0;
+        } catch (std::out_of_range& e) {
+            Server::ServerLog::Error("Out of range: ", e.what());
             return 0;
         }
     }

@@ -72,7 +72,7 @@ public:
     struct has_equal_operator : std::integral_constant<bool,
             !std::is_same<decltype(std::declval<T>() == std::declval<T>()), void>::value> {};
 
-    // 模板函数，仅当T支持 == 操作符时才可用
+    // 模板函数，仅当T具备hash属性才可用
     template <typename T, typename = typename std::enable_if<has_equal_operator<T>::value>::type>
     static inline bool IsVectorEqualIgnoreOrder(std::vector<T> const& vec1, std::vector<T> const& vec2)
     {
@@ -81,14 +81,18 @@ public:
             return false;
         }
 
-        // 排序两个vector
-        std::vector<T> sortedVec1(vec1);
-        std::vector<T> sortedVec2(vec2);
-        std::sort(sortedVec1.begin(), sortedVec1.end());
-        std::sort(sortedVec2.begin(), sortedVec2.end());
+        std::unordered_map<T, int> count;
+        for (const auto& i : vec1) {
+            ++count[i];
+        }
 
-        // 比较排序后的vector
-        return sortedVec1 == sortedVec2;
+        for (const auto& i : vec2) {
+            if (count[i] == 0) {
+                return false;
+            }
+            --count[i];
+        }
+        return true;
     }
 
     static const inline std::string EMPTY_STRING = "";

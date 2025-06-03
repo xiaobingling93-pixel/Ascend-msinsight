@@ -58,7 +58,11 @@ def execute_cmd(cmd, work_path):
     proc = subprocess.Popen(cmd, cwd=work_path, stdout=subprocess.PIPE)
     for line in iter(proc.stdout.readline, b''):
         build_log(line.decode('utf-8').strip())
-    proc.communicate(timeout=600)
+    try:
+        proc.communicate(timeout=600)
+    except subprocess.TimeoutExpired:
+        LOG.error('Subprocess timed out')
+        return 1
     return proc.returncode
 
 
@@ -135,7 +139,6 @@ def init_log(name):
     """init log config"""
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
-
     building_log = logging.getLogger(name)
     building_log.setLevel(logging.DEBUG)
     formatter = logging.Formatter('[%(asctime)s] %(message)s')

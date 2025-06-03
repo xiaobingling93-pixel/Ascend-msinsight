@@ -22,6 +22,7 @@ public:
 
     static inline bool ExecuteCmdWithResult(const std::string &cmd, std::string &result)
     {
+        // 该公共方法，使用前建议进行命令注入问题检测
         FILE *pipe = popen(cmd.c_str(), "r");
         if (!pipe) {
             Server::ServerLog::Error("popen cmd error, cmd: ", cmd);

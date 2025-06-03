@@ -137,6 +137,17 @@ bool FileUtil::IsRegularFile(const std::string &filePath)
 #endif
 }
 
+bool FileUtil::IsFilePathExist(const std::string &filePath)
+{
+#ifdef _WIN32
+    DWORD fileAttributes = GetFileAttributesA(filePath.c_str());
+    return fileAttributes != INVALID_FILE_ATTRIBUTES;
+#else
+    struct stat fileStat;
+    return stat(filePath.c_str(), &fileStat) == 0;
+#endif
+}
+
 bool FileUtil::CheckFileValid(const std::string &filePath)
 {
     if (!CheckDirValid(filePath)) {
@@ -188,8 +199,7 @@ bool FileUtil::CheckDirValid(const std::string &path)
 
 bool FileUtil::CheckFilePathExist(const std::string& filePath)
 {
-    std::string tmpPath(filePath);
-    if (access(tmpPath.c_str(), R_OK) == -1) {
+    if (access(filePath.c_str(), R_OK) == -1) {
         Server::ServerLog::Error("Check file path exist cannot read file path");
         return false;
     }
@@ -368,8 +378,11 @@ std::shared_ptr<std::string> FileUtil::GetRelativePath(const std::string& target
 
 bool FileUtil::ModifyFilePermissions(const std::string &filePath, const mode_t &mode)
 {
-    std::string tmpPath(filePath);
-    return chmod(tmpPath.c_str(), mode);
+    if (!FileUtil::IsFilePathExist(filePath)) {
+        // 文件不存在，返回错误代码或抛出异常
+        return false;
+    }
+    return chmod(filePath.c_str(), mode) == 0;
 }
 
 bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path)
