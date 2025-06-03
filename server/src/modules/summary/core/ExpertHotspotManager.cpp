@@ -459,7 +459,7 @@ bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, con
     cannApiList.insert(cannApiList.end(), layerExecuteApiNameList.begin(), layerExecuteApiNameList.end());
     cannApiList.insert(cannApiList.end(), groupedMatmulApiNameList.begin(), groupedMatmulApiNameList.end());
     cannApiList.insert(cannApiList.end(), lmHeadApiNameList.begin(), lmHeadApiNameList.end());
-    for (const auto &fileId: Timeline::DataBaseManager::Instance().GetAllFileId()) {
+    for (const auto &fileId: Timeline::DataBaseManager::Instance().GetAllRankId()) {
         ExtractHeatMapParams params{fileId, dataType, cannApiList, groupedMatmulComputeNameList, clusterPath};
         if (!ExtractHeatMapFromTraceDb(params, modelInfo, errorMsg)) {
             return false;

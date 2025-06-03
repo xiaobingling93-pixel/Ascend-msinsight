@@ -140,9 +140,9 @@ namespace Dic::Module::Operator {
             return true;
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
+        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
         std::vector<Protocol::OperatorDetailInfoRes> cmpRes;
-        if (!database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
+        if (!database || !database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query current detail info by rankId.");
             return false;
         }
@@ -153,10 +153,11 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to get baseline id.");
             return false;
         }
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabase(baselineId);
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
         request.params.rankId = "";
-        if (!databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
+        if (!database ||
+            !databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query baseline detail Info by baselineId.");
             return false;
         }
@@ -184,8 +185,8 @@ namespace Dic::Module::Operator {
                                                            OperatorDetailInfoResponse &response)
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
-        if (!database->QueryOperatorDetailInfo(request.params, response)) {
+        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        if (!database || !database->QueryOperatorDetailInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query detail Info by rankId");
             return false;
         }

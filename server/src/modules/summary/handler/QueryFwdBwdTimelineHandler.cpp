@@ -75,7 +75,7 @@ bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineByRank(const std::string &ra
     }
     auto rank = &dataMap.at(rankId);
     uint64_t offset = Timeline::TraceTime::Instance().GetStartTime();
-    auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
     if (database == nullptr) {
         // DB场景下无法根据rankId获取database
         database = DataBaseManager::Instance().GetTraceDatabaseWithOutHost(rankId);

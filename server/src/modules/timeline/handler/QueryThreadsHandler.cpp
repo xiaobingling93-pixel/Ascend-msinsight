@@ -26,7 +26,7 @@ bool QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query threads failed to get connection.");
         session.OnResponse(std::move(responsePtr));

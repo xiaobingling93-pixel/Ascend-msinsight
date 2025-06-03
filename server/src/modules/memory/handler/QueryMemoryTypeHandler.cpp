@@ -21,8 +21,8 @@ namespace Memory {
             SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
-        auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.rankId);
-        if (!database->QueryMemoryType(response.type, response.graphId)) {
+        auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.rankId);
+        if (!database || !database->QueryMemoryType(response.type, response.graphId)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory type data.");
             return false;
         }

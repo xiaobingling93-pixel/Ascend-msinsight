@@ -12,7 +12,7 @@ namespace Dic::Module::Advisor {
 using namespace Dic::Server;
 bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AffinityAPIResBody &resBody)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for Affinity API query. fileId:", params.rankId);
         return false;
@@ -51,7 +51,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
 std::vector<Protocol::FlowLocation> AffinityAPIAdvisor::GetFlowLocationData(const Protocol::APITypeParams &params)
 {
     std::vector<Protocol::FlowLocation> results;
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for Affinity API query. fileId:", params.rankId);
         return results;

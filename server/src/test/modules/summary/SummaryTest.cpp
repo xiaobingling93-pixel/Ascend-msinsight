@@ -13,7 +13,7 @@ class SummaryTest : TestSuit {
 TEST_F(TestSuit, QueryComputeStatisticsData)
 {
     DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SummaryStatisticParams requestParams;
     requestParams.rankId = "0";
     Dic::Protocol::SummaryStatisticsBody responseBody;
@@ -24,7 +24,7 @@ TEST_F(TestSuit, QueryComputeStatisticsData)
 
 TEST_F(TestSuit, QueryComputeStatisticsDataWithEmptyParamReturnExpectSize)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SummaryStatisticParams requestParams;
     requestParams.stepId = "";
     Dic::Protocol::SummaryStatisticsBody responseBody;
@@ -36,7 +36,7 @@ TEST_F(TestSuit, QueryComputeStatisticsDataWithEmptyParamReturnExpectSize)
 
 TEST_F(TestSuit, QueryComputeStatisticsData2)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SummaryStatisticParams requestParams;
     requestParams.rankId = "0";
     requestParams.stepId = "2";
@@ -48,7 +48,7 @@ TEST_F(TestSuit, QueryComputeStatisticsData2)
 
 TEST_F(TestSuit, QueryCommunicationDetailData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::CommunicationDetailParams requestParams;
     requestParams.rankId = "0";
     requestParams.currentPage = 1;
@@ -61,7 +61,7 @@ TEST_F(TestSuit, QueryCommunicationDetailData)
 
 TEST_F(TestSuit, QueryGetTotalNumData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::CommunicationDetailParams requestParams;
     requestParams.rankId = "0";
     requestParams.currentPage = 0;
@@ -75,7 +75,7 @@ TEST_F(TestSuit, QueryGetTotalNumData)
 
 TEST_F(TestSuit, QueryComputeDetailData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::ComputeDetailParams requestParams;
     requestParams.rankId = "0";
     requestParams.currentPage = 1;

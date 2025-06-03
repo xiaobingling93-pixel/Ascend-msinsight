@@ -74,16 +74,16 @@ void FullDbParser::Reset()
 // 此方法为私有方法，调用前需保证不会出现空指针的情况
 std::shared_ptr<DbTraceDataBase> FullDbParser::GetTraceDatabase(const std::string &filePath)
 {
-    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath);
+    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(filePath);
     return std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
 }
 
 void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineId(rankIds[0])) ?
+    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineRankId(rankIds[0])) ?
         rankIds[0] : filePath;
-    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(dbId);
+    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(dbId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return;
@@ -176,13 +176,13 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     for (const auto &future : *futures) {
         future.wait();
     }
-    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineId(rankIds[0])) ?
+    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineRankId(rankIds[0])) ?
         rankIds[0] : filePath;
-    bool isNotSendMessage = (Global::BaselineManager::Instance().IsBaselineId(rankIds[0])
+    bool isNotSendMessage = (Global::BaselineManager::Instance().IsBaselineRankId(rankIds[0])
             && DataBaseManager::Instance().IsContainDatabasePath(filePath))
                     || DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0])==FileType::LEAKS;
     for (const std::string& id : rankIds) {
-        ParserCallBack(id, true);
+        ParserCallBack(id, filePath, true);
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -204,7 +204,7 @@ void FullDbParser::SendHostEvent(const std::string &fileId)
     event->body.unit.type = "card";
     event->body.isFullDb = true;
     event->body.fileId = fileId;
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:Host");
         return;
@@ -220,11 +220,11 @@ void FullDbParser::SendHostEvent(const std::string &fileId)
     SendEvent(std::move(event));
 }
 
-void FullDbParser::ParserCallBack(std::string fileId, bool result)
+void FullDbParser::ParserCallBack(std::string rankId, const std::string &fileId, bool result)
 {
     auto &instance = FullDbParser::Instance();
     if (instance.parseEndCallback != nullptr) {
-        instance.parseEndCallback(fileId, fileId, true, "");
+        instance.parseEndCallback(rankId, fileId, true, "");
     }
 }
 
@@ -233,13 +233,13 @@ void FullDbParser::InitSummary(const std::vector<std::string> &rankIds, const st
     for (const std::string& id : rankIds) {
         bool result = false;
         auto summeryDatabase = std::dynamic_pointer_cast<FullDb::DbSummaryDataBase, Summary::VirtualSummaryDataBase>(
-            Timeline::DataBaseManager::Instance().GetSummaryDatabase(id));
+            Timeline::DataBaseManager::Instance().CreateSummaryDatabase(id, path));
         if (summeryDatabase != nullptr && summeryDatabase->OpenDb(path, false)) {
             result = true;
         } else {
             ServerLog::Error("Failed to connect or open SummeryDatabase.");
         }
-        if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
+        if (!Global::BaselineManager::Instance().IsBaselineRankId(id)) {
             FullDb::DbSummaryDataBase::ParserEnd(id, path, result, "");
         }
     }
@@ -256,7 +256,7 @@ void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std
     for (const std::string& id : rankIds) {
         bool result = false;
         auto memoryDatabase = std::dynamic_pointer_cast<FullDb::DbMemoryDataBase, Memory::VirtualMemoryDataBase>(
-            Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
+            Timeline::DataBaseManager::Instance().CreateMemoryDataBase(id, path));
         if (memoryDatabase != nullptr && memoryDatabase->OpenDb(path, false)) {
             FullDb::DbMemoryDataBase::ParserEnd(id, true);
             result = true;
@@ -264,7 +264,7 @@ void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std
             FullDb::DbMemoryDataBase::ParserEnd(id, false);
             ServerLog::Error("Failed to connect or open memoryDatabase.");
         }
-        if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
+        if (!Global::BaselineManager::Instance().IsBaselineRankId(id)) {
             FullDb::DbMemoryDataBase::ParseCallBack(id, path, result, "");
         }
     }

@@ -16,7 +16,7 @@ bool QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     std::unique_ptr<FlowCategoryListResponse> responsePtr = std::make_unique<FlowCategoryListResponse>();
     FlowCategoryListResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query flow category list failed to get connection. ");
         SetResponseResult(response, true);

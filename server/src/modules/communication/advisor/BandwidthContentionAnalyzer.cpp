@@ -22,7 +22,7 @@ bool BandwidthContentionAnalyzer::QueryAdvisorData(const std::string &clusterPat
     for (const auto &rank : rankList) {
         data.matMulData.insert({rank.iterationOrRankId, {}});
         data.SDMAData.insert({rank.iterationOrRankId, {}});
-        auto summaryDatabase = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rank.iterationOrRankId);
+        auto summaryDatabase = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rank.iterationOrRankId);
         if (!summaryDatabase) {
             Server::ServerLog::Error("Failed to get summary database connection.");
             continue;

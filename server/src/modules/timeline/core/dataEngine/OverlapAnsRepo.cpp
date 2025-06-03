@@ -14,7 +14,7 @@ void OverlapAnsRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slic
         ServerLog::Warn("overlap query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("overlap open database is failed");
         return;
@@ -64,7 +64,7 @@ void OverlapAnsRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const 
         TABLE_OVERLAP_ANALYSIS + " where 1 = 1 and id in (";
     std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
     sql += sliceidvecStr + ");";
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("overlap open database is failed");
         return;

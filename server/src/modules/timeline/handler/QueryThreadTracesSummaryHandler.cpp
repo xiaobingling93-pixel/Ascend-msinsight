@@ -25,7 +25,7 @@ bool QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Re
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.cardId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.cardId);
     if (database == nullptr) {
         ServerLog::Error("Query thread traces summary failed to get connection.");
         session.OnResponse(std::move(responsePtr));

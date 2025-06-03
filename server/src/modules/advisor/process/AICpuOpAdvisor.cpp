@@ -10,7 +10,7 @@ namespace Dic::Module::Advisor {
 using namespace Dic::Server;
 bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AICpuOperatorResBody &resBody)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection in AI CPU advice. fileId:", params.rankId);
         return false;

@@ -267,7 +267,7 @@ namespace Dic::Module::Operator {
                                                             OperatorExportDetailsResponse &response)
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
+        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
 
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
@@ -291,7 +291,7 @@ namespace Dic::Module::Operator {
         AppendFileContent(headerStr);
         do {
             statisticReqParams.current++;
-            if (!database->QueryOperatorStatisticInfo(statisticReqParams, statisticReqResponse)) {
+            if (!database || !database->QueryOperatorStatisticInfo(statisticReqParams, statisticReqResponse)) {
                 ServerLog::Error("[Operator]Failed to query Statistic Info in export op detail.");
                 DestroyFile();
                 return false;
@@ -314,7 +314,7 @@ namespace Dic::Module::Operator {
                                                                OperatorExportDetailsResponse &response)
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
+        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
             rankId: request.params.rankId,
@@ -334,7 +334,7 @@ namespace Dic::Module::Operator {
         CreateCsvFile(request, response);
         do {
             statisticReqParams.current++;
-            if (!database->QueryOperatorDetailInfo(statisticReqParams, detailInfoReqResponse)) {
+            if (!database || !database->QueryOperatorDetailInfo(statisticReqParams, detailInfoReqResponse)) {
                 ServerLog::Error("[Operator]Failed to query detail Info in export op detail");
                 DestroyFile();
                 return false;

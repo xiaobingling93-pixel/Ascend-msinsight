@@ -41,10 +41,13 @@ public:
             session->WaitForExit();
             Dic::Server::WsSessionManager::Instance().RemoveSession();
         }
+        DataBaseManager::Instance().Clear();
+        BaselineManagerService::ResetBaseline();
     }
 
     static void InitDbManager()
     {
+        DataBaseManager::Instance().Clear();
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
@@ -52,10 +55,11 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
+        std::string fullDbPath = StringUtil::StrJoin(currPath, dbPath3, "msprof_0.db");
         auto summeryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
-                DataBaseManager::Instance().GetSummaryDatabase("2"));
-        summeryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
+                DataBaseManager::Instance().CreateSummaryDatabase("2", fullDbPath));
+        summeryDatabase->OpenDb(fullDbPath, false);
     }
 
     static void InitBaseLineManager()

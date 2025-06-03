@@ -21,10 +21,10 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
     if (!request.params.isCompare) {
         uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
-        if (!database->QueryMemoryView(request.params, response.data, offsetTime)) {
+        if (!database || !database->QueryMemoryView(request.params, response.data, offsetTime)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory view data.");
             return false;
         }
@@ -51,7 +51,7 @@ bool QueryMemoryViewHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryData
         errorMsg = "Failed to get baseline id.";
         return false;
     }
-    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(baselineId);
     if (!databaseBaseline) {
         errorMsg = "Failed to connect to database of baseline.";
         return false;

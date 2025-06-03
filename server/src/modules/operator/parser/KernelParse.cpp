@@ -92,8 +92,8 @@ std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(cons
         std::string tempId = fileId;
         std::string parentDir = FileUtil::GetParentPath(file);
         std::string name = FileUtil::GetFileName(file);
-        while (Timeline::DataBaseManager::Instance().HasFileId(Timeline::DatabaseType::SUMMARY, tempId)) {
-            std::string dbPath = Timeline::DataBaseManager::Instance().GetSummaryDatabase(tempId)->GetDbPath();
+        while (Timeline::DataBaseManager::Instance().HasRankId(Timeline::DatabaseType::SUMMARY, tempId)) {
+            std::string dbPath = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(tempId)->GetDbPath();
             std::string dbParentPath = FileUtil::GetParentPath(dbPath);
             if (RegexUtil::RegexSearch(name, SLICE_STR).has_value() && parentDir == dbParentPath) {
                 break;
@@ -103,7 +103,7 @@ std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(cons
 
         ServerLog::Info("Kernel file: ", file, ", FileId: ", tempId);
         std::string dbPath = FileUtil::GetDbPath(file, tempId);
-        Timeline::DataBaseManager::Instance().GetSummaryDatabase(tempId)->SetDbPath(dbPath);
+        Timeline::DataBaseManager::Instance().CreateSummaryDatabase(tempId, dbPath);
         results[tempId].push_back(file);
     }
     return results;
@@ -166,7 +166,7 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
     }
     std::string dbPath = FileUtil::GetDbPath(filePathList[0], fileId);
     auto database = std::dynamic_pointer_cast<TextSummaryDataBase, VirtualSummaryDataBase>(
-        Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().CreateSummaryDatabase(fileId, dbPath));
     if (database == nullptr) {
         message = "Failed to get summary database, fileId: ." + fileId + " filePath: " + filePathList[0];
         return false;
@@ -398,7 +398,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::string line;
     std::map<std::string, size_t> dataMap;
     auto db = std::dynamic_pointer_cast<TextSummaryDataBase, VirtualSummaryDataBase>(
-        Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(fileId));
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
@@ -407,7 +407,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> parseProcessList;
 
-    std::string realFileId = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
+    std::string realFileId = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
         FileUtil::GetProfilerFileId(filePath) : fileId;
     std::vector<std::string> columns;
     uint64_t lineNumber = 0;
@@ -520,7 +520,7 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
     }
     // 初始化DB
     std::string dbPath = FileUtil::GetDbPath(kernelFile[0], fileId);
-    Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId)->SetDbPath(dbPath);
+    Timeline::DataBaseManager::Instance().CreateSummaryDatabase(fileId, dbPath);
     // 初始化解析状态
     Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + fileId,
                                                               Timeline::ParserStatus::INIT);

@@ -19,7 +19,7 @@ bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
         return false;
     }
     for (const auto rank : rankList) {
-        auto timelineDatabase = Timeline::DataBaseManager::Instance().GetTraceDatabase(rank.iterationOrRankId);
+        auto timelineDatabase = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(rank.iterationOrRankId);
         if (!timelineDatabase) {
             timelineDatabase =
                 Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(rank.iterationOrRankId);

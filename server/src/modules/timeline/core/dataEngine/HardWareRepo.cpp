@@ -16,7 +16,7 @@ void HardWareRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
         ServerLog::Warn("hardWare query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("hardWare open database is failed");
         return;
@@ -215,7 +215,7 @@ bool HardWareRepo::QueryMemoryInfo(const SliceQuery &sliceQuery, CompeteSliceDom
 
 Stmt HardWareRepo::CreatPreparedStatement(const std::string &sql, const SliceQuery &sliceQuery)
 {
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("hardWare open database is failed");
         return nullptr;
@@ -225,7 +225,7 @@ Stmt HardWareRepo::CreatPreparedStatement(const std::string &sql, const SliceQue
 
 std::string HardWareRepo::GetDbPath(const SliceQuery &sliceQuery)
 {
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("hardWare open database is failed");
         return "";

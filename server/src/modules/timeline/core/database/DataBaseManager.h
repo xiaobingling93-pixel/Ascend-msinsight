@@ -44,29 +44,39 @@ public:
     DataBaseManager(DataBaseManager &&) = delete;
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
-    bool CreatConnectionPool(const std::string &fileId, const std::string &dbPath);
-    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabase(const std::string &fileId);
+    bool CreatConnectionPool(const std::string &rankId, const std::string &dbPath);
+    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseByRankId(const std::string &rankId);
+    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseByFileId(const std::string& fileId);
+
     std::vector<ConnectionPool *> GetAllTraceDatabase();
-    std::vector<std::string> GetAllFileId();
+    std::vector<std::string> GetAllRankId();
     void Clear();
     void Clear(DatabaseType type);
     void EraseClusterDb(const std::string &uniqueKey);
     void ClearClusterDb();
-    void ReleaseDatabase(const std::string &fileId);
-    bool HasFileId(DatabaseType type, const std::string &fileId);
+    void ReleaseDatabaseByRankId(const std::string &rankId);
+    void ReleaseDatabaseByFileId(const std::string& fileId);
+    bool HasRankId(DatabaseType type, const std::string &rankId);
     std::shared_ptr<VirtualClusterDatabase> CreateClusterDatabase(const std::string &uniqueKey, DataType type);
     std::shared_ptr<VirtualClusterDatabase> GetClusterDatabase(const std::string &uniqueKey);
     std::vector<std::shared_ptr<VirtualClusterDatabase>> GetAllClusterDatabase();
 
-    std::shared_ptr<Memory::VirtualMemoryDataBase> GetMemoryDatabase(const std::string &fileId);
+    std::shared_ptr<Memory::VirtualMemoryDataBase> CreateMemoryDataBase(const std::string &rankId,
+                                                                        const std::string &dbPath);
+    std::shared_ptr<Memory::VirtualMemoryDataBase> GetMemoryDatabaseByRankId(const std::string &rankId);
+    std::shared_ptr<Memory::VirtualMemoryDataBase> GetMemoryDatabaseByFileId(const std::string& fileId);
+
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
 
     std::shared_ptr<FullDb::LeaksMemoryDatabase> GetLeaksMemoryDatabase(const std::string &fileId);
     std::vector<FullDb::LeaksMemoryDatabase *> GetAllLeaksMemoryDatabase();
-    std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabase(const std::string &fileId);
+    std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabaseByRankId(const std::string &rankId);
+    std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDataBaseByFileId(const std::string &fileId);
+    std::shared_ptr<Summary::VirtualSummaryDataBase> CreateSummaryDatabase(const std::string &rankId,
+                                                                           const std::string &dbPath);
     std::vector<Summary::VirtualSummaryDataBase *> GetAllSummaryDatabase();
 
-    std::string GetDbPath(const std::string &fileId);
+    std::string GetDbPathByRankId(const std::string &rankId);
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseWithOutHost(const std::string &rankId);
     DataType GetDataType();
     void SetDataType(DataType type);
@@ -76,7 +86,7 @@ public:
     void SetBaselineDataType(DataType type);
     void SetBaselineFileType(FileType type);
     bool ResetBaseline();
-    void SetDbPathMapping(const std::string& fileId, const std::string& filePath, const std::string& hostId);
+    void SetDbPathMapping(const std::string& rankId, const std::string& dbPath, const std::string& hostId);
     bool IsContainDatabasePath(const std::string& databasePath);
     inline std::vector<std::string> GetDbPathByHost(const std::string& id)
     {
@@ -89,28 +99,44 @@ public:
 
     std::string GetAnyTraceDatabaseId();
 
+    std::string GetFileIdByRankId(const std::string& rankId) const;
+
 private:
+    /**
+     * @brief 设置rankId到fileId的映射
+     * @param rankId
+     * @param fileId
+     * @param isBaseLine
+     */
+    void SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId, bool isBaseLine);
+    
+    using RankId = std::string;
+    using FileId = std::string;
+    using DbPath = FileId;
+    using HostId = std::string;
+    using ClusterPath = std::string;
     DataBaseManager() = default;
     ~DataBaseManager() = default;
-
     std::recursive_mutex mutex;
     DataType dataType = DataType::TEXT;
     DataType baselineType = DataType::TEXT;
     FileType fileType = FileType::PYTORCH;
+
     std::map<std::string, std::recursive_mutex> dbMutexMap;
-    std::map<std::string, std::string> dbFilePathMap;
-    std::map<std::string, std::vector<std::string>> host2DbPath;
+    std::map<RankId, DbPath> dbFilePathMap;
+    std::map<RankId, FileId> rankId2FileIdMap;
+    std::map<FileId, RankId> fileIdToRankIdMap;
+    std::map<HostId, std::vector<DbPath>> host2DbPath;
     std::unordered_set<std::string> databasePathSet;
-    std::map<std::string, std::shared_ptr<ConnectionPool>> traceDatabaseMap;
-    std::map<std::string, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
-    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
-    std::map<std::string, std::shared_ptr<FullDb::LeaksMemoryDatabase>> leaksMemoryDatabaseMap;
-    std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
+    std::map<FileId, std::shared_ptr<ConnectionPool>> traceDatabaseMap;
+    std::map<ClusterPath, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
+    std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
+    std::map<FileId, std::shared_ptr<FullDb::LeaksMemoryDatabase>> leaksMemoryDatabaseMap;
+    std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
     FileType baselineFileType = FileType::PYTORCH;
-    std::map<std::string, std::shared_ptr<ConnectionPool>> traceBaselineDatabaseMap;
-    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
-    std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
+    std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
+    std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
 
     std::recursive_mutex &GetDbMutex(const std::string &fileId);
 };

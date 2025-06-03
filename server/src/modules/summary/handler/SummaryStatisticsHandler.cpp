@@ -27,7 +27,7 @@ bool SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
         if (database == nullptr) {

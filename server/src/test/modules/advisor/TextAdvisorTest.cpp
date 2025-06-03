@@ -21,7 +21,7 @@ class TextAdvisorTest : TestSuit {
 TEST_F(TestSuit, QueryAffinityApiAdvisorSuccessInText)
 {
     DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
@@ -40,7 +40,7 @@ TEST_F(TestSuit, QueryAffinityApiAdvisorSuccessInText)
 
 TEST_F(TestSuit, QueryAffinityOptimizerAdvisorSuccessText)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
@@ -53,7 +53,7 @@ TEST_F(TestSuit, QueryAffinityOptimizerAdvisorSuccessText)
 
 TEST_F(TestSuit, QueryAclNNOperatorAdvisorSuccessText)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     std::vector<Protocol::KernelBaseInfo> data{};
@@ -65,7 +65,7 @@ TEST_F(TestSuit, QueryAclNNOperatorAdvisorSuccessText)
 
 TEST_F(TestSuit, QueryAICPUOperatorAdvisorSuccessText)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     std::vector<Protocol::KernelBaseInfo> data{};
@@ -78,7 +78,7 @@ TEST_F(TestSuit, QueryAICPUOperatorAdvisorSuccessText)
 
 TEST_F(TestSuit, QueryFusedOperatorAdvisorSuccessText)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
@@ -90,7 +90,7 @@ TEST_F(TestSuit, QueryFusedOperatorAdvisorSuccessText)
 
 TEST_F(TestSuit, QueryOperatorDispatchAdvisorSuccessOnText)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据

@@ -40,7 +40,7 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::st
         return false;
     }
     std::string dbPath = FileUtil::GetDbPath(*memoryFilePairs.recordFiles.begin(), fileId);
-    Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId)->SetDbPath(dbPath);
+    Timeline::DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbPath);
     Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId,
                                                               Timeline::ParserStatus::INIT);
     threadPool->AddTask(PreParseTask, memoryFilePairs, fileId);
@@ -52,7 +52,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Operator Memory: ", filePath, ", FileId: ", fileId);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -233,7 +233,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Memory Record: ", filePath, ", FileId: ", fileId);
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -283,7 +283,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Memory Static Operator: ", filePath, ", FileId: ", fileId);
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -333,7 +333,7 @@ bool MemoryParse::ComponentParse(const std::string &filePath, const std::string 
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Npu Module Mem: ", filePath, ", FileId: ", fileId);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
     if (!memoryDatabase) {
         ServerLog::Error("Could not get the pointer to memory database.");
         return false;
@@ -482,8 +482,8 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
         std::string fileId = FileUtil::GetProfilerFileId(recordFile);
         int i = 1;
         std::string tempId = fileId;
-        while (Timeline::DataBaseManager::Instance().HasFileId(Timeline::DatabaseType::MEMORY, tempId)) {
-            std::string dbPath = Timeline::DataBaseManager::Instance().GetMemoryDatabase(tempId)->GetDbPath();
+        while (Timeline::DataBaseManager::Instance().HasRankId(Timeline::DatabaseType::MEMORY, tempId)) {
+            std::string dbPath = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(tempId)->GetDbPath();
             if (RegexUtil::RegexSearch(FileUtil::GetFileName(recordFile), SLICE_STR).has_value() &&
                 FileUtil::GetParentPath(recordFile) == FileUtil::GetParentPath(dbPath)) {
                 break;
@@ -491,7 +491,7 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
             tempId = fileId + "_" + std::to_string(++i);
         }
         std::string dbPath = FileUtil::GetDbPath(recordFile, tempId);
-        Timeline::DataBaseManager::Instance().GetMemoryDatabase(tempId)->SetDbPath(dbPath);
+        Timeline::DataBaseManager::Instance().CreateMemoryDataBase(tempId, dbPath);
         results[tempId].recordFiles.insert(recordFile);
         results[tempId].operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());
         results[tempId].staticOpFiles.insert(staticOpFiles.begin(), staticOpFiles.end());
@@ -590,7 +590,7 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
         return false;
     }
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
     ParseEndCallBack(fileId, memoryDatabase->GetDbPath(), true, "");
     Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
     return true;
@@ -608,7 +608,7 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
     }
     std::string dbPath = FileUtil::GetDbPath(*(filePair.recordFiles.begin()), fileId);
     auto db = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        Timeline::DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbPath));
     if (!db->OpenDb(dbPath, false)) {
         message = "Failed to open db file. Please delete the file manually: " + dbPath;
 #if defined(__linux__) || defined(__APPLE__)

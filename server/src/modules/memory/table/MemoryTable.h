@@ -16,7 +16,7 @@ public:
 
     virtual void ExcuteQuery(const std::string &fileId, std::vector<T> &result)
     {
-        auto database = FullDb::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+        auto database = FullDb::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId);
         if (database == nullptr) {
             this->ClearThreadLocal();
             return;
@@ -98,7 +98,7 @@ public:
 
     virtual uint64_t Count(const std::string &fileId)
     {
-        auto database = FullDb::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+        auto database = FullDb::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId);
         if (database == nullptr) {
             this->ClearThreadLocal();
             return 0;

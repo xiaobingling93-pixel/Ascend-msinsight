@@ -27,19 +27,20 @@ public:
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
         DataBaseManager::Instance().CreatConnectionPool("0", currPath + dbPath3 + "msprof_0.db");
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, VirtualTraceDatabase>(
-            DataBaseManager::Instance().GetTraceDatabase("0"));
+            DataBaseManager::Instance().GetTraceDatabaseByRankId("0"));
         database->UpdateStartTime("0");
+        std::string fullDbPath = StringUtil::StrJoin(currPath, dbPath3, "msprof_0.db");
         auto summaryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
-                DataBaseManager::Instance().GetSummaryDatabase("0"));
-        summaryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
+                DataBaseManager::Instance().CreateSummaryDatabase("0", fullDbPath));
+        summaryDatabase->OpenDb(fullDbPath, false);
     }
     static void TearDownTestSuite() {}
 };
 
 TEST_F(DbSummaryTest, QueryComputeStatisticsData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SummaryStatisticParams requestParams;
     requestParams.rankId = "2";
     Dic::Protocol::SummaryStatisticsBody responseBody;
@@ -50,7 +51,7 @@ TEST_F(DbSummaryTest, QueryComputeStatisticsData)
 
 TEST_F(DbSummaryTest, QueryComputeStatisticsDataWithEmptyParamReturnExpectSize)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SummaryStatisticParams requestParams;
     requestParams.stepId = "";
     Dic::Protocol::SummaryStatisticsBody responseBody;
@@ -62,7 +63,7 @@ TEST_F(DbSummaryTest, QueryComputeStatisticsDataWithEmptyParamReturnExpectSize)
 
 TEST_F(DbSummaryTest, QueryComputeStatisticsData2)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SummaryStatisticParams requestParams;
     requestParams.rankId = "2";
     requestParams.stepId = "16";
@@ -74,7 +75,7 @@ TEST_F(DbSummaryTest, QueryComputeStatisticsData2)
 
 TEST_F(DbSummaryTest, QueryCommunicationDetailData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::CommunicationDetailParams requestParams;
     requestParams.rankId = "2";
     requestParams.currentPage = 0;
@@ -88,7 +89,7 @@ TEST_F(DbSummaryTest, QueryCommunicationDetailData)
 
 TEST_F(DbSummaryTest, QueryGetTotalNumData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::CommunicationDetailParams requestParams;
     requestParams.rankId = "2";
     requestParams.currentPage = 0;
@@ -102,7 +103,7 @@ TEST_F(DbSummaryTest, QueryGetTotalNumData)
 
 TEST_F(DbSummaryTest, QueryComputeDetailData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::ComputeDetailParams requestParams;
     requestParams.rankId = "2";
     requestParams.currentPage = 0;

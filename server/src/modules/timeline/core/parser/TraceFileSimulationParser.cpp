@@ -54,7 +54,7 @@ bool TraceFileSimulationParser::InitParser(const std::vector<std::string> &fileP
         ServerLog::Info("Pre task skip this file.");
         return false;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId: ", fileId);
         return false;
@@ -98,7 +98,7 @@ void TraceFileSimulationParser::ParseTask(const std::string &filePath, const std
         ServerLog::Info("Parse task skip this file. ID:", fileId);
         return;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Warn("Failed to get connection when parse simulation json,ID: ", fileId);
         return;
@@ -142,7 +142,7 @@ void TraceFileSimulationParser::EndParseTask(const std::string &fileId, const st
     ServerLog::Info("Parse completed. ID:", fileId,
         " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(fileId));
+        DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         ParserStatusManager::Instance().SetFinishStatus(fileId);
@@ -208,8 +208,8 @@ void TraceFileSimulationParser::DeleteParseFileFromDisk(const std::string &fileI
 {
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
-    std::string path = DataBaseManager::Instance().GetDbPath(fileId);
-    DataBaseManager::Instance().ReleaseDatabase(fileId);
+    std::string path = DataBaseManager::Instance().GetDbPathByRankId(fileId);
+    DataBaseManager::Instance().ReleaseDatabaseByRankId(fileId);
     if (!path.empty()) {
         FileUtil::RemoveFileExDb(path);
     }

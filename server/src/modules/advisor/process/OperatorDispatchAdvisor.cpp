@@ -12,7 +12,7 @@ namespace Dic::Module::Advisor {
 using namespace Dic::Server;
 bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Protocol::OperatorDispatchResBody &resBody)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for Operator Dispatch advice. fileId:", params.rankId);
         return false;
@@ -26,7 +26,7 @@ bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Pro
         param.orderBy = "duration";
     }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    std::string filePath = Timeline::DataBaseManager::Instance().GetDbPath(params.rankId);
+    std::string filePath = Timeline::DataBaseManager::Instance().GetDbPathByRankId(params.rankId);
     std::vector<Protocol::KernelBaseInfo> data{};
     if (!database->QueryOperatorDispatchData(param, data, startTime,
                                              OPERATOR_COMPILE_CNT_THRESHOLD, filePath)) {

@@ -24,7 +24,7 @@ bool SetCardAliasHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         SendResponse(std::move(responsePtr), false, "Set card alias failed to get connection.");
         return false;

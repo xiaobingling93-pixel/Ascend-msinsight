@@ -18,7 +18,7 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
     }
     optimizers.pop_back(); // 去除最后的逗号
     std::vector<Protocol::ThreadTraces> data{};
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", params.rankId);
         return false;

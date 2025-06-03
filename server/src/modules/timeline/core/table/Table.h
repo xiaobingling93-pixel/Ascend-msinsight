@@ -178,7 +178,7 @@ public:
 
     virtual void ExcuteQuery(const std::string &fileId, std::vector<T> &result)
     {
-        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
         if (database == nullptr) {
             ClearThreadLocal();
             return;
@@ -260,7 +260,7 @@ public:
 
     virtual uint64_t Count(const std::string &fileId)
     {
-        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
         if (database == nullptr) {
             ClearThreadLocal();
             return 0;
@@ -298,7 +298,7 @@ public:
 
     virtual std::string GetDbPath(const std::string &fileId)
     {
-        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
         if (database == nullptr) {
             std::string empty;
             return empty;

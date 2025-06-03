@@ -33,7 +33,7 @@ std::string BaselineManager::GetBaselineId()
     }
 }
 
-bool BaselineManager::IsBaselineId(const std::string &rankId)
+bool BaselineManager::IsBaselineRankId(const std::string &rankId)
 {
     std::shared_lock<std::shared_mutex> sharedLock(sharedMutex);
     if (std::empty(rankId) || std::empty(baselineRankId)) {

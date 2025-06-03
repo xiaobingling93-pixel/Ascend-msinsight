@@ -16,7 +16,7 @@ bool QueryOverallMoreDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Req
     UnitThreadsOperatorsResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         SendResponse(std::move(responsePtr), false, "Failed to get connection for system view overall statistics.");
         return false;

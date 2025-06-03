@@ -82,7 +82,7 @@ public:
 
 TEST_F(SystemViewOverallDbRepoTest, QueryOverlapAnalysisDataForOverallMetricTest)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {
@@ -107,7 +107,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryOverlapAnalysisDataForOverallMetricTest
 // System View Overall: 查询Computing拆解所需数据（有PMU数据，能正常查询）
 TEST_F(SystemViewOverallDbRepoTest, QueryDataForComputingOverallMetricTestWithPmu)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {
@@ -126,7 +126,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryDataForComputingOverallMetricTestWithPm
 
 TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhenSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {
@@ -151,7 +151,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhe
 
 TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTestWhenSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {

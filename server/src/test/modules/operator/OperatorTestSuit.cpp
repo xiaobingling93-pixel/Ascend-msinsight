@@ -19,7 +19,7 @@ const std::string GROUP_INPUT_SHAPE = "Input Shape";
 TEST_F(TestSuit, QueryOperatorDurationInfoByOpType)
 {
     DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_OPERATOR_TYPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
@@ -35,7 +35,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpType)
 
 TEST_F(TestSuit, QueryOperatorDurationInfoByOpTypeAndInputShape)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_INPUT_SHAPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
@@ -51,7 +51,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpTypeAndInputShape)
 
 TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_OPERATOR, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
@@ -67,7 +67,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
 
 TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_OPERATOR_TYPE, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
@@ -79,7 +79,7 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 
 TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpType)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorStatisticReqParams reqParams = {true, "0", GROUP_OPERATOR_TYPE, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
@@ -91,7 +91,7 @@ TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpType)
 
 TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpTypeAndInputShape)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_INPUT_SHAPE, 15, 1, 5, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
@@ -104,7 +104,7 @@ TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpTypeAndInputShape)
 
 TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_OPERATOR, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorDetailInfoResponse response = {};
     bool result = db->QueryOperatorDetailInfo(reqParams, response);
@@ -118,7 +118,7 @@ TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 
 TEST_F(TestSuit, QueryAllOperatorDetailInfoByOperator)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_OPERATOR, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorDetailInfoResponse response = {};
     std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
@@ -131,7 +131,7 @@ TEST_F(TestSuit, QueryAllOperatorDetailInfoByOperator)
 
 TEST_F(TestSuit, QueryOperatorMoreInfoByOpType)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
         "0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", "AI_CORE", 1, 10, "", ""};
     Dic::Protocol::OperatorMoreInfoResponse response = {};
@@ -145,7 +145,7 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByOpType)
 
 TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
         "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", "MIX_AIV", 1, 10, "", ""
     };
@@ -160,7 +160,7 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
 
 TEST_F(TestSuit, QueryBandwidthContentionMatMulDataTest)
 {
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     std::vector<Dic::Module::BandwidthContentionMatMulInfo> res;
     bool result = db->QueryBandwidthContentionMatMulData(res);
     size_t size = 0;

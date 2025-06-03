@@ -39,9 +39,10 @@ public:
         std::string dbPath = R"(test/data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+        std::string dbPathFull = StringUtil::StrJoin(currPath, dbPath, "ascend_pytorch_profiler_0.db");
         auto memoryDatabase = std::dynamic_pointer_cast<DbMemoryDataBase, VirtualMemoryDataBase>(
-            DataBaseManager::Instance().GetMemoryDatabase("0"));
-        memoryDatabase->OpenDb(currPath + dbPath + "ascend_pytorch_profiler_0.db", false);
+            DataBaseManager::Instance().CreateMemoryDataBase("0", dbPathFull));
+        memoryDatabase->OpenDb(dbPathFull, false);
     }
     static void TearDownTestSuite()
     {
@@ -51,7 +52,7 @@ public:
             session->WaitForExit();
             Dic::Server::WsSessionManager::Instance().RemoveSession();
         }
-        auto memoryDatabase = DataBaseManager::Instance().GetMemoryDatabase("0");
+        auto memoryDatabase = DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
         memoryDatabase->CloseDb();
         DataBaseManager::Instance().Clear();
     }

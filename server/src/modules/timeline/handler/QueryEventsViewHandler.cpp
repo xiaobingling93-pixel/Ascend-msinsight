@@ -27,7 +27,7 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         return false;
     }
     SetResponseResult(response, true);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query events view failed to get connection.");
         session.OnResponse(std::move(responsePtr));

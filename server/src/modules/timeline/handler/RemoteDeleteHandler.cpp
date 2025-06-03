@@ -30,14 +30,14 @@ bool RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 
 void RemoteDeleteHandler::GetUpdateTime(RemoteDeleteBody &body)
 {
-    auto fileIdList = DataBaseManager::Instance().GetAllFileId();
+    auto fileIdList = DataBaseManager::Instance().GetAllRankId();
     TraceTime::Instance().Reset();
     auto &parseStatusInstance = ParserStatusManager::Instance();
     for (const auto &fileId : fileIdList) {
         if (parseStatusInstance.GetParserStatus(fileId) == ParserStatus::FINISH) {
             uint64_t min = UINT64_MAX;
             uint64_t max = 0;
-            auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+            auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
             if (database == nullptr) {
                 ServerLog::Error("Remote delete failed to get connection.");
                 return;

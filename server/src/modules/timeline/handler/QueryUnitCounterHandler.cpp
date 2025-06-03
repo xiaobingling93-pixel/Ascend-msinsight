@@ -29,7 +29,7 @@ bool QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
     if (StringUtil::EndWith(request.params.rankId, hostString)) {
         request.params.rankId = DataBaseManager::Instance().GetAnyTraceDatabaseId();
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query unit counter failed to get connection.");
         session.OnResponse(std::move(responsePtr));

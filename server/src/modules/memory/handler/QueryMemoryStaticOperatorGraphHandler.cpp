@@ -25,9 +25,9 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
     if (!request.params.isCompare) {
-        if (!database->QueryStaticOperatorGraph(request.params, response.data)) {
+        if (!database || !database->QueryStaticOperatorGraph(request.params, response.data)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph data.");
             return false;
         }
@@ -55,7 +55,7 @@ bool QueryMemoryStaticOperatorGraphHandler::GetRespectiveData(std::shared_ptr<Vi
         errorMsg = "Failed to get baseline id.";
         return false;
     }
-    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(baselineId);
     if (!databaseBaseline) {
         errorMsg = "Failed to connect to database of baseline.";
         return false;

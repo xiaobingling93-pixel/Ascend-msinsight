@@ -24,10 +24,10 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
     if (!request.params.isCompare) {
         std::vector<MemoryComponent> componentDetails;
-        if (!database->QueryComponentDetail(request.params, response.columnAttr, componentDetails) ||
+        if (!database || !database->QueryComponentDetail(request.params, response.columnAttr, componentDetails) ||
         !database->QueryComponentsTotalNum(request.params, response.totalNum)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory component data.");
             return false;
@@ -60,7 +60,7 @@ bool QueryMemoryComponentHandler::GetRespectiveData(std::shared_ptr<VirtualMemor
         errorMsg = "Failed to get baseline id.";
         return false;
     }
-    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(baselineId);
     if (!databaseBaseline) {
         errorMsg = "Failed to connect to database of baseline.";
         return false;

@@ -21,9 +21,9 @@ bool QueryMemoryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Req
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
     if (!request.params.isCompare) {
-        if (!database->QueryOperatorSize(response.size.minSize, response.size.maxSize)) {
+        if (!database || !database->QueryOperatorSize(response.size.minSize, response.size.maxSize)) {
             SendResponse(std::move(responsePtr), false, "Failed to query operator size data.");
             return false;
         }
@@ -54,7 +54,7 @@ bool QueryMemoryOperatorSizeHandler::GetRespectiveData(std::shared_ptr<VirtualMe
         errorMsg = "Failed to get baseline id.";
         return false;
     }
-    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(baselineId);
     if (!databaseBaseline) {
         errorMsg = "Failed to connect to database of baseline.";
         return false;

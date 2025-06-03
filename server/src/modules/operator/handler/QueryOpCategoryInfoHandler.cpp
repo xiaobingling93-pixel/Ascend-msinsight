@@ -25,8 +25,8 @@ namespace Dic::Module::Operator {
             return false;
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
-        if (!database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
+        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        if (!database || !database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
             ServerLog::Error("[Operator]Failed to query Category Info by rankId.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));

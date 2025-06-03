@@ -18,7 +18,7 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
     CommunicationKernelResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
 
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
         if (database == nullptr) {

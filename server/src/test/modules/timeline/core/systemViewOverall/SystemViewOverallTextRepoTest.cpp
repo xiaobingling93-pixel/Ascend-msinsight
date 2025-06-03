@@ -38,10 +38,10 @@ public:
         WaitParseEnd({"0"});
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "1", "");
         WaitParseEnd({"1"});
-        std::string testDataPath0 = currPath + R"(/test/data/pytorch/text/level1)";
+        std::string testDataPath0 = currPath + R"(/test/data/pytorch/text/level1/rank0_ascend_pt)";
         KernelParse::Instance().Parse({testDataPath0});
         WaitParseEnd({KERNEL_PREFIX + "0"});
-        std::string testDataPathWithoutPmu = currPath + R"(/test/data/pytorch/text/level0)";
+        std::string testDataPathWithoutPmu = currPath + R"(/test/data/pytorch/text/level0/rank1_ascend_pt)";
         KernelParse::Instance().Parse({testDataPathWithoutPmu});
         WaitParseEnd({KERNEL_PREFIX + "1"});
     }
@@ -83,7 +83,7 @@ public:
 
 TEST_F(SystemViewOverallTextRepoTest, QueryOverlapAnalysisDataForOverallMetricTest)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {
@@ -108,7 +108,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryOverlapAnalysisDataForOverallMetricTe
 // System View Overall: 查询Computing拆解所需数据（有PMU数据，能正常查询）
 TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWithPmu)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {
@@ -151,7 +151,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
 //  System View Overall: 查询Computing拆解所需数据（无PMU数据，无法进行Computing拆解）
 TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWithoutPmu)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("1");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("1");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {
@@ -170,7 +170,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
 
 TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOverlapOverallInfosTestWhenSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {
@@ -195,7 +195,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOverlapOverallInfosTestW
 
 TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOpsTimeDataByGroupNameTestWhenSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType());
     if (repoPtr == nullptr) {

@@ -11,7 +11,7 @@ namespace Dic::Module::Advisor {
 using namespace Dic::Server;
 bool AclnnOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AclnnOperatorResBody &resBody)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection in Aclnn op advice. fileId:", params.rankId);
         return false;

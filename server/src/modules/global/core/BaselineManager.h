@@ -22,7 +22,7 @@ public:
     BaselineManager(BaselineManager &&) = delete;
     BaselineManager &operator=(BaselineManager &&) = delete;
     std::string GetBaselineId();
-    bool IsBaselineId(const std::string &rankId);
+    bool IsBaselineRankId(const std::string &rankId);
     void SetBaselineInfo(const BaselineInfo &baselineInfo);
     std::string GetCompareClusterPath()
     {

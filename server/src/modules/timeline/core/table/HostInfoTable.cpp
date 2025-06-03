@@ -7,7 +7,7 @@ namespace Dic::Module::Timeline {
 std::string HostInfoTable::GetHost(const std::string &fileId)
 {
     std::string host;
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (database == nullptr) {
         ClearThreadLocal();
         return host;

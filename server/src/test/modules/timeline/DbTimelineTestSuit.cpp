@@ -14,7 +14,7 @@ class DbTimelineTestSuit : FullDbTestSuit {
 
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithFuzzyMatch)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     uint32_t expectCount = 1;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "hcom";
@@ -26,7 +26,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithFuzzyMatch)
 
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseMatch)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     uint32_t expectCount = 0;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "Hcom";
@@ -39,7 +39,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseMatch)
 
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithExactMatch)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     uint32_t expectCount = 3;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "aclnnInplaceadd";
@@ -52,7 +52,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithExactMatch)
 
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseAndExactMatch)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     uint32_t expectCount = 0;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "aclnnInplaceadd";
@@ -67,7 +67,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseAndExactMatch)
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceName)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::SearchSliceParams params;
     params.searchContent = "hcom";
     int index = 0;
@@ -91,8 +91,8 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceName)
 TEST_F(FullDbTestSuit, FullDb_of_QueryRankIds)
 {
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
-
+        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb"));
+    EXPECT_NE(database, nullptr);
     DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
     auto rankIds = database->QueryRankId();
     EXPECT_EQ(rankIds.size(), 8); // size = 8
@@ -101,7 +101,7 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryRankIds)
 TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::UnitThreadTracesSummaryBody body;
 
     Dic::Protocol::UnitThreadTracesSummaryParams params;
@@ -140,7 +140,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
 TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::UnitThreadsBody body;
 
     Dic::Protocol::UnitThreadsParams params;
@@ -185,7 +185,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
 
 TEST_F(FullDbTestSuit, FullDb_of_UnitMetaData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     auto metaData = std::vector<std::unique_ptr<Protocol::UnitTrack>>();
     database->QueryUnitsMetadata("2", metaData);
@@ -197,7 +197,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitMetaData)
 TEST_F(FullDbTestSuit, FullDb_of_HostMetaData)
 {
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
+        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb"));
 
     auto metaData = std::vector<std::unique_ptr<Protocol::UnitTrack>>();
     database->QueryHostMetadata(metaData);
@@ -219,7 +219,7 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData)
     Dic::Protocol::KernelDetailsBody responseBody;
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
+        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb"));
 
     database->QueryKernelDetailData(requestParams, responseBody, minTimestamp);
 
@@ -241,7 +241,7 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData_WithInvalidKey)
     Dic::Protocol::KernelDetailsBody responseBody;
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDbNew"));
+        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDbNew"));
 
     auto result = database->QueryKernelDetailData(requestParams, responseBody, minTimestamp);
 
@@ -262,7 +262,7 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData_QueryHCCLType)
     Dic::Protocol::KernelDetailsBody responseBody;
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDbNew"));
+        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDbNew"));
 
     database->QueryKernelDetailData(requestParams, responseBody, minTimestamp);
 
@@ -273,7 +273,7 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData_QueryHCCLType)
 TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Dic::Protocol::UnitCounterParams params;
     params.startTime = 0;
@@ -311,7 +311,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
 TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcess)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::EventsViewParams params;
     params.currentPage = CUR_PAGE_1;
     params.metaType = "CANN_API";
@@ -348,7 +348,7 @@ TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcess)
 TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThread)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::EventsViewParams params;
     params.currentPage = CUR_PAGE_1;
     params.metaType = "CANN_API";
@@ -385,7 +385,7 @@ TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThread)
 TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANN)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::EventsViewParams params;
     params.currentPage = CUR_PAGE_1;
     params.metaType = "CANN_API";
@@ -422,7 +422,7 @@ TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANN)
 TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANNAcl)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::EventsViewParams params;
     params.currentPage = CUR_PAGE_1;
     params.metaType = "CANN_API";
@@ -460,7 +460,7 @@ TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANNAcl)
 
 TEST_F(FullDbTestSuit, QueryComputeStatisticsData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Protocol::SummaryStatisticParams requestParams;
     Protocol::SummaryStatisticsBody responseBody;
@@ -584,7 +584,7 @@ TEST_F(FullDbTestSuit, QueryHardwareSliceByNameListSuccess)
 
 TEST_F(FullDbTestSuit, QueryUnitFLows)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Protocol::UnitFlowsParams requestParams;
     requestParams.metaType = "Ascend Hardware";
@@ -600,7 +600,7 @@ TEST_F(FullDbTestSuit, QueryUnitFLows)
 
 TEST_F(FullDbTestSuit, QueryTotalKernel)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Protocol::KernelDetailsParams requestParams;
     requestParams.coreType = "";
@@ -613,7 +613,7 @@ TEST_F(FullDbTestSuit, QueryTotalKernel)
 
 TEST_F(FullDbTestSuit, QueryKernelDepthAndThread)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Protocol::KernelParams params;
     params.name = "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike";
@@ -629,7 +629,7 @@ TEST_F(FullDbTestSuit, QueryKernelDepthAndThread)
 
 TEST_F(FullDbTestSuit, QueryCommunicationKernelInfoDbSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Protocol::KernelParams params;
     Dic::Protocol::CommunicationKernelBody responseBody;
@@ -640,7 +640,7 @@ TEST_F(FullDbTestSuit, QueryCommunicationKernelInfoDbSuccess)
 
 TEST_F(FullDbTestSuit, SearchAllSlicesDetails)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Protocol::SearchAllSliceParams params;
     params.current = 1;
@@ -659,7 +659,7 @@ TEST_F(FullDbTestSuit, SearchAllSlicesDetails)
 
 TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenHccl)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.tid = {"0"};
@@ -678,7 +678,7 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenHccl)
 
 TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenOverlap)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.tid = {"0"};
@@ -698,7 +698,7 @@ TEST_F(FullDbTestSuit, QueryByteAlignmentAnalyzerRawDataTest)
     std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> largeOpInfo;
     std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> smallOpInfo;
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDbNew"));
+        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDbNew"));
     bool result = database->QueryByteAlignmentAnalyzerRawData(largeOpInfo, smallOpInfo);
     ASSERT_TRUE(result);
     ASSERT_EQ(largeOpInfo.size(), 4); // 4

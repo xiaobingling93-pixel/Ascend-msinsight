@@ -14,7 +14,7 @@ void PythonApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slice
         ServerLog::Warn("python api query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("python api open database is failed");
         return;
@@ -49,7 +49,7 @@ void PythonApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector
         return;
     }
     std::string sql = "SELECT ROWID as id from " + TABLE_API + " where globalTid = ? and type = 50003";
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("python api open database is failed");
         return;
@@ -80,7 +80,7 @@ uint64_t PythonApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &slic
         return count;
     }
     std::string sql = "SELECT count(*) as count from " + TABLE_API + " where globalTid = ? and type = 50003";
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("python api open database is failed");
         return 0;
@@ -120,7 +120,7 @@ void PythonApiRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const s
         TABLE_API + " where 1 = 1 and id in (";
     std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
     sql += sliceidvecStr + ");";
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("python api open database is failed");
         return;

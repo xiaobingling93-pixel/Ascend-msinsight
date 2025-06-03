@@ -149,7 +149,7 @@ std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vecto
         if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
             ServerLog::Error("Failed to create connection pool. ", dbFiles[0]);
         }
-        auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(file);
+        auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(file);
         if (db == nullptr) {
             ServerLog::Error("Failed to get connection.");
             continue;

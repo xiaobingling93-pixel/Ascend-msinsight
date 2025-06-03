@@ -25,17 +25,18 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+        std::string dbPath = StringUtil::StrJoin(currPath, dbPath3, "ascend_pytorch_profiler.db");
         auto memoryDatabase =
             std::dynamic_pointer_cast<DbMemoryDataBase, Dic::Module::Memory::VirtualMemoryDataBase>(
-                DataBaseManager::Instance().GetMemoryDatabase("0"));
-        memoryDatabase->OpenDb(currPath + dbPath3 + "ascend_pytorch_profiler.db", false);
+                DataBaseManager::Instance().CreateMemoryDataBase("0", dbPath));
+        memoryDatabase->OpenDb(dbPath, false);
         // minTime = 1734230739709945000, maxTime = 1734230739709945000
         TraceTime::Instance().UpdateTime(1734230739709945000, 1734230739709945000);
     }
 
     static void TearDownTestSuite()
     {
-        auto memoryDatabase = DataBaseManager::Instance().GetMemoryDatabase("0");
+        auto memoryDatabase = DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
         memoryDatabase->CloseDb();
         DataBaseManager::Instance().Clear();
     }
@@ -43,7 +44,7 @@ public:
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryComponentData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryComponentParams requestParams;
     requestParams.rankId = "0";
     requestParams.currentPage = 0;
@@ -60,7 +61,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryComponentData)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireComponentTable)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
     std::vector<Dic::Protocol::MemoryComponent> responseBody;
     bool result = database->QueryEntireComponentTable(responseBody, offsetTime);
@@ -72,7 +73,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireComponentTable)
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorData)
 {
     DataBaseManager::Instance().SetDataType(DataType::DB);
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -94,7 +95,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorData)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithTime)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -121,7 +122,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTime)
     const uint64_t timeStamp = 1734230739778225840;
     const double secondToMillisecond = 1000.0;
     const int precision = 3;
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -151,7 +152,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTimeOnlyShowWit
     const uint64_t timeStamp = 1734230739778225840;
     const double secondToMillisecond = 1000.0;
     const int precision = 3;
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -176,7 +177,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTimeOnlyShowWit
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithSize)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -198,7 +199,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithSize)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptZero)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
@@ -220,7 +221,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptZero)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptSeveral)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
@@ -242,7 +243,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptSeveral)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryComponentsTotalNum)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryComponentParams requestParams;
     requestParams.rankId = "0";
     int64_t totalNum;
@@ -254,7 +255,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryComponentsTotalNum)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNum)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -272,7 +273,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNum)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithSize)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -290,7 +291,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithSize)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithTime)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -313,7 +314,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithLimitedTime)
     const uint64_t timeStamp = 1734230739778225840;
     const double secondToMillisecond = 1000.0;
     const int precision = 3;
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -332,7 +333,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithLimitedTime)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectZero)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.searchName = "aten::empty_stridedss";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
@@ -349,7 +350,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectZero)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectSeveral)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
@@ -367,7 +368,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectSeveral)
 TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireOperatorTable)
 {
     DataBaseManager::Instance().SetDataType(DataType::DB);
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
     std::vector<Dic::Protocol::MemoryOperator> opDetails;
     bool result = database->QueryEntireOperatorTable(opDetails, offsetTime);
@@ -378,7 +379,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireOperatorTable)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryResourceTypeData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     std::string type;
     bool result = database->QueryMemoryResourceType(type);
     std::string expectType = "Pytorch";
@@ -388,7 +389,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryResourceTypeData)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorGraph)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::StaticOperatorGraphParams requestParams;
     requestParams.rankId = "0";
     requestParams.graphId = "0";
@@ -403,7 +404,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorGraph)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorList)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::StaticOperatorListParams requestParams;
     requestParams.rankId = "0";
     requestParams.graphId = "0";
@@ -425,7 +426,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorList)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorsTotalNum)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::StaticOperatorListParams requestParams;
     requestParams.rankId = "0";
     requestParams.graphId = "0";
@@ -444,7 +445,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorsTotalNum)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryEntireStaticOperatorTable)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::StaticOperatorListParams requestParams;
     requestParams.rankId = "0";
     requestParams.graphId = "0";
@@ -463,7 +464,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryEntireStaticOperatorTable)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorSize)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::StaticOperatorSizeParams requestParams;
     requestParams.rankId = "0";
     requestParams.graphId = "";
@@ -475,7 +476,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorSize)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryTypeDataDynamic)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     std::string type;
     std::vector<std::string> graphId;
     bool result = database->QueryMemoryType(type, graphId);
@@ -487,7 +488,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryTypeDataDynamic)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
@@ -501,7 +502,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewData)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByStreamExpectSeveral)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
@@ -515,7 +516,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByStreamExpectSeveral)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByComponentExpectSeveral)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_COMPONENT_GROUP;
@@ -529,7 +530,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByComponentExpectSeveral)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorSizeData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     double min;
     double max;
     auto result = database->QueryOperatorSize(min, max);

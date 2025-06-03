@@ -24,8 +24,9 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+        std::string fullDbPath = StringUtil::StrJoin(currPath, dbPath3, "leaks_dump_2025.dat");
         auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-        ASSERT_TRUE(memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_2025.dat", false));
+        ASSERT_TRUE(memoryDatabase->OpenDb(fullDbPath, false));
     }
     static void TearDownTestSuite()
     {

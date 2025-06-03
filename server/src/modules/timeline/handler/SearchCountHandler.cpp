@@ -33,7 +33,7 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     } else if (!request.params.metadataList.empty()) {
         SearchResult searchResult;
         searchResult.rankId = request.params.rankId;
-        auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
         if (database != nullptr) {
             searchResult.count = database->SearchSliceNameCount(request.params, trackQueryVec);
         }
@@ -42,7 +42,7 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     } else {
         SearchResult searchResult;
         searchResult.rankId = request.params.rankId;
-        auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
         if (database != nullptr) {
             searchResult.count = database->SearchSliceNameCount(request.params, {});
         }
@@ -62,7 +62,7 @@ void SearchCountHandler::QueryHostNameCount(const SearchCountRequest &request, S
         ServerLog::Info("request.params.rankId is: ", fileId);
         SearchResult searchResult;
         searchResult.rankId = fileId;
-        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
         if (database != nullptr) {
             searchResult.count = database->SearchSliceNameCount(request.params, trackQueryVec);
         }

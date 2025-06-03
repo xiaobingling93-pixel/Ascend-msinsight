@@ -18,7 +18,7 @@ bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query kernel detail failed to get connection. ");
         session.OnResponse(std::move(responsePtr));

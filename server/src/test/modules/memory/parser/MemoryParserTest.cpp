@@ -37,7 +37,7 @@ TEST_F(MemoryParserTest, OperatorParseNormalTest)
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
     memoryDatabase->OpenDb(dbFilePath, false);
     memoryDatabase->CreateTable();
     bool result = MemoryParse::Instance().OperatorParse(filePath, fileId);
@@ -73,7 +73,7 @@ TEST_F(MemoryParserTest, OperatorParseEmptyLineTest)
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
     memoryDatabase->OpenDb(dbFilePath, false);
     memoryDatabase->CreateTable();
     bool result = MemoryParse::Instance().OperatorParse(filePath, fileId);
@@ -100,7 +100,7 @@ TEST_F(MemoryParserTest, RecordParseNormalTest)
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
     memoryDatabase->OpenDb(dbFilePath, false);
     memoryDatabase->CreateTable();
     bool result = MemoryParse::Instance().RecordToParse(filePath, fileId);
@@ -133,7 +133,7 @@ TEST_F(MemoryParserTest, RecordParseEmptyLineTest)
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
     memoryDatabase->OpenDb(dbFilePath, false);
     memoryDatabase->CreateTable();
     bool result = MemoryParse::Instance().RecordToParse(filePath, fileId);
@@ -165,7 +165,7 @@ TEST_F(MemoryParserTest, StaticOpParseNormalTest)
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
     memoryDatabase->OpenDb(dbFilePath, false);
     memoryDatabase->CreateTable();
     bool result = MemoryParse::Instance().StaticOpParse(filePath, fileId);
@@ -198,7 +198,7 @@ TEST_F(MemoryParserTest, StaticOpParseEmptyLineTest)
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        DataBaseManager::Instance().GetMemoryDatabase(fileId));
+        DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
     memoryDatabase->OpenDb(dbFilePath, false);
     memoryDatabase->CreateTable();
     bool result = MemoryParse::Instance().StaticOpParse(filePath, fileId);

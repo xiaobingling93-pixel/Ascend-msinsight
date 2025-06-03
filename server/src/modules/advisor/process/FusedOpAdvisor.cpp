@@ -11,7 +11,7 @@ namespace Dic::Module::Advisor {
 using namespace Dic::Server;
 bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::OperatorFusionResBody &resBody)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for Fused Operator advice. fileId:", params.rankId);
         return false;

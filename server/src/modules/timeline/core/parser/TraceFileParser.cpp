@@ -69,7 +69,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     if (!CheckInitParser(fileId)) {
         return false;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
@@ -81,7 +81,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     }
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
     if ((database->HasFinishedParseLastTime(statusInfo) &&
-        !Global::BaselineManager::Instance().IsBaselineId(fileId)) ||
+        !Global::BaselineManager::Instance().IsBaselineRankId(fileId)) ||
         StringUtil::EndWith(filePathArr[0], "profiler.db")) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
@@ -139,7 +139,7 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
         ServerLog::Info("Parse task skip this file. ID:", fileId);
         return;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Warn("Failed to get connection when parse timeline json,ID: ", fileId);
         return;
@@ -181,7 +181,7 @@ void TraceFileParser::EndParseTask(const std::string &rankId, const std::vector<
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. ID:", rankId,
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    auto db = DataBaseManager::Instance().GetTraceDatabase(rankId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", rankId);
         ParserStatusManager::Instance().SetFinishStatus(rankId);
@@ -257,8 +257,8 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
 {
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
-    std::string path = DataBaseManager::Instance().GetDbPath(fileId);
-    DataBaseManager::Instance().ReleaseDatabase(fileId);
+    std::string path = DataBaseManager::Instance().GetDbPathByRankId(fileId);
+    DataBaseManager::Instance().ReleaseDatabaseByRankId(fileId);
     if (!path.empty()) {
         FileUtil::RemoveFileExDb(path);
     }

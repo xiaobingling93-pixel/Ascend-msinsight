@@ -31,7 +31,7 @@ public:
     {
         SourceFileParser::Instance().Reset();
         DataBaseManager::Instance().Clear();
-        DataBaseManager::Instance().ReleaseDatabase(dbPath);
+        DataBaseManager::Instance().ReleaseDatabaseByRankId(dbPath);
         if (std::remove(dbPath.c_str()) == 0) {
             ServerLog::Info("Remove database file success.");
         } else {

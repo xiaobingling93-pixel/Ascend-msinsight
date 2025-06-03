@@ -160,7 +160,7 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
     event->body.unit.metadata.cardId = rankId;
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
-    auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", rankId);
         return;
@@ -210,7 +210,7 @@ bool ProjectParserBase::IsNeedReset(const ImportActionRequest &request)
 
 void ProjectParserBase::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData)
 {
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         return;
@@ -247,8 +247,8 @@ std::string ProjectParserBase::GetFileId(const std::string &filePath, const std:
     std::string result = fileId;
     std::string parentDir = FileUtil::GetParentPath(filePath);
     std::string name = FileUtil::GetFileName(filePath);
-    while (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, result)) {
-        auto database = DataBaseManager::Instance().GetTraceDatabase(result);
+    while (DataBaseManager::Instance().HasRankId(DatabaseType::TRACE, result)) {
+        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(result);
         if (database == nullptr) {
             continue;
         }

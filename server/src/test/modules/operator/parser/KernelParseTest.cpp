@@ -109,11 +109,13 @@ TEST_F(KernelParseTest, GetMsProfSliceKernelFilesSuccess)
 {
     std::vector<std::string> paths = {testDataPath + R"(msprof/slice)"};
     auto result = KernelParse::GetKernelFiles(paths);
-    EXPECT_EQ(result.size(), 1);
+    EXPECT_EQ(result.size(), 2); // 2
     EXPECT_EQ(result.count("slice"), 1);
-    EXPECT_EQ(result["slice"].size(), 2); // 2
-    EXPECT_EQ(result["slice"].at(0), paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_1_20230919172305.csv)");
-    EXPECT_EQ(result["slice"].at(1), paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_0_20230919172304.csv)");
+    EXPECT_EQ(result["slice"].size(), 1); // 1
+    EXPECT_EQ(result["slice"].at(0),
+              paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_1_20230919172305.csv)");
+    EXPECT_EQ(result["slice_2"].at(0),
+              paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_0_20230919172304.csv)");
 }
 
 TEST_F(KernelParseTest, CheckHeaderFieldAndFilterParseFuncFail)

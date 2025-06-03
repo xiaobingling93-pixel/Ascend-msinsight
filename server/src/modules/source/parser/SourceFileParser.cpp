@@ -61,7 +61,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     }
 
     // 获取目标数据对象的应用，下面对数据进行改动时会影响
-    auto &curDataBlockMap = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
+    auto &curDataBlockMap = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
         baselineDataBlockMap : dataBlockMap;
     auto fileSize = FileUtil::GetFileSize(selectedFile.c_str());
     if (fileSize <= 0) {
@@ -151,7 +151,7 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         ServerLog::Info("Pre task skip this file cause set running status failed: ", fileId);
         return true;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get database connection for: ", fileId);
         return false;
@@ -162,9 +162,9 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         return false;
     }
     auto &instance = SourceFileParser::Instance();
-    auto curDataBlockMap = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
+    auto curDataBlockMap = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
         instance.baselineDataBlockMap :  instance.dataBlockMap;
-    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
+    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
         instance.baselineFilePath : instance.filePath;
     std::vector<Position> &traceFilePos = curDataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
     std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::in | std::ios::binary);
@@ -231,7 +231,7 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
         future.wait();
     }
     ServerLog::Info("Parse completed. ID:", fileId);
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get database connection in end parse task. fileId:", fileId);
         return;
@@ -256,9 +256,9 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
     }
     ServerLog::Info("Start parse timeline from bin file:", fileId);
     auto &instance = SourceFileParser::Instance();
-    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineId(fileId) ? instance.baselineFilePath :
-        instance.filePath;
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ? instance.baselineFilePath :
+                              instance.filePath;
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
     if (db == nullptr) {
         ServerLog::Warn("Failed to get connection when parse bin json,ID: ", fileId);
         return;

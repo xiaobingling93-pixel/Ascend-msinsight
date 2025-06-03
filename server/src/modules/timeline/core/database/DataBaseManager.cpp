@@ -21,17 +21,17 @@ DataBaseManager &DataBaseManager::Instance()
     return instance;
 }
 
-bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::string &dbPath)
+bool DataBaseManager::CreatConnectionPool(const std::string &rankId, const std::string &dbPath)
 {
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::recursive_mutex> lock(mutex);
     databasePathSet.emplace(dbPath);
-    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
-    std::map<std::string, std::shared_ptr<ConnectionPool>> &curTraceDbMap =
-        isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
+    bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
     DataType curDataType = isBaseline ? baselineType : dataType;
-    if (curTraceDbMap.count(fileId) == 0) {
+    std::string fileId = dbPath;
+    if (traceDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
+        SetRankIdFileIdMapping(rankId, fileId, isBaseline);
         std::shared_ptr<ConnectionPool> conn;
         switch (curDataType) {
             case DataType::DB:
@@ -45,29 +45,37 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
                 break;
         }
         conn->SetMaxActiveCount(CPU_CORE_COUNT);
-        curTraceDbMap.emplace(fileId, std::move(conn));
+        traceDatabaseMap.emplace(fileId, std::move(conn));
         return true;
     }
-    ServerLog::Error("The file id has a connection. id:", fileId, ", old path:", curTraceDbMap.at(fileId)->GetDbPath(),
-        ", new path:", dbPath);
+    ServerLog::Error("The file id has a connection. id:",
+                     fileId,
+                     ", old path:",
+                     traceDatabaseMap.at(fileId)->GetDbPath(),
+                     ", new path:",
+                     dbPath);
     return false;
 }
 
-std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
+std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseByRankId(const std::string &rankId)
+{
+    std::string fileId = GetFileIdByRankId(rankId);
+    return GetTraceDatabaseByFileId(fileId);
+}
+
+std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseByFileId(const std::string &fileId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
-    std::map<std::string, std::shared_ptr<ConnectionPool>> &curTraceDbMap =
-        isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
-    auto it = curTraceDbMap.find(fileId);
-    if (it == curTraceDbMap.end() && dbFilePathMap.count(fileId) != 0) {
-        it = curTraceDbMap.find(dbFilePathMap[fileId]);
+    auto it = traceDatabaseMap.find(fileId);
+    if (it == traceDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
+        it = traceDatabaseMap.find(dbFilePathMap[fileId]);
     }
-    if (it == curTraceDbMap.end()) {
+    if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;
     }
-    return it->second->GetConnection();
+    auto ptr = it->second->GetConnection();
+    return ptr;
 }
 
 std::string DataBaseManager::GetRankIdByFileId(const std::string &fileId)
@@ -91,71 +99,103 @@ std::string DataBaseManager::GetRankIdByFileId(const std::string &fileId)
     return hostRankVec[1];
 }
 
-std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDatabase(const std::string &inputId)
+std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDatabaseByRankId(const std::string &rankId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
-    // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
-    std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> &curSummaryDbMap =
-        isBaseline ? summaryBaselineDatabaseMap : summaryDatabaseMap;
-    DataType curDataType = isBaseline ? baselineType : dataType;
-    auto func = [&curSummaryDbMap, this, &curDataType](const std::string &inputId) ->
-        std::shared_ptr<Summary::VirtualSummaryDataBase> {
-        if (curSummaryDbMap.count(inputId) == 0) {
-            std::recursive_mutex &dbMutex = GetDbMutex(inputId);
-            if (curDataType == DataType::TEXT) {
-                curSummaryDbMap.emplace(inputId, std::make_shared<Summary::TextSummaryDataBase>(dbMutex));
-            } else if (curDataType == DataType::DB) {
-                curSummaryDbMap.emplace(inputId, std::make_shared<FullDb::DbSummaryDataBase>(dbMutex));
-            }
-        }
-        return curSummaryDbMap[inputId];
-    };
-    std::shared_ptr<Summary::VirtualSummaryDataBase> db;
     std::vector<std::string> ids;
-    for (const auto &hostInfo : host2DbPath) {
-        auto host = StringUtil::ReplaceFirst(hostInfo.first, "Host", "");
-        if (!StringUtil::StartWith(inputId, host)) {
-            ids.push_back(StringUtil::ReplaceFirst(hostInfo.first, "Host", inputId));
-        }
-    }
-    for (const auto &id : ids) {
-        db = func(id);
-        if (db != nullptr) {
-            break;
-        }
-    }
-    if (db == nullptr) {
-        db = func(inputId);
-    }
-    return db;
+    std::shared_ptr<Summary::VirtualSummaryDataBase> db = nullptr;
+    std::string fileId = GetFileIdByRankId(rankId);
+    return GetSummaryDataBaseByFileId(fileId);
 }
 
-std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::GetMemoryDatabase(const std::string &inputId)
+std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDataBaseByFileId(const std::string &fileId)
 {
-    std::unique_lock<std::recursive_mutex> lock(mutex);
-    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
-    // 获取当前map，如果fileId包含baseline字样则从memoryBaselineDatabaseMap中获取，否则从memoryDatabaseMap获取
-    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap =
-        isBaseline ? memoryBaselineDatabaseMap : memoryDatabaseMap;
+    std::unique_lock lock(mutex);
+    auto it = summaryDatabaseMap.find(fileId);
+    if (it == summaryDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
+        it = summaryDatabaseMap.find(dbFilePathMap[fileId]);
+    }
+    if (it == summaryDatabaseMap.end()) {
+        ServerLog::Error("Can't find summary database. FileId:", fileId);
+        return nullptr;
+    }
+    return it->second;
+}
+
+std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::CreateSummaryDatabase(const std::string &rankId,
+                                                                                        const std::string &dbPath)
+{
+    std::unique_lock lock(mutex);
+    databasePathSet.emplace(dbPath);
+    bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
     DataType curDataType = isBaseline ? baselineType : dataType;
-    std::string fileId = inputId;
-    if (curMemoryDbMap.count(fileId) == 0) {
+    std::string fileId = dbPath;
+    if (summaryDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
+        SetRankIdFileIdMapping(rankId, fileId, isBaseline);
+        if (curDataType == DataType::TEXT) {
+            summaryDatabaseMap.emplace(fileId, std::make_shared<Summary::TextSummaryDataBase>(dbMutex));
+        } else if (curDataType == DataType::DB) {
+            summaryDatabaseMap.emplace(fileId, std::make_shared<FullDb::DbSummaryDataBase>(dbMutex));
+        }
+    }
+    return summaryDatabaseMap[fileId];
+}
+
+std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::CreateMemoryDataBase(const std::string &rankId,
+                                                                                     const std::string &dbPath)
+{
+    std::unique_lock lock(mutex);
+    databasePathSet.emplace(dbPath);
+    bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
+    DataType curDataType = isBaseline ? baselineType : dataType;
+    std::string fileId = dbPath;
+    if (memoryDatabaseMap.count(fileId) == 0) {
+        std::recursive_mutex &dbMutex = GetDbMutex(fileId);
+        SetRankIdFileIdMapping(rankId, fileId, isBaseline);
         switch (curDataType) {
             case DataType::DB:
-                curMemoryDbMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
+                memoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
                 break;
             case DataType::TEXT:
             default:
-                curMemoryDbMap.emplace(fileId, std::make_unique<Memory::TextMemoryDataBase>(dbMutex));
+                memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::TextMemoryDataBase>(dbMutex));
                 break;
         }
     }
-    return curMemoryDbMap[fileId];
+    auto res = memoryDatabaseMap[fileId];
+    res->SetDbPath(dbPath);
+    return memoryDatabaseMap[fileId];
 }
 
-void DataBaseManager::ReleaseDatabase(const std::string &fileId)
+std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::GetMemoryDatabaseByRankId(const std::string &rankId)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string fileId = GetFileIdByRankId(rankId);
+    return GetMemoryDatabaseByFileId(fileId);
+}
+
+std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::GetMemoryDatabaseByFileId(const std::string &fileId)
+{
+    std::unique_lock lock(mutex);
+    auto it = memoryDatabaseMap.find(fileId);
+    if (it == memoryDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
+        it = memoryDatabaseMap.find(dbFilePathMap[fileId]);
+    }
+    if (it == memoryDatabaseMap.end()) {
+        ServerLog::Error("Can't find memory database. FileId:", fileId);
+        return nullptr;
+    }
+    return it->second;
+}
+
+void DataBaseManager::ReleaseDatabaseByRankId(const std::string &rankId)
+{
+    std::string fileId = GetFileIdByRankId(rankId);
+    return ReleaseDatabaseByFileId(fileId);
+}
+
+void DataBaseManager::ReleaseDatabaseByFileId(const std::string &fileId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     auto traceDataBase = traceDatabaseMap.find(fileId);
@@ -172,9 +212,10 @@ void DataBaseManager::ReleaseDatabase(const std::string &fileId)
     }
 }
 
-bool DataBaseManager::HasFileId(DatabaseType type, const std::string &fileId)
+bool DataBaseManager::HasRankId(DatabaseType type, const std::string &rankId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string fileId = GetFileIdByRankId(rankId);
     bool result = false;
     switch (type) {
         case DatabaseType::TRACE:
@@ -324,25 +365,23 @@ std::vector<std::shared_ptr<VirtualClusterDatabase>> DataBaseManager::GetAllClus
     return res;
 }
 
-std::vector<std::string> DataBaseManager::GetAllFileId()
+std::vector<std::string> DataBaseManager::GetAllRankId()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::vector<std::string> traceFileId;
     for (auto &traceDatabase : traceDatabaseMap) {
-        traceFileId.emplace_back(traceDatabase.first);
+        traceFileId.emplace_back(fileIdToRankIdMap[traceDatabase.first]);
     }
     return traceFileId;
 }
 
-std::string DataBaseManager::GetDbPath(const std::string &fileId)
+std::string DataBaseManager::GetDbPathByRankId(const std::string &rankId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string fileId = GetFileIdByRankId(rankId);
     auto it = traceDatabaseMap.find(fileId);
-    if (it == traceDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
-        it = traceDatabaseMap.find(dbFilePathMap[fileId]);
-    }
     if (it == traceDatabaseMap.end()) {
-        ServerLog::Error("Can't find db path for rank ", fileId);
+        ServerLog::Error("Can't find db path for rank ", rankId);
         return "";
     }
     return it->second->GetDbPath();
@@ -356,7 +395,7 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseWithOutHo
     }
     std::shared_ptr<VirtualTraceDatabase> database;
     for (const auto &id : ids) {
-        database = GetTraceDatabase(id);
+        database = GetTraceDatabaseByRankId(id);
         if (database != nullptr) {
             break;
         }
@@ -385,7 +424,7 @@ FileType DataBaseManager::GetFileType()
 
 FileType DataBaseManager::GetFileTypeByRankId(const std::string &rankId)
 {
-    if (!rankId.empty() && Global::BaselineManager::Instance().IsBaselineId(rankId)) {
+    if (!rankId.empty() && Global::BaselineManager::Instance().IsBaselineRankId(rankId)) {
         return baselineFileType;
     }
     return fileType;
@@ -408,25 +447,18 @@ void DataBaseManager::SetBaselineDataType(DataType type)
     baselineType = type;
 }
 
-void DataBaseManager::SetDbPathMapping(const std::string &fileId, const std::string &filePath,
-    const std::string &hostId)
+void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &dbPath,
+                                       const std::string &hostId)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex);
-    dbFilePathMap[fileId] = filePath;
-    host2DbPath[hostId].push_back(filePath);
+    rankId2FileIdMap[rankId] = dbPath;
+    dbFilePathMap[rankId] = dbPath;
+    host2DbPath[hostId].push_back(dbPath);
 }
 
 bool DataBaseManager::ResetBaseline()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex);
-    for (const auto &item : traceBaselineDatabaseMap) {
-        if (item.second != nullptr) {
-            std::string databasePath = item.second->GetDbPath();
-            databasePathSet.erase(databasePath);
-            item.second->Stop();
-        }
-    }
-    traceBaselineDatabaseMap.clear();
     for (const auto &item : memoryBaselineDatabaseMap) {
         if (item.second != nullptr) {
             item.second->CloseDb();
@@ -478,6 +510,21 @@ std::string DataBaseManager::GetAnyTraceDatabaseId()
         return "";
     }
     return traceDatabaseMap.begin()->first;
+}
+void DataBaseManager::SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId, bool isBaseLine)
+{
+    std::string realRankId = isBaseLine ? StringUtil::StrJoin("Baseline", rankId) : rankId;
+    rankId2FileIdMap[realRankId] = fileId;
+    fileIdToRankIdMap[fileId] = realRankId;
+}
+std::string DataBaseManager::GetFileIdByRankId(const std::string &rankId) const
+{
+    bool isBaseline = BaselineManager::Instance().IsBaselineRankId(rankId);
+    std::string realRankId = isBaseline ? StringUtil::StrJoin("Baseline", rankId) : rankId;
+    if (rankId2FileIdMap.find(realRankId) == rankId2FileIdMap.end()) {
+        return "";
+    }
+    return rankId2FileIdMap.at(realRankId);
 }
 } // end of namespace Timeline
 } // end of namespace Module
