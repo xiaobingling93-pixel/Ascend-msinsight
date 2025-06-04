@@ -370,6 +370,52 @@ struct LeaksMemoryAllocationParams {
     }
 };
 
+struct LeaksMemoryDetailParams {
+    uint64_t timestamp;
+    bool relativeTime;
+    std::string deviceId;
+
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(deviceId, errorMsg)) {
+            errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
+        return true;
+    }
+};
+
+struct LeaksMemoryThreadPythonTraceParams {
+    uint64_t startTimestamp;
+    uint64_t endTimestamp;
+    bool relativeTime;
+    std::string deviceId;
+    uint64_t threadId;
+
+    LeaksMemoryThreadPythonTraceParams() : startTimestamp(0), endTimestamp(0), relativeTime(false), threadId(0) {}
+
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(deviceId, errorMsg)) {
+            errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
+        if (startTimestamp > endTimestamp) {
+            errorMsg = "The start timestamp (startTimestamp) should be less than the end timestamp (endTimestamp).";
+            return false;
+        }
+        if (startTimestamp > INT64_MAX || endTimestamp > INT64_MAX) {
+            errorMsg = "The timestamp value is too large.";
+            return false;
+        }
+        if (threadId >= INT64_MAX) {
+            errorMsg = "The threadId value is too large.";
+            return false;
+        }
+        return true;
+    }
+};
+
 struct LeaksMemoryBlockRequest : public Request {
     LeaksMemoryBlockRequest() : Request(REQ_RES_LEAKS_MEMORY_BLOCKS){};
     LeaksMemoryBlockParams params;

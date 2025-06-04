@@ -825,6 +825,19 @@ template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSucc
     return std::optional<document_t>{std::move(json)};
 }
 
+static bool BuildLeaksParseSuccessEventDeviceIdsJson(const LeaksParseSuccessEvent &event, json_t &deviceIds,
+    RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+{
+    for (auto &devicePair: event.body.deviceIds) {
+        json_t eventTypes(kArrayType);
+        for (auto &eventType : devicePair.second) {
+            eventTypes.PushBack(json_t().SetString(eventType.c_str(), allocator), allocator);
+        }
+        JsonUtil::AddMember(deviceIds, std::string_view(devicePair.first), eventTypes, allocator);
+    }
+    return true;
+}
+
 template <> std::optional<document_t> ToEventJson<LeaksParseSuccessEvent>(const LeaksParseSuccessEvent &event)
 {
     document_t json(kObjectType);
@@ -832,19 +845,19 @@ template <> std::optional<document_t> ToEventJson<LeaksParseSuccessEvent>(const 
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json_t body(kObjectType);
     json_t deviceIds(kObjectType);
+    json_t threadIds(kArrayType);
     json_t &moduleName = json["moduleName"];
     moduleName.SetString(Protocol::MODULE_LEAKS.c_str(), allocator);
-    if (!event.body.deviceEventMap.empty()) {
-        for (auto &deviceIdEventsPair : event.body.deviceEventMap) {
-            JsonUtil::AddMember(deviceIds, deviceIdEventsPair.first,
-                                deviceIdEventsPair.second, allocator);
-        }
-    }
+    BuildLeaksParseSuccessEventDeviceIdsJson(event, deviceIds, allocator);
     JsonUtil::AddMember(body, "deviceIds", deviceIds, allocator);
+    // 构建threadIds
+    for (auto threadId : event.body.threadIds) {
+        threadIds.PushBack(json_t().SetUint64(threadId), allocator);
+    }
+    JsonUtil::AddMember(body, "threadIds", threadIds, allocator);
     JsonUtil::AddMember(body, "dbPath", event.body.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     JsonUtil::AddMember(json, "errMsg", event.errMsg, allocator);
-
     return std::optional<document_t>{std::move(json)};
 }
 

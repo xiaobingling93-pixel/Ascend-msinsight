@@ -14,6 +14,8 @@
 #include "TraceTime.h"
 #include "ParserStatusManager.h"
 #include "MemoryDef.h"
+#include "LeaksMemoryPythonTrace.h"
+#include "LeaksMemoryTableColumn.h"
 
 namespace Dic {
 namespace Module {
@@ -35,11 +37,29 @@ public:
     bool CreateMemoryAllocationAndBlockTable();
     bool DropMemoryAllocationAndBlockTable();
     bool QueryEntireEventsTable(std::vector<Memory::MemoryEvent> &eventDetails);
+    bool QueryEventsWithinTimeRangeByDeviceId(uint64_t startTimestamp, uint64_t endTimestamp,
+                                              const std::string &deviceId,
+                                              std::vector<Memory::MemoryEvent> &events);
     void QueryDeviceIds(std::set<std::string> &deviceIdSet);
+    void QueryThreadIdsByProcessId(uint64_t processId, std::vector<uint64_t> &threadIds);
     void QueryMallocOrFreeEventTypeWithDeviceId(std::unordered_map<std::string, std::vector<std::string>> &resultMap);
+    void QueryThreadIds(std::vector<uint64_t > &threadIds);
     void QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams, std::vector<Memory::MemoryBlock> &blocks);
+    void QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string &deviceId, uint64_t timestamp,
+                                                       std::set<std::string> &owners);
+    void QueryPythonTrace(const LeaksMemoryThreadPythonTraceParams &queryParams,
+                          Memory::LeaksMemoryPythonTrace &trace);
+    void QueryPythonTracesUsingTableName(const std::string &traceTableName,
+                                         const LeaksMemoryThreadPythonTraceParams &queryParams,
+                                         Memory::LeaksMemoryPythonTrace &trace);
+    uint64_t QueryTotalSizeUtilTimestampUsingOwner(const std::string &deviceId,
+                                                                        uint64_t timestamp,
+                                                                        const std::string &owner);
     void QueryMemoryAllocations(const LeaksMemoryAllocationParams &queryParams,
                                 std::vector<Memory::MemoryAllocation> &allocations);
+    std::optional<Memory::MemoryAllocation> QueryLatestAllocationWithinTimestamp(const std::string &deviceId,
+                                                                  const std::string &eventType,
+                                                                  uint64_t timestamp);
     uint64_t QueryMemoryEventExtremumTimestamp(const std::string &deviceId, bool isMinimum);
     void InsertMemoryAllocationList(const std::vector<Memory::MemoryAllocation> &allocList);
     void InsertMemoryAllocation(const Memory::MemoryAllocation &alloc);
@@ -49,12 +69,21 @@ public:
     void FlushMemoryAllocationsCache();
 
 private:
+    bool QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<Memory::MemoryEvent> &events);
+    bool QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<Memory::MemoryBlock> &blocks);
+    bool QueryMemoryAllocationsByStep(sqlite3_stmt* stmt, std::vector<Memory::MemoryAllocation> &allocations);
+    bool QueryMemoryPythonTracesByStep(sqlite3_stmt* stmt, Memory::LeaksMemoryPythonTrace &trace);
+    void AppendMemoryBlockQueryConditionSqlByParams(const LeaksMemoryBlockParams &queryParams, std::string &querySql);
+    std::vector<std::string> GetPythonTraceTables();
+    std::string GetCreateMemoryAllocationTableSql();
+    std::string GetCreateMemoryBlockTableSql();
     // 内存折线图数据库中存储表名为memory_alloc, 包含优化前、后
     const std::string memoryAllocationTable = "memory_allocation";
     // 内存块图数据
     const std::string memoryBlockTable = "memory_block";
     // 火焰图数据
-    const std::string pythonTraceTable = "python_trace";
+    const std::string pythonTraceTablePrefix = "python_trace_";
+
     // Parse status info
     const std::string leaksMemoryParseStatus = "LEAKS_PARSE_STATUS";
     const uint64_t cacheSize = 100;

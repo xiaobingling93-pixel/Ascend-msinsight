@@ -105,7 +105,8 @@ struct AllSuccessEvent : public Event {
 
 struct LeaksParseSuccessEventBody {
     std::string fileId;
-    std::unordered_map<std::string, std::vector<std::string>> deviceEventMap;
+    std::unordered_map<std::string, std::vector<std::string>> deviceIds;
+    std::vector<uint64_t> threadIds;
 };
 
 struct LeaksParseSuccessEvent : public Event {

@@ -457,6 +457,48 @@ inline static std::string StrJoin(const std::string& first, Args... args)
 }
 // LCOV_EXCL_BR_STOP
 
+// 使用时传入string_view数组作为参数，使用{}作为占位符按顺序进行匹配和替换fmtStr, !!!注意在使用时需确保入参本身不存在注入问题
+static std::string FormatSqlUsingPlaceHolder(const std::string& fmtStr, const std::vector<std::string>& args,
+                                             std::string &errMsg)
+{
+    static const std::regex placeholder_regex("\\{\\}");
+
+    // 统计占位符数量
+    std::sregex_iterator it(fmtStr.begin(), fmtStr.end(), placeholder_regex);
+    std::sregex_iterator end;
+    size_t placeholder_count = std::distance(it, end);
+    if (placeholder_count != args.size()) {
+        errMsg = "Number of placeholders does not match the number of arguments";
+        return "";
+    }
+    std::string result;
+    std::smatch match;
+    std::string::const_iterator search_start(fmtStr.begin());
+    size_t index = 0;
+
+    while (std::regex_search(search_start, fmtStr.cend(), match, placeholder_regex)) {
+        // 添加匹配前的内容
+        result.append(match.prefix().first, match.prefix().second);
+        // 添加替换内容
+        result.append(args[index++]);
+        // 更新搜索起点
+        search_start = match.suffix().first;
+    }
+    // 添加最后剩余部分
+    result.append(search_start, fmtStr.cend());
+    return result;
+}
+// 该方法用于寻找两个字符串的最长前缀, 时间复杂度为O(n)
+static std::string FindLCP(const std::string& str1, const std::string& str2)
+{
+    size_t minLength = std::min(str1.size(), str2.size());
+    size_t i = 0;
+    while (i < minLength && str1[i] == str2[i]) {
+        i++;
+    }
+    return str1.substr(0, i);
+}
+
 private:
 #ifdef _WIN32
     static inline char injectList[] = {

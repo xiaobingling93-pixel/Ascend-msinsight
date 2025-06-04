@@ -34,7 +34,8 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
         Protocol::LeaksParseSuccessEventBody body;
         if (event->result) {
             auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
-            memoryDatabase->QueryMallocOrFreeEventTypeWithDeviceId(body.deviceEventMap);
+            memoryDatabase->QueryMallocOrFreeEventTypeWithDeviceId(body.deviceIds);
+            memoryDatabase->QueryThreadIds(body.threadIds);
             memoryDatabase->SetDataBaseVersion();
         } else {
             event->errMsg = msg;
@@ -91,8 +92,8 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<Memo
         }
         deviceTotalSize[event.deviceId + event.eventType] += eventExtendAttr.size;
         // 构造allocation折线图元素
-        MemoryAllocation allocation(event.timestamp, deviceTotalSize[event.deviceId + event.eventType],
-                                    event.deviceId, event.eventType, false);
+        MemoryAllocation allocation(event.timestamp, deviceTotalSize[event.deviceId + event.eventType], event.deviceId,
+                                    event.eventType, false);
         db->InsertMemoryAllocation(allocation);
     }
 
@@ -136,35 +137,50 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
     // 如果是分配事件
     if (event.event == "MALLOC") {
         // 已存在则忽略, 可能为重复申请
-        if (allocMap.find(event.ptr+event.eventType) != allocMap.end()) {
+        if (allocMap.find(event.ptr + event.eventType) != allocMap.end()) {
             Server::ServerLog::Warn("An invalid memory allocation event[" + event.ptr +
                                     "] was detected: the address was already "
                                     "allocated and not released.");
             return false;
         }
         // 加入申请表
-        allocMap[event.ptr+event.eventType] = &event;
+        allocMap[event.ptr + event.eventType] = &event;
     }
     // 如果是释放事件
     if (event.event == "FREE") {
         // 内存分配表中未找到匹配的分配事件，则忽略
-        if (allocMap.find(event.ptr+event.eventType) == allocMap.end()) {
+        if (allocMap.find(event.ptr + event.eventType) == allocMap.end()) {
             Server::ServerLog::Warn("An invalid memory free event[" + event.ptr +
                                     "] was detected: no corresponding allocation was "
                                     "recorded for the same address.");
             return false;
         }
 
-        auto &allocEvent = allocMap[event.ptr+event.eventType];
+        auto &allocEvent = allocMap[event.ptr + event.eventType];
+        BlockEventAttr allocEventAttr;
+        BuildBlockEventAttrFromEvent(*allocEvent, allocEventAttr);
         // 构造block
-        MemoryBlock block(event.ptr, event.deviceId, std::abs(eventExtendAttr.size),
-                          allocEvent->timestamp, event.timestamp, eventExtendAttr.owner,
-                          event.eventType, "");
+        MemoryBlock block(event.ptr, event.deviceId, std::abs(eventExtendAttr.size), allocEvent->timestamp,
+                          event.timestamp, allocEventAttr.owner, event.eventType, "");
         db->InsertMemoryBlock(block);
         // 从申请表中去除内存申请事件
-        allocMap.erase(event.ptr+event.eventType);
+        allocMap.erase(event.ptr + event.eventType);
     }
     return true;
+}
+void LeaksMemoryService::GetEventAttrWithDefaultValueByJson(json_t &json, BlockEventAttr &eventAttr)
+{
+    JsonUtil::SetByJsonKeyValue(eventAttr.addr, json, BLOCK_EVENT_ATTR_ADDR_FIELD);
+    JsonUtil::SetByJsonKeyValue(eventAttr.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
+    std::string tmp_str = JsonUtil::GetString(json, BLOCK_EVENT_ATTR_SIZE_FIELD);
+    eventAttr.size = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
+    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_TOTAL_FIELD);
+    eventAttr.total = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
+    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_USED_FIELD);
+    eventAttr.used = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
+    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_MID_FIELD);
+    eventAttr.mid = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
+    JsonUtil::SetByJsonKeyValue(eventAttr.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
 }
 void LeaksMemoryService::BuildBlockEventAttrFromEvent(const MemoryEvent &event, BlockEventAttr &eventAttr)
 {
@@ -182,23 +198,8 @@ void LeaksMemoryService::BuildBlockEventAttrFromEvent(const MemoryEvent &event, 
         return;
     }
     auto &json = jsonDoc.value();
-    if (!JsonUtil::IsJsonKeyValid(json, BLOCK_EVENT_ATTR_SIZE_FIELD) ||
-    !JsonUtil::IsJsonKeyValid(json, BLOCK_EVENT_ATTR_OWNER_FIELD)) {
-        Server::ServerLog::Warn("The 'attr' field does not contain the required fields % and %.",
-                                BLOCK_EVENT_ATTR_SIZE_FIELD, BLOCK_EVENT_ATTR_OWNER_FIELD);
-        return;
-    }
-    std::string size_str = JsonUtil::GetString(json, BLOCK_EVENT_ATTR_SIZE_FIELD);
-    eventAttr.size = NumberUtil::StringToLongLong(size_str);
-    JsonUtil::SetByJsonKeyValue(eventAttr.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
-
-    if (JsonUtil::IsJsonKeyValid(json, BLOCK_EVENT_ATTR_ADDR_FIELD)) {
-        JsonUtil::SetByJsonKeyValue(eventAttr.addr, json, BLOCK_EVENT_ATTR_ADDR_FIELD);
-    } else {
-        eventAttr.addr = event.ptr;
-    }
+    GetEventAttrWithDefaultValueByJson(json, eventAttr);
 }
-
 }  // Memory
 }  // Module
 }  // Dic

@@ -41,12 +41,12 @@ TEST_F(LeaksMemoryServiceTest, ParseEventsToAllocationsAndBlocks)
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
     std::vector<MemoryEvent> events;
     memoryDatabase->QueryEntireEventsTable(events);
-    const size_t expectEventsSize = 15128;
+    const size_t expectEventsSize = 6306;
     EXPECT_EQ(events.size(), expectEventsSize);
     EXPECT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
     EXPECT_TRUE(memoryDatabase->CreateMemoryAllocationAndBlockTable());
-    const size_t expectBlockSize = 2270;
-    const size_t expectAllocationSize = 4540;
+    const size_t expectBlockSize = 468;
+    const size_t expectAllocationSize = 936;
     LeaksMemoryService::ParseEventsToBlockAndAllocations(events, memoryDatabase);
     // 校验blocks
     LeaksMemoryBlockParams blockParams;
@@ -98,7 +98,7 @@ TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithJsonAttrNotContai
     eventAttr.size = 0;
     LeaksMemoryService::BuildBlockEventAttrFromEvent(event, eventAttr);
     EXPECT_EQ(eventAttr.size, 0);
-    EXPECT_EQ(eventAttr.addr, "");
+    EXPECT_EQ(eventAttr.addr, "123");
     EXPECT_EQ(eventAttr.owner, "");
 }
 

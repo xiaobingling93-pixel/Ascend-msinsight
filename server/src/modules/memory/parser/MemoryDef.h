@@ -120,6 +120,13 @@ struct MemoryBlock {
           eventType(std::move(eventType)),
           otherAttr(std::move(otherAttr)) {}
 };
+
+struct MemoryDetailTree {
+    uint64_t size;
+    std::string name;
+    std::vector<MemoryDetailTree> subNodes;
+};
+
 // Type类型字段
 const std::string MEMORY_TYPE_DYNAMIC = "dynamic";  // 纯动态图数据
 const std::string MEMORY_TYPE_STATIC = "static";    // 纯静态图数据

@@ -18,6 +18,9 @@ struct BlockEventAttr {
     std::string addr;
     int64_t size;
     std::string owner;
+    uint64_t total;
+    uint64_t used;
+    int64_t mid;
 };
 class LeaksMemoryService {
 public:
@@ -33,9 +36,13 @@ private:
                                        std::map<std::string, const MemoryEvent *> &allocMap,
                                        const BlockEventAttr &eventExtendAttr);
 
+    static void GetEventAttrWithDefaultValueByJson(json_t &json, BlockEventAttr &eventAttr);
     inline static const std::string BLOCK_EVENT_ATTR_SIZE_FIELD = "size";
     inline static const std::string BLOCK_EVENT_ATTR_OWNER_FIELD = "owner";
     inline static const std::string BLOCK_EVENT_ATTR_ADDR_FIELD = "addr";
+    inline static const std::string BLOCK_EVENT_ATTR_TOTAL_FIELD = "total";
+    inline static const std::string BLOCK_EVENT_ATTR_USED_FIELD = "used";
+    inline static const std::string BLOCK_EVENT_ATTR_MID_FIELD = "MID";
 };
 }  // Memory
 }  // Module
