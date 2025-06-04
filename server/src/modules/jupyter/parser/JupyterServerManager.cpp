@@ -26,7 +26,7 @@ bool JupyterServerManager::Close()
             return false;
         }
 
-        if (StringUtil::IsAllDigits(pid)) {
+        if (!StringUtil::IsAllDigits(pid)) {
             ServerLog::Warn("Invalid pid!");
             return false;
         }
@@ -77,12 +77,19 @@ std::string JupyterServerManager::GetPidByPort(std::string& port)
 bool JupyterServerManager::KillProcessByPid(std::string& pid)
 {
 #ifdef WIN32
-    std::string killProcessCmd = "taskkill /f /t /im " + pid;
+    std::string killProcessCmd = "taskkill /t /im " + pid;
 #else
     std::string killProcessCmd = "kill " + pid;
 #endif
     std::string cmdRes;
     if (!CmdUtil::ExecuteCmdWithResult(killProcessCmd, cmdRes)) {
+#ifdef WIN32
+        // windows场景下，尝试正常关闭jupyter服务关闭失败，则尝试强制关闭
+        std::string forceKillProcessCmd = "taskkill /f /t /im " + pid;
+        if (CmdUtil::ExecuteCmdWithResult(forceKillProcessCmd, cmdRes)) {
+            return true;
+        }
+#endif
         ServerLog::Error("Kill process by pid failed, pid:", pid);
         return false;
     }
