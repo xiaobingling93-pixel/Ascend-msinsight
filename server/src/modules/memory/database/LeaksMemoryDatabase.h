@@ -25,6 +25,7 @@ public:
     ~LeaksMemoryDatabase() override;
     bool CheckTablesExist();
     static void Reset();
+    bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool HasFinishedParseLastTime();
     bool UpdateParseStatus(const std::string &status);
     bool InitStmt();
@@ -35,6 +36,7 @@ public:
     bool DropMemoryAllocationAndBlockTable();
     bool QueryEntireEventsTable(std::vector<Memory::MemoryEvent> &eventDetails);
     void QueryDeviceIds(std::set<std::string> &deviceIdSet);
+    void QueryMallocOrFreeEventTypeWithDeviceId(std::unordered_map<std::string, std::vector<std::string>> &resultMap);
     void QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams, std::vector<Memory::MemoryBlock> &blocks);
     void QueryMemoryAllocations(const LeaksMemoryAllocationParams &queryParams,
                                 std::vector<Memory::MemoryAllocation> &allocations);
@@ -54,7 +56,7 @@ private:
     // 火焰图数据
     const std::string pythonTraceTable = "python_trace";
     // Parse status info
-    const std::string leaksMemoryParseStatus = "PARSE_STATUS";
+    const std::string leaksMemoryParseStatus = "LEAKS_PARSE_STATUS";
     const uint64_t cacheSize = 100;
 
     bool hasInitStmt = false;

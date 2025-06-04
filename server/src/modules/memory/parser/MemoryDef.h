@@ -82,14 +82,17 @@ struct MemoryAllocation {
     uint64_t timestamp;
     uint64_t totalSize;
     std::string deviceId;
+    std::string eventType;
     bool optimized;
 
     MemoryAllocation() = default;
-    MemoryAllocation(uint64_t timestamp, uint64_t totalSize, std::string deviceId, bool optimized)
+    MemoryAllocation(uint64_t timestamp, uint64_t totalSize, std::string deviceId,
+                     std::string eventType, bool optimized)
         : id(0),
           timestamp(timestamp),
           totalSize(totalSize),
           deviceId(std::move(deviceId)),
+          eventType(std::move(eventType)),
           optimized(optimized) {}
 };
 
@@ -101,11 +104,12 @@ struct MemoryBlock {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
     std::string owner;
+    std::string eventType;
     std::string otherAttr;
 
     MemoryBlock() = default;
     MemoryBlock(std::string ptr, std::string deviceId, uint64_t size, uint64_t startTs, uint64_t endTs,
-                std::string owner, std::string otherAttr)
+                std::string owner, std::string eventType, std::string otherAttr)
         : id(0),
           ptr(std::move(ptr)),
           deviceId(std::move(deviceId)),
@@ -113,6 +117,7 @@ struct MemoryBlock {
           startTimestamp(startTs),
           endTimestamp(endTs),
           owner(std::move(owner)),
+          eventType(std::move(eventType)),
           otherAttr(std::move(otherAttr)) {}
 };
 // Type类型字段

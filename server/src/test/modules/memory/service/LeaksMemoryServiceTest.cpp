@@ -45,19 +45,21 @@ TEST_F(LeaksMemoryServiceTest, ParseEventsToAllocationsAndBlocks)
     EXPECT_EQ(events.size(), expectEventsSize);
     EXPECT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
     EXPECT_TRUE(memoryDatabase->CreateMemoryAllocationAndBlockTable());
-    const size_t expectBlockSize = 2350;
-    const size_t expectAllocationSize = 4620;
+    const size_t expectBlockSize = 2270;
+    const size_t expectAllocationSize = 4540;
     LeaksMemoryService::ParseEventsToBlockAndAllocations(events, memoryDatabase);
     // 校验blocks
     LeaksMemoryBlockParams blockParams;
     blockParams.deviceId = "0";
     blockParams.relativeTime = false;
+    blockParams.eventType = "PTA";
     std::vector<MemoryBlock> blocks;
     memoryDatabase->QueryMemoryBlocks(blockParams, blocks);
     // 校验allocations
     LeaksMemoryAllocationParams allocationParams;
     allocationParams.deviceId = "0";
     allocationParams.optimized = false;
+    allocationParams.eventType = "PTA";
     std::vector<MemoryAllocation> allocations;
     memoryDatabase->QueryMemoryAllocations(allocationParams, allocations);
     EXPECT_EQ(blocks.size(), expectBlockSize);

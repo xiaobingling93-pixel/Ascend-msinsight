@@ -141,8 +141,10 @@ std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryAllocationRequest(const js
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    if (!json.HasMember("params") || !json["params"].HasMember("deviceId")) {
-        error = "Request json lacks member deviceId.";
+    if (!json.HasMember("params") || !json["params"].HasMember("deviceId") ||
+        !json["params"].HasMember("eventType")) {
+        error = "Request[requestId=" + std::to_string(reqPtr->id) +
+                "] json lacks member params or deviceId or eventType.";
         return nullptr;
     }
     const json_t &param_json = json["params"];
@@ -151,6 +153,7 @@ std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryAllocationRequest(const js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.optimized, param_json, "optimized");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.eventType, param_json, "eventType");
     return reqPtr;
 }
 
@@ -161,8 +164,10 @@ std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryBlockRequest(const json_t 
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    if (!json.HasMember("params") || !json["params"].HasMember("deviceId")) {
-        error = "Request json lacks member deviceId.";
+    if (!json.HasMember("params") || !json["params"].HasMember("deviceId") ||
+        !json["params"].HasMember("eventType")) {
+        error = "Request[requestId=" + std::to_string(reqPtr->id) +
+                "] json lacks member params or deviceId or eventType.";
         return nullptr;
     }
     const json_t &param_json = json["params"];
@@ -172,6 +177,7 @@ std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryBlockRequest(const json_t 
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "maxSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.eventType, param_json, "eventType");
     return reqPtr;
 }
 

@@ -22,7 +22,29 @@ void LeaksMemoryDatabase::Reset()
     }
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::LEAKS);
 }
-
+bool LeaksMemoryDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
+{
+    if (!Database::OpenDb(dbPath, clearAllTable)) {
+        ServerLog::Error("[Leaks] Failed to open leaks memory db with path: %.", dbPath);
+        return false;
+    }
+    if (!IsDatabaseVersionChange()) {
+        return true;
+    }
+    ServerLog::Info("The database version has changed, the table structure and data will be reset.");
+    // Create 方法中的建表Sql会在表存在时删除
+    if (!CreateMemoryAllocationAndBlockTable()) {
+        ServerLog::Error("[Leaks] Failed to drop and create allocation and block table.");
+        CloseDb();
+        return false;
+    }
+    if (!UpdateParseStatus(NOT_FINISH_STATUS)) {
+        ServerLog::Warn("[Leaks] Failed to update leaks parse status.");
+        CloseDb();
+        return false;
+    }
+    return true;
+}
 bool LeaksMemoryDatabase::CreateMemoryAllocationAndBlockTable()
 {
     if (!isOpen) {
@@ -38,7 +60,8 @@ bool LeaksMemoryDatabase::CreateMemoryAllocationAndBlockTable()
                             "  timestamp integer,"
                             "  totalSize integer,"
                             "  optimized integer,"
-                            "  deviceId text(255)"
+                            "  deviceId text(255),"
+                            "  eventType text(255)"
                             ");"
                             "CREATE TABLE " + memoryBlockTable +
                             "("
@@ -48,6 +71,7 @@ bool LeaksMemoryDatabase::CreateMemoryAllocationAndBlockTable()
                             "  size integer,"
                             "  startTimestamp integer,"
                             "  endTimestamp integer,"
+                            "  eventType text(255),"
                             "  attr TEXT(255)"
                             ");";
     // LCOV_EXCL_BR_STOP
@@ -103,11 +127,12 @@ void LeaksMemoryDatabase::InsertMemoryAllocationList(const std::vector<Memory::M
 
     int idx = bindStartIndex;
     for (const auto &alloc : allocList) {
-        // (timestamp, totalSize, optimized, deviceId)
+        // (timestamp, totalSize, optimized, deviceId, eventType)
         sqlite3_bind_int64(stmt, idx++, alloc.timestamp > INT64_MAX ? INT64_MAX : alloc.timestamp);
         sqlite3_bind_int64(stmt, idx++, alloc.totalSize > INT64_MAX ? INT64_MAX : alloc.totalSize);
         sqlite3_bind_int(stmt, idx++, alloc.optimized ? 1 : 0);
         sqlite3_bind_text(stmt, idx++, alloc.deviceId.c_str(), alloc.deviceId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, alloc.eventType.c_str(), alloc.eventType.length(), SQLITE_TRANSIENT);
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
@@ -139,12 +164,13 @@ void LeaksMemoryDatabase::InsertMemoryBlockList(const std::vector<Memory::Memory
 
     int idx = bindStartIndex;
     for (const auto &block : blocklist) {
-        // (deviceId, addr, size, startTimestamp, endTimestamp, attr)
+        // (deviceId, addr, size, startTimestamp, endTimestamp, eventType, attr)
         sqlite3_bind_text(stmt, idx++, block.deviceId.c_str(), block.deviceId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, block.ptr.c_str(), block.ptr.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, block.size > INT64_MAX ? INT64_MAX : block.size);
         sqlite3_bind_int64(stmt, idx++, block.startTimestamp > INT64_MAX ? INT64_MAX : block.startTimestamp);
         sqlite3_bind_int64(stmt, idx++, block.endTimestamp > INT64_MAX ? INT64_MAX : block.endTimestamp);
+        sqlite3_bind_text(stmt, idx++, block.eventType.c_str(), block.eventType.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, block.otherAttr.c_str(), block.otherAttr.length(), SQLITE_TRANSIENT);
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
@@ -173,13 +199,13 @@ bool LeaksMemoryDatabase::InitStmt()
         return true;
     }
     // LCOV_EXCL_BR_START
-    std::string insertAllocationsSql =
-        "INSERT INTO " + memoryAllocationTable + " (timestamp, totalSize, optimized, deviceId) VALUES (?,?,?,?)";
+    std::string insertAllocationsSql = "INSERT INTO " + memoryAllocationTable +
+            " (timestamp, totalSize, optimized, deviceId, eventType) VALUES (?,?,?,?,?)";
     std::string insertBlocksSql = "INSERT INTO " + memoryBlockTable +
-                                  " (deviceId, addr, size, startTimestamp, endTimestamp, attr) VALUES (?,?,?,?,?,?)";
+            "(deviceId, addr, size, startTimestamp, endTimestamp, eventType, attr) VALUES (?,?,?,?,?,?,?)";
     for (uint64_t i = 0; i < cacheSize - 1; ++i) {
-        insertAllocationsSql.append(",(?,?,?,?)");
-        insertBlocksSql.append(",(?,?,?,?,?,?)");
+        insertAllocationsSql.append(",(?,?,?,?,?)");
+        insertBlocksSql.append(",(?,?,?,?,?,?,?)");
     }
     // LCOV_EXCL_BR_STOP
     if (sqlite3_prepare_v2(db, insertAllocationsSql.c_str(), -1, &insertAllocationStmt, nullptr) != SQLITE_OK) {
@@ -232,9 +258,10 @@ sqlite3_stmt *LeaksMemoryDatabase::GetInsertAllocationsStmt(uint64_t allocations
     } else {
         // LCOV_EXCL_BR_START
         std::string insertAllocationsSql =
-            "INSERT INTO " + memoryAllocationTable + " (timestamp, totalSize, optimized, deviceId) VALUES (?,?,?,?)";
+            "INSERT INTO " + memoryAllocationTable +
+            " (timestamp, totalSize, optimized, deviceId, eventType) VALUES (?,?,?,?,?)";
         for (uint64_t i = 0; i < allocationsLen - 1; ++i) {
-            insertAllocationsSql.append(",(?,?,?,?)");
+            insertAllocationsSql.append(",(?,?,?,?,?)");
         }
         // LCOV_EXCL_BR_STOP
         if (sqlite3_prepare_v2(db, insertAllocationsSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -261,9 +288,9 @@ sqlite3_stmt *LeaksMemoryDatabase::GetInsertBlocksStmt(uint64_t blocksLen)
         // LCOV_EXCL_BR_START
         std::string insertBlocksSql =
             "INSERT INTO " + memoryBlockTable +
-            " (deviceId, addr, size, startTimestamp, endTimestamp, attr) VALUES (?,?,?,?,?,?)";
+            " (deviceId, addr, size, startTimestamp, endTimestamp, eventType, attr) VALUES (?,?,?,?,?,?,?)";
         for (uint64_t i = 0; i < blocksLen - 1; ++i) {
-            insertBlocksSql.append(",(?,?,?,?,?,?)");
+            insertBlocksSql.append(",(?,?,?,?,?,?,?)");
         }
         // LCOV_EXCL_BR_STOP
         if (sqlite3_prepare_v2(db, insertBlocksSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -322,7 +349,7 @@ void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryP
     querySql = "SELECT id, addr, size, "
                "(startTimestamp - " + std::to_string(minTimestamp) + ") AS startTimestamp,"
                "(endTimestamp - "+ std::to_string(minTimestamp) + ") AS endTimestamp "
-               "FROM "+ memoryBlockTable + " where deviceId=? ";
+               "FROM "+ memoryBlockTable + " where deviceId=? AND eventType=? ";
     if (queryParams.endTimestamp > 0) {
         querySql += " AND (startTimestamp - " + std::to_string(minTimestamp) + ") >= " +
                 std::to_string(queryParams.startTimestamp) + " AND "
@@ -336,7 +363,9 @@ void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryP
     querySql += " ORDER BY startTimestamp ASC";
     // LCOV_EXCL_BR_STOP
     int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query blocks table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
@@ -373,7 +402,7 @@ void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationPara
     querySql = "SELECT id,"
                "(timestamp - " + std::to_string(minTimestamp) + ") AS timestamp, "
                "totalSize "
-               "FROM "+ memoryAllocationTable + " WHERE deviceId=? AND optimized=? ";
+               "FROM "+ memoryAllocationTable + " WHERE deviceId=? AND optimized=? AND eventType=? ";
     if (queryParams.endTimestamp > 0) {
         querySql += " AND (timestamp - " + std::to_string(minTimestamp) + ") >= " +
                     std::to_string(queryParams.startTimestamp) +
@@ -386,6 +415,7 @@ void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationPara
     int bindIdx = bindStartIndex;
     sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, bindIdx++, optimized);
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query allocations table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
@@ -445,6 +475,26 @@ void LeaksMemoryDatabase::QueryDeviceIds(std::set<std::string> &deviceIdSet)
         int col = resultStartIndex;
         std::string deviceId = sqlite3_column_string(stmt, col++);
         deviceIdSet.insert(std::move(deviceId));
+    }
+    sqlite3_finalize(stmt);
+}
+
+using array_map = std::unordered_map<std::string, std::vector<std::string>>;
+void LeaksMemoryDatabase::QueryMallocOrFreeEventTypeWithDeviceId(array_map &resultMap)
+{
+    std::string sql = "SELECT DISTINCT deviceId, eventType FROM " + TABLE_LEAKS_DUMP +
+            " WHERE (event = 'MALLOC' or event = 'FREE') AND deviceId != 'N/A'";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query entire events table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string deviceId = sqlite3_column_string(stmt, col++);
+        std::string eventType = sqlite3_column_string(stmt, col++);
+        resultMap[deviceId].push_back(eventType);
     }
     sqlite3_finalize(stmt);
 }

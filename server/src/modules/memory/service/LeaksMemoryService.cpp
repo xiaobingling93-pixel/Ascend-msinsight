@@ -26,8 +26,6 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
         auto event = std::make_unique<Protocol::LeaksParseSuccessEvent>();
         event->moduleName = Protocol::MODULE_MEMORY;
         event->result = true;
-        event->reset = true;
-        event->body.fileId = fileId;
         SendEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::LeaksParseSuccessEvent>();
@@ -36,12 +34,13 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
         Protocol::LeaksParseSuccessEventBody body;
         if (event->result) {
             auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
-            memoryDatabase->QueryDeviceIds(body.deviceIds);
+            memoryDatabase->QueryMallocOrFreeEventTypeWithDeviceId(body.deviceEventMap);
+            memoryDatabase->SetDataBaseVersion();
         } else {
-            body.errMsg = msg;
+            event->errMsg = msg;
         }
+        body.fileId = fileId;
         event->body = body;
-        event->body.fileId = fileId;
         SendEvent(std::move(event));
     }
 }
@@ -52,7 +51,7 @@ bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
         Server::ServerLog::Error("Cannot get leaks db connections from database manager");
         return false;
     }
-    if (database->HasFinishedParseLastTime() && database->CheckTablesExist()) {
+    if (database->CheckTablesExist() && database->HasFinishedParseLastTime()) {
         Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
         return true;
     }
@@ -90,9 +89,10 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<Memo
         if (!SingleDeviceEventParse(db, event, allocMap, eventExtendAttr)) {
             continue;
         }
-        deviceTotalSize[event.deviceId] += eventExtendAttr.size;
+        deviceTotalSize[event.deviceId + event.eventType] += eventExtendAttr.size;
         // 构造allocation折线图元素
-        MemoryAllocation allocation(event.timestamp, deviceTotalSize[event.deviceId], event.deviceId, false);
+        MemoryAllocation allocation(event.timestamp, deviceTotalSize[event.deviceId + event.eventType],
+                                    event.deviceId, event.eventType, false);
         db->InsertMemoryAllocation(allocation);
     }
 
@@ -111,7 +111,7 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<Memo
             }
             // 构造block
             MemoryBlock block(event->ptr, event->deviceId, eventExtendAttr.size, event->timestamp, maxTimestamp,
-                              eventExtendAttr.owner, "");
+                              eventExtendAttr.owner, event->eventType, "");
             db->InsertMemoryBlock(block);
         }
     }
@@ -136,32 +136,33 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
     // 如果是分配事件
     if (event.event == "MALLOC") {
         // 已存在则忽略, 可能为重复申请
-        if (allocMap.find(event.ptr) != allocMap.end()) {
+        if (allocMap.find(event.ptr+event.eventType) != allocMap.end()) {
             Server::ServerLog::Warn("An invalid memory allocation event[" + event.ptr +
                                     "] was detected: the address was already "
                                     "allocated and not released.");
             return false;
         }
         // 加入申请表
-        allocMap[event.ptr] = &event;
+        allocMap[event.ptr+event.eventType] = &event;
     }
     // 如果是释放事件
     if (event.event == "FREE") {
         // 内存分配表中未找到匹配的分配事件，则忽略
-        if (allocMap.find(event.ptr) == allocMap.end()) {
+        if (allocMap.find(event.ptr+event.eventType) == allocMap.end()) {
             Server::ServerLog::Warn("An invalid memory free event[" + event.ptr +
                                     "] was detected: no corresponding allocation was "
                                     "recorded for the same address.");
             return false;
         }
 
-        auto &allocEvent = allocMap[event.ptr];
+        auto &allocEvent = allocMap[event.ptr+event.eventType];
         // 构造block
         MemoryBlock block(event.ptr, event.deviceId, std::abs(eventExtendAttr.size),
-                          allocEvent->timestamp, event.timestamp, eventExtendAttr.owner, "");
+                          allocEvent->timestamp, event.timestamp, eventExtendAttr.owner,
+                          event.eventType, "");
         db->InsertMemoryBlock(block);
         // 从申请表中去除内存申请事件
-        allocMap.erase(event.ptr);
+        allocMap.erase(event.ptr+event.eventType);
     }
     return true;
 }

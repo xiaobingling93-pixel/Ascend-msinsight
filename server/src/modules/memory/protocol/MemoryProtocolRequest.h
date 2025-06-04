@@ -293,6 +293,7 @@ struct LeaksMemoryBlockParams {
     uint64_t minSize;
     uint64_t maxSize;
     std::string deviceId;
+    std::string eventType;
     bool relativeTime;
 
     LeaksMemoryBlockParams()
@@ -314,6 +315,11 @@ struct LeaksMemoryBlockParams {
             return false;
         }
         if (!CheckStrParamValid(deviceId, errorMsg)) {
+            errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
+        if (!CheckStrParamValid(eventType, errorMsg)) {
+            errorMsg = "Invalid eventType, detail: " + errorMsg;
             return false;
         }
         return true;
@@ -324,6 +330,7 @@ struct LeaksMemoryAllocationParams {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
     std::string deviceId;
+    std::string eventType;
     bool optimized;
     bool relativeTime;
 
@@ -336,6 +343,11 @@ struct LeaksMemoryAllocationParams {
             return false;
         }
         if (!CheckStrParamValid(deviceId, errorMsg)) {
+            errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
+        if (!CheckStrParamValid(eventType, errorMsg)) {
+            errorMsg = "Invalid eventType, detail: " + errorMsg;
             return false;
         }
         return true;

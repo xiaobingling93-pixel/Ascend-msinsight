@@ -167,7 +167,14 @@ struct MemoryBlockItem : Dic::Module::Memory::MemoryBlock {
         : MemoryBlock(block) {}
 };
 struct LeaksMemoryBlocksResponse : public Response {
-    LeaksMemoryBlocksResponse() : Response (REQ_RES_LEAKS_MEMORY_BLOCKS) {}
+    LeaksMemoryBlocksResponse()
+        : Response (REQ_RES_LEAKS_MEMORY_BLOCKS),
+          minTimestamp(0),
+          maxTimestamp(0),
+          minSize(0),
+          maxSize(0),
+          totalNum(0) {}
+
     std::vector<MemoryBlockItem> blocks;
     uint64_t minTimestamp;
     uint64_t maxTimestamp;
@@ -177,7 +184,10 @@ struct LeaksMemoryBlocksResponse : public Response {
 };
 
 struct LeaksMemoryAllocationsResponse : public Response {
-    LeaksMemoryAllocationsResponse() : Response(REQ_RES_LEAKS_MEMORY_ALLOCATIONS) {}
+    LeaksMemoryAllocationsResponse()
+        : Response(REQ_RES_LEAKS_MEMORY_ALLOCATIONS),
+          minTimestamp(0),
+          maxTimestamp(0) {}
     uint64_t minTimestamp;
     uint64_t maxTimestamp;
     std::vector<Dic::Module::Memory::MemoryAllocation> allocations;

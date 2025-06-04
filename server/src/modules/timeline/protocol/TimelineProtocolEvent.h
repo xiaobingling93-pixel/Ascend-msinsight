@@ -104,15 +104,14 @@ struct AllSuccessEvent : public Event {
 };
 
 struct LeaksParseSuccessEventBody {
-    std::set<std::string> deviceIds;
     std::string fileId;
-    std::string errMsg;
+    std::unordered_map<std::string, std::vector<std::string>> deviceEventMap;
 };
 
 struct LeaksParseSuccessEvent : public Event {
     LeaksParseSuccessEvent() : Event(EVENT_PARSE_LEAKS_MEMORY_COMPLETED) {}
     LeaksParseSuccessEventBody body;
-    bool reset;
+    std::string errMsg;
 };
 
 struct ParseClusterStep2CompletedEvent : public Event {

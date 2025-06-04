@@ -58,6 +58,18 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseInvalidParamsDevi
     EXPECT_FALSE(result);
 }
 
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseInvalidParamsEventType)
+{
+    Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryAllocationRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
+    requestPtr->params.deviceId = "1";
+    requestPtr->params.eventType = "";
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationUseInvalidParamsTimestamp)
 {
     Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
@@ -77,6 +89,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseNonExistsDeviceId
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "-1";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.eventType = "PTA";
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_TRUE(result);
 }
@@ -88,6 +101,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseValidParamsWithou
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "0";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.eventType = "PTA";
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_TRUE(result);
 }
@@ -99,6 +113,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseValidParamsWithTi
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "0";
     requestPtr->params.relativeTime = true;
+    requestPtr->params.eventType = "PTA";
     const uint64_t endTimestamp = 10000000000;
     requestPtr->params.endTimestamp = endTimestamp;
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
@@ -113,6 +128,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsDeviceId)
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.deviceId = "@:1:;";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.eventType = "PTA";
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_FALSE(result);
 }
@@ -125,6 +141,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsTimestamp
     requestPtr->params.endTimestamp = 0;
     requestPtr->params.startTimestamp = INT64_MAX;
     requestPtr->params.deviceId = "0";
+    requestPtr->params.eventType = "PTA";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_FALSE(result);
@@ -138,6 +155,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsSize)
     requestPtr->params.maxSize = 0;
     requestPtr->params.minSize = INT64_MAX;
     requestPtr->params.deviceId = "0";
+    requestPtr->params.eventType = "PTA";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_FALSE(result);
@@ -150,6 +168,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsExceedSiz
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.maxSize = INT64_MAX;
     requestPtr->params.deviceId = "0";
+    requestPtr->params.eventType = "PTA";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_FALSE(result);
@@ -161,6 +180,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithoutTime
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.deviceId = "0";
+    requestPtr->params.eventType = "PTA";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_TRUE(result);
@@ -175,6 +195,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithTimeCon
     requestPtr->params.endTimestamp = endTimestamp;
     requestPtr->params.relativeTime = true;
     requestPtr->params.deviceId = "0";
+    requestPtr->params.eventType = "PTA";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_TRUE(result);
@@ -188,6 +209,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithSizeCon
     const uint64_t maxSize = 100000;
     requestPtr->params.maxSize = maxSize;
     requestPtr->params.deviceId = "0";
+    requestPtr->params.eventType = "PTA";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_TRUE(result);

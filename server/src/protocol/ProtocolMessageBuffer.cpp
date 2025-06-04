@@ -78,6 +78,7 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
     bodyStr = StringUtil::ToLocalStr(bodyStr);
     std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
     if (request == nullptr) {
+        Server::ServerLog::Warn("Dispatch failed requests, detail: %", error);
         // 从buffer中删除无法处理的请求数据
         buffer = buffer.substr(bodyPos + bodyLen);
         return nullptr;

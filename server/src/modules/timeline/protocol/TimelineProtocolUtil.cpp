@@ -831,18 +831,19 @@ template <> std::optional<document_t> ToEventJson<LeaksParseSuccessEvent>(const 
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json_t body(kObjectType);
-    json_t deviceIds(kArrayType);
+    json_t deviceIds(kObjectType);
     json_t &moduleName = json["moduleName"];
     moduleName.SetString(Protocol::MODULE_LEAKS.c_str(), allocator);
-    if (!event.body.deviceIds.empty()) {
-        for (auto &deviceId : event.body.deviceIds) {
-            deviceIds.PushBack(json_t().SetString(deviceId.c_str(), allocator), allocator);
+    if (!event.body.deviceEventMap.empty()) {
+        for (auto &deviceIdEventsPair : event.body.deviceEventMap) {
+            JsonUtil::AddMember(deviceIds, deviceIdEventsPair.first,
+                                deviceIdEventsPair.second, allocator);
         }
     }
-    JsonUtil::AddMember(body, "errMsg", event.body.errMsg, allocator);
     JsonUtil::AddMember(body, "deviceIds", deviceIds, allocator);
     JsonUtil::AddMember(body, "dbPath", event.body.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
+    JsonUtil::AddMember(json, "errMsg", event.errMsg, allocator);
 
     return std::optional<document_t>{std::move(json)};
 }

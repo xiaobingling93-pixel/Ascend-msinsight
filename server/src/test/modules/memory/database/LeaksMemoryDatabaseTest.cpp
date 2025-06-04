@@ -7,6 +7,7 @@
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "LeaksMemoryDatabase.h"
+#include "LeaksMemoryService.h"
 #include "../../../TestSuit.cpp"
 
 using namespace Dic::Module::Timeline;
@@ -24,7 +25,9 @@ public:
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::LEAKS);
         auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-        memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_2025.dat", false);
+        ASSERT_TRUE(memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_2025.dat", false));
+        ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
+        ASSERT_TRUE(LeaksMemoryService::ParseMemoryLeaksDumpEvents("0"));
     }
     static void TearDownTestSuite()
     {
@@ -51,6 +54,27 @@ TEST_F(LeaksMemoryDatabaseTest, QueryDeviceIds)
     size_t expectSize = 3;
     EXPECT_EQ(deviceIds.size(), expectSize);
 }
+TEST_F(LeaksMemoryDatabaseTest, QueryDeviceEventTypeMap)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    std::unordered_map<std::string, std::vector<std::string>> resultMap;
+    memoryDatabase->QueryMallocOrFreeEventTypeWithDeviceId(resultMap);
+    std::vector<std::string> eventTypes = resultMap["0"];
+    auto it = std::find(eventTypes.begin(), eventTypes.end(), "HAL");
+    EXPECT_TRUE(it != eventTypes.end());
+    it = std::find(eventTypes.begin(), eventTypes.end(), "PTA");
+    EXPECT_TRUE(it != eventTypes.end());
+    eventTypes = resultMap["1"];
+    it = std::find(eventTypes.begin(), eventTypes.end(), "HAL");
+    EXPECT_TRUE(it != eventTypes.end());
+    it = std::find(eventTypes.begin(), eventTypes.end(), "PTA");
+    EXPECT_TRUE(it != eventTypes.end());
+    eventTypes = resultMap["host"];
+    it = std::find(eventTypes.begin(), eventTypes.end(), "HAL");
+    EXPECT_TRUE(it != eventTypes.end());
+    it = std::find(eventTypes.begin(), eventTypes.end(), "PTA");
+    EXPECT_TRUE(it == eventTypes.end());
+}
 TEST_F(LeaksMemoryDatabaseTest, QueryMinAndMaxTimestamp)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
@@ -61,7 +85,7 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMinAndMaxTimestamp)
     EXPECT_EQ(minTimestamp, expectMin);
     EXPECT_EQ(maxTimestamp, expectMax);
 }
-// 自此UT开始, 已解析创建memory_block, memory_allocation表
+
 TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithNoTimeAndSizeCondition)
 {
     std::vector<MemoryEvent> events;
@@ -69,9 +93,10 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithNoTimeAndSizeCondition)
     LeaksMemoryBlockParams params;
     params.deviceId = "0";
     params.relativeTime = false;
+    params.eventType = "PTA";
     std::vector<MemoryBlock> blocks;
     memoryDatabase->QueryMemoryBlocks(params, blocks);
-    const size_t expectSize = 2350;
+    const size_t expectSize = 2270;
     EXPECT_EQ(blocks.size(), expectSize);
 }
 TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelativeTime)
@@ -83,6 +108,7 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelat
     const uint64_t maxSize = 600;
     params.endTimestamp = endTimestamp;
     params.maxSize = maxSize;
+    params.eventType = "PTA";
     std::vector<MemoryBlock> blocks;
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
     memoryDatabase->QueryMemoryBlocks(params, blocks);
@@ -101,10 +127,11 @@ TEST_F(LeaksMemoryDatabaseTest, QueryAllocationWithNoTimeCondition)
     LeaksMemoryAllocationParams params;
     params.deviceId = "0";
     params.optimized = false;
+    params.eventType = "PTA";
     std::vector<MemoryAllocation> allocations;
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
     memoryDatabase->QueryMemoryAllocations(params, allocations);
-    size_t expectSize = 4620;
+    size_t expectSize = 4540;
     EXPECT_EQ(allocations.size(), expectSize);
 }
 TEST_F(LeaksMemoryDatabaseTest, QueryAllocationWithTimeAndRelativeCondition)
@@ -115,16 +142,17 @@ TEST_F(LeaksMemoryDatabaseTest, QueryAllocationWithTimeAndRelativeCondition)
     const uint64_t endTimestamp = 20 * 1000 * 1000;
     params.endTimestamp = endTimestamp;
     params.relativeTime = true;
+    params.eventType = "PTA";
     std::vector<MemoryAllocation> allocations;
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
     memoryDatabase->QueryMemoryAllocations(params, allocations);
     uint64_t minTimestamp = memoryDatabase->QueryMemoryEventExtremumTimestamp("0", true);
-    const size_t expectSize = 4411;
+    const size_t expectSize = 4331;
     EXPECT_EQ(allocations.size(), expectSize);
     MemoryAllocation &firstAllocation = allocations[0];
-    uint64_t expectTimestamp = 1746671067160936 - minTimestamp;
+    const uint64_t expectTimestamp = 6379153;
     EXPECT_EQ(firstAllocation.timestamp, expectTimestamp);
-    uint64_t totalSize = 16384;
+    uint64_t totalSize = 7168;
     EXPECT_EQ(firstAllocation.totalSize, totalSize);
 }
 
