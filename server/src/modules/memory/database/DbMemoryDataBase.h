@@ -30,7 +30,7 @@ public:
         uint64_t offsetTime) override;
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
-    bool QueryOperatorSize(double &min, double &max) override;
+    bool QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max) override;
     bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams, double &min, double &max) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
 
@@ -41,9 +41,10 @@ public:
     bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                   Protocol::StaticOperatorGraphItem &graphItem) override;
 
-    bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
-    bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
-                                   uint64_t offsetTime) override;
+    bool QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
+        std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
+    bool QueryEntireComponentTable(Protocol::MemoryComponentParams &requestParams,
+        std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime) override;
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) override;
 
@@ -54,6 +55,7 @@ public:
                               const std::string &msg);
     std::map<std::string, Protocol::MemorySuccess> GetRanks();
     static void Reset();
+    std::string QueryDeviceId() override;
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;
     std::string BuildOperatorDetailSql(const std::string& startTimeString, const std::string& offsetTimeString);

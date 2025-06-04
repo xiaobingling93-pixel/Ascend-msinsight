@@ -27,6 +27,12 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
+    if (deviceId.empty()) {
+        return false;
+    }
+    request.params.deviceId = deviceId;
     if (!request.params.isCompare) {
         std::vector<MemoryOperator> opDetails;
         if (!database || !database->QueryOperatorDetail(request.params, response.columnAttr, opDetails) or
@@ -68,12 +74,12 @@ bool QueryMemoryOperatorHandler::GetRespectiveData(std::shared_ptr<VirtualMemory
         return false;
     }
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
-    if (!database->QueryEntireOperatorTable(compareData, offsetTimeCompare)) {
+    if (!database->QueryEntireOperatorTable(request.params, compareData, offsetTimeCompare)) {
         errorMsg = "Failed to query memory operator compare data.";
         return false;
     }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
-    if (!databaseBaseline->QueryEntireOperatorTable(baselineData, offsetTimeBaseline)) {
+    if (!databaseBaseline->QueryEntireOperatorTable(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory operator baseline data.";
         return false;
     }

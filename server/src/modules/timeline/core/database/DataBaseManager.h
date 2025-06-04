@@ -88,6 +88,7 @@ public:
     bool ResetBaseline();
     void SetDbPathMapping(const std::string& rankId, const std::string& dbPath, const std::string& hostId);
     bool IsContainDatabasePath(const std::string& databasePath);
+    std::string GetDeviceIdFromRankId(const std::string& rankId, const std::string& module);
     inline std::vector<std::string> GetDbPathByHost(const std::string& id)
     {
         if (host2DbPath.find(id) != host2DbPath.end()) {

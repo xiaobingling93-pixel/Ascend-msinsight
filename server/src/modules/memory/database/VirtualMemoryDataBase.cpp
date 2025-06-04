@@ -12,20 +12,38 @@ namespace Memory {
 using namespace Server;
 using namespace Dic::Module::Timeline;
 
-std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankId)
+std::string VirtualMemoryDataBase::ExecuteQueryDeviceId(std::string &sql)
+{
+    std::string deviceId;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        return "";
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string res = sqlite3_column_string(stmt, col++);
+        deviceId = res;
+    }
+    sqlite3_finalize(stmt);
+    return deviceId;
+}
+
+std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string deviceId)
 {
     std::vector<std::string> streams = {};
     DataType type = DataBaseManager::Instance().GetDataType();
     std::string sql = "";
     if (type == DataType::TEXT) {
-        sql += "SELECT stream FROM " + recordTable + " WHERE stream <> '' Group BY stream ORDER BY timestamp ASC";
+        sql += "SELECT stream FROM " + recordTable + " WHERE deviceId = ? AND stream <> '' "
+            "Group BY stream ORDER BY timestamp ASC";
     } else if (type == DataType::DB) {
         FileType fileType = DataBaseManager::Instance().GetFileType();
         if (fileType == FileType::PYTORCH) {
             std::string streamPtrColumnName = isLowCamel ? "streamPtr" : "stream_ptr";
             std::string timeColumnName = isLowCamel ? "timestamp" : "time_stamp";
             sql += "SELECT " + streamPtrColumnName + " FROM " + TABLE_MEMORY_RECORD +
-                " WHERE " + streamPtrColumnName + " <> ''"
+                " WHERE device_id = ? AND " + streamPtrColumnName + " <> ''"
                 " Group BY " + streamPtrColumnName + " ORDER BY " + timeColumnName + " ASC";
         } else {
             ServerLog::Error("Memory tab does not support msprof data.");
@@ -38,6 +56,8 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
         ServerLog::Error("Get stream lists. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return streams;
     }
+    int index = bindStartIndex;
+    sqlite3_bind_text(stmt, index++, deviceId.c_str(), deviceId.length(), nullptr);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         streams.emplace_back(sqlite3_column_string(stmt, col++));
@@ -86,13 +106,21 @@ bool VirtualMemoryDataBase::ExecuteMemoryResourceType(std::string &type, std::st
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteOperatorSize(double &min, double &max, std::string sql)
+bool VirtualMemoryDataBase::ExecuteOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min,
+    double &max, std::string sql)
 {
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query operator size. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
+    }
+    int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+        sqlite3_bind_int64(stmt, index++, deviceId);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -135,6 +163,12 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
         return false;
     }
     int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+        sqlite3_bind_int64(stmt, index++, deviceId);
+    }
     std::string orderName = "%" + requestParams.searchName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -183,6 +217,15 @@ bool VirtualMemoryDataBase::ExecuteComponentTotalNum(Protocol::MemoryComponentPa
         ServerLog::Error("Query components total num. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
+
+    int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+        sqlite3_bind_int64(stmt, index++, deviceId);
+    }
+
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int(stmt, resultStartIndex);
     }
@@ -233,6 +276,13 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryVie
         ServerLog::Error("Query memory view. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
+    int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+        sqlite3_bind_int64(stmt, index++, deviceId);
+    }
     std::string peakMemory;
     std::set<std::string> componentSets;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -254,7 +304,7 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryVie
     }
 
     // 查询是否包含stream信息，如果不包含则不显示stream相关信息，同时也用来判断是否active相关信息
-    streams = GetStreamLists(requestParams.rankId);
+    streams = GetStreamLists(requestParams.deviceId);
     return true;
 }
 
@@ -295,8 +345,13 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
         return false;
     }
     int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+        sqlite3_bind_int64(stmt, index++, deviceId);
+    }
     std::string orderName = "%" + requestParams.searchName + "%";
-
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
@@ -339,8 +394,8 @@ std::vector<Protocol::MemoryOperator> VirtualMemoryDataBase::QueryOperatorDetail
     return operatorDtoVec;
 }
 
-bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails,
-                                                            const std::string &sql)
+bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
+    std::vector<Protocol::MemoryOperator> &opDetails, const std::string &sql)
 {
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -348,6 +403,15 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol
         ServerLog::Error("Query entire operator table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
+
+    int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+        sqlite3_bind_int64(stmt, index++, deviceId);
+    }
+
     std::vector<Protocol::MemoryOperator> &operatorDtoVec = opDetails;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -392,6 +456,11 @@ bool VirtualMemoryDataBase::ExecuteComponentDetail(Protocol::MemoryComponentPara
         return false;
     }
     int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        sqlite3_bind_int64(stmt, index++, StringUtil::StringToInt(requestParams.deviceId));
+    }
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -409,8 +478,8 @@ bool VirtualMemoryDataBase::ExecuteComponentDetail(Protocol::MemoryComponentPara
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteQueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
-                                                             std::string &sql)
+bool VirtualMemoryDataBase::ExecuteQueryEntireComponentTable(Protocol::MemoryComponentParams &requestParams,
+    std::vector<Protocol::MemoryComponent> &componentDetails, std::string &sql)
 {
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -418,6 +487,15 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireComponentTable(std::vector<Protoco
         ServerLog::Error("Query entire component table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
+
+    int index = bindStartIndex;
+    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
+    } else {
+        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+        sqlite3_bind_int64(stmt, index++, deviceId);
+    }
+
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MemoryComponent componentElement;
@@ -440,10 +518,10 @@ bool VirtualMemoryDataBase::ExecuteStaticGraphTotalSize(Protocol::StaticOperator
         return false;
     }
     int index = bindStartIndex;
-    sqlite3_bind_text(totalStmt, index, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
+    sqlite3_bind_text(totalStmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     if (!requestParams.modelName.empty()) {
         std::string modelName = "%" + requestParams.modelName + "%";
-        sqlite3_bind_text(totalStmt, index, modelName.c_str(), modelName.length(), nullptr);
+        sqlite3_bind_text(totalStmt, index++, modelName.c_str(), modelName.length(), nullptr);
     }
     if (sqlite3_step(totalStmt) == SQLITE_ROW) {
         totalSize = sqlite3_column_double(totalStmt, resultStartIndex);

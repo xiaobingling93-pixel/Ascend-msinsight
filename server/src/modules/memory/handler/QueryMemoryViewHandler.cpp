@@ -22,6 +22,12 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
+    if (deviceId.empty()) {
+        return false;
+    }
+    request.params.deviceId = deviceId;
     if (!request.params.isCompare) {
         uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
         if (!database || !database->QueryMemoryView(request.params, response.data, offsetTime)) {

@@ -26,6 +26,7 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+
     if (!request.params.isCompare) {
         std::vector<StaticOperatorItem> opDetails;
         if (!database || !database->QueryStaticOperatorList(request.params, response.columnAttr, opDetails) or

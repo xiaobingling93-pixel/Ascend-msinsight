@@ -31,6 +31,7 @@ const uint64_t MAX_LEAKS_MEMORY_BLOCK_SIZE = 1 * 1024 * 1024 * 1024;
 
 struct MemoryOperatorParams {
     std::string rankId;
+    std::string deviceId;
     std::string type;
     std::string searchName;
     int64_t minSize;
@@ -46,6 +47,9 @@ struct MemoryOperatorParams {
     bool CommonCheck(std::string &errorMsg, uint64_t minTimeStamp)
     {
         if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(deviceId, errorMsg)) {
             return false;
         }
         if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP) {
@@ -89,11 +93,15 @@ struct MemoryOperatorParams {
 
 struct MemoryOperatorSizeParams {
     std::string rankId;
+    std::string deviceId;
     std::string type;
     bool isCompare = false;
     bool CommonCheck(std::string &errorMsg)
     {
         if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(deviceId, errorMsg)) {
             return false;
         }
         if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP) {
@@ -214,6 +222,7 @@ struct MemoryOperatorSizeRequest : public Request {
 
 struct MemoryComponentParams {
     std::string rankId;
+    std::string deviceId;
     int64_t currentPage = 0;
     int64_t pageSize = 0;
     std::string orderBy;
@@ -222,6 +231,9 @@ struct MemoryComponentParams {
     bool CommonCheck(std::string &errorMsg)
     {
         if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(deviceId, errorMsg)) {
             return false;
         }
         if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
@@ -249,11 +261,15 @@ struct MemoryComponentRequest : public Request {
 
 struct MemoryViewParams {
     std::string rankId;
+    std::string deviceId;
     std::string type; // Overall, Stream, Component
     bool isCompare = false;
     bool CommonCheck(std::string &errorMsg)
     {
         if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(deviceId, errorMsg)) {
             return false;
         }
         if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP && type != MEMORY_COMPONENT_GROUP) {

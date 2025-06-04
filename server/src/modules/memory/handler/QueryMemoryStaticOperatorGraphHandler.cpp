@@ -26,6 +26,7 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+
     if (!request.params.isCompare) {
         if (!database || !database->QueryStaticOperatorGraph(request.params, response.data)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph data.");

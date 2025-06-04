@@ -5,6 +5,7 @@
 #include "TraceTime.h"
 #include "VirtualMemoryDataBase.h"
 #include "ConstantDefs.h"
+#include "DataBaseManager.h"
 #include "TextMemoryDataBase.h"
 
 
@@ -389,7 +390,7 @@ std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
         "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
         "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
         "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
-        "stream FROM " + operatorTable + " WHERE name LIKE ?";
+        "stream FROM " + operatorTable + " WHERE deviceId = ? AND name LIKE ?";
     AddOperatorSql(requestParams, sql);
     return sql;
 }
@@ -446,7 +447,8 @@ bool TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &req
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
-bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
+bool TextMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
+    std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
@@ -465,8 +467,8 @@ bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryOp
         "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
         "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
         "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
-        "stream FROM " + operatorTable;
-    return ExecuteQueryEntireOperatorTable(opDetails, sql);
+        "stream FROM " + operatorTable + " WHERE deviceId = ? ";
+    return ExecuteQueryEntireOperatorTable(requestParams, opDetails, sql);
 }
 
 bool TextMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
@@ -484,6 +486,7 @@ bool TextMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &r
         "(SELECT component, MAX(total_reserved) AS max_total_reserved FROM " + componentTable +
         " GROUP BY component HAVING max_total_reserved >= " + std::to_string(componentThresholdMb) +
         ") AS t2 ON t1.component = t2.component AND t1.total_reserved = t2.max_total_reserved "
+        "WHERE t1.deviceId = ? "
         "GROUP BY t1.component, t1.total_reserved";
     if (!requestParams.order.empty() && !requestParams.orderBy.empty()) {
         sql += " ORDER BY " + requestParams.orderBy + "Column";
@@ -497,8 +500,8 @@ bool TextMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &r
     return ExecuteComponentDetail(requestParams, columnAttr, componentDetails, sql);
 }
 
-bool TextMemoryDataBase::QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
-                                                   uint64_t offsetTime)
+bool TextMemoryDataBase::QueryEntireComponentTable(Protocol::MemoryComponentParams &requestParams,
+    std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string sql =
@@ -508,8 +511,9 @@ bool TextMemoryDataBase::QueryEntireComponentTable(std::vector<Protocol::MemoryC
         "(SELECT component, MAX(total_reserved) AS max_total_reserved FROM " + componentTable +
         " GROUP BY component HAVING max_total_reserved >= " + std::to_string(componentThresholdMb) +
         ") AS t2 ON t1.component = t2.component AND t1.total_reserved = t2.max_total_reserved "
+        "WHERE t1.deviceId = ? "
         "GROUP BY t1.component, t1.total_reserved";
-    return ExecuteQueryEntireComponentTable(componentDetails, sql);
+    return ExecuteQueryEntireComponentTable(requestParams, componentDetails, sql);
 }
 
 bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams,
@@ -521,7 +525,7 @@ bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestPara
         ") / (1000.0 * 1000.0), 3) as timestamp, "
         "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserve, 2) as total_reserve, "
         "ROUND(total_active, 2) as total_active, stream FROM " +
-        recordTable + " WHERE 1==1";
+        recordTable + " WHERE deviceId = ? ";
     std::vector<Protocol::ComponentDto> componentDtoVec;
     std::vector<std::string> streams;
     if (!ExecuteQueryMemoryViewExecuteSql(requestParams, componentDtoVec, streams, sql)) {
@@ -695,7 +699,7 @@ sqlite3_stmt *TextMemoryDataBase::GetComponentStmt(uint64_t paramLen)
 
 bool TextMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
-    std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
+    std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE deviceId = ? AND name LIKE ?";
 
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql += " AND stream <> ''";
@@ -744,6 +748,7 @@ bool TextMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
 bool TextMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum)
 {
     std::string sql = "SELECT count(*) FROM (SELECT component FROM " + componentTable +
+        " WHERE deviceId = ? "
         " GROUP BY component HAVING MAX(total_reserved) >= " + std::to_string(componentThresholdMb) + ") AS t3";
     return ExecuteComponentTotalNum(requestParams, totalNum, sql);
 }
@@ -751,7 +756,8 @@ bool TextMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams
 bool TextMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                                       int64_t &totalNum)
 {
-    std::string sql = "SELECT count(*) as nums FROM " + staticOpTable + " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
+    std::string sql = "SELECT count(*) as nums FROM " + staticOpTable +
+        " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
     if (!requestParams.graphId.empty()) {
         sql += " AND graph_id = ?";
     }
@@ -770,10 +776,11 @@ bool TextMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorLi
     return ExecuteStaticOperatorListTotalNum(requestParams, totalNum, sql);
 }
 
-bool TextMemoryDataBase::QueryOperatorSize(double &min, double &max)
+bool TextMemoryDataBase::QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max)
 {
-    std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM " + operatorTable;
-    return ExecuteOperatorSize(min, max, sql);
+    std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM "
+        + operatorTable + " WHERE deviceId = ? ";
+    return ExecuteOperatorSize(requestParams, min, max, sql);
 }
 
 bool TextMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
@@ -787,6 +794,18 @@ bool TextMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizePar
     }
     return ExecuteStaticOperatorSize(requestParams, min, max, sql);
 }
+
+std::string TextMemoryDataBase::QueryDeviceId()
+{
+    FullDb::FileType type = FullDb::DataBaseManager::Instance().GetFileType();
+    std::string sql = "";
+    if (type == FullDb::FileType::PYTORCH) {
+        sql += "SELECT deviceId FROM " + recordTable + " LIMIT 1 ";
+    } else {
+        return "";
+    }
+    return ExecuteQueryDeviceId(sql);
+};
 
 } // end of namespace Memory
 } // end of namespace Module

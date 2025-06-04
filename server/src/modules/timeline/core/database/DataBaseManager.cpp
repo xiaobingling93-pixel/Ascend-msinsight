@@ -526,6 +526,15 @@ std::string DataBaseManager::GetFileIdByRankId(const std::string &rankId) const
     }
     return rankId2FileIdMap.at(realRankId);
 }
+
+std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId, const std::string& module)
+{
+    if (module == "memory") {
+        auto database = DataBaseManager::GetMemoryDatabaseByRankId(rankId);
+        return database->QueryDeviceId();
+    }
+    return "";
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

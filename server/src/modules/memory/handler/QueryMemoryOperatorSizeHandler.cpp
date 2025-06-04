@@ -22,8 +22,14 @@ bool QueryMemoryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Req
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
+    if (deviceId.empty()) {
+        return false;
+    }
+    request.params.deviceId = deviceId;
     if (!request.params.isCompare) {
-        if (!database || !database->QueryOperatorSize(response.size.minSize, response.size.maxSize)) {
+        if (!database || !database->QueryOperatorSize(request.params, response.size.minSize, response.size.maxSize)) {
             SendResponse(std::move(responsePtr), false, "Failed to query operator size data.");
             return false;
         }
@@ -59,11 +65,11 @@ bool QueryMemoryOperatorSizeHandler::GetRespectiveData(std::shared_ptr<VirtualMe
         errorMsg = "Failed to connect to database of baseline.";
         return false;
     }
-    if (!database->QueryOperatorSize(compareData.minSize, compareData.maxSize)) {
+    if (!database->QueryOperatorSize(request.params, compareData.minSize, compareData.maxSize)) {
         errorMsg = "Failed to query memory operator size compare data.";
         return false;
     }
-    if (!databaseBaseline->QueryOperatorSize(baselineData.minSize, baselineData.maxSize)) {
+    if (!databaseBaseline->QueryOperatorSize(request.params, baselineData.minSize, baselineData.maxSize)) {
         errorMsg = "Failed to query memory operator size baseline data.";
         return false;
     }

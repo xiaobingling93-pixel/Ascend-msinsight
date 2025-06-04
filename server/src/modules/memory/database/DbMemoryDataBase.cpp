@@ -60,7 +60,7 @@ std::string DbMemoryDataBase::BuildOperatorDetailSql(
         "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
     sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
     sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
-        " WHERE realName LIKE ? ";
+        " WHERE device_id = ? AND realName LIKE ? ";
     return tempSql + sql;
 }
 
@@ -102,7 +102,8 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
-bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
+bool DbMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
+    std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
@@ -125,12 +126,13 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryOper
             "ROUND(release_total_reserved / (1024.0 * 1024.0), 2) as release_reserve, "
             "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
-        sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name";
+        sql += TABLE_OPERATOR_MEMORY +
+            " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name WHERE device_id = ? ";
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;
     }
-    return ExecuteQueryEntireOperatorTable(opDetails, sql);
+    return ExecuteQueryEntireOperatorTable(requestParams, opDetails, sql);
 }
 
 bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
@@ -154,6 +156,7 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
             "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
             " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdByte) +
             ") AS t2 ON t1.moduleId = t2.moduleId AND t1.totalReserved = t2.max_total_reserved "
+            " WHERE t1.deviceId = ? "
             "GROUP BY t1.moduleId, t1.totalReserved) AS t3 JOIN ENUM_MODULE AS t4 ON t3.id = t4.id";
         if (!requestParams.order.empty() && !requestParams.orderBy.empty()) {
             sql += " ORDER BY " + requestParams.orderBy + "Column";
@@ -171,8 +174,8 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
     return ExecuteComponentDetail(requestParams, columnAttr, componentDetails, sql);
 }
 
-bool DbMemoryDataBase::QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
-                                                 uint64_t offsetTime)
+bool DbMemoryDataBase::QueryEntireComponentTable(Protocol::MemoryComponentParams &requestParams,
+    std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime)
 {
     std::string sql;
     FileType type = DataBaseManager::Instance().GetFileType();
@@ -185,12 +188,13 @@ bool DbMemoryDataBase::QueryEntireComponentTable(std::vector<Protocol::MemoryCom
               "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
               " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdByte) +
               ") AS t2 ON t1.moduleId = t2.moduleId AND t1.totalReserved = t2.max_total_reserved "
-              "GROUP BY t1.moduleId, t1.totalReserved) AS t3 JOIN ENUM_MODULE AS t4 ON t3.id = t4.id";
+              "WHERE t1.deviceId = ? "
+              "GROUP BY t1.moduleId, t1.totalReserved) AS t3 JOIN ENUM_MODULE AS t4 ON t3.id = t4.id ";
     } else {
         ServerLog::Error("Failed to query entire component table: Memory tab does not support msprof data.");
         return false;
     }
-    return ExecuteQueryEntireComponentTable(componentDetails, sql);
+    return ExecuteQueryEntireComponentTable(requestParams, componentDetails, sql);
 }
 
 bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams,
@@ -207,15 +211,15 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
             ") / (1000.0 * 1000.0), 3) as timestamp, "
             "ROUND(total_allocated / (1024.0 * 1024.0), 2) as total_allocated, "
             " ROUND(total_reserved / (1024.0 * 1024.0), 2) as total_reserve, "
-            "ROUND(total_active / (1024.0 * 1024.0), 2) as total_active, stream_ptr as stream FROM ";
+            "ROUND(total_active / (1024.0 * 1024.0), 2) as total_active, stream_ptr as stream, device_id FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component ";
         sql += " UNION ALL select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
                 " ) / (1000.0 * 1000.0), 2) as timestampNs, "
                " 0 as total_allocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as total_reserve, "
-               " 0 as totalActive, '' as stream from NPU_MEM join STRING_IDS as ids on ids.id = type "
+               " 0 as totalActive, '' as stream, deviceId from NPU_MEM join STRING_IDS as ids on ids.id = type "
                " where value = 'app' ";
-        sql += " ) where 1 = 1";
+        sql += " ) where device_id = ? ";
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;
@@ -238,10 +242,11 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
             "   SELECT NAME.value as name, ";
         sql.append(isLowCamel ? "streamPtr, allocationTime, releaseTime," :
             "stream_ptr, allocation_time, release_time,");
-        sql.append(" ROUND(size / 1024.0, 2) as size, size as realSize FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
+        sql.append(" ROUND(size / 1024.0, 2) as size, size as realSize, OP_MEMORY.device_id"
+            " FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
             "   NAME.id = OP_MEMORY.name"
             ") "
-            " WHERE name LIKE ? ");
+            " WHERE device_id = ? AND name LIKE ? ");
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;
@@ -302,7 +307,8 @@ bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::PYTORCH) {
         sql = "SELECT count(*) FROM (SELECT t2.name FROM " + TABLE_NPU_MODULE_MEM +
-            " AS t1 JOIN ENUM_MODULE AS t2 ON t1.moduleId = t2.id GROUP BY t2.name HAVING MAX(t1.totalReserved) >= " +
+            " AS t1 JOIN ENUM_MODULE AS t2 ON t1.moduleId = t2.id WHERE deviceId = ? "
+            " GROUP BY t2.name HAVING MAX(t1.totalReserved) >= " +
             std::to_string(componentThresholdByte) + ") AS t3";
     } else {
         ServerLog::Error("Failed to query components total num: Memory tab does not support msprof data.");
@@ -311,18 +317,18 @@ bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &
     return ExecuteComponentTotalNum(requestParams, totalNum, sql);
 }
 
-bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max)
+bool DbMemoryDataBase::QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max)
 {
     FileType type = DataBaseManager::Instance().GetFileType();
     std::string sql = "";
     if (type == FileType::PYTORCH) {
         sql += "SELECT ROUND(min(size)/ 1024.0, 2) as minSize, "
-               " ROUND(max(size)/ 1024.0, 2) as maxSize FROM " + TABLE_OPERATOR_MEMORY;
+               " ROUND(max(size)/ 1024.0, 2) as maxSize FROM " + TABLE_OPERATOR_MEMORY + " WHERE device_id = ? ";
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;
     }
-    return ExecuteOperatorSize(min, max, sql);
+    return ExecuteOperatorSize(requestParams, min, max, sql);
 }
 
 // DB格式不支持静态图内存数据
@@ -425,6 +431,18 @@ void DbMemoryDataBase::Reset()
     }
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
 }
+
+std::string DbMemoryDataBase::QueryDeviceId()
+{
+    FileType type = DataBaseManager::Instance().GetFileType();
+    std::string sql = "";
+    if (type == FileType::PYTORCH) {
+        sql += "SELECT deviceId FROM " + TABLE_OPERATOR_MEMORY + " LIMIT 1 ";
+    } else {
+        return "";
+    }
+    return ExecuteQueryDeviceId(sql);
+};
 
 }
 }

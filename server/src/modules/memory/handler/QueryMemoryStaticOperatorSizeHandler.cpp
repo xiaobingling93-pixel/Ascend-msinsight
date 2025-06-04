@@ -23,6 +23,7 @@ bool QueryMemoryStaticOperatorSizeHandler::HandleRequest(std::unique_ptr<Protoco
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+
     if (!request.params.isCompare) {
         if (!database
             || !database->QueryStaticOperatorSize(request.params, response.size.minSize, response.size.maxSize)) {

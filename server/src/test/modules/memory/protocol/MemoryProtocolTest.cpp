@@ -231,7 +231,7 @@ TEST_F(MemoryProtocolTest, ToMemoryComponentRequestNormalTest)
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/component", "params": {"rankId": "2", "currentPage": 1, "pageSize": 100,
         "orderBy": "component", "order": "ascend"}})";
-    MemoryComponentParams expect = {"2", 1, 100, "component", "ascend", false};
+    MemoryComponentParams expect = {"2", "2", 1, 100, "component", "ascend", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -274,7 +274,7 @@ TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestNormalTest)
         "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream", "searchName": "aten::add",
         "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
         "orderBy": "size", "order": "ascend"}})";
-    MemoryOperatorParams expect = {"3", "Stream", "aten::add", -100, 1000, 100.314, 256.397, 100, 10,
+    MemoryOperatorParams expect = {"3", "3", "Stream", "aten::add", -100, 1000, 100.314, 256.397, 100, 10,
         "size", "ascend", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
@@ -300,7 +300,7 @@ TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestLackMinSizeAndMaxSizeTest)
         "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream", "searchName": "aten::add",
         "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
         "orderBy": "size", "order": "ascend"}})";
-    MemoryOperatorParams expect = {"3", "Stream", "aten::add", std::numeric_limits<int64_t>::min(),
+    MemoryOperatorParams expect = {"3", "3", "Stream", "aten::add", std::numeric_limits<int64_t>::min(),
         std::numeric_limits<int64_t>::max(), 100.314, 256.397, 100, 10, "size", "ascend", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
@@ -510,7 +510,7 @@ TEST_F(MemoryProtocolTest, ToMemoryViewRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "command": "Memory/view/memoryUsage",
         "resultCallbackId": 0, "params": {"rankId": "1", "type": "Overall", "isCompare": false}})";
-    MemoryViewParams expect = {"1", "Overall", false};
+    MemoryViewParams expect = {"1", "1", "Overall", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -536,7 +536,7 @@ TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/operatorSize", "params": {"rankId": "1", "type": "Overall", "isCompare": false}})";
-    MemoryOperatorSizeParams expect = {"1", "Overall", false};
+    MemoryOperatorSizeParams expect = {"1", "1", "Overall", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;

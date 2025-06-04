@@ -62,12 +62,13 @@ public:
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
-    bool QueryOperatorSize(double &min, double &max) override;
+    bool QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max) override;
     bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
                                  double &min, double &max) override;
-    bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
-    bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
-                                   uint64_t offsetTime) override;
+    bool QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
+        std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
+    bool QueryEntireComponentTable(Protocol::MemoryComponentParams &requestParams,
+        std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime) override;
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                         std::vector<Protocol::StaticOperatorItem>& opDetails) override;
     uint64_t QueryMinOperatorAllocationTime();
@@ -76,6 +77,7 @@ public:
 
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
+    std::string QueryDeviceId() override;
 
 private:
     // 动态图表格数据在数据库中存储表名为operator，全量DB对应表名OP_MEMORY

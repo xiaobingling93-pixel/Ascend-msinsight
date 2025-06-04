@@ -63,8 +63,10 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireComponentTable)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.deviceId = "0";
     std::vector<Dic::Protocol::MemoryComponent> responseBody;
-    bool result = database->QueryEntireComponentTable(responseBody, offsetTime);
+    bool result = database->QueryEntireComponentTable(requestParams, responseBody, offsetTime);
     int expectSize = 0;
     EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
@@ -76,6 +78,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 10; // page size = 10
@@ -98,6 +101,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithTime)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 100; // page size = 100
@@ -125,6 +129,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTime)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 100; // page size = 100
@@ -155,6 +160,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTimeOnlyShowWit
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 100; // page size = 100
@@ -180,6 +186,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithSize)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 10; // page size = 10
@@ -202,6 +209,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptZero)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 100; // page size = 100
@@ -224,6 +232,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptSeveral)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 100; // page size = 100
@@ -246,6 +255,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryComponentsTotalNum)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryComponentParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     int64_t totalNum;
     auto result = database->QueryComponentsTotalNum(requestParams, totalNum);
     EXPECT_TRUE(result);
@@ -258,6 +268,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNum)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "";
     requestParams.minSize = std::numeric_limits<int64_t>::min();
@@ -276,6 +287,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithSize)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "aten::empty_strided";
     requestParams.minSize = 0; // min size = 0
@@ -294,6 +306,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithTime)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "aten::empty_strided";
     requestParams.minSize = std::numeric_limits<int64_t>::min();
@@ -317,6 +330,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithLimitedTime)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
@@ -335,6 +349,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectZero)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.deviceId = "0";
     requestParams.searchName = "aten::empty_stridedss";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     requestParams.minSize = std::numeric_limits<int64_t>::min();
@@ -353,6 +368,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectSeveral)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
@@ -369,9 +385,11 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireOperatorTable)
 {
     DataBaseManager::Instance().SetDataType(DataType::DB);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.deviceId = "0";
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
     std::vector<Dic::Protocol::MemoryOperator> opDetails;
-    bool result = database->QueryEntireOperatorTable(opDetails, offsetTime);
+    bool result = database->QueryEntireOperatorTable(requestParams, opDetails, offsetTime);
     int expectSize = 359;
     EXPECT_TRUE(result);
     EXPECT_EQ(opDetails.size(), expectSize);
@@ -491,6 +509,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
@@ -505,6 +524,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByStreamExpectSeveral)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
@@ -519,6 +539,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByComponentExpectSeveral)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_COMPONENT_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
@@ -531,9 +552,11 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByComponentExpectSeveral)
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorSizeData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
+    Dic::Protocol::MemoryOperatorSizeParams requestParams;
+    requestParams.deviceId = "0";
     double min;
     double max;
-    auto result = database->QueryOperatorSize(min, max);
+    auto result = database->QueryOperatorSize(requestParams, min, max);
     EXPECT_EQ(result, true);
     EXPECT_EQ(min, 0.5); // minSize = 0.5
     EXPECT_EQ(max, 32896); // maxSize = 32896
