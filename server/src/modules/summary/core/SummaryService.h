@@ -8,6 +8,7 @@
 #include "SummaryProtocolResponse.h"
 #include "ParallelStrategyAlgorithmManager.h"
 #include "DataBaseManager.h"
+#include "ParallelStrategyAlgorithmDef.h"
 
 namespace Dic {
 namespace Module {
@@ -21,7 +22,8 @@ public:
     static bool QueryParallelismPerformanceInfo(const ParallelismPerformance &params,
                                                 PerformanceIndicatorData &indicatorData);
     static std::unordered_map<std::string, std::vector<CommInfoUnderRank>> QueryParallelismCommTime(
-        std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params);
+        const std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params,
+        CommInfoMap &commInTpDimension);
 private:
     static std::vector<IndicatorDataStruct> GetPerformanceDataByDimension(
         std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params);

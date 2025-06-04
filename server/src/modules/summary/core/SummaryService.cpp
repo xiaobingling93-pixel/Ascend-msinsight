@@ -137,8 +137,8 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
     GetPerformanceIndicatorParam indicatorParam{params.step,  params.dimension, params.config};
     std::vector<IndicatorDataStruct> compareIndicatorData = GetPerformanceDataByDimension(database,
                                                                                           indicatorParam);
-    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> compareCommInfo =
-        QueryParallelismCommTime(database, indicatorParam);
+    CommInfoMap compareCommInTpDimension;
+    CommInfoMap compareCommInfo = QueryParallelismCommTime(database, indicatorParam, compareCommInTpDimension);
     // 查询baseline数据
     std::vector<IndicatorDataStruct> baselineIndicatorData;
     std::unordered_map<std::string, std::vector<CommInfoUnderRank>> baselineCommInfo;
@@ -147,7 +147,8 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
             BaselineManager::Instance().GetBaseLineClusterPath());
         GetPerformanceIndicatorParam baselineParams{params.baselineStep, params.dimension, params.config};
         baselineIndicatorData = GetPerformanceDataByDimension(databaseBaseline, baselineParams);
-        baselineCommInfo = QueryParallelismCommTime(databaseBaseline, baselineParams);
+        CommInfoMap baseCommInTpDimension;
+        baselineCommInfo = QueryParallelismCommTime(databaseBaseline, baselineParams, baseCommInTpDimension);
     }
 
     if (compareIndicatorData.empty() && baselineIndicatorData.empty()) {
@@ -162,6 +163,10 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
             ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath());
         if (algPtr != nullptr) {
             algPtr->CalAdviceInfo(params.dimension, indicatorData.advices, compareIndicatorData);
+            if (!algPtr->CalAdviceInfoByCommInfo(compareCommInTpDimension)) {
+                ServerLog::Warn("Failed to calculate slow rank advice by communication time. Current parallel "
+                                "strategy config do not match the actual model training parameters.");
+            }
         }
     }
     return true;
@@ -195,7 +200,8 @@ void SummaryService::MergeCommInfo(std::vector<CommInfoUnderRank> compare, std::
 }
 
 std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::QueryParallelismCommTime(
-    std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params)
+    const std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params,
+    CommInfoMap &commInTpDimension)
 {
     if (database == nullptr) {
         ServerLog::Warn("Fail to query parallelism communication info, database not exist.");
@@ -229,9 +235,9 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
         return {};
     }
     // 匹配数据
-    auto MatchRes = MatchCommDataForConnection(commTimeForRankDim, connections, importRankList);
+    commInTpDimension = MatchCommDataForConnection(commTimeForRankDim, connections, importRankList);
     // 数据根据维度进行折叠
-    return algPtr->GetCommInfoByDimension(MatchRes, params.dimension);
+    return algPtr->GetCommInfoByDimension(commInTpDimension, params.dimension);
 }
 
 /**

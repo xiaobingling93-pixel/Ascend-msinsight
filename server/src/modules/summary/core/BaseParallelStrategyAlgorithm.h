@@ -10,6 +10,8 @@
 #include "ClusterDef.h"
 #include "SummaryProtocolResponse.h"
 #include "SummaryProtocolRequest.h"
+#include "ParallelStrategyAlgorithmDef.h"
+#include "TopNAdviceMaintainer.h"
 
 namespace Dic::Module::Summary {
 
@@ -38,9 +40,9 @@ public:
     virtual void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
                                std::vector<IndicatorDataStruct> &indicatorData);
     virtual std::vector<Connection> GetAllCommunicationGroups(std::string &err) = 0;
-    virtual std::unordered_map<std::string, std::vector<CommInfoUnderRank>> GetCommInfoByDimension(
-        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &expandCommInfos,
-        const std::string &dimension);
+    virtual CommInfoMap GetCommInfoByDimension(const CommInfoMap &expandCommInfos, const std::string &curDimension);
+    // calculate slow rank info by commInfo under rank
+    bool CalAdviceInfoByCommInfo(CommInfoMap &commInTpDimension);
 
 protected:
     int64_t GetParallelSizeByType(const std::string& type) const;
@@ -53,7 +55,8 @@ protected:
     void UpdateElementSize();
     std::string GetElementName(std::unordered_map<std::string, uint32_t> &indexAttributes);
     Position GetElementPosition(std::unordered_map<std::string, uint32_t>& indexAttributes) const;
-    uint32_t CalculateContainingRanksByAttrs(uint32_t dpIndex, uint32_t ppIndex, uint32_t cpIndex, uint32_t tpIndex);
+    uint32_t CalculateContainingRanksByAttrs(uint32_t dpIndex, uint32_t ppIndex, uint32_t cpIndex,
+                                             uint32_t tpIndex) const;
     static std::string FormatRanksForInterval(uint32_t start, uint32_t end);
     static std::string FormatRanksForSeveralIntervals(const std::vector<std::string>& intervals);
     std::vector<uint32_t> GetElementContainRanks(uint32_t index,
@@ -88,6 +91,24 @@ protected:
 
     std::unordered_map<std::string, std::vector<CommInfoUnderRank>> ReduceCommDefaultFunc(
         const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, uint32_t w, uint32_t h);
+
+    // calculate slow rank info by commInfo under rank
+    TopNAdviceMaintainer CalAdviceInfoByPpDim(const CommInfoMap &commInTpDimension, bool &matchSuccess);
+    uint32_t GetElementIndex(std::unordered_map<std::string, uint32_t> &indexAttributes,
+                             const ParallelStrategyConfig &tmpConfig) const;
+    static std::string GetElementNameForTopNAdvice(const ParallelStrategyConfig& tmpConfig,
+        std::unordered_map<std::string, uint32_t> &indexAttributes);
+    static int64_t GetTempParallelSizeByTypeForTopNAdvice(const std::string& type,
+                                                          const ParallelStrategyConfig& config);
+    TopNAdviceMaintainer CalAdviceInfoByCpDim(const TopNAdviceMaintainer& topNAdviceForPpDim,
+        const CommInfoMap &commInTpDimension, bool &matchSuccess);
+    TopNAdviceMaintainer CalAdviceInfoByTpDim(const TopNAdviceMaintainer& topNAdviceForCpDim,
+        CommInfoMap &commInTpDimension, bool &matchSuccess);
+    void CalTpDimAdviceInfoWithoutDpCpAdvice(const ParallelStrategyConfig &tmpConfig, CommInfoMap &commInTpDimension,
+                                             TopNAdviceMaintainer& topNAdviceForTpDim);
+
+    void CalSynchronizeTime(const std::string& para, AdviceInfoForSlowRank &adviceInfo,
+        const ParallelStrategyConfig &tmpConfig, CommInfoMap &commInDimension, TopNAdviceMaintainer& topNAdvice);
 
     ParallelStrategyConfig strategyConfig;
     bool orderIsTpPpDp = false; // 用于区分算法排布顺序是TP-PP-DP类型还是TP-DP-PP类型, 默认为TP-DP-PP类型
@@ -131,6 +152,11 @@ protected:
     const static inline int cpSizeWithEp = 1;
     const static inline int reservedNum = 2; // 保留2位小数
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
+    const static inline uint32_t maxLengthOfAdvice = 10; // 专家建议优先队列最大容量
+    const static inline uint32_t topN = 3; // 专家建议取TopN慢卡
+
+    // slow rank advice by CommInfo under rank
+    std::vector<AdviceInfoForSlowRank> slowRankAdvice;
 
     using CommInfoHandler = std::function<std::unordered_map<std::string, std::vector<CommInfoUnderRank>>(
         const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>&)>;

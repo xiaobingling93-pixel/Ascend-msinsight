@@ -295,12 +295,19 @@ struct CommInfoUnderRank {
     std::string pgName;
 };
 
+struct AdviceInfoForSlowRank {
+    uint32_t index{}; // rank or group index
+    std::string name; // rank or group name
+    std::unordered_map<std::string, uint32_t> indexAttributes; // {key: pgName, value: xpIndex}
+    std::unordered_map<std::string, double> synchronizeTime; // <key: pgName, value: xpSynchronizeTime>
+};
+
 // 一张卡或一个分组的相关信息，包括序号、名称、位置、并行分组属性、包含的卡等信息
 struct Element {
     uint32_t index; // rank or group index
     std::string name; // rank or group name
     Position position{}; // rank or group position in 2D arrangement
-    std::unordered_map<std::string, uint32_t> indexAttributes{}; // {dp_index=0}
+    std::unordered_map<std::string, uint32_t> indexAttributes; // {key: pgName, value: xpIndex}
     std::vector<uint32_t> ranks;
     std::string formattedRanks;
 };

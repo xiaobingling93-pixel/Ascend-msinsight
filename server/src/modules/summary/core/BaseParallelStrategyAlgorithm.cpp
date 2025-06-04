@@ -4,6 +4,7 @@
 #include <cfloat>
 #include "NumberUtil.h"
 #include "ServerLog.h"
+#include "StringUtil.h"
 #include "BaseParallelStrategyAlgorithm.h"
 
 namespace Dic::Module::Summary {
@@ -41,6 +42,7 @@ void BaseParallelStrategyAlgorithm::ClearStrategyConfigCache()
     reducePpStatistic.clear();
     reduceCpMax.clear();
     reduceCpMin.clear();
+    slowRankAdvice.clear();
 }
 
 void BaseParallelStrategyAlgorithm::SetStrategyConfig(const ParallelStrategyConfig& config)
@@ -633,12 +635,269 @@ void BaseParallelStrategyAlgorithm::CalAdviceInfo(const std::string &tmpDimensio
     }
 }
 
-std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStrategyAlgorithm::GetCommInfoByDimension(
-    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &expandCommInfos,
-    const std::string &dimension)
+/**
+ * 慢卡专家建议
+ * @param commInTpDimension 全展开维度下，按通信域拆解通信时间结果
+ * @return 当前并行策略参数是否能正确按通信域拆解出通信时间
+ * (若当前并行策略参数与实际模型训练参数不一致，可能无法正确按通信域拆解出通信时间，无法给出慢卡专家建议)
+ */
+bool BaseParallelStrategyAlgorithm::CalAdviceInfoByCommInfo(CommInfoMap &commInTpDimension)
+{
+    slowRankAdvice.clear();
+    if (dimension == DIMENSIONS_DP) {
+        return true;
+    }
+    bool matchSuccess = true;
+    TopNAdviceMaintainer topNAdviceForPpDim = CalAdviceInfoByPpDim(commInTpDimension, matchSuccess);
+    if (dimension == DIMENSIONS_PP) {
+        slowRankAdvice = topNAdviceForPpDim.GetTopNSlowest(topN);
+        return matchSuccess;
+    }
+    TopNAdviceMaintainer topNAdviceForCpDim = CalAdviceInfoByCpDim(topNAdviceForPpDim, commInTpDimension,
+                                                                   matchSuccess);
+    if (dimension == DIMENSIONS_CP) {
+        slowRankAdvice = topNAdviceForCpDim.GetTopNSlowest(topN);
+        return matchSuccess;
+    }
+    TopNAdviceMaintainer topNAdviceForTpDim = CalAdviceInfoByTpDim(topNAdviceForCpDim, commInTpDimension, matchSuccess);
+    slowRankAdvice = topNAdviceForTpDim.GetTopNSlowest(topN);
+    return matchSuccess;
+}
+
+void BaseParallelStrategyAlgorithm::CalTpDimAdviceInfoWithoutDpCpAdvice(const ParallelStrategyConfig &tmpConfig,
+    CommInfoMap &commInTpDimension, TopNAdviceMaintainer& topNAdviceForTpDim)
+{
+    // 若没有DP+PP+CP维度TopN慢分组，则遍历当前维度所有TP通信域
+    for (uint32_t dpIndex = 0; dpIndex < strategyConfig.dpSize; dpIndex++) {
+        for (uint32_t ppIndex = 0; ppIndex < strategyConfig.ppSize; ppIndex++) {
+            for (uint32_t cpIndex = 0; cpIndex < strategyConfig.cpSize; cpIndex++) {
+                AdviceInfoForSlowRank tmpAdvice;
+                tmpAdvice.indexAttributes[DP_PARA] = dpIndex;
+                tmpAdvice.indexAttributes[CP_PARA] = cpIndex;
+                tmpAdvice.indexAttributes[PP_PARA] = ppIndex;
+                // 求当前通信域每张卡的TP卡间同步平均时间(最大TP通信时间-该Element TP通信时间)
+                CalSynchronizeTime(TP_PARA, tmpAdvice, tmpConfig, commInTpDimension, topNAdviceForTpDim);
+            }
+        }
+    }
+}
+
+TopNAdviceMaintainer BaseParallelStrategyAlgorithm::CalAdviceInfoByTpDim(const TopNAdviceMaintainer& topNAdviceForCpDim,
+    CommInfoMap &commInTpDimension, bool &matchSuccess)
+{
+    if (strategyConfig.tpSize == 1) {
+        return topNAdviceForCpDim;
+    }
+    ParallelStrategyConfig tmpConfig = strategyConfig;
+    // 根据DP-PP-CP-TP维度通信指标,过滤出TP-通信时间
+    for (auto& item : commInTpDimension) {
+        auto& commInfo = item.second;
+        commInfo.erase(std::remove_if(commInfo.begin(), commInfo.end(), [](const CommInfoUnderRank& info) {
+            return info.pgName != TP_GROUP;
+            }), commInfo.end());
+    }
+    TopNAdviceMaintainer topNAdviceForTpDim(maxLengthOfAdvice);
+    if (topNAdviceForCpDim.IsEmpty()) {
+        // 若没有DP+PP+CP维度TopN慢分组，则遍历当前维度所有TP通信域
+        CalTpDimAdviceInfoWithoutDpCpAdvice(tmpConfig, commInTpDimension, topNAdviceForTpDim);
+    } else {
+        // 否则，根据DP+PP+CP维度TopN慢分组进一步排查
+        std::vector<AdviceInfoForSlowRank> adviceListForCp = topNAdviceForCpDim.GetTopNSlowest(topN);
+        for (auto& adviceForCp : adviceListForCp) {
+            CalSynchronizeTime(TP_PARA, adviceForCp, tmpConfig, commInTpDimension, topNAdviceForTpDim);
+        }
+    }
+    if (topNAdviceForTpDim.IsEmpty()) {
+        matchSuccess = false; // 当前并行策略参数与实际模型训练参数不一致，无法正确按通信域拆解出通信时间，无法给出慢卡专家建议
+    } else {
+        matchSuccess = true;
+    }
+    return topNAdviceForTpDim;
+}
+
+TopNAdviceMaintainer BaseParallelStrategyAlgorithm::CalAdviceInfoByCpDim(const TopNAdviceMaintainer& topNAdviceForPpDim,
+    const CommInfoMap &commInTpDimension, bool &matchSuccess)
+{
+    if (strategyConfig.cpSize == 1) {
+        return topNAdviceForPpDim;
+    }
+    ParallelStrategyConfig tmpConfig = strategyConfig;
+    tmpConfig.tpSize = 1;
+
+    // 得到DP-PP-CP维度通信指标
+    CommInfoMap commInCpDimension = GetCommInfoByDimension(commInTpDimension, DIMENSIONS_CP);
+    // 过滤出CP-通信时间
+    for (auto& item : commInCpDimension) {
+        auto& commInfo = item.second;
+        commInfo.erase(std::remove_if(commInfo.begin(), commInfo.end(), [](const CommInfoUnderRank& info) {
+            return info.pgName != CP_GROUP;
+            }), commInfo.end());
+    }
+    TopNAdviceMaintainer topNAdviceForCpDim(maxLengthOfAdvice);
+    if (topNAdviceForPpDim.IsEmpty()) {
+        // 若没有DP+PP维度TopN慢分组，则遍历当前维度所有CP分组
+        for (uint32_t dpIndex = 0; dpIndex < strategyConfig.dpSize; dpIndex++) {
+            for (uint32_t ppIndex = 0; ppIndex < strategyConfig.ppSize; ppIndex++) {
+                AdviceInfoForSlowRank tmpAdvice;
+                tmpAdvice.indexAttributes[DP_PARA] = dpIndex;
+                tmpAdvice.indexAttributes[TP_PARA] = 0;
+                tmpAdvice.indexAttributes[PP_PARA] = ppIndex;
+                // 求当前通信域每张卡的CP组间同步平均时间(最大CP通信时间-该Element CP通信时间)
+                CalSynchronizeTime(CP_PARA, tmpAdvice, tmpConfig, commInCpDimension, topNAdviceForCpDim);
+            }
+        }
+    } else {
+        // 否则，根据DP+PP维度TopN慢分组进一步排查
+        std::vector<AdviceInfoForSlowRank> adviceListForPp = topNAdviceForPpDim.GetTopNSlowest(topN);
+        for (auto& adviceForPp : adviceListForPp) {
+            CalSynchronizeTime(CP_PARA, adviceForPp, tmpConfig, commInCpDimension, topNAdviceForCpDim);
+        }
+    }
+    if (topNAdviceForCpDim.IsEmpty()) {
+        matchSuccess = false; // 当前并行策略参数与实际模型训练参数不一致，无法正确按通信域拆解出通信时间，无法给出慢卡专家建议
+    } else {
+        matchSuccess = true;
+    }
+    return topNAdviceForCpDim;
+}
+
+TopNAdviceMaintainer BaseParallelStrategyAlgorithm::CalAdviceInfoByPpDim(const CommInfoMap &commInTpDimension,
+                                                                         bool &matchSuccess)
+{
+    TopNAdviceMaintainer topNAdviceForPpDim(maxLengthOfAdvice);
+    if (strategyConfig.dpSize == 1) {
+        return topNAdviceForPpDim;
+    }
+    ParallelStrategyConfig tmpConfig = strategyConfig;
+    tmpConfig.tpSize = 1;
+    tmpConfig.cpSize = 1;
+    // 得到DP-PP维度通信指标
+    CommInfoMap commInPpDimension = GetCommInfoByDimension(commInTpDimension, DIMENSIONS_PP);
+    // 过滤出DP-通信时间
+    for (auto& item : commInPpDimension) {
+        auto& commInfo = item.second;
+        commInfo.erase(std::remove_if(commInfo.begin(), commInfo.end(), [](const CommInfoUnderRank& info) {
+            return info.pgName != DP_GROUP;
+            }), commInfo.end());
+    }
+    for (uint32_t ppIndex = 0; ppIndex < strategyConfig.ppSize; ppIndex++) {
+        AdviceInfoForSlowRank tmpAdvice;
+        tmpAdvice.indexAttributes[CP_PARA] = 0;
+        tmpAdvice.indexAttributes[TP_PARA] = 0;
+        tmpAdvice.indexAttributes[PP_PARA] = ppIndex;
+        // 求当前通信域每张卡的DP组间同步平均时间(最大DP通信时间-该Element DP通信时间)
+        CalSynchronizeTime(DP_PARA, tmpAdvice, tmpConfig, commInPpDimension, topNAdviceForPpDim);
+    }
+    if (topNAdviceForPpDim.IsEmpty()) {
+        matchSuccess = false; // 当前并行策略参数与实际模型训练参数不一致，无法正确按通信域拆解出通信时间，无法给出慢卡专家建议
+    } else {
+        matchSuccess = true;
+    }
+    return topNAdviceForPpDim;
+}
+
+// 求当前通信域每张卡的XX组间同步平均时间(最大XX通信时间-该Element XX通信时间)
+void BaseParallelStrategyAlgorithm::CalSynchronizeTime(const std::string& para, AdviceInfoForSlowRank &adviceInfo,
+    const ParallelStrategyConfig &tmpConfig, CommInfoMap &commInDimension, TopNAdviceMaintainer& topNAdvice)
+{
+    double maxCommTime = 0.0;
+    uint32_t paraSize = GetParallelSizeByType(para);
+    // 遍历当前XX-通信域，找到最大XX-通信时间
+    for (uint32_t index = 0; index < paraSize; index++) {
+        adviceInfo.indexAttributes[para] = index;
+        uint32_t eleIndex = GetElementIndex(adviceInfo.indexAttributes, tmpConfig);
+        std::vector<CommInfoUnderRank> commInfoList = commInDimension[std::to_string(eleIndex)];
+        if (commInfoList.empty()) {
+            continue;
+        }
+        maxCommTime = maxCommTime > commInfoList[0].commTime ? maxCommTime : commInfoList[0].commTime;
+    }
+    if (maxCommTime == 0.0) {
+        return;
+    }
+    const std::vector<std::string> commTimeListForAdvice = {DP_PARA, CP_PARA};
+    // 求当前通信域每张卡的XX组间同步平均时间(最大XX通信时间-该Element XX-通信时间)
+    for (uint32_t index = 0; index < paraSize; index++) {
+        adviceInfo.indexAttributes[para] = index;
+        uint32_t eleIndex = GetElementIndex(adviceInfo.indexAttributes, tmpConfig);
+        std::vector<CommInfoUnderRank> commInfoList = commInDimension[std::to_string(eleIndex)];
+        if (commInfoList.empty()) {
+            continue;
+        }
+        AdviceInfoForSlowRank adviceInfoForSlowRank;
+        adviceInfoForSlowRank.index = eleIndex;
+        adviceInfoForSlowRank.name = GetElementNameForTopNAdvice(tmpConfig, adviceInfo.indexAttributes);
+        adviceInfoForSlowRank.indexAttributes = adviceInfo.indexAttributes;
+        adviceInfoForSlowRank.synchronizeTime[para] = maxCommTime - commInfoList[0].commTime;
+        // 添加对应所属分组DP-通信时间、CP通信时间
+        for (const auto& item : commTimeListForAdvice) {
+            if (adviceInfo.synchronizeTime.find(item) != adviceInfo.synchronizeTime.end()) {
+                adviceInfoForSlowRank.synchronizeTime[item] = adviceInfo.synchronizeTime[item];
+            }
+        }
+        topNAdvice.Insert(adviceInfoForSlowRank);
+    }
+}
+
+uint32_t BaseParallelStrategyAlgorithm::GetElementIndex(std::unordered_map<std::string, uint32_t> &indexAttributes,
+                                                        const ParallelStrategyConfig &tmpConfig) const
+{
+    // 前端入参已校验，无乘法整数溢出风险
+    uint32_t curTpSize = tmpConfig.tpSize;
+    uint32_t curTpCpSize = curTpSize * tmpConfig.cpSize;
+    uint32_t curTpCpDpSize = curTpCpSize * tmpConfig.dpSize;
+    uint32_t curTpCpPpSize = curTpCpSize * tmpConfig.ppSize;
+
+    uint32_t eleIndex{};
+    if (orderIsTpPpDp) {
+        eleIndex = curTpCpPpSize * indexAttributes[DP_PARA] + curTpCpSize * indexAttributes[PP_PARA]
+            + curTpSize * indexAttributes[CP_PARA] + indexAttributes[TP_PARA];
+    } else {
+        eleIndex = curTpCpDpSize * indexAttributes[PP_PARA] + curTpCpSize * indexAttributes[DP_PARA]
+                   + curTpSize * indexAttributes[CP_PARA] + indexAttributes[TP_PARA];
+    }
+    return eleIndex;
+}
+
+std::string BaseParallelStrategyAlgorithm::GetElementNameForTopNAdvice(const ParallelStrategyConfig& tmpConfig,
+    std::unordered_map<std::string, uint32_t> &indexAttributes)
+{
+    std::string name;
+    for (const auto& para : LAYOUT) {
+        if (GetTempParallelSizeByTypeForTopNAdvice(para, tmpConfig) > 1) {
+            name = StringUtil::StrJoin(name, para, std::to_string(indexAttributes[para]), "-");
+        }
+    }
+    if (!name.empty()) {
+        name.pop_back();
+    }
+    return name;
+}
+
+int64_t BaseParallelStrategyAlgorithm::GetTempParallelSizeByTypeForTopNAdvice(const std::string& type,
+    const ParallelStrategyConfig& config)
+{
+    if (type == DP_PARA) {
+        return config.dpSize;
+    }
+    if (type == PP_PARA) {
+        return config.ppSize;
+    }
+    if (type == TP_PARA) {
+        return config.tpSize;
+    }
+    if (type == CP_PARA) {
+        return config.cpSize;
+    }
+    // 默认值为1，表征没有启用对应的并行方式
+    return 1;
+}
+
+CommInfoMap BaseParallelStrategyAlgorithm::GetCommInfoByDimension(const CommInfoMap &expandCommInfos,
+    const std::string &curDimension)
 {
     // 查找对应的处理函数
-    auto it = commInfoHandlers.find(dimension);
+    auto it = commInfoHandlers.find(curDimension);
     // 如果找到了对应的处理函数，则调用它
     if (it != commInfoHandlers.end()) {
         return it->second(expandCommInfos);
@@ -731,7 +990,7 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStra
  * @return
  */
 uint32_t BaseParallelStrategyAlgorithm::CalculateContainingRanksByAttrs(
-    uint32_t dpIndex, uint32_t ppIndex, uint32_t cpIndex, uint32_t tpIndex)
+    uint32_t dpIndex, uint32_t ppIndex, uint32_t cpIndex, uint32_t tpIndex) const
 {
     return orderIsTpPpDp ? tpCpPpSize * dpIndex + tpCpSize * ppIndex + tpSize * cpIndex + tpIndex :
            tpCpDpSize * ppIndex + tpCpSize * dpIndex + tpSize * cpIndex + tpIndex;
