@@ -20,12 +20,23 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
     std::unique_ptr<SqliteResultSet> resultSet;
     const std::vector<PROCESS_TYPE> hostCounterEvents = {PROCESS_TYPE::CPU_USAGE,
         PROCESS_TYPE::HOST_DISK_USAGE, PROCESS_TYPE::HOST_MEM_USAGE, PROCESS_TYPE::HOST_NETWORK_USAGE};
+    const std::vector<PROCESS_TYPE> deviceCounterEvents = {PROCESS_TYPE::NIC, PROCESS_TYPE::ROCE,
+        PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS};
     if (std::find(hostCounterEvents.begin(), hostCounterEvents.end(),
                   Timeline::TraceDatabaseHelper::GetProcessType(params.metaType)) != hostCounterEvents.end()) {
         try {
             resultSet = TraceDatabaseHelper::QueryHostUnitCounter(stmt, params, minTimestamp);
         } catch (DatabaseException &e) {
-            ServerLog::Error("Query unit counter failed, ", e.What());
+            ServerLog::Error("Query host unit counter failed, ", e.What());
+            return false;
+        }
+    } else if (std::find(deviceCounterEvents.begin(), deviceCounterEvents.end(),
+                         Timeline::TraceDatabaseHelper::GetProcessType(params.metaType)) != deviceCounterEvents.end()) {
+        try {
+            resultSet = TraceDatabaseHelper::QueryDeviceUnitCounter(stmt,
+                params, minTimestamp, GetDeviceId(params.rankId));
+        } catch (DatabaseException &e) {
+            ServerLog::Error("Query device unit counter failed, ", e.What());
             return false;
         }
     } else {
@@ -51,7 +62,7 @@ void DbTraceDataBase::ProcessHostCounterEventsMetadata(std::vector<std::unique_p
     helper.RegisterHostMap();
     for (const auto &element : helper.hostCounterEventMap) {
         std::string progressName = element.second.progressName;
-        std::string metaDataSQL = helper.GenerateMetaDataSQL(element.first);
+        std::string metaDataSQL = helper.GenerateHostMetadataSQL(element.first);
         auto counter = GenerateBaseUnitTrack("label", path, progressName, progressName,
                                              ENUM_TO_STR(element.first).value());
         auto stmt = CreatPreparedStatement(metaDataSQL);

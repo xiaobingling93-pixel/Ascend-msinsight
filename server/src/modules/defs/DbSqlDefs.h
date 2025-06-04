@@ -5,8 +5,8 @@
 
 #ifndef PROFILER_SERVER_DBSQLDEFS_H
 #define PROFILER_SERVER_DBSQLDEFS_H
-#include "ConstantDefs.h"
 #include <string>
+#include "ConstantDefs.h"
 
 namespace Dic {
     // init full db
@@ -60,12 +60,6 @@ const static std::string SAMPLE_PMU_MEAT_DATA_SQL =
         " where deviceId = ? group by coreType, coreId) "
         "  select 'freq(Mhz),usage(%),totalCycle' as types, format('%s Core %s', value, coreId) as name  "
         " from main join STRING_IDS on coreType = id";
-const static std::string NIC_MEAT_DATA_SQL =
-        "with main as (select funcId from # where deviceId = ? group by funcId) "
-        "     select 'rx_bandwidth_effciency,rx_packets,rx_error_rate,rx_dropped_rate' as types, "
-        " format('Port %s/rx', funcId) as name from main "
-        "UNION select 'tx_bandwidth_effciency,tx_packets,tx_error_rate,tx_dropped_rate' as types,"
-        " format('Port %s/tx', funcId) as name from main";
 
 
     // sql of timeline unit/counter
@@ -103,31 +97,6 @@ const static std::string SAMPLE_PMU_UNIT_COUNTER_SQL =
         " format('{\"freq(Mhz)\":%s, \"usage(%%)\":%s, \"totalCycle\":%s}', freq, usage, totalCycle) as args "
         " from SAMPLE_PMU_TIMELINE join STRING_IDS on coreType = id  where deviceId = ? and "
         "        format('%s Core %s', value, coreId) = ? and startTime >= ? AND startTime <= ? ORDER BY startTime;";
-const static std::string NIC_UNIT_COUNTER_SQL =
-        "with pn as (select ? as name) "
-        "select timestampNs - ? as startTime, "
-        "case when glob('*rx',pn.name) then json_object('rx_bandwidth_effciency',round(rxByteRate*8/bandwidth,4),"
-        " 'rx_packets', rxPackets, 'rx_error_rate', round(rxErrors * 1.0 / rxPackets, 4), "
-        " 'rx_dropped_rate', round(rxDropped * 1.0 / rxPackets, 4)) "
-        "  else json_object('tx_bandwidth_effciency', round(txByteRate * 8 / bandwidth, 4), "
-        "  'tx_packets', txPackets, 'tx_error_rate', round(txErrors * 1.0 / txPackets, 4), "
-        "  'tx_dropped_rate', round(txDropped * 1.0 / txPackets, 4)) end as args "
-        " from # join pn where deviceId = ? and glob('Port '||funcId||'/*', pn.name)"
-        " and startTime >= ? AND startTime <= ? ORDER BY startTime;";
-
-const static std::string HCCS_UNIT_COUNTER_SQL =
-        "select timestampNs - ? as startTime, json_object('txThroughput(B/s)',round(txThroughput, 4),"
-        " 'rxThroughput(B/s)',round(rxThroughput, 4)) as args "
-        "from HCCS where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime";
-
-const static std::string PCIE_UNIT_COUNTER_SQL =
-        "select timestampNs - ? as startTime, "
-        " case ? when 'PCIe_post' then json_object('txAvg(B/s)',round(txPostAvg, 4),'rxAvg(B/s)',round(rxPostAvg, 4)) "
-        "  when 'PCIe_nonpost' then json_object('txAvg(B/s)',round(txNonpostAvg,4),'rxAvg(B/s)',round(rxNonpostAvg,4)) "
-        "   when 'PCIe_cpl' then json_object('txAvg(B/s)', round(txCplAvg, 4), 'rxAvg(B/s)', round(rxCplAvg, 4)) "
-        "   else json_object('txAvg(B/s)', round(txNonpostLatencyAvg, 4)) "
-        " end as args"
-        " from PCIE where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime;";
 
 const static std::string AI_CORE_UNIT_COUNTER_SQL =
     "select timestampNs - ? as startTime, json_object('Mhz',round(freq, 4)) as args "

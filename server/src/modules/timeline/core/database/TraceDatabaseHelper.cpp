@@ -250,18 +250,6 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::uniq
         case PROCESS_TYPE::SAMPLE_PMU:
             return ExecuteQuery(stmt, SAMPLE_PMU_UNIT_COUNTER_SQL, minTimestamp, rankId,
                                 requestParams.threadId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::ROCE:
-        case PROCESS_TYPE::ROH:
-        case PROCESS_TYPE::NIC:
-            return ExecuteQuery(stmt, StringUtil::ReplaceFirst(NIC_UNIT_COUNTER_SQL, "#", requestParams.metaType),
-                                requestParams.threadId, minTimestamp, rankId,
-                                requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::HCCS:
-            return ExecuteQuery(stmt, HCCS_UNIT_COUNTER_SQL, minTimestamp, rankId,
-                                requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::PCIE:
-            return ExecuteQuery(stmt, PCIE_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
-                                rankId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::AI_CORE:
             return ExecuteQuery(stmt, AI_CORE_UNIT_COUNTER_SQL, minTimestamp,
                                 rankId, requestParams.startTime, requestParams.endTime);
@@ -277,9 +265,21 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryHostUnitCounter(
     CounterEventHelper helper;
     helper.RegisterHostMap();
     auto processType = GetProcessType(requestParams.metaType);
-    std::string sql = helper.GenerateCounterSQL(processType);
+    std::string sql = helper.GenerateHostCounterSQL(processType);
     return ExecuteQuery(stmt, sql, minTimestamp,
         requestParams.threadId, requestParams.startTime, requestParams.endTime);
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryDeviceUnitCounter(
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitCounterParams &requestParams,
+    uint64_t minTimestamp, const std::string &rankId)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    auto processType = GetProcessType(requestParams.metaType);
+    std::string sql = helper.GenerateDeviceCounterSQL(processType, requestParams.threadId);
+    return ExecuteQuery(stmt, sql, minTimestamp,
+        requestParams.threadId, requestParams.startTime, requestParams.endTime, rankId);
 }
 
 std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsDetails(
