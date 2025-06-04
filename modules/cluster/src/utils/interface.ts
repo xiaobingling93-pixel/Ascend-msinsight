@@ -34,15 +34,22 @@ export interface FormatterParams {
     seriesType: string;
 }
 
-export interface GetParallelStrategyRes {
+export interface GetParallelStrategyResCommon {
     algorithm: 'megatron-lm(tp-cp-ep-dp-pp)' | 'megatron-lm(tp-cp-pp-dp-ep)' | 'mindspeed(tp-cp-ep-dp-pp)' | 'mindie-llm(tp-dp-ep-pp-moetp)' | 'vllm(tp-pp-dp-ep)';
-    level: string;
     dpSize: number;
     ppSize: number;
     tpSize: number;
     epSize: number;
     cpSize: number;
     moeTpSize: number | null;
+}
+
+export interface GetParallelStrategyRes extends GetParallelStrategyResCommon {
+    level: string;
+}
+
+export interface GetSlowRankAdvise extends GetParallelStrategyResCommon {
+    dimension: 'ep-dp' | 'ep-dp-pp' | 'ep-dp-pp-cp' | 'ep-dp-pp-cp-tp';
 }
 
 export type SetParallelStrategyParams = Omit<GetParallelStrategyRes, 'level'>;
@@ -102,9 +109,29 @@ export interface PerformanceDataItem {
     [key: string]: any;
     index: number;
 }
+
+export interface TopElements {
+    name: string;
+    index: number;
+    dpSynchronizeTime: number;
+    cpSynchronizeTime?: number;
+    tpSynchronizeTime?: number;
+}
+
+export interface AntdTableRow {
+    [header: string]: string | number;
+    key: string;
+}
+
 export interface GetParallelismPerformanceRes {
     performance: PerformanceDataItem[];
     advice: string[];
+}
+
+export interface GetSlowRankAdviseRes {
+    hasSlowRank: boolean;
+    matchSuccess: boolean;
+    topNElements: TopElements[];
 }
 
 export interface ClickOperatorItem {

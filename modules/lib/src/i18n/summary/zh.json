@@ -142,6 +142,13 @@
     "Dump unbalanced": "Dump-均衡前",
     "Dump balanced": "Dump-均衡后",
     "Import data": "导入{{version}} dump 数据",
-    "Search": "查询"
+    "Search": "查询",
+    "slowRankTopN": "应关注Top3分组/慢卡",
+    "dpSynchronizeTime": "DP-组间同步平均耗时（us）",
+    "cpSynchronizeTime": "CP-组间同步平均耗时（us）",
+    "tpSynchronizeTime": "TP-卡间同步耗时（us）",
+    "number": "序号",
+    "slow rank advice": "请关注如下分组是否拖累了整网。同一通信域内，同步耗时越久，说明集群快慢卡不同步问题越严重。",
+    "No problem": "当前维度无明显快慢卡问题"
   }
 }

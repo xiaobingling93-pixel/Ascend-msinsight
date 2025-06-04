@@ -21,15 +21,18 @@ import styled from '@emotion/styled';
 import {
     getParallelismPerformanceDataCancelable,
     queryAllConnections,
+    slowRankAdvisor,
 } from '../../utils/RequestUtils';
 import { runInAction } from 'mobx';
 import { Communicator, partitionMode } from '../communicatorContainer/ContainerUtils';
 import connector from '../../connection';
-import { IndicatorsItem, PerformanceDataItem } from '../../utils/interface';
+import { AntdTableRow, IndicatorsItem, PerformanceDataItem, TopElements } from '../../utils/interface';
 import { isEqual } from 'lodash';
 import { ExpertLoadBalancingBox } from './expert-load-balancing';
 import { ClusterSelect } from '../ClusterSelect';
 import { Label } from '../Common';
+import { ResizeTable } from 'ascend-resize';
+import { Advice } from 'ascend-utils/Common';
 
 const FlowChartContainer = styled.div`
     margin-top: 24px;
@@ -103,6 +106,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
     const [activeRankId, setActiveRankId] = useState('');
     const [performanceLoading, setPerformanceLoading] = useState(false);
     const [adviceContent, setAdviceContent] = useState<string[]>([]);
+    const [slowRankAnalysis, setSlowRankAnalysis] = useState<JSX.Element[]>([]);
     const [performanceChartConditions, setPerformanceChartConditions] = useState<PerformanceChartConditions>(defaultPerformanceChartConditions);
     const [generateConditions, setGenerateConditions] = useState<GenerateConditions>(defaultGenerateConditions);
     const isDefaultGenerateConditions: boolean = useMemo(() => {
@@ -155,6 +159,87 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
                 session.setRankDyeingData();
             }
         });
+    };
+
+    const generateHeaders = (topNElementData: TopElements): string[] => {
+        const fixedHeader = 'slowRankTopN';
+        const dynamicHeaders = [];
+        if (topNElementData.dpSynchronizeTime !== undefined) { dynamicHeaders.push('dpSynchronizeTime'); }
+        if (topNElementData.cpSynchronizeTime !== undefined) { dynamicHeaders.push('cpSynchronizeTime'); }
+        if (topNElementData.tpSynchronizeTime !== undefined) { dynamicHeaders.push('tpSynchronizeTime'); }
+        return [fixedHeader, ...dynamicHeaders];
+    };
+
+    const generateAntdTableData = (headers: string[], tableData: TopElements[]): AntdTableRow[] => {
+        if (tableData.length === 0 || headers.length === 0) {
+            return [];
+        }
+        return tableData.map((item, index) => {
+            const rowData: AntdTableRow = {
+                key: (index + 1).toString(),
+            };
+            rowData[headers[0]] = `${item.name} ${t('number')}(${item.index})`;
+            for (let i = 1; i < headers.length; i++) {
+                rowData[headers[i]] = item[headers[i] as keyof TopElements] ?? ''; // 如果字段不存在，默认空字符串
+            }
+            return rowData;
+        });
+    };
+
+    const generateColumns = (dataKeys: string[]): Array<{dataIndex: string; key: string; title: string}> => {
+        return dataKeys.map(key => ({
+            dataIndex: key,
+            key: key,
+            title: t(key),
+        }));
+    };
+
+    const getSlowRankData = (): void => {
+        const fetchData = async (): Promise<void> => {
+            const params = {
+                ...generateConditions,
+            };
+            const results: JSX.Element[] = [];
+            if (params.dimension === 'ep-dp') {
+                setSlowRankAnalysis(results);
+                return;
+            }
+            const data = await slowRankAdvisor(params);
+            if (!data.matchSuccess) {
+                setSlowRankAnalysis(results);
+                return;
+            }
+            if (!data.hasSlowRank) {
+                const res: JSX.Element = (
+                    <div>
+                        <Advice text={t('No problem')} />
+                    </div>
+                );
+                results.push(res);
+                setSlowRankAnalysis(results);
+                return;
+            }
+
+            const keys = generateHeaders(data.topNElements[0]);
+            const column = generateColumns(keys);
+            const tableData = generateAntdTableData(keys, data.topNElements);
+
+            const resDiv: JSX.Element = (
+                <div>
+                    <div>
+                        <Advice text={t('slow rank advice')} />
+                    </div>
+                    <ResizeTable
+                        columns={column}
+                        dataSource={tableData}
+                        size="small"
+                    ></ResizeTable>
+                </div>
+            );
+            results.push(resDiv);
+            setSlowRankAnalysis(results);
+        };
+        fetchData();
     };
 
     // 获取全展开的连线数据
@@ -216,7 +301,12 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
             return;
         }
         getPerformanceData();
+        getSlowRankData();
     }, [performanceChartConditions.step, performanceChartConditions.baselineStep, JSON.stringify(generateConditions), session.isCompare]);
+
+    useEffect(() => {
+        getSlowRankData();
+    }, [t]);
 
     useEffect(() => {
         if (isDefaultGenerateConditions) {
@@ -252,7 +342,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
                 loading={performanceLoading}
                 clusterPath={clusterPath}
             />
-
+            { slowRankAnalysis }
             {!isDefaultGenerateConditions && <CollapsiblePanel
                 id="communication-overview-panel"
                 secondary

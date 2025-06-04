@@ -12,6 +12,8 @@ import {
     QueryExpertHotspotResult,
     SetParallelStrategyParams,
     PacketAndBandwidthChartsParams,
+    GetSlowRankAdvise,
+    GetSlowRankAdviseRes,
 } from './interface';
 import { createCancelableApi } from 'ascend-utils';
 import { store } from '../store';
@@ -237,6 +239,10 @@ export const getParallelismPerformanceDataCancelable = createCancelableApi(
         return await window.requestData('parallelism/performance/data', withClusterPath(params), 'summary');
     },
 );
+
+export const slowRankAdvisor = async (params: GetSlowRankAdvise): Promise<GetSlowRankAdviseRes> => {
+    return await window.requestData('summary/slowRank/advisor', withClusterPath(params), 'summary');
+};
 
 /**
  * 导入 MoE 专家负载均衡数据
