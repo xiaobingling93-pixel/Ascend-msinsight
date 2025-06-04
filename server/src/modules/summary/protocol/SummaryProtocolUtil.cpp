@@ -436,6 +436,36 @@ std::optional<document_t> ToResponseJson<ParallelismPerformanceResponse>(const P
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
+
+template <>
+std::optional<document_t> ToResponseJson<SummarySlowRankAdvisorResponse>(const SummarySlowRankAdvisorResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t topNElements(kArrayType);
+    for (const auto& data : response.body.topNElements) {
+        json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "index", data.index, allocator);
+        JsonUtil::AddMember(dataJson, "name", data.name, allocator);
+        if (data.synchronizeTime.find("tp") != data.synchronizeTime.end()) {
+            JsonUtil::AddMember(dataJson, "tpSynchronizeTime", data.synchronizeTime.at("tp"), allocator);
+        }
+        if (data.synchronizeTime.find("cp") != data.synchronizeTime.end()) {
+            JsonUtil::AddMember(dataJson, "cpSynchronizeTime", data.synchronizeTime.at("cp"), allocator);
+        }
+        if (data.synchronizeTime.find("dp") != data.synchronizeTime.end()) {
+            JsonUtil::AddMember(dataJson, "dpSynchronizeTime", data.synchronizeTime.at("dp"), allocator);
+        }
+        topNElements.PushBack(dataJson, allocator);
+    }
+    JsonUtil::AddMember(body, "topNElements", topNElements, allocator);
+    JsonUtil::AddMember(body, "hasSlowRank", response.body.hasSlowRank, allocator);
+    JsonUtil::AddMember(body, "matchSuccess", response.body.matchSuccess, allocator);
+    JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

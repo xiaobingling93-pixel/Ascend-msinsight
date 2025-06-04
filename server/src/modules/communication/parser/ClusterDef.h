@@ -300,6 +300,7 @@ struct AdviceInfoForSlowRank {
     std::string name; // rank or group name
     std::unordered_map<std::string, uint32_t> indexAttributes; // {key: pgName, value: xpIndex}
     std::unordered_map<std::string, double> synchronizeTime; // <key: pgName, value: xpSynchronizeTime>
+    std::unordered_map<std::string, double> maxCommTime; // 所在通信域最大通信时间 <key: pgName, value: xpMaxCommTime>
 };
 
 // 一张卡或一个分组的相关信息，包括序号、名称、位置、并行分组属性、包含的卡等信息

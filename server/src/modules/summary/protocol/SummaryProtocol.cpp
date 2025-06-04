@@ -28,6 +28,7 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_IMPORT_EXPERT_DATA, ToImportExpertDataRequest);
     jsonToReqFactory.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, ToQueryExpertHotspotRequest);
     jsonToReqFactory.emplace(REQ_RES_QUERY_MODEL_INFO, ToQueryModelInfoRequest);
+    jsonToReqFactory.emplace(REQ_RES_SUMMARY_SLOW_RANK_ADVISOR, ToSummarySlowRankAdvisorRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -48,6 +49,7 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_IMPORT_EXPERT_DATA, ToImportExpertDataResponse);
     resToJsonFactory.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, ToQueryExpertHotspotResponse);
     resToJsonFactory.emplace(REQ_RES_QUERY_MODEL_INFO, ToQueryModelInfoResponse);
+    resToJsonFactory.emplace(REQ_RES_SUMMARY_SLOW_RANK_ADVISOR, ToSummarySlowRankAdvisorResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -339,6 +341,11 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryModelInfoRequest(const json_t &
     return reqPtr;
 }
 
+std::unique_ptr<Request> SummaryProtocol::ToSummarySlowRankAdvisorRequest(const json_t &json, std::string &error)
+{
+    return ToQueryParallelismArrangementRequest(json, error);
+}
+
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -424,6 +431,12 @@ std::optional<document_t> SummaryProtocol::ToQueryExpertHotspotResponse(const Re
 std::optional<document_t> SummaryProtocol::ToQueryModelInfoResponse(const Response &response)
 {
     return ToResponseJson<QueryModelInfoResponse>(dynamic_cast<const QueryModelInfoResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToSummarySlowRankAdvisorResponse(const Response &response)
+{
+    return ToResponseJson<SummarySlowRankAdvisorResponse>(
+        dynamic_cast<const SummarySlowRankAdvisorResponse &>(response));
 }
 #pragma endregion
 } // namespace Protocol

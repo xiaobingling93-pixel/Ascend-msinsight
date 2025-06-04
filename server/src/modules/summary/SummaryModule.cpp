@@ -18,6 +18,7 @@
 #include "ImportExpertDataHandler.h"
 #include "QueryExpertHotspotHandler.h"
 #include "QueryModelInfoHandler.h"
+#include "SummarySlowRankAdvisorHandler.h"
 #include "ProtocolDefs.h"
 #include "SummaryModule.h"
 
@@ -57,6 +58,7 @@ void SummaryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, std::make_unique<QueryExpertHotspotHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_EXPERT_DATA, std::make_unique<ImportExpertDataHandler>());
     requestHandlerMap.emplace(REQ_RES_QUERY_MODEL_INFO, std::make_unique<QueryModelInfoHandler>());
+    requestHandlerMap.emplace(REQ_RES_SUMMARY_SLOW_RANK_ADVISOR, std::make_unique<SummarySlowRankAdvisorHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

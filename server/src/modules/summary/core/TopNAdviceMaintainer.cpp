@@ -33,7 +33,7 @@ std::vector<AdviceInfoForSlowRank> TopNAdviceMaintainer::GetTopNSlowest(uint32_t
     std::reverse(all.begin(), all.end());
 
     // 截取前 topN
-    if (topN < all.size()) {
+    if (static_cast<size_t>(topN) < all.size()) {
         all.resize(topN);
     }
     return all;

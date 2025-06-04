@@ -394,6 +394,38 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceResponseTestWillRet
     EXPECT_EQ(jsonOptional.value()["body"].HasMember("advice"), true);
 }
 
+TEST_F(SummaryProtocolUtilTest, ToSummarySlowRankAdvisorResponseTestWillReturnWhenNormalInput)
+{
+    Dic::Protocol::SummarySlowRankAdvisorResponse response{};
+    Module::AdviceInfoForSlowRank adviceInfo;
+    adviceInfo.name = "dp4-pp0-cp1-tp2";
+    adviceInfo.index = 9; // 9
+    adviceInfo.synchronizeTime["tp"] = 1.23; // 1.23
+    adviceInfo.synchronizeTime["cp"] = 4.56; // 4.56
+    adviceInfo.synchronizeTime["dp"] = 7.89; // 7.89
+    response.body.topNElements.push_back(adviceInfo);
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("topNElements"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["topNElements"].GetArray().Size(), response.body.topNElements.size());
+    int i = 0;
+    for (const auto &item : jsonOptional.value()["body"]["topNElements"].GetArray()) {
+        auto tmp = response.body.topNElements.at(i);
+        EXPECT_EQ(item["index"].GetUint(), tmp.index);
+        EXPECT_EQ(item["name"].GetString(), tmp.name);
+        EXPECT_EQ(item.HasMember("tpSynchronizeTime"), true);
+        EXPECT_EQ(item["tpSynchronizeTime"], tmp.synchronizeTime["tp"]);
+        EXPECT_EQ(item.HasMember("cpSynchronizeTime"), true);
+        EXPECT_EQ(item["cpSynchronizeTime"], tmp.synchronizeTime["cp"]);
+        EXPECT_EQ(item.HasMember("dpSynchronizeTime"), true);
+        EXPECT_EQ(item["dpSynchronizeTime"], tmp.synchronizeTime["dp"]);
+    }
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("hasSlowRank"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("matchSuccess"), true);
+}
+
 TEST_F(SummaryProtocolUtilTest, ToQueryExpertHotspotResponseJsonWhenNormalInput)
 {
     QueryExpertHotspotResponse response{};

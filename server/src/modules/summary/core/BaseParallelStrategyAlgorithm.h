@@ -43,6 +43,7 @@ public:
     virtual CommInfoMap GetCommInfoByDimension(const CommInfoMap &expandCommInfos, const std::string &curDimension);
     // calculate slow rank info by commInfo under rank
     bool CalAdviceInfoByCommInfo(CommInfoMap &commInTpDimension);
+    std::vector<AdviceInfoForSlowRank> GetTopNAdviceInfo(bool &matchSuccess);
 
 protected:
     int64_t GetParallelSizeByType(const std::string& type) const;
@@ -93,7 +94,7 @@ protected:
         const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, uint32_t w, uint32_t h);
 
     // calculate slow rank info by commInfo under rank
-    TopNAdviceMaintainer CalAdviceInfoByPpDim(const CommInfoMap &commInTpDimension, bool &matchSuccess);
+    TopNAdviceMaintainer CalAdviceInfoByPpDim(const CommInfoMap &commInTpDimension);
     uint32_t GetElementIndex(std::unordered_map<std::string, uint32_t> &indexAttributes,
                              const ParallelStrategyConfig &tmpConfig) const;
     static std::string GetElementNameForTopNAdvice(const ParallelStrategyConfig& tmpConfig,
@@ -101,9 +102,9 @@ protected:
     static int64_t GetTempParallelSizeByTypeForTopNAdvice(const std::string& type,
                                                           const ParallelStrategyConfig& config);
     TopNAdviceMaintainer CalAdviceInfoByCpDim(const TopNAdviceMaintainer& topNAdviceForPpDim,
-        const CommInfoMap &commInTpDimension, bool &matchSuccess);
+        const CommInfoMap &commInTpDimension);
     TopNAdviceMaintainer CalAdviceInfoByTpDim(const TopNAdviceMaintainer& topNAdviceForCpDim,
-        CommInfoMap &commInTpDimension, bool &matchSuccess);
+        CommInfoMap &commInTpDimension);
     void CalTpDimAdviceInfoWithoutDpCpAdvice(const ParallelStrategyConfig &tmpConfig, CommInfoMap &commInTpDimension,
                                              TopNAdviceMaintainer& topNAdviceForTpDim);
 
@@ -154,9 +155,11 @@ protected:
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
     const static inline uint32_t maxLengthOfAdvice = 10; // 专家建议优先队列最大容量
     const static inline uint32_t topN = 3; // 专家建议取TopN慢卡
+    const static inline double thresholdForSlowRankAdvice = 0.05; // 慢卡/慢分组 通信同步时间阈值
 
     // slow rank advice by CommInfo under rank
     std::vector<AdviceInfoForSlowRank> slowRankAdvice;
+    bool commMatchSuccess;
 
     using CommInfoHandler = std::function<std::unordered_map<std::string, std::vector<CommInfoUnderRank>>(
         const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>&)>;

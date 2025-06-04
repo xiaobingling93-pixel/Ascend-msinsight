@@ -20,6 +20,7 @@
 #include "ImportExpertDataHandler.h"
 #include "QueryExpertHotspotHandler.h"
 #include "QueryModelInfoHandler.h"
+#include "SummarySlowRankAdvisorHandler.h"
 
 using namespace Dic::Module;
 using namespace Dic::Module::Summary;
@@ -351,4 +352,30 @@ TEST_F(HandlerTest, QueryModelInfoHandlerNormal)
     QueryModelInfoHandler handler;
     bool res = handler.HandleRequest(std::move(request));
     EXPECT_EQ(res, true);
+}
+
+TEST_F(HandlerTest, SummarySlowRankAdvisorHandlerShouldReturnFalseWithParamError)
+{
+    auto request = std::make_unique<QueryParallelismArrangementRequest>();
+    request->params.config.tpSize = 2; // 2
+    request->params.config.dpSize = 4; // 4
+    request->params.config.cpSize = 2; // 2
+    request->params.config.ppSize = 2; // 2
+    request->params.config.epSize = 0; // 0
+    SummarySlowRankAdvisorHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, SummarySlowRankAdvisorHandlerShouldReturnFalseWithDataBaseError)
+{
+    auto request = std::make_unique<QueryParallelismArrangementRequest>();
+    request->params.config.tpSize = 2; // 2
+    request->params.config.dpSize = 4; // 4
+    request->params.config.cpSize = 2; // 2
+    request->params.config.ppSize = 2; // 2
+    request->params.config.epSize = 1; // 1
+    SummarySlowRankAdvisorHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
 }

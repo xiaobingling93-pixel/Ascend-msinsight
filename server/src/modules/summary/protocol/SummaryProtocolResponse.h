@@ -256,6 +256,17 @@ struct QueryModelInfoResponse : public Response {
     QueryModelInfoBody body;
 };
 
+struct SummarySlowRankAdvisorBody {
+    bool hasSlowRank = true;
+    bool matchSuccess = true;
+    std::vector<Module::AdviceInfoForSlowRank> topNElements;
+};
+
+struct SummarySlowRankAdvisorResponse : public Response {
+    SummarySlowRankAdvisorResponse() : Response(REQ_RES_SUMMARY_SLOW_RANK_ADVISOR) {}
+    SummarySlowRankAdvisorBody body;
+};
+
 struct ParallelismArrangementResponse : public Response {
     ParallelismArrangementResponse() : Response(REQ_RES_PARALLELISM_ARRANGEMENT_ALL) {}
     Module::ArrangementAndConnectionData arrangeData;
