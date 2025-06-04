@@ -66,6 +66,7 @@ TEST_F(CommunicationProtocolUtilTest, ToOperatorListResponseTest)
     std::string err;
     OperatorListsResponseBody body;
     response.body.rankLists.emplace_back("1");
+    response.body.dbPathList.emplace_back("test");
     response.body.minTime = NUMBER_HUNDRED;
     response.body.maxTime = NUMBER_THOUSAND;
     OperatorTimeItem op = {"op1", 100, 900};

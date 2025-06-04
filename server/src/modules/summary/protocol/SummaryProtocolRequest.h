@@ -245,6 +245,7 @@ const std::string KEY_BASELINE_STEP = "baselineStep";
 
 struct ComputeDetailParams {
     std::string rankId;
+    std::string dbPath;
     std::string timeFlag;
     int64_t currentPage = 0;
     int64_t pageSize = 0;

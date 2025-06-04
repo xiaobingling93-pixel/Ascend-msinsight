@@ -7,6 +7,7 @@
 #include <string>
 #include <mutex>
 #include <unordered_map>
+#include <set>
 #include <map>
 namespace Dic::Module::Timeline {
 struct TrackInfo {
@@ -61,7 +62,9 @@ public:
     std::string GetRankId(const std::string &host, const std::string &deviceId);
     void Reset();
     std::string GetDeviceId(const std::string &cardId);
-
+    void UpdateClusterDbToFileIdMap(const std::string &clusterDb, const std::string &fileId);
+    std::map<std::string, std::string> GetRankIdToFileIdByClusterDb(const std::string &clusterDb);
+    std::string GetFileIdByClusterDbAndRankId(const std::string &clusterDb, const std::string &rankId);
 private:
     TrackInfoManager() = default;
     ~TrackInfoManager() = default;
@@ -90,6 +93,11 @@ private:
      * 键是host + deviceId拼接，值是rankId，显卡全局唯一id；
      */
     std::unordered_map<std::string, std::string> deviceIdToRankIdMap;
+
+    /**
+     * 集群db到rankId的映射
+     */
+    std::unordered_map<std::string, std::set<std::string>> clusterDbToFileIdMap;
     uint64_t maxTrackId = 0;
     std::string GetRankId(const std::string &cardId);
     std::string GetHost(const std::string &cardId);

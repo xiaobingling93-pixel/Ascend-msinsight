@@ -18,6 +18,7 @@ struct OperatorTimeItem {
     std::string operatorName;
     uint64_t startTime = 0;
     uint64_t elapseTime = 0;
+    std::string dbPath;
     static bool SortByTime(const OperatorTimeItem &first, const OperatorTimeItem &second)
     {
         if (first.startTime < second.startTime) {
@@ -167,6 +168,7 @@ struct DurationData {
 
 struct Duration {
     std::string rankId;
+    std::string dbPath;
     CompareData<DurationData> durationData;
 };
 
@@ -193,6 +195,7 @@ struct OperatorListsResponseBody {
     uint64_t minTime = UINT64_MAX;
     uint64_t maxTime = 0;
     std::vector<std::string> rankLists;
+    std::vector<std::string> dbPathList;
     std::vector<CompareData<std::vector<OperatorTimeItem>>> opLists;
     // 此方法为了所有色块能同屏展示
     void AdjustTime(const std::string &operatorName)

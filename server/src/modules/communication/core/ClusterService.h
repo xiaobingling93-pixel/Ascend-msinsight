@@ -28,7 +28,7 @@ private:
     static void MergeOperatorList(Protocol::OperatorListsResponseBody &body, const std::vector<OperatorTimeDo> &compare,
                                   const std::vector<OperatorTimeDo> &baseline, const std::string &operatorName);
     static void MergeDurationData(Protocol::DurationListsResponseBody &body, std::vector<DurationDo> &compare,
-                                  std::vector<DurationDo> &baseline);
+                                  std::vector<DurationDo> &baseline, const std::string &clusterPath);
     static void StatisticBandwidthData(const DurationDo &item, std::vector<Protocol::BandwidthStatistic> &bwStat);
     static void GetBandwidthStatisticResult(std::vector<Protocol::BandwidthStatistic> &bwStat,
                                             Protocol::DurationListsResponseBody &responseBody);

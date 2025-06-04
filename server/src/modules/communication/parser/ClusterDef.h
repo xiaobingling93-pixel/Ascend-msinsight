@@ -321,11 +321,17 @@ struct ElementRankDetails {
     uint32_t tpIndexMax = 0;
 };
 
+struct RankMap {
+    std::string rankId;
+    std::string dbPath;
+};
+
 struct ArrangementAndConnectionData {
     uint32_t size;
     std::vector<IndicatorAttr> indicators;
     std::vector<Element> arrangements; // rank or group arrangement and performance data
     std::vector<Connection> connections; // connection between ranks or groups
+    std::vector<RankMap> rankDbPathList;
 };
 
 struct IndicatorDataStruct {

@@ -20,6 +20,7 @@
 #include "ParserStatusManager.h"
 #include "SystemMemoryDatabaseDef.h"
 #include "ProjectAnalyze.h"
+#include "TrackInfoManager.h"
 #include "ExpertHotspotManager.h"
 
 using namespace Dic;
@@ -289,9 +290,15 @@ std::string ProjectParserBase::GetDbPath(const std::string &filePath, const int 
 
 void ProjectParserBase::ParsePostProcess(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos)
 {
+    // 全量db和json场景需要存储集群和单卡的映射关系
+    for (const auto &cluster: clusterInfos) {
+        for (const auto &child: cluster->subParseFile) {
+            TrackInfoManager::Instance().UpdateClusterDbToFileIdMap(cluster->parseFilePath, child->fileId);
+        }
+    }
+
     // 发送解析成功消息
     SendAllParseSuccess();
-
     // 数据统计内容
     auto event = std::make_unique<ParseHeatmapCompletedEvent>();
     if (!clusterInfos.empty()) {

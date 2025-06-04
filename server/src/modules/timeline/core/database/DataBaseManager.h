@@ -102,6 +102,8 @@ public:
 
     std::string GetFileIdByRankId(const std::string& rankId) const;
 
+    std::string GetRankIdByFileId(const std::string &fileId) const;
+
 private:
     /**
      * @brief 设置rankId到fileId的映射

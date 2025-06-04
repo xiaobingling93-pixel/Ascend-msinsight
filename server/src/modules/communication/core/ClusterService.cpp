@@ -11,6 +11,7 @@
 #include "ClusterCovert.h"
 #include "NumberUtil.h"
 #include "BaselineManager.h"
+#include "TrackInfoManager.h"
 #include "ClusterService.h"
 
 namespace Dic {
@@ -208,10 +209,15 @@ void ClusterService::QueryOperatorList(Protocol::DurationListParams &params, Pro
     }
 
     MergeOperatorList(body, compareOperatorTimeList, baselineOperatorTimeList, params.targetOperatorName);
+    for (const auto &item: body.rankLists) {
+        std::string traceDb =
+            FullDb::TrackInfoManager::Instance().GetFileIdByClusterDbAndRankId(params.clusterPath, item);
+        body.dbPathList.push_back(traceDb);
+    }
 }
 
 void ClusterService::MergeDurationData(Protocol::DurationListsResponseBody &body, std::vector<DurationDo> &compare,
-                                       std::vector<DurationDo> &baseline)
+                                       std::vector<DurationDo> &baseline, const std::string &clusterPath)
 {
     std::set<std::string> rankIdSet;
     std::map<std::string, Protocol::DurationData> compareMap;
@@ -228,6 +234,7 @@ void ClusterService::MergeDurationData(Protocol::DurationListsResponseBody &body
     for (const auto &item: rankIdSet) {
         Protocol::Duration duration;
         duration.rankId = item;
+        duration.dbPath =  FullDb::TrackInfoManager::Instance().GetFileIdByClusterDbAndRankId(clusterPath, item);
         if (compareMap.count(item) != 0) {
             duration.durationData.compare = compareMap[item];
         }
@@ -309,7 +316,7 @@ void ClusterService::QueryDurationList(Protocol::DurationListParams &params, Pro
         }
     }
 
-    MergeDurationData(body, compareDurationDoList, baselineDurationDoList);
+    MergeDurationData(body, compareDurationDoList, baselineDurationDoList, params.clusterPath);
     CalBandwidthData(body, compareDurationDoList);
 }
 }

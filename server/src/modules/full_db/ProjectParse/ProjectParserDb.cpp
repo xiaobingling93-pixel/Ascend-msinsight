@@ -403,6 +403,7 @@ void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorer
             cluster->parseFilePath = item.fileName;
             cluster->type = ParseFileType::CLUSTER;
             cluster->clusterId = item.fileName;
+            cluster->subParseFile = item.subParseFileInfo;
             clusterFilePath.emplace_back(cluster);
         });
     }

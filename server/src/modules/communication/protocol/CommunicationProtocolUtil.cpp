@@ -162,6 +162,7 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
     for (const Duration& duration : response.body.durationList) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "rankId", duration.rankId, allocator);
+        JsonUtil::AddMember(itemJson, "dbPath", duration.dbPath, allocator);
         json_t compareData(kObjectType);
         auto compare = DurationDataToJson(duration.durationData.compare, allocator);
         JsonUtil::AddMember(compareData, "compare", compare, allocator);
@@ -213,6 +214,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorListsResponse>(cons
     for (size_t i = 0; i < response.body.rankLists.size(); ++i) {
         json_t oneRankJson(kObjectType);
         JsonUtil::AddMember(oneRankJson, "rankId", response.body.rankLists[i], allocator);
+        JsonUtil::AddMember(oneRankJson, "dbPath", response.body.dbPathList[i], allocator);
         json_t compareOpList(kObjectType);
         auto compare = OpTimeListToJson(response.body.opLists[i].compare, allocator);
         JsonUtil::AddMember(compareOpList, "compare", compare, allocator);

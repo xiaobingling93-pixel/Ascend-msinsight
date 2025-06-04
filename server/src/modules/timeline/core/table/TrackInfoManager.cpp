@@ -2,6 +2,7 @@
 //  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 //
 #include "pch.h"
+#include "DataBaseManager.h"
 #include "TrackInfoManager.h"
 namespace Dic::Module::Timeline {
 uint64_t TrackInfoManager::GetTrackId(const std::string &cardId, const std::string &pid, const std::string &tid)
@@ -32,6 +33,7 @@ void TrackInfoManager::Reset()
     maxTrackId = 0;
     deviceMap.clear();
     deviceIdToRankIdMap.clear();
+    clusterDbToFileIdMap.clear();
 }
 
 void TrackInfoManager::UpdateHost(const std::string &cardId, const std::string &host)
@@ -132,5 +134,45 @@ std::string TrackInfoManager::GetRankId(const std::string &host, const std::stri
     }
     Server::ServerLog::Warn("Failed to query rank id by device id, device id is: ", deviceId);
     return {};
+}
+
+void TrackInfoManager::UpdateClusterDbToFileIdMap(const std::string &clusterDb, const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    clusterDbToFileIdMap[clusterDb].insert(fileId);
+}
+
+std::map<std::string, std::string> TrackInfoManager::GetRankIdToFileIdByClusterDb(const std::string &clusterDb)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    // 根据集群db获取该集群下所有的fileId
+    auto it = clusterDbToFileIdMap.find(clusterDb);
+    if (it == clusterDbToFileIdMap.end()) {
+        return {};
+    }
+    // 再根据fileId找到对应的rankId（目前单host多device没有集群）
+    std::map<std::string, std::string> res;
+    for (const auto &item: clusterDbToFileIdMap[clusterDb]) {
+        res[DataBaseManager::Instance().GetRankIdByFileId(item)] = item;
+    }
+    return res;
+}
+
+std::string TrackInfoManager::GetFileIdByClusterDbAndRankId(const std::string &clusterDb, const std::string &rankId)
+{
+    std::map<std::string, std::string> rankIdToFileIdMap = GetRankIdToFileIdByClusterDb(clusterDb);
+    const size_t splitSizeWithHost = 2;
+    for (auto &item: rankIdToFileIdMap) {
+        auto splitList = StringUtil::Split(item.first, " ");
+        // rankId没有host的情况
+        if (splitList.size() == 1 && splitList[0] == rankId) {
+            return item.second;
+        }
+        // rankId有host的情况
+        if (splitList.size() == splitSizeWithHost && splitList[1] == rankId) {
+            return item.second;
+        }
+    }
+    return "";
 }
 }

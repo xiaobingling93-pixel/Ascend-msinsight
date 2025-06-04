@@ -5,7 +5,7 @@
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "ParallelStrategyAlgorithmManager.h"
-#include "SummaryService.h"
+#include "TrackInfoManager.h"
 #include "QueryParallelismArrangementHandler.h"
 namespace Dic::Module::Summary {
 bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
@@ -29,6 +29,10 @@ bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol:
     if (!QueryArrangementByDimension(database->GetDbPath(), err, request, response)) {
         SendResponse(std::move(responsePtr), false, err);
         return false;
+    }
+    for (const auto &item: FullDb::TrackInfoManager::Instance().GetRankIdToFileIdByClusterDb(
+        request.params.clusterPath)) {
+        response.arrangeData.rankDbPathList.push_back({item.first, item.second});
     }
     SendResponse(std::move(responsePtr), true);
     return true;

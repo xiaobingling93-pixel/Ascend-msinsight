@@ -200,6 +200,7 @@ void ProjectParserJson::ParserTraceData(const std::map<std::string, std::vector<
             cluster->parseFilePath = item.fileName;
             cluster->type = ParseFileType::CLUSTER;
             cluster->clusterId = item.fileName;
+            cluster->subParseFile = item.subParseFileInfo;
             clusterInfos.emplace_back(cluster);
         });
     }

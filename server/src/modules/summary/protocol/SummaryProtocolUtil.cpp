@@ -373,6 +373,14 @@ std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const P
         indicators.PushBack(indicatorJson, allocator);
     }
     JsonUtil::AddMember(body, "indicators", indicators, allocator);
+    json_t rankDbPathListJson(kArrayType);
+    for (const auto &item: response.arrangeData.rankDbPathList) {
+        json_t rankMap(kObjectType);
+        JsonUtil::AddMember(rankMap, "rankId", item.rankId, allocator);
+        JsonUtil::AddMember(rankMap, "dbPath", item.dbPath, allocator);
+        rankDbPathListJson.PushBack(rankMap, allocator);
+    }
+    JsonUtil::AddMember(body, "rankDbPathList", rankDbPathListJson, allocator);
     json_t connections(kArrayType);
     for (const auto& connection : response.arrangeData.connections) {
         json_t connectionJson(kObjectType);

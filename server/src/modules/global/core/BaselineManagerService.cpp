@@ -37,6 +37,10 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
         baselineInfo.errorMessage = "The project does not exist, baseline setting failed.";
         return false;
     }
+    if (projectExplorerList.size() > 1 || projectExplorerList[0].subParseFileInfo.size() > 1) {
+        baselineInfo.errorMessage = "Multi device scenario does not support setting comparison.";
+        return false;
+    }
     // 移除追加的工程项目,如果仍有多个项目记录，以第一个为准
     projectExplorerList.erase(
         std::remove_if(projectExplorerList.begin(), projectExplorerList.end(),
