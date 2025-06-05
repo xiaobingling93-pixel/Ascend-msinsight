@@ -6,8 +6,11 @@
 #include "WsSessionImpl.h"
 #include "MemoryProtocolRequest.h"
 #include "LeaksMemoryDatabase.h"
+#include "LeaksMemoryService.h"
 #include "QueryLeaksMemoryAllocationHandler.h"
 #include "QueryLeaksMemoryBlockHandler.h"
+#include "QueryLeaksMemoryDetailHandler.h"
+#include "QueryLeaksMemoryPythonTraceHandler.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 
@@ -19,6 +22,8 @@ using namespace Dic;
 
 class LeaksMemoryRequestHandlerTest : public ::testing::Test {
 public:
+    static const uint64_t SECOND = 1000000000;
+    static const uint64_t INT64MAX = INT64_MAX;
     static void SetUpTestSuite()
     {
         Dic::Server::WsChannel *ws;
@@ -31,7 +36,10 @@ public:
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::LEAKS);
         auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-        memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_2025.dat", false);
+        ASSERT_TRUE(memoryDatabase != nullptr);
+        ASSERT_TRUE(memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_2025.dat", false));
+        ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
+        ASSERT_TRUE(LeaksMemoryService::ParseMemoryLeaksDumpEvents("0"));
     }
     static void TearDownTestSuite()
     {
@@ -211,6 +219,108 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithSizeCon
     requestPtr->params.deviceId = "0";
     requestPtr->params.eventType = "PTA";
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_TRUE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithInjectDeviceId)
+{
+    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.deviceId = "&";
+    requestPtr->params.timestamp = 0;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithNonExistsDeviceId)
+{
+    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.deviceId = "-1";
+    const uint64_t durationSecond = 15;
+    requestPtr->params.timestamp = durationSecond * SECOND;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithBigRelativeTimestamp)
+{
+    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.deviceId = "1";
+    requestPtr->params.timestamp = INT64MAX + 1;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseValidParams)
+{
+    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
+    const uint64_t durationSecond = 15;
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.deviceId = "1";
+    requestPtr->params.timestamp = durationSecond * SECOND;
+    requestPtr->params.relativeTime = true;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_TRUE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInjectDeviceId)
+{
+    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.deviceId = "&";
+    requestPtr->params.relativeTime = true;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInvalidThreadId)
+{
+    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.deviceId = "";
+    requestPtr->params.threadId = INT64MAX + 1;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInvalidTimestamp)
+{
+    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    requestPtr->params.deviceId = "0";
+    requestPtr->params.threadId = 1;
+    requestPtr->params.startTimestamp = INT64MAX + 1;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseValidParams)
+{
+    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
+            std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
+    requestPtr->moduleName = Protocol::MODULE_MEMORY;
+    const uint64_t threadId = 3841316;
+    requestPtr->params.deviceId = "0";
+    requestPtr->params.threadId = 3841316;
+    requestPtr->params.relativeTime = true;
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_TRUE(result);
 }

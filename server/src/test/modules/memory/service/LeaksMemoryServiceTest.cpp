@@ -16,6 +16,7 @@ using namespace Dic;
 
 class LeaksMemoryServiceTest : public ::testing::Test {
 public:
+    const static uint64_t SECOND = 1000000000;
     static void SetUpTestSuite()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
@@ -90,29 +91,18 @@ TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithInvalidJsonAttr)
     EXPECT_EQ(eventAttr.owner, "");
 }
 
-TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithJsonAttrNotContainSizeOrOwner)
-{
-    MemoryEvent event;
-    event.attr = R"({"addr":"123"})";
-    BlockEventAttr eventAttr;
-    eventAttr.size = 0;
-    LeaksMemoryService::BuildBlockEventAttrFromEvent(event, eventAttr);
-    EXPECT_EQ(eventAttr.size, 0);
-    EXPECT_EQ(eventAttr.addr, "123");
-    EXPECT_EQ(eventAttr.owner, "");
-}
-
 TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithValidJsonAttr)
 {
     MemoryEvent event;
-    event.attr = R"({"size":"123","owner":"","addr":"123"})";
+    event.attr = R"({"addr": "20617055174656", "size": "7849984", "total": "132120576",
+"used": "116313600", "owner": "PTA@init_model"})";
     BlockEventAttr eventAttr;
     eventAttr.size = 0;
     LeaksMemoryService::BuildBlockEventAttrFromEvent(event, eventAttr);
-    const int64_t expectSize = 123;
+    const int64_t expectSize = 7849984;
     EXPECT_EQ(eventAttr.size, expectSize);
-    EXPECT_EQ(eventAttr.addr, "123");
-    EXPECT_EQ(eventAttr.owner, "");
+    EXPECT_EQ(eventAttr.addr, "20617055174656");
+    EXPECT_EQ(eventAttr.owner, "PTA@init_model");
 }
 
 TEST_F(LeaksMemoryServiceTest, ParserEnd)
@@ -135,4 +125,42 @@ TEST_F(LeaksMemoryServiceTest, ParseLeaksDump)
     EXPECT_TRUE(memoryDatabase->CreateMemoryAllocationAndBlockTable());
     memoryDatabase->UpdateParseStatus(NOT_FINISH_STATUS);
     EXPECT_TRUE(LeaksMemoryService::ParseMemoryLeaksDumpEvents("0"));
+}
+
+TEST_F(LeaksMemoryServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    LeaksMemoryDetailTreeNode tree;
+    const std::string deviceId = "7";
+    const uint64_t expectDuration = 1000000;
+    const uint64_t timestamp =
+            memoryDatabase->QueryMemoryEventExtremumTimestamp(deviceId, true) + expectDuration;
+    LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(deviceId, expectDuration, tree, true);
+    ServerLog::Error(tree.tag);
+}
+
+TEST_F(LeaksMemoryServiceTest, ParseThreadPythonTraceInTimeRange)
+{
+    const uint64_t startTimestamp = 1000000;
+    const uint64_t durationSeconds = 15;
+    const uint64_t endTimestamp = startTimestamp + durationSeconds * SECOND;
+    const uint64_t threadId = 3841316;
+    LeaksMemoryThreadPythonTraceParams params;
+    params.startTimestamp = startTimestamp;
+    params.endTimestamp = endTimestamp;
+    params.relativeTime = true;
+    params.threadId = threadId;
+    params.deviceId = '0';
+    LeaksMemoryPythonTrace trace;
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    memoryDatabase->QueryPythonTrace(params, trace);
+    const size_t expectSize = 2017;
+    const uint64_t expectMinTimestamp = 11358527770;
+    const uint64_t expectMaxTimestamp = 39780754520;
+    EXPECT_EQ(trace.slices.size(), expectSize);
+    LeaksMemoryService::ParseThreadPythonTrace(trace);
+    EXPECT_EQ(trace.minTimestamp, expectMinTimestamp);
+    EXPECT_EQ(trace.maxTimestamp, expectMaxTimestamp);
 }

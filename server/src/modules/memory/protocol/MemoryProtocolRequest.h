@@ -330,6 +330,10 @@ struct LeaksMemoryBlockParams {
             errorMsg = "[startTimestamp] must be preceed [endTimestamp].";
             return false;
         }
+        if (startTimestamp > INT64_MAX || endTimestamp > INT64_MAX) {
+            errorMsg = "Invalid timestamp, detail: exceeds the maximum limit of " + std::to_string(INT64_MAX);
+            return false;
+        }
         if (!CheckStrParamValid(deviceId, errorMsg)) {
             errorMsg = "Invalid deviceId, detail: " + errorMsg;
             return false;
@@ -358,6 +362,10 @@ struct LeaksMemoryAllocationParams {
             errorMsg = "The start timestamp (startTimestamp) should be less than the end timestamp (endTimestamp).";
             return false;
         }
+        if (startTimestamp > INT64_MAX || endTimestamp > INT64_MAX) {
+            errorMsg = "Invalid timestamp, detail: exceeds the maximum limit of " + std::to_string(INT64_MAX);
+            return false;
+        }
         if (!CheckStrParamValid(deviceId, errorMsg)) {
             errorMsg = "Invalid deviceId, detail: " + errorMsg;
             return false;
@@ -379,6 +387,14 @@ struct LeaksMemoryDetailParams {
     {
         if (!CheckStrParamValid(deviceId, errorMsg)) {
             errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
+        if (deviceId.empty()) {
+            errorMsg = "Invalid deviceId, detail: deviceId is empty";
+            return false;
+        }
+        if (timestamp > INT64_MAX) {
+            errorMsg = "Invalid timestamp, detail: exceeds the maximum limit of " + std::to_string(INT64_MAX);
             return false;
         }
         return true;
@@ -424,6 +440,16 @@ struct LeaksMemoryBlockRequest : public Request {
 struct LeaksMemoryAllocationRequest : public Request {
     LeaksMemoryAllocationRequest() : Request(REQ_RES_LEAKS_MEMORY_ALLOCATIONS){};
     LeaksMemoryAllocationParams params;
+};
+
+struct LeaksMemoryDetailRequest : public Request {
+    LeaksMemoryDetailRequest() : Request(REQ_RES_LEAKS_MEMORY_DETAILS){};
+    LeaksMemoryDetailParams params;
+};
+
+struct LeaksMemoryTraceRequest : public Request {
+    LeaksMemoryTraceRequest() : Request(REQ_RES_LEAKS_MEMORY_TRACES){};
+    LeaksMemoryThreadPythonTraceParams params;
 };
 
 struct MemoryFindSliceRequest : public Request {

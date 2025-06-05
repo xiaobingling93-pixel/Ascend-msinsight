@@ -166,6 +166,39 @@ std::optional<document_t> ToLeaksMemoryBlockJson(const MemoryBlockItem &blockIte
     JsonUtil::AddMember(json, "path", path, allocator);
     return std::optional<document_t>{std::move(json)};
 }
+// 此处转json存在递归，但treeNode在构造时确保了层数不超过8
+std::optional<document_t> ToLeaksDetailTreeJson(const LeaksMemoryDetailTreeNode &treeNode,
+                                                Document::AllocatorType &allocator)
+{
+    document_t json(kObjectType);
+    JsonUtil::AddMember(json, "name", treeNode.name, allocator);
+    JsonUtil::AddMember(json, "tag", treeNode.tag, allocator);
+    JsonUtil::AddMember(json, "size", treeNode.size, allocator);
+    json_t subNodes(kArrayType);
+    for (auto &subNode : treeNode.subNodes) {
+        auto subNodeJson = ToLeaksDetailTreeJson(subNode, allocator);
+        if (subNodeJson.has_value()) {
+            subNodes.PushBack(subNodeJson.value(), allocator);
+        }
+    }
+    JsonUtil::AddMember(json, "subNodes", subNodes, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+std::optional<document_t> ToLeaksTracesJson(const std::vector<PythonTraceSlice> &slices,
+                                            Document::AllocatorType &allocator)
+{
+    document_t json(kArrayType);
+    for (auto &slice : slices) {
+        document_t traceJson(kObjectType);
+        JsonUtil::AddMember(traceJson, "func", slice.func, allocator);
+        JsonUtil::AddMember(traceJson, "startTimestamp", slice.startTimestamp, allocator);
+        JsonUtil::AddMember(traceJson, "endTimestamp", slice.endTimestamp, allocator);
+        JsonUtil::AddMember(traceJson, "depth", slice.depth, allocator);
+        json.PushBack(traceJson, allocator);
+    }
+    return std::optional<document_t>{std::move(json)};
+}
 
 template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response)
 {
@@ -389,6 +422,45 @@ std::optional<document_t> ToResponseJson<LeaksMemoryBlocksResponse>
         }
     }
     JsonUtil::AddMember(body, "blocks", blocks, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template<>
+std::optional<document_t> ToResponseJson<LeaksMemoryDetailsResponse>
+        (const LeaksMemoryDetailsResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t &moduleName = json["moduleName"];
+    moduleName.SetString(Protocol::MODULE_LEAKS.c_str(), allocator);
+    auto body_json = ToLeaksDetailTreeJson(response.detail, allocator);
+    if (!body_json.has_value()) {
+        body_json = document_t(kObjectType);
+    }
+    JsonUtil::AddMember(json, "body", body_json.value(), allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template<>
+std::optional<document_t> ToResponseJson<LeaksMemoryTracesResponse>
+                (const LeaksMemoryTracesResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t &moduleName = json["moduleName"];
+    moduleName.SetString(Protocol::MODULE_LEAKS.c_str(), allocator);
+    document_t body(kObjectType);
+    auto tracesJson = ToLeaksTracesJson(response.trace.slices, allocator);
+    if (!tracesJson.has_value()) {
+        tracesJson = document_t(kObjectType);
+    }
+    JsonUtil::AddMember(body, "traces", tracesJson.value(), allocator);
+    JsonUtil::AddMember(body, "minTimestamp", response.trace.minTimestamp, allocator);
+    JsonUtil::AddMember(body, "maxTimestamp", response.trace.maxTimestamp, allocator);
+    JsonUtil::AddMember(json, "threadId", response.trace.threadId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

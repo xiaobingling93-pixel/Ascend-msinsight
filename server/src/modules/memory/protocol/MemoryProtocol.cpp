@@ -25,6 +25,8 @@ void MemoryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX, ToMemoryStaticOperatorSizeRequest);
     jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_ALLOCATIONS, ToLeaksMemoryAllocationRequest);
     jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ToLeaksMemoryBlockRequest);
+    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, ToLeaksMemoryDetailRequest);
+    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_TRACES, ToLeaksMemoryTraceRequest);
 }
 
 void MemoryProtocol::RegisterResponseToJsonFuncs()
@@ -41,6 +43,8 @@ void MemoryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX, ToMemoryStaticOperatorSizeResponseJson);
     resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_ALLOCATIONS, ToLeaksMemoryAllocationsResponse);
     resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ToLeaksMemoryBlocksResponse);
+    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, ToLeaksMemoryDetailsResponse);
+    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_TRACES, ToLeaksMemoryTracesResponse);
 }
 
 void MemoryProtocol::RegisterEventToJsonFuncs()
@@ -178,6 +182,48 @@ std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryBlockRequest(const json_t 
     JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.eventType, param_json, "eventType");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryDetailRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<LeaksMemoryDetailRequest> reqPtr = std::make_unique<LeaksMemoryDetailRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (!json.HasMember("params") || !json["params"].HasMember("deviceId") ||
+        !json["params"].HasMember("timestamp")) {
+        error = "Request[requestId=" + std::to_string(reqPtr->id) +
+                "] json lacks member params or deviceId or timestamp.";
+        return nullptr;
+    }
+    const json_t &param_json = json["params"];
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.timestamp, param_json, "timestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryTraceRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<LeaksMemoryTraceRequest> reqPtr = std::make_unique<LeaksMemoryTraceRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (!json.HasMember("params") || !json["params"].HasMember("deviceId") ||
+        !json["params"].HasMember("threadId")) {
+        error = "Request[requestId=" + std::to_string(reqPtr->id) +
+                "] json lacks member params or deviceId or threadId.";
+        return nullptr;
+    }
+    const json_t &param_json = json["params"];
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.threadId, param_json, "threadId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
     return reqPtr;
 }
 
@@ -354,6 +400,18 @@ std::optional<document_t> MemoryProtocol::ToLeaksMemoryBlocksResponse(const Resp
 {
     return ToResponseJson<LeaksMemoryBlocksResponse>(
             dynamic_cast<const LeaksMemoryBlocksResponse &>(response));
+}
+
+std::optional<document_t> MemoryProtocol::ToLeaksMemoryDetailsResponse(const Response &response)
+{
+    return ToResponseJson<LeaksMemoryDetailsResponse>(
+            dynamic_cast<const LeaksMemoryDetailsResponse &>(response));
+}
+
+std::optional<document_t> MemoryProtocol::ToLeaksMemoryTracesResponse(const Response &response)
+{
+    return ToResponseJson<LeaksMemoryTracesResponse>(
+            dynamic_cast<const LeaksMemoryTracesResponse &>(response));
 }
 #pragma endregion
 } // end of namespace Protocol

@@ -12,6 +12,8 @@
 #include "QueryMemoryStaticOperatorSizeHandler.h"
 #include "QueryLeaksMemoryAllocationHandler.h"
 #include "QueryLeaksMemoryBlockHandler.h"
+#include "QueryLeaksMemoryDetailHandler.h"
+#include "QueryLeaksMemoryPythonTraceHandler.h"
 #include "FindSliceByAllocationTimeHandler.h"
 #include "RepositoryFactory.h"
 #include "DataEngine.h"
@@ -51,7 +53,10 @@ void MemoryModule::RegisterRequestHandlers()
                               std::make_unique<QueryLeaksMemoryAllocationHandler>());
     requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS,
                               std::make_unique<QueryLeaksMemoryBlockHandler>());
-
+    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_DETAILS,
+                              std::make_unique<QueryLeaksMemoryDetailHandler>());
+    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_TRACES,
+                              std::make_unique<QueryLeaksMemoryPythonTraceHandler>());
     auto renderEngine = Timeline::RenderEngine::Instance();
     auto findSliceByAllocationTimeHandler = std::make_unique<FindSliceByAllocationTimeHandler>(renderEngine);
     requestHandlerMap.emplace(REQ_RES_MEMORY_FIND_SLICE, std::move(findSliceByAllocationTimeHandler));

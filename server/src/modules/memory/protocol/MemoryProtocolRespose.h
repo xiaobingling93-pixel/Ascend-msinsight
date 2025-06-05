@@ -10,9 +10,12 @@
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 #include "MemoryDef.h"
+#include "LeaksMemoryDetailTreeNode.h"
+#include "LeaksMemoryPythonTrace.h"
 
 namespace Dic {
 namespace Protocol {
+using namespace Dic::Module::Memory;
 // 待与MemoryDef.h中的Operator合并
 struct MemoryOperator {
     std::string name;
@@ -191,6 +194,20 @@ struct LeaksMemoryAllocationsResponse : public Response {
     uint64_t minTimestamp;
     uint64_t maxTimestamp;
     std::vector<Dic::Module::Memory::MemoryAllocation> allocations;
+};
+
+struct LeaksMemoryDetailsResponse : public Response {
+    LeaksMemoryDetailsResponse()
+        : Response(REQ_RES_LEAKS_MEMORY_DETAILS),
+          timestamp(0) {}
+    uint64_t timestamp;
+    LeaksMemoryDetailTreeNode detail;
+};
+
+struct LeaksMemoryTracesResponse : public Response {
+    LeaksMemoryTracesResponse()
+        : Response(REQ_RES_LEAKS_MEMORY_TRACES) {}
+    LeaksMemoryPythonTrace trace;
 };
 
 struct ComponentDto {

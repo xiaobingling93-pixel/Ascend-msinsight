@@ -32,6 +32,8 @@ private:
     static std::unique_ptr<Request> ToMemoryStaticOperatorSizeRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToLeaksMemoryAllocationRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToLeaksMemoryBlockRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToLeaksMemoryDetailRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToLeaksMemoryTraceRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<document_t> ToMemoryTypeResponseJson(const Response &response);
     static std::optional<document_t> ToMemoryResourceTypeResponseJson(const Response &response);
@@ -45,6 +47,8 @@ private:
     static std::optional<document_t> ToMemoryStaticOperatorSizeResponseJson(const Response &response);
     static std::optional<document_t> ToLeaksMemoryAllocationsResponse(const Response &response);
     static std::optional<document_t> ToLeaksMemoryBlocksResponse(const Response &response);
+    static std::optional<document_t> ToLeaksMemoryDetailsResponse(const Response &response);
+    static std::optional<document_t> ToLeaksMemoryTracesResponse(const Response &response);
 };
 
 } // end of namespace Protocol

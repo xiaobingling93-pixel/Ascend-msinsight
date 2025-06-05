@@ -9,6 +9,7 @@
 
 #include "MemoryDef.h"
 #include "LeaksMemoryDatabase.h"
+#include "LeaksMemoryDetailTreeNode.h"
 #include "MemoryProtocolRespose.h"
 
 namespace Dic {
@@ -22,6 +23,8 @@ struct BlockEventAttr {
     uint64_t used;
     int64_t mid;
 };
+const std::string START_PATTERN = "start:";
+const std::string STOP_PATTERN = "stop:";
 class LeaksMemoryService {
 public:
     static void ParseEventsToBlockAndAllocations(const std::vector<MemoryEvent> &events,
@@ -30,12 +33,19 @@ public:
     static bool ParseMemoryLeaksDumpEvents(const std::string &fileId);
     static void ParserEnd(const std::string &rankId, bool result);
     static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
-
+    static bool ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId, const uint64_t &timestamp,
+                                                      LeaksMemoryDetailTreeNode &detailTree, bool relativeTime);
+    // 传入slices必须为已按照startTimestamp升序排序的数组
+    static bool ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace);
 private:
     static bool SingleDeviceEventParse(const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db, const MemoryEvent &event,
                                        std::map<std::string, const MemoryEvent *> &allocMap,
                                        const BlockEventAttr &eventExtendAttr);
-
+    // 递归,depth从0开始
+    static void BuildMemoryAllocDetailTreeNode(const std::string &deviceId,
+                                        const uint64_t &timestamp,
+                                        const std::set<std::string> &owners,
+                                        LeaksMemoryDetailTreeNode &curNode, int depth);
     static void GetEventAttrWithDefaultValueByJson(json_t &json, BlockEventAttr &eventAttr);
     inline static const std::string BLOCK_EVENT_ATTR_SIZE_FIELD = "size";
     inline static const std::string BLOCK_EVENT_ATTR_OWNER_FIELD = "owner";

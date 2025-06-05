@@ -7,8 +7,6 @@
 #include "DataBaseManager.h"
 #include "LeaksMemoryService.h"
 
-#include <utility>
-
 namespace Dic {
 namespace Module {
 namespace Memory {
@@ -120,6 +118,7 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<Memo
     db->FlushMemoryAllocationsCache();
     db->UpdateParseStatus(FINISH_STATUS);
 }
+
 bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db,
                                                 const MemoryEvent &event,
                                                 std::map<std::string, const MemoryEvent *> &allocMap,
@@ -199,6 +198,156 @@ void LeaksMemoryService::BuildBlockEventAttrFromEvent(const MemoryEvent &event, 
     }
     auto &json = jsonDoc.value();
     GetEventAttrWithDefaultValueByJson(json, eventAttr);
+}
+// 该方法用于寻找当前owner set中两两字符串的最长相同前缀，并添加到owners中, 暴力枚举,时间复杂度O(n^2), 后续考虑优化为Trie树
+static void HandleOwnerSet(std::set<std::string> &owners)
+{
+    std::set<std::string> newPrefixes;
+    for (auto it1 = owners.begin(); it1 != owners.end(); ++it1) {
+        for (auto it2 = std::next(it1); it2 != owners.end(); ++it2) {
+            std::string lcp = StringUtil::FindLCP(*it1, *it2);
+            if (!lcp.empty() && !StringUtil::EndWith(lcp, "@")) {
+                owners.insert(lcp);
+            }
+        }
+    }
+}
+
+static bool CheckIfSubTagIsPrefixOfOwner(const std::vector<std::string> &subNodeTags,
+                                         const std::string &owner)
+{
+    for (auto &subNodeTag : subNodeTags) {
+        if (owner.find(subNodeTag) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static std::vector<std::string> FindSubNodeTags(const std::string &tag, const std::set<std::string> &owners)
+{
+    std::vector<std::string> subNodeTags;
+    if (!LeaksMemoryDetailTreeNode::IsValidOwnerTag(tag)) {
+        Server::ServerLog::Warn("[LeaksDetail]The tag of current node is invalid.");
+        return subNodeTags;
+    }
+    if (tag == LEAKS_MEMORY_ALLOC_OWNER_HAL) {
+        subNodeTags = std::vector<std::string>(LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_TAGS.begin(),
+                                               LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_TAGS.end());
+        return subNodeTags;
+    }
+    long layer = std::count(tag.begin(), tag.end(), '@');
+    for (auto &owner : owners) {
+        if (std::count(owner.begin(), owner.end(), '@') <= layer) {
+            continue;
+        }
+        if (owner.find(tag) == std::string::npos) {
+            continue;
+        }
+        if (CheckIfSubTagIsPrefixOfOwner(subNodeTags, owner)) {
+            continue;
+        }
+        subNodeTags.push_back(owner);
+    }
+    return subNodeTags;
+}
+
+// depth 从1开始
+void LeaksMemoryService::BuildMemoryAllocDetailTreeNode(const std::string &deviceId, const uint64_t &timestamp,
+                                                        const std::set<std::string> &owners,
+                                                        LeaksMemoryDetailTreeNode &curNode, int depth)
+{
+    // 实际从框架层开始统计为第一层
+    if (depth > MAX_TREE_DEPTH) {
+        Server::ServerLog::Warn("[LeaksDetail]The depth of current tree has exceeded 8.");
+        return;
+    }
+    if (curNode.size == 0) {
+        return;
+    }
+    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    if (database == nullptr) {
+        Server::ServerLog::Error("[LeaksDetail]Cannot get leaks db connections from database manager");
+        return;
+    }
+    std::vector<std::string> subNodeOwnerTags = FindSubNodeTags(curNode.tag, owners);
+    for (auto &subNodeOwnerTag : subNodeOwnerTags) {
+        LeaksMemoryDetailTreeNode subNode;
+        subNode.tag = subNodeOwnerTag;
+        subNode.size = database->QueryTotalSizeUtilTimestampUsingOwner(deviceId, timestamp, subNodeOwnerTag);
+        subNode.name = LeaksMemoryDetailTreeNode::GetNodeNameByOwnerTag(subNodeOwnerTag);
+        if (subNode.size > 0) {
+            // 递归构造子节点
+            BuildMemoryAllocDetailTreeNode(deviceId, timestamp, owners, subNode, depth + 1);
+            curNode.InsertSubNode(subNode);
+        }
+    }
+}
+
+bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId, const uint64_t &timestamp,
+                                                               LeaksMemoryDetailTreeNode &detailTree, bool relativeTime)
+{
+    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    if (database == nullptr) {
+        Server::ServerLog::Error("Cannot get leaks db connections from database manager");
+        return false;
+    }
+    uint64_t minTimestamp = database->QueryMemoryEventExtremumTimestamp(deviceId, true);
+    uint64_t maxTimestamp = database->QueryMemoryEventExtremumTimestamp(deviceId, false);
+    uint64_t realTimestamp = timestamp;
+    if (relativeTime) {
+        realTimestamp += minTimestamp;
+    }
+    if (realTimestamp > maxTimestamp || realTimestamp < minTimestamp) {
+        Server::ServerLog::Error("Parse memory alloc details failed: invalid timestamp");
+        return false;
+    }
+    // 构造固定层顶层-进程占用, 来自HAL最后一次分配的总内存
+    auto latestHALAllocation = database->QueryLatestAllocationWithinTimestamp(deviceId, "HAL", realTimestamp);
+    if (!latestHALAllocation.has_value()) {
+        Server::ServerLog::Error("Parse memory alloc details failed: empty HAL allocation data");
+        return false;
+    }
+    detailTree.size = latestHALAllocation->totalSize;
+    if (latestHALAllocation->totalSize <= 0) {
+        Server::ServerLog::Warn("Parse memory alloc details: empty data.");
+        return true;
+    }
+    detailTree.name = LEAKS_MEMORY_ALLOC_OWNER_HAL_NAME;
+    detailTree.tag = LEAKS_MEMORY_ALLOC_OWNER_HAL;
+    // 构造框架层 - ATB/MindSpore/PTA 总占用，所有owner带有PTA@ ATB@ 或 MINDSPORE@
+    std::set<std::string> owners(LEAKS_MEMORY_ALLOC_OWNER_BASE_TAGS);
+    database->QueryMemoryBlocksOwnersReleasedAfterTimestamp(deviceId, realTimestamp, owners);
+    if (owners.empty()) {
+        Server::ServerLog::Warn("Parse memory alloc details: empty data.");
+        return true;
+    }
+    HandleOwnerSet(owners);
+    BuildMemoryAllocDetailTreeNode(deviceId, realTimestamp, owners, detailTree, 1);
+    return true;
+}
+
+bool LeaksMemoryService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace)
+{
+    std::stack<PythonTraceSlice *> callStack;
+    for (auto &slice : trace.slices) {
+        // 弹出栈中已经结束的func
+        while (!callStack.empty() && callStack.top()->endTimestamp < slice.startTimestamp) {
+            callStack.pop();
+        }
+
+        // 当前调用栈深度 = 栈的大小
+        size_t callStackDepth = callStack.size();
+        if (callStackDepth > INT_MAX) {
+            Server::ServerLog::Error("Build python call stack failed: the stack depth exceeds the max of int");
+            return false;
+        }
+        slice.depth = callStackDepth;
+        // 将当前函数入栈
+        callStack.push(&slice);
+    }
+
+    return true;
 }
 }  // Memory
 }  // Module

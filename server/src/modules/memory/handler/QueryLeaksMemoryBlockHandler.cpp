@@ -7,8 +7,6 @@
 #include "MemoryProtocolRequest.h"
 #include "QueryLeaksMemoryBlockHandler.h"
 
-#include <utility>
-
 namespace Dic {
 namespace Module {
 namespace Memory {

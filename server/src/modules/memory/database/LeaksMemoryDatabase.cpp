@@ -761,7 +761,7 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocati
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, bindIdx++, eventType.c_str(), eventType.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, bindIdx++, timestamp);
+    sqlite3_bind_int64(stmt, bindIdx++, timestamp > INT64_MAX ? INT64_MAX : timestamp);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query allocation table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return std::nullopt;
@@ -794,6 +794,10 @@ void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const st
     sqlite3_stmt *stmt = nullptr;
     int bindIdx = bindStartIndex;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (timestamp > INT64_MAX) {
+        ServerLog::Warn("Invalid timestamp: exceeds the limit of ", INT64_MAX);
+        timestamp == INT64_MAX;
+    }
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
@@ -870,6 +874,7 @@ void BuildTimeConditionForQueryPythonTraces(std::string &timeCondition,
         timeCondition = "0";
     }
 }
+
 void LeaksMemoryDatabase::QueryPythonTracesUsingTableName(const std::string &traceTableName,
                                                           const LeaksMemoryThreadPythonTraceParams &queryParams,
                                                           LeaksMemoryPythonTrace &trace)
