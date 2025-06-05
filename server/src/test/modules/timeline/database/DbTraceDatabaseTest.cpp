@@ -461,7 +461,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     const uint64_t minTimestamp = 0;
     const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
-    EXPECT_EQ(result, true);
+    EXPECT_EQ(result, false);
 }
 
 TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)

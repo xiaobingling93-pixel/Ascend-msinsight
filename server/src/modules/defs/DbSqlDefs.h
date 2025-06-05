@@ -105,10 +105,15 @@ const static std::string AI_CORE_UNIT_COUNTER_SQL =
 // sql of same operate detail
 const static std::string ASCEND_SAME_NAME_DETAIL_SQL =
     "with nameIds as (select id, value as realName from STRING_IDS where value = ?) "
-    "select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id , streamId as tid "
+    "select main.startNs - ? as timestamp, main.endNs - main.startNs as duration, main.depth, main.ROWID as id , "
+    "streamId as tid "
     "from TASK  main "
-    "     left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId "
-    "     join nameIds on coalesce(c.name, main.taskType) = id  where deviceId = ? and streamId in (";
+    "     left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId  left join " +
+    TABLE_MSTX_EVENTS + " m on  (m.connectionId = main.connectionId and  m.connectionId != " + WRONG_DATA +
+    " ) left join " + TABLE_COMMUNICATION_SCHEDULE_TASK +
+    " s on main.globalTaskId = s.globalTaskId "
+    "     join nameIds on coalesce(c.name, m.message, s.name, main.taskType) = id  where deviceId = ? and streamId in "
+    "(";
 const static std::string HCCL_SAME_NAME_DETAIL_SQL_PART1 =
     "with nameIds as (select id, ? as minTime, ? as rankId, ? as startTime, ? as endTime "
     "                   from STRING_IDS where value = ?) "
