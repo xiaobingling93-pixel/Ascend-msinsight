@@ -46,8 +46,8 @@ const mapLevelOption = (): any => {
             itemStyle: {
                 color: getColorGradientByGroup(i),
                 borderColor: getColorGradientByGroup(i),
-                borderWidth: 1,
-                gapWidth: 1.5,
+                borderWidth: 5,
+                gapWidth: 5,
             },
             emphasis: {
                 itemStyle: {
@@ -65,8 +65,8 @@ const getLevelOption = (): any => {
             itemStyle: {
                 color: '#fff',
                 borderColor: '#fff',
-                borderWidth: 1,
-                gapWidth: 1.5,
+                borderWidth: 5,
+                gapWidth: 5,
             },
             upperLabel: {
                 show: false,
