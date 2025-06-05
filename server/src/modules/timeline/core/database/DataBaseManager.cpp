@@ -531,16 +531,10 @@ std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId, co
 {
     if (module == "memory") {
         auto database = DataBaseManager::GetMemoryDatabaseByRankId(rankId);
+        if (database == nullptr) {
+            return "";
+        }
         return database->QueryDeviceId();
-    }
-    return "";
-}
-
-std::string DataBaseManager::GetRankIdByFileId(const std::string &fileId) const
-{
-    auto it = fileIdToRankIdMap.find(fileId);
-    if (it != fileIdToRankIdMap.end()) {
-        return it->second;
     }
     return "";
 }
