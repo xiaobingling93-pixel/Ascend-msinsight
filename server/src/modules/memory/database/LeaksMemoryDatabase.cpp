@@ -796,7 +796,7 @@ void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const st
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (timestamp > INT64_MAX) {
         ServerLog::Warn("Invalid timestamp: exceeds the limit of ", INT64_MAX);
-        timestamp == INT64_MAX;
+        timestamp = INT64_MAX;
     }
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);

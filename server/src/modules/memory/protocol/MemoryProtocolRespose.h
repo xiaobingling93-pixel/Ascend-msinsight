@@ -168,6 +168,31 @@ struct MemoryBlockItem : Dic::Module::Memory::MemoryBlock {
     MemoryBlockItem() = default;
     explicit MemoryBlockItem(const MemoryBlock &block)
         : MemoryBlock(block) {}
+
+    void AddPathPoint(uint64_t timestamp, uint64_t size)
+    {
+        if (path.empty()) {
+            path.emplace_back(timestamp, size);
+            return;
+        }
+        std::pair<std::uint64_t, std::uint64_t> lastPoint = path.back();
+        // 如果新加入的点x值与最后一个点x值相同, 或者x值在最后一个点的x之前 视为无效点
+        if (timestamp <= lastPoint.first) {
+            return;
+        }
+        if (path.size() == 1) {
+            path.emplace_back(timestamp, size);
+            return;
+        }
+        // 如果新加入的点, y值与最后一个点的y值相同
+        std::pair<std::uint64_t, std::uint64_t> secondLastPoint = path[path.size()-2];
+        if (size == lastPoint.second && size == secondLastPoint.second) {
+            // 如果倒数第二个点、最后一个点、和新加入的点y值都相同, 则中间点可省略
+            path.back().first = timestamp;
+            return;
+        }
+        path.emplace_back(timestamp, size);
+    }
 };
 struct LeaksMemoryBlocksResponse : public Response {
     LeaksMemoryBlocksResponse()

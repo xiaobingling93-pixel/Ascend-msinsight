@@ -89,13 +89,11 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
     uint64_t currentTotalSize = 0;
     response.maxTimestamp = sortedEvents.back()->timestamp;
     response.minTimestamp = sortedEvents[0]->timestamp;
-    response.maxSize = 0;
-    response.minSize = 0;
-
-    for (auto &eventPtr : sortedEvents) {
+    for (size_t idx = 0; idx < sortedEvents.size(); idx++) {
+        auto eventPtr = sortedEvents[idx];
         if (eventPtr->type == SimpleBlockEventType::MALLOC) {
             currentBlockStack.push(eventPtr->blockItemPtr);
-            eventPtr->blockItemPtr->path.emplace_back(eventPtr->timestamp, currentTotalSize);
+            eventPtr->blockItemPtr->AddPathPoint(eventPtr->timestamp, currentTotalSize);
             currentTotalSize += eventPtr->blockItemPtr->size;
             response.maxSize = std::max(response.maxSize, currentTotalSize);
             continue;
@@ -104,17 +102,19 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
             std::shared_ptr<MemoryBlockItem> tempItemPtr = currentBlockStack.top();
             currentBlockStack.pop();
             currentTotalSize -= tempItemPtr->size;
-            if (tempItemPtr->id == eventPtr->blockItemPtr->id) {
-                tempItemPtr->path.emplace_back(eventPtr->timestamp, currentTotalSize);
-                break;
+            tempItemPtr->AddPathPoint(eventPtr->timestamp, currentTotalSize);
+            if (tempItemPtr->id != eventPtr->blockItemPtr->id) {
+                tempBlockStack.push(tempItemPtr);
             }
-            tempBlockStack.push(tempItemPtr);
         }
         while (!tempBlockStack.empty()) {
             std::shared_ptr<MemoryBlockItem> tempItemPtr = tempBlockStack.top();
             tempBlockStack.pop();
             currentBlockStack.push(tempItemPtr);
-            tempItemPtr->path.emplace_back(eventPtr->timestamp, currentTotalSize);
+            // 此处忽略截断的精度丢失
+            uint64_t  tmpTimestamp = idx + 1 < sortedEvents.size() ?
+                    (eventPtr->timestamp + sortedEvents[idx+1]->timestamp)/2 : response.maxTimestamp;
+            tempItemPtr->AddPathPoint(tmpTimestamp, currentTotalSize);
             currentTotalSize += tempItemPtr->size;
         }
     }
@@ -122,7 +122,7 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
     while (!currentBlockStack.empty()) {
         std::shared_ptr<MemoryBlockItem> tempItemPtr = currentBlockStack.top();
         currentBlockStack.pop();
-        tempItemPtr->path.emplace_back(response.maxTimestamp, currentTotalSize);
+        tempItemPtr->AddPathPoint(response.maxTimestamp, currentTotalSize);
         currentTotalSize -= tempItemPtr->size;
     }
     response.totalNum = response.blocks.size();
