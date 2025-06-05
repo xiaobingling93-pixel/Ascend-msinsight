@@ -10,6 +10,7 @@ import { Session } from '../entity/session';
 import { observer } from 'mobx-react';
 import { type DetailData } from '../utils/RequestUtils';
 import { getNewDetailData } from './dataHandler';
+import { safeStr } from 'ascend-utils';
 interface treemap {
     name: string;
     value: number;
@@ -86,7 +87,7 @@ const getSeries = (chartData: treemap[], t: any): any => {
             formatter: (params: any): string => {
                 const { name, value } = params.data;
                 const isB: boolean = (value / 1024 / 1024).toFixed(0) === '0';
-                return isB ? `${name}:${value}B` : `${name}: ${(value / 1024 / 1024).toFixed(0)}MB`;
+                return isB ? safeStr(`${name}:${value}B`) : safeStr(`${name}: ${(value / 1024 / 1024).toFixed(0)}MB`);
             },
         },
         upperLabel: {
@@ -118,7 +119,7 @@ const MemorySliceChart: any = observer(({ session }: { session: Session }): Reac
                 formatter: (params: any): string => {
                     const { name, value } = params.data;
                     const isB: boolean = (value / 1024 / 1024).toFixed(0) === '0';
-                    return isB ? `${name}:${value}B` : `${name}: ${(value / 1024 / 1024).toFixed(0)}MB`;
+                    return isB ? safeStr(`${name}:${value}B`) : safeStr(`${name}: ${(value / 1024 / 1024).toFixed(0)}MB`);
                 },
             },
             series: getSeries(chartData, t) as echarts.SeriesOption,
