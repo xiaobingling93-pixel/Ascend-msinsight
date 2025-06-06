@@ -231,7 +231,7 @@ export function getIndexByRankNameAndDeviceId(rankName: string, deviceId: string
 
 /**
  * 将 cardId 转化成 cardIdInfo
- * @param cardId 有三种可能：1 - rankName; 2 - host+deviceId;
+ * @param cardId 有两种可能：1 - rankName; 2 - host+deviceId;
  */
 export function transformCardIdInfo(cardId: string): { host: string; rankName: string; deviceId: string; index: number } {
     const list = cardId.split(' ');

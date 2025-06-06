@@ -1,12 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { store } from '../store';
 import { runInAction } from 'mobx';
-import type { NotificationHandler } from './defs';
+import { getIndexByRankNameAndDeviceId, getRankInfoKey } from 'ascend-utils';
 import i18n from 'ascend-i18n';
-import type { CardInfo, DirInfo } from '../entity/session';
-import { transformCardIdInfo } from 'ascend-utils';
+import { store } from '../store';
+import type { NotificationHandler } from './defs';
+import type { CardInfo, CardRankInfo, DirInfo, RankInfo } from '../entity/session';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -25,7 +25,7 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
                 (session as any)[key] = data[key];
             }
             if (key === 'operatorCardInfos') {
-                session.allCardInfos = [...data[key] as CardInfo[]].sort((a, b) => Number(a.index) - Number(b.index));
+                session.allCardInfos = [...data[key] as CardRankInfo[]].sort((a, b) => Number(a.index) - Number(b.index));
             }
         });
         session.renderId = session.renderId++ % 1000;
@@ -47,18 +47,26 @@ export const switchDirectoryHandler: NotificationHandler = async (data): Promise
 export const parseSuccessHandler: NotificationHandler = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
-    runInAction(() => {
-        if (!session) {
+    if (!session || !Array.isArray(data.rankList)) {
+        return;
+    }
+    const infos: CardRankInfo[] = [...session.allCardInfos];
+    const keys = new Set(infos.map(({ rankInfo }) => getRankInfoKey(rankInfo)));
+    data.rankList.forEach((rank: RankInfo) => {
+        const key = getRankInfoKey(rank);
+        if (keys.has(key)) {
             return;
         }
-        if (session.allCardInfos.every(({ cardId }) => cardId !== String(data.rankId))) {
-            const cardIdInfo = transformCardIdInfo(String(data.rankId));
-            session.allCardInfos = [...session.allCardInfos, {
-                cardId: String(data.rankId),
-                dbPath: data.dbPath ?? '',
-                index: cardIdInfo.index,
-            } as CardInfo].sort((a, b) => a.index - b.index);
-        }
+        infos.push({
+            rankInfo: rank,
+            dbPath: data.dbPath ?? '',
+            index: getIndexByRankNameAndDeviceId(rank.rankName, rank.deviceId),
+        } as CardRankInfo);
+        keys.add(key);
+    });
+    infos.sort((a, b) => a.index - b.index);
+    runInAction(() => {
+        session.allCardInfos = infos;
     });
 };
 
@@ -80,9 +88,9 @@ export const deleteCardHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        const deleteIds: Set<string> = new Set((data.info as any[]).map(({ cardId }) => cardId));
+        const deleteIds: Set<string> = new Set((data.info as CardInfo[]).map(({ cardId }) => cardId));
         if (deleteIds.size > 0) {
-            session.allCardInfos = session.allCardInfos.filter((item) => !deleteIds.has(item.cardId));
+            session.allCardInfos = session.allCardInfos.filter((item) => !deleteIds.has(item.rankInfo.rankId));
         }
     });
 };

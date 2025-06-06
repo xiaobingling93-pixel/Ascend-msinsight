@@ -60,6 +60,20 @@ export interface CardInfo {
     index?: number;
 }
 
+export interface RankInfo {
+    clusterId: string;
+    host: string;
+    rankName: string;
+    rankId: string;
+    deviceId: string;
+}
+
+export interface CardRankInfo {
+    rankInfo: RankInfo;
+    dbPath: string;
+    index?: number;
+}
+
 export const DEFAULT_ACTIVE_DATASOURCE: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [], selectedFileType: 'UNKNOWN', selectedFilePath: '' };
 
 export class Session {
@@ -91,7 +105,7 @@ export class Session {
     endTimeAll: number = -1;
     unitcount: number = 0;
     memoryCardInfos: Array<Required<CardInfo>> = [];
-    operatorCardInfos: Array<Required<CardInfo>> = [];
+    operatorCardInfos: Array<Required<CardRankInfo>> = [];
     iERankIds: string[] = [];
     deviceIds: any = {};
     threadIds: number[] = [];

@@ -1,13 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
+import { runInAction } from 'mobx';
+import { getIndexByRankNameAndDeviceId, getRankInfoKey, transformCardIdInfo } from 'ascend-utils';
 import type { NotificationInterceptor } from './defs';
 import { type DataSource } from '@/centralServer/websocket/defs';
 import { updateSession } from '@/connection/notificationHandler';
 import { store } from '@/store';
-import type { CardInfo } from '@/entity/session';
-import { runInAction } from 'mobx';
-import { transformCardIdInfo } from 'ascend-utils';
+import type { CardInfo, RankInfo } from '@/entity/session';
 
 interface ImportActionBody {
     subdirectoryList: string[];
@@ -36,7 +36,8 @@ interface ParseMemoryNotification {
     memoryResult: MemoryResult[];
 }
 interface ParseOperatorNotification {
-    rankId: string; // 实际是 cardId, rankId 应该只有数字，而 cardId 可能在前面带有 host，形如: `{host} {rankId}`
+    rankId: string; // 形如: rankName / `{host} {deviceId}`
+    rankList: RankInfo[];
     dbPath?: string;
     index: number;
 }
@@ -69,16 +70,25 @@ export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotif
 export const parseOperatorSuccessHandler: NotificationInterceptor<ParseOperatorNotification> = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
-    if (!session) {
+    if (!session || !Array.isArray(data.rankList)) {
         return;
     }
-    const cardIdInfo = transformCardIdInfo(String(data.rankId));
-    const ids = [...session.operatorCardInfos, {
-        cardId: String(data.rankId),
-        dbPath: data.dbPath ?? '',
-        index: cardIdInfo.index,
-    } as Required<CardInfo>].sort((a, b) => a.index - b.index);
-    updateSession({ operatorCardInfos: ids });
+    const infos = [...session.operatorCardInfos];
+    const keys = new Set(infos.map(({ rankInfo }) => getRankInfoKey(rankInfo)));
+    data.rankList.forEach((rank) => {
+        const key = getRankInfoKey(rank);
+        if (keys.has(key)) {
+            return;
+        }
+        infos.push({
+            rankInfo: rank,
+            dbPath: data.dbPath ?? '',
+            index: getIndexByRankNameAndDeviceId(rank.rankName, rank.deviceId),
+        });
+        keys.add(key);
+    });
+    infos.sort((a, b) => a.index - b.index);
+    updateSession({ operatorCardInfos: infos });
 };
 
 export const parseStatisticSuccessHandler: NotificationInterceptor<ParseStatisticNotification> = (data): void => {

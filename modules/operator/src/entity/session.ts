@@ -14,9 +14,23 @@ export interface CardInfo {
     index: number;
 }
 
+export interface RankInfo {
+    clusterId: string;
+    host: string;
+    rankName: string;
+    rankId: string;
+    deviceId: string;
+}
+
+export interface CardRankInfo {
+    rankInfo: RankInfo;
+    dbPath: string;
+    index: number;
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
-    allCardInfos: CardInfo[] = [];
+    allCardInfos: CardRankInfo[] = [];
     renderId: number = 0;
     total: number = 0;
     isDark: boolean = true;

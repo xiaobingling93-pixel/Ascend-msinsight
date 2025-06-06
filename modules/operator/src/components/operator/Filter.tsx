@@ -6,12 +6,13 @@ import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, InputNumber } from 'ascend-components';
-import { GroupCardInfosByHost, Label } from 'ascend-utils';
+import { getRankInfoKey, getRankInfoLabel, GroupCardRankInfosByHost, Label } from 'ascend-utils';
 import type { OptionDataType, OptionMapType, VoidFunction } from '../../utils/interface';
-import type { CardInfo, Session } from '../../entity/session';
+import type { CardRankInfo, Session } from '../../entity/session';
 const OPERATOR_TYPE = 'Operator Type';
 
 export interface ConditionType {
+    rankInfoKey: string;
     rankId: string;
     dbPath: string;
     group: string;
@@ -22,6 +23,7 @@ export interface ConditionType {
 }
 
 export const defaultCondition = {
+    rankInfoKey: '',
     rankId: '',
     dbPath: '',
     group: OPERATOR_TYPE,
@@ -83,9 +85,10 @@ const setCondition = (initCondition: ConditionType = {} as ConditionType): void 
         if (condition.host === '' || !optionMap.hostOptions.find(item => item.value === condition.host)) {
             condition.host = optionMap.hostOptions[0]?.value as string ?? '';
         }
-        if (condition.rankId === '') {
-            condition.rankId = optionMap.rankOptions[0]?.value as string ?? '';
-            condition.dbPath = optionMap.rankOptions[0]?.dbPath as string ?? '';
+        if (condition.rankInfoKey === '') {
+            condition.rankInfoKey = optionMap.rankOptions?.[0]?.value as string ?? '';
+            condition.rankId = optionMap.rankOptions?.[0]?.rankId as string ?? '';
+            condition.dbPath = optionMap.rankOptions?.[0]?.dbPath as string ?? '';
         }
     });
 };
@@ -95,27 +98,30 @@ function handleChange<T>(key: keyof ConditionType, val: T): void {
         condition[key] = val as never;
         if (key === 'topK' && val === 0) {
             condition.custom = 15;
-        } else if (key === 'rankId') {
-            condition.dbPath = optionMap.rankOptions.find(({ value }) => value === val)?.dbPath ?? '';
+        } else if (key === 'rankInfoKey') {
+            const rankOption = optionMap.rankOptions.find(({ value }) => value === val);
+            condition.dbPath = rankOption?.dbPath ?? '';
+            condition.rankId = rankOption?.rankId ?? '';
         }
     });
 };
 
 function checkRankId(rankId: string): boolean {
-    if (rankId !== '' && optionMap.rankOptions.some((item) => rankId === item.value as string)) {
+    if (rankId !== '' && optionMap.rankOptions.some((item) => rankId === item.rankId as string)) {
         return true;
     }
     return false;
 }
 
-function getRankOptions(cards: CardInfo[], host: string): Array<OptionDataType & { dbPath: string }> {
+function getRankOptions(cards: CardRankInfo[], host: string): Array<OptionDataType & { rankId: string; dbPath: string }> {
     return cards.map((item) => {
-        const label = (!item.cardId.startsWith('[MSPROF]') ? item.cardId : item.cardId.substring(item.cardId.lastIndexOf('__') + 2)).replace(`${host} `, '');
+        const label = getRankInfoLabel(item.rankInfo);
         return {
             label,
-            value: item.cardId,
+            value: getRankInfoKey(item.rankInfo),
+            rankId: item.rankInfo.rankId,
             dbPath: item.dbPath ?? '',
-            index: Number.isNaN(label) ? 0 : Number(label),
+            index: item.index,
         };
     }).sort((a, b) => a.index - b.index);
 }
@@ -137,7 +143,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
             setCondition(defaultCondition);
             return;
         }
-        const { hosts, cardsMap }: { hosts: string[]; cardsMap: Map<string, CardInfo[]> } = GroupCardInfosByHost(session.allCardInfos);
+        const { hosts, cardsMap }: { hosts: string[]; cardsMap: Map<string, CardRankInfo[]> } = GroupCardRankInfosByHost(session.allCardInfos);
         const hostOptions = hosts.map(item => (
             { label: item, value: item, cards: cardsMap.get(item) }
         ) as OptionDataType);
@@ -148,8 +154,9 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
 
     useEffect(() => {
         runInAction(() => {
-            condition.rankId = checkRankId(session.dirInfo.rankId) ? session.dirInfo.rankId : optionMap.rankOptions[0]?.value as string ?? '';
-            const found = optionMap.rankOptions.find(({ value }) => value === condition.rankId);
+            condition.rankId = checkRankId(session.dirInfo.rankId) ? session.dirInfo.rankId : optionMap.rankOptions[0]?.rankId as string ?? '';
+            const found = optionMap.rankOptions.find(({ rankId }) => rankId === condition.rankId);
+            condition.rankInfoKey = (found?.value ?? '') as string;
             condition.dbPath = found?.dbPath ?? '';
             condition.isCompare = session.dirInfo.isCompare ?? false;
         });
@@ -220,9 +227,9 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             name={t('Rank ID')}
             content={(<Select
                 id={'select-rankId'}
-                value={condition.rankId}
+                value={condition.rankInfoKey}
                 style={{ width: 200 }}
-                onChange={(val: string): void => handleChange('rankId', val)} // rankId 修改，要联动 dbPath
+                onChange={(val: string): void => handleChange('rankInfoKey', val)} // rankId 修改，要联动 dbPath
                 options={optionMap.rankOptions}
                 showSearch={true}
                 disabled={condition.isCompare}

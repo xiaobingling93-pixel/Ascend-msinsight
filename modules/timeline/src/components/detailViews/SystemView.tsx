@@ -181,7 +181,7 @@ const ViewSelect = observer((props: any) => {
 
 // eslint-disable-next-line max-lines-per-function
 export const RankFilter = observer((props: { session: Session; viewOption?: number; handleChange: (v: SelectedCardInfo) => void }): JSX.Element => {
-    const [rankCondition, setRankCondition] = useState<ConditionType<CardRankInfo, number>>({ options: [], value: 0 });
+    const [rankCondition, setRankCondition] = useState<ConditionType<CardRankInfo, number | undefined>>({ options: [], value: undefined });
     const [hostCondition, setHostCondition] = useState<HostConditionType>({ options: [], value: '' });
     const { t } = useTranslation('timeline');
     useEffect(() => {
@@ -197,10 +197,14 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
 
     useEffect(() => {
         const rankOptions = hostCondition.cardsMap?.get(hostCondition.value) ?? [];
-        setRankCondition({ options: rankOptions, value: 0 });
+        setRankCondition({ options: rankOptions, value: rankOptions.length > 0 ? 0 : undefined });
     }, [hostCondition]);
 
     useEffect(() => {
+        if (rankCondition.value === undefined) {
+            props.handleChange({ cardId: '', dbPath: '' });
+            return;
+        }
         const cardRankInfo = rankCondition.options[rankCondition.value];
         props.handleChange({ cardId: cardRankInfo.rankInfo.rankId, dbPath: cardRankInfo.dbPath });
     }, [rankCondition]);
