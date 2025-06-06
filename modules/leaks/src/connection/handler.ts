@@ -5,7 +5,6 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import i18n from 'ascend-i18n';
-
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
@@ -37,12 +36,36 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
     }
     i18n.changeLanguage(lang);
 };
+const restore = (session: any): void => {
+    session.allocationData = { allocations: [], maxTimestamp: 0, minTimestamp: 0 };
+    session.blockData = { blocks: [], minSize: 0, maxSize: 0, minTimestamp: 0, maxTimestamp: 0 };
+    session.memoryData = { size: 0, name: '', subNodes: [] };
+    session.funcData = { traces: [], maxTimestamp: 0, minTimestamp: 0 };
+    session.deviceId = '';
+    session.eventType = '';
+    session.threadId = '';
+    session.memoryStamp = 0;
+    session.deviceIdOpts = [];
+    session.typeOpts = [];
+    session.threadOps = [];
+};
 export const parseCompletedHandler = (data: any): void => {
     const session = store.sessionStore.activeSession;
     if (session) {
         runInAction(() => {
             session.deviceIds = data.deviceIds;
             session.threadIds = data.threadIds;
+            restore(session);
+        });
+    }
+};
+export const removeRemoteHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    if (session) {
+        runInAction(() => {
+            session.deviceIds = {};
+            session.threadIds = [];
+            restore(session);
         });
     }
 };

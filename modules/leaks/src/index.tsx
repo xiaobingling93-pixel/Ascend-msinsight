@@ -57,8 +57,8 @@ window.request = async (params): Promise<any> => {
     // 检查最近的请求时间
     const lastRequestTime = requestCache.get(requestKey);
 
-    // 如果最近请求时间在 100ms 内，则跳过请求
-    if (lastRequestTime !== null && lastRequestTime !== undefined && (now - lastRequestTime) < 100) {
+    // 如果最近请求时间在 10ms 内，则跳过请求
+    if (lastRequestTime !== null && lastRequestTime !== undefined && (now - lastRequestTime) < 1) {
         // 返回一个拒绝的 Promise 或自定义行为
         return Promise.reject(new Error('Requests are too frequent'));
     };

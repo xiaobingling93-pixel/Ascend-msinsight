@@ -126,15 +126,21 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
             setLoading(true);
             getFuncNewData(session);
         }
-    }, [session.threadId]);
+    }, [session.deviceId, session.eventType, session.threadId]);
     useEffect(() => {
         setChartOptions(getOptions(session));
         if (chartRef.current !== null && chartRef.current !== undefined) {
             setFuncIns(chartRef.current.getInstance());
         }
         setLoading(false);
-    }, [JSON.stringify(session.funcData.traces), session.maxTime, session.minTime]);
-
+    }, [session.deviceId, session.eventType, JSON.stringify(session.funcData.traces), session.maxTime, session.minTime]);
+    useEffect(() => {
+        chartRef.current?.getInstance()?.dispatchAction({
+            type: 'takeGlobalCursor',
+            key: 'dataZoomSelect',
+            dataZoomSelectActive: true,
+        });
+    }, [chartOptions]);
     return (
         <MIChart
             ref={chartRef}

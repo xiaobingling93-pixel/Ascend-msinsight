@@ -169,7 +169,7 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
     const chartRef = useRef<ChartsHandle>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
-    const { blockData, allocationData, deviceId, eventType } = session;
+    const { blockData, allocationData, deviceId, eventType, threadId } = session;
     const lineSource = allocationData.allocations.map((line: any) => [line.timestamp, line.totalSize]);
     const source: number[][] = useMemo(() => {
         const blockSource: number[][] = [];
@@ -188,6 +188,12 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
         return blockSource;
     }, [JSON.stringify(blockData.blocks)]);
     const initParam: InitParam = { session, blockData, lineSource, source, t };
+    useEffect(() => {
+        if (deviceId !== '') {
+            setLoading(true);
+            getBarNewData(session);
+        }
+    }, [deviceId, eventType, threadId]);
     useEffect(() => {
         const param: EChartsOption = getOptions(initParam);
         setChartOptions(param);
@@ -209,15 +215,14 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
                 }
             }
         });
-    }, [JSON.stringify(blockData), session.maxTime, session.minTime, t]);
-
+    }, [threadId, JSON.stringify(blockData), session.maxTime, session.minTime, t]);
     useEffect(() => {
-        if (deviceId !== '') {
-            setLoading(true);
-            getBarNewData(session);
-        }
-    }, [deviceId, eventType]);
-
+        chartRef.current?.getInstance()?.dispatchAction({
+            type: 'takeGlobalCursor',
+            key: 'dataZoomSelect',
+            dataZoomSelectActive: true,
+        });
+    }, [chartOptions]);
     return (
         <MIChart
             ref={chartRef}

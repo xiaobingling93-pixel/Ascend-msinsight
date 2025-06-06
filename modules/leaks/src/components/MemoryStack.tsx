@@ -12,15 +12,9 @@ import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { getFuncNewData, getBarNewData } from './dataHandler';
 import { Line, initLine, cancelLine } from './LineHandler';
-interface TypeOption {
-    label: string | number;
-    value: string | number;
-}
+
 const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
     const { t } = useTranslation('leaks');
-    const [idOpts, setIdOpts] = useState<TypeOption[]>([]);
-    const [threadOps, setThreadOps] = useState<TypeOption[]>([]);
-    const [typeOpts, setTypeOpts] = useState<TypeOption[]>([]);
     const [funcIns, setFuncIns] = useState<echarts.ECharts | null>();
     const [barIns, setBarIns] = useState<echarts.ECharts | null>();
     const [lineShow, setLineshow] = useState('none');
@@ -60,11 +54,11 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         if (newIdOpts.length) {
             const newTypeOpts = session.deviceIds[newIdOpts[0].value].map((type: string) => ({ label: type, value: type }));
             const newThreadOpts = session.threadIds.map((thread: number) => ({ label: thread, value: thread }));
-            setIdOpts(newIdOpts);
-            setThreadOps(newThreadOpts);
-            setTypeOpts(newTypeOpts);
             initLine(mouseEnter, mouseMove, mouseLeave);
             runInAction(() => {
+                session.deviceIdOpts = newIdOpts;
+                session.typeOpts = newTypeOpts;
+                session.threadOps = newThreadOpts;
                 session.deviceId = newIdOpts[0].value;
                 session.eventType = newTypeOpts[0].value;
                 session.threadId = newThreadOpts[0].value;
@@ -73,12 +67,11 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         return () => {
             cancelLine(mouseEnter, mouseMove, mouseLeave);
         };
-    }, [session.deviceIds]);
+    }, [session.deviceIds, session.threadIds]);
 
     useEffect(() => {
         linkageHandle();
     }, [funcIns, barIns]);
-
     return (
         <div>
             <div style={{ marginLeft: 24, marginTop: 24 }}>
@@ -92,7 +85,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                             session.threadId = value;
                         });
                     }}
-                    options={threadOps}
+                    options={session.threadOps}
                 />
             </div>
             <div id='funcContent' style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
@@ -107,13 +100,13 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     value={session.deviceId}
                     size="middle"
                     onChange={(value): void => {
-                        setTypeOpts(session.deviceIds[value].map((type: string) => ({ label: type, value: type })));
                         runInAction(() => {
+                            session.typeOpts = session.deviceIds[value].map((type: string) => ({ label: type, value: type }));
                             session.deviceId = value;
                             session.eventType = session.deviceIds[value][0];
                         });
                     }}
-                    options={idOpts}
+                    options={session.deviceIdOpts}
                 />
                 <Label name={t('Type')} />
                 <Select
@@ -125,7 +118,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                             session.eventType = value;
                         });
                     }}
-                    options={typeOpts}
+                    options={session.typeOpts}
                 />
             </div>
             <div id='barContent' style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
