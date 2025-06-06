@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <memory>
+#include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
@@ -51,6 +52,7 @@ struct ParseSuccessEventBody {
     uint64_t maxTimeStamp = 0;
     uint64_t offset = 0;
     std::string fileId;
+    std::vector<RankInfo> rankList;  // 值为 cluster + host + rankId + deviceId 拼接
 };
 
 struct ParseSuccessEvent : public Event {
@@ -71,8 +73,10 @@ struct ParseFailEvent : public Event {
 
 struct MemorySuccess {
     std::string rankId;
+    std::string fileId;
     bool parseSuccess = false;
     bool hasFile = false;
+    RankInfo rankInfo;
 };
 
 struct ParseClusterCompletedEventBody {

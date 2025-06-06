@@ -847,5 +847,6 @@ std::vector<std::map<std::string, std::string>> Database::QueryDataByPage(const 
     }
     return res;
 }
+
 }  // end of namespace Module
 }  // end of namespace Dic

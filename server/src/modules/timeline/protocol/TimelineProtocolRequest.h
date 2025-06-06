@@ -73,6 +73,7 @@ struct ImportActionRequest : public Request {
 };
 struct ParseCardsParams {
     std::vector<std::string> cards;
+    std::vector<std::string> fileIds;
 };
 struct ParseCardsRequest : public Request {
     ParseCardsRequest() : Request(REQ_RES_PARSE_CARDS){};

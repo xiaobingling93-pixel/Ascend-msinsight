@@ -20,8 +20,10 @@ namespace Timeline {
 class TraceFileParser : public FileParser, protected JsonFileProcess {
 public:
     static TraceFileParser &Instance();
-    bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
-        const std::string &selectedFolder) override;
+    bool Parse(const std::vector<std::string> &filePathArr,
+               const std::string &rankId,
+               const std::string &selectedFolder,
+               const std::string &fileId) override;
     void Reset() override;
     static void DeleteParseFiles(const std::vector<std::string> &fileIds);
     static void ParseEndCallBack(const std::string &rankId,
@@ -37,8 +39,12 @@ private:
     const int maxThreadNum = 4;
     std::unique_ptr<ThreadPool> threadPool;
     static bool CheckInitParser(const std::string &fileId);
-    static bool InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId);
-    static void PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId);
+    static bool InitParser(const std::vector<std::string> &filePathArr,
+                           const std::string &rankId,
+                           const std::string &fileId);
+    static void PreParseTask(const std::vector<std::string> &filePathArr,
+                             const std::string &rankId,
+                             const std::string &fileId);
     static void ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos);
     static void EndParseTask(const std::string &rankId, const std::vector<std::string> &filePathArr,
                              std::shared_ptr<std::vector<std::future<void>>> futures,

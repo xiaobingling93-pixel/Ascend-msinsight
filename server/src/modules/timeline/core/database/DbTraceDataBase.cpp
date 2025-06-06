@@ -1679,6 +1679,7 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     }
     while (resultSet->Next()) {
         Protocol::SearchAllSlices searchAllSlice{};
+        searchAllSlice.fileId = params.fileId;
         searchAllSlice.name = resultSet->GetString("value");
         searchAllSlice.timestamp = resultSet->GetUint64("startTime");
         searchAllSlice.duration = resultSet->GetUint64("duration");
@@ -1714,8 +1715,7 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     if (trackQueryVec.empty()) {
         return SearchAllSlicesDetails(params, body, minTimestamp);
     }
-    std::string sql = TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
-    auto stmt = CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec));
     if (stmt == nullptr) {
         ServerLog::Error("Query slice name failed!.");
         return false;
@@ -1731,6 +1731,7 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     }
     while (resultSet->Next()) {
         Protocol::SearchAllSlices searchAllSlice{};
+        searchAllSlice.fileId = params.fileId;
         searchAllSlice.name = resultSet->GetString("value");
         searchAllSlice.timestamp = resultSet->GetUint64("timestamp");
         searchAllSlice.duration = resultSet->GetUint64("endTime") - searchAllSlice.timestamp; // 保证 endTime > timestamp

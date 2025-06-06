@@ -697,17 +697,9 @@ std::vector<std::string> FileUtil::GetSubDirs(const std::string &filePath)
     if (!FileUtil::IsFolder(filePath)) {
         return {};
     }
-    constexpr uint64_t maxCount = 50000;
-    std::vector<std::string> res;
-    uint64_t count = 0;
-    for (const auto &item: fs::directory_iterator(filePath)) {
-        if (count++ > maxCount) {
-            return res;
-        }
-        if (fs::is_directory(item) && CheckDirValid(item.path().string())) {
-            res.emplace_back(item.path().string());
-        }
-    }
-    return res;
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    FileUtil::FindFolders(filePath, folders, files);
+    return folders;
 }
 } // Dic

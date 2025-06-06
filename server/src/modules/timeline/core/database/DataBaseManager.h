@@ -101,14 +101,13 @@ public:
     std::string GetAnyTraceDatabaseId();
 
     std::string GetFileIdByRankId(const std::string& rankId) const;
+
+    void UpdateRankIdToDeviceId(const std::string &fileId,
+                                const std::string &rankId,
+                                const std::string &deviceId);
+
 private:
-    /**
-     * @brief 设置rankId到fileId的映射
-     * @param rankId
-     * @param fileId
-     * @param isBaseLine
-     */
-    void SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId, bool isBaseLine);
+    void SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId);
     
     using RankId = std::string;
     using FileId = std::string;
@@ -138,6 +137,7 @@ private:
     std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
     std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
 
+    std::map<std::string, std::string> rankIdToDeviceIdMap;  // key: fileId + rankId , value: deviceId
     std::recursive_mutex &GetDbMutex(const std::string &fileId);
 };
 } // end of namespace Timeline

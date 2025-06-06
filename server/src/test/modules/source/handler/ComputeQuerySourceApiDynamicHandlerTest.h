@@ -38,7 +38,7 @@ public:
         // init parser
         std::string binPath = std::string(BIN_FILE_PATH_API_LINE_DYNAMIC);
         SourceFileParser::Instance().SetFilePath(binPath);
-        SourceFileParser::Instance().Parse({binPath}, binPath, binPath);
+        SourceFileParser::Instance().Parse({binPath}, binPath, binPath, "");
 
         // init ws session
         WsChannel *ws;

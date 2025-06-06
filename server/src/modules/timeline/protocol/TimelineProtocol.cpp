@@ -129,6 +129,11 @@ std::unique_ptr<Request> TimelineProtocol::ToParseCardsRequest(const json_t &jso
             reqPtr->params.cards.emplace_back(JsonUtil::GetStringWithoutKey(card));
         }
     }
+    if (json["params"].HasMember("dbPaths") && json["params"]["dbPaths"].IsArray()) {
+        for (const auto &dbPath : json["params"]["dbPaths"].GetArray()) {
+            reqPtr->params.fileIds.emplace_back(JsonUtil::GetStringWithoutKey(dbPath));
+        }
+    }
     return reqPtr;
 }
 

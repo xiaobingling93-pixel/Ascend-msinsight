@@ -28,7 +28,7 @@ TEST_F(PerformanceTest, testTraceParser1P2GBTime)
         std::string(test1P2GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
     TraceFileParser::Instance().Parse(
         {std::string(test1P2GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"},
-        "0", "");
+        "0", "", "");
     while (true) {
         ParserStatus status = ParserStatusManager::Instance().GetParserStatus("0");
         if (status == ParserStatus::FINISH) {
@@ -55,7 +55,7 @@ TEST_F(PerformanceTest, testTraceParser1P5GBTime)
         std::string(test1P5GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
     TraceFileParser::Instance().Parse(
         {std::string(test1P5GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"},
-        "0", "");
+        "0", "", "");
     while (true) {
         ParserStatus status = ParserStatusManager::Instance().GetParserStatus("0");
         if (status == ParserStatus::FINISH) {

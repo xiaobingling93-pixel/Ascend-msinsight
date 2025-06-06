@@ -40,7 +40,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
         }
     }
     response.body.projectFileTree = projectInfos[0].projectFileTree;
-    auto hostInfoMap = GetReportFiles(dataFiles);
+    auto hostInfoMap = GetReportFiles(projectInfos);
     SetHostInfo(hostInfoMap, response);
     SetParseCallBack();
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
@@ -53,6 +53,11 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     bool isPending = response.body.isPending;
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
+    std::for_each(projectInfos.begin(), projectInfos.end(), [](const auto& project) {
+        if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer(project, true)) {
+            ServerLog::Error("Failed to update project in parsing");
+        }
+    });
     for (const auto &hostInfo : hostInfoMap) {
         for (const auto &ranks : hostInfo.second) {
             if (isPending) {
@@ -73,7 +78,7 @@ void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, 
     for (auto &hostInfo : hostInfoMap) {
         if (!hostInfo.second.empty()) {
             // 如果rank列表为空，则Timeline页面不展示Host
-            SetBaseActionOfResponse(response, "Host", hostInfo.first, "");
+            SetBaseActionOfResponse(response, "Host", hostInfo.first, hostInfo.second.begin()->first);
         }
         rankSize += hostInfo.second.size();
         for (auto &ranks : hostInfo.second) {
@@ -121,54 +126,60 @@ void ProjectParserDb::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo,
 }
 // LCOV_EXCL_BR_STOP
 
-std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)
+std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vector<ProjectExplorerInfo> &projectInfos)
 {
-    std::vector<std::string> dbFiles = {};
-    for (const auto &file : reportFiles) {
-        if (!FileUtil::IsFolder(file)) {
-            dbFiles.push_back(file);
-            if (std::regex_match(FileUtil::GetFileName(file), std::regex(leaksMemDbReg))) {
-                DataBaseManager::Instance().SetFileType(FileType::LEAKS);
-            }
-            continue;
-        }
-        std::vector<std::string> dbFilesOneDir = GetDbFilesInDir(file);
-        if (dbFilesOneDir.empty()) {
-            continue;
-        }
-        if (RegexUtil::RegexSearch(dbFilesOneDir[0], leaksMemDbReg)) {
-            std::copy(dbFilesOneDir.begin(), dbFilesOneDir.end(), std::back_inserter(dbFiles));
-            DataBaseManager::Instance().SetFileType(FileType::LEAKS);
-            continue;
-        }
-        std::copy(dbFilesOneDir.begin(), dbFilesOneDir.end(), std::back_inserter(dbFiles));
-    }
-    // 只解析找到的第一个report文件
     std::map<std::string, HostInfo> hostMap;
-    for (const auto &file : dbFiles) {
-        if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
-            ServerLog::Error("Failed to create connection pool. ", dbFiles[0]);
+    for (const auto& project : projectInfos) {
+        for (const auto& file : project.subParseFileInfo) {
+            GetReportFilesOneFile(project, hostMap, file);
         }
-        auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(file);
+    }
+    return hostMap;
+}
+
+void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectExplorerInfo &project,
+                                            std::map<std::string, HostInfo> &hostMap,
+                                            std::shared_ptr<ParseFileInfo> parsefileInfo)
+{
+    std::vector<std::string> dbFiles = GetDbFilesInDir(parsefileInfo->parseFilePath);
+    for (const auto &file: dbFiles) {
+        if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
+            ServerLog::Error("Failed to create connection pool. ", file);
+        }
+        auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(file);
         if (db == nullptr) {
             ServerLog::Error("Failed to get connection.");
             continue;
         }
         auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
         if (database == nullptr) {
-            ServerLog::Error("Failed to convert virtual trace database to db trace database in getting report files.");
+            ServerLog::Error(
+                "Failed to convert virtual trace database to db trace database in getting report files.");
             continue;
         }
         auto host = database->QueryHostInfo();
-        for (const auto &rank : database->QueryRankId()) {
+        for (const auto &rank: database->QueryRankId()) {
+            if (parsefileInfo->type == DEVICE_CHIP && parsefileInfo->deviceId != rank) {
+                continue;
+            }
+            parsefileInfo->host = host;
+            parsefileInfo->rankId = host + rank;
+            std::string rankName = rank;
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
             TrackInfoManager::Instance().UpdateDeviceMap(host + rank, database->QueryRankIdAndDeviceMap());
             TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
+            TrackInfoManager::Instance().SetRankListByFileId(file,
+                                                             {parsefileInfo->clusterId,
+                                                              parsefileInfo->host,
+                                                              parsefileInfo->rankId,
+                                                              parsefileInfo->deviceId,
+                                                              rankName});
+            DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, rank);
         }
+        TrackInfoManager::Instance().SetClusterByFileId(file, parsefileInfo->clusterId);
     }
-    return hostMap;
 }
 
 void ProjectParserDb::SetParseCallBack()
@@ -185,6 +196,7 @@ void ProjectParserDb::SetBaseActionOfResponse(ImportActionResponse &response, co
 {
     Action action;
     action.cardName = rankId;
+    action.cluster = TrackInfoManager::Instance().GetClusterByFileId(dbFile);
     action.rankId = host + rankId;
     action.host = host.length() >= 1 ? host.substr(0, host.length() - 1) : "";
     action.result = true;
@@ -279,7 +291,7 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
         return;
     }
     if (baselineInfo.isCluster) {
-        ProjectParserDb::ParseBaselineClusterInfo(projectInfo);
+        ProjectParserDb::ParseBaselineClusterInfo(projectInfo, baselineInfo);
         return;
     }
     std::string parseFilePath = projectInfo.subParseFileInfo[0]->parseFilePath;
@@ -300,7 +312,7 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
         file = msprofFiles[0];
     }
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
-    auto hostInfoMap = GetReportFiles({ parseFilePath });
+    auto hostInfoMap = GetReportFiles({ projectInfo });
     if (std::empty(hostInfoMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         baselineInfo.errorMessage = "Db get host info failed!";
@@ -314,16 +326,18 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
     std::string rankId = hostInfoMap.begin()->first + hostInfoMap.begin()->second.begin()->second[0];
     const std::string &cardId = rankId;
     baselineInfo.rankId = rankId;
-    baselineInfo.cardName = "baseline" + cardId;
+    baselineInfo.cardName = "Baseline_" + cardId;
     baselineInfo.host = hostInfoMap.begin()->first;
+    baselineInfo.fileId = file;
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(rankId, file)) {
+    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(baselineInfo.rankId, file)) {
         ServerLog::Error("Failed to create baseline connection pool. ");
     }
-    FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ rankId }, file);
+    FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ baselineInfo.rankId }, file);
 }
 
-void ProjectParserDb::ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos)
+void ProjectParserDb::ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos,
+                                               BaselineInfo &baselineInfo)
 {
     std::vector<std::shared_ptr<ParseFileInfo>> clusterInfos = projectInfos.GetClusterInfos();
     if (clusterInfos.empty()) {
@@ -333,13 +347,14 @@ void ProjectParserDb::ParseBaselineClusterInfo(const Global::ProjectExplorerInfo
         cluster->clusterId = FileUtil::GetFileName(projectInfos.fileName);
         clusterInfos.emplace_back(cluster);
     }
-    std::for_each(clusterInfos.begin(), clusterInfos.end(), [](const std::shared_ptr<ParseFileInfo>& item) {
+    std::for_each(clusterInfos.begin(), clusterInfos.end(), [&baselineInfo](const std::shared_ptr<ParseFileInfo>& item) {
         auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(item->parseFilePath, DataType::DB);
         ClusterFileParser clusterFileParser(item->parseFilePath, clusterDatabase,
                                             item->clusterId + TimeUtil::Instance().NowStr());
         if (!clusterFileParser.ParserClusterOfDb()) {
             ServerLog::Warn("Failed to parse cluster db files");
         }
+        baselineInfo.fileId = clusterFileParser.GetClusterDbPath();
     });
 }
 
@@ -386,11 +401,10 @@ void ProjectParserDb::BuildProjectFromParseFile(Dic::Module::Global::ProjectExpl
         parentFolders.erase(parentFolders.begin());
     }
 
-    if (clusterPrefix.empty()) {
-        info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
-    } else {
-        info.AddSubParseFileInfo(clusterPrefix, ParseFileType::CLUSTER, parseFileInfoRank);
+    if (!clusterPrefix.empty()) {
+        parseFileInfoRank->clusterId = FileUtil::GetFileName(cluster);
     }
+    AddRankDeviceParseFileInfo(info, parseFileInfoRank);
 }
 
 void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isCluster,
@@ -435,6 +449,14 @@ std::string ProjectParserDb::GetFileIdWithDb(const std::string &filePath)
 
 std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &filePath)
 {
+    std::vector<std::string> dbFiles;
+    if (!FileUtil::IsFolder(filePath)) {
+        dbFiles.emplace_back(filePath);
+        if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(leaksMemDbReg))) {
+            DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+        }
+        return dbFiles;
+    }
     // 静态初始化，避免重复调用时正则编译开销
     static std::vector<std::regex> dbRegex = {
         std::regex{leaksMemDbReg}, std::regex{pytorchDBReg},

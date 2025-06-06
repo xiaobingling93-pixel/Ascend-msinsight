@@ -93,6 +93,7 @@ bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
     JsonUtil::SetByJsonKeyValue(moduleName, json, "moduleName");
     request.moduleName = moduleName.empty() ? MODULE_UNKNOWN : moduleName;
     JsonUtil::SetByJsonKeyValue(request.resultCallbackId, json, "resultCallbackId");
+    JsonUtil::SetByJsonKeyValue(request.fileId, json, "fileId");
     return true;
 }
 

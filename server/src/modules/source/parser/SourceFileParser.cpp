@@ -45,8 +45,10 @@ SourceFileParser::~SourceFileParser()
     threadPool->ShutDown();
 }
 
-bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-    const std::string &selectedFile)
+bool SourceFileParser::Parse(const std::vector<std::string> &filePaths,
+                             const std::string &rankId,
+                             const std::string &selectedFile,
+                             const std::string &fileId)
 {
     if (!FileUtil::CheckFilePathLength(selectedFile)) {
         ServerLog::Error("Parse bin file failed cause path length is too long.");
@@ -61,7 +63,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     }
 
     // 获取目标数据对象的应用，下面对数据进行改动时会影响
-    auto &curDataBlockMap = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
+    auto &curDataBlockMap = Global::BaselineManager::Instance().IsBaselineRankId(rankId) ?
         baselineDataBlockMap : dataBlockMap;
     auto fileSize = FileUtil::GetFileSize(selectedFile.c_str());
     if (fileSize <= 0) {
@@ -74,8 +76,8 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     }
     file.close();
     ConvertToData();
-    Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, fileId);
+    Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::INIT);
+    threadPool->AddTask(PreParseTask, rankId);
     return true;
 }
 

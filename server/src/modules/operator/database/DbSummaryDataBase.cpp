@@ -10,6 +10,7 @@
 #include "OperatorProtocolEvent.h"
 #include "TraceTime.h"
 #include "DataBaseManager.h"
+#include "TrackInfoManager.h"
 #include "DbSummaryDataBase.h"
 
 namespace Dic::Module::FullDb {
@@ -1139,6 +1140,7 @@ void DbSummaryDataBase::ParserEnd(const std::string &rankId,
         event->data.status = result;
         event->data.error = msg;
         event->fileId = fileId;
+        event->rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
         session->OnEvent(std::move(event));
     }
 }

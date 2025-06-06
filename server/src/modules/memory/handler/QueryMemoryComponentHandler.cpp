@@ -28,6 +28,7 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
 
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
     if (deviceId.empty()) {
+        SendResponse(std::move(responsePtr), false, "Failed to query memory component data.");
         return false;
     }
     request.params.deviceId = deviceId;
@@ -76,6 +77,7 @@ bool QueryMemoryComponentHandler::GetRespectiveData(std::shared_ptr<VirtualMemor
         errorMsg = "Failed to query memory component compare data.";
         return false;
     }
+    request.params.deviceId = FullDb::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "memory");
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryEntireComponentTable(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory component baseline data.";

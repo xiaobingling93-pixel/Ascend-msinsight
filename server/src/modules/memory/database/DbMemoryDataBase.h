@@ -48,7 +48,7 @@ public:
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) override;
 
-    static void ParserEnd(std::string rankId, bool result);
+    static void ParserEnd(std::string rankId, bool result, std::string fileId);
     static void ParseCallBack(const std::string &rankId,
                               const std::string &fileId,
                               bool result,

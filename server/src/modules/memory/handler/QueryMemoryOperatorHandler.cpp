@@ -7,12 +7,14 @@
 #include "MemoryProtocolRequest.h"
 #include "MemoryProtocolRespose.h"
 #include "TraceTime.h"
+#include "TrackInfoManager.h"
 #include "QueryMemoryOperatorHandler.h"
 
 namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Dic::Server;
+using namespace Timeline;
 bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryOperatorRequest &request = dynamic_cast<MemoryOperatorRequest &>(*requestPtr.get());
@@ -30,6 +32,7 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
 
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
     if (deviceId.empty()) {
+        SendResponse(std::move(responsePtr), false, "Failed to query memory operator data.");
         return false;
     }
     request.params.deviceId = deviceId;
@@ -78,6 +81,7 @@ bool QueryMemoryOperatorHandler::GetRespectiveData(std::shared_ptr<VirtualMemory
         errorMsg = "Failed to query memory operator compare data.";
         return false;
     }
+    request.params.deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "memory");
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryEntireOperatorTable(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory operator baseline data.";

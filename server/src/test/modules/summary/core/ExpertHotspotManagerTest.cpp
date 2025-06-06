@@ -72,7 +72,7 @@ protected:
     {
         DataBaseManager::Instance().SetDataType(DataType::TEXT);
         DataBaseManager::Instance().CreatConnectionPool("100", filePath + "mindstudio_insight_data.db");
-        TraceFileParser::Instance().Parse({filePath + "trace_view.json"}, "100", "");
+        TraceFileParser::Instance().Parse({filePath + "trace_view.json"}, "100", "", "");
         WaitParseEnd({"100"});
     }
 

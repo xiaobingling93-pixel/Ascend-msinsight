@@ -20,6 +20,7 @@
 #include "TimeUtil.h"
 #include "FileReader.h"
 #include "ProjectAnalyze.h"
+#include "TrackInfoManager.h"
 
 namespace Dic::Module {
 using namespace Timeline;
@@ -39,18 +40,10 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
     ImportActionResponse &response = *responsePtr;
     FillBaseResponseInfo(request, response, projectInfos);
     // 获取rankid及文件映射关系信息
-    std::map<std::string, std::vector<std::string>> rankToFoldersMap;
-    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(projectInfos, rankToFoldersMap);
+    std::map<std::string, RankEntry> rankListMap = GetRankEntryMap(projectInfos, false);
+    UpdateRankIdToDevice(rankListMap);
     // 设置基础响应内容
-    for (const auto &rankEntry : rankListMap) {
-        auto folders = rankToFoldersMap[rankEntry.first];
-        if (rankEntry.second.empty()) {
-            continue;
-        }
-        std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
-        std::string fileId = GetFileIdWithDb(folders[0]);
-        SetBaseActionOfResponse(response, rankEntry.first, fileId, cardPath, folders);
-    }
+    SetBaseAction(rankListMap, response);
     // 解析内容
     auto projectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
@@ -60,8 +53,13 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
         response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData;
         SendResponse(std::move(responsePtr), true);
         for (const auto &rankEntry : rankListMap) {
-            Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first,
-                                                                  rankEntry.second[0]);
+            if (!rankEntry.second.rankInfo.empty()) {
+                continue;
+            }
+            Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second.parseFileList,
+                                                                  rankEntry.first,
+                                                                  rankEntry.second.parseFolder,
+                                                                  rankEntry.second.fileId);
         }
         TraceTime::Instance().SetIsSimulation(true);
         return;
@@ -76,8 +74,12 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
     auto [hasTraceJson, hasMemoryData, hasOperatorData] = CheckHasTraceJsonMemoryDataOperatorData(projectInfos);
     response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData && !isCluster;
     ModuleRequestHandler::SetResponseResult(response, true);
-    // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
+    std::for_each(projectInfos.begin(), projectInfos.end(), [](const auto& project) {
+        if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer(project, true)) {
+            ServerLog::Error("Failed to update project in parsing");
+        }
+    });
     ParserTraceData(rankListMap, projectInfos, isCluster);
 }
 // LCOV_EXCL_BR_STOP
@@ -100,21 +102,41 @@ void ProjectParserJson::FillBaseResponseInfo(const ImportActionRequest &request,
     }
 }
 
-std::map<std::string, std::vector<std::string>> ProjectParserJson::GetRankListMap(
-    const std::vector<Global::ProjectExplorerInfo> &projectInfos,
-    std::map<std::string, std::vector<std::string>> &rankToFoldersMap)
+std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
+    const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isBaseline)
 {
     // 获取单卡文件，并根据单卡所在目录获取其单卡信息
-    std::map<std::string, std::vector<std::string>> rankToTraceMap;
+    std::map<std::string, RankEntry> rankToTraceMap;
     for (const auto &project : projectInfos) {
         for (const auto &parseFileInfo : project.subParseFileInfo) {
+            std::string fileId = parseFileInfo->fileId;
+            bool isDevice = parseFileInfo->type == ParseFileType::DEVICE_CHIP;
             std::vector<std::string> jsonFiles = GetJsonFileUnderFolder(parseFileInfo->parseFilePath);
             if (!CheckParseFileInfoSize(parseFileInfo, jsonFiles)) {
                 continue;
             }
-            std::string fileId = GetFileId(jsonFiles[0], parseFileInfo->parseFilePath);
-            rankToFoldersMap[fileId].push_back(parseFileInfo->parseFilePath);
-            rankToTraceMap[fileId] = jsonFiles;
+            std::string rankId = FileUtil::GetRankIdFromFile(jsonFiles[0]);
+            if (isDevice) {
+                rankId = parseFileInfo->deviceId;
+            }
+            if (isBaseline) {
+                rankId = StringUtil::StrJoin("Baseline_", rankId);
+            }
+            parseFileInfo->rankId = rankId;
+            std::string rankName = rankId;
+            RankEntry& entry = rankToTraceMap[rankId];
+            entry.rankId = rankId;
+            entry.fileId = fileId;
+            entry.parseFolder = parseFileInfo->parseFilePath;
+            entry.isDevice = isDevice;
+            RankInfo rankInfo{parseFileInfo->clusterId,
+                              parseFileInfo->host,
+                              parseFileInfo->rankId,
+                              parseFileInfo->deviceId,
+                              rankName};
+            entry.rankInfo.emplace_back(rankInfo);
+            TrackInfoManager::Instance().SetRankListByFileId(fileId, rankInfo);
+            entry.parseFileList = jsonFiles;
         }
     }
     return rankToTraceMap;
@@ -166,8 +188,9 @@ std::vector<std::string> ProjectParserJson::GetJsonFileUnderFolder(const std::st
     return jsonFiles;
 }
 
-void ProjectParserJson::ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
-    const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isShowCluster)
+void ProjectParserJson::ParserTraceData(const std::map<std::string, RankEntry> &rankListMap,
+                                        const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                                        bool isShowCluster)
 {
     std::vector<std::string> fileList;
     for (const auto &item : projectInfos) {
@@ -177,21 +200,21 @@ void ProjectParserJson::ParserTraceData(const std::map<std::string, std::vector<
     ParserMetaData(projectInfos);
     bool isParseTraceJson = rankListMap.size() < PENDIND_CRITICAL_VALUE;
     for (const auto &rankEntry : rankListMap) {
+        if (!Summary::KernelParse::Instance().Parse(rankEntry.second)) {
+            ServerLog::Warn("Failed to parse kernel files.");
+        }
+        if (!Memory::MemoryParse::Instance().Parse(rankEntry.second)) {
+            ServerLog::Warn("Failed to parse memory files.");
+        }
         if (!isParseTraceJson) {
             ParserStatusManager::Instance().SetPendingStatus(rankEntry.first,
-                { ProjectTypeEnum::TRACE, rankEntry.second });
+                { ProjectTypeEnum::TRACE, rankEntry.second.parseFileList });
             continue;
         }
-        Timeline::TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, rankEntry.second[0]);
+        Timeline::TraceFileParser::Instance().Parse(rankEntry.second.parseFileList,
+                                                    rankEntry.second.rankId,
+                                                    rankEntry.second.parseFolder, rankEntry.second.fileId);
     }
-    if (!Summary::KernelParse::Instance().Parse(fileList)) {
-        ServerLog::Warn("Failed to parse kernel files.");
-    }
-
-    if (!Memory::MemoryParse::Instance().Parse(fileList)) {
-        ServerLog::Warn("Failed to parse memory files.");
-    }
-
     auto projectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     auto clusterInfos = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
     if (clusterInfos.empty()) {
@@ -498,7 +521,8 @@ std::vector<std::string> ProjectParserJson::GetParseFileByImportFile(const std::
     return result;
 }
 
-void ProjectParserJson::ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo)
+void ProjectParserJson::ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo,
+                                              BaselineInfo &baselineInfo)
 {
     // 创建新的db连接对象
     std::string clusterPath = BaselineManager::Instance().GetBaseLineClusterPath();
@@ -508,6 +532,7 @@ void ProjectParserJson::ParserClusterBaseline(const Global::ProjectExplorerInfo 
         BaselineManager::Instance().GetBaseLineClusterPath(), DataType::TEXT);
     // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
     ClusterFileParser clusterFileParser(clusterPath, database, uniqueKey);
+    baselineInfo.fileId = clusterFileParser.GetClusterDbPath();
     if (clusterFileParser.ParseClusterFiles()) {
         ServerLog::Info("The cluster file is parsed successfully.");
         ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(
@@ -531,8 +556,7 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos.projectType);
     // 创建db连接池
     std::string dbPath = FileUtil::GetDbPath(jsonFiles[0]);
-    std::map<std::string, std::vector<std::string>> rankToFoldersMap;
-    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap({projectInfos}, rankToFoldersMap);
+    std::map<std::string, RankEntry> rankListMap = GetRankEntryMap({projectInfos}, true);
     if (std::empty(rankListMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         baselineInfo.errorMessage = "Json get rank id failed!";
@@ -540,29 +564,38 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     }
     std::string rankId = rankListMap.begin()->first;
     baselineInfo.rankId = rankId;
-    baselineInfo.cardName = "baseline" + rankId;
+    baselineInfo.cardName = rankId;
+    std::string fileId = dbPath;
+    baselineInfo.fileId = dbPath;
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
     bool isParsed = DataBaseManager::Instance().IsContainDatabasePath(dbPath);
-    if (!isParsed && !DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
+    UpdateRankIdToDevice(rankListMap);
+    if (isParsed) {
+        ServerLog::Warn("Init Baseline, Already parsed.");
+        return;
+    }
+    if (!DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", rankId, ". path:", dbPath);
     }
 
-    if (!isParsed && projectTypeEnum == ProjectTypeEnum::SIMULATION) {
-        Timeline::TraceFileSimulationParser::Instance().Parse(jsonFiles, rankId, filePath);
+    if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
+        Timeline::TraceFileSimulationParser::Instance().Parse(jsonFiles,
+                                                              rankId,
+                                                              filePath,
+                                                              fileId);
         return;
     }
 
     // 如果是系统调优数据，分别解析trace、kernel和memory数据
-    if (!isParsed &&
-        !Timeline::TraceFileParser::Instance().Parse(jsonFiles, rankId, filePath)) {
+    if (!Timeline::TraceFileParser::Instance().Parse(jsonFiles, rankId, filePath, fileId)) {
         ServerLog::Warn("Failed to parse baseline trace files.");
     }
 
-    if (!Summary::KernelParse::Instance().Parse(std::vector<std::string>(), rankId, filePath)) {
+    if (!Summary::KernelParse::Instance().Parse(std::vector<std::string>(), rankId, filePath, fileId)) {
         ServerLog::Warn("Failed to parse baseline kernel files.");
     }
 
-    if (!Memory::MemoryParse::Instance().Parse(std::vector<std::string>(), rankId, filePath)) {
+    if (!Memory::MemoryParse::Instance().Parse(std::vector<std::string>(), rankId, filePath, fileId)) {
         ServerLog::Warn("Failed to parse baseline memory files.");
     }
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
@@ -576,7 +609,7 @@ void ProjectParserJson::ParserBaseline(const Global::ProjectExplorerInfo &projec
     }
     // 判断是否为集群
     if (baselineInfo.isCluster) {
-        ParserClusterBaseline(projectInfo);
+        ParserClusterBaseline(projectInfo, baselineInfo);
     } else {
         ParserSingleCardBaseline(projectInfo, baselineInfo);
     }
@@ -693,12 +726,10 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
         }
         parentFolders.erase(parentFolders.begin());
     }
-
-    if (clusterPrefix.empty()) {
-        info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
-    } else {
-        info.AddSubParseFileInfo(clusterPrefix, ParseFileType::CLUSTER, parseFileInfoRank);
+    if (!clusterPrefix.empty()) {
+        parseFileInfoRank->clusterId = FileUtil::GetFileName(cluster);
     }
+    AddRankDeviceParseFileInfo(info, parseFileInfoRank);
 }
 
 std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
@@ -706,7 +737,28 @@ std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
     std::string rankId = FileUtil::GetProfilerFileId(FileUtil::SplicePath(filePath, "mindstudio_data.db"));
     return FileUtil::GetDbPath(FileUtil::SplicePath(filePath, "mindstudio_data.db"), rankId);
 }
-ProjectAnalyzeRegister<ProjectParserJson> pRegJson(ParserType::JSON);
 
+void ProjectParserJson::UpdateRankIdToDevice(std::map<std::string, RankEntry> &rankEntry)
+{
+    for (auto &[rankId, entry]: rankEntry) {
+        DataBaseManager::Instance().CreatConnectionPool(rankId, entry.fileId);
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(entry.fileId, rankId, entry.rankId);
+    }
+}
+
+void ProjectParserJson::SetBaseAction(const std::map<std::string, RankEntry> &rankListMap,
+                                      ImportActionResponse &response)
+{
+    for (const auto &rankEntry : rankListMap) {
+        auto folder = rankEntry.second.parseFolder;
+        std::string fileId = rankEntry.second.fileId;
+        SetBaseActionOfResponse(response, rankEntry.first, fileId, rankEntry.first, {folder});
+        if (rankEntry.second.isDevice) {
+            break;
+        }
+    }
+}
+
+ProjectAnalyzeRegister<ProjectParserJson> pRegJson(ParserType::JSON);
 } // Module
 // Dic

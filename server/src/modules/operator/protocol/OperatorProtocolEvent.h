@@ -7,6 +7,7 @@
 
 #include <vector>
 #include "ProtocolDefs.h"
+#include "GlobalDefs.h"
 #include "ProtocolMessage.h"
 
 namespace Dic::Protocol {
@@ -20,6 +21,7 @@ namespace Dic::Protocol {
         OperatorParseStatusEvent() : Event(EVENT_PARSE_OPERATOR_STATUS) {}
         OperatorRank data;
         std::string fileId;
+        std::vector<RankInfo> rankList;
     };
 
     struct OperatorParseClearEvent : public Event {

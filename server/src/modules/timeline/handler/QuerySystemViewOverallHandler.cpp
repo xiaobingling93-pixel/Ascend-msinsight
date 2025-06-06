@@ -18,7 +18,7 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     std::unique_ptr<SystemViewOverallResponse> responsePtr = std::make_unique<SystemViewOverallResponse>();
     SystemViewOverallResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
     if (database == nullptr) {
         SendResponse(std::move(responsePtr), false, "Failed to get connection for system view overall statistics.");
         return false;

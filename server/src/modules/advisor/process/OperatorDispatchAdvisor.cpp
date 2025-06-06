@@ -49,6 +49,7 @@ bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Pro
         resBody.data.emplace_back(one);
     }
     resBody.size = data.size();
+    resBody.dbPath = database->GetDbPath();
     return true;
 }
 } // Dic::Module::Advisor

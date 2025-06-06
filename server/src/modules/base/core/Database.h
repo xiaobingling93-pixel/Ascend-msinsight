@@ -95,6 +95,7 @@ protected:
     bool isLowCamel = false;
     std::string metaVersion;
     const std::string metaDataTable = "META_DATA";
+    std::unordered_map<std::string, std::string> rankToDeviceMap;
 
     std::string GetValueFromMetaDataTable(const std::string& name);
     bool CreateStatusInfoTable(); // 创建表时未加锁，需要在调用处加锁

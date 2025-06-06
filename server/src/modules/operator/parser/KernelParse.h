@@ -66,12 +66,14 @@ public:
     ~KernelParse() override;
     void Reset() override;
 
-    bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-               const std::string &selectedFolder) override;
-    bool Parse(const std::vector<std::string>& pathList);
+    bool Parse(const std::vector<std::string> &filePaths,
+               const std::string &rankId,
+               const std::string &selectedFolder,
+               const std::string &fileId) override;
+    bool Parse(const RankEntry& rankEntry);
 
 protected:
-    static std::map<std::string, std::vector<std::string>> GetKernelFiles(const std::vector<std::string>& paths);
+    static std::vector<std::string> GetKernelFiles(const std::vector<std::string>& paths);
     static bool ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
                                std::string &message, std::set<std::string>& devices);
     static bool CheckHeaderFieldAndFilterParseFunc(std::vector<std::string> rowVector,
@@ -99,12 +101,13 @@ private:
                               bool result,
                               const std::string &msg);
 
-    static void PreParseTask(const std::vector<std::string>& filePathList, const std::string &fileId);
+    static void PreParseTask(const std::vector<std::string> &filePathList, const std::string &rankId,
+                             const std::string &fileId);
     static bool ParseTask(const std::vector<std::string>& filePathList, const std::string &fileId,
                           std::string &message);
 
-    static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
-                           std::string &message);
+    static bool InitParser(const std::vector<std::string> &filePathList, const std::string &rankId,
+                           const std::string &fileId, std::string &message);
     static void PostParseTask(const std::set<std::string> &devices,
                               const std::string &rankId,
                               const std::string &fileId);

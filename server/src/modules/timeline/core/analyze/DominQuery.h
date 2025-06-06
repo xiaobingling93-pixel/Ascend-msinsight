@@ -126,6 +126,8 @@ struct TrackQuery {
      * 泳道结束时间
      */
     uint64_t endTime = 0;
+
+    std::string fileId;
 };
 }
 #endif // PROFILER_SERVER_SLICEQUERY_H

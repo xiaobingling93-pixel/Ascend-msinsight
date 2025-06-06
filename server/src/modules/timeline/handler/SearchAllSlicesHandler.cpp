@@ -33,6 +33,7 @@ bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    request.params.fileId = request.fileId;
     std::vector<TrackQuery> trackQueryVec;
     for (const auto &item : request.params.metadataList) {
         if ((request.params.rankId == item.rankId || item.rankId == database->GetDbPath()) && !item.pid.empty() &&
@@ -54,7 +55,7 @@ bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-
+    response.body.dbPath = database->GetDbPath();
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
     return true;

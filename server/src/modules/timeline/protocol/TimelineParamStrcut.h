@@ -51,6 +51,7 @@ struct SearchAllSliceParams {
     std::string searchContent;
     std::string orderBy;
     std::string order;
+    std::string fileId;
     uint64_t current = 0;
     uint64_t pageSize = 0;
     std::vector<Metadata> metadataList;

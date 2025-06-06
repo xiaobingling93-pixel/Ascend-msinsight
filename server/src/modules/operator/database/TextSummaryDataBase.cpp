@@ -162,6 +162,7 @@ void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel> &kern
 
 void TextSummaryDataBase::InsertKernelDetail(const Kernel &kernel, const std::vector<std::string> &columns)
 {
+    std::lock_guard lock(mutex);
     kernelCache.emplace_back(kernel);
     if (kernelCache.size() == cacheSize) {
         InsertKernelDetailList(kernelCache, columns);

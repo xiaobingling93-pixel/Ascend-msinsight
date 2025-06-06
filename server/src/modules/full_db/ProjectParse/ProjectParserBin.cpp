@@ -80,7 +80,7 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
     }
     response.body.isSimulation = true;
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
-    sourceFileParser.Parse(empty, fileId, selectedFolder);
+    sourceFileParser.Parse(empty, fileId, selectedFolder, "");
     for (const auto &rankEntry : rankListMap) {
         if (rankEntry.second.empty()) {
             continue;
@@ -157,7 +157,7 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
     std::string message;
     if (sourceFileParser.CheckOperatorBinary(filePath, message)) {
         sourceFileParser.SetBaselineFilePath(filePath);
-        sourceFileParser.Parse(std::vector<std::string>(), fileId, filePath);
+        sourceFileParser.Parse(std::vector<std::string>(), fileId, filePath, "");
     } else {
         ServerLog::Error("Failed to parse baseline bin file cause ", message);
     }

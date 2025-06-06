@@ -44,6 +44,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         one.note = item.deviceId;
         resBody.datas.emplace_back(one);
     }
+    resBody.dbPath = database->GetDbPath();
     resBody.size = results.size();
     return true;
 }

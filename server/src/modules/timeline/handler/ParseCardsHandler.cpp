@@ -13,7 +13,8 @@ using namespace Dic::Server;
 bool Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ParseCardsRequest &request = dynamic_cast<ParseCardsRequest &>(*requestPtr.get());
-    for (const auto &item : request.params.cards) {
+    for (size_t i = 0; i < request.params.cards.size() && i < request.params.fileIds.size(); i++) {
+        std::string item = request.params.cards[0];
         std::pair<ProjectTypeEnum, std::vector<std::string>> filePathPair =
             ParserStatusManager::Instance().QueryPendingFilePath(item);
         if (std::empty(filePathPair.second)) {
@@ -21,7 +22,7 @@ bool Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Pro
             continue;
         }
         if (filePathPair.first == ProjectTypeEnum::TRACE) {
-            TraceFileParser::Instance().Parse(filePathPair.second, item, "");
+            TraceFileParser::Instance().Parse(filePathPair.second, item, "", request.params.fileIds[i]);
             continue;
         }
         FullDb::FullDbParser::Instance().Parse({ item }, filePathPair.second[0]);

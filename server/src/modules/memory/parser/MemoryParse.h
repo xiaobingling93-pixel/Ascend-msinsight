@@ -26,9 +26,11 @@ public:
     MemoryParse();
 
     ~MemoryParse() override;
-    bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-               const std::string &selectedFolder) override;
-    bool Parse(const std::vector<std::string>& pathList);
+    bool Parse(const std::vector<std::string> &filePaths,
+               const std::string &rankId,
+               const std::string &selectedFolder,
+               const std::string &fileId) override;
+    bool Parse(const RankEntry &rankEntry);
     void Reset() override;
     bool OperatorParse(const std::string &filePath, const std::string &fileId);
     bool RecordToParse(const std::string &filePath, const std::string &fileId);
@@ -52,7 +54,9 @@ private:
     bool GetMapValid(const std::vector<std::string> &vec, const std::map<std::string, size_t> &dataMap);
     std::vector<std::string> GetPeerDirOperatorFile(const std::string& operatorFile, const std::string &reg);
     MemoryFilePairs GetMemoryFile(const std::string &path);
-    std::map<std::string, MemoryFilePairs> GetMemoryFiles(const std::vector<std::string>& paths);
+    std::map<std::string, MemoryFilePairs>
+    GetMemoryFiles(const std::vector<std::string> &paths, const std::string &rankId,
+                   const std::string &fileId);
     std::vector<std::string> GetMemoryRecordFileLists(const std::vector<std::string>& paths);
     static void SetParseCallBack();
     static void ParseEndCallBack(const std::string &rankId,

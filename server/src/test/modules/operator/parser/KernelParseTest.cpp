@@ -90,9 +90,7 @@ TEST_F(KernelParseTest, GetPyTorchKernelFilesSuccess)
     std::vector<std::string> paths = {testDataPath + R"(test_rank_0)"};
     auto result = KernelParse::GetKernelFiles(paths);
     EXPECT_EQ(result.size(), 1);
-    EXPECT_EQ(result.count("0"), 1);
-    EXPECT_EQ(result["0"].size(), 1);
-    EXPECT_EQ(result["0"].at(0), paths[0] + R"(/ASCEND_PROFILER_OUTPUT/kernel_details.csv)");
+    EXPECT_EQ(result.at(0), paths[0] + R"(/ASCEND_PROFILER_OUTPUT/kernel_details.csv)");
 }
 
 TEST_F(KernelParseTest, GetMsProfKernelFilesSuccess)
@@ -100,21 +98,17 @@ TEST_F(KernelParseTest, GetMsProfKernelFilesSuccess)
     std::vector<std::string> paths = {testDataPath + R"(msprof/normal)"};
     auto result = KernelParse::GetKernelFiles(paths);
     EXPECT_EQ(result.size(), 1);
-    EXPECT_EQ(result.count("normal"), 1);
-    EXPECT_EQ(result["normal"].size(), 1);
-    EXPECT_EQ(result["normal"].at(0), paths[0] + R"(/mindstudio_profiler_output/op_summary_20230919172305.csv)");
+    EXPECT_EQ(result.at(0), paths[0] + R"(/mindstudio_profiler_output/op_summary_20230919172305.csv)");
 }
 
 TEST_F(KernelParseTest, GetMsProfSliceKernelFilesSuccess)
 {
     std::vector<std::string> paths = {testDataPath + R"(msprof/slice)"};
     auto result = KernelParse::GetKernelFiles(paths);
-    EXPECT_EQ(result.size(), 2); // 2
-    EXPECT_EQ(result.count("slice"), 1);
-    EXPECT_EQ(result["slice"].size(), 1); // 1
-    EXPECT_EQ(result["slice"].at(0),
+    EXPECT_EQ(result.size(), 2); // 1
+    EXPECT_EQ(result.at(0),
               paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_1_20230919172305.csv)");
-    EXPECT_EQ(result["slice_2"].at(0),
+    EXPECT_EQ(result.at(1),
               paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_0_20230919172304.csv)");
 }
 

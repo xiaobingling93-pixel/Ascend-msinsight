@@ -212,6 +212,11 @@ std::optional<document_t> ToEventJson<OperatorParseStatusEvent>(const OperatorPa
     JsonUtil::AddMember(body, "status", event.data.status, allocator);
     JsonUtil::AddMember(body, "error", event.data.error, allocator);
     JsonUtil::AddMember(body, "dbPath", event.fileId, allocator);
+    json_t rankList(kArrayType);
+    for (const auto &rank: event.rankList) {
+        rankList.PushBack(rank.SerializationToJson(allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "rankList", rankList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

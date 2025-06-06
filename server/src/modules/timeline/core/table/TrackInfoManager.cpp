@@ -33,6 +33,8 @@ void TrackInfoManager::Reset()
     maxTrackId = 0;
     deviceMap.clear();
     deviceIdToRankIdMap.clear();
+    fileIdToRankListMap.clear();
+    fileIdToClusterMap.clear();
     clusterDbToFileIdMap.clear();
 }
 
@@ -156,6 +158,30 @@ std::map<std::string, std::string> TrackInfoManager::GetRankIdToFileIdByClusterD
         res[DataBaseManager::Instance().GetRankIdByFileId(item)] = item;
     }
     return res;
+}
+
+std::vector<RankInfo> TrackInfoManager::GetRankListByFileId(const std::string &fileId, const std::string &rankId)
+{
+    std::lock_guard lock(trackMutex);
+    return fileIdToRankListMap[fileId + rankId];
+}
+
+void TrackInfoManager::SetRankListByFileId(const std::string &fileId, const RankInfo& rankInfo)
+{
+    std::lock_guard lock(trackMutex);
+    fileIdToRankListMap[fileId + rankInfo.rankId].push_back(rankInfo);
+}
+
+std::string TrackInfoManager::GetClusterByFileId(const std::string &fileId)
+{
+    std::lock_guard lock(trackMutex);
+    return fileIdToClusterMap[fileId];
+}
+
+void TrackInfoManager::SetClusterByFileId(const std::string &fileId, const std::string &cluster)
+{
+    std::lock_guard lock(trackMutex);
+    fileIdToClusterMap[fileId] = cluster;
 }
 
 std::string TrackInfoManager::GetFileIdByClusterDbAndRankId(const std::string &clusterDb, const std::string &rankId)

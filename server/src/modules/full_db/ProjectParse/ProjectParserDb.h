@@ -27,7 +27,10 @@ public:
     static std::string GetFileIdWithDb(const std::string& filePath);
 
 private:
-    std::map<std::string, HostInfo> GetReportFiles(const std::vector<std::string> &reportFiles);
+    std::map<std::string, HostInfo> GetReportFiles(const std::vector<ProjectExplorerInfo> &projectInfos);
+    void GetReportFilesOneFile(const Dic::Module::Global::ProjectExplorerInfo &project,
+                               std::map<std::string, HostInfo> &hostMap,
+                               std::shared_ptr<ParseFileInfo> file);
     static std::vector<std::string> GetDbFilesInDir(const std::string& filePath);
     void SetParseCallBack();
     static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
@@ -39,7 +42,7 @@ private:
                                ProjectTypeEnum curProjectTypeEnum,
                                std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
                                const std::string &projectName);
-    static void ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos);
+    static void ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos, BaselineInfo &baselineInfo);
     void ParseClusterInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isCluster,
                           ProjectTypeEnum projectType);
 };

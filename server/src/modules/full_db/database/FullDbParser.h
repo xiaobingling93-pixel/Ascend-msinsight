@@ -17,12 +17,14 @@ public:
     FullDbParser();
 
     ~FullDbParser() override;
-    bool Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
-               const std::string &selectedFolder) override;
+    bool Parse(const std::vector<std::string> &fileIds,
+               const std::string &filePath,
+               const std::string &selectedFolder,
+               const std::string &fileId) override;
     void Reset() override;
     static void InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankId);
 
-    bool Parse(const std::vector<std::string> &fileIds, const std::string &filePath);
+    bool Parse(const std::vector<std::string> &rankIds, const std::string &fileId);
 
 private:
     std::unique_ptr<ThreadPool> threadPool;

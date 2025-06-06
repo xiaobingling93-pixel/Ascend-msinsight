@@ -178,6 +178,7 @@ void TextMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
 
 void TextMemoryDataBase::InsertOperatorDetail(const Operator &event)
 {
+    std::lock_guard lock(mutex);
     operatorCache.emplace_back(event);
     if (operatorCache.size() == cacheSize) {
         InsertOperatorDetailList(operatorCache);
@@ -241,6 +242,7 @@ void TextMemoryDataBase::InsertStaticOpDetailList(const std::vector<StaticOp> &e
 
 void TextMemoryDataBase::InsertRecordDetail(const Record &event)
 {
+    std::lock_guard lock(mutex);
     recordCache.emplace_back(event);
     if (recordCache.size() == cacheSize) {
         InsertRecordDetailList(recordCache);
@@ -250,6 +252,7 @@ void TextMemoryDataBase::InsertRecordDetail(const Record &event)
 
 void TextMemoryDataBase::InsertStaticOpDetail(const StaticOp &event)
 {
+    std::lock_guard lock(mutex);
     staticOpCache.emplace_back(event);
     if (staticOpCache.size() == cacheSize) {
         InsertStaticOpDetailList(staticOpCache);
@@ -283,6 +286,7 @@ void TextMemoryDataBase::InsertComponentDetailList(const std::vector<Component> 
 
 void TextMemoryDataBase::InsertComponentDetail(const Component &event)
 {
+    std::lock_guard lock(mutex);
     componentCache.emplace_back(event);
     if (componentCache.size() == cacheSize) {
         InsertComponentDetailList(componentCache);

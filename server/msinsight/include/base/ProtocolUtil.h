@@ -47,6 +47,7 @@ struct Request : public ProtocolMessage {
     ~Request() override = default;
     std::string projectName;
     std::string command;
+    std::string fileId;
 };
 struct Response : public ProtocolMessage {
     explicit Response(const std::string &command) : command(command)

@@ -54,7 +54,7 @@ namespace Dic::Module::Operator {
             ServerLog::Error(std::string("[Operator]Failed to check rankId in query op more info.") + errMsg);
             return false;
         }
-        if (!CheckStrParamValid(params.deviceId, errMsg)) {
+        if (!CheckStrParamValidEmptyAllowed(params.deviceId, errMsg)) {
             ServerLog::Error(std::string("[Operator]Failed to check deviceId in query op more info.") + errMsg);
             return false;
         }

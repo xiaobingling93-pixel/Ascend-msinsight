@@ -26,6 +26,7 @@ static void BuildImportActionJson(const std::vector<Action> &actions,
         JsonUtil::AddMember(actionJson, "cardPath", action.cardPath, allocator);
         JsonUtil::AddMember(actionJson, "result", action.result, allocator);
         JsonUtil::AddMember(actionJson, "dbPath", action.fileId, allocator);
+        JsonUtil::AddMember(actionJson, "cluster", action.cluster, allocator);
         json_t dataPathList(kArrayType);
         for (const auto &item: action.dataPathList) {
             dataPathList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
@@ -268,6 +269,7 @@ template <> std::optional<document_t> ToResponseJson<SearchCountResponse>(const 
     for (const auto &data : response.body.countList) {
         json_t tmp(kObjectType);
         JsonUtil::AddMember(tmp, "rankId", data.rankId, allocator);
+        JsonUtil::AddMember(tmp, "dbPath", data.dbPath, allocator);
         JsonUtil::AddMember(tmp, "count", data.count, allocator);
         countList.PushBack(tmp, allocator);
     }
@@ -286,6 +288,7 @@ template <> std::optional<document_t> ToResponseJson<SearchSliceResponse>(const 
     JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
     JsonUtil::AddMember(body, "tid", response.body.tid, allocator);
     JsonUtil::AddMember(body, "id", response.body.id, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     JsonUtil::AddMember(body, "startTime", response.body.startTime, allocator);
     JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
     JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
@@ -600,10 +603,12 @@ template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(co
         JsonUtil::AddMember(itemJson, "pid", searchAllSlices.pid, allocator);
         JsonUtil::AddMember(itemJson, "rankId", searchAllSlices.rankId, allocator);
         JsonUtil::AddMember(itemJson, "deviceId", searchAllSlices.deviceId, allocator);
+        JsonUtil::AddMember(itemJson, "dbPath", searchAllSlices.fileId, allocator);
         searchAllSlicesDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "searchAllSlicesDetails", searchAllSlicesDetails, allocator);
     JsonUtil::AddMember(body, "count", response.body.count, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
@@ -771,6 +776,11 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     for (const auto &track : event.body.unit.children) {
         children.PushBack(UnitTrackToJson(*track, allocator, 0), allocator); // 限制最大递归次数，起始为0
     }
+    json_t rankList(kArrayType);
+    for (const auto& rank : event.body.rankList) {
+        rankList.PushBack(rank.SerializationToJson(allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "rankList", rankList, allocator);
     JsonUtil::AddMember(unit, "children", children, allocator);
     JsonUtil::AddMember(body, "unit", unit, allocator);
     JsonUtil::AddMember(body, "dbPath", event.body.fileId, allocator);
@@ -885,11 +895,13 @@ template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(con
         json_t chartJson(kObjectType);
         JsonUtil::AddMember(chartJson, "rankId", memory.rankId, allocator);
         JsonUtil::AddMember(chartJson, "hasMemory", memory.hasFile and memory.parseSuccess, allocator);
+        JsonUtil::AddMember(chartJson, "dbPath", memory.fileId, allocator);
+        JsonUtil::AddMember(chartJson, "rankInfo", memory.rankInfo.SerializationToJson(allocator), allocator);
         memoryResult.PushBack(chartJson, allocator);
     }
     JsonUtil::AddMember(body, "isCluster", event.isCluster, allocator);
     JsonUtil::AddMember(body, "memoryResult", memoryResult, allocator);
-    JsonUtil::AddMember(body, "fileId", event.fileId, allocator);
+    JsonUtil::AddMember(body, "dbPath", event.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

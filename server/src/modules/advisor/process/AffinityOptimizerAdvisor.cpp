@@ -52,7 +52,7 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
         resBody.datas.emplace_back(one);
     }
     resBody.size = data.size();
-
+    resBody.dbPath = database->GetDbPath();
     return true;
 }
 }

@@ -70,7 +70,7 @@ TEST_F(SourceFileParserTest, Parse)
 {
     auto& parser = SourceFileParser::Instance();
     parser.SetFilePath(dataPath);
-    parser.Parse(std::vector<std::string>(), dataPath, dataPath);
+    parser.Parse(std::vector<std::string>(), dataPath, dataPath, "");
     // 等待解析任务完成
     WaitParseEnd({dataPath});
     auto list = parser.GetSourceList();

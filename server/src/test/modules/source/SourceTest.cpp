@@ -132,7 +132,7 @@ static Module::Source::SourceFileParser &InitParser(const string& dataPath)
     std::string errMsg;
     EXPECT_EQ(true, parser.CheckOperatorBinary(dataPath, errMsg));
     parser.SetFilePath(dataPath);
-    parser.Parse(std::vector<std::string>(), "", dataPath);
+    parser.Parse(std::vector<std::string>(), "", dataPath, "");
     return parser;
 }
 

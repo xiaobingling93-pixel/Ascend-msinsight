@@ -36,14 +36,14 @@ FullDbParser::~FullDbParser()
     threadPool->ShutDown();
 }
 
-bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath)
+bool FullDbParser::Parse(const std::vector<std::string> &rankIds, const std::string &fileId)
 {
     ServerLog::Info("start db parse.");
-    for (auto id:fileIds) {
+    for (auto id:rankIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::INIT);
     }
     auto &instance = FullDbParser::Instance();
-    instance.threadPool->AddTask(InitOpenDb, filePath, fileIds);
+    instance.threadPool->AddTask(InitOpenDb, fileId, rankIds);
     return true;
 }
 
@@ -99,23 +99,24 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     if (type != FileType::LEAKS) {
         BuildProfilingInitTask(futures, dbId, threadPool);
         threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
-        database->UpdateStartTime(rankIds[0]);
+        for (const auto &item: rankIds) {
+            database->UpdateStartTime(item);
+        }
     } else {
         threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
     }
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
-            FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
+            FullDb::DbMemoryDataBase::ParserEnd(rankId, false, dbId);
             FullDb::DbMemoryDataBase::ParseCallBack(rankId, filePath, false, "");
         }
         ServerLog::Error("There is no Memory Data in this db file");
     } else if (type == FileType::LEAKS && !database->CheckTableDataInvalid(TABLE_LEAKS_DUMP)) {
-        std::string errMsg = "There is no Leaks Memory Data in this db file";
         for (const auto& rankId: rankIds) {
             Memory::LeaksMemoryService::ParserEnd(rankId, false);
-            Memory::LeaksMemoryService::ParseCallBack(rankId, false, errMsg);
+            Memory::LeaksMemoryService::ParseCallBack(rankId, false, "There is no Leaks Memory Data in this db file");
         }
-        ServerLog::Error(errMsg);
+        ServerLog::Error("There is no Leaks Memory Data in this db file");
     } else {
         InitMemory(rankIds, filePath);
     }
@@ -257,11 +258,11 @@ void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std
         bool result = false;
         auto memoryDatabase = std::dynamic_pointer_cast<FullDb::DbMemoryDataBase, Memory::VirtualMemoryDataBase>(
             Timeline::DataBaseManager::Instance().CreateMemoryDataBase(id, path));
-        if (memoryDatabase != nullptr && memoryDatabase->OpenDb(path, false)) {
-            FullDb::DbMemoryDataBase::ParserEnd(id, true);
+        if (memoryDatabase->IsOpen() || memoryDatabase->OpenDb(path, false)) {
+            FullDb::DbMemoryDataBase::ParserEnd(id, true, path);
             result = true;
         } else {
-            FullDb::DbMemoryDataBase::ParserEnd(id, false);
+            FullDb::DbMemoryDataBase::ParserEnd(id, false, path);
             ServerLog::Error("Failed to connect or open memoryDatabase.");
         }
         if (!Global::BaselineManager::Instance().IsBaselineRankId(id)) {
@@ -271,8 +272,10 @@ void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std
     ServerLog::Info("Init Memory finish");
 }
 
-bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
-                         const std::string &selectedFolder)
+bool FullDbParser::Parse(const std::vector<std::string> &fileIds,
+                         const std::string &filePath,
+                         const std::string &selectedFolder,
+                         const std::string &fileId)
 {
     return false;
 }

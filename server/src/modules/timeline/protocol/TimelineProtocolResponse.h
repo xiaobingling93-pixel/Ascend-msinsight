@@ -29,6 +29,7 @@ struct Action {
     std::string cardPath;
     std::string host;
     std::string fileId;
+    std::string cluster;
     bool result = true;
     std::vector<std::string> dataPathList;
 };
@@ -250,6 +251,7 @@ struct SimpleSlice {
 };
 struct SearchResult {
     std::string rankId;
+    std::string dbPath;
     uint32_t count = 0;
 };
 
@@ -268,6 +270,7 @@ struct SearchSliceBody {
     std::string pid;
     std::string tid;
     std::string id;
+    std::string dbPath;
     uint64_t startTime = 0;
     uint64_t duration = 0;
     uint32_t depth = 0;

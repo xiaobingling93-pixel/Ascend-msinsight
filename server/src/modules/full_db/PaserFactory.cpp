@@ -22,6 +22,7 @@
 #include "ProjectAnalyze.h"
 #include "TrackInfoManager.h"
 #include "ExpertHotspotManager.h"
+#include "TrackInfoManager.h"
 
 using namespace Dic;
 using namespace Dic::Server;
@@ -101,13 +102,17 @@ void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response,
                                                 const std::string &cardPath,
                                                 std::vector<std::string> dataPath)
 {
+    auto rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
     Action action;
     action.cardName = rankId;
+    if (!rankList.empty() && !rankList[0].cluster.empty()) {
+        action.cardName += rankList[0].cluster;
+    }
     action.rankId = rankId;
     action.result = true;
     action.fileId = fileId;
     // 路径信息，与rankId对应，用于页面上删除时，能够正确找到要删除的甬道信息（目前只有导入单卡数据需要这个信息）
-    action.dataPathList = std::move(dataPath);
+    action.dataPathList = dataPath;
     // 将文件所在路径的三级目录名称作为rank的tooltip信息
     action.cardPath = "Directory: " + cardPath;
     response.body.result.emplace_back(action);
@@ -161,9 +166,9 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
     event->body.unit.metadata.cardId = rankId;
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
-    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", rankId);
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
         return;
     }
     event->body.unit.metadata.cardAlias = database->QueryCardAlias();
@@ -178,7 +183,8 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     event->body.offset = TraceTime::Instance().GetOffsetByFileId(rankId);
     event->body.fileId = fileId;
-    SearchMetaData(rankId, event->body.unit.children);
+    event->body.rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
+    SearchMetaData(rankId, fileId, event->body.unit.children);
     SendEvent(std::move(event));
 }
 
@@ -209,14 +215,15 @@ bool ProjectParserBase::IsNeedReset(const ImportActionRequest &request)
     return false;
 }
 
-void ProjectParserBase::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData)
+void ProjectParserBase::SearchMetaData(const std::string &rankId, const std::string &fileId,
+                                       std::vector<std::unique_ptr<UnitTrack>> &metaData)
 {
-    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         return;
     }
-    database->QueryUnitsMetadata(fileId, metaData);
+    database->QueryUnitsMetadata(rankId, metaData);
     ProcessMetadata(metaData);
 }
 
@@ -241,7 +248,7 @@ void ProjectParserBase::ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> 
     }
 }
 
-std::string ProjectParserBase::GetFileId(const std::string &filePath, const std::string &importPath)
+std::string ProjectParserBase::GetRankIdFromPath(const std::string &filePath, const std::string &importPath)
 {
     std::string fileId = FileUtil::GetRankIdFromFile(filePath);
     int i = 1;
@@ -259,17 +266,13 @@ std::string ProjectParserBase::GetFileId(const std::string &filePath, const std:
         }
         result = fileId + "_" + std::to_string(++i);
     }
-    std::string dbPath = FileUtil::GetDbPath(filePath, result);
+    std::string dbPath = FileUtil::GetDbPath(filePath);
     if (dbPath.length() >= FileUtil::GetFilePathLengthLimit()) {
         const std::string message = dbPath + " length exceed " + std::to_string(FileUtil::GetFilePathLengthLimit());
         SendParseFailEvent("", dbPath, message);
     }
-    if (!DataBaseManager::Instance().CreatConnectionPool(result, dbPath)) {
-        ServerLog::Error("Failed to create connection pool. fileId:", result);
-        return "";
-    }
     dataPathToDbMap[importPath].push_back(dbPath);
-    return fileId;
+    return result;
 }
 
 std::string ProjectParserBase::GetDbPath(const std::string &filePath, const int index)
@@ -409,6 +412,59 @@ std::tuple<std::string, std::string> ProjectParserBase::GetClusterInfo(const std
         return {"", ""};
     }
     return {folders.back(), folders.back()};
+}
+
+std::vector<std::string> ProjectParserBase::SearchDeviceInfo(ProjectExplorerInfo &info, const std::string &searchPath)
+{
+    // 在PROF_目录下寻找device_x
+    static std::regex profRegex("^PROF_");
+    static std::regex deviceRegex("^device_([0-9]+)$");
+    std::string profDir;
+    for (const auto &folder: FileUtil::GetSubDirs(searchPath)) {
+        std::string folderName = FileUtil::GetFileName(folder);
+        if (std::regex_search(folderName, profRegex)) {
+            profDir = folder;
+            break;
+        }
+    }
+    if (profDir.empty()) {  // 未找到PROF目录
+        return {};
+    }
+    std::smatch match;
+    std::vector<std::string> res;
+    auto subDir = FileUtil::GetSubDirs(profDir);
+    for (const auto &dir: subDir) {
+        std::string fileName = FileUtil::GetFileName(dir);
+        if (!std::regex_search(fileName, match, deviceRegex)) {
+            continue;
+        }
+        if (match.size() > 1) {
+            res.emplace_back(match[1].str());
+        }
+    }
+    return res;
+}
+
+void ProjectParserBase::AddRankDeviceParseFileInfo(ProjectExplorerInfo &info, std::shared_ptr<ParseFileInfo> rankInfo)
+{
+    auto deviceIds = ProjectParserBase::SearchDeviceInfo(info, FileUtil::GetParentPath(rankInfo->parseFilePath));
+    if (deviceIds.size() < 2) { // deviceIds size > 2, multi device
+        info.AddSubParseFileInfo(rankInfo);
+        return;
+    }
+    std::for_each(deviceIds.begin(),
+                  deviceIds.end(),
+                  [&info, &rankInfo](const std::string &deviceId) {
+                      auto deviceInfo = std::make_shared<ParseFileInfo>();
+                      deviceInfo->subId = FileUtil::SplicePath(rankInfo->subId, deviceId);
+                      deviceInfo->parseFilePath = rankInfo->parseFilePath;
+                      deviceInfo->type = ParseFileType::DEVICE_CHIP;
+                      deviceInfo->rankId = deviceId;
+                      deviceInfo->fileId = rankInfo->fileId;
+                      deviceInfo->clusterId = rankInfo->clusterId;
+                      deviceInfo->deviceId = deviceId;
+                      info.AddSubParseFileInfo(deviceInfo);
+                  });
 }
 
 ProjectAnalyzeRegister<ProjectParserBase> pReg(ParserType::OTHER);

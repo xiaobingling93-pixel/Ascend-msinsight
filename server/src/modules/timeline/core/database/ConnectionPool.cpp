@@ -111,6 +111,7 @@ std::string ConnectionPool::GetDbPath()
 {
     return path;
 }
+
 } // end of namespace Timeline
 // end of namespace Module
 // end of namespace Dic

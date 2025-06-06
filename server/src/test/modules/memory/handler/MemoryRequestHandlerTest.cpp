@@ -42,6 +42,7 @@ public:
         std::string dbPathFull = StringUtil::StrJoin(currPath, dbPath, "ascend_pytorch_profiler_0.db");
         auto memoryDatabase = std::dynamic_pointer_cast<DbMemoryDataBase, VirtualMemoryDataBase>(
             DataBaseManager::Instance().CreateMemoryDataBase("0", dbPathFull));
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPathFull, "0", "0");
         memoryDatabase->OpenDb(dbPathFull, false);
     }
     static void TearDownTestSuite()

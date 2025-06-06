@@ -113,6 +113,7 @@ struct BaselineSettingBody {
     std::string cluster;
     std::string cardName;
     std::string errorMessage;
+    std::string fileId;
     bool isCluster = false;
 };
 

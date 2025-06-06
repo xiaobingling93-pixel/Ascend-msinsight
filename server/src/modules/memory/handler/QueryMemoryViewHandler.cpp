@@ -25,6 +25,7 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
 
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
     if (deviceId.empty()) {
+        SendResponse(std::move(responsePtr), false, "Failed to query memory view data.");
         return false;
     }
     request.params.deviceId = deviceId;
@@ -67,6 +68,7 @@ bool QueryMemoryViewHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryData
         errorMsg = "Failed to query memory view compare data.";
         return false;
     }
+    request.params.deviceId = FullDb::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "memory");
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryMemoryView(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory view baseline data.";

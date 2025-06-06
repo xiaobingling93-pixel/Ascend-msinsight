@@ -34,24 +34,28 @@ TraceFileParser::~TraceFileParser()
     threadPool->ShutDown();
 }
 
-bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const std::string &fileId,
-    const std::string &selectedFolder)
+bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr,
+                            const std::string &rankId,
+                            const std::string &selectedFolder,
+                            const std::string &fileId)
 {
     ServerLog::Info("start parse. file id:", fileId);
-    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, filePathArr, fileId);
+    ParserStatusManager::Instance().SetParserStatus(rankId, ParserStatus::INIT);
+    threadPool->AddTask(PreParseTask, filePathArr, rankId, fileId);
     return true;
 }
 
-void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId)
+void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr,
+                                   const std::string &rankId,
+                                   const std::string &fileId)
 {
-    if (!InitParser(filePathArr, fileId)) {
+    if (!InitParser(filePathArr, rankId, fileId)) {
         auto msg = "Failed to open db. Please delete dbFile and try again or see logs in " +
                    ServerLog::GetCurrentLogPath();
 #if defined(__linux__) || defined(__APPLE__)
         msg += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
 #endif
-        ParseEndCallBack(fileId, "", false, msg);
+        ParseEndCallBack(rankId, "", false, msg);
     }
 }
 
@@ -64,41 +68,43 @@ bool TraceFileParser::CheckInitParser(const std::string &fileId)
     return true;
 }
 
-bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId)
+bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
+                                 const std::string &rankId,
+                                 const std::string &fileId)
 {
-    if (!CheckInitParser(fileId)) {
+    if (!CheckInitParser(rankId)) {
         return false;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
     }
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to open trace database. rankId:", fileId);
+        ServerLog::Error("Failed to open trace database. rankId:", rankId);
         return false;
     }
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
     if ((database->HasFinishedParseLastTime(statusInfo) &&
-        !Global::BaselineManager::Instance().IsBaselineRankId(fileId)) ||
+        !Global::BaselineManager::Instance().IsBaselineRankId(rankId)) ||
         StringUtil::EndWith(filePathArr[0], "profiler.db")) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
         database->QueryExtremumTimestamp(min, max);
         auto threadMap = database->QueryAllThreadMap();
-        TrackInfoManager::Instance().UpdateTrackIdMap(fileId, threadMap);
+        TrackInfoManager::Instance().UpdateTrackIdMap(rankId, threadMap);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
-        Timeline::TraceTime::Instance().UpdateCardTimeDuration(fileId, min, max);
-        ParseEndCallBack(fileId, database->GetDbPath(), true, "");
-        ParserStatusManager::Instance().SetFinishStatus(fileId);
+        Timeline::TraceTime::Instance().UpdateCardTimeDuration(rankId, min, max);
+        ParseEndCallBack(rankId, fileId, true, "");
+        ParserStatusManager::Instance().SetFinishStatus(rankId);
         return true;
     }
     if (!database->DropTable() || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
-        ServerLog::Error("Failed to init trace database. rankId:", fileId);
+        ServerLog::Error("Failed to init trace database. rankId:", rankId);
         return false;
     }
-    InitFileProcess(filePathArr, fileId);
+    InitFileProcess(filePathArr, rankId);
     return true;
 }
 

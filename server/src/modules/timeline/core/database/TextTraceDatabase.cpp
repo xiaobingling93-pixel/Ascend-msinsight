@@ -1772,6 +1772,7 @@ void TextTraceDatabase::GetSearchAllSliceData(const SearchAllSliceParams &params
         searchAllSlice.pid = resultSet->GetString(col++);
         searchAllSlice.rankId = params.rankId;
         searchAllSlice.deviceId = params.rankId;
+        searchAllSlice.fileId = params.fileId;
         body.searchAllSlices.emplace_back(searchAllSlice);
     }
 }
@@ -1831,6 +1832,7 @@ bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
         searchAllSlice.pid = resultSet->GetString(col++);
         searchAllSlice.rankId = params.rankId;
         searchAllSlice.deviceId = params.rankId;
+        searchAllSlice.fileId = params.fileId;
         body.searchAllSlices.emplace_back(searchAllSlice);
     }
     body.currentPage = params.current;

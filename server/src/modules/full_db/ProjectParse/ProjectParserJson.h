@@ -57,20 +57,22 @@ private:
 
     bool isSimulation(std::string filePath);
 
-    std::map<std::string, std::vector<std::string>> GetRankListMap(
-        const std::vector<Global::ProjectExplorerInfo> &projectInfos,
-        std::map<std::string, std::vector<std::string>> &rankToFoldersMap);
+    std::map<std::string, RankEntry>
+    GetRankEntryMap(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isBaseline);
     std::vector<std::string> GetJsonFileUnderFolder(const std::string &path);
-    void ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
-        const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isShowCluster);
+    void ParserTraceData(const std::map<std::string, RankEntry> &rankListMap,
+                         const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isShowCluster);
     static void FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
                               const std::vector<Global::ProjectExplorerInfo> &projectInfos);
     static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         std::vector<std::string> &subdirectoryList);
-    static void ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo);
+    static void ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo, BaselineInfo &baselineInfo);
     void ParserSingleCardBaseline(const Global::ProjectExplorerInfo &projectInfos,
                                   Global::BaselineInfo &baselineInfo);
     static void ParserMetaData(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
+
+    static void UpdateRankIdToDevice(std::map<std::string, RankEntry>& rankEntry);
+    void SetBaseAction(const std::map<std::string, RankEntry>& rankListMap, ImportActionResponse& response);
 };
 } // end of namespace Module
 } // end of namespace Dic

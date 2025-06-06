@@ -38,6 +38,7 @@ bool SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     for (const auto &item: request.params.metadataList) {
         if (item.rankId == request.params.rankId && !item.tid.empty() && !item.pid.empty()) {
             TrackQuery trackQuery;
+            trackQuery.fileId = request.fileId;
             trackQuery.rankId = item.rankId;
             trackQuery.processId = item.pid;
             trackQuery.threadId = item.tid;
@@ -55,6 +56,7 @@ bool SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    response.body.dbPath = database->GetDbPath();
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
     return true;

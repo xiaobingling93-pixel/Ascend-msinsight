@@ -29,8 +29,10 @@ public:
     SourceFileParser();
     ~SourceFileParser() override;
 
-    bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-        const std::string &selectedFile) override;
+    bool Parse(const std::vector<std::string> &filePaths,
+               const std::string &rankId,
+               const std::string &selectedFile,
+               const std::string &fileId) override;
     void Reset() override;
     bool CheckOperatorBinary(const std::string &selectedFilePath, std::string &errMsg);
     static void PreParseTask(const std::string &fileId);

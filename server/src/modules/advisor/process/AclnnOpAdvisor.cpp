@@ -26,6 +26,7 @@ bool AclnnOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Ac
     if (!AclnnOpProcess(database, param, resBody)) {
         return false;
     }
+    resBody.dbPath = database->GetDbPath();
     return true;
 }
 

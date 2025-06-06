@@ -27,11 +27,11 @@ bool DataBaseManager::CreatConnectionPool(const std::string &rankId, const std::
     std::unique_lock<std::recursive_mutex> lock(mutex);
     databasePathSet.emplace(dbPath);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
+    SetRankIdFileIdMapping(rankId, dbPath);
     DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = dbPath;
     if (traceDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        SetRankIdFileIdMapping(rankId, fileId, isBaseline);
         std::shared_ptr<ConnectionPool> conn;
         switch (curDataType) {
             case DataType::DB:
@@ -130,9 +130,9 @@ std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::CreateSummaryD
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
     DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = dbPath;
+    SetRankIdFileIdMapping(rankId, fileId);
     if (summaryDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        SetRankIdFileIdMapping(rankId, fileId, isBaseline);
         if (curDataType == DataType::TEXT) {
             summaryDatabaseMap.emplace(fileId, std::make_shared<Summary::TextSummaryDataBase>(dbMutex));
         } else if (curDataType == DataType::DB) {
@@ -150,9 +150,9 @@ std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::CreateMemoryData
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
     DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = dbPath;
+    SetRankIdFileIdMapping(rankId, fileId);
     if (memoryDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        SetRankIdFileIdMapping(rankId, fileId, isBaseline);
         switch (curDataType) {
             case DataType::DB:
                 memoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
@@ -164,7 +164,9 @@ std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::CreateMemoryData
         }
     }
     auto res = memoryDatabaseMap[fileId];
-    res->SetDbPath(dbPath);
+    if (!res->IsOpen()) {
+        res->SetDbPath(dbPath);
+    }
     return memoryDatabaseMap[fileId];
 }
 
@@ -276,6 +278,7 @@ void DataBaseManager::Clear()
     databasePathSet.clear();
     leaksMemoryDatabaseMap.clear();
     fileType = FileType::PYTORCH;
+    rankId2FileIdMap.clear();
 }
 
 void DataBaseManager::Clear(DatabaseType type)
@@ -511,30 +514,40 @@ std::string DataBaseManager::GetAnyTraceDatabaseId()
     }
     return traceDatabaseMap.begin()->first;
 }
-void DataBaseManager::SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId, bool isBaseLine)
+void DataBaseManager::SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId)
 {
-    std::string realRankId = isBaseLine ? StringUtil::StrJoin("Baseline", rankId) : rankId;
-    rankId2FileIdMap[realRankId] = fileId;
-    fileIdToRankIdMap[fileId] = realRankId;
+    rankId2FileIdMap[rankId] = fileId;
+    fileIdToRankIdMap[fileId] = rankId;
 }
 std::string DataBaseManager::GetFileIdByRankId(const std::string &rankId) const
 {
-    bool isBaseline = BaselineManager::Instance().IsBaselineRankId(rankId);
-    std::string realRankId = isBaseline ? StringUtil::StrJoin("Baseline", rankId) : rankId;
-    if (rankId2FileIdMap.find(realRankId) == rankId2FileIdMap.end()) {
+    if (rankId2FileIdMap.find(rankId) == rankId2FileIdMap.end()) {
         return "";
     }
-    return rankId2FileIdMap.at(realRankId);
+    return rankId2FileIdMap.at(rankId);
+}
+void DataBaseManager::UpdateRankIdToDeviceId(const std::string &fileId,
+                                             const std::string &rankId,
+                                             const std::string &deviceId)
+{
+    if (fileId.empty() || rankId.empty()) {
+        return;
+    }
+    std::string deviceIdTmp = deviceId;
+    if (deviceId.empty()) {
+        deviceIdTmp = rankId;
+    }
+    if (auto pos = rankId.find("Baseline_"); pos != std::string::npos) {
+        deviceIdTmp = rankId.substr(pos + strlen("Baseline_"));
+    }
+    rankIdToDeviceIdMap[fileId + rankId] = deviceIdTmp;
 }
 
 std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId, const std::string& module)
 {
     if (module == "memory") {
-        auto database = DataBaseManager::GetMemoryDatabaseByRankId(rankId);
-        if (database == nullptr) {
-            return "";
-        }
-        return database->QueryDeviceId();
+        std::string fileId = GetFileIdByRankId(rankId);
+        return rankIdToDeviceIdMap[fileId + rankId];
     }
     if (module == "operator") {
         auto database = DataBaseManager::GetSummaryDatabaseByRankId(rankId);

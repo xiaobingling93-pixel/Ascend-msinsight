@@ -11,6 +11,7 @@
 #include "RegexUtil.h"
 #include "TraceTime.h"
 #include "BaselineManager.h"
+#include "TrackInfoManager.h"
 #include "KernelParse.h"
 
 namespace Dic::Module::Summary {
@@ -73,7 +74,7 @@ void KernelParse::InitKernelParseMap()
         std::placeholders::_3, std::placeholders::_4));
 }
 
-std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(const std::vector<std::string> &paths)
+std::vector<std::string> KernelParse::GetKernelFiles(const std::vector<std::string> &paths)
 {
     std::vector<std::string> fileList = {};
     for (const std::string& path : paths) {
@@ -84,57 +85,35 @@ std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(cons
         ServerLog::Warn("There is no kernel file.");
         return {};
     }
-    std::map<std::string, std::vector<std::string>> results = {};
-    std::map<std::string, std::string> hasResetFileIdMap = {};
-    for (const auto& file : fileList) {
-        std::string fileId = FileUtil::GetProfilerFileId(file);
-        int i = 1;
-        std::string tempId = fileId;
-        std::string parentDir = FileUtil::GetParentPath(file);
-        std::string name = FileUtil::GetFileName(file);
-        while (Timeline::DataBaseManager::Instance().HasRankId(Timeline::DatabaseType::SUMMARY, tempId)) {
-            std::string dbPath = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(tempId)->GetDbPath();
-            std::string dbParentPath = FileUtil::GetParentPath(dbPath);
-            if (RegexUtil::RegexSearch(name, SLICE_STR).has_value() && parentDir == dbParentPath) {
-                break;
-            }
-            tempId = fileId + "_" + std::to_string(++i);
-        }
-
-        ServerLog::Info("Kernel file: ", file, ", FileId: ", tempId);
-        std::string dbPath = FileUtil::GetDbPath(file, tempId);
-        Timeline::DataBaseManager::Instance().CreateSummaryDatabase(tempId, dbPath);
-        results[tempId].push_back(file);
-    }
-    return results;
+    return fileList;
 }
 
-bool KernelParse::Parse(const std::vector<std::string> &pathList)
+bool KernelParse::Parse(const RankEntry &rankEntry)
 {
     if (threadPool == nullptr) {
         ServerLog::Error("Failed to get thread pool in kernel parse.");
         return false;
     }
-    auto kernelFiles = GetKernelFiles(pathList);
+    auto kernelFiles = GetKernelFiles({rankEntry.parseFolder});
     if (kernelFiles.empty()) {
         ServerLog::Warn("Kernel file is empty.");
         return false;
     }
     SetParseCallBack();
-    for (const auto& kernelFile : kernelFiles) {
-        Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + kernelFile.first,
-                                                                  Timeline::ParserStatus::INIT);
-        threadPool->AddTask(PreParseTask, kernelFile.second, kernelFile.first);
-    }
+    Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + rankEntry.rankId,
+                                                              Timeline::ParserStatus::INIT);
+    threadPool->AddTask(PreParseTask, kernelFiles, rankEntry.rankId, rankEntry.fileId);
     return true;
 }
 
-void KernelParse::PreParseTask(const std::vector<std::string>& filePathList, const std::string &fileId)
+void KernelParse::PreParseTask(const std::vector<std::string> &filePathList, const std::string &rankId,
+                               const std::string &fileId)
 {
     std::string message;
-    if (!InitParser(filePathList, fileId, message)) {
-        ServerLog::Error("Failed to parse summary files for fileId:", fileId, "reason: ", message);
-        ParseEndCallBack(fileId, "", false, message);
+    if (!InitParser(filePathList, rankId, fileId, message)) {
+        Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + rankId);
+        ServerLog::Error("Failed to parse summary files for fileId:", rankId, "reason: ", message);
+        ParseEndCallBack(rankId, "", false, message);
     }
 }
 
@@ -154,26 +133,27 @@ void KernelParse::PostParseTask(const std::set<std::string> &devices,
     }
 }
 
-bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const std::string& fileId,
-                             std::string &message)
+bool KernelParse::InitParser(const std::vector<std::string> &filePathList, const std::string &rankId,
+                             const std::string &fileId, std::string &message)
 {
     if (filePathList.empty()) {
         return false;
     }
-    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(KERNEL_PREFIX + fileId)) {
+    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(KERNEL_PREFIX + rankId)) {
         ServerLog::Info("Pre task skip this kernel file.");
         return false;
     }
-    std::string dbPath = FileUtil::GetDbPath(filePathList[0], fileId);
+    std::string dbPath = fileId;
+    auto databaseTmp = Timeline::DataBaseManager::Instance().CreateSummaryDatabase(rankId, fileId);
     auto database = std::dynamic_pointer_cast<TextSummaryDataBase, VirtualSummaryDataBase>(
-        Timeline::DataBaseManager::Instance().CreateSummaryDatabase(fileId, dbPath));
+        databaseTmp);
     if (database == nullptr) {
-        message = "Failed to get summary database, fileId: ." + fileId + " filePath: " + filePathList[0];
+        message = "Failed to get summary database, fileId: ." + rankId + " filePath: " + filePathList[0];
         return false;
     }
-    if (!database->OpenDb(dbPath, false)) {
-        message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
-                filePathList[0] + " fileId: " + dbPath;
+    if (!database->IsOpen() && !database->OpenDb(dbPath, false)) {
+        message = "Failed to init summary database. fileId: " + rankId + " filePath: " +
+                  filePathList[0] + " fileId: " + dbPath;
 #if defined(__linux__) || defined(__APPLE__)
         message += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
 #endif
@@ -183,16 +163,16 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
         uint64_t minTimestamp = database->QueryMinStartTime();
         Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
         std::set<std::string> devices = database->QueryRankIds();
-        PostParseTask(devices, fileId, dbPath);
+        PostParseTask(devices, rankId, dbPath);
         return true;
     }
     if (!database->DropTable() or !database->CreateTable() or !database->SetConfig() or
         !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
-        message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
+        message = "Failed to init summary database. fileId: " + rankId + " filePath: " +
                   filePathList[0] + " fileId: " + dbPath;
         return false;
     }
-    if (!ParseTask(filePathList, fileId, message) or !database->UpdateParseStatus(FINISH_STATUS)) {
+    if (!ParseTask(filePathList, rankId, message) or !database->UpdateParseStatus(FINISH_STATUS)) {
         return false;
     }
     return true;
@@ -488,6 +468,10 @@ void KernelParse::ParseCallBack(const std::string &rankId,
         event->reset = true;
         session->OnEvent(std::move(event));
     } else {
+        std::string realRankId = rankId;
+        if (auto pos = rankId.find(MSPROF_PREFIX); pos != std::string::npos) {
+            realRankId = rankId.substr(pos + MSPROF_PREFIX.size(), rankId.find(MSPROF_CONNECT) - pos - MSPROF_PREFIX.size());
+        }
         auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
         event->moduleName = MODULE_OPERATOR;
         event->result = true;
@@ -495,6 +479,7 @@ void KernelParse::ParseCallBack(const std::string &rankId,
         event->data.status = result;
         event->data.error = msg;
         event->fileId = fileId;
+        event->rankList = Timeline::TrackInfoManager::Instance().GetRankListByFileId(fileId, realRankId);
         session->OnEvent(std::move(event));
     }
 }
@@ -510,8 +495,10 @@ void KernelParse::SetParseCallBack()
     KernelParse::Instance().SetParseEndCallBack(func);
 }
 
-bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-                        const std::string &selectedFolder)
+bool KernelParse::Parse(const std::vector<std::string> &filePaths,
+                        const std::string &rankId,
+                        const std::string &selectedFolder,
+                        const std::string &fileId)
 {
     if (threadPool == nullptr) {
         ServerLog::Error("Failed to get thread pool in kernel parse.");
@@ -524,11 +511,11 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
     }
     // 初始化DB
     std::string dbPath = FileUtil::GetDbPath(kernelFile[0], fileId);
-    Timeline::DataBaseManager::Instance().CreateSummaryDatabase(fileId, dbPath);
+    Timeline::DataBaseManager::Instance().CreateSummaryDatabase(rankId, dbPath);
     // 初始化解析状态
-    Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + fileId,
+    Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + rankId,
                                                               Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, kernelFile, fileId);
+    threadPool->AddTask(PreParseTask, kernelFile, rankId, fileId);
     return true;
 }
 

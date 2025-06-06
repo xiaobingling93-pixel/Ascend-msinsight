@@ -44,7 +44,6 @@ private:
     int maxWaitTime = 2; // seconds
     std::deque<VirtualTraceDatabase*> idlePool;
     std::deque<VirtualTraceDatabase*> activePool;
-
     VirtualTraceDatabase* CreatConnection();
     void ReleaseConnection(VirtualTraceDatabase *conn);
 };

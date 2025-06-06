@@ -83,9 +83,10 @@ TEST_F(GlobalProtocolUtilTest, TestBaselineSettingResponseToJson)
     auto jsonOp = Dic::Protocol::ToResponseJson(response);
     EXPECT_EQ(jsonOp.has_value(), true);
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
-    const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"global/"
-        "setBaseline\",\"moduleName\":\"unknown\",\"body\":{\"rankId\":\"\",\"host\":\"\","
-        "\"cardName\":\"\",\"isCluster\":false,\"errorMessage\":\"\"}}";
+    const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":"
+                                "\"global/setBaseline\",\"moduleName\":\"unknown\",\"body\":{\"rankId\":\"\","
+                                "\"host\":\"\",\"cardName\":\"\",\"isCluster\":false,\"errorMessage\":\"\",\""
+                                "dbPath\":\"\"}}";
     EXPECT_EQ(json, jsonStr);
 }
 

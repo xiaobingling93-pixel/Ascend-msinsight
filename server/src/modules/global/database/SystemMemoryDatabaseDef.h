@@ -27,6 +27,7 @@ enum ParseFileType:int64_t {
     RANK = 3, // 卡
     COMPUTE  = 4, // 算子bin文件
     IPYNB    = 5, // jupyterlab文件
+    DEVICE_CHIP = 6, //  区别于rank，DEVICE_CHIP是硬件上的概念
 };
 
 inline std::string CastParseFileTypeToStr(ParseFileType type)
@@ -38,6 +39,7 @@ inline std::string CastParseFileTypeToStr(ParseFileType type)
             return "CLUSTER";
         case ParseFileType::DATA_FILE:
             return "DATA_FILE";
+        case ParseFileType::DEVICE_CHIP:
         case ParseFileType::RANK:
             return "RANK";
         case ParseFileType::COMPUTE:
@@ -72,7 +74,6 @@ struct ParseFileInfo {
         JsonUtil::AddMember(res, "type", CastParseFileTypeToStr(type), allocator);
         JsonUtil::AddMember(res, "deviceId", deviceId, allocator);
         JsonUtil::AddMember(res, "fileDir", curDirName, allocator);
-        JsonUtil::AddMember(res, "fileId", fileId, allocator);
         json_t children(rapidjson::kArrayType);
         std::for_each(subParseFile.begin(), subParseFile.end(), [&children, &allocator](const auto &fileInfo) {
             children.PushBack(fileInfo->SerializeToJson(allocator), allocator);
@@ -294,6 +295,7 @@ struct BaselineInfo {
     std::string errorMessage;
     bool isCluster = false;
     std::string clusterBaseLine;
+    std::string fileId;
 };
 }
 #endif // PROFILER_SERVER_FILEMENUDATABASEDEF_H

@@ -22,6 +22,7 @@ template
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "count", response.body.size, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
@@ -48,6 +49,7 @@ template <> std::optional<document_t> ToResponseJson<AffinityAPIResponse>(const 
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "count", response.body.size, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
@@ -76,6 +78,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorFusionResponse>(con
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "count", response.body.size, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
@@ -104,6 +107,7 @@ template <> std::optional<document_t> ToResponseJson<AICpuOperatorResponse>(cons
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "count", response.body.size, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
@@ -130,6 +134,7 @@ template <> std::optional<document_t> ToResponseJson<AclnnOperatorResponse>(cons
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "count", response.body.size, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
@@ -156,6 +161,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorDispatchResponse>(c
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "count", response.body.size, allocator);
+    JsonUtil::AddMember(body, "dbPath", response.body.dbPath, allocator);
     json_t dataList(kArrayType);
     for (auto item : response.body.data) {
         json_t dataJson(kObjectType);

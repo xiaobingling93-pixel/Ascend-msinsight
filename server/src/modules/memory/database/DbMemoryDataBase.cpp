@@ -7,6 +7,7 @@
 #include "TableDefs.h"
 #include "DataBaseManager.h"
 #include "ProtocolDefs.h"
+#include "TrackInfoManager.h"
 #include "DbMemoryDataBase.h"
 
 namespace Dic {
@@ -371,7 +372,7 @@ bool DbMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphPar
     return false;
 }
 
-void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)
+void DbMemoryDataBase::ParserEnd(std::string rankId, bool result, std::string fileId)
 {
     if (!result) {
         return;
@@ -383,6 +384,11 @@ void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)
         success.rankId = rankId;
         success.parseSuccess = true;
         success.hasFile = true;
+        success.fileId = fileId;
+        auto rankInfos = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
+        if (!rankInfos.empty()) {
+            success.rankInfo = rankInfos[0];
+        }
         ranks.emplace(rankId, success);
     } else {
         ranks[rankId].parseSuccess = true;

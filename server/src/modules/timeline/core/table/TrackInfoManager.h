@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <set>
 #include <map>
+#include <vector>
+#include "ProjectParserFactory.h"
 namespace Dic::Module::Timeline {
 struct TrackInfo {
     /* *
@@ -64,6 +66,15 @@ public:
     std::string GetDeviceId(const std::string &cardId);
     void UpdateClusterDbToFileIdMap(const std::string &clusterDb, const std::string &fileId);
     std::map<std::string, std::string> GetRankIdToFileIdByClusterDb(const std::string &clusterDb);
+
+    std::vector<RankInfo> GetRankListByFileId(const std::string &fileId, const std::string &rankId);
+
+    void SetRankListByFileId(const std::string& fileId, const RankInfo& rank);
+
+    std::string GetClusterByFileId(const std::string& fileId);
+
+    void SetClusterByFileId(const std::string& fileId, const std::string& cluster);
+
     std::string GetFileIdByClusterDbAndRankId(const std::string &clusterDb, const std::string &rankId);
 private:
     TrackInfoManager() = default;
@@ -98,6 +109,17 @@ private:
      * 集群db到rankId的映射
      */
     std::unordered_map<std::string, std::set<std::string>> clusterDbToFileIdMap;
+
+    /**
+     * @brief 键是fileId, 值是host + cluster + rankId + rankList 的拼写
+     */
+    std::unordered_map<std::string, std::vector<RankInfo>> fileIdToRankListMap;
+
+    /**
+     * @brief 键是fileId,值是cluster
+     */
+    std::unordered_map<std::string, std::string> fileIdToClusterMap;
+
     uint64_t maxTrackId = 0;
     std::string GetRankId(const std::string &cardId);
     std::string GetHost(const std::string &cardId);

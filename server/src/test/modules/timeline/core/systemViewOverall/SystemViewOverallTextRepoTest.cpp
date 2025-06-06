@@ -34,15 +34,19 @@ public:
         DataBaseManager::Instance().CreatConnectionPool("0", currPath + refPath0 + "mindstudio_insight_data.db");
         DataBaseManager::Instance().CreatConnectionPool("1", currPath + refPathWithoutPMU +
             "mindstudio_insight_data.db");
-        TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "");
+        TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",
+                                          currPath + refPath0 + "mindstudio_insight_data.db");
         WaitParseEnd({"0"});
-        TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "1", "");
+        TraceFileParser::Instance().Parse({currPath + refPathWithoutPMU + "trace_view.json"}, "1", "",
+                                          currPath + refPathWithoutPMU + "mindstudio_insight_data.db");
         WaitParseEnd({"1"});
         std::string testDataPath0 = currPath + R"(/test/data/pytorch/text/level1/rank0_ascend_pt)";
-        KernelParse::Instance().Parse({testDataPath0});
+        KernelParse::Instance().Parse(
+            {currPath + refPath0 + "mindstudio_insight_data.db", "0", testDataPath0});
         WaitParseEnd({KERNEL_PREFIX + "0"});
         std::string testDataPathWithoutPmu = currPath + R"(/test/data/pytorch/text/level0/rank1_ascend_pt)";
-        KernelParse::Instance().Parse({testDataPathWithoutPmu});
+        KernelParse::Instance().Parse(
+            {currPath +  refPathWithoutPMU + "mindstudio_insight_data.db", "1", testDataPathWithoutPmu});
         WaitParseEnd({KERNEL_PREFIX + "1"});
     }
 

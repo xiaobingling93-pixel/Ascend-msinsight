@@ -9,6 +9,7 @@
 #include "FileDef.h"
 #include "WsSender.h"
 #include "TraceTime.h"
+#include "TrackInfoManager.h"
 #include "MemoryParse.h"
 
 namespace Dic {
@@ -32,18 +33,20 @@ MemoryParse::~MemoryParse()
     threadPool->ShutDown();
 }
 
-bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-                        const std::string &selectedFolder)
+bool MemoryParse::Parse(const std::vector<std::string> &filePaths,
+                        const std::string &rankId,
+                        const std::string &selectedFolder,
+                        const std::string &fileId)
 {
     MemoryFilePairs memoryFilePairs = GetMemoryFile(selectedFolder);
     if (memoryFilePairs.recordFiles.empty()) {
         return false;
     }
     std::string dbPath = FileUtil::GetDbPath(*memoryFilePairs.recordFiles.begin(), fileId);
-    Timeline::DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbPath);
-    Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId,
+    Timeline::DataBaseManager::Instance().CreateMemoryDataBase(rankId, dbPath);
+    Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + rankId,
                                                               Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, memoryFilePairs, fileId);
+    threadPool->AddTask(PreParseTask, memoryFilePairs, rankId);
     return true;
 }
 
@@ -465,7 +468,9 @@ MemoryFilePairs MemoryParse::GetMemoryFile(const std::string &path)
     return result;
 }
 
-std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::vector<std::string>& paths)
+std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::vector<std::string> &paths,
+                                                                   const std::string &rankId,
+                                                                   const std::string &fileId)
 {
     std::vector<std::string> fileList = GetMemoryRecordFileLists(paths);
     if (fileList.empty()) {
@@ -481,26 +486,18 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
             ServerLog::Warn("There is no memory record file or static op mem file paired with ", recordFile);
             continue;
         }
-        std::string fileId = FileUtil::GetProfilerFileId(recordFile);
-        int i = 1;
-        std::string tempId = fileId;
-        while (Timeline::DataBaseManager::Instance().HasRankId(Timeline::DatabaseType::MEMORY, tempId)) {
-            std::string dbPath = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(tempId)->GetDbPath();
-            if (RegexUtil::RegexSearch(FileUtil::GetFileName(recordFile), SLICE_STR).has_value() &&
-                FileUtil::GetParentPath(recordFile) == FileUtil::GetParentPath(dbPath)) {
-                break;
+        results[rankId].recordFiles.insert(recordFile);
+        results[rankId].operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());
+        results[rankId].staticOpFiles.insert(staticOpFiles.begin(), staticOpFiles.end());
+        results[rankId].componentFiles.insert(componentFiles.begin(), componentFiles.end());
+        if (ranks.count(rankId) == 0) {
+            auto rankInfos = Timeline::TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
+            RankInfo rankInfo;
+            if (!rankInfos.empty()) {
+                rankInfo = rankInfos[0];
             }
-            tempId = fileId + "_" + std::to_string(++i);
-        }
-        std::string dbPath = FileUtil::GetDbPath(recordFile, tempId);
-        Timeline::DataBaseManager::Instance().CreateMemoryDataBase(tempId, dbPath);
-        results[tempId].recordFiles.insert(recordFile);
-        results[tempId].operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());
-        results[tempId].staticOpFiles.insert(staticOpFiles.begin(), staticOpFiles.end());
-        results[tempId].componentFiles.insert(componentFiles.begin(), componentFiles.end());
-        if (ranks.count(tempId) == 0) {
-            Protocol::MemorySuccess one = {tempId, false, true};
-            ranks.emplace(tempId, one);
+            Protocol::MemorySuccess one = {rankId, fileId, false, true, rankInfo};
+            ranks.emplace(rankId, one);
         }
     }
 
@@ -516,9 +513,9 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
     return results;
 }
 
-bool MemoryParse::Parse(const std::vector<std::string> &pathList)
+bool MemoryParse::Parse(const RankEntry &rankEntry)
 {
-    auto memoryFiles = GetMemoryFiles(pathList);
+    auto memoryFiles = GetMemoryFiles({rankEntry.parseFolder}, rankEntry.rankId, rankEntry.fileId);
     if (memoryFiles.empty()) {
         ServerLog::Warn("Memory file is empty.");
         return false;
@@ -611,7 +608,7 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
     std::string dbPath = FileUtil::GetDbPath(*(filePair.recordFiles.begin()), fileId);
     auto db = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbPath));
-    if (!db->OpenDb(dbPath, false)) {
+    if (!db->IsOpen() && !db->OpenDb(dbPath, false)) {
         message = "Failed to open db file. Please delete the file manually: " + dbPath;
 #if defined(__linux__) || defined(__APPLE__)
         message += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
@@ -642,7 +639,8 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
 
 void MemoryParse::SetParseCallBack()
 {
-    std::function<void(const std::string, const std::string, bool, const std::string)> func =
+    std::function<void(const std::string, const std::string, bool, const std::string)>
+        func =
         std::bind(ParseCallBack,
                   std::placeholders::_1,
                   std::placeholders::_2,

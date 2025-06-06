@@ -37,7 +37,7 @@ protected:
         } else {
             parser.SetFilePath(dataPath);
         }
-        parser.Parse(std::vector<std::string>(), fileId, dataPath);
+        parser.Parse(std::vector<std::string>(), fileId, dataPath, "");
         return parser;
     }
 };

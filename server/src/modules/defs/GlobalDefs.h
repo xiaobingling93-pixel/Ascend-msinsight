@@ -11,6 +11,7 @@
 #include "writer.h"
 #include "stringbuffer.h"
 #include "unordered_map"
+#include "JsonUtil.h"
 #include <vector>
 #include <algorithm>
 #include <string>
@@ -114,6 +115,47 @@ static inline bool isFileConflict(ProjectTypeEnum oldProjectType, ProjectTypeEnu
     }
     return true;
 }
+
+struct RankInfo {
+    RankInfo() = default;
+    RankInfo(std::string cluster, std::string host, std::string rankId, std::string deviceId, std::string rankName)
+        :cluster(std::move(cluster)),
+        host(std::move(host)),
+        rankId(std::move(rankId)),
+        deviceId(std::move(deviceId)),
+        rankName(std::move(rankName))
+    {
+    }
+
+    json_t SerializationToJson(RAPIDJSON_DEFAULT_ALLOCATOR &allocator) const
+    {
+        json_t rankInfo(kObjectType) ;
+        JsonUtil::AddMember(rankInfo, "clusterId", cluster, allocator);
+        JsonUtil::AddMember(rankInfo, "host", host, allocator);
+        JsonUtil::AddMember(rankInfo, "rankId", rankId, allocator);
+        JsonUtil::AddMember(rankInfo, "rankName", rankName, allocator);
+        JsonUtil::AddMember(rankInfo, "deviceId", deviceId, allocator);
+        return rankInfo;
+    }
+    std::string cluster;
+    std::string host;
+    std::string rankId;
+    std::string deviceId;
+    std::string rankName;
+};
+
+struct RankEntry {
+    RankEntry() = default;
+    RankEntry(std::string fileId, std::string rankId, std::string parseFolder)
+        :fileId(std::move(fileId)), rankId(std::move(rankId)), parseFolder(std::move(parseFolder))
+    {}
+    std::string fileId;
+    std::string rankId;
+    std::vector<RankInfo> rankInfo;  // rankInfo：cluster + host + rankId + deviceId
+    std::string parseFolder;
+    std::vector<std::string> parseFileList;
+    bool isDevice{false};
+};
 } // end of namespace Dic
 
 #endif // DATA_INSIGHT_CORE_DEFS_H

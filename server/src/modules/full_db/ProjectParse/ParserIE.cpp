@@ -98,7 +98,10 @@ void ParserIE::ParserTraceData(const std::unordered_map<std::string, std::string
                 { ProjectTypeEnum::IE, { rankEntry.second } });
             continue;
         }
-        Timeline::TraceFileParser::Instance().Parse({ rankEntry.second }, rankEntry.first, rankEntry.second);
+        Timeline::TraceFileParser::Instance().Parse({rankEntry.second},
+                                                    rankEntry.first,
+                                                    rankEntry.second,
+                                                    rankEntry.first);
     }
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }

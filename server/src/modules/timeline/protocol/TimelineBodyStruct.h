@@ -34,10 +34,12 @@ struct SearchAllSlices {
     uint64_t depth = 0;
     std::string rankId;
     std::string deviceId;
+    std::string fileId;
 };
 
 struct SearchAllSlicesBody {
     std::vector<SearchAllSlices> searchAllSlices;
+    std::string dbPath;
     uint64_t count{};
     uint64_t pageSize{};
     uint64_t currentPage{};

@@ -51,6 +51,7 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
         one.note = item.note;
         resBody.datas.emplace_back(one);
     }
+    resBody.dbPath = database->GetDbPath();
     resBody.size = data.size();
     return true;
 }

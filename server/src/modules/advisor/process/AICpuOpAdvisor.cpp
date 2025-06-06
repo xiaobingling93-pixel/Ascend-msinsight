@@ -43,6 +43,7 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
         one.note = GenerateAICpuOperatorNote(item);
         resBody.datas.emplace_back(one);
     }
+    resBody.dbPath = database->GetDbPath();
     resBody.size = data.size();
     return true;
 }

@@ -33,6 +33,7 @@ bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     response.body.cardName = baselineInfo.cardName;
     response.body.isCluster = baselineInfo.isCluster;
     response.body.cluster = baselineInfo.clusterBaseLine;
+    response.body.fileId = baselineInfo.fileId;
     SendResponse(std::move(responsePtr), res);
     return res;
 }
