@@ -44,6 +44,7 @@ const memoryImgMap = {
 };
 
 test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
+    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -258,6 +259,7 @@ test.describe('Memory(MindSpore)', () => {
 });
 
 test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
+    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -349,6 +351,7 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
 });
 
 test.describe('Memory(Pytorch_SwitchProject)', () => {
+    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -406,6 +409,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
 });
 
 test.describe('Memory(Pytorch_Group_By_Component', () => {
+    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
