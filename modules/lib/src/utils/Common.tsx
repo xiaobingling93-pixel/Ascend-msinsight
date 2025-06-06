@@ -284,12 +284,16 @@ export function getRankInfoLabel({ clusterId, rankName, deviceId }: RankInfo): s
     return `${clusterId} ${rankName} ${deviceId}`.trim();
 }
 
+function transformRankInfo(rankInfo: RankInfo): { clusterId: string; host: string; rankName: string; deviceId: string } {
+    return { ...rankInfo, host: rankInfo.host.trim() };
+}
+
 export function GroupCardRankInfosByHost<T extends { rankInfo: RankInfo; dbPath: string } = { rankInfo: RankInfo; dbPath: string }>(
     cardRankInfos: T[]): { hosts: string[]; cardsMap: Map<string, Array<T & { index: number }>> } {
     const host = new Set<string>();
     const cardsMap = new Map<string, Array<T & { index: number }>>();
     cardRankInfos.forEach((item): void => {
-        const info = item.rankInfo;
+        const info = transformRankInfo(item.rankInfo);
         if (info.host !== '') {
             host.add(info.host);
         }

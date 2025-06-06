@@ -2,12 +2,12 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { runInAction } from 'mobx';
-import { getIndexByRankNameAndDeviceId, getRankInfoKey, transformCardIdInfo } from 'ascend-utils';
+import { getIndexByRankNameAndDeviceId, getRankInfoKey } from 'ascend-utils';
 import type { NotificationInterceptor } from './defs';
 import { type DataSource } from '@/centralServer/websocket/defs';
 import { updateSession } from '@/connection/notificationHandler';
 import { store } from '@/store';
-import type { CardInfo, RankInfo } from '@/entity/session';
+import type { CardRankInfo, RankInfo } from '@/entity/session';
 
 interface ImportActionBody {
     subdirectoryList: string[];
@@ -29,6 +29,7 @@ export interface ImportActionResponse {
 interface MemoryResult {
     hasMemory: boolean;
     rankId: string; // 实际是 cardId, rankId 应该只有数字，而 cardId 可能在前面带有 host，形如: `{host} {rankId}`
+    rankInfo: RankInfo;
     dbPath?: string;
     index: number;
 }
@@ -55,13 +56,20 @@ interface ParseHeatmapNotification {
 
 export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotification> = (data): void => {
     const session = store.sessionStore.activeSession;
-    const currentCardInfos: CardInfo[] = [...session.memoryCardInfos];
-    const memoryCardIdSet: Set<string> = new Set(currentCardInfos.map(({ cardId }): string => cardId));
+    if (!session || !Array.isArray(data.memoryResult)) {
+        return;
+    }
+    const currentCardInfos: CardRankInfo[] = [...session.memoryCardInfos];
+    const memoryCardIdSet: Set<string> = new Set(currentCardInfos.map(({ rankInfo }): string => getRankInfoKey(rankInfo)));
     data.memoryResult.forEach((item) => {
-        if (!memoryCardIdSet.has(item.rankId) && item.hasMemory) {
-            const cardIdInfo = transformCardIdInfo(item.rankId);
-            currentCardInfos.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: cardIdInfo.index });
-            memoryCardIdSet.add(item.rankId);
+        const key = getRankInfoKey(item.rankInfo);
+        if (!memoryCardIdSet.has(key) && item.hasMemory) {
+            currentCardInfos.push({
+                rankInfo: item.rankInfo,
+                dbPath: item.dbPath ?? '',
+                index: getIndexByRankNameAndDeviceId(item.rankInfo.rankName, item.rankInfo.deviceId),
+            });
+            memoryCardIdSet.add(key);
         }
     });
     updateSession({ memoryCardInfos: currentCardInfos });

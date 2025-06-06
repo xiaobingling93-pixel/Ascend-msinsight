@@ -124,7 +124,7 @@ export const deleteCardHandler = (e: NotificationMessage): void => {
     const removeCardIds: Set<string> = new Set(removeCardInfos.map(({ cardId }) => cardId));
     if (removeCardIds.size > 0) {
         const session = store.sessionStore.activeSession;
-        const memoryCardInfos = session.memoryCardInfos.filter((item) => !removeCardIds.has(item.cardId));
+        const memoryCardInfos = session.memoryCardInfos.filter((item) => !removeCardIds.has(item.rankInfo.rankId));
         const operatorCardInfos = session.operatorCardInfos.filter((item) => !removeCardIds.has(item.rankInfo.rankId));
         updateSession({ memoryCardInfos, operatorCardInfos });
     }

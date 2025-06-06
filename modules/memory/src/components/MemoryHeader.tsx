@@ -7,11 +7,11 @@ import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { SearchBox, FlexDiv } from '../utils/styleUtils';
 import { MemoryHeaderStrategy } from '../utils/strategyUtils';
-import type { CardInfo, Session } from '../entity/session';
-import { MemorySession, GroupBy, DEFAULT_CARD_VALUE } from '../entity/memorySession';
+import type { CardRankInfo, Session } from '../entity/session';
+import { MemorySession, GroupBy } from '../entity/memorySession';
 import { Label, useHit } from './Common';
 import { Select } from 'ascend-components';
-import { GroupCardInfosByHost, notNull, transformCardIdInfo } from 'ascend-utils';
+import { getRankInfoLabel, GroupCardRankInfosByHost, notNull, transformCardIdInfo } from 'ascend-utils';
 import { useTranslation } from 'react-i18next';
 import _ from 'lodash';
 
@@ -37,21 +37,21 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         label: t(`searchCriteria.${item.label}`),
     }));
 
-    const getRankOptions = (value: string, ranks?: Map<string, CardInfo[]>): CardInfo[] => {
+    const getRankOptions = (value: string, ranks?: Map<string, CardRankInfo[]>): Array<CardRankInfo & { value: number }> => {
         const tempRanks = _.cloneDeep(ranks);
         // 将db格式中rankId内的host名称剔除，只对RankId为数字做排序，不能转为数字的字符串则不排序
-        return (tempRanks?.get(value) ?? []).sort((a, b) => a.index - b.index);
+        return (tempRanks?.get(value) ?? []).sort((a, b) => a.index - b.index).map((item, idx) => ({ ...item, value: idx }));
     };
 
     const onHostChanged = (value: string): void => {
         const rankOptions = getRankOptions(value, memorySession.hostCondition.cardsMap);
         runInAction(() => {
             memorySession.hostCondition = { ...memorySession.hostCondition, value };
-            memorySession.rankCondition = { options: rankOptions, value: rankOptions[0] ?? DEFAULT_CARD_VALUE };
+            memorySession.rankCondition = { options: rankOptions, value: 0 };
         });
     };
 
-    const onRankValueChanged = (value: CardInfo): void => {
+    const onRankValueChanged = (value: number): void => {
         runInAction(() => {
             memorySession.rankCondition = { ...memorySession.rankCondition, value };
         });
@@ -64,7 +64,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     };
 
     useEffect(() => {
-        const { hosts, cardsMap } = GroupCardInfosByHost(session.memoryCardInfos);
+        const { hosts, cardsMap } = GroupCardRankInfosByHost(session.memoryCardInfos);
         // 判断是否为db场景（host存在compareRank中)，若是则取出host，否则hostCondition.value为空
         // rankId 实际是 cardId
         const cardIdInfo = transformCardIdInfo(session.compareRank.rankId);
@@ -78,12 +78,8 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                 memorySession.hostCondition.value = host ?? '';
             }
             memorySession.rankCondition.options = rankOptions;
-            const foundIdx = rankOptions.findIndex(({ cardId }) => cardId === session.compareRank.rankId);
-            if (foundIdx >= 0) {
-                memorySession.rankCondition.value = rankOptions[foundIdx] ?? DEFAULT_CARD_VALUE;
-            } else {
-                memorySession.rankCondition.value = rankOptions[0] ?? DEFAULT_CARD_VALUE;
-            }
+            const foundIdx = rankOptions.findIndex(({ rankInfo }) => rankInfo.rankId === session.compareRank.rankId);
+            memorySession.rankCondition.value = foundIdx >= 0 ? foundIdx : undefined;
         });
     }, [session.memoryCardInfos]);
 
@@ -95,7 +91,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
 
     useEffect(() => {
         const hostSetted = memorySession.hostCondition.options.length === 0 || memorySession.hostCondition.value !== '';
-        if (session.compareRank.rankId === memorySession.rankCondition.value.cardId && hostSetted) {
+        if (session.compareRank.rankId === memorySession.selectedRankId && hostSetted) {
             return;
         }
         // rankId 实际是 cardId
@@ -104,12 +100,12 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
             const rankOptions = getRankOptions(cardIdInfo.host, memorySession.hostCondition.cardsMap);
             const hostCondition =
                 { ...memorySession.hostCondition, value: memorySession.hostCondition.options.includes(cardIdInfo.host) ? cardIdInfo.host : '' };
-            const foundIdx = rankOptions.findIndex(({ cardId }) => cardId === session.compareRank.rankId);
+            const foundIdx = rankOptions.findIndex(({ rankInfo }) => rankInfo.rankId === session.compareRank.rankId);
             runInAction(() => {
                 memorySession.hostCondition = hostCondition;
                 memorySession.rankCondition = {
                     options: rankOptions,
-                    value: foundIdx >= 0 ? rankOptions[foundIdx] : DEFAULT_CARD_VALUE,
+                    value: foundIdx >= 0 ? foundIdx : undefined,
                 };
             });
         } else {
@@ -117,9 +113,9 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                 memorySession.hostCondition.value = '';
             });
         }
-        const foundIdx = session.memoryCardInfos.findIndex(({ cardId }) => cardId === session.compareRank.rankId);
+        const foundIdx = session.memoryCardInfos.findIndex(({ rankInfo }) => rankInfo.rankId === session.compareRank.rankId);
         if (foundIdx >= 0) {
-            onRankValueChanged(session.memoryCardInfos[foundIdx]);
+            onRankValueChanged(foundIdx);
         }
     }, [session.compareRank.rankId]);
 
@@ -157,17 +153,16 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                     <Label name={t('searchCriteria.RankId')} />
                     <Select
                         id={'select-rankId'}
-                        value={memorySession.rankCondition.value.cardId}
+                        value={memorySession.rankCondition.value}
                         size="middle"
-                        onChange={(cardId: string): void => {
-                            const found = memorySession.rankCondition.options.find((item) => item.cardId === cardId);
-                            if (found) { onRankValueChanged(found); }
+                        onChange={(value: number): void => {
+                            onRankValueChanged(value);
                         }}
                         disabled={isCompare}
                         options={memorySession.rankCondition.options.map((item) => {
                             return {
-                                value: item.cardId,
-                                label: item.cardId.replace(`${memorySession.hostCondition.value} `, ''),
+                                value: item.value,
+                                label: getRankInfoLabel(item.rankInfo),
                             };
                         })}
                     />

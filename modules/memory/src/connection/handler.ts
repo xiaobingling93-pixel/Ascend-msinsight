@@ -5,20 +5,27 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
-import type { RankInfo } from '../entity/memory';
-import type { CardInfo } from '../entity/session';
+import type { MemoryRankInfo } from '../entity/memory';
+import type { CardInfo, CardRankInfo } from '../entity/session';
 import i18n from 'ascend-i18n';
-import { customConsole as console, transformCardIdInfo } from 'ascend-utils';
-import { DEFAULT_CARD_VALUE } from '../entity/memorySession';
+import {
+    customConsole as console,
+    getIndexByRankNameAndDeviceId,
+    getRankInfoKey,
+} from 'ascend-utils';
 
-function addMemoryCardInfos(before: CardInfo[], addList: RankInfo[]): CardInfo[] {
+function addMemoryCardInfos(before: CardRankInfo[], addList: MemoryRankInfo[]): CardRankInfo[] {
     const current = [...before];
-    const currentCardIds: Set<string> = new Set(current.map(({ cardId }) => cardId));
+    const currentKeys: Set<string> = new Set(current.map(({ rankInfo }) => getRankInfoKey(rankInfo)));
     addList.forEach((item) => {
-        if (!currentCardIds.has(item.rankId) && (item.hasMemory as boolean)) {
-            const cardIdInfo = transformCardIdInfo(item.rankId);
-            current.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: cardIdInfo.index });
-            currentCardIds.add(item.rankId);
+        const key = getRankInfoKey(item.rankInfo);
+        if (!currentKeys.has(key) && (item.hasMemory as boolean)) {
+            current.push({
+                rankInfo: item.rankInfo,
+                dbPath: item.dbPath ?? '',
+                index: getIndexByRankNameAndDeviceId(item.rankInfo.rankName, item.rankInfo.deviceId),
+            });
+            currentKeys.add(key);
         }
     });
     return current;
@@ -33,8 +40,7 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
             if (!session) {
                 return;
             }
-            const memoryResult = data.memoryResult as RankInfo[];
-            session.memoryCardInfos = addMemoryCardInfos(session.memoryCardInfos, memoryResult);
+            session.memoryCardInfos = addMemoryCardInfos(session.memoryCardInfos, data.memoryResult as MemoryRankInfo[]);
         });
     } catch (err) {
         console.error(err);
@@ -54,7 +60,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             session.isAllMemoryCompletedSwitch = false;
             session.isCluster = false;
             session.compareRank.rankId = '';
-            memorySession.rankCondition = { options: [], value: DEFAULT_CARD_VALUE };
+            memorySession.rankCondition = { options: [], value: 0 };
         });
     } catch (error) {
         console.error(error);
@@ -77,7 +83,7 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             const usableKeys: string[] = ['isCluster', 'unitcount'];
             dataKeys.forEach((key: any) => {
                 if (key === 'memoryCardInfos') {
-                    const memoryCardInfos = data.memoryCardInfos as CardInfo[];
+                    const memoryCardInfos = data.memoryCardInfos as CardRankInfo[];
                     // cardId 不能转成数字时排序不会报错，但是会出现逻辑错误（排序失效）
                     session.memoryCardInfos = [...memoryCardInfos].sort((a, b) => Number(a.index) - Number(b.index));
                     return;
@@ -119,7 +125,7 @@ export const deleteCardHandler: NotificationHandler = async (data): Promise<void
             }
             const deleteIds: Set<string> = new Set((data.info as CardInfo[]).map(({ cardId }) => cardId));
             if (deleteIds.size > 0) {
-                session.memoryCardInfos = session.memoryCardInfos.filter((item) => !deleteIds.has(item.cardId));
+                session.memoryCardInfos = session.memoryCardInfos.filter((item) => !deleteIds.has(item.rankInfo.rankId));
             }
         });
     } catch (error) {

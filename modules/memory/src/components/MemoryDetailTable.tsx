@@ -10,7 +10,7 @@ import { Spin } from 'ascend-components';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Session } from '../entity/session';
+import { CardInfo, Session } from '../entity/session';
 import { MemorySession, MemoryGraphType, GroupBy } from '../entity/memorySession';
 import MemoryDetailTableFilter from './MemoryDetailTableFilter';
 import { AntTableChart, TableByComponent } from './AntTableChart';
@@ -41,9 +41,10 @@ const setSelectedRecord = (memorySession: MemorySession, record?: any): void => 
 };
 
 const buildDynamicSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): OperatorMemoryCondition => {
+    const rankValue = memorySession.getSelectedRankValue();
     const param: OperatorMemoryCondition = {
-        rankId: memorySession.rankCondition.value.cardId,
-        dbPath: memorySession.rankCondition.value.dbPath,
+        rankId: rankValue.rankInfo.rankId,
+        dbPath: rankValue.dbPath,
         type: memorySession.groupId,
         currentPage: tempCurrent,
         pageSize: memorySession.pageSize,
@@ -61,9 +62,10 @@ const buildDynamicSearchParam = (memorySession: MemorySession, tempCurrent: numb
 };
 
 const buildStaticSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): StaticMemoryCondition => {
+    const rankValue = memorySession.getSelectedRankValue();
     const param: StaticMemoryCondition = {
-        rankId: memorySession.rankCondition.value.cardId,
-        dbPath: memorySession.rankCondition.value.dbPath,
+        rankId: rankValue.rankInfo.rankId,
+        dbPath: rankValue.dbPath,
         graphId: memorySession.memoryGraphId,
         currentPage: tempCurrent,
         pageSize: memorySession.pageSize,
@@ -114,8 +116,8 @@ const getFetchSizeApi = (memoryType: string): any => {
 };
 
 const buildSearchSizeParam = (memorySession: MemorySession, isCompare: boolean): MemorySizeQueryCondition => {
-    const selectedCard = memorySession.rankCondition.value;
-    const param: MemorySizeQueryCondition = { rankId: selectedCard.cardId, dbPath: selectedCard.dbPath, type: memorySession.groupId, isCompare };
+    const selectedCard = memorySession.getSelectedRankValue();
+    const param: MemorySizeQueryCondition = { rankId: selectedCard.rankInfo.rankId, dbPath: selectedCard.dbPath, type: memorySession.groupId, isCompare };
     switch (memorySession.memoryType) {
         case MemoryGraphType.STATIC:
             param.graphId = memorySession.memoryGraphId;
@@ -165,7 +167,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     };
 
     const preParamCheck = (): boolean => {
-        const isRankIdConditionInvalid = memorySession.rankCondition.value === undefined || memorySession.rankCondition.value.cardId === '';
+        const isRankIdConditionInvalid = memorySession.selectedRankId === '';
         const isStaticMemoryInvalid = memorySession.memoryType === MemoryGraphType.STATIC && memorySession.memoryGraphId === '';
         if (isRankIdConditionInvalid || isStaticMemoryInvalid) {
             setMemoryTableData([]);
@@ -238,8 +240,17 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         fetchDetailTableData(param);
     };
 
+    const selectedCard = React.useMemo(() => {
+        const rankValue = memorySession.getSelectedRankValue();
+        return {
+            cardId: memorySession.selectedRankId,
+            dbPath: rankValue.dbPath,
+            index: rankValue.index,
+        } as CardInfo;
+    }, [memorySession.selectedRankId]);
+
     useEffect(() => {
-        if (memorySession.rankCondition.value === undefined || memorySession.rankCondition.value.cardId === '') {
+        if (memorySession.selectedRankId === '') {
             setDetailTableData();
             return;
         }
@@ -256,7 +267,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         }).catch((err: any) => {
             console.error(err);
         });
-    }, [memorySession.rankCondition.value.cardId, memorySession.groupId, memorySession.memoryGraphId, isCompare, memoryType]);
+    }, [memorySession.selectedRankId, memorySession.groupId, memorySession.memoryGraphId, isCompare, memoryType]);
 
     useEffect(() => {
         setDetailTableData();
@@ -283,7 +294,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                             onOrderByChange={setOrderBy}
                             total={total}
                             isCompare={isCompare}
-                            selectedCard={memorySession.rankCondition.value}
+                            selectedCard={selectedCard}
                         />
                     </Spin>
                 </>}

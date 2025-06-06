@@ -319,16 +319,17 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
     };
     const getTableData = async (value: OrderPageInfo = { currentPage: 1, pageSize: 10 }): Promise<void> => {
         setTableSpin(true);
-        if (memorySession === undefined || memorySession.rankCondition.value === undefined || memorySession.rankCondition.value.cardId === '') {
+        if (memorySession === undefined || memorySession.selectedRankId === '') {
             setTableSpin(false);
             setTableData([]);
             return;
         }
+        const rankValue = memorySession.getSelectedRankValue();
         try {
             const res = await fetchTableDataByComponent({
                 ...value,
-                rankId: memorySession.rankCondition.value.cardId,
-                dbPath: memorySession.rankCondition.value.dbPath,
+                rankId: rankValue.rankInfo.rankId,
+                dbPath: rankValue.dbPath,
                 isCompare: session.compareRank.isCompare,
             });
             setResponse({ ...res });
@@ -340,7 +341,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
 
     useEffect(() => {
         getTableData();
-    }, [memorySession?.rankCondition.value.cardId, session.compareRank.isCompare, session.isAllMemoryCompletedSwitch]);
+    }, [memorySession?.selectedRankId, session.compareRank.isCompare, session.isAllMemoryCompletedSwitch]);
     useEffect(() => {
         pagination = { ...pagination, total: response.totalNum };
         setColumns(getTableColumns(response.columnAttr, theme, t, session.compareRank.isCompare, setExpandedKeys) as TableColumnsType<ComponentMemory>);

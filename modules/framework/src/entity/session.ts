@@ -104,7 +104,7 @@ export class Session {
     startTime: number = -1;
     endTimeAll: number = -1;
     unitcount: number = 0;
-    memoryCardInfos: Array<Required<CardInfo>> = [];
+    memoryCardInfos: Array<Required<CardRankInfo>> = [];
     operatorCardInfos: Array<Required<CardRankInfo>> = [];
     iERankIds: string[] = [];
     deviceIds: any = {};
@@ -115,7 +115,7 @@ export class Session {
     // 右键菜单
     contextMenu: ContextMenu = { visible: false };
     // 对比功能
-    selectedFile: File = { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' };
+    selectedFile: File = { projectName: '', fileType: 'UNKNOWN', filePath: '' };
     compareSet: { baseline: CompareData; comparison: CompareData } = {
         baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
         comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },

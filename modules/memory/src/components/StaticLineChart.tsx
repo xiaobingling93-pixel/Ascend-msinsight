@@ -58,14 +58,14 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
     };
 
     useEffect(() => {
-        if (memorySession.rankCondition.value === undefined || memorySession.rankCondition.value.cardId === '' || memorySession.memoryGraphId === undefined) {
+        if (memorySession.selectedRankId === '' || memorySession.memoryGraphId === undefined) {
             setStaticLineChartData(undefined);
             setMemoryStaticCurveData(undefined);
             return;
         }
         setStaticCurveSping(true);
-        const selectedCard = memorySession.rankCondition.value;
-        staticOpMemoryGraphGet({ rankId: selectedCard.cardId, dbPath: selectedCard.dbPath, graphId: memorySession.memoryGraphId, isCompare }).then((resp) => {
+        const selectedCard = memorySession.getSelectedRankValue();
+        staticOpMemoryGraphGet({ rankId: selectedCard.rankInfo.rankId, dbPath: selectedCard.dbPath, graphId: memorySession.memoryGraphId, isCompare }).then((resp) => {
             // Reset the select range to null when rankId changes
             runInAction(() => {
                 memorySession.staticSelectedRange = undefined;
@@ -80,7 +80,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
         }).finally(() => {
             setStaticCurveSping(false);
         });
-    }, [memorySession.rankCondition.value, session.isAllMemoryCompletedSwitch, memorySession.memoryGraphId, t, isCompare]);
+    }, [memorySession.selectedRankId, session.isAllMemoryCompletedSwitch, memorySession.memoryGraphId, t, isCompare]);
 
     return (
         <div className="mb-30">

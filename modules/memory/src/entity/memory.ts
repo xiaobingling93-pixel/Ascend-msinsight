@@ -4,27 +4,41 @@
 
 import { GroupBy } from './memorySession';
 
+export interface RankInfo {
+    clusterId: string;
+    host: string;
+    rankName: string;
+    rankId: string;
+    deviceId: string;
+}
+
 /**
  * 返回的数据是否包含memory信息
- * @interface RankInfo
+ * @interface MemoryRankInfo
  */
-export interface RankInfo {
+export interface MemoryRankInfo {
     /**
      *
      * @type {string}
-     * @memberof RankInfo
+     * @memberof MemoryRankInfo
      */
     rankId: string;
     /**
+     * rank 详情
+     * @type {RankInfo}
+     * @memberof MemoryRankInfo
+     */
+    rankInfo: RankInfo;
+    /**
      * 数据库路径
      * @type {string}
-     * @memberof RankInfo
+     * @memberof MemoryRankInfo
      */
     dbPath?: string;
     /**
      *
      * @type {boolean}
-     * @memberof RankInfo
+     * @memberof MemoryRankInfo
      */
     hasMemory: boolean;
 };

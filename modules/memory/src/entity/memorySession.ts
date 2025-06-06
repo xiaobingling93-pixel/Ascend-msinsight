@@ -4,15 +4,15 @@
 
 import { makeAutoObservable } from 'mobx';
 import { OperatorDetail, StaticOperatorListDetail } from './memory';
-import type { CardInfo } from './session';
+import type { CardRankInfo } from './session';
 
-export interface ConditionType<T> {
+export interface ConditionType<T, K> {
     options: T[];
-    value: T;
+    value: K;
 }
 
-export interface HostConditionType extends ConditionType<string> {
-    cardsMap?: Map<string, CardInfo[]>;
+export interface HostConditionType extends ConditionType<string, string> {
+    cardsMap?: Map<string, CardRankInfo[]>;
 }
 
 export const enum MemoryGraphType {
@@ -31,7 +31,7 @@ export interface SelectedRange {
 };
 
 export const DEFAULT_SHOW_WITHIN_INTERVAL = false;
-export const DEFAULT_CARD_VALUE = { cardId: '', dbPath: '', index: 0 };
+export const DEFAULT_CARD_RANK_INFO: CardRankInfo = { rankInfo: { clusterId: '', host: '', rankName: '', rankId: '', deviceId: '' }, dbPath: '', index: 0 };
 
 export const enum GroupBy {
     DEFAULT = 'Overall',
@@ -50,7 +50,7 @@ export class MemorySession {
 
     // 顶部筛选条件相关变量
     hostCondition: HostConditionType = { options: [], value: '' };
-    rankCondition: ConditionType<CardInfo> = { options: [], value: DEFAULT_CARD_VALUE };
+    rankCondition: ConditionType<CardRankInfo & { value?: number }, number | undefined> = { options: [], value: undefined };
     groupId: GroupBy = GroupBy.DEFAULT;
 
     // 中部折线图框选和下方表格联动
@@ -77,5 +77,14 @@ export class MemorySession {
 
     constructor() {
         makeAutoObservable(this);
+    }
+
+    getSelectedRankValue(): CardRankInfo {
+        if (this.rankCondition.value === undefined) { return DEFAULT_CARD_RANK_INFO; }
+        return this.rankCondition.value < this.rankCondition.options.length ? this.rankCondition.options[this.rankCondition.value] : DEFAULT_CARD_RANK_INFO;
+    }
+
+    get selectedRankId(): string {
+        return this.getSelectedRankValue().rankInfo.rankId ?? '';
     }
 };

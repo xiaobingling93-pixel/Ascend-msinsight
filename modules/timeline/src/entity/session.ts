@@ -261,7 +261,6 @@ export class Session {
         this._domain = new Domain(this.isNsMode, this.endTimeAll, this.debouncedSetZoomingHistory);
         this.buttons = conf?.buttons ?? [];
         this.simpleCache = new SimpleCache();
-        this.isMultiCluster = false;
         // 录制时长大于等于5min，建议结束录制
         const MAXTIME = this.isNsMode ? 5 * 60 * 1e9 : 5 * 60 * 1e3;
         when(

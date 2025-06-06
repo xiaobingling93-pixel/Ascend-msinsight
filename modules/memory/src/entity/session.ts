@@ -3,6 +3,7 @@
  */
 
 import { makeAutoObservable } from 'mobx';
+import { RankInfo } from './memory';
 
 export interface ICompareRankInfo {
     rankId: string;
@@ -15,10 +16,16 @@ export interface CardInfo {
     index: number;
 }
 
+export interface CardRankInfo {
+    rankInfo: RankInfo;
+    dbPath: string;
+    index: number;
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     unitcount = 0;
-    memoryCardInfos: CardInfo[] = [];
+    memoryCardInfos: CardRankInfo[] = [];
     isCluster: boolean = false;
     isAllMemoryCompletedSwitch: boolean = false;
     // rankId 实际是 cardId: `{host} {rankId}`

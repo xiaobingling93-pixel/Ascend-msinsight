@@ -48,8 +48,8 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
 
     const onMemoryCurveGet = (): void => {
         setCurveSpin(true);
-        const cardInfo = memorySession.rankCondition.value;
-        memoryCurveGet({ rankId: cardInfo.cardId, dbPath: cardInfo.dbPath, type: memorySession.groupId, isCompare }).then((resp) => {
+        const rankValue = memorySession.getSelectedRankValue();
+        memoryCurveGet({ rankId: rankValue.rankInfo.rankId, dbPath: rankValue.dbPath, type: memorySession.groupId, isCompare }).then((resp) => {
             // Reset the select range to null when rankId changes
             runInAction(() => {
                 memorySession.selectedRange = undefined;
@@ -81,13 +81,13 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
     };
 
     useEffect(() => {
-        if (memorySession.rankCondition.value === undefined || memorySession.rankCondition.value.cardId === '') {
+        if (memorySession.selectedRankId === '') {
             setLineChartData(undefined);
             setMemoryCurveData(undefined);
             return;
         }
         onMemoryCurveGet();
-    }, [memorySession.rankCondition.value.cardId, memorySession.groupId, t, session.isAllMemoryCompletedSwitch]);
+    }, [memorySession.selectedRankId, memorySession.groupId, t, session.isAllMemoryCompletedSwitch]);
 
     useEffect(() => {
         runInAction(() => {
@@ -96,7 +96,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
             memorySession.current = 1;
             memorySession.pageSize = 10;
         });
-        if (memorySession.rankCondition.value === undefined || memorySession.rankCondition.value.cardId === '') {
+        if (memorySession.selectedRankId === '') {
             return;
         }
         onMemoryCurveGet();
