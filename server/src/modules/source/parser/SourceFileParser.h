@@ -35,11 +35,16 @@ public:
                const std::string &fileId) override;
     void Reset() override;
     bool CheckOperatorBinary(const std::string &selectedFilePath, std::string &errMsg);
-    static void PreParseTask(const std::string &fileId);
-    static bool InitParser(const std::string &fileId);
-    static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
-    static void ParseTask(const std::string &fileId, std::pair<int64_t, int64_t> pos);
-    static void EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures);
+    static void PreParseTask(const std::string &rankId, const std::string &fileId);
+    static bool InitParser(const std::string &rankId, const std::string &fileId);
+    static void ParseEndCallBack(const std::string &rankId,
+                                 bool result,
+                                 const std::string &message,
+                                 const std::string &fileId);
+    static void ParseTask(const std::string &rankId, std::pair<int64_t, int64_t> pos, const std::string &fileId);
+    static void EndParseTask(const std::string &rankId,
+                             std::shared_ptr<std::vector<std::future<void>>> futures,
+                             const std::string &fileId);
     std::vector<std::string> GetCoreList();
     std::vector<std::string> GetSourceList();
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);

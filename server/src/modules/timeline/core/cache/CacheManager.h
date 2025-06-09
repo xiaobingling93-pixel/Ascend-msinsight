@@ -30,11 +30,11 @@ public:
 
     /**
      * 清理单卡缓存
-     * @param fileId
+     * @param rankId
      */
-    void ClearCacheByFileId(const std::string &fileId)
+    void ClearCacheByRankId(const std::string &rankId)
     {
-        simulationSliceCacheManager.ClearCacheByFileId(fileId);
+        simulationSliceCacheManager.ClearCacheByFileId(rankId);
     }
 
 private:

@@ -77,7 +77,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths,
     file.close();
     ConvertToData();
     Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, rankId);
+    threadPool->AddTask(PreParseTask, rankId, fileId);
     return true;
 }
 
@@ -139,34 +139,34 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
     return true;
 }
 
-void SourceFileParser::PreParseTask(const std::string &fileId)
+void SourceFileParser::PreParseTask(const std::string &rankId, const std::string &fileId)
 {
-    ServerLog::Info("Start to parse simulation timeline file. file id: ", fileId);
-    if (!InitParser(fileId)) {
-        ParseEndCallBack(fileId, false, "Failed to open db. Please delete dbFile and try again.");
+    ServerLog::Info("Start to parse simulation timeline file. file id: ", rankId);
+    if (!InitParser(rankId, fileId)) {
+        ParseEndCallBack(rankId, false, "Failed to open db. Please delete dbFile and try again.", fileId);
     }
 }
 
-bool SourceFileParser::InitParser(const std::string &fileId)
+bool SourceFileParser::InitParser(const std::string &rankId, const std::string &fileId)
 {
-    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(fileId)) {
-        ServerLog::Info("Pre task skip this file cause set running status failed: ", fileId);
+    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(rankId)) {
+        ServerLog::Info("Pre task skip this file cause set running status failed: ", rankId);
         return true;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get database connection for: ", fileId);
         return false;
     }
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr || !(database->DropTable() && database->CreateTable())) {
-        ServerLog::Error("Failed to open trace database. rankId:", fileId);
+        ServerLog::Error("Failed to open trace database. fileId:", fileId);
         return false;
     }
     auto &instance = SourceFileParser::Instance();
-    auto curDataBlockMap = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
+    auto curDataBlockMap = Global::BaselineManager::Instance().IsBaselineRankId(rankId) ?
         instance.baselineDataBlockMap :  instance.dataBlockMap;
-    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
+    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineRankId(rankId) ?
         instance.baselineFilePath : instance.filePath;
     std::vector<Position> &traceFilePos = curDataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
     std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::in | std::ios::binary);
@@ -191,14 +191,14 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         }
     }
 
-    instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, totalSize);
+    instance.fileProgressMap[rankId] = std::make_unique<FileProgress>(0, totalSize);
 
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &pos : adjustTraceFilePos) {
-        auto future = instance.threadPool->AddTask(ParseTask, fileId, pos);
+        auto future = instance.threadPool->AddTask(ParseTask, rankId, pos, fileId);
         futures->emplace_back(std::move(future));
     }
-    instance.threadPool->AddTask(EndParseTask, fileId, futures);
+    instance.threadPool->AddTask(EndParseTask, rankId, futures, fileId);
     return true;
 }
 
@@ -222,20 +222,22 @@ uint64_t SourceFileParser::CalculateTotalSize(std::vector<std::pair<int64_t, int
     return totalSize;
 }
 
-void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures)
+void SourceFileParser::EndParseTask(const std::string &rankId,
+                                    std::shared_ptr<std::vector<std::future<void>>> futures,
+                                    const std::string &fileId)
 {
-    if (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) != Timeline::ParserStatus::RUNNING) {
-        ServerLog::Info("End parse task skip this file cause timeline parser status is not running: ", fileId);
+    if (Timeline::ParserStatusManager::Instance().GetParserStatus(rankId) != Timeline::ParserStatus::RUNNING) {
+        ServerLog::Info("End parse task skip this file cause timeline parser status is not running: ", rankId);
         return;
     }
-    ServerLog::Info("Wait parse completed. ID:", fileId);
+    ServerLog::Info("Wait parse completed. ID:", rankId);
     for (const auto &future : *futures) {
         future.wait();
     }
-    ServerLog::Info("Parse completed. ID:", fileId);
-    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
+    ServerLog::Info("Parse completed. ID:", rankId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);
     if (db == nullptr) {
-        ServerLog::Error("Failed to get database connection in end parse task. fileId:", fileId);
+        ServerLog::Error("Failed to get database connection in end parse task. rankId:", rankId);
         return;
     }
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
@@ -245,60 +247,65 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
     }
     database->CreateIndex();
     database->SimulationUpdateProcessSortIndex();
-    CacheManager::Instance().ClearCacheByFileId(fileId);
-    ServerLog::Info("Update depth completed. ID:", fileId);
-    ParseEndCallBack(fileId, true, "");
+    CacheManager::Instance().ClearCacheByRankId(rankId);
+    ServerLog::Info("Update depth completed. ID:", rankId);
+    ParseEndCallBack(rankId, true, "", fileId);
 }
 
-void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, int64_t> pos)
+void SourceFileParser::ParseTask(const std::string &rankId,
+                                 std::pair<int64_t, int64_t> pos,
+                                 const std::string &fileId)
 {
-    if (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) != Timeline::ParserStatus::RUNNING) {
-        ServerLog::Info("Parse task skip this file cause timeline parser status is not running. ID:", fileId);
+    if (Timeline::ParserStatusManager::Instance().GetParserStatus(rankId) != Timeline::ParserStatus::RUNNING) {
+        ServerLog::Info("Parse task skip this file cause timeline parser status is not running. ID:", rankId);
         return;
     }
-    ServerLog::Info("Start parse timeline from bin file:", fileId);
+    ServerLog::Info("Start parse timeline from bin file:", rankId);
     auto &instance = SourceFileParser::Instance();
-    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ? instance.baselineFilePath :
+    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineRankId(rankId) ? instance.baselineFilePath :
                               instance.filePath;
-    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
     if (db == nullptr) {
-        ServerLog::Warn("Failed to get connection when parse bin json,ID: ", fileId);
+        ServerLog::Warn("Failed to get connection when parse bin json,ID: ", rankId);
         return;
     }
     std::shared_ptr<TextTraceDatabase> databasePtr =
             std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (databasePtr == nullptr) {
-        ServerLog::Warn("Failed to get text connection when parse bin json,ID: ", fileId);
+        ServerLog::Warn("Failed to get text connection when parse bin json,ID: ", rankId);
         return;
     }
-    Timeline::EventParser eventParser(curFilePath, fileId, databasePtr);
+    Timeline::EventParser eventParser(curFilePath, rankId, databasePtr);
     eventParser.SetSimulationStatus(true);
     // 先将文件内容切片，避免一次解析的数据量过大
     for (const auto& pair : JsonFileProcess::SplitFile(curFilePath, pos)) {
         if (!eventParser.Parse(pair.first, pair.second)) {
-            if (Timeline::ParserStatusManager::Instance().SetTerminateStatus(fileId) ==
+            if (Timeline::ParserStatusManager::Instance().SetTerminateStatus(rankId) ==
                 Timeline::ParserStatus::RUNNING) {
                 // 只发送一次解析失败事件
-                ParseEndCallBack(fileId, false, eventParser.GetError());
+                ParseEndCallBack(rankId, false, eventParser.GetError(), fileId);
                 break;
             }
         }
         // 发送解析进度事件
-        std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
+        std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[rankId];
         curFileProgress->AddToParsedSize(NumberSafe::Sub(pair.second, pair.first));
-        instance.parseProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+        instance.parseProgressCallback(rankId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
                                        curFileProgress->GetProgressPercentage());
     }
 }
 
-void SourceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+void SourceFileParser::ParseEndCallBack(const std::string &rankId,
+                                        bool result,
+                                        const std::string &message,
+                                        const std::string &fileId)
 {
-    if (!(result && Timeline::ParserStatusManager::Instance().SetFinishStatus(fileId))) {
+    if (!(result && Timeline::ParserStatusManager::Instance().SetFinishStatus(rankId))) {
         result = false;
     }
     auto &instance = SourceFileParser::Instance();
     if (instance.parseEndCallback != nullptr) {
-        instance.parseEndCallback(fileId, fileId, result, message);
+        instance.parseEndCallback(rankId, fileId, result, message);
     }
 }
 

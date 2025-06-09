@@ -4,7 +4,6 @@
 
 #include <gtest/gtest.h>
 #include "ProtocolDefs.h"
-#include "AdvisorProtocolFromRequestJson.h"
 #include "AdvisorProtocolResponse.h"
 #include "AdvisorProtocolUtil.h"
 
@@ -30,7 +29,8 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAffinityOptimizerResponseTest)
     std::string error;
     std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
-    response.body = {.size = refSize, .datas = {
+    response.body.size = refSize;
+    response.body.datas = {
         {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Optimizer.step#SGD.step", "torch_npu.optim.NpuFusedSGD"},
         {
             {"1", "1", 2, 2, "pid2", "tid2", 2}, // rank = 1, depth = 2
@@ -42,7 +42,7 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAffinityOptimizerResponseTest)
             "Optimizer.step#Lamb.step",
             "torch_npu.optim.NpuFusedLamb"
         }
-    }};
+    };
     jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
     EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
@@ -71,17 +71,15 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAffinityAPIResponseTest)
     std::string error;
     std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
-    response.body = {
-        .size = refSize,
-        .datas = {
-            {
-                {"0", "0", 1, 1, "pid1", "tid1", 1},
-                "aten::gelu", "aten::gelu", "torch_npu.fast_gelu", ""
-                },
-            {
-                {"1", "1", 2, 2, "pid2", "tid2", 2},
-                "aten::linear", "aten::linear", "torch_npu.npu_linear", ""
-            }
+    response.body.size = refSize;
+    response.body.datas = {
+        {
+            {"0", "0", 1, 1, "pid1", "tid1", 1},
+            "aten::gelu", "aten::gelu", "torch_npu.fast_gelu", ""
+        },
+        {
+            {"1", "1", 2, 2, "pid2", "tid2", 2},
+            "aten::linear", "aten::linear", "torch_npu.npu_linear", ""
         }
     };
     jsonOptional = advisorProtocol.ToJson(response, error);
@@ -112,12 +110,10 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAICpuOperatorResponseTest)
     std::string error;
     std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
-    response.body = {
-        .size = refSize,
-        .datas = {
-            {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Cast75", ""},
-            {{"1", "1", 2, 2, "pid2", "tid2", 2}, "Add77", ""}
-        }
+    response.body.size = refSize;
+    response.body.datas = {
+        {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Cast75", ""},
+        {{"1", "1", 2, 2, "pid2", "tid2", 2}, "Add77", ""}
     };
     jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
@@ -147,12 +143,10 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAclnnOperatorResponseTest)
     std::string error;
     std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
-    response.body = {
-        .size = refSize,
-        .datas = {
-            {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Ascend@aclnnCast", ""},
-            {{"1", "1", 2, 2, "pid2", "tid2", 2}, "Ascend@aclnnAdd", ""}
-        }
+    response.body.size = refSize;
+    response.body.datas = {
+        {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Ascend@aclnnCast", ""},
+        {{"1", "1", 2, 2, "pid2", "tid2", 2}, "Ascend@aclnnAdd", ""}
     };
     jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
@@ -182,17 +176,15 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToOperatorFusionResponseTest)
     std::string error;
     std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
-    response.body = {
-        .size = refSize,
-        .datas = {
-            {
-                {"0", "0", 1, 1, "pid1", "tid1", 1},
-                "Cast", "Cast, LayerNorm, Cast", "LayerNorm", ""
-            },
-            {
-                {"1", "1", 2, 2, "pid2", "tid2", 2},
-                "Transpose", "Transpose, Transpose, GatherElement, Transpose", "GatherElements", ""
-            }
+    response.body.size = refSize;
+    response.body.datas = {
+        {
+            {"0", "0", 1, 1, "pid1", "tid1", 1},
+            "Cast", "Cast, LayerNorm, Cast", "LayerNorm", ""
+        },
+        {
+            {"1", "1", 2, 2, "pid2", "tid2", 2},
+            "Transpose", "Transpose, Transpose, GatherElement, Transpose", "GatherElements", ""
         }
     };
     jsonOptional = advisorProtocol.ToJson(response, error);
@@ -223,12 +215,10 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToOperatorDispatchResponseTest)
     std::string error;
     std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
-    response.body = {
-        .size = refSize,
-        .data = {
+    response.body.size = refSize;
+    response.body.data = {
         {{"0", "0", 1, 1, "pid1", "tid1", 1}, "AscendCL@aclopCompileAndExecute", operatorDispatchNote},
         {{"1", "1", 2, 2, "pid2", "tid2", 2}, "AscendCL@aclopCompileAndExecute", operatorDispatchNote}
-        }
     };
     jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);

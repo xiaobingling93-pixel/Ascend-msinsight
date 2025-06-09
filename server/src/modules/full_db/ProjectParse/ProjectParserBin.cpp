@@ -70,23 +70,25 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
     std::vector<std::string> empty;
     auto files = GetSimulationTraceFiles(selectedFolder, response.body);
     std::string fileId;
+    std::string rankId;
     if (!files.empty()) {
+        rankId = files.front().first;
         fileId = files.front().second;
         dataPathToDbMap[selectedFolder].push_back(fileId);
-        FullDb::DataBaseManager::Instance().CreatConnectionPool(fileId, fileId);
+        FullDb::DataBaseManager::Instance().CreatConnectionPool(rankId, fileId);
     } else {
         fileId = selectedFolder;
         ServerLog::Error("Simulation trace files is empty.");
     }
     response.body.isSimulation = true;
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
-    sourceFileParser.Parse(empty, fileId, selectedFolder, fileId);
+    sourceFileParser.Parse(empty, rankId, selectedFolder, fileId);
     for (const auto &rankEntry : rankListMap) {
         if (rankEntry.second.empty()) {
             continue;
         }
         std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
-        SetBaseActionOfResponse(response, rankEntry.first, fileId, cardPath, std::vector<std::string>{});
+        SetBaseActionOfResponse(response, rankEntry.second[0], fileId, cardPath, std::vector<std::string>{});
     }
     ModuleRequestHandler::SetResponseResult(response, true);
     response.body.isBinary = true;

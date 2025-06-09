@@ -287,7 +287,7 @@ void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
         if (oldStatus == ParserStatus::FINISH) {
             DeleteParseFileFromDisk(fileId);
         }
-        CacheManager::Instance().ClearCacheByFileId(fileId);
+        CacheManager::Instance().ClearCacheByRankId(fileId);
     }
 }
 } // end of namespace Timeline

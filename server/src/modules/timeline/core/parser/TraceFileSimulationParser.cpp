@@ -160,7 +160,7 @@ void TraceFileSimulationParser::EndParseTask(const std::string &rankId,
     }
     database->CreateIndex();
     database->SimulationUpdateProcessSortIndex();
-    CacheManager::Instance().ClearCacheByFileId(rankId);
+    CacheManager::Instance().ClearCacheByRankId(rankId);
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, fileId, true, "");
 }
@@ -242,7 +242,7 @@ void TraceFileSimulationParser::DeleteParseFiles(const std::vector<std::string> 
         if (oldStatus == ParserStatus::FINISH) {
             DeleteParseFileFromDisk(fileId);
         }
-        CacheManager::Instance().ClearCacheByFileId(fileId);
+        CacheManager::Instance().ClearCacheByRankId(fileId);
     }
 }
 } // end of namespace Timeline
