@@ -100,7 +100,6 @@ TEST_F(CommunicationProtocolUtilTest, ToCommunicationAdvisorResponseNormalDataTe
     std::string err;
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     const int two = 2;
-    const int three = 3;
     CheckResponseBaseStruct(jsonOptional);
     ASSERT_TRUE(jsonOptional.value()["body"].HasMember("items"));
     ASSERT_TRUE(jsonOptional.value()["body"]["items"].IsArray());
@@ -124,4 +123,228 @@ TEST_F(CommunicationProtocolUtilTest, ToCommunicationAdvisorResponseNormalDataTe
     ASSERT_EQ(jsonOptional.value()["body"]["items"][0]["statistics"]["Packet Size <= Min Size Percentage"].Size(), two);
     EXPECT_EQ(jsonOptional.value()["body"]["items"][0]["statistics"]["Packet Size <= Min Size Percentage"][0], "2.1");
     EXPECT_EQ(jsonOptional.value()["body"]["items"][0]["statistics"]["Packet Size <= Min Size Percentage"][1], "0.5");
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToOperatorDetailsResponseReturnFalseWithEmptyData)
+{
+    OperatorDetailsResponse response;
+    response.body.count = 0;
+    response.body.pageSize = 0;
+    response.body.currentPage = 0;
+    response.body.allOperators = {};
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body["count"].GetInt(), response.body.count);
+    EXPECT_EQ(body["pageSize"].GetInt(), response.body.pageSize);
+    EXPECT_EQ(body["currentPage"].GetInt(), response.body.currentPage);
+    EXPECT_EQ(body["allOperators"].GetArray().Size(), 0);
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToOperatorDetailsResponseReturnTrueWithNormalData)
+{
+    OperatorDetailsResponse response;
+    response.body.count = 122;
+    response.body.pageSize = 50;
+    response.body.currentPage = 12;
+    response.body.allOperators = {
+        {"AAA", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+        {"BBB", 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+    };
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body["count"].GetInt(), response.body.count);
+    EXPECT_EQ(body["pageSize"].GetInt(), response.body.pageSize);
+    EXPECT_EQ(body["currentPage"].GetInt(), response.body.currentPage);
+    EXPECT_EQ(body["allOperators"].GetArray().Size(), response.body.allOperators.size());
+    size_t index = 0;
+    for (const auto &item : body["allOperators"].GetArray()) {
+        EXPECT_EQ(item["operatorName"].GetString(), response.body.allOperators[index].operatorName);
+        EXPECT_EQ(item["startTime"].GetDouble(), response.body.allOperators[index].startTime);
+        EXPECT_EQ(item["sdmaBw"].GetDouble(), response.body.allOperators[index++].sdmaBw);
+    }
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToBandwidthDataResponseReturnFalseWithEmptyData)
+{
+    BandwidthDataResponse response = {};
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("items"), true);
+    EXPECT_EQ(body["items"].GetArray().Size(), 0);
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToBandwidthDataResponseReturnTrueWithNormalData)
+{
+    BandwidthDataResponse response;
+    response.body.items = {
+        {"AAA", 1, 2, 3, 4},
+        {"BBB", 5, 6, 7, 8},
+    };
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("items"), true);
+    EXPECT_EQ(body["items"].GetArray().Size(), response.body.items.size());
+    size_t index = 0;
+    for (const auto &item : body["items"].GetArray()) {
+        EXPECT_EQ(item["transportType"].GetString(), response.body.items[index].transportType);
+        EXPECT_EQ(item["transitTime"].GetDouble(), response.body.items[index].transitTime);
+        EXPECT_EQ(item["largePacketRatio"].GetDouble(), response.body.items[index++].largePacketRatio);
+    }
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToDurationResponseReturnFalseWithEmptyData)
+{
+    DurationResponse response = {};
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("items"), true);
+    EXPECT_EQ(body["items"].GetArray().Size(), 0);
+    EXPECT_EQ(body.HasMember("advice"), true);
+    EXPECT_EQ(body["advice"].GetArray().Size(), 0);
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToDurationResponseReturnTrueWithNormalData)
+{
+    DurationResponse response = {};
+    response.body.durationList = {
+        {
+            "AAA", "/root/data",
+            {
+                {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+                {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22}
+            }
+        }
+    };
+    response.body.bwStatistics = {
+        {"AAA", 1, 2, 3, 4, 5},
+        {"BBB", 31, 32, 33, 34, 35}
+    };
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("items"), true);
+    EXPECT_EQ(body["items"].GetArray().Size(), response.body.durationList.size());
+    EXPECT_EQ(body.HasMember("advice"), true);
+    EXPECT_EQ(body["advice"].GetArray().Size(), response.body.bwStatistics.size());
+    size_t index = 0;
+    for (const auto &item : body["items"].GetArray()) {
+        EXPECT_EQ(item["rankId"].GetString(), response.body.durationList[index].rankId);
+        EXPECT_EQ(item["dbPath"].GetString(), response.body.durationList[index].dbPath);
+        EXPECT_EQ(item["compareData"]["baseline"]["sdmaBw"],
+                  response.body.durationList[index++].durationData.baseline.sdmaBw);
+    }
+    index = 0;
+    for (const auto &item : body["advice"].GetArray()) {
+        EXPECT_EQ(item["type"].GetString(), response.body.bwStatistics[index].type);
+        EXPECT_EQ(item["avg"].GetDouble(), response.body.bwStatistics[index].avgBw);
+        EXPECT_EQ(item["time"].GetDouble(), response.body.bwStatistics[index++].allTime);
+    }
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToMatrixGroupResponseReturnFalseWithEmptyData)
+{
+    MatrixGroupResponse response = {};
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("data"), true);
+    EXPECT_EQ(body["data"].GetArray().Size(), 0);
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToMatrixGroupResponseReturnTrueWithNormalData)
+{
+    MatrixGroupResponse response = {};
+    response.body.groupList = {
+        {"A1", "A2", "A3"},
+        {"B1", "B2", "B3"}
+    };
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("data"), true);
+    EXPECT_EQ(body["data"].GetArray().Size(), response.body.groupList.size());
+    size_t index = 0;
+    for (const auto &item : body["data"].GetArray()) {
+        EXPECT_EQ(item["group"].GetString(), response.body.groupList[index].group);
+        EXPECT_EQ(item["parallelStrategy"].GetString(), response.body.groupList[index].parallelStrategy);
+        EXPECT_EQ(item["type"].GetString(), response.body.groupList[index++].type);
+    }
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToMatrixListResponseWithEmptyData)
+{
+    MatrixListResponse response = {};
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("matrixList"), true);
+    EXPECT_EQ(body["matrixList"].GetArray().Size(), 0);
+}
+
+TEST_F(CommunicationProtocolUtilTest, ToMatrixListResponseWithNormalData)
+{
+    MatrixListResponse response;
+    response.body.matrixList = {
+        {
+            0, 1,
+            {
+                {"A1", "A2", 1, 2, 3},
+                {"B1", "B2", 4, 5, 6},
+            }
+        },
+        {
+            1, 0,
+            {
+                {"C1", "C2", 7, 8, 9},
+                {"D1", "D2", 10, 11, 12},
+            }
+        }
+    };
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("matrixList"), true);
+    EXPECT_EQ(body["matrixList"].GetArray().Size(), response.body.matrixList.size());
+    size_t index = 0;
+    for (const auto &item : body["matrixList"].GetArray()) {
+        EXPECT_EQ(item["srcRank"].GetInt(), response.body.matrixList[index].srcRank);
+        EXPECT_EQ(item["dstRank"].GetInt(), response.body.matrixList[index].dstRank);
+        EXPECT_EQ(item["matrixData"]["baseline"]["transportType"].GetString(),
+                  response.body.matrixList[index++].matrixData.baseline.transportType);
+    }
 }
