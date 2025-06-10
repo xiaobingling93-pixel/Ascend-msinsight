@@ -202,6 +202,53 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-deep-operator.png', { maxDiffPixels: 50 });
     });
 
+    // 工具栏 - 算子连线  HostToDevice MsTx async_npu
+    test('test_operator_npu_LinkLine', async ({ page, timelinePage }) => {
+        const { flowBtn, timelineFrame } = timelinePage;
+        const hcclUnit = timelineFrame.locator('#unitWrapperScroller').getByText('Ascend Hardware (2094647552)');
+        await hcclUnit.click();
+        const LinkLineType = [
+            'HostToDevice',
+            'MsTx',
+            'async_npu',
+        ];
+        for (const item of LinkLineType) {
+            await flowBtn.click();
+            const LinkLineTypeCheckbox = timelineFrame.getByLabel(item);
+            await LinkLineTypeCheckbox.check();
+            await flowBtn.click();
+            await page.mouse.move(0, 0);
+            await page.waitForTimeout(2000);
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`operator-link-line-${item}.png`, { maxDiffPixels: 100 });
+            await flowBtn.click();
+            await LinkLineTypeCheckbox.uncheck();
+            await flowBtn.click();
+        }
+    });
+
+    // 工具栏 - 算子连线  async_task_queue fwdbwd
+    test('test_operator_cpu_LinkLine', async ({ page, timelinePage }) => {
+        const { flowBtn, timelineFrame } = timelinePage;
+        const hcclUnit = timelineFrame.locator('#unitWrapperScroller').getByText('Python (2045554)');
+        await hcclUnit.click();
+        const LinkLineType = [
+            'async_task_queue',
+            'fwdbwd',
+        ];
+        for (const item of LinkLineType) {
+            await flowBtn.click();
+            const LinkLineTypeCheckbox = timelineFrame.getByLabel(item);
+            await LinkLineTypeCheckbox.check();
+            await flowBtn.click();
+            await page.mouse.move(0, 0);
+            await page.waitForTimeout(2000);
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`operator-link-line-${item}.png`, { maxDiffPixels: 100 });
+            await flowBtn.click();
+            await LinkLineTypeCheckbox.uncheck();
+            await flowBtn.click();
+        }
+    });
+
     // 工具栏 - 泳道(card)过滤
     test('test_cardFilter', async ({ page, timelinePage }) => {
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
@@ -243,20 +290,6 @@ test.describe('Timeline', () => {
         await filterBtn.click();
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('units-filter.png', { maxDiffPixels: 100 });
-    });
-
-    // 工具栏 - 算子连线
-    test('test_operatorLinkLine', async ({ page, timelinePage }) => {
-        const { flowBtn, timelineFrame } = timelinePage;
-        const hostToDeviceCheckbox = timelineFrame.getByLabel('HostToDevice');
-        const hcclUnit = timelineFrame.locator('#unitWrapperScroller').getByText('HCCL (2094647744)');
-
-        await flowBtn.click();
-        await hostToDeviceCheckbox.check();
-        await flowBtn.click();
-        await hcclUnit.click();
-        await page.mouse.move(0, 0);
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('operator-link-line.png', { maxDiffPixels: 100 });
     });
 
     // 工具栏 - 缩放按钮、重置按钮

@@ -114,6 +114,38 @@ test.describe('Timeline(DB)', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-deep-operator.png', { maxDiffPixels: 200 });
     });
 
+    // 工具栏 - 算子连线
+    test('test_operatorLinkLine', async ({ page, timelinePage }) => {
+        const { flowBtn, timelineFrame } = timelinePage;
+        await timelineFrame.locator('div:nth-child(7) > .chart > div > .canvasContainer > .drawCanvas').click({
+            position: {
+                x: 84,
+                y: 17,
+            },
+        });
+        await timelineFrame.locator('div:nth-child(12) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
+        await timelineFrame.locator('div:nth-child(13) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
+        const LinkLineType = [
+            'HostToDevice',
+            'MsTx',
+            'async_npu',
+        ];
+        for (const item of LinkLineType) {
+            const LinkTypeCheckbox = timelineFrame.getByLabel(item);
+            await flowBtn.click();
+            await LinkTypeCheckbox.check();
+            await flowBtn.click();
+            await page.mouse.move(0, 0);
+            await page.waitForTimeout(2000);
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`operator-link-line-${item}.png`, { maxDiffPixels: 100 });
+            await flowBtn.click();
+            await LinkTypeCheckbox.uncheck();
+            await flowBtn.click();
+        }
+    });
+
+    //todo: 工具栏 连线async_task_queue  && fwdbwd
+
     // 工具栏 - 泳道(card)过滤
     test('test_db_cardFilter', async ({ page, timelinePage }) => {
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
@@ -215,5 +247,53 @@ test.describe('Timeline(DB)', () => {
         await hcclChart.waitFor({ state: 'visible' });
 
         await expect(hcclChart).toHaveScreenshot('redirect-to-communication.png', { maxDiffPixels: 100 });
+    });
+
+    // 同通信域泳道置顶
+    test('test_db_same_communication_group', async ({ page, timelinePage, ws }) => {
+        const { filterBtn, timelineFrame, selectFilterType,
+            selectOptionFilterType, selectFilterContent } = timelinePage;
+        const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
+        const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
+
+        await filterBtn.click();
+        await page.mouse.move(0, 0);
+
+        await filterTypeSelector.open();
+        // 由于该 select 框下拉选项是自定义节点，不能使用 SelectHelpers 的 selectOption 方法取值
+        const option = selectOptionFilterType.getByText('Units Filter');
+        await option.click();
+
+        await page.mouse.move(0, 0);
+        await filterContentSelector.open();
+        await filterContentSelector.setValue('Communication');
+        await filterContentSelector.selectOption('Communication');
+        await filterBtn.click();
+        await timelineFrame.locator('#unitWrapperScroller').click();
+        await timelineFrame.locator('.insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').first().click();
+        await timelineFrame.locator('.insight-unit-fold').first().click();
+        await timelineFrame.getByText('mp:Group group_name_41').click({
+            button: 'right',
+        });
+        await timelineFrame.getByText('Pin (Same Group group_name_41)').click();
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('communication_group_pin.png', { maxDiffPixels: 100 });
+        await timelineFrame.locator('#pinnedUnitWrapperScroller').getByText('localhost.localdomain4978604445055226587_0 0_Communication (HCCL)_mp:Group').click({
+            button: 'right',
+        });
+        await timelineFrame.getByText('Unpin (Same Group').click();
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('communication_group_unpin.png', { maxDiffPixels: 100 });
+    });
+
+    // 右键菜单--Show in events view
+    test('test_db_context_menu_click_ShowInEventsView', async ({ timelinePage, page }) => {
+        const { timelineFrame, bottomPanel } = timelinePage;
+        timelineFrame.locator('#unitWrapperScroller');
+        await timelineFrame.locator('div:nth-child(12) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
+        await timelineFrame.locator('div:nth-child(13) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
+        await timelineFrame.locator('#unitWrapperScroller div').filter({ hasText: /^Stream 2$/ }).nth(3).click({
+            button: 'right',
+        });
+        await timelineFrame.getByText('Show in events view').click();
+        await expect(bottomPanel).toHaveScreenshot('test-db-click-ShowInEventsView.png', { maxDiffPixels: 400 });
     });
 });
