@@ -18,6 +18,7 @@
 #include "QueryOpStatisticInfoHandler.h"
 #include "QueryOpDetailInfoHandler.h"
 #include "ExportOpDetailsHandler.h"
+#include "NumberSafeUtil.h"
 
 namespace {
     using namespace Dic;
@@ -307,7 +308,8 @@ namespace Dic::Module::Operator {
                     return true;
                 };
             }
-        } while (statisticReqParams.current * statisticReqParams.pageSize < statisticReqResponse.total);
+        } while (NumberSafe::Muls(statisticReqParams.current, statisticReqParams.pageSize) < statisticReqResponse.total
+                 && NumberSafe::Muls(statisticReqParams.current, statisticReqParams.pageSize) > 0);
         DestroyFile();
         // LCOV_EXCL_BR_STOP
         return true;
