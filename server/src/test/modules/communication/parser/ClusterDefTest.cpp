@@ -127,8 +127,73 @@ TEST_F(ClusterDefTest, TestEPSizeEvenlyDividedByTPSize)
 // Test for valid configuration (all parameters are valid)
 TEST_F(ClusterDefTest, TestValidConfiguration)
 {
-    std::string error = "";
+    std::string error;
     ParallelStrategyConfig config = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 2, 2, 4, 2, 2 };
     EXPECT_EQ(config.CheckParams(error), true);
+    EXPECT_EQ(error, "");
+}
+
+TEST_F(ClusterDefTest, TestCheckParamForMindSpeedForParallelStrategyConfigReturnFalseWithInvalidParameter)
+{
+    std::vector<ParallelStrategyConfig> configList = {
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 3, 5, 1, "AA", {}},
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 3, 6, 1, "AA", {false, 1, 1, "XXX", 2, 1}},
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 3, 6, 1, "AA", {false, 1, 1, MINDSPEED_HYBIRD_CP_ALG, 0, 1}},
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 3, 6, 1, "AA", {false, 1, 1, MINDSPEED_HYBIRD_CP_ALG, 2, 1}},
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 3, 6, 1, "AA", {false, 1, 1, MINDSPEED_HYBIRD_CP_ALG, 3, 0}},
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 6, 6, 1, "AA", {false, 1, 1, MINDSPEED_HYBIRD_CP_ALG, 3, 3}},
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 6, 6, 1, "AA", {false, 1, 1, MINDSPEED_MEGATRON_CP_ALG, 3, 0}},
+        {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 6, 6, 1, "AA", {false, 1, 1, MINDSPEED_MEGATRON_CP_ALG, 3, 4}}
+    };
+    std::vector<std::string> errList = {
+        "[Summary] The product of DP size and CP size must be evenly divided by EP Size for the MindSpeed.",
+        "[Summary] Mindspeed CP algorithm is not allowed.",
+        "[Summary] Ulysses degree must be greater than 0.",
+        "[Summary] CP size must be evenly divided by ulysses degree for hybird cp.",
+        "[Summary] CP Window size must be greater than 0.",
+        "[Summary] CP size must be evenly divided by the product of ulysses degree and cp window size.",
+        "[Summary] CP Window size must be greater than 0.",
+        "[Summary] CP size must be evenly divided by cp window size."
+    };
+    std::string error;
+    ParallelStrategyConfig config;
+    for (size_t i = 0; i < configList.size() && i < errList.size(); i++) {
+        config = configList[i];
+        EXPECT_EQ(config.CheckParamForMindSpeed(error), false);
+        EXPECT_EQ(error, errList[i]);
+    }
+}
+
+TEST_F(ClusterDefTest, TestCheckParamForMindSpeedForParallelStrategyConfigReturnTrueWithValidParameter)
+{
+    ParallelStrategyConfig config = {
+        MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 3, 6, 1, "AA", {false, 1, 1, MINDSPEED_HYBIRD_CP_ALG, 3, 1}
+    };
+    std::string error;
+    EXPECT_EQ(config.CheckParamForMindSpeed(error), true);
+    EXPECT_EQ(error, "");
+}
+TEST_F(ClusterDefTest, TestCheckTp2DSizeForMindSpeedForParallelStrategyConfigReturnFalseWithInvalidParameter)
+{
+    ParallelStrategyConfig config1 = {
+        MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 1, 1, 1, "AA", {true, 0, 0, "", 0, 0}
+    };
+    std::string error;
+    EXPECT_EQ(config1.CheckTp2DSizeForMindSpeed(error), false);
+    EXPECT_EQ(error, "[Summary] Nd1dim1 or nd2dim1 must be greater than 0.");
+    ParallelStrategyConfig config2 = {
+        MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 2, 4, 1, 1, 1, "AA", {true, 3, 1, "", 0, 0}
+    };
+    EXPECT_EQ(config2.CheckTp2DSizeForMindSpeed(error), false);
+    EXPECT_EQ(error, "[Summary] TP size must be evenly divided by nd1dim1 and nd2dim1 for tp2d.");
+}
+
+TEST_F(ClusterDefTest, TestCheckTp2DSizeForMindSpeedForParallelStrategyConfigReturnTrueWithValidParameter)
+{
+    ParallelStrategyConfig config1 = {
+        MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 4, 2, 1, 1, 1, "AA", {true, 2, 2, "", 0, 0}
+    };
+    std::string error;
+    EXPECT_EQ(config1.CheckTp2DSizeForMindSpeed(error), true);
     EXPECT_EQ(error, "");
 }
