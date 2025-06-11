@@ -58,7 +58,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const { memoryFrame, rankIdSelector } = memoryPage;
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         await rankIdSelect.open();
-        await rankIdSelect.selectOption('0');
+        await rankIdSelect.selectOption('0 0');
         await page.mouse.move(0, 0);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.loadPytorchSingleMachineMultiRankDataSuccess, {
             maxDiffPixels: 500,
@@ -71,7 +71,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         const groupIdSelect = new SelectHelpers(page, groupIdSelector, memoryFrame);
         await rankIdSelect.open();
-        await rankIdSelect.selectOption('4');
+        await rankIdSelect.selectOption('4 4');
         await groupIdSelect.open();
         await groupIdSelect.selectOption('Stream');
         await page.mouse.move(0, 0);
@@ -373,7 +373,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         await hostSelector.waitFor({ state: 'detached' });
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         const selectedText = await rankIdSelect.getValue();
-        expect(selectedText).toBe('1');
+        expect(selectedText).toBe('1 1');
         // 等待 echarts 动画结束
         await page.waitForTimeout(1000);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.dbToText, {
@@ -428,7 +428,7 @@ test.describe('Memory(Pytorch_Group_By_Component', () => {
         const { memoryFrame, rankIdSelector } = memoryPage;
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         await rankIdSelect.open();
-        await rankIdSelect.selectOption('1');
+        await rankIdSelect.selectOption('1 1');
         await page.waitForTimeout(1000);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.pytorchTextGroupByComponent, {
             maxDiffPixels: 500,

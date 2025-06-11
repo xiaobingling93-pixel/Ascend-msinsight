@@ -46,7 +46,7 @@ test.describe('Operator', () => {
         await groupIdSelect.open();
         await groupIdSelect.selectOption('Computing Operator Type');
         await rankIdSelect.open();
-        await rankIdSelect.selectOption('4');
+        await rankIdSelect.selectOption('4 4');
         await topSelect.open();
         await topSelect.selectOption('15');
         await page.mouse.move(0, 0);
@@ -61,7 +61,7 @@ test.describe('Operator', () => {
         const seeMoreBtn = operatorFrame.getByRole('button', { name: 'See more' }).first();
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
         await rankIdSelect.open();
-        await rankIdSelect.selectOption('0');
+        await rankIdSelect.selectOption('0 0');
         await seeMoreBtn.click();
         await page.mouse.move(0, 0);
         await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot(operatorImgMap.expandOperatorDetailTableDataSuccess, {

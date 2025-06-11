@@ -413,7 +413,7 @@ test.describe('Timeline', () => {
         await expect(hcclChart).toHaveScreenshot('redirect-to-communication.png', { maxDiffPixels: 100 });
     });
 
-    // 右键菜单--Hide/Show All Hidden
+    // 右键菜单--Hide/Show all
     test('test_context_menu_click_hide', async ({ timelinePage }) => {
         const { timelineFrame, clickMenu } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller');
@@ -421,11 +421,11 @@ test.describe('Timeline', () => {
         await clickMenu(clickUnit, timelineFrame, 'Hide');
         const hideUnit = unitList.locator('.unit > .empty');
         expect(await hideUnit.count()).toBe(1);
-        await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
+        await clickMenu(hideUnit, timelineFrame, 'Show all');
         expect(await hideUnit.count()).toBe(0);
     });
 
-    // 右键菜单--多选隐藏有兄弟关系 Hide/Show All Hidden
+    // 右键菜单--多选隐藏有兄弟关系 Hide/Show all
     test('test_context_menu_click_multi_hide_siblings', async ({ timelinePage }) => {
         const { timelineFrame, clickMenu } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller .unit-info');
@@ -444,11 +444,11 @@ test.describe('Timeline', () => {
         const hideUnit = timelineFrame.locator('#unitWrapperScroller .unit > .empty');
         const hideUnitTitle = hideUnit.locator('.insight-lane-info span');
         expect(await hideUnitTitle.innerHTML()).toBe('2 units hidden');
-        await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
+        await clickMenu(hideUnit, timelineFrame, 'Show all');
         expect(await hideUnit.count()).toBe(0);
     });
 
-    // 右键菜单--多选隐藏有父子关系 Hide/Show All Hidden
+    // 右键菜单--多选隐藏有父子关系 Hide/Show all
     test('test_context_menu_click_multi_hide_parent_child', async ({ timelinePage }) => {
         const { timelineFrame, clickMenu } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller .unit-info');
@@ -467,7 +467,7 @@ test.describe('Timeline', () => {
 
         const hideUnit = timelineFrame.locator('#unitWrapperScroller .unit > .empty');
         expect(await hideUnit.count()).toBe(1);
-        await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
+        await clickMenu(hideUnit, timelineFrame, 'Show all');
         expect(await hideUnit.count()).toBe(0);
     });
 
@@ -489,7 +489,7 @@ test.describe('Timeline', () => {
         const { timelineFrame, clickMenu, bottomPanel } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const clickUnit = unitList.locator('.unit-info').nth(1);
-        await clickMenu(clickUnit, timelineFrame, 'Show in events view');
+        await clickMenu(clickUnit, timelineFrame, 'Show in Events View');
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'attached' });
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'detached' });
         await page.mouse.move(0, 0);
@@ -512,6 +512,7 @@ test.describe('Timeline', () => {
             await page.mouse.move(0, 0);
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-context-menu-click-Zoom.png', { maxDiffPixels: 200 });
             await clickMenu(clickUnit, timelineFrame, options[i]);
+            await page.mouse.move(0, 0);
             await page.waitForTimeout(1000);
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 200 });
         }

@@ -284,7 +284,7 @@ test.describe('Timeline(DB)', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('communication_group_unpin.png', { maxDiffPixels: 100 });
     });
 
-    // 右键菜单--Show in events view
+    // 右键菜单--Show in Events View
     test('test_db_context_menu_click_ShowInEventsView', async ({ timelinePage, page }) => {
         const { timelineFrame, bottomPanel } = timelinePage;
         timelineFrame.locator('#unitWrapperScroller');
@@ -293,7 +293,7 @@ test.describe('Timeline(DB)', () => {
         await timelineFrame.locator('#unitWrapperScroller div').filter({ hasText: /^Stream 2$/ }).nth(3).click({
             button: 'right',
         });
-        await timelineFrame.getByText('Show in events view').click();
+        await timelineFrame.getByText('Show in Events View').click();
         await expect(bottomPanel).toHaveScreenshot('test-db-click-ShowInEventsView.png', { maxDiffPixels: 400 });
     });
 });
