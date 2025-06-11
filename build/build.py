@@ -165,7 +165,6 @@ def build_frontend():
     if result != 0:
         return 1
 
-    shutil.copytree(os.path.join(framework_path, 'plugins'), os.path.join(framework_path, 'build', 'plugins'))
     return 0
 
 

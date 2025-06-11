@@ -16,7 +16,7 @@ import sys
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 MODULES_DIR = os.path.dirname(BUILD_DIR)
-PLUGIN_DIR = os.path.join(os.path.dirname(MODULES_DIR), MODULES_DIR, 'framework', 'plugins')
+PLUGIN_DIR = os.path.join(os.path.dirname(MODULES_DIR), MODULES_DIR, 'framework', 'public', 'plugins')
 
 MODULES_MAP = {
     'cluster': 'Cluster',
@@ -51,7 +51,7 @@ def execute_cmd(module, module_dir, cmd):
 
 def build_module(module):
     """
-    构建单个模块，首先先npm install --force安装依赖，然后npm run build进行编译，最终拷贝结果到framework下的plugins对应目录里
+    构建单个模块，首先先npm install --force安装依赖，然后npm run build进行编译，最终拷贝结果到framework/public/plugins对应目录里
 
     :param module: 子模块
     :return: 0 表示构建成功， 1表示构建失败

@@ -5,6 +5,8 @@ const {webpackCfg} = require('../build-config');
 module.exports = {
   devServer: {
     port: 5174,
+    open: false,
+    historyApiFallback: false,
   },
   webpack: {
     configure: webpackConfig => {
