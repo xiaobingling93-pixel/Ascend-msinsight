@@ -24,32 +24,20 @@ const test = baseTest.extend<TestFixtures>({
 });
 
 const memoryImgMap = {
-    loadPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single.png',
-    filterPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-filter.png',
-    queryPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-query.png',
-    compareRankRes: 'memory-compare-rank.png',
-    queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess: 'memory-pytorch-interval-only-show.png',
     loadMindSporeDataSuccess: 'memory-mindspore-loaded.png',
     queryMindSporeDataSuccess: 'memory-mindspore-filter.png',
     loadMultiMachinesMultiRanksDataSuccess: 'memory-pytorch-multi-loaded.png',
-    redirectToTimeline: 'memory-redirect-to-timeline.png',
     multiMachinesClickRank: 'memory-pytorch-multi-click-rank.png',
-    dbToText: 'memory-pytorch-db-to-text.png',
-    textToDb: 'memory-pytorch-text-to-db.png',
     compareRankDb: 'memory-compare-rank-db.png',
     queryCompareRankDb: 'memory-compare-rank-db-with-condition.png',
-    pytorchTextGroupByComponent: 'memory-pytorch-group-by-component.png',
-    sortRankGroupByComponent: 'memory-pytorch-sort-group-by-component.png',
-    compareRankGroupByComponent: 'memory-pytorch-compare-group-by-component.png',
 };
 
 test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
-    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
-        await importData(page);
+        await importData(page, FilePath.TEXT_330);
         await allCardParsedPromise;
     });
 
@@ -60,7 +48,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await rankIdSelect.open();
         await rankIdSelect.selectOption('0 0');
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.loadPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-single-rank-0.png', {
             maxDiffPixels: 500,
         });
     });
@@ -75,7 +63,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await groupIdSelect.open();
         await groupIdSelect.selectOption('Stream');
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.filterPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-single-rank-4.png', {
             maxDiffPixels: 500,
         });
     });
@@ -89,12 +77,12 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await nameInput.setValue('aten::empty_strided');
         expect(await nameInput.expectValueToBe('aten::empty_strided'));
         expect(await minSizeInput.expectValueToBe('0'));
-        expect(await maxSizeInput.expectValueToBe('503810'));
+        expect(await maxSizeInput.expectValueToBe('421916'));
         const queryBtn = memoryFrame.getByTestId('query-btn');
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.queryPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page').locator('.mi-collapsible-panel').nth(1)).toHaveScreenshot('pytorch-single-table-data.png', {
             maxDiffPixels: 500,
         });
     });
@@ -109,20 +97,20 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const tableWrapper = memoryFrame.locator('.mi-page').locator('.panel-content').nth(1);
 
         await page.mouse.move(0, 0);
-        await expect(tableWrapper).toHaveScreenshot('memory-pytorch-single-reset.png', {
+        await expect(tableWrapper).toHaveScreenshot('pytorch-single-reset.png', {
             maxDiffPixels: 500,
         });
 
         await maxSizeInput.setValue('1000');
         await queryBtn.click();
         await page.mouse.move(0, 0);
-        await expect(tableWrapper).toHaveScreenshot('memory-pytorch-single-reset-change.png', {
+        await expect(tableWrapper).toHaveScreenshot('pytorch-single-reset-change.png', {
             maxDiffPixels: 500,
         });
 
         await resetBtn.click();
         await page.mouse.move(0, 0);
-        await expect(tableWrapper).toHaveScreenshot('memory-pytorch-single-reset.png', {
+        await expect(tableWrapper).toHaveScreenshot('pytorch-single-reset.png', {
             maxDiffPixels: 500,
         });
     });
@@ -137,7 +125,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await memoryFrame.getByText('Find in Timeline').click();
 
         await page.mouse.move(0, 0);
-        await expect(fullPage).toHaveScreenshot(memoryImgMap.redirectToTimeline, {
+        await expect(fullPage).toHaveScreenshot('redirect-to-timeline.png', {
             maxDiffPixels: 500,
         });
     });
@@ -145,9 +133,9 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     // 对比数据
     test('memory_compare_rank_text', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
-        await setCompare(page, memoryFrame);
+        await setCompare(page, memoryFrame,{ baseline:FilePath.TEXT_330_RANK_0,comparison:FilePath.TEXT_330_RANK_1 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.compareRankRes, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('compare-rank.png', {
             maxDiffPixels: 500,
         });
         await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
@@ -182,9 +170,9 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await page.mouse.move(0, 0);
 
         const totalNumListItem = memoryFrame.locator('.ant-spin-container > ul > li.ant-pagination-total-text');
-        expect(await totalNumListItem.innerText()).toBe('Total 229 items');
+        expect(await totalNumListItem.innerText()).toBe('Total 507 items');
 
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-interval-only-show.png', {
             maxDiffPixels: 500,
         });
     });
@@ -259,7 +247,6 @@ test.describe('Memory(MindSpore)', () => {
 });
 
 test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
-    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -351,12 +338,11 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
 });
 
 test.describe('Memory(Pytorch_SwitchProject)', () => {
-    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
-        await importData(page);
+        await importData(page, FilePath.TEXT_330);
         await allCardParsedPromise;
         await importData(page, FilePath.MULTI_MACHINES);
         await allCardParsedPromise;
@@ -367,16 +353,17 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         const frameworkPage = new FrameworkPage(page);
         const dbRank0 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_0);
         await dbRank0.click();
-        const textRank1 = frameworkPage.getRankLocator(FilePath.TEXT_RANK_1);
+        const textRank1 = frameworkPage.getRankLocator(FilePath.TEXT_330_RANK_1);
         await textRank1.click();
         const { memoryFrame, hostSelector, rankIdSelector } = memoryPage;
         await hostSelector.waitFor({ state: 'detached' });
+        await page.waitForTimeout(1000);
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         const selectedText = await rankIdSelect.getValue();
         expect(selectedText).toBe('1 1');
         // 等待 echarts 动画结束
         await page.waitForTimeout(1000);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.dbToText, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-db-to-text.png', {
             maxDiffPixels: 500,
         });
     });
@@ -384,7 +371,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
     // 测试从单机多卡text类型数据切换到多机多卡db类型数据
     test('test_pageDisplay_when_text_to_db', async ({ page, memoryPage }) => {
         const frameworkPage = new FrameworkPage(page);
-        const textRank0 = frameworkPage.getRankLocator(FilePath.TEXT_RANK_0);
+        const textRank0 = frameworkPage.getRankLocator(FilePath.TEXT_330_RANK_0);
         await textRank0.click();
         const dbRank1 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_1);
         await dbRank1.click();
@@ -398,7 +385,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         expect(selectedText).toBe('1');
         // 等待 echarts 动画结束
         await page.waitForTimeout(2000);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.textToDb, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-text-to-db.png', {
             maxDiffPixels: 500,
         });
     });
@@ -409,12 +396,11 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
 });
 
 test.describe('Memory(Pytorch_Group_By_Component', () => {
-    test.skip();
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
-        await importData(page);
+        await importData(page, FilePath.TEXT_330);
         await allCardParsedPromise;
         const { memoryFrame, groupIdSelector } = memoryPage;
         const groupIdSelect = new SelectHelpers(page, groupIdSelector, memoryFrame);
@@ -430,7 +416,7 @@ test.describe('Memory(Pytorch_Group_By_Component', () => {
         await rankIdSelect.open();
         await rankIdSelect.selectOption('1 1');
         await page.waitForTimeout(1000);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.pytorchTextGroupByComponent, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-group-by-component.png', {
             maxDiffPixels: 500,
         });
     });
@@ -439,7 +425,7 @@ test.describe('Memory(Pytorch_Group_By_Component', () => {
     test('test_sort_group_by_Component', async({ memoryPage }) => {
         const { memoryFrame } = memoryPage;
         await memoryFrame.getByRole('table').getByText('Peak Memory Reserved(MB)').click();
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.sortRankGroupByComponent, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-sort-group-by-component.png', {
             maxDiffPixels: 500,
         });
     });
@@ -447,15 +433,17 @@ test.describe('Memory(Pytorch_Group_By_Component', () => {
     // 组件级内存比对场景测试
     test('test_compare_group_by_Component', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
-        await setCompare(page, memoryFrame);
+        await setCompare(page, memoryFrame, { baseline:FilePath.TEXT_330_RANK_0,comparison:FilePath.TEXT_330_RANK_1 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.compareRankGroupByComponent, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-compare-group-by-component.png', {
             maxDiffPixels: 500,
         });
-        await memoryFrame.getByRole('row', { name: 'APP Difference 0 15.540 See' }).getByRole('button').click();
-        await expect(memoryFrame.locator('tbody')).toContainText('104.2');
-        await memoryFrame.getByRole('row', { name: 'HCCL Difference -400.004 15.' }).getByRole('button').click();
-        await expect(memoryFrame.locator('tbody')).toContainText('1600.046875');
+
+        const table = memoryFrame.locator('.mi-page').locator('.mi-collapsible-panel').nth(1);
+        await table.getByRole('button', { name: 'See more' }).nth(0).click();
+        await table.getByRole('button', { name: 'See more' }).nth(1).click();
+        await table.getByRole('button', { name: 'See more' }).nth(2).click();
+        await expect(table).toHaveScreenshot('pytorch-compare-group-by-component-table.png');
         await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
