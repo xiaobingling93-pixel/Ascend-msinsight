@@ -39,6 +39,10 @@ bool IEContext::ExecSql(const std::string& fileId, const std::string& sql)
         return false;
     }
     auto dataBase = databaseMap[fileId]->GetConnection();
+    if (dataBase == nullptr) {
+        ServerLog::Error("Failed to get connection! fileId:", fileId);
+        return false;
+    }
     return dataBase->ExecSql(sql);
 }
 

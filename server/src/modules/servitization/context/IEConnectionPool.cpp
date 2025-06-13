@@ -6,9 +6,9 @@
 #include "SystemUtil.h"
 
 namespace Dic::Module::IE {
-IEConnectionPool::IEConnectionPool(std::string dbPath, std::recursive_mutex& dbMutex)
+IEConnectionPool::IEConnectionPool(std::string dbPath, std::recursive_mutex& insertSqlMutex)
     : path(std::move(dbPath)),
-      insertSqlMutex(dbMutex)
+      insertSqlMutex(insertSqlMutex)
 {
 }
 

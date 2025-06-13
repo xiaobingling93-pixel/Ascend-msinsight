@@ -19,7 +19,7 @@ struct Event {
 };
 
 struct Slice : public Event {
-    int64_t trackId = 0;
+    uint64_t trackId = 0;
     std::string tid;
     int64_t ts = 0;
     int64_t dur = 0;
@@ -49,7 +49,7 @@ struct MetaData : public Event {
 };
 
 struct ThreadEvent : public Event {
-    int64_t trackId = 0;
+    uint64_t trackId = 0;
     std::string tid;
     std::string pid;
     std::string threadName;
@@ -84,7 +84,7 @@ struct ProcessEvent : public Event {
 };
 
 struct Flow : public Event {
-    int64_t trackId = 0;
+    uint64_t trackId = 0;
     std::string tid;
     int64_t ts = 0;
     std::string pid;
@@ -100,7 +100,7 @@ struct Counter : public Event {
     std::optional<std::string> cat;
     std::string args;
     std::string tid;
-    int64_t trackId = 0;
+    uint64_t trackId = 0;
 };
 } // end of namespace Trace
 } // end of namespace Timeline

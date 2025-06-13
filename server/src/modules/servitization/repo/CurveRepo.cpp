@@ -62,6 +62,9 @@ std::vector<std::map<std::string, std::string>> CurveRepo::QueryDataByColumn(con
         return {};
     }
     auto result = stmt->ExecuteQuery();
+    if (!TryOpt(result, "Query data by column get result failed!")) {
+        return {};
+    }
     std::vector<std::map<std::string, std::string>> res;
     while (result->Next()) {
         std::map<std::string, std::string> data;
