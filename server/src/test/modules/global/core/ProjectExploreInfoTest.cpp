@@ -74,7 +74,7 @@ TEST_F(ProjectExploreInfoTest, IsSubFile)
     auto children = MockParseFileInfo("parent/data/children", ParseFileType::RANK);
     auto children2 = MockParseFileInfo("data", ParseFileType::RANK);
     EXPECT_EQ(ProjectExplorerInfo::IsSubFile(parent, children), true);
-    EXPECT_EQ(ProjectExplorerInfo::IsSubFile(parent, children2), true);
+    EXPECT_EQ(ProjectExplorerInfo::IsSubFile(parent, children2), false);
 }
 
 TEST_F(ProjectExploreInfoTest, DeleteSingleFileTree)

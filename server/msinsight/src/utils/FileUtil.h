@@ -512,6 +512,8 @@ public:
     */
     static std::vector<std::string> GetSubDirs(const std::string &filePath);
 
+    static bool IsSubDir(const std::string& parent, const std::string& children);
+
     // 切分路径
     static std::vector<std::string> SplitFilePath(std::string &path);
     static bool IsSoftLink(const std::string &path);

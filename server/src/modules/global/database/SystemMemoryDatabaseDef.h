@@ -228,8 +228,10 @@ struct ProjectExplorerInfo {
 
     static bool IsSubFile(std::shared_ptr<ParseFileInfo> parent, std::shared_ptr<ParseFileInfo> children)
     {
-        return (StringUtil::StartWith(children->subId, parent->subId) ||
-                StringUtil::EndWith(parent->subId, children->subId));
+        if (parent->subId == children->subId) {
+            return true;
+        }
+        return FileUtil::IsSubDir(parent->subId, children->subId);
     }
 
     void DeleteFile(std::shared_ptr<ParseFileInfo> file)

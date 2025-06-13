@@ -702,4 +702,24 @@ std::vector<std::string> FileUtil::GetSubDirs(const std::string &filePath)
     FileUtil::FindFolders(filePath, folders, files);
     return folders;
 }
+bool FileUtil::IsSubDir(const std::string &parent, const std::string &children)
+{
+    std::vector<std::string> parentPath = StringUtil::Split(parent, "[\\\\/]");
+    std::vector<std::string> childrenPath = StringUtil::Split(children, "[\\\\/]");
+    parentPath.erase(std::remove_if(parentPath.begin(), parentPath.end(), [](const std::string &str) {
+            return str.empty();
+        }), parentPath.end());
+    childrenPath.erase(std::remove_if(childrenPath.begin(), childrenPath.end(), [](const std::string &str) {
+            return str.empty();
+        }), childrenPath.end());
+    if (childrenPath.size() < parentPath.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < parentPath.size(); i++) {
+        if (parentPath[i] != childrenPath[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 } // Dic
