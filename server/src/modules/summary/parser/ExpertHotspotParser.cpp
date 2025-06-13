@@ -13,7 +13,7 @@ namespace Dic::Module::Summary {
             return false;
         }
         // 解析文件名，获取模型阶段和rankId
-        auto searchRes = RegexUtil::RegexSearch(filePath, expertHotspotFileReg);
+        auto searchRes = RegexUtil::RegexSearch(filePath, EXPERT_HOTSPOT_FILE_REG);
         if (!searchRes.has_value() || searchRes.value().size() != regexMatchNumber) {
             return false;
         }
@@ -46,8 +46,8 @@ namespace Dic::Module::Summary {
         modelInfoMap[modelStage].moeLayer = layer;
         // 单独看热点数据，没有专家id，因此使用专家数量作为专家id的最大值
         uint64_t expertNumber = NumberSafe::Muls(modelInfoMap[modelStage].rankNumber, expertCountPerRank);
-        modelInfoMap[modelStage].expertNumber =
-            NumberUtil::CeilingClamp(expertNumber, static_cast<uint64_t>(INT_MAX));
+        modelInfoMap[modelStage].expertNumber = static_cast<int>(
+            NumberUtil::CeilingClamp(expertNumber, static_cast<uint64_t>(INT_MAX)));
         return true;
     }
 

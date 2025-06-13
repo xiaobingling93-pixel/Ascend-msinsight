@@ -15,7 +15,7 @@ bool ExpertDeploymentParser::Parse(const std::string &filePath, const std::strin
         return false;
     }
     // 解析文件名，获取模型阶段
-    auto searchRes = RegexUtil::RegexSearch(filePath, expertDeploymentFileReg);
+    auto searchRes = RegexUtil::RegexSearch(filePath, EXPERT_DEPLOYMENT_FILE_REG);
     if (!searchRes.has_value() || searchRes.value().size() != regexMatchNumber) {
         return false;
     }

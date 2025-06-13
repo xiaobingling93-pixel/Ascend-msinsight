@@ -264,7 +264,13 @@ bool TextClusterDatabase::InsertGroupInfoReturnIndex(const CommGroupParallelInfo
     sqlite3_bind_text(stmt, idx++, groupInfo.pgName.c_str(), groupInfo.pgName.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int coll = resultStartIndex;
-        index = sqlite3_column_int64(stmt, coll++);
+        int64_t id = sqlite3_column_int64(stmt, coll++);
+        if (id < 0) {
+            ServerLog::Error("Failed to get index after insert group info.");
+            sqlite3_finalize(stmt);
+            return false;
+        }
+        index = static_cast<uint64_t>(id);
     }
     sqlite3_finalize(stmt);
     return true;

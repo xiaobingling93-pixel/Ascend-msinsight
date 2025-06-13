@@ -1123,7 +1123,8 @@ std::vector<ExpertHotspotStruct> VirtualClusterDatabase::QueryExpertHotspotData(
         info.localExpertId = sqlite3_column_int(stmt, col++);
         info.modelStage = sqlite3_column_string(stmt, col++);
         info.rankId = sqlite3_column_int(stmt, col++);
-        info.visits = sqlite3_column_int64(stmt, col++);
+        int64_t visits = sqlite3_column_int64(stmt, col++);
+        info.visits = static_cast<uint64_t>(visits > 0 ? visits : 0);
         info.version = sqlite3_column_string(stmt, col++);
         info.layer = sqlite3_column_int(stmt, col++);
         res.emplace_back(info);

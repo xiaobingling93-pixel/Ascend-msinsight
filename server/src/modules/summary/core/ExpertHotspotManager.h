@@ -19,7 +19,7 @@ struct FillExpertDataParams {
     std::vector<ExpertDeploymentStruct> deployment;
     std::vector<int> moeLayerMapping;
     int colNumber = 0;
-    int expertNumberPerRank = 0;
+    uint64_t expertNumberPerRank = 0;
     std::set<int> denseLayerSet;
 };
 

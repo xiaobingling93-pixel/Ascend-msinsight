@@ -112,8 +112,8 @@ bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, co
     }
 
     // 查找文件列表
-    auto hotspotFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(expertHotspotFileReg));
-    auto deploymentFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(expertDeploymentFileReg));
+    auto hotspotFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(EXPERT_HOTSPOT_FILE_REG));
+    auto deploymentFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(EXPERT_DEPLOYMENT_FILE_REG));
     if (hotspotFiles.empty() && deploymentFiles.empty()) {
         errorMsg = "No parsable files found";
         return false;
@@ -261,9 +261,9 @@ bool ExpertHotspotManager::FillDeploymentData(std::vector<ExpertHotspotStruct> &
         }
         int aclLayer = params.moeLayerMapping[item.layer];
         for (size_t i = 0; i < item.expertList.size(); ++i) {
-            int expertIndex = NumberSafe::Add(i, NumberSafe::Muls(params.expertNumberPerRank, item.deviceId));
-            int index =  NumberSafe::Add(expertIndex, NumberSafe::Muls(aclLayer, params.colNumber));
-            if (index >= NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer)) {
+            uint64_t expertIndex = NumberSafe::Add(i, NumberSafe::Muls(params.expertNumberPerRank, item.deviceId));
+            uint64_t index =  NumberSafe::Add(expertIndex, NumberSafe::Muls(aclLayer, params.colNumber));
+            if (index >= static_cast<uint64_t>(NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer))) {
                 return false;
             }
             res[index].expertIndex = expertIndex;
@@ -297,7 +297,7 @@ bool ExpertHotspotManager::FillExpertInfo(std::vector<ExpertHotspotStruct> &hots
                                           const std::vector<ExpertDeploymentStruct> &deployment)
 {
     // 获取每个rank的专家数，以及热力图的列数目
-    int expertNumberPerRank = 0;
+    uint64_t expertNumberPerRank = 0;
     int colNumber = 0;
     if (!hotspotInfos.empty()) {
         std::vector<ExpertHotspotStruct> filteredHotspots;
@@ -429,7 +429,7 @@ std::map<std::string, ExpertHotspotStruct> ExpertHotspotManager::CalHeatMap(
             std::string key = modelStage + "_" + std::to_string(rankId) + "_" + std::to_string(layer);
             res[key].modelStage = modelStage;
             res[key].rankId = rankId;
-            res[key].layer = NumberSafe::Sub(layer, denseLayerList.size());
+            res[key].layer = static_cast<int>(NumberSafe::Sub(layer, denseLayerList.size()));
             res[key].visits += hardwareSliceList[hardwareIndex++].duration;
             res[key].version = "profiling";
             isDenseLayer = false;
@@ -467,7 +467,7 @@ bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, con
             return false;
         }
     }
-    modelInfo.moeLayer = NumberSafe::Sub(modelInfo.modelLayer, modelInfo.denseLayerList.size());
+    modelInfo.moeLayer = static_cast<int>(NumberSafe::Sub(modelInfo.modelLayer, modelInfo.denseLayerList.size()));
     modelInfo.expertNumber = modelInfo.rankNumber;
     ModelInfo curModelInfo = GetModelInfo(clusterPath);
     modelInfo.rankNumber = std::max(modelInfo.rankNumber, curModelInfo.rankNumber);

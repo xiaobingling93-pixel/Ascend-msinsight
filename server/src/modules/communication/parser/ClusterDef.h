@@ -446,8 +446,8 @@ const std::string KEY_RANK_NUMBER = "rankNumber";
 const std::string KEY_EXPERT_NUMBER = "expertNumber";
 const std::string KEY_MODEL_LAYER = "modelLayer";
 const int CACHE_SIZE = 1024;
-const std::string expertHotspotFileReg = R"((prefill|decode)_([0-9]{1,4})\.csv$)";
-const std::string expertDeploymentFileReg = R"((prefill|decode)_global_deployment\.json$)";
+const std::string EXPERT_HOTSPOT_FILE_REG = R"((prefill|decode)_([0-9]{1,4})\.csv$)";
+const std::string EXPERT_DEPLOYMENT_FILE_REG = R"((prefill|decode)_global_deployment\.json$)";
 
 const std::string PACKET_ANALYZER_TITLE = "Packet Analysis";
 struct PacketAnalyzerData {

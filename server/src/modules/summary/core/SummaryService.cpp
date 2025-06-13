@@ -26,8 +26,8 @@ bool SummaryService::QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared
         ServerLog::Warn("Fail to get extremum timestamp when query summary base info.");
         return false;
     }
-    baseInfo.collectStartTime =
-        NumberUtil::CeilingClamp(min / (numberThousands * numberThousands), static_cast<uint64_t>(INT64_MAX));
+    baseInfo.collectStartTime = static_cast<int64_t>(
+        NumberUtil::CeilingClamp(min / (numberThousands * numberThousands), static_cast<uint64_t>(INT64_MAX)));
     baseInfo.collectDuration =
         NumberUtil::CeilingClamp((max - min) / numberThousands, static_cast<uint64_t>(INT64_MAX));
     return true;
