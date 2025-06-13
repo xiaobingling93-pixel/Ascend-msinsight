@@ -295,8 +295,8 @@ std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>> SystemMemoryDatab
 
     while (resultSet->Next()) {
         auto info = std::make_shared<ParseFileInfo>();
-        info->id = resultSet->GetUint64("id");
-        info->projectExplorerId = resultSet->GetUint64("projectExplorerId");
+        info->id = static_cast<int64_t>(resultSet->GetUint64("id"));
+        info->projectExplorerId = static_cast<int64_t>(resultSet->GetUint64("projectExplorerId"));
         info->parseFilePath = resultSet->GetString("parseFilePath");
         info->fileId = resultSet->GetString("fileId");
         info->subId = resultSet->GetString("subId");

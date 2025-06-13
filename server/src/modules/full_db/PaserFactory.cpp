@@ -23,10 +23,9 @@
 #include "TrackInfoManager.h"
 #include "ExpertHotspotManager.h"
 #include "TrackInfoManager.h"
-
+namespace Dic::Module {
 using namespace Dic;
 using namespace Dic::Server;
-using namespace Dic::Module;
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Global;
 // 静态变量 锁初始化
@@ -468,3 +467,4 @@ void ProjectParserBase::AddRankDeviceParseFileInfo(ProjectExplorerInfo &info, st
 }
 
 ProjectAnalyzeRegister<ProjectParserBase> pReg(ParserType::OTHER);
+}

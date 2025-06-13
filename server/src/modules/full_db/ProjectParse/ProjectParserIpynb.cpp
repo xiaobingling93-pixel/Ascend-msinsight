@@ -11,9 +11,10 @@
 #include "ProjectAnalyze.h"
 #include "ProjectParserIpynb.h"
 
-using namespace Dic::Module;
+namespace Dic::Module {
 using namespace Dic::Module::Global;
 using namespace Jupyter;
+
 // LCOV_EXCL_BR_START
 void ProjectParserIpynb::Parser(const std::vector<ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
@@ -29,7 +30,7 @@ void ProjectParserIpynb::Parser(const std::vector<ProjectExplorerInfo> &projectI
     // 检查jupyter服务是否存在
     std::string jupyterVersionResult;
     if (CmdUtil::ExecuteCmdWithResult("jupyter-lab --version", jupyterVersionResult)
-            && !jupyterVersionResult.empty()) {
+        && !jupyterVersionResult.empty()) {
         IpynbImportResponse(request, projectInfos[0], true);
         JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, path);
     } else {
@@ -39,7 +40,7 @@ void ProjectParserIpynb::Parser(const std::vector<ProjectExplorerInfo> &projectI
 }
 
 void ProjectParserIpynb::IpynbImportResponse(ImportActionRequest &request, const ProjectExplorerInfo &projectInfo,
-                                             bool isDisplay)
+    bool isDisplay)
 {
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
@@ -87,7 +88,7 @@ ProjectTypeEnum ProjectParserIpynb::GetProjectType(const std::string &dataPath)
 // LCOV_EXCL_BR_STOP
 
 void ProjectParserIpynb::BuildProjectExploreInfo(ProjectExplorerInfo &projectInfo,
-                                                 const std::vector<std::string> &parsedFiles)
+    const std::vector<std::string> &parsedFiles)
 {
     ProjectParserBase::BuildProjectExploreInfo(projectInfo, parsedFiles);
     for (const auto &file: parsedFiles) {
@@ -110,4 +111,5 @@ std::string ProjectParserIpynb::GetFileIdWithDb(const std::string &filePath)
     return FileUtil::SplicePath(dir, dbFileName);
 }
 
-ProjectAnalyzeRegister<ProjectParserIpynb> pRegIPYNB(ParserType::IPYNB);
+static ProjectAnalyzeRegister<ProjectParserIpynb> pRegIPYNB(ParserType::IPYNB);
+}

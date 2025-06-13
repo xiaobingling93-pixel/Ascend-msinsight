@@ -558,38 +558,39 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
     }
 
     for (const auto& operatorFile : operatorFiles) {
-        if (MemoryParse::Instance().OperatorParse(operatorFile, fileId)) {
-            continue;
+        if (!MemoryParse::Instance().OperatorParse(operatorFile, fileId)) {
+            message = "Failed to parse operator memory file, path = " + operatorFile;
+            return false;
         }
-        message = "Failed to parse operator memory file, path = " + operatorFile;
-        return false;
     }
 
     for (const auto& recordFile : recordFiles) {
-        if (MemoryParse::Instance().RecordToParse(recordFile, fileId)) {
-            continue;
+        if (!MemoryParse::Instance().RecordToParse(recordFile, fileId)) {
+            message = "Failed to parse operator record file, path = " + recordFile;
+            return false;
         }
-        message = "Failed to parse operator record file, path = " + recordFile;
-        return false;
     }
 
     for (const auto& staticOpFile : staticOpFiles) {
-        if (MemoryParse::Instance().StaticOpParse(staticOpFile, fileId)) {
-            continue;
+        if (!MemoryParse::Instance().StaticOpParse(staticOpFile, fileId)) {
+            message = "Failed to parse staticOp record file, path = " + staticOpFile;
+            return false;
         }
-        message = "Failed to parse staticOp record file, path = " + staticOpFile;
-        return false;
     }
 
     for (const auto& componentFile : componentFiles) {
-        if (MemoryParse::Instance().ComponentParse(componentFile, fileId)) {
-            continue;
+        if (!MemoryParse::Instance().ComponentParse(componentFile, fileId)) {
+            message = "Failed to parse npu module mem file, path = " + componentFile;
+            return false;
         }
-        message = "Failed to parse npu module mem file, path = " + componentFile;
-        return false;
     }
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
+    if (memoryDatabase == nullptr) {
+        message = StringUtil::StrJoin("Failed to get db connection, rankId:", fileId);
+        return false;
+    }
+
     ParseEndCallBack(fileId, memoryDatabase->GetDbPath(), true, "");
     Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
     return true;

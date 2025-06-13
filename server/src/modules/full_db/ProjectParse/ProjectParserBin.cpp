@@ -14,9 +14,10 @@
 #include "DataBaseManager.h"
 #include "ProjectParserBin.h"
 
-using namespace Dic::Module;
+namespace Dic::Module {
 using namespace Dic::Server;
 using namespace Dic::Module::Global;
+
 void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
@@ -83,7 +84,7 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
     response.body.isSimulation = true;
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
     sourceFileParser.Parse(empty, rankId, selectedFolder, fileId);
-    for (const auto &rankEntry : rankListMap) {
+    for (const auto &rankEntry: rankListMap) {
         if (rankEntry.second.empty()) {
             continue;
         }
@@ -94,7 +95,7 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
     response.body.isBinary = true;
     response.body.coreList = sourceFileParser.GetCoreList();
     response.body.sourceList = sourceFileParser.GetSourceList();
-    response.body.hasCachelineRecords =  sourceFileParser.HasCachelineRecords();
+    response.body.hasCachelineRecords = sourceFileParser.HasCachelineRecords();
     response.body.version = sourceFileParser.GetInstrVersion();
 }
 
@@ -123,8 +124,8 @@ void ProjectParserBin::SetParseCallBack(FileParser &fileParser)
 
     // 复用解析完成回调函数设置逻辑
     std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> progressFunc =
-        std::bind(ParseProgressCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-        std::placeholders::_4);
+            std::bind(ParseProgressCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                      std::placeholders::_4);
     fileParser.SetParseProgressCallBack(progressFunc);
 }
 
@@ -134,7 +135,7 @@ ProjectTypeEnum ProjectParserBin::GetProjectType(const std::string &dataPath)
 }
 
 void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
-                                      Global::BaselineInfo &baselineInfo)
+    Global::BaselineInfo &baselineInfo)
 {
     if (projectInfo.fileInfoMap.empty()) {
         return;
@@ -166,13 +167,14 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
 }
 
 void ProjectParserBin::BuildProjectExploreInfo(Dic::Module::Global::ProjectExplorerInfo &projectInfo,
-                                               const std::vector<std::string> &parsedFiles)
+    const std::vector<std::string> &parsedFiles)
 {
     ProjectParserBase::BuildProjectExploreInfo(projectInfo, parsedFiles);
     std::for_each(parsedFiles.begin(), parsedFiles.end(), [&projectInfo](const std::string &parseFile) {
         ProjectParserBin::BuildProjectInfoFromParseFile(projectInfo, parseFile);
     });
 }
+
 void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projectInfo, const std::string &parsedFile)
 {
     // bin类型没有上层结构
@@ -184,6 +186,7 @@ void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projec
     parseFileInfo->fileId = GetFileIdWithDb(parsedFile);
     projectInfo.AddSubParseFileInfo(parseFileInfo);
 }
+
 std::string ProjectParserBin::GetFileIdWithDb(const std::string &filePath)
 {
     // 避免一个目录下有多个bin文件，这里通过文件名做区分
@@ -193,4 +196,5 @@ std::string ProjectParserBin::GetFileIdWithDb(const std::string &filePath)
     return FileUtil::SplicePath(dir, dbFileName);
 }
 
-ProjectAnalyzeRegister<ProjectParserBin> pRegBIN(ParserType::BIN);
+static ProjectAnalyzeRegister<ProjectParserBin> pRegBIN(ParserType::BIN);
+}
