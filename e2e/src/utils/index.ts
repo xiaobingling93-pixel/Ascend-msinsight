@@ -3,7 +3,7 @@
  */
 
 import { expect, type FrameLocator, type Page, WebSocket } from '@playwright/test';
-import { FrameworkPage, FileExploreDialogPage } from '../page-object';
+import { FrameworkPage, FileExploreDialogPage } from '@/page-object';
 import { FilePath, WEBSOCKET_URL } from './constants';
 
 let iterationNum = 0;
@@ -124,6 +124,7 @@ export function waitForResponse(ws: WebSocket, matchCondition: (payload: any) =>
             try {
                 const res = JSON.parse(event.payload);
                 if (matchCondition(res)) {
+                    ws.off('framereceived', frameHandler);
                     resolve(res);
                 }
             } catch (error) {

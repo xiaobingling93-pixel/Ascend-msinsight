@@ -191,13 +191,16 @@ test.describe('Communication', () => {
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
         const expandIconList = (await dataAnalysisTable.getCell(1, 1)).locator('div div');
         const expandIcon = expandIconList.first();
+        const firstRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
         await expandIcon.click();
-        await requestTableDataResp;
+        await firstRequest;
         // 定位到子表格元素
         const expandTableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container').locator('.ant-table-container');
         const expandTable = new TableHelpers(page, expandTableLocator, communicationFrame);
         // 表格滚动到可视区域并点击表头排序
+        const secondRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
         await expandTable.sortTableHead('Elapse Time(ms)');
+        await secondRequest;
         await page.mouse.move(0, 0);
         await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 500 });
         // 定位子表格分页器组件
@@ -207,14 +210,17 @@ test.describe('Communication', () => {
         await expect(totalTextDiv).toHaveText('Total 59 items');
         // 点击分页按钮
         const pageLink = pagination.locator('.ant-pagination-item.ant-pagination-item-3 a'); // 第三页
+        const thirdRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
         await pageLink.click();
-        await waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
+        await thirdRequest;
         await expect(await expandTable.getCell(1, 2)).toHaveText('1.518');
         // 验证分页器输入框
         const paginationInput = pagination.locator('.ant-pagination-options .ant-pagination-options-quick-jumper input');
         await paginationInput.focus();
         await paginationInput.fill('1');
+        const forthRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
         await paginationInput.press('Enter');
+        await forthRequest;
         await expect(await expandTable.getCell(1, 2)).toHaveText('0.0421');
     });
 
