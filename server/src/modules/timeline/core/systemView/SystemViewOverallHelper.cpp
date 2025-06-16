@@ -84,7 +84,7 @@ void SystemViewOverallHelper::AggregateComputingOverallMetrics(std::vector<Syste
         tempRes.totalTime = otherComputingTime;
         tempRes.name = OVERALL_CAT_OTHER;
         tempRes.ValidateValues();
-        tempRes.id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1));
+        tempRes.id = std::to_string(Protocol::SystemViewOverallRes::idCounter++);
         responseBody[0].children.push_back(tempRes);
     }
     SummarizeSystemViewOverall(responseBody[0], 0);
@@ -154,7 +154,7 @@ SystemViewOverallRes &SystemViewOverallHelper::FindOrCreateChild(std::vector<Sys
     }
     SystemViewOverallRes tempRes;
     tempRes.name = name;
-    tempRes.id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1));
+    tempRes.id = std::to_string(Protocol::SystemViewOverallRes::idCounter++);
     list.push_back(tempRes);
     return list.back();
 }

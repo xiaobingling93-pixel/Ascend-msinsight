@@ -8,13 +8,12 @@
 #include "SystemViewOverallRepoFactory.h"
 #include "QuerySystemViewOverallHandler.h"
 
-std::atomic<uint32_t> Dic::Protocol::SystemViewOverallRes::idCounter{0};
+thread_local uint32_t  Dic::Protocol::SystemViewOverallRes::idCounter{0};
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
 bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SystemViewOverallRequest &>(*requestPtr);
-    Protocol::SystemViewOverallRes::idCounter = 0;
     std::unique_ptr<SystemViewOverallResponse> responsePtr = std::make_unique<SystemViewOverallResponse>();
     SystemViewOverallResponse &response = *responsePtr;
     SetBaseResponse(request, response);
@@ -102,19 +101,19 @@ double QuerySystemViewOverallHandler::GetOverlapAnalysisData(SystemViewOverallHe
     // 组装一层级数据
     Protocol::SystemViewOverallRes tmpRes = { .totalTime = computingTime, .ratio = computingRatio, .nums = 0,
         .avg = 0, .max = 0, .min = UINT32_MAX, .name = COMPUTING_TIME, .children = {}, .level = 1,
-        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))};
+        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)};
     responseBody.emplace_back(tmpRes);
     tmpRes = {.totalTime = communicationNotOverlapped, .ratio = communicationRatio, .nums = 0, .avg = 0, .max = 0,
         .min = 0, .name = COMMUNICATION_NOT_OVERLAP_TIME, .children = {}, .level = 1,
-        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))};
+        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)};
     responseBody.emplace_back(tmpRes);
     tmpRes = {.totalTime = freeTime, .ratio = freeRatio, .nums = 0, .avg = 0, .max = 0,
         .min = 0, .name = FREE_TIME, .children = {}, .level = 1,
-        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))};
+        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)};
     responseBody.emplace_back(tmpRes);
     tmpRes = {.totalTime = NumberUtil::DoubleReservedNDigits(e2eTime, TWO), .ratio = e2eRatio, .nums = 0, .avg = 0,
               .max = 0, .min = 0, .name = E2E_TIME, .children = {}, .level = 1,
-        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))};
+        .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)};
     return e2eTime;
 }
 } // namespace Dic::Module::Timeline

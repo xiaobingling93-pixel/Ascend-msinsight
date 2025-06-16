@@ -372,7 +372,7 @@ struct SystemViewOverallRes {
     std::vector<SystemViewOverallRes> children;
     uint32_t level{1};
     // 每个结构体对象返回一个唯一id
-    static std::atomic<uint32_t> idCounter;
+    static thread_local uint32_t idCounter;
     std::string id;
 
     void ValidateValues()

@@ -112,14 +112,14 @@ void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(
         Protocol::SystemViewOverallRes group = {
             .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = data.groupName, .children = {}, .level = 2, // level 2
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))
+            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
         };
         group.totalTime = NumberUtil::DoubleReservedNDigits(data.op.uncoveredTransmitTime * NS_TO_US, TWO);
         group.ratio = NumberUtil::DoubleReservedNDigits(group.totalTime / e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
         Protocol::SystemViewOverallRes wait = {
             .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = WAIT_TIME, .children = {}, .level = 3, // level 3
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))
+            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
         };
         uint64_t minWait = UINT64_MAX;
         for (auto &tmpItem : data.taskMap) {
@@ -130,7 +130,7 @@ void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(
         Protocol::SystemViewOverallRes transmit = {
             .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = TRANSMIT_TIME, .children = {}, .level = 3, // level 3
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))
+            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
         };
         if (data.op.uncoveredTransmitTime > minWait) {
             transmit.totalTime =

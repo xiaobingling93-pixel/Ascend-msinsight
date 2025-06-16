@@ -301,7 +301,7 @@ void SystemViewOverallDbRepo::QueryCommunicationOverlapOverallInfos(
         Protocol::SystemViewOverallRes notOverlapped = {
             .totalTime = notOverlapTime, .ratio = ratio, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = COMMUNICATION_NOT_OVERLAP_TIME, .children = {}, .level = 1, // level 1
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter.fetch_add(1))
+            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
         };
         responseBody.emplace_back(notOverlapped);
     }
