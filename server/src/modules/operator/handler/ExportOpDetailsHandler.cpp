@@ -148,6 +148,12 @@ namespace Dic::Module::Operator {
             return false;
         }
 
+        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "operator");
+        if (request.params.deviceId.empty()) {
+            ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail because empty device id.");
+            return false;
+        }
+
         bool rst = request.params.isCompare ?
                 HandleCompareDataRequest(request, dynamic_cast<OperatorExportDetailsResponse &>(*responsePtr)) :
                 HandleDataRequest(request, dynamic_cast<OperatorExportDetailsResponse &>(*responsePtr));
@@ -159,12 +165,10 @@ namespace Dic::Module::Operator {
                                                           OperatorExportDetailsResponse &response)
     {
         if (request.params.IsStatisticGroup()) {
-            HandleStatisticCompareDataRequest(request, response);
-            return true;
+            return HandleStatisticCompareDataRequest(request, response);
         }
         if (request.params.IsNotStatisticGroup()) {
-            HandleNotStatisticCompareDataRequest(request, response);
-            return true;
+            return HandleNotStatisticCompareDataRequest(request, response);
         }
         return false;
     }
@@ -193,7 +197,9 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
             return false;
         }
-        CreateCsvFile(request, response);
+        if (!CreateCsvFile(request, response)) {
+            return false;
+        }
         std::string headerStr = concatHeader(it->second.header);
         AppendFileContent(headerStr);
         for (auto &dataItem : operatorStatisticCompareResponse.datas) {
@@ -233,7 +239,9 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
             return false;
         }
-        CreateCsvFile(request, response);
+        if (!CreateCsvFile(request, response)) {
+            return false;
+        }
         std::string headerStr = request.params.group == "Operator"
                 ? concatHeader(it->second.header, operatorNotStatisticCompareResponse.pmuHeaders)
                 : concatHeader(it->second.header);
@@ -256,12 +264,10 @@ namespace Dic::Module::Operator {
                                                    OperatorExportDetailsResponse &response)
     {
         if (request.params.IsStatisticGroup()) {
-            HandleStatisticDataRequest(request, response);
-            return true;
+            return HandleStatisticDataRequest(request, response);
         }
         if (request.params.IsNotStatisticGroup()) {
-            HandleNotStatisticDataRequest(request, response);
-            return true;
+            return HandleNotStatisticDataRequest(request, response);
         }
         return false;
     }
@@ -271,11 +277,6 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
-        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "operator");
-        if (request.params.deviceId.empty()) {
-            ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail because empty device id.");
-            return false;
-        }
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
             rankId: request.params.rankId,
@@ -294,7 +295,9 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
             return false;
         }
-        CreateCsvFile(request, response);
+        if (!CreateCsvFile(request, response)) {
+            return false;
+        }
         std::string headerStr = concatHeader(it->second.header);
         AppendFileContent(headerStr);
         do {
@@ -310,7 +313,7 @@ namespace Dic::Module::Operator {
                     response.exceedingFileLimit = true;
                     DestroyFile();
                     return true;
-                };
+                }
             }
         } while (NumberSafe::Muls(statisticReqParams.current, statisticReqParams.pageSize) < statisticReqResponse.total
                  && NumberSafe::Muls(statisticReqParams.current, statisticReqParams.pageSize) > 0);
@@ -324,11 +327,6 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
-        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "operator");
-        if (request.params.deviceId.empty()) {
-            ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail because empty device id.");
-            return false;
-        }
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
             rankId: request.params.rankId,
@@ -346,7 +344,9 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
             return false;
         }
-        CreateCsvFile(request, response);
+        if (!CreateCsvFile(request, response)) {
+            return false;
+        }
         do {
             statisticReqParams.current++;
             if (!database || !database->QueryOperatorDetailInfo(statisticReqParams, detailInfoReqResponse)) {
@@ -354,6 +354,7 @@ namespace Dic::Module::Operator {
                 DestroyFile();
                 return false;
             }
+
             // LCOV_EXCL_BR_START
             if (statisticReqParams.current == 1) {
                 std::string headerStr = request.params.group == "Operator"
@@ -367,7 +368,7 @@ namespace Dic::Module::Operator {
                     response.exceedingFileLimit = true;
                     DestroyFile();
                     return true;
-                };
+                }
             }
             // LCOV_EXCL_BR_STOP
         } while (statisticReqParams.current * statisticReqParams.pageSize < detailInfoReqResponse.total);
@@ -375,7 +376,7 @@ namespace Dic::Module::Operator {
         return true;
     }
 
-    void ExportOpDetailsHandler::CreateCsvFile(OperatorExportDetailsRequest &request,
+    bool ExportOpDetailsHandler::CreateCsvFile(OperatorExportDetailsRequest &request,
                                                OperatorExportDetailsResponse &response)
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
@@ -391,6 +392,11 @@ const std::string_view MSVP_SLASH = "/";
 #endif
         std::string filePath = projectInfo[0].fileName + std::string(MSVP_SLASH) + "operator_detail_group_by_"
                 + request.params.group + "_" + rankId + "_" + std::to_string(timestamp) + ".csv";
+        bool isInvalidPath = FileUtil::CheckPathInvalidChar(filePath);
+        if (isInvalidPath) {
+            ServerLog::Error("[Operator]File path is invalid in export op detail.");
+            return false;
+        }
         ofs.open(filePath, std::ios::out | std::ios::trunc);
         response.filePath = filePath;
         currentFileSize = 0;
@@ -404,6 +410,7 @@ const std::string_view MSVP_SLASH = "/";
         chmod(filePath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
         ofs.open(filePath, std::ofstream::out | std::ofstream::app);
 #endif
+        return true;
     }
 
     bool ExportOpDetailsHandler::AppendFileContent(const std::string &str)

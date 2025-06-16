@@ -34,12 +34,12 @@ namespace Dic::Module::Operator {
                                         OperatorExportDetailsResponse &responsePtr);
         bool HandleNotStatisticDataRequest(OperatorExportDetailsRequest &request,
                                            OperatorExportDetailsResponse &responsePtr);
-        void CreateCsvFile(OperatorExportDetailsRequest &request, OperatorExportDetailsResponse &response);
+        bool CreateCsvFile(OperatorExportDetailsRequest &request, OperatorExportDetailsResponse &response);
         bool AppendFileContent(const std::string &str); // 写入文件的内容需校验再传入
         void DestroyFile();
         std::ofstream ofs;
-        int maxFileSize = 1024 * 1024 * 1024; // 1GB
-        int currentFileSize = 0;
+        size_t maxFileSize = 1024 * 1024 * 1024; // 1GB
+        size_t currentFileSize = 0;
     };
 }
 
