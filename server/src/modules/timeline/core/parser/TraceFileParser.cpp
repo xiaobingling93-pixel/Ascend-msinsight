@@ -91,7 +91,9 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
         StringUtil::EndWith(filePathArr[0], "profiler.db")) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
-        database->QueryExtremumTimestamp(min, max);
+        if (!database->QueryExtremumTimestamp(min, max)) {
+            return false;
+        }
         auto threadMap = database->QueryAllThreadMap();
         TrackInfoManager::Instance().UpdateTrackIdMap(rankId, threadMap);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);

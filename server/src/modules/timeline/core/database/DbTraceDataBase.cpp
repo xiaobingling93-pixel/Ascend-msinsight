@@ -86,7 +86,7 @@ bool DbTraceDataBase::GenerateOverlapAnalysisMetadata(const std::string &fileId,
 
 bool DbTraceDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
-    return false;
+    return true;
 }
 
 std::vector<FlowLocation> DbTraceDataBase::ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet)

@@ -171,7 +171,9 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
         return;
     }
     event->body.unit.metadata.cardAlias = database->QueryCardAlias();
-    database->QueryExtremumTimestamp(min, max);
+    if (!database->QueryExtremumTimestamp(min, max)) {
+        return;
+    }
     if (min == max && max == 0) {
         event->body.startTimeUpdated = false;
     } else {

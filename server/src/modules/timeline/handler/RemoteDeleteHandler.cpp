@@ -42,7 +42,9 @@ void RemoteDeleteHandler::GetUpdateTime(RemoteDeleteBody &body)
                 ServerLog::Error("Remote delete failed to get connection.");
                 return;
             }
-            database->QueryExtremumTimestamp(min, max);
+            if (!database->QueryExtremumTimestamp(min, max)) {
+                return;
+            }
             if (min != max || max != 0) {
                 body.startTimeUpdated = true;
                 TraceTime::Instance().UpdateTime(min, max);
