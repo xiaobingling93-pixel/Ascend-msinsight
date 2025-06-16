@@ -228,6 +228,7 @@ export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<stri
     expandable: boolean;
     isExpanded: boolean;
     height: () => number;
+    isMultiDeviceHidden: boolean; // 判断是否是单 Host 多 Device 中需要隐藏的泳道
     isDisplay: boolean;
     children?: InsightUnit[];
     type: 'basic' | 'transparent';
@@ -297,6 +298,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
     const basicUnitClass = class implements InsightUnit {
         parent?: InsightUnit;
         _children?: InsightUnit[];
+        isMultiDeviceHidden = false;
         isUnitVisible = true;
         isMerged = false;
         type = 'basic' as const;
@@ -366,6 +368,7 @@ export { unitBase as unit };
 export const transparentUnit = <T extends MetaDataBase = MetaDataBase>(params:
 Pick<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
     const transparentUnitClass = class implements InsightUnit {
+        isMultiDeviceHidden = false;
         isUnitVisible = true;
         isMerged = false;
         isParseLoading = false; // 是否正在解析

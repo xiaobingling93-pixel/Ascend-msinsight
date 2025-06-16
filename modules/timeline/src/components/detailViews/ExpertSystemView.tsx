@@ -22,7 +22,7 @@ import { BaseSummary, type BaseSummaryProps, type SelectContentViewProps } from 
 import { ExpertSummary } from './ExpertSummary';
 import { queryExpertAnalysis, queryOperatorDispatch } from '../../api/request';
 import type { BaseSummaryRowItemType } from '../../api/interface';
-import { jumpToUnitOperator } from '../../utils';
+import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 
 const ExpertAnalysis = observer((props: SelectContentViewProps) => {
     return <ExpertSummary request={queryExpertAnalysis} {...props} />;

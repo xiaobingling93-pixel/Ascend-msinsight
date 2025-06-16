@@ -19,7 +19,7 @@ import type { FilterValue, SorterResult } from 'antd/lib/table/interface';
 import { Session } from '../../entity/session';
 import { getDefaultColumData, getPageData, PageType, queryOneKernel } from './Common';
 import type { CardMetaData } from '../../entity/data';
-import { jumpToUnitOperator } from '../../utils';
+import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';

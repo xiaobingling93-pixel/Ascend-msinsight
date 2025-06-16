@@ -183,6 +183,7 @@ const initUnitSessionInfo = (session: Session, result: ImportResult, dataSource:
     session.isIpynb = result.isIpynb;
     session.isCluster = result.isCluster;
     session.isMultiCluster = new Set(result.result.map(({ cluster }) => cluster)).size > 1;
+    session.isMultiDevice = result.isMultiDevice;
 };
 
 const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSource: DataSource): void => {
@@ -233,6 +234,7 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
         }
     });
     session.sortUnits();
+    session.updateUnitsForMultiDevice();
 };
 
 const createBaselineCard = (session: Session | undefined, result: TimelineCard[], dataSource: DataSource): void => {
@@ -416,6 +418,7 @@ const resetPage = (data?: Record<string, unknown>): void => {
         if (!session) {
             return;
         }
+        session.isMultiDevice = false;
         session.isFullDb = false;
         clearUnits(session, data);
         session.simpleCache.clear();

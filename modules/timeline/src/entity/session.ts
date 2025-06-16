@@ -19,6 +19,7 @@ import { InsightUnitSet } from '../utils/PageSetting';
 import { getTimeOffsetKey } from '../insight/units/utils';
 import { CardMetaData, SliceData, SliceMeta, ThreadMetaData, ThreadTrace, ThreadTraceRequest } from './data';
 import { CardRankInfo } from '../api/interface';
+import { getRootUnit } from '../utils';
 
 export const MAX_ZOOM_COUNT = 10000;
 
@@ -109,6 +110,7 @@ export class Session {
     // 页面可视范围的Card的CardId
     viewedCardIdSet: Set<string> = new Set<string>();
     selectedMultiSlice: string = '';
+    isMultiDevice: boolean = false; // 判断项目是否是单Host多Device
     isFullDb: boolean = false;
     // 是否是ipynb文件
     isIpynb: boolean = false;
@@ -477,6 +479,18 @@ export class Session {
         });
     }
 
+    // 对于 Text 的单 Host 多 Device 场景，只保留一个卡，对于 db 的单 Host 多 Device 场景，只保留一个 host
+    updateUnitsForMultiDevice(): void {
+        const rootUnits = getRootUnit(this._units); // db 情况 this._units 不是根泳道，因此需要先获取根泳道
+        if (!this.isMultiDevice) {
+            return;
+        }
+        const len = rootUnits.length;
+        for (let i = 1; i < len; ++i) {
+            this.setUnitMultiDeviceHidden(rootUnits[i], true);
+        }
+    }
+
     setSelectedUnitKeys(value: [string] | []): void {
         if (this.selectedRangeIsLock) {
             return;
@@ -495,6 +509,24 @@ export class Session {
         if (this.contextMenu.zoomHistory.length > MAX_ZOOM_COUNT) {
             this.contextMenu.zoomHistory = this.contextMenu.zoomHistory.slice(-MAX_ZOOM_COUNT);
         }
+    }
+
+    // 用于更新 unit 下的全部泳道是否可见
+    private setUnitMultiDeviceHidden(unit: InsightUnit, hidden: boolean): void {
+        const visited = new Set<InsightUnit>();
+        const setUnitDisplayable = (child: InsightUnit): void => {
+            if (visited.has(child)) {
+                return;
+            }
+            child.isMultiDeviceHidden = hidden;
+            visited.add(child);
+            if (child.children) {
+                for (const item of child.children) {
+                    setUnitDisplayable(item);
+                }
+            }
+        };
+        setUnitDisplayable(unit);
     }
 
     private getMaxRelativeOffset(): number {

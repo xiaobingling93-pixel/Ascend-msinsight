@@ -42,7 +42,7 @@ import { ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData, PageType } from '../../components/detailViews/Common';
 import { safeJSONParse } from 'ascend-utils';
 import { SorterResult } from 'antd/lib/table/interface';
-import { jumpToUnitOperator } from '../../utils';
+import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import { queryAllSameOperatorsDuration } from '../../api/request';
 import type { OpData } from '../../api/interface';
 

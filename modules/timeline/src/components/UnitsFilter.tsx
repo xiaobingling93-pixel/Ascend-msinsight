@@ -314,7 +314,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
     const unitNames = new Set<string>();
 
     const visitUnit = (unit: InsightUnit): void => {
-        if (unit.name === 'Card') {
+        if (unit.name === 'Card' && !unit.isMultiDeviceHidden) {
             cardNames.add((unit.metadata as CardMetaData).cardName ?? '');
         }
         if (unit.name === 'Process' || unit.name === 'Label') {

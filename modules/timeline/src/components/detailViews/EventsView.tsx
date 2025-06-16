@@ -13,7 +13,7 @@ import { getTimeOffset } from '../../insight/units/utils';
 import { useTranslation } from 'react-i18next';
 import i18n from 'ascend-i18n';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, SelectContentViewProps } from './SystemView';
-import { jumpToUnitOperator } from '../../utils';
+import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 export interface EventTableData {
     eventDetails: EventDetails[];
     columnList: EventTableColumn[];

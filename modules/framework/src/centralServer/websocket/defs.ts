@@ -106,6 +106,7 @@ export interface ImportResultBody {
     isSimulation: boolean;
     isIpynb: boolean;
     isCluster: boolean;
+    isMultiDevice: boolean; // 判断是否是单Host多Device项目
     children: ImportTreeInfo[];
 }
 

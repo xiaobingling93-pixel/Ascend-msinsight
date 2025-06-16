@@ -383,7 +383,7 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
         let height = initialHeight;
 
         for (const unit of units) {
-            if (!unit.isDisplay || unit.isMerged) {
+            if (!unit.isDisplay || unit.isMerged || unit.isMultiDeviceHidden) {
                 continue;
             }
 

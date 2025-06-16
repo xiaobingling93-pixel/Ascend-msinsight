@@ -17,7 +17,7 @@ import type { InsightUnit } from '../../entity/insight';
 import { getTimeOffset } from '../../insight/units/utils';
 import type { ThreadMetaData } from '../../entity/data';
 import { ProcessMetaData } from '../../entity/data';
-import { jumpToUnitOperator } from '../../utils';
+import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 
 const CONTAINER = styled.div`
     height: calc(100% - 50px);

@@ -19,6 +19,7 @@ import { throttle } from 'lodash';
 import { DynamicTooltip, Responsive } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 import { message, Spin } from 'antd';
+import { transformCardIdInfo } from 'ascend-utils';
 
 const CanvasContainer = styled.div`
     max-height: 720px;
@@ -322,8 +323,11 @@ export const ParallelismGraph = observer(({ session, generateConditions, targetR
                 drawer.render(canvasContainerRef.current?.scrollLeft ?? 0, canvasContainerRef.current?.scrollTop ?? 0);
             });
             const rankDbPathMap: Map<string, string> = new Map();
-            data.rankDbPathList?.forEach((item) => rankDbPathMap.set(item.rankId, item.dbPath));
-
+            const getRealRankId = (cardId: string): string => {
+                const cardInfo = transformCardIdInfo(cardId);
+                return cardInfo.rankName !== '' ? cardInfo.rankName : cardInfo.deviceId;
+            };
+            data.rankDbPathList?.forEach((item) => rankDbPathMap.set(getRealRankId(item.rankId), item.dbPath));
             // 更新所有通信域数据、指标数据
             runInAction(() => {
                 const connections = data.connections.map(item => item.list.toString());

@@ -280,7 +280,7 @@ const orderOptions = {
     options: {
         when: (unit: TreeNode<InsightUnit>): boolean => unit.isExpanded,
         bypass: (unit: TreeNode<InsightUnit>): boolean => unit.type === 'transparent',
-        exclude: (unit: TreeNode<InsightUnit>): boolean => (unit.pinType === 'move' && isPinned(unit)) || !unit.isDisplay,
+        exclude: (unit: TreeNode<InsightUnit>): boolean => (unit.pinType === 'move' && isPinned(unit)) || !unit.isDisplay || unit.isMultiDeviceHidden,
     },
 };
 

@@ -22,7 +22,7 @@ import { ResizeTable } from 'ascend-resize';
 import { StyledEmpty } from 'ascend-utils';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, BaseSummary, SelectContentViewProps } from './SystemView';
 import { OverallMetrics } from './OverallMetrics';
-import { jumpToUnitOperator } from '../../utils';
+import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 
 const filterColumn = [
     'name', 'type', 'acceleratorCore', 'taskId', 'inputShapes', 'inputDataTypes',

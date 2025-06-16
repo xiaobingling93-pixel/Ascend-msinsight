@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import type { ProcessMetaData, SliceData, ThreadMetaData } from '../entity/data';
 import { getTimeOffset } from '../insight/units/utils';
-import { jumpToUnitOperator } from '../utils';
+import jumpToUnitOperator from '../utils/jumpToUnitOperator';
 
 const CloseIcon = AntdCloseIcon as SvgType;
 
@@ -99,7 +99,7 @@ const queryDataCount = async (session: Session, searchContent: string, isMatchCa
     remoteCntArray = [];
     const metadataList = getLockRangeMetaList(session);
     for (const unit of session.units) {
-        if (!unit.isDisplay) {
+        if (!unit.isDisplay || unit.isMultiDeviceHidden) {
             continue;
         }
         const metadata = unit.metadata as any;

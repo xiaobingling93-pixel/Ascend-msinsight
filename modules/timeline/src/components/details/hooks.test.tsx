@@ -16,6 +16,7 @@ describe('hooks test', () => {
         height: () => 1,
         expandable: false,
         isExpanded: false,
+        isMultiDeviceHidden: false,
         isDisplay: true,
         isUnitVisible: true,
         isMerged: false,
