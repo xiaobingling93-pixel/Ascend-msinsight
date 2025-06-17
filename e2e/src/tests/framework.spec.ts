@@ -2,9 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { FrameworkPage } from '@/page-object';
-import { clearAllData } from '@/utils';
+import { clearAllData, importData } from '@/utils';
+import { FilePath } from '@/utils/constants';
 
 test.describe('Framework', () => {
     test.beforeEach(async ({ page }) => {
@@ -41,5 +42,19 @@ test.describe('Framework', () => {
         await frameworkPage.helpInfoBtn.click();
         await page.getByText('About').click();
         await expect(helpInfoDialog).toBeVisible();
+    });
+
+    // 设置项目为基线
+    test('set project as baseline', async ({ page  }) => {
+        const frameworkPage = new FrameworkPage(page);
+        await importData(page, FilePath.DB_2025330);
+        await page.waitForTimeout(5000); // 等待前面的项目加载完成
+        await importData(page, FilePath.DB_memory);
+        await frameworkPage.projectList.getByText(FilePath.DB_2025330, { exact: true }).click({
+            button: 'right',
+        });
+        await page.getByText('Set as Baseline Data').click();
+        await page.mouse.move(0, 0);
+        await expect(frameworkPage.projectList).toHaveScreenshot('set-project-baseline.png', { maxDiffPixels: 500 });
     });
 });

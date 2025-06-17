@@ -198,6 +198,7 @@ const getTreeData = (session: Session): ProjectTreeDataNode[] => {
                     projectName: dataSource.projectName,
                     fileType: layerType,
                     filePath: dataSource.projectPath[0],
+                    rankId: '',
                 })}`}>
                     <span className="content-name" onContextMenu={
                         (): void => handleRightClick({
