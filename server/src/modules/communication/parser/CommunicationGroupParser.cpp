@@ -94,9 +94,11 @@ std::vector<CommGroupParallelInfo> CommunicationGroupParser::ParseCommunicationG
         auto end = std::chrono::high_resolution_clock::now();
         Server::ServerLog::Info("End parse communication group file data into db ,file:", filePath, ",cost time:",
             (end - start).count());
+        communicationGroup.close();
         return res;
     } else {
         Server::ServerLog::Error("Parse communication group file fail, path:", filePath);
+        communicationGroup.close();
         return {};
     }
 }

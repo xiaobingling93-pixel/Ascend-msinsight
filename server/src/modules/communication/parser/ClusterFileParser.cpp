@@ -84,6 +84,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
     if (textDb == nullptr) {
         ServerLog::Error("Can't get cluster database when parse step statistics file.");
+        stepTraceFileCsv.close();
         return;
     }
     bool isHeader = true;
@@ -98,6 +99,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
                 ServerLog::Error("The header of step statistics file is invalid, "
                                  "missing header data as follows: %, filePath: %",
                                  StringUtil::join(difference, ","), filePath);
+                stepTraceFileCsv.close();
                 return;
             }
             for (size_t i = 0; i < tokens.size(); ++i) {
