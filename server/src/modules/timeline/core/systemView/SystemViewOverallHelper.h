@@ -203,6 +203,8 @@ namespace Dic::Module::Timeline {
         std::vector<OverallTmpInfo> overlapInfos;
         bool needResponse = false;
         double e2eTime{};
+        // 每行结果返回一个唯一id
+        uint32_t idCounter{};
         void CategorizeComputingEvents();
         std::vector<SameOperatorsDetails>
         FilterComputingEventsByCategory(const std::vector<std::string> &expectList, uint64_t minTimeStamp,
@@ -214,10 +216,10 @@ namespace Dic::Module::Timeline {
         const int timeScale = 1000; // us转化为ns
         static void UpdateSystemViewResStatus(SystemViewOverallRes& currentRes, const OverallTmpInfo& tmpInfo);
         void SummarizeSystemViewOverall(SystemViewOverallRes &currentRes, uint32_t depth);
-        static void ComputeOverallMetrics(std::vector<SystemViewOverallRes> &resList,
+        void ComputeOverallMetrics(std::vector<SystemViewOverallRes> &resList,
                                           const OverallTmpInfo& tmpInfo, size_t index);
-        static SystemViewOverallRes& FindOrCreateChild(std::vector<SystemViewOverallRes> &list,
-                                                       const std::string &name);
+        SystemViewOverallRes& FindOrCreateChild(std::vector<SystemViewOverallRes> &list,
+            const std::string &name);
     };
 }
 #endif // PROFILER_SERVER_SYSTEMVIEWOVERALLHELPER_H

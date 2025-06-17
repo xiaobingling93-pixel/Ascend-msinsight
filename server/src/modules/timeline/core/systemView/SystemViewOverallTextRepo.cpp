@@ -201,7 +201,7 @@ void SystemViewOverallTextRepo::QueryBwdTrackIdForComputingOverall(uint64_t& bwd
 }
 
 void SystemViewOverallTextRepo::QueryCommunicationOverlapOverallInfos(
-    const Protocol::SystemViewOverallReqParam &requestParams, double e2eTime,
+    const Protocol::SystemViewOverallReqParam &requestParams, SystemViewOverallHelper &overallHelper,
     std::vector<Protocol::SystemViewOverallRes> &responseBody, const std::shared_ptr<VirtualTraceDatabase> &database)
 {
     // 查询通信未掩盖数据
@@ -218,13 +218,14 @@ void SystemViewOverallTextRepo::QueryCommunicationOverlapOverallInfos(
     if (it == responseBody.end()) {
         double ratio = 0;
         double notOverlapTime = NS_TO_US * totalTime;
-        if (e2eTime != 0) {
-            ratio = NumberUtil::DoubleReservedNDigits(notOverlapTime / e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
+        if (overallHelper.e2eTime != 0) {
+            ratio = NumberUtil::DoubleReservedNDigits(notOverlapTime / overallHelper.e2eTime * PERCENTAGE_RATIO_SCALE,
+                                                      TWO);
         }
         Protocol::SystemViewOverallRes notOverlapped = {
             .totalTime = notOverlapTime, .ratio = ratio, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = COMMUNICATION_NOT_OVERLAP_TIME, .children = {}, .level = 1, // level 1
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
+            .id = std::to_string(overallHelper.idCounter++)
         };
         responseBody.emplace_back(notOverlapped);
     }
@@ -239,7 +240,7 @@ void SystemViewOverallTextRepo::QueryCommunicationOverlapOverallInfos(
     it = std::find_if(responseBody.begin(), responseBody.end(), [](const Protocol::SystemViewOverallRes& item) {
         return item.name == COMMUNICATION_NOT_OVERLAP_TIME;
     });
-    ParamsForCalCSData paramsForCalCsData = { sql4Summary, e2eTime };
+    ParamsForCalCSData paramsForCalCsData = { sql4Summary, overallHelper };
     database->CalculateCommunicationSummaryData(uncovered, groupMap, paramsForCalCsData, deviceId, *it);
 }
 

@@ -19,7 +19,7 @@ public:
     virtual bool QueryDataForComputingOverallMetric(const Protocol::SystemViewOverallReqParam &requestParams,
         SystemViewOverallHelper &computeHelper, const std::shared_ptr<VirtualTraceDatabase> &database) = 0;
     virtual void QueryCommunicationOverlapOverallInfos(const Protocol::SystemViewOverallReqParam &requestParams,
-        double e2eTime, std::vector<Protocol::SystemViewOverallRes> &responseBody,
+        SystemViewOverallHelper &overallHelper, std::vector<Protocol::SystemViewOverallRes> &responseBody,
         const std::shared_ptr<VirtualTraceDatabase> &database) = 0;
     virtual bool QueryCommunicationOpsTimeDataByGroupName(const SystemViewOverallReqParam &params, uint64_t offset,
         const std::vector<Protocol::ThreadTraces> &notOverlapData, std::vector<SameOperatorsDetails> &opsDetails,

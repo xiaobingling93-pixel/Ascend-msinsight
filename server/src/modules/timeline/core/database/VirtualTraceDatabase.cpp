@@ -101,10 +101,10 @@ void VirtualTraceDatabase::ExecuteQueryCommunicationSummaryData(
 }
 
 void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(
-    const std::map<std::string, CommunicationSummaryInfoByGroup> &summaryData, double e2eTime,
+    const std::map<std::string, CommunicationSummaryInfoByGroup> &summaryData, SystemViewOverallHelper &overallHelper,
     Protocol::SystemViewOverallRes &result)
 {
-    if (summaryData.empty() || e2eTime <= 0) {
+    if (summaryData.empty() || overallHelper.e2eTime <= 0) {
         return;
     }
     for (auto &item : summaryData) {
@@ -112,31 +112,34 @@ void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(
         Protocol::SystemViewOverallRes group = {
             .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = data.groupName, .children = {}, .level = 2, // level 2
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
+            .id = std::to_string(overallHelper.idCounter++)
         };
         group.totalTime = NumberUtil::DoubleReservedNDigits(data.op.uncoveredTransmitTime * NS_TO_US, TWO);
-        group.ratio = NumberUtil::DoubleReservedNDigits(group.totalTime / e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
+        group.ratio = NumberUtil::DoubleReservedNDigits(
+            group.totalTime / overallHelper.e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
         Protocol::SystemViewOverallRes wait = {
             .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = WAIT_TIME, .children = {}, .level = 3, // level 3
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
+            .id = std::to_string(overallHelper.idCounter++)
         };
         uint64_t minWait = UINT64_MAX;
         for (auto &tmpItem : data.taskMap) {
             minWait = std::min(minWait, tmpItem.second.uncoveredWaitTime);
         }
         wait.totalTime = NumberUtil::DoubleReservedNDigits(minWait * NS_TO_US, TWO);
-        wait.ratio = NumberUtil::DoubleReservedNDigits(wait.totalTime / e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
+        wait.ratio = NumberUtil::DoubleReservedNDigits(
+            wait.totalTime / overallHelper.e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
         Protocol::SystemViewOverallRes transmit = {
             .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = TRANSMIT_TIME, .children = {}, .level = 3, // level 3
-            .id = std::to_string(Protocol::SystemViewOverallRes::idCounter++)
+            .id = std::to_string(overallHelper.idCounter++)
         };
         if (data.op.uncoveredTransmitTime > minWait) {
             transmit.totalTime =
                 NumberUtil::DoubleReservedNDigits((data.op.uncoveredTransmitTime - minWait) * NS_TO_US, TWO);
         }
-        transmit.ratio = NumberUtil::DoubleReservedNDigits(transmit.totalTime / e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
+        transmit.ratio = NumberUtil::DoubleReservedNDigits(
+            transmit.totalTime / overallHelper.e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
         group.children.emplace_back(wait);
         group.children.emplace_back(transmit);
         result.children.emplace_back(group);

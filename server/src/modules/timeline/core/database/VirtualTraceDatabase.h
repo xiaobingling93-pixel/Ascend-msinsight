@@ -27,7 +27,7 @@ const uint64_t AICPU_OP_DURATION_THRESHOLD = 20000; // 20us
 
 struct ParamsForCalCSData {
     const std::string &sql;
-    double e2eTime;
+    SystemViewOverallHelper &overallHelper;
 };
 struct ParamsForOAData {
     const std::string &sql;
@@ -135,7 +135,7 @@ public:
         ExecuteQueryCommunicationSummaryData(summaryInfoMap, resultSet, groupInfoMap, uncovered);
 
         // 最终数据整理，按Group整理出Wait和Transmit时间
-        ComputeCommunicationWaitAndTransmitTimeByGroup(summaryInfoMap, paramsForCalCsData.e2eTime, result);
+        ComputeCommunicationWaitAndTransmitTimeByGroup(summaryInfoMap, paramsForCalCsData.overallHelper, result);
 
         return true;
     };
@@ -235,8 +235,8 @@ private:
         const std::vector<Protocol::ThreadTraces> &uncovered);
 
     void ComputeCommunicationWaitAndTransmitTimeByGroup(
-        const std::map<std::string, CommunicationSummaryInfoByGroup> &summaryData, double e2eTime,
-        Protocol::SystemViewOverallRes &result);
+        const std::map<std::string, CommunicationSummaryInfoByGroup> &summaryData,
+        SystemViewOverallHelper &overallHelper, Protocol::SystemViewOverallRes &result);
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H

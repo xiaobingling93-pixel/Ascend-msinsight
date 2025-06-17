@@ -188,10 +188,10 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOverlapOverallInfosTestW
     Dic::Protocol::SystemViewOverallReqParam requestParams;
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
-    const double e2eTime = 136581.01;
     SystemViewOverallHelper computeHelper;
+    computeHelper.e2eTime = 136581.01; // 136581.01
     std::vector<Protocol::SystemViewOverallRes> responseBody;
-    repoPtr->QueryCommunicationOverlapOverallInfos(requestParams, e2eTime, responseBody, database);
+    repoPtr->QueryCommunicationOverlapOverallInfos(requestParams, computeHelper, responseBody, database);
     EXPECT_EQ(responseBody.size(), 1);
     EXPECT_DOUBLE_EQ(responseBody[0].totalTime, 101963.203); // 101963.203
     EXPECT_DOUBLE_EQ(responseBody[0].ratio, 74.65); // 74.65
