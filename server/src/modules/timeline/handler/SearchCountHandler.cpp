@@ -36,8 +36,8 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
         if (database != nullptr) {
             searchResult.count = database->SearchSliceNameCount(request.params, trackQueryVec);
+            searchResult.dbPath = database->GetDbPath();
         }
-        searchResult.dbPath = database->GetDbPath();
         response.body.countList.emplace_back(searchResult);
         response.body.totalCount = searchResult.count;
     } else {
@@ -46,8 +46,8 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
         if (database != nullptr) {
             searchResult.count = database->SearchSliceNameCount(request.params, {});
+            searchResult.dbPath = database->GetDbPath();
         }
-        searchResult.dbPath = database->GetDbPath();
         response.body.countList.emplace_back(searchResult);
         response.body.totalCount = searchResult.count;
     }
@@ -67,8 +67,8 @@ void SearchCountHandler::QueryHostNameCount(const SearchCountRequest &request, S
         auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
         if (database != nullptr) {
             searchResult.count = database->SearchSliceNameCount(request.params, trackQueryVec);
+            searchResult.dbPath = database->GetDbPath();
         }
-        searchResult.dbPath = database->GetDbPath();
         response.body.totalCount += searchResult.count;
         if (searchResult.count > 0) {
             response.body.countList.emplace_back(searchResult);

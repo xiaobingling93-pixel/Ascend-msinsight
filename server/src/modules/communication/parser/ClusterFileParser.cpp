@@ -56,8 +56,10 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
     if (fp == nullptr) {
         return;
     }
-    char readBuffer[65536];
-    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    constexpr size_t bufferLen = 65536;
+    std::string readBuffer;
+    readBuffer.reserve(bufferLen);
+    rapidjson::FileReadStream is(fp, readBuffer.data(), sizeof(bufferLen));
     rapidjson::Reader reader;
     if (saxHandlerType == 0) {
         CommunicationRapidSaxHandler rapidSaxHandler(textDb, uniqueKey);

@@ -47,8 +47,8 @@ struct OperatorItem {
 
 struct OperatorDetailsResBody {
     int count = 0;
-    int pageSize;
-    int currentPage;
+    int pageSize{0};
+    int currentPage{1};
     std::vector<OperatorItem> allOperators;
 };
 
