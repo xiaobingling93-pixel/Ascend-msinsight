@@ -76,13 +76,13 @@ bool QueryMemoryComponentHandler::GetRespectiveData(std::shared_ptr<VirtualMemor
         errorMsg = "Failed to connect to database of baseline.";
         return false;
     }
-    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
+    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(request.params.rankId);
     if (!database->QueryEntireComponentTable(request.params, compareData, offsetTimeCompare)) {
         errorMsg = "Failed to query memory component compare data.";
         return false;
     }
     request.params.deviceId = FullDb::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "memory");
-    uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
+    uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(baselineId);
     if (!databaseBaseline->QueryEntireComponentTable(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory component baseline data.";
         return false;

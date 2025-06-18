@@ -34,8 +34,8 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     }
     request.params.deviceId = deviceId;
     if (!request.params.isCompare) {
-        uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
-        if (!database->QueryMemoryView(request.params, response.data, offsetTime)) {
+        uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(request.params.rankId);
+        if (!database || !database->QueryMemoryView(request.params, response.data, offsetTime)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory view data.");
             return false;
         }
@@ -67,13 +67,13 @@ bool QueryMemoryViewHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryData
         errorMsg = "Failed to connect to database of baseline.";
         return false;
     }
-    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
+    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(request.params.rankId);
     if (!database->QueryMemoryView(request.params, compareData, offsetTimeCompare)) {
         errorMsg = "Failed to query memory view compare data.";
         return false;
     }
     request.params.deviceId = FullDb::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "memory");
-    uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
+    uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(baselineId);
     if (!databaseBaseline->QueryMemoryView(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory view baseline data.";
         return false;

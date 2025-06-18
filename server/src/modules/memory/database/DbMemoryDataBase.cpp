@@ -93,7 +93,7 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
             requestParams.maxSize *= KB_SIZE;
         }
     }
-    const uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
+    const uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
     if (type == FileType::PYTORCH) {
         sql = DbMemoryDataBase::BuildOperatorDetailSql(std::to_string(startTime),
             std::to_string(offsetTime));
@@ -146,7 +146,7 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::PYTORCH) {
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-        uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
+        uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
         // 最内层SQL根据组件编号分组取出内存占用峰值大于100M的那些组件编号
         // 中间层SQL和最内层SQL的查询结果根据组件编号和内存占用值做一次连接
         // 做分组的原因是可能有多个时刻内存占用为峰值，只需要时刻最小的那个

@@ -663,6 +663,7 @@ void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
             continue;
         }
         TraceTime::Instance().UpdateTime(startTime, endTime);
+        TraceTime::Instance().UpdateCardMinTimestamp(fileId, startTime);
         TraceTime::Instance().UpdateCardTimeDuration(fileId, startTime, endTime);
         TraceTime::Instance().UpdateCardTimeDuration(QueryHostInfo() + "Host", startTime, endTime);
     }

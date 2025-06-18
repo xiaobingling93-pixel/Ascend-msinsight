@@ -20,6 +20,7 @@ void TraceTime::Reset()
     minTimestamp = UINT64_MAX;
     cardTimeDurationMap.clear();
     cardGroupTimeDurations.clear();
+    rankMinTimestampMap.clear();
     isSimulation = false;
 }
 
@@ -94,6 +95,20 @@ uint64_t TraceTime::GetOffsetByFileId(const std::string &fileId)
     return ComputetargetOffset(targetTime);
 }
 
+uint64_t TraceTime::GetOffsetByFileIdUsingMinTimestamp(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (rankMinTimestampMap.find(fileId) == rankMinTimestampMap.end()) {
+        return 0;
+    }
+    // 已判断不为空
+    uint64_t deviceMinTimestamp = rankMinTimestampMap[fileId];
+    if (deviceMinTimestamp > minTimestamp) {
+        return deviceMinTimestamp - minTimestamp;
+    }
+    return 0;
+}
+
 uint64_t TraceTime::ComputetargetOffset(const std::pair<uint64_t, uint64_t> &targetTime)
 {
     uint64_t cardMinTime = targetTime.first;
@@ -137,6 +152,17 @@ void TraceTime::UpdateCardGroupTime(uint64_t min, uint64_t max)
         }
     }
     cardGroupTimeDurations = mergeDurations;
+}
+
+void TraceTime::UpdateCardMinTimestamp(const std::string &fileId, uint64_t minTs)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (rankMinTimestampMap.find(fileId) == rankMinTimestampMap.end()) {
+        rankMinTimestampMap[fileId] = minTs;
+    } else {
+        rankMinTimestampMap[fileId] = std::min(rankMinTimestampMap[fileId], minTs);
+    }
+    minTimestamp = std::min(minTimestamp, rankMinTimestampMap[fileId]);
 }
 } // end of namespace Timeline
 } // end of namespace Module

@@ -376,7 +376,7 @@ uint64_t TextMemoryDataBase::QueryMinComponentTimestamp()
 std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
+    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
     // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
     std::string sql =
         "SELECT id, name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
@@ -480,7 +480,7 @@ bool TextMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &r
                                               std::vector<Protocol::MemoryComponent> &componentDetails)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
+    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
     // 内层SQL根据组件名分组取出内存占用峰值大于100M的那些组件，外层SQL和内层SQL的查询结果根据组件名和内存占用值做一次连接
     // 外层再做一次分组的原因是可能有多个时刻内存占用为峰值，只需要时刻最小的那个
     std::string sql =
