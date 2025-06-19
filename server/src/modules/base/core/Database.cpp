@@ -4,8 +4,8 @@
 
 #include "pch.h"
 #include "TableDefs.h"
-#include "Database.h"
 #include "ConstantDefs.h"
+#include "Database.h"
 
 namespace Dic {
 namespace Module {

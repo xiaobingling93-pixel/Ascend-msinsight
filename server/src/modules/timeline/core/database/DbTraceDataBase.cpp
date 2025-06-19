@@ -636,7 +636,7 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
     }
     const uint64_t maxDataCount = 30000;
     uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
-    unitTime = unitTime <= 0 ? 1 : unitTime;
+    unitTime = unitTime == 0 ? 1 : unitTime;
     TraceDatabaseHelper::ComputeSummarySlice(resultSet, unitTime, responseBody);
     return true;
 }

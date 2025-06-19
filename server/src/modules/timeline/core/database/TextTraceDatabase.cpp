@@ -434,7 +434,7 @@ bool TextTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
 {
     const int64_t maxDataCount = 30000;
     uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount; // 校验过保证 endTime > startTime
-    unitTime = unitTime <= 0 ? 1 : unitTime;
+    unitTime = unitTime == 0 ? 1 : unitTime;
     std::vector<uint64_t> trackIds = QueryAllTrackIdsByPid(requestParams.processId);
     std::string sql = TextSqlConstant::GetSummarySliceSql(trackIds.size());
     auto stmt = CreatPreparedStatement(sql);
@@ -1320,7 +1320,8 @@ bool TextTraceDatabase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICo
         }
         // 确保 "MHz" 键存在且类型正确
         if (jsonArgs.HasMember("MHz") && jsonArgs["MHz"].IsString()) {
-            detail.second = NumberUtil::StringToInt(jsonArgs["MHz"].GetString());
+            int temp = NumberUtil::StringToInt(jsonArgs["MHz"].GetString());
+            detail.second = temp < 0 ? 0 : temp;
         } else {
             ServerLog::Error("Invalid AI core freq data structure detected.");
             break;
@@ -1388,8 +1389,7 @@ std::vector<std::string> TextTraceDatabase::QueryCoreType()
 uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams)
 {
     uint64_t total = 0;
-    std::string sql = "SELECT count(*) "
-        "FROM ("
+    std::string sql = "SELECT count(*) FROM ("
         "    SELECT name, op_type AS type, accelerator_core AS acceleratorCore, "
         "    input_shapes AS inputShapes, input_data_types AS inputDataTypes, input_formats AS inputFormats, "
         "    output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
