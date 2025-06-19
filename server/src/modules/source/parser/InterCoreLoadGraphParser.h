@@ -43,7 +43,7 @@ struct InterCoreLoadAnalysisDetail {
 
     void SetMinCycle(const std::string &subCoreType, uint64_t cycle)
     {
-        if (cycle <= 0) {
+        if (cycle == 0) {
             return;
         }
         uint64_t &minCycle = minCycleMap[subCoreType];
@@ -56,7 +56,7 @@ struct InterCoreLoadAnalysisDetail {
 
     void SetMinThroughput(const std::string &subCoreType, uint64_t throughput)
     {
-        if (throughput <= 0) {
+        if (throughput == 0) {
             return;
         }
         uint64_t &minThroughput = minThroughputMap[subCoreType];
