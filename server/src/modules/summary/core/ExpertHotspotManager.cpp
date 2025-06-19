@@ -291,7 +291,8 @@ void ExpertHotspotManager::FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &
             res[index].layer = item;
             if (params.expertNumberPerRank != 0) {
                 // rankId计算（向下取整）：列数 ÷ 每个rank的专家数
-                res[index].rankId = static_cast<uint64_t>(i) / params.expertNumberPerRank;
+                res[index].rankId = static_cast<int>(NumberUtil::CeilingClamp(static_cast<uint64_t>(i) /
+                    params.expertNumberPerRank, static_cast<uint64_t>(INT_MAX)));
             }
         }
     }

@@ -463,7 +463,8 @@ static std::string FormatSqlUsingPlaceHolder(const std::string& fmtStr, const st
     // 统计占位符数量
     std::sregex_iterator it(fmtStr.begin(), fmtStr.end(), placeholder_regex);
     std::sregex_iterator end;
-    size_t placeholder_count = std::distance(it, end);
+    int count = std::distance(it, end);
+    uint64_t placeholder_count = static_cast<uint64_t>(count > 0 ? count : 0);
     if (placeholder_count != args.size()) {
         errMsg = "Number of placeholders does not match the number of arguments";
         return "";
