@@ -121,8 +121,8 @@ const getMenuItems = ({ session }: IProps, t: TFunction): MenuItemModel[] => {
             label: t('Set as Comparison Data'),
             key: 'setAsComparisonData',
             action: (): void => { setCompareData(selectedFile); },
-            // 有基线，且自己不是基线也不是比对，且基线和自己是可比较的
-            visible: hasBaseline && !isBaseline && !isComparison && isComparable,
+            // 有基线，自己类型不是 PROJECT 或 CLUSTER, 且自己不是基线也不是比对，且基线和自己是可比较的
+            visible: selectedFile.fileType !== 'PROJECT' && selectedFile.fileType !== 'CLUSTER' && hasBaseline && !isBaseline && !isComparison && isComparable,
             // 选中的内容所属的 projectName 必须是激活的数据源
             disabled: activeDataSource.projectName !== selectedFile.projectName,
         },
