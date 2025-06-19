@@ -36,14 +36,10 @@ public:
     bool EndObject(rapidjson::SizeType memberCount);
     bool StartArray();
     bool EndArray(rapidjson::SizeType elementCount);
-    CommunicationBandWidth MapToBandwidth(const rapidjson::Document &json);
-    CommunicationTimeInfo MapToTimeInfo(const rapidjson::Document &json);
+    void GetBandwidth();
+    void GetTimeInfo();
     std::string GetIndexByStage(const std::string &stage);
 private:
-    double tempTransitSize = 0;
-    unsigned int tempInt = 0;
-    rapidjson::Document currentObject;
-    rapidjson::Value sizeDistribution;
     std::string currentKey;
     std::string rankId;
     std::string stepId;
@@ -66,6 +62,9 @@ private:
     std::unordered_map<std::string, int64_t> groupIdsMap;
     std::shared_ptr<TextClusterDatabase> database;
     std::string uniqueKey;
+
+    CommunicationBandWidth bandwidth;
+    CommunicationTimeInfo timeInfo;
 };
 } // end of namespace Timeline
 } // end of namespace Module

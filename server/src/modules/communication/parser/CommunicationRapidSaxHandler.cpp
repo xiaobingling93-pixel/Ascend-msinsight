@@ -12,10 +12,7 @@ namespace Module {
 namespace Timeline {
 
 CommunicationRapidSaxHandler::CommunicationRapidSaxHandler(std::shared_ptr<TextClusterDatabase> database,
-    const std::string &uniqueKey) : database(database), uniqueKey(uniqueKey)
-{
-    currentObject.SetObject();
-}
+    const std::string &uniqueKey) : database(database), uniqueKey(uniqueKey) {}
 
 CommunicationRapidSaxHandler::~CommunicationRapidSaxHandler() {}
 
@@ -26,70 +23,81 @@ bool CommunicationRapidSaxHandler::Null()
 
 bool CommunicationRapidSaxHandler::Bool(bool b)
 {
-    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, b, currentObject.GetAllocator());
     return true;
 }
 
 bool CommunicationRapidSaxHandler::Int(int i)
 {
-    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
     return true;
 }
 
 bool CommunicationRapidSaxHandler::Uint(unsigned int u)
 {
-    if (currentDepth == sizeDistributionDepth) {
-        tempInt = u;
-    } else {
-        rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-        currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
-    }
     return true;
 }
 
 bool CommunicationRapidSaxHandler::Int64(int64_t i)
 {
-    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
     return true;
 }
 
 bool CommunicationRapidSaxHandler::Uint64(uint64_t u)
 {
-    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
     return true;
 }
 
 bool CommunicationRapidSaxHandler::Double(double d)
 {
-    if (currentDepth == sizeDistributionDepth) {
-        tempTransitSize = d;
-    } else {
-        rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-        currentObject.AddMember(tempKey, d, currentObject.GetAllocator());
-    }
     return true;
 }
 
 bool CommunicationRapidSaxHandler::RawNumber(const char *str, SizeType len, bool copy)
 {
-    if (currentDepth != sizeDistributionDepth) {
-        return BaseReaderHandler::RawNumber(str, len, copy);
+    if (str == nullptr) {
+        ServerLog::Error("Parsing communication.json encounters nullptr.");
+        return false;
     }
-
-    const std::string numberStr(str);
-    if (StringUtil::Contains(numberStr, ".")) {
-        tempTransitSize = NumberUtil::StringToDouble(numberStr);
-    } else {
-        int temporary = NumberUtil::StringToInt(numberStr);
-        if (temporary < 0) {
-            ServerLog::Error("Packet number is smaller than 0.");
-            tempInt = 0;
-        } else {
-            tempInt = static_cast<unsigned int>(temporary);
+    std::string s(str);
+    if (currentDepth == sizeDistributionDepth) {
+        bandwidth.sizeDistribution += s + ",";
+        return true;
+    }
+    if (currentDepth == tableFlagDepth + 1 && tableFlag == "Communication Time Info") {
+        if (currentKey == "Start Timestamp(us)") {
+            int64_t tempStartTime = NumberUtil::TimestampUsToNs(s);
+            timeInfo.startTime = NumberUtil::Int64ToUint64(tempStartTime);
+        }
+        if (currentKey == "Elapse Time(ms)") {
+            timeInfo.elapseTime = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Idle Time(ms)") {
+            timeInfo.idleTime = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Synchronization Time Ratio") {
+            timeInfo.synchronizationTimeRatio = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Synchronization Time(ms)") {
+            timeInfo.synchronizationTime = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Transit Time(ms)") {
+            timeInfo.transitTime = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Wait Time Ratio") {
+            timeInfo.waitTimeRatio = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Wait Time(ms)") {
+            timeInfo.waitTime = NumberUtil::StringToDouble(s);
+        }
+    }
+    if (currentDepth == infoDepth + 1 && tableFlag == "Communication Bandwidth Info") {
+        if (currentKey == "Bandwidth(GB/s)") {
+            bandwidth.bandwidthSize = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Transit Size(MB)") {
+            bandwidth.transitSize = NumberUtil::StringToDouble(s);
+        }
+        if (currentKey == "Transit Time(ms)") {
+            bandwidth.transitTime = NumberUtil::StringToDouble(s);
         }
     }
     return true;
@@ -97,17 +105,14 @@ bool CommunicationRapidSaxHandler::RawNumber(const char *str, SizeType len, bool
 
 bool CommunicationRapidSaxHandler::String(const char *str, rapidjson::SizeType length, bool copy)
 {
-    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    rapidjson::Value val(str, currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, val, currentObject.GetAllocator());
     return true;
 }
 
 bool CommunicationRapidSaxHandler::StartObject()
 {
     currentDepth++;
-    if (currentDepth == infoDepthSeven) {
-        sizeDistribution = rapidjson::Value(rapidjson::kObjectType);
+    if (currentDepth == sizeDistributionDepth) {
+        bandwidth.sizeDistribution = "{";
     }
     return true;
 }
@@ -129,6 +134,9 @@ bool CommunicationRapidSaxHandler::Key(const char *str, rapidjson::SizeType leng
     if (currentDepth == tableFlagDepth) { tableFlag = str; }
     if (currentDepth == infoDepth && std::strcmp("Communication Bandwidth Info", tableFlag.c_str()) == 0) {
         transportType = str;
+    }
+    if (currentDepth == sizeDistributionDepth) {
+        bandwidth.sizeDistribution += "\"" + currentKey + "\"";
     }
     return true;
 }
@@ -152,37 +160,38 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
     }
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
-        CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);
-        database->InsertBandwidth(bandWidth);
-        currentObject.RemoveAllMembers();
+        GetBandwidth();
+        database->InsertBandwidth(bandwidth);
+        bandwidth = CommunicationBandWidth{};
     }
 
     if (currentDepth == tableFlagDepth && std::strcmp(tableFlag.c_str(), "Communication Time Info") == 0) {
-        CommunicationTimeInfo timeInfo = MapToTimeInfo(currentObject);
+        GetTimeInfo();
         database->InsertTimeInfo(timeInfo);
-        currentObject.RemoveAllMembers();
+        timeInfo = CommunicationTimeInfo{};
     }
     if (currentDepth == infoDepthSeven) {
-        currentObject.AddMember("Size Distribution", sizeDistribution, currentObject.GetAllocator());
+        if (StringUtil::EndWith(bandwidth.sizeDistribution, ",")) {
+            bandwidth.sizeDistribution.resize(bandwidth.sizeDistribution.size() - 1);
+        }
+        bandwidth.sizeDistribution += "}";
     }
     return true;
 }
 
 bool CommunicationRapidSaxHandler::StartArray()
 {
+    bandwidth.sizeDistribution += ":[";
     return true;
 }
 
 bool CommunicationRapidSaxHandler::EndArray(rapidjson::SizeType elementCount)
 {
     if (currentDepth == sizeDistributionDepth) {
-        rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-        rapidjson::Value array(rapidjson::kArrayType);
-        rapidjson::Value tempIntVal(tempInt);
-        rapidjson::Value tempTransitSizeVal(tempTransitSize);
-        array.PushBack(tempIntVal, currentObject.GetAllocator());
-        array.PushBack(tempTransitSizeVal, currentObject.GetAllocator());
-        sizeDistribution.AddMember(tempKey, array, currentObject.GetAllocator());
+        if (StringUtil::EndWith(bandwidth.sizeDistribution, ",")) {
+            bandwidth.sizeDistribution.resize(bandwidth.sizeDistribution.size() - 1);
+        }
+        bandwidth.sizeDistribution += "],";
     }
     return true;
 }
@@ -201,33 +210,26 @@ std::string CommunicationRapidSaxHandler::GetIndexByStage(const std::string &sta
     return std::to_string(groupIdsMap[stageId]);
 }
 
-CommunicationBandWidth CommunicationRapidSaxHandler::MapToBandwidth(const rapidjson::Document &json)
+void CommunicationRapidSaxHandler::GetBandwidth()
 {
-    CommunicationBandWidth bandWidth;
-    bandWidth.stageId = GetIndexByStage(stageId);
-    bandWidth.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
+    bandwidth.stageId = GetIndexByStage(stageId);
+    bandwidth.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
     if (std::strcmp(stepId.c_str(), "step") == 0) {
-        bandWidth.iterationId = "0";
+        bandwidth.iterationId = "0";
     }
-    bandWidth.rankId = rankId;
-    size_t index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
+    bandwidth.rankId = rankId;
+    size_t index = tempOpName.find_last_of('@');
     if (index != std::string::npos) {
-        bandWidth.opName = tempOpName.substr(0, index);
-        bandWidth.opSuffix = tempOpName.substr(index + 1);
+        bandwidth.opName = tempOpName.substr(0, index);
+        bandwidth.opSuffix = tempOpName.substr(index + 1);
     } else {
-        bandWidth.opName = tempOpName;
+        bandwidth.opName = tempOpName;
     }
-    bandWidth.transportType = transportType;
-    bandWidth.bandwidthSize = JsonUtil::GetDouble(json, "Bandwidth(GB/s)");
-    bandWidth.sizeDistribution = JsonUtil::GetDumpString(json, "Size Distribution");
-    bandWidth.transitSize = JsonUtil::GetDouble(json, "Transit Size(MB)");
-    bandWidth.transitTime = JsonUtil::GetDouble(json, "Transit Time(ms)");
-    return bandWidth;
+    bandwidth.transportType = transportType;
 }
 
-CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjson::Document &json)
+void CommunicationRapidSaxHandler::GetTimeInfo()
 {
-    CommunicationTimeInfo timeInfo;
     timeInfo.rankId = rankId;
     // 去掉step前缀
     timeInfo.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
@@ -235,27 +237,13 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
         timeInfo.iterationId = "0";
     }
     timeInfo.stageId = GetIndexByStage(stageId);
-    size_t index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
+    size_t index = tempOpName.find_last_of('@');
     if (index != std::string::npos) {
         timeInfo.opName = tempOpName.substr(0, index);
         timeInfo.opSuffix = tempOpName.substr(index + 1);
     } else {
         timeInfo.opName = tempOpName;
     }
-    int64_t tempStartTime = NumberUtil::TimestampUsToNs(JsonUtil::GetString(json, "Start Timestamp(us)"));
-    if (tempStartTime <= 0) {
-        timeInfo.startTime = 0;
-    } else {
-        timeInfo.startTime = static_cast<uint64_t>(tempStartTime);
-    }
-    timeInfo.elapseTime = JsonUtil::GetDouble(json, "Elapse Time(ms)");
-    timeInfo.idleTime = JsonUtil::GetDouble(json, "Idle Time(ms)");
-    timeInfo.synchronizationTimeRatio = JsonUtil::GetDouble(json, "Synchronization Time Ratio");
-    timeInfo.synchronizationTime = JsonUtil::GetDouble(json, "Synchronization Time(ms)");
-    timeInfo.transitTime = JsonUtil::GetDouble(json, "Transit Time(ms)");
-    timeInfo.waitTimeRatio = JsonUtil::GetDouble(json, "Wait Time Ratio");
-    timeInfo.waitTime = JsonUtil::GetDouble(json, "Wait Time(ms)");
-    return timeInfo;
 }
 } // end of namespace Timeline
 } // end of namespace Module

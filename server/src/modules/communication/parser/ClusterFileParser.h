@@ -26,7 +26,7 @@ public:
                       const std::string &uniqueKey);
     bool ParseClusterFiles();
     bool ParseClusterStep2Files();
-    bool ParseCommunication(const std::vector<std::string> &filePathList);
+    void ParseCommunication(const std::vector<std::string> &filePathList);
     void ParseStepStatisticsFile(const std::vector<std::string> &filePathList);
     void SaveClusterBaseInfo(const std::string& selectedPath);
     void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);

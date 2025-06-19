@@ -503,6 +503,14 @@ public:
         }
         return static_cast<uint32_t>(num);
     }
+
+    static inline uint64_t Int64ToUint64(const int64_t num)
+    {
+        if (num < 0) {
+            return 0;
+        }
+        return static_cast<uint64_t>(num);
+    }
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_NUMBER_UTIL_H

@@ -25,17 +25,25 @@ namespace Timeline {
 using namespace Dic::Server;
 using namespace rapidjson;
 using namespace Dic::Module::FullDb;
-bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
+void ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
 {
+    if (filePathList.empty()) {
+        ServerLog::Error("Communication file list is empty.");
+        return;
+    }
     const std::string &filePath = FileUtil::PathPreprocess(filePathList[0].c_str());
+    Server::ServerLog::Info("ParseCommunication: " + filePath);
     SaxParseJsonFile(filePath, 0);
-    return true;
 }
 
 void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> &filePathList)
 {
+    if (filePathList.empty()) {
+        ServerLog::Error("Communication matrix file list is empty.");
+        return;
+    }
     const std::string &filePath = FileUtil::PathPreprocess(filePathList[0].c_str());
-    Server::ServerLog::Info("ParseCommunicationMatrix"+filePath);
+    Server::ServerLog::Info("ParseCommunicationMatrix: " + filePath);
     SaxParseJsonFile(filePath, 1);
 }
 
