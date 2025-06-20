@@ -2,15 +2,23 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test, WebSocket } from '@playwright/test';
 import { FrameworkPage } from '@/page-object';
-import { clearAllData, importData } from '@/utils';
+import { clearAllData, importData, setupWebSocketListener, waitForResponse } from '@/utils';
 import { FilePath } from '@/utils/constants';
+
+let ws: Promise<WebSocket>;
 
 test.describe('Framework', () => {
     test.beforeEach(async ({ page }) => {
+        ws = setupWebSocketListener(page);
+
         const frameworkPage = new FrameworkPage(page);
         await frameworkPage.goto();
+        await clearAllData(page);
+    });
+
+    test.afterEach(async ({ page }) => {
         await clearAllData(page);
     });
 
@@ -47,14 +55,19 @@ test.describe('Framework', () => {
     // 设置项目为基线
     test('set project as baseline', async ({ page  }) => {
         const frameworkPage = new FrameworkPage(page);
+
+        const waitFirstRes = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
         await importData(page, FilePath.DB_2025330);
-        await page.waitForTimeout(5000); // 等待前面的项目加载完成
+        await waitFirstRes;
+        const waitSecondRes = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
         await importData(page, FilePath.DB_memory);
+        await waitSecondRes;
         await frameworkPage.projectList.getByText(FilePath.DB_2025330, { exact: true }).click({
             button: 'right',
         });
         await page.getByText('Set as Baseline Data').click();
         await page.mouse.move(0, 0);
         await expect(frameworkPage.projectList).toHaveScreenshot('set-project-baseline.png', { maxDiffPixels: 500 });
+        await page.waitForTimeout(2000);
     });
 });

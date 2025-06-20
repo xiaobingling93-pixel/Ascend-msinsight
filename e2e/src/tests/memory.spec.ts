@@ -24,7 +24,6 @@ const test = baseTest.extend<TestFixtures>({
 });
 
 const memoryImgMap = {
-    multiMachinesClickRank: 'memory-pytorch-multi-click-rank.png',
     compareRankDb: 'memory-compare-rank-db.png',
     queryCompareRankDb: 'memory-compare-rank-db-with-condition.png',
 };
@@ -287,7 +286,8 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
         await page.waitForTimeout(1000);
         expect(await hostSelect.getValue()).toBe('ubuntu22044973785946912235777_0');
         expect(await rankIdSelect.getValue()).toBe('9');
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.multiMachinesClickRank, {
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-multi-click-rank.png', {
             maxDiffPixels: 500,
         });
     });
