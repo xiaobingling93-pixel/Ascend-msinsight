@@ -629,6 +629,7 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
     if (db->HasFinishedParseLastTime()) {
         Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
         uint64_t minTimestamp = std::min(db->QueryMinRecordTimestamp(), db->QueryMinOperatorAllocationTime());
+        minTimestamp = std::min(minTimestamp, db->QueryMinComponentTimestamp());
         Timeline::TraceTime::Instance().UpdateCardMinTimestamp(fileId, minTimestamp);
         ParseEndCallBack(fileId, dbPath, true, "");
         return true;
