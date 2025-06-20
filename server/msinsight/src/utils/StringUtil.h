@@ -176,9 +176,13 @@ static inline const std::wstring String2WString(const std::string& s)
     if (bufferSize > PATH_MAX) { // 超过最大长度返回空字符串
         return std::wstring();
     }
-    wchar_t dstWstr[PATH_MAX] = {0};
-    mbstowcs(dstWstr, s.c_str(), bufferSize);
-    std::wstring result = dstWstr;
+    std::vector<wchar_t> dstWstr;
+    dstWstr.reserve(PATH_MAX);
+    auto len = mbstowcs(dstWstr.data(), s.c_str(), bufferSize);
+    if (len == static_cast<size_t>(-1)) {
+        return std::wstring();
+    }
+    std::wstring result(dstWstr.data(), len);
     return result;
 }
 
