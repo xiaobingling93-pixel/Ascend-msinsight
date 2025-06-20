@@ -80,14 +80,16 @@ bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
 
 uint64_t SafeCalculateAllocationSize(uint64_t currentSize, int64_t eventSize)
 {
+    uint64_t tmpSize;
     if (eventSize >= 0) {
-        if (currentSize > UINT64_MAX - eventSize) {
+        tmpSize = static_cast<uint64_t>(eventSize);
+        if (currentSize > UINT64_MAX - tmpSize) {
             Server::ServerLog::Warn("Allocation total size is too large.");
             return UINT64_MAX;
         }
-        return currentSize + eventSize;
+        return currentSize + tmpSize;
     }
-    uint64_t tmpSize = static_cast<uint64_t>(-eventSize);
+    tmpSize = static_cast<uint64_t>(-eventSize);
     if (currentSize > tmpSize) {
         return currentSize - tmpSize;
     }
@@ -374,7 +376,7 @@ bool LeaksMemoryService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace)
             Server::ServerLog::Error("Build python call stack failed: the stack depth exceeds the max of int");
             return false;
         }
-        slice.depth = callStackDepth;
+        slice.depth = static_cast<int>(callStackDepth);
         // 将当前函数入栈
         callStack.push(&slice);
     }

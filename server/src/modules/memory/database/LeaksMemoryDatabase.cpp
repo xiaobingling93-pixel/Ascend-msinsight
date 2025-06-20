@@ -158,13 +158,13 @@ bool LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vecto
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Memory::MemoryEvent event{};
-        event.id = std::abs(sqlite3_column_int64(stmt, col++));
+        event.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         event.event = sqlite3_column_string(stmt, col++);
         event.eventType = sqlite3_column_string(stmt, col++);
         event.name = sqlite3_column_string(stmt, col++);
-        event.timestamp = std::abs(sqlite3_column_int64(stmt, col++));
-        event.processId = std::abs(sqlite3_column_int64(stmt, col++));
-        event.threadId = std::abs(sqlite3_column_int64(stmt, col++));
+        event.timestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        event.processId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        event.threadId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         event.deviceId = sqlite3_column_string(stmt, col++);
         event.ptr = sqlite3_column_string(stmt, col++);
         event.attr = sqlite3_column_string(stmt, col++);
@@ -189,13 +189,13 @@ bool LeaksMemoryDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
             ServerLog::Warn("Invalid timestamp for func info: ", slice.func);
             continue;
         }
-        slice.startTimestamp = tmpInt64;
+        slice.startTimestamp = static_cast<uint64_t>(tmpInt64);
         tmpInt64 = sqlite3_column_int64(stmt, col++);
         if (tmpInt64 < 0) {
             ServerLog::Warn("Invalid timestamp for func info: ", slice.func);
             continue;
         }
-        slice.endTimestamp = tmpInt64;
+        slice.endTimestamp = static_cast<uint64_t>(tmpInt64);
         trace.minTimestamp = std::min(trace.minTimestamp, slice.startTimestamp);
         trace.maxTimestamp = std::max(trace.maxTimestamp, slice.endTimestamp);
         trace.slices.push_back(slice);
@@ -486,15 +486,11 @@ bool LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vecto
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Memory::MemoryBlock block;
-        int64_t tmpInt64 = sqlite3_column_int64(stmt, col++);
-        block.id = tmpInt64 < 0 ? 0 : tmpInt64;
+        block.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.ptr = sqlite3_column_string(stmt, col++);
-        tmpInt64 = sqlite3_column_int64(stmt, col++);
-        block.size = tmpInt64 < 0 ? 0 : tmpInt64;
-        tmpInt64 = sqlite3_column_int64(stmt, col++);
-        block.startTimestamp = tmpInt64 < 0 ? 0 : tmpInt64;
-        tmpInt64 = sqlite3_column_int64(stmt, col++);
-        block.endTimestamp = tmpInt64 < 0 ? 0 : tmpInt64;
+        block.size = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        block.startTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        block.endTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.owner = sqlite3_column_string(stmt, col++);
         block.otherAttr = sqlite3_column_string(stmt, col++);
         blocks.emplace_back(block);
@@ -530,15 +526,14 @@ void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryP
                                                      errMsg);
     AppendMemoryBlockQueryConditionSqlByParams(queryParams, querySql);
     querySql += " ORDER BY " + startTimestampStr +" ASC";
-    // LCOV_EXCL_BR_STOP
     int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
-    int bindIdx = bindStartIndex;
-    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query blocks table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
     }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
     QueryMemoryBlocksByStep(stmt, blocks);
     sqlite3_finalize(stmt);
 }
@@ -553,14 +548,10 @@ bool LeaksMemoryDatabase::QueryMemoryAllocationsByStep(sqlite3_stmt *stmt,
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Memory::MemoryAllocation allocation;
-        int64_t tmpInt64 = sqlite3_column_int64(stmt, col++);
-        allocation.id = tmpInt64 < 0 ? 0 : tmpInt64;
-        tmpInt64 = sqlite3_column_int64(stmt, col++);
-        allocation.timestamp = tmpInt64 < 0 ? 0 : tmpInt64;
-        tmpInt64 = sqlite3_column_int64(stmt, col++);
-        allocation.totalSize = tmpInt64 < 0 ? 0 : tmpInt64;
-        tmpInt64 = sqlite3_column_int64(stmt, col++);
-        allocation.optimized = tmpInt64 != 0;
+        allocation.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        allocation.timestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        allocation.totalSize = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        allocation.optimized = sqlite3_column_int64(stmt, col++) != 0;
         allocation.deviceId = sqlite3_column_string(stmt, col++);
         allocation.eventType = sqlite3_column_string(stmt, col++);
         allocations.emplace_back(allocation);
@@ -583,7 +574,6 @@ void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationPara
     std::string DEVICE_ID(ALLOCATION::DEVICE_ID);
     std::string OPTIMIZED(ALLOCATION::OPTIMIZED);
     std::string EVENT_TYPE(ALLOCATION::EVENT_TYPE);
-    // LCOV_EXCL_BR_START
     querySql = "SELECT {},"
                "({} - {}) AS {}, "
                "{}, {}, {}, {} "
@@ -607,16 +597,15 @@ void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationPara
                                                               errMsg));
     }
     querySql += " ORDER BY " + TIMESTAMP + " ASC";
-    // LCOV_EXCL_BR_STOP
     int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
-    int bindIdx = bindStartIndex;
-    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, bindIdx++, optimized);
-    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query allocations table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
     }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, bindIdx++, optimized);
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
     QueryMemoryAllocationsByStep(stmt, allocations);
     sqlite3_finalize(stmt);
 }
@@ -637,16 +626,15 @@ uint64_t LeaksMemoryDatabase::QueryMemoryEventExtremumTimestamp(const std::strin
                                                 errMsg);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query extremum timestamp failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
+    sqlite3_bind_text(stmt, 1, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
     uint64_t extremumTimestamp;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        int64_t resExtremumTs = sqlite3_column_int64(stmt, col++);
-        extremumTimestamp = resExtremumTs > 0 ? resExtremumTs : 0;
+        extremumTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
     }
     sqlite3_finalize(stmt);
     return extremumTimestamp;
@@ -730,14 +718,14 @@ bool LeaksMemoryDatabase::QueryEventsWithinTimeRangeByDeviceId(uint64_t startTim
         {TABLE_LEAKS_DUMP, COL_DEVICE_ID, COL_TIMESTAMP, COL_TIMESTAMP, COL_TIMESTAMP}, errMsg);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    int bindIdx = bindStartIndex;
-    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, bindIdx++, startTimestamp);
-    sqlite3_bind_int64(stmt, bindIdx++, endTimestamp);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query events table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, bindIdx++, startTimestamp);
+    sqlite3_bind_int64(stmt, bindIdx++, endTimestamp);
     QueryMemoryEventsByStep(stmt, events);
     sqlite3_finalize(stmt);
     return true;
@@ -757,15 +745,15 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocati
                                                  COL_TIMESTAMP, COL_TIMESTAMP},
                                                 errMsg);
     sqlite3_stmt *stmt = nullptr;
-    int bindIdx = bindStartIndex;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, bindIdx++, eventType.c_str(), eventType.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, bindIdx++, timestamp > INT64_MAX ? INT64_MAX : timestamp);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query allocation table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return std::nullopt;
     }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, bindIdx++, eventType.c_str(), eventType.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, bindIdx++, timestamp > INT64_MAX ? INT64_MAX : timestamp);
     std::vector<Memory::MemoryAllocation> allocations;
     QueryMemoryAllocationsByStep(stmt, allocations);
     if (allocations.empty()) {
@@ -791,20 +779,20 @@ void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const st
         ServerLog::Error("[LeaksMemory] Failed to query block owners, error: ", errMsg);
         return;
     }
-    sqlite3_stmt *stmt = nullptr;
-    int bindIdx = bindStartIndex;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (timestamp > INT64_MAX) {
         ServerLog::Warn("Invalid timestamp: exceeds the limit of ", INT64_MAX);
         timestamp = INT64_MAX;
     }
-    sqlite3_bind_int64(stmt, bindIdx++, timestamp);
-    sqlite3_bind_int64(stmt, bindIdx++, timestamp);
-    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query allocation table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
     }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_int64(stmt, bindIdx++, timestamp);
+    sqlite3_bind_int64(stmt, bindIdx++, timestamp);
+    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string owner = sqlite3_column_string(stmt, col++);
@@ -833,27 +821,21 @@ uint64_t LeaksMemoryDatabase::QueryTotalSizeUtilTimestampUsingOwner(const std::s
         return 0;
     }
     sqlite3_stmt *stmt = nullptr;
-    int bindIdx = bindStartIndex;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query allocation table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return 0;
+    }
+    int bindIdx = bindStartIndex;
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
     std::string ownerPattern = owner + '%';
     sqlite3_bind_text(stmt, bindIdx++, ownerPattern.c_str(), ownerPattern.length(), SQLITE_TRANSIENT);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Query allocation table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
-        return 0;
-    }
     uint64_t totalSize = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        int64_t tmpInt64 = sqlite3_column_int64(stmt, col++);
-        if (tmpInt64 < 0) {
-            ServerLog::Error("The total size of blocks released before % is less than 0.", timestamp);
-            totalSize = 0;
-            break;
-        }
-        totalSize = tmpInt64;
+        totalSize = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
     }
     sqlite3_finalize(stmt);
     return totalSize;
@@ -901,15 +883,15 @@ void LeaksMemoryDatabase::QueryPythonTracesUsingTableName(const std::string &tra
         return;
     }
     sqlite3_stmt *stmt = nullptr;
-    int bindIdx = 1;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_int64(stmt, bindIdx++, minTimestamp);
-    sqlite3_bind_int64(stmt, bindIdx++, minTimestamp);
-    sqlite3_bind_int64(stmt, bindIdx++, queryParams.threadId);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query python trace. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
     }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_int64(stmt, bindIdx++, minTimestamp);
+    sqlite3_bind_int64(stmt, bindIdx++, minTimestamp);
+    sqlite3_bind_int64(stmt, bindIdx++, queryParams.threadId);
     QueryMemoryPythonTracesByStep(stmt, trace);
     sqlite3_finalize(stmt);
 }
@@ -937,16 +919,16 @@ std::vector<std::string> LeaksMemoryDatabase::GetPythonTraceTables()
 {
     std::string sql = "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE ?;";
     sqlite3_stmt *stmt = nullptr;
-    int bindIdx = bindStartIndex;
     std::string pythonTraceTableNamePattern = pythonTraceTablePrefix + '%';
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    std::vector<std::string> resultList;
-    sqlite3_bind_text(stmt, bindIdx++, pythonTraceTableNamePattern.c_str(),
-                      pythonTraceTableNamePattern.length(), SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query python trace table failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return {};
     }
+    std::vector<std::string> resultList;
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, pythonTraceTableNamePattern.c_str(),
+                      pythonTraceTableNamePattern.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string table_name = sqlite3_column_string(stmt, col++);
@@ -973,7 +955,7 @@ void LeaksMemoryDatabase::QueryThreadIdsByProcessId(uint64_t processId, std::vec
         int col = resultStartIndex;
         int64_t threadId = sqlite3_column_int64(stmt, col++);
         if (threadId > 0) {
-            threadIds.push_back(threadId);
+            threadIds.push_back(static_cast<uint64_t>(threadId));
         }
     }
     sqlite3_finalize(stmt);
