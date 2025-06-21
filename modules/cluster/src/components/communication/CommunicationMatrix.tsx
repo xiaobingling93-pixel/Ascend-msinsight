@@ -264,11 +264,21 @@ function getVisualMap({ dataLength, min, max, type, isCompare = false, t }: {
         };
     }
     if (dataLength > 0 || isFinite(max)) {
+        let inRange = { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] };
+
+        if (type === MatrixType.TRANSIT_TIME) {
+            inRange.color.reverse();
+        }
+
+        if (min === max) {
+            inRange = { color: [COLOR.BAND_1] };
+        }
+
         return {
             ...baseVisualMap,
             calculable: true,
             itemHeight: 300, // 调整宽度,
-            inRange: min === max ? { color: [COLOR.BAND_1] } : { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] },
+            inRange,
             min,
             max,
             precision: Math.max(getDecimalCount(min), getDecimalCount(max)),
