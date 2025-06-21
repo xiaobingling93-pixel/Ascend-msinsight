@@ -58,6 +58,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await rankIdSelect.selectOption('4');
         await groupIdSelect.open();
         await groupIdSelect.selectOption('Stream');
+        await memoryFrame.getByText('loading').first().waitFor({ state: 'hidden' });
         await page.mouse.move(0, 0);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-single-rank-4.png', {
             maxDiffPixels: 500,
