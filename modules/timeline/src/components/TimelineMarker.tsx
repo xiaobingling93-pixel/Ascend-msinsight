@@ -81,6 +81,8 @@ export function drawFlag(
             break;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0); // 重置变换矩阵为默认值
+    const dpr = window.devicePixelRatio;
+    ctx.scale(dpr, dpr); // MacOS重置变换矩阵后需要重新根据dpr展开画布
 }
 
 const drawTimelineFlag = (ctx: CanvasRenderingContext2D, beginX: number, item: TimelineAxisFlag, session: Session): void => {

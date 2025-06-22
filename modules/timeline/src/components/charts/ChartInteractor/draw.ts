@@ -289,20 +289,22 @@ export const drawOnMove = ({
 
     // draw mask
     // 因为拖动结束时normal canvas也会绘制mask，避免绘制双层mask，这里限制只有在拖动过程中才hover canvas才绘制mask
-    if (clickPos !== undefined) {
+    // session.selectedRangeIsLock 时 normal canvas 的 mask 不会删除，避免绘制双层 mask
+    if (clickPos !== undefined && !session.selectedRangeIsLock) {
         drawMaskRange({ ctx, width, height, xReverseScaleRef, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
         // should filter on data type
         drawSelectedRange(ctx, selectedRange, xReverseScaleRef);
     }
 
     // draw hoverline and timeaxis highlight
-    if (clickPos !== undefined) {
+    // session.selectedRangeIsLock 时绘制基准线没有意义
+    if (clickPos !== undefined && !session.selectedRangeIsLock) {
         const startX = xReverseScaleRef.current(clickPos.timeAxisX);
         ctx.strokeStyle = '#3778ED';
         ctx.beginPath();
         ctx.moveTo(startX, 0);
         ctx.lineTo(startX, height);
-        ctx.stroke();
+        ctx.stroke(); // 绘制基准连线
     }
 
     if (mousePosNow !== undefined) {
@@ -311,10 +313,10 @@ export const drawOnMove = ({
         ctx.beginPath();
         ctx.moveTo(mousePosNow.x, 0);
         ctx.lineTo(mousePosNow.x, height);
-        ctx.stroke();
+        ctx.stroke(); // 绘制鼠标位置连线
 
         // timeRect & text
-        drawHoverTimeRect(ctx, width, mousePosNow, xScale, session);
+        drawHoverTimeRect(ctx, width, mousePosNow, xScale, session); // 绘制鼠标连线上方的时间方框
     }
 };
 

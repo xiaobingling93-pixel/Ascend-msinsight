@@ -219,6 +219,7 @@ interface MouseActionParams {
     splitLineRef: React.RefObject<HTMLDivElement>;
     interactorParams: InteractorParams;
 }
+// 泳道画布内的元素点击都会经过这个函数，根据该函数的返回结果确定是否有点击下去，是否点击在选中区间的边界
 export const mouseDownAction = ({
     session, xReverseScaleRef, interactorMouseState, e, splitLineRef, interactorParams,
 }: MouseActionParams): MouseDownActionResult => {
@@ -253,7 +254,7 @@ export const mouseDownAction = ({
     }
     let needDragOneSide = false;
     let timeAxisX;
-    if (session.selectedRange !== undefined && isOnSideline(lastPos, session.selectedRange, xReverseScaleRef)) {
+    if (session.selectedRange !== undefined && isOnSideline(lastPos, session.selectedRange, xReverseScaleRef)) { // 已经有选中区间，且点击到区间的边界
         const isOnLeftSide = offsetX <= xReverseScaleRef.current(session.selectedRange[0]) + SINGLE_DRAG_OFFSET &&
             offsetX >= xReverseScaleRef.current(session.selectedRange[0]) - SINGLE_DRAG_OFFSET;
         timeAxisX = isOnLeftSide ? session.selectedRange[1] : session.selectedRange[0];

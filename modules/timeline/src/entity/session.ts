@@ -137,7 +137,6 @@ export class Session {
 
     // some params for selected value which is not a range.
     selectedParams: SelectedParams = { baseRawId: undefined, curRawId: undefined };
-    selectedRange?: [ TimeStamp, TimeStamp ];
     scrollTop: number = 0;
     // Timeline模块键盘滚动区域
     scrollArea: string = '';
@@ -225,6 +224,7 @@ export class Session {
     isDragging: boolean = false;
     debouncedSetZoomingHistory;
 
+    private _selectedRange?: [ TimeStamp, TimeStamp ];
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.
@@ -352,6 +352,10 @@ export class Session {
         return this._selectedUnits;
     }
 
+    get selectedRange(): [TimeStamp, TimeStamp] | undefined {
+        return this._selectedRange;
+    }
+
     set endTimeAll(endTimeAll: TimeStamp | undefined) {
         this._initEndTimeAll = endTimeAll;
         this.updateEndTimeAll();
@@ -424,6 +428,14 @@ export class Session {
             return;
         }
         this._selectedUnits = data;
+    }
+
+    set selectedRange(data: [TimeStamp, TimeStamp] | undefined) {
+        if (this.selectedRangeIsLock) {
+            console.warn('[WARN] selectedRange is locked, cannot set value.');
+            return;
+        }
+        this._selectedRange = data;
     }
 
     updateEndTimeAll(): void {

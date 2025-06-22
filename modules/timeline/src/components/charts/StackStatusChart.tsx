@@ -233,6 +233,9 @@ interface MouseUpFuncParams {
 }
 const mouseUpFunc = ({ e, datasState, rangeAndDomain, rowHeight, session, metadata, onClick }: MouseUpFuncParams): void => {
     const clickedData = findDataByXY({ x: e.offsetX, y: e.offsetY }, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0);
+    if (clickedData !== undefined) {
+        clickedData.showSelectedData = true; // 强制设置优先显示“选中详情”
+    }
     runInAction(() => {
         session.selectedData = clickedData
             ? { ...clickedData, threadId: (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' }
@@ -250,7 +253,7 @@ const mouseMoveUpFunc = ([downX, upX]: number[], datasState: StackStatusData[][]
 };
 
 // eslint-disable-next-line max-lines-per-function
-export const StackStatusChart = observer(({
+export const StackStatusChart = observer(({ // 绘制 slice 的画布
     session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator,
     rowHeight, width, textConfig, isNeedClamp, isCollapse, maxDepth,
 }: StackStatusChartProps) => {

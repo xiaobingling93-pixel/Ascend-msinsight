@@ -247,7 +247,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         }
         const needDragOneSide = chartInteractorRef.current.mouseDownAction(interactorMouseState, e);
         if (needDragOneSide === MouseDownActionResult.NEED_DRAG_ONE_SIDE) {
-            // 拖拽
+            // 当点击到已经有 selectedRange 的边界，需要触发拖拽
             onMouseMove(e);
         }
     };

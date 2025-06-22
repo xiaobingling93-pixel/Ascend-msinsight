@@ -573,5 +573,37 @@ test.describe('Timeline', () => {
         await page.mouse.wheel(0, 250);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-npu-mem.png', { maxDiffPixels:100 });
     });
+
+    // 图形化窗格 - 锁定选中区间后，点击算子跳转显示选中详情
+    test('test_lock_selected_area_then_click_operator_detail', async ({ timelinePage, page }) => {
+        const { timelineFrame, clickMenu } = timelinePage;
+        const clickUnit = timelineFrame.locator('.unit-info').nth(9);
+        await clickUnit.click();
+        // 这里需要优化，改为当图表渲染完成后再继续执行
+        await page.waitForTimeout(1000);
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const chartInfo = await chart.boundingBox();
+        if (!chartInfo) {
+            return;
+        }
+        const { x: startX, y: startY } = chartInfo;
+        await page.mouse.move(startX + 50, startY + 80);
+        await page.mouse.down();
+        await page.mouse.move(startX + 200, startY + 150);
+        await page.mouse.up();
+        // 右键锁定
+        await clickMenu(chart.first(), timelineFrame, 'Lock selection area');
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test_lock_selected_area.png', { maxDiffPixels:100 });
+        // 点击算子
+        await chart.first().click({
+            position: {
+                x: 316,
+                y: 12,
+            },
+        });
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('.bottomPanelContainer ')).toHaveScreenshot('test_lock_selected_area_then_click_operator_detail.png', { maxDiffPixels:100 });
+    });
 });
 

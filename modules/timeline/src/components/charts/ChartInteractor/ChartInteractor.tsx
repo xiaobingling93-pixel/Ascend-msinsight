@@ -27,7 +27,7 @@ import {
     type MouseDownActionResult, handleMousePosChange,
 } from './actions';
 import type { TimeStamp } from '../../../entity/common';
-registerCrossUnitRenderer({
+registerCrossUnitRenderer({ // 绘制选中区间的虚线
     action: (ctx, session, xScale) => {
         const selectedRange = session.selectedRange; // should filter on data type
         if (ctx !== null && selectedRange !== undefined) {
@@ -220,7 +220,7 @@ const Interactor = ({
         if (drawArgs === null) { return; }
         drawMEventMask(drawArgs);
     }, [domainStart, domainEnd, endTimeAll, theme, scrollTop, session.mKeyRender, session.mMaskRange, renderTrigger, ...customRenderTriggers]);
-    useEffect(() => {
+    useEffect(() => { // 当页面中的范围等变化时，必须更新绘图
         const drawArgs = getDrawArgs();
         if (drawArgs === null) { return; }
         draw(drawArgs);
@@ -236,7 +236,8 @@ const Interactor = ({
             draw(drawArgs);
         }, 10);
     }, [normalRect]);
-    useEffect(() => {
+    useEffect(() => { // 用于在鼠标按住框选时配合 awsd 方向按键更新拖动选框绘制
+        if (session.selectedRangeIsLock) { return; }
         handleMousePosChange(interactorParams, interactorMouseState);
     }, [domainStart, domainEnd]);
 
