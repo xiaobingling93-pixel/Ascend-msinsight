@@ -32,10 +32,16 @@ public:
                const std::string &fileId) override;
     bool Parse(const RankEntry &rankEntry);
     void Reset() override;
-    bool OperatorParse(const std::string &filePath, const std::string &fileId);
+    bool OperatorParse(const std::string &filePath, const std::string &rankId);
     bool RecordToParse(const std::string &filePath, const std::string &fileId);
     bool StaticOpParse(const std::string &filePath, const std::string &fileId);
     bool ComponentParse(const std::string &filePath, const std::string &fileId);
+
+    static bool ParseOperatorHeaderLine(std::map<std::string, size_t>& dataMap, const std::vector<std::string>& row);
+
+    static Operator ParseOperatorDataLine(std::map<std::string, size_t>& dataMap, std::vector<std::string> &row);
+    MemoryFilePairs GetMemoryFile(const std::string &path);
+
 private:
     const uint32_t maxThreadNum = 4;
     const double mbToKb = 1024.0;
@@ -47,13 +53,12 @@ private:
     std::map<std::string, std::future<void>> futureMap;
 
     Record mapperToRecordDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
-    Operator mapperToOperatorDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
+    static Operator mapperToOperatorDetail(std::map<std::string, size_t> &dataMap, std::vector<std::string> &row);
     StaticOp mapperToStaticOpDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
     Component mapperToComponentDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
 
-    bool GetMapValid(const std::vector<std::string> &vec, const std::map<std::string, size_t> &dataMap);
+    static bool GetMapValid(const std::vector<std::string> &vec, const std::map<std::string, size_t> &dataMap);
     std::vector<std::string> GetPeerDirOperatorFile(const std::string& operatorFile, const std::string &reg);
-    MemoryFilePairs GetMemoryFile(const std::string &path);
     std::map<std::string, MemoryFilePairs>
     GetMemoryFiles(const std::vector<std::string> &paths, const std::string &rankId,
                    const std::string &fileId);
@@ -69,7 +74,7 @@ private:
                               const std::string &msg);
 
     static void PreParseTask(const MemoryFilePairs& filePair, const std::string& fileId);
-    static bool ParseTask(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message);
+    static bool ParseTask(const MemoryFilePairs& filePair, const std::string& rankId, std::string &message);
     static bool InitParser(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message);
     static std::string DeleteNPUPrefix(const std::string &str);
 };

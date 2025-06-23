@@ -10,12 +10,14 @@
 #include "WsSender.h"
 #include "TraceTime.h"
 #include "TrackInfoManager.h"
+#include "ProjectExplorerManager.h"
 #include "MemoryParse.h"
 
 namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Dic::Server;
+using namespace Dic::Module::Timeline;
 MemoryParse &MemoryParse::Instance()
 {
     static MemoryParse instance;
@@ -50,18 +52,19 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths,
     return true;
 }
 
-bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &fileId)
+bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &rankId)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("Start parsing Operator Memory: ", filePath, ", FileId: ", fileId);
+    ServerLog::Info("Start parsing Operator Memory: ", filePath, ", FileId: ", rankId);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
+        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(rankId));
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
+    std::string lastDeviceId;
     while (getline(file, line)) {
-        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
+        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + rankId) !=
             Timeline::ParserStatus::RUNNING) {
             ServerLog::Error("Parsing process of operator_memory.csv is interrupted.");
             file.close();
@@ -69,17 +72,9 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
         }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
-            if (row.empty()) {
-                ServerLog::Error("The first line of operator_memory.csv is not header.");
+            if (!ParseOperatorHeaderLine(dataMap, row)) {
                 file.close();
-                return false;
-            }
-            for (size_t i = 0; i < row.size(); i++) {
-                dataMap[row[i]] = i;
-            }
-            bool columnExist = GetMapValid((row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF), dataMap);
-            if (!columnExist) {
-                file.close();
+                ServerLog::Error("First line of operator_memory.csv is not valid");
                 return false;
             }
             isHeader = false;
@@ -88,7 +83,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
             if (dataMap.size() != row.size()) {
                 continue;
             }
-            Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
+            Operator opePtr = ParseOperatorDataLine(dataMap, row);
             // 读取每一行数据并插入到operator内
             memoryDatabase->InsertOperatorDetail(opePtr);
         }
@@ -99,7 +94,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     ServerLog::Info("End parsing Operator Memory: ", filePath, ", cost time: ",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minStartTime = memoryDatabase->QueryMinOperatorAllocationTime();
-    Timeline::TraceTime::Instance().UpdateCardMinTimestamp(fileId, minStartTime);
+    Timeline::TraceTime::Instance().UpdateCardMinTimestamp(rankId, minStartTime);
     return true;
 }
 
@@ -114,7 +109,7 @@ bool MemoryParse::GetMapValid(const std::vector<std::string>& vec, const std::ma
     return true;
 }
 
-Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataMap, std::vector<std::string> row)
+Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> &dataMap, std::vector<std::string> &row)
 {
     Operator anOperator {};
     size_t nameIndex = dataMap[NAME];
@@ -550,7 +545,7 @@ void MemoryParse::PreParseTask(const MemoryFilePairs& filePair, const std::strin
     }
 }
 
-bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message)
+bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& rankId, std::string &message)
 {
     std::set<std::string> operatorFiles = filePair.operatorFiles;
     std::set<std::string> recordFiles = filePair.recordFiles;
@@ -562,46 +557,46 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
     std::copy(staticOpFiles.begin(), staticOpFiles.end(), std::back_inserter(files));
     std::copy(componentFiles.begin(), componentFiles.end(), std::back_inserter(files));
     if (!ValidateUtil::CheckCsvFileList(files)) {
-        message = "Failed to parse memory file: " + fileId + " due to access or file size.";
+        message = "Failed to parse memory file: " + rankId + " due to access or file size.";
         return false;
     }
 
     for (const auto& operatorFile : operatorFiles) {
-        if (!MemoryParse::Instance().OperatorParse(operatorFile, fileId)) {
+        if (!MemoryParse::Instance().OperatorParse(operatorFile, rankId)) {
             message = "Failed to parse operator memory file, path = " + operatorFile;
             return false;
         }
     }
 
     for (const auto& recordFile : recordFiles) {
-        if (!MemoryParse::Instance().RecordToParse(recordFile, fileId)) {
+        if (!MemoryParse::Instance().RecordToParse(recordFile, rankId)) {
             message = "Failed to parse operator record file, path = " + recordFile;
             return false;
         }
     }
 
     for (const auto& staticOpFile : staticOpFiles) {
-        if (!MemoryParse::Instance().StaticOpParse(staticOpFile, fileId)) {
+        if (!MemoryParse::Instance().StaticOpParse(staticOpFile, rankId)) {
             message = "Failed to parse staticOp record file, path = " + staticOpFile;
             return false;
         }
     }
 
     for (const auto& componentFile : componentFiles) {
-        if (!MemoryParse::Instance().ComponentParse(componentFile, fileId)) {
+        if (!MemoryParse::Instance().ComponentParse(componentFile, rankId)) {
             message = "Failed to parse npu module mem file, path = " + componentFile;
             return false;
         }
     }
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
-        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
+        Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(rankId));
     if (memoryDatabase == nullptr) {
-        message = StringUtil::StrJoin("Failed to get db connection, rankId:", fileId);
+        message = StringUtil::StrJoin("Failed to get db connection, rankId:", rankId);
         return false;
     }
 
-    ParseEndCallBack(fileId, memoryDatabase->GetDbPath(), true, "");
-    Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
+    ParseEndCallBack(rankId, memoryDatabase->GetDbPath(), true, "");
+    Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + rankId);
     return true;
 }
 
@@ -715,6 +710,27 @@ std::string MemoryParse::DeleteNPUPrefix(const std::string &str)
         return str.substr(npuPrefix.size());
     }
     return str;
+}
+
+bool MemoryParse::ParseOperatorHeaderLine(std::map<std::string, size_t> &dataMap, const std::vector<std::string> &row)
+{
+    if (row.empty()) {
+        ServerLog::Error("The first line of static_op_mem.csv is not header.");
+        return false;
+    }
+    for (size_t i = 0; i < row.size(); i++) {
+        dataMap[row[i]] = i;
+    }
+    bool columnExist = GetMapValid(row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF, dataMap);
+    if (!columnExist) {
+        return false;
+    }
+    return true;
+}
+
+Operator MemoryParse::ParseOperatorDataLine(std::map<std::string, size_t> &dataMap, std::vector<std::string> &row)
+{
+    return MemoryParse::mapperToOperatorDetail(dataMap, row);
 }
 
 } // end of namespace Memory

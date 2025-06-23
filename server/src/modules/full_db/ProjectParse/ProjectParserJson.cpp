@@ -117,12 +117,12 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
                 continue;
             }
             std::string rankId = FileUtil::GetRankIdFromFile(jsonFiles[0]);
-            std::string deviceId = rankId;
+            std::string deviceId = isDevice ? rankId : GetDeviceIdFromCSVFile(parseFileInfo->parseFilePath, rankId);
             if (isDevice) {
                 rankId = parseFileInfo->deviceId;
                 deviceId = rankId;
             }
-            parseFileInfo->deviceId = rankId;
+            parseFileInfo->deviceId = deviceId;
             if (isMultiCluster) {
                 rankId = StringUtil::StrJoin(parseFileInfo->clusterId, "_", rankId);
             }
@@ -789,6 +789,39 @@ void ProjectParserJson::SetBaseAction(const std::map<std::string, RankEntry> &ra
             response.body.isMultiDevice = true;
         }
     }
+}
+
+std::string ProjectParserJson::GetDeviceIdFromCSVFile(const std::string &parseFolder,
+                                                      const std::string &rankId)
+{
+    std::string operatorMemoryFile;
+    auto memoryFiles = MemoryParse::Instance().GetMemoryFile(parseFolder);
+    for (const auto& file : memoryFiles.operatorFiles) {
+        if (RegexUtil::RegexSearch(file, memoryOperatorReg)) {
+            operatorMemoryFile = file;
+            break;
+        }
+    }
+    auto file = OpenReadFileSafely(operatorMemoryFile);
+    if (!file.is_open()) {
+        return rankId;
+    }
+    std::string line;
+    bool isHeader = true;
+    std::map<std::string, size_t> dataMap;
+    while (getline(file, line)) {
+        std::vector<std::string> row = StringUtil::StringSplit(line);
+        if (isHeader) {
+            if (!MemoryParse::ParseOperatorHeaderLine(dataMap, row)) {
+                return rankId;
+            }
+            isHeader = false;
+        } else {
+            auto op = MemoryParse::ParseOperatorDataLine(dataMap, row);
+            return op.deviceType;
+        }
+    }
+    return rankId;
 }
 
 ProjectAnalyzeRegister<ProjectParserJson> pRegJson(ParserType::JSON);

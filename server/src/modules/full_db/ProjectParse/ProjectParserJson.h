@@ -80,9 +80,6 @@ private:
     static void FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
                                      const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 
-    static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
-                                       std::vector<std::string> &subdirectoryList);
-
     static void ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo, BaselineInfo &baselineInfo);
 
     void ParserSingleCardBaseline(const Global::ProjectExplorerInfo &projectInfos,
@@ -96,6 +93,8 @@ private:
 
     void ParseBaselineTraceFile(const std::vector<std::string> &jsonFiles, const std::string &rankId,
                                 const std::string &fileId, const std::string &filePath);
+
+    static std::string GetDeviceIdFromCSVFile(const std::string &parseFolder, const std::string &rankId);
 };
 } // end of namespace Module
 } // end of namespace Dic

@@ -420,7 +420,8 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
             continue;
         }
         // 记录有多少device
-        devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]] : rankId);
+        devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]]
+                                                                 : realDeviceId);
         // 读取每一行数据写入kernel内
         db->InsertKernelDetail(kernel, columns);
     }
