@@ -4,11 +4,10 @@
 
 import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { queryParallelismArrangementCancelable } from '../../utils/RequestUtils';
-import { ContextMenuItem, ParallelismArrangementResult } from '../../utils/interface';
+import { ParallelismArrangementResult } from '../../utils/interface';
 import { Session } from '../../entity/session';
 import { observer } from 'mobx-react';
 import { CanvasDrawer, Frame, Line, Rectangle } from './shape';
-import { GenerateConditions } from './CommunicatorContainer';
 import { runInAction } from 'mobx';
 import { getDyeingColor, groupFrames } from './ContainerUtils';
 import eventBus from '../../utils/eventBus';
@@ -19,7 +18,9 @@ import { throttle } from 'lodash';
 import { ContextMenu, DynamicTooltip, Responsive } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 import { message, Spin } from 'antd';
-import { copyObjectToClipboard, transformCardIdInfo } from 'ascend-utils';
+import { transformCardIdInfo } from 'ascend-utils';
+import parallelismStore, { type GenerateConditions } from '../../store/parallelism';
+import { useContextMenuItems } from './useContextMenuItems';
 
 const CanvasContainer = styled.div`
     max-height: 720px;
@@ -122,22 +123,6 @@ const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns =>
     return { data, loading, error, isUpdated };
 };
 
-const useContextMenuItems = (activeRectIndex: number | null, tooltipsData: Record<string, string> | null): ContextMenuItem[] => {
-    const { t } = useTranslation('summary', { keyPrefix: 'contextMenu' });
-
-    return useMemo(
-        () => [
-            {
-                label: t('Copy attributes'),
-                visible: activeRectIndex !== null,
-                action: (): void => {
-                    copyObjectToClipboard(tooltipsData);
-                },
-            },
-        ].filter(item => item.visible),
-        [activeRectIndex]);
-};
-
 interface TooltipsDataProps {
     session: Session;
     hoveredRectIndex: number | null;
@@ -193,11 +178,11 @@ const useTooltipsData = ({ hoveredRectIndex, data, session, dimension }: Tooltip
 
 interface ParallelismGraphProps {
     session: Session;
-    generateConditions: GenerateConditions | null;
     targetRankIndex: number | null;
     targetTrigger: boolean;
 }
-export const ParallelismGraph = observer(({ session, generateConditions, targetRankIndex, targetTrigger }: ParallelismGraphProps): JSX.Element => {
+export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrigger }: ParallelismGraphProps): JSX.Element => {
+    const { generateConditions } = parallelismStore;
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const mainCanvasRef = useRef<HTMLCanvasElement>(null);
     const hoverCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -212,14 +197,20 @@ export const ParallelismGraph = observer(({ session, generateConditions, targetR
     const { data, loading, isUpdated } = useFetchData(generateConditions);
     const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1, dimension } = generateConditions ?? {};
     const locateTargetAnim = useLocateAnim(canvasContainerRef);
-    const [contextMenuRectIndex, setContextMenuRectIndex] = useState<number | null>(null);
+    const [contextMenuRect, setContextMenuRect] = useState<Rectangle | null>(null);
+    const [contextMenuLine, setContextMenuLine] = useState<Line | null>(null);
     const tooltipsData = useTooltipsData({
         hoveredRectIndex,
         data,
         session,
         dimension,
     });
-    const contextMenuItems = useContextMenuItems(contextMenuRectIndex, tooltipsData);
+    const contextMenuItems = useContextMenuItems({
+        session,
+        activeRect: contextMenuRect,
+        activeLine: contextMenuLine,
+        tooltipsData,
+    });
 
     const canvasSize = useMemo(() => {
         let width = 200;
@@ -246,6 +237,7 @@ export const ParallelismGraph = observer(({ session, generateConditions, targetR
             drawer?.addRectangle(
                 new Rectangle({
                     index: arrangement.index,
+                    name: arrangement.name,
                     rowAndCol: arrangement.position,
                     fillColor: dyeingMode === 'None'
                         ? undefined
@@ -502,7 +494,10 @@ export const ParallelismGraph = observer(({ session, generateConditions, targetR
         const y = clientY - scrollTop;
 
         const rect = canvasDrawer.visibleRectangleList.find(r => r.isInside(x, y));
-        setContextMenuRectIndex(rect?.index ?? null);
+        setContextMenuRect(rect ?? null);
+
+        const line = canvasDrawer.lineList.find(l => l.isInside(x, y));
+        setContextMenuLine(line ?? null);
     };
 
     return <div className="parallelism-graph" style={{ position: 'relative' }}>

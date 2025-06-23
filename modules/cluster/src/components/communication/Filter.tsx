@@ -43,9 +43,9 @@ const defaultOptionMap = {
     stageOptions: [],
 };
 
-const observeCondition = observable<{ value: ConditionDataType }>({ value: defaultCondition });
+const observeCondition = observable<{ value: Partial<ConditionDataType> }>({ value: defaultCondition });
 
-export function updateData(filterParams: ConditionDataType): void {
+export function updateData(filterParams: Partial<ConditionDataType>): void {
     observeCondition.value = filterParams;
 }
 

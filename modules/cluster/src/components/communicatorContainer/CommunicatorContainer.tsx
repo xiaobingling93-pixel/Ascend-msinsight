@@ -20,6 +20,7 @@ import cls from 'classnames';
 import { isEqual } from 'lodash';
 import i18n from 'ascend-i18n';
 import { AimOutlined } from '@ant-design/icons';
+import parallelismStore, { DimensionOption, type GenerateConditions } from '../../store/parallelism';
 
 const ParallelismGraphHeader = styled.div`
     display: grid;
@@ -97,13 +98,11 @@ const ColorScaleContainer = styled.div<{ equal: boolean }>`
 
 interface CommunicatorContainerProps {
     session: Session;
-    generateConditions: GenerateConditions;
-    onGenerateConditionsChange: (params: GenerateConditions) => void;
     loading: boolean;
     clusterPath: string;
 }
 
-export const CommunicatorContainer = observer(({ session, generateConditions, onGenerateConditionsChange, loading, clusterPath }:
+export const CommunicatorContainer = observer(({ session, loading, clusterPath }:
 CommunicatorContainerProps) => {
     const { t } = useTranslation('summary');
     const [showRank, setShowRank] = useState(false);
@@ -114,9 +113,7 @@ CommunicatorContainerProps) => {
                 session={session}
                 showRank={showRank}
                 setShowRank={setShowRank}
-                generateConditions={generateConditions}
                 clusterPath={clusterPath}
-                setGenerateConditions={onGenerateConditionsChange}
             />}
 
             {
@@ -129,10 +126,7 @@ CommunicatorContainerProps) => {
                             </Loading>
                         }
                         <ParallelSwitchConditionsProvider>
-                            <CommunicatorContent
-                                session={session}
-                                generateConditions={generateConditions}
-                            />
+                            <CommunicatorContent session={session} />
                         </ParallelSwitchConditionsProvider>
                     </div>
                     : <div className={'noDataTip'}>{t('NoDataTip')}</div>
@@ -149,13 +143,10 @@ const DimensionTabExtraContent = (): JSX.Element => {
     return <Form.Item style={{ marginBottom: 0 }} label={t('Parallel Dimension')} tooltip={<div>{tooltip}</div>}></Form.Item>;
 };
 
-export type GenerateConditions = ParallelismArrangementParams;
 interface CommunicatorHeaderProps {
     session: Session;
     showRank: boolean;
     setShowRank: React.Dispatch<React.SetStateAction<boolean>>;
-    generateConditions: GenerateConditions;
-    setGenerateConditions: (params: GenerateConditions) => void;
     clusterPath: string;
 }
 interface CollectedConfiguration {
@@ -166,23 +157,13 @@ interface CollectedConfiguration {
     cpSize: number;
     moeTpSize: number;
 }
-const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateConditions, setGenerateConditions, clusterPath }: CommunicatorHeaderProps) => {
+const CommunicatorHeader = observer(({ session, showRank, setShowRank, clusterPath }: CommunicatorHeaderProps) => {
+    const { generateConditions, dimensionOptionsData } = parallelismStore;
     const [form] = Form.useForm();
-    const [activeTab, setActiveTab] = useState(generateConditions.dimension);
     const collectedConfiguration = useRef<CollectedConfiguration | null>(null);
     const { t } = useTranslation('summary');
     const dimensionOptions = useMemo(() => {
-        const options = getDimensionOptions(t, generateConditions);
-
-        // 无 CP 维度时，选中 DP 维度
-        if (generateConditions.cpSize === 1 && activeTab === 'ep-dp-pp-cp') {
-            setActiveTab('ep-dp');
-        }
-
-        return options.filter(option => {
-            // 当 cpSize = 1，隐藏 cp 维度视图
-            return !(generateConditions.cpSize === 1 && option.key === 'ep-dp-pp-cp');
-        });
+        return getDimensionOptions(t, dimensionOptionsData);
     }, [generateConditions.cpSize, t]);
 
     const init = async (path: string): Promise<void> => {
@@ -201,7 +182,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
             setShowRank(true);
         }
         form.setFieldsValue({ dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize, algorithm });
-        setGenerateConditions({ algorithm, dimension: activeTab, ppSize, tpSize, cpSize, dpSize, epSize, moeTpSize });
+        parallelismStore.updateGenerateConditions({ algorithm, ppSize, tpSize, cpSize, dpSize, epSize, moeTpSize });
         eventBus.emit('activeCommunicator', undefined);
     };
 
@@ -236,7 +217,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
 
         try {
             await setParallelStrategy({ ...values });
-            setGenerateConditions({ ...values, dimension: activeTab });
+            parallelismStore.updateGenerateConditions({ ...values, dimension: generateConditions.dimension });
             setShowRank(true);
             eventBus.emit('activeCommunicator', undefined);
         } catch (e) {
@@ -249,9 +230,8 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
 
     const handleTabChange = (key: string): void => {
         const dimension = key as ParallelismArrangementParams['dimension'];
-        setActiveTab(dimension);
 
-        setGenerateConditions({ ...generateConditions, dimension });
+        parallelismStore.updateGenerateConditions({ dimension });
         eventBus.emit('activeCommunicator', undefined);
     };
 
@@ -262,7 +242,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
             size="small"
             tabBarGutter={4}
             tabBarExtraContent={{ left: <DimensionTabExtraContent /> }}
-            activeKey={activeTab}
+            activeKey={generateConditions.dimension}
             onChange={handleTabChange}
             items={dimensionOptions}
         />}
@@ -277,19 +257,11 @@ const selectOptions = [
     { value: 'mindie-llm(tp-dp-ep-pp-moetp)', label: 'MindIE-LLM (tp-dp-ep-pp-moetp)' },
     { value: 'vllm(tp-pp-dp-ep)', label: 'vLLM (tp-pp-dp-ep)' },
 ];
-const getDimensionOptions = (t: TFunction, generateConditions: GenerateConditions): Array<{key: string; label: ReactNode}> => {
-    const { cpSize } = generateConditions;
-    return [
-        { key: 'ep-dp', label: <Tooltip title={t('DPDimensionTooltip')}>{'DP'}</Tooltip> },
-        { key: 'ep-dp-pp', label: <Tooltip title={t('PPDimensionTooltip')}>{'DP + PP'}</Tooltip> },
-        { key: 'ep-dp-pp-cp', label: <Tooltip title={t('CPDimensionTooltip')}>{'DP + PP + CP'}</Tooltip> },
-        {
-            key: 'ep-dp-pp-cp-tp',
-            label: cpSize === 1
-                ? <Tooltip title={t('TPDimensionTooltip')}>{'DP + PP + TP'}</Tooltip>
-                : <Tooltip title={t('TPDimensionTooltip')}>{'DP + PP + CP + TP'}</Tooltip>,
-        },
-    ];
+const getDimensionOptions = (t: TFunction, dimensionOptionsData: DimensionOption[]): Array<{key: string; label: ReactNode}> => {
+    return dimensionOptionsData.map(item => ({
+        key: item.key,
+        label: <Tooltip title={t(item.tooltipKey)}>{item.label}</Tooltip>,
+    }));
 };
 
 const FormDom = (
@@ -379,10 +351,9 @@ const FormDom = (
 
 interface CommunicatorContentProps {
     session: Session;
-    generateConditions: GenerateConditions | null;
 }
 
-const CommunicatorContent = observer(({ session, generateConditions }: CommunicatorContentProps) => {
+const CommunicatorContent = observer(({ session }: CommunicatorContentProps) => {
     const { dyeingMode, startVal, endVal } = useParallelSwitchConditions();
     const [targetRankIndex, setTargetRankIndex] = useState<number | null>(null);
     const [targetTrigger, setTargetTrigger] = useState<boolean>(false);
@@ -396,14 +367,13 @@ const CommunicatorContent = observer(({ session, generateConditions }: Communica
         <>
             <ParallelSwitch session={session} onTargetRankIndexChange={handleChange} />
             <ParallelismGraphHeader>
-                <LegendContainer generateConditions={generateConditions} />
+                <LegendContainer />
                 <div>
                     {dyeingMode !== 'None' && <ColorScale min={startVal} max={endVal}/>}
                 </div>
             </ParallelismGraphHeader>
             <ParallelismGraph
                 session={session}
-                generateConditions={generateConditions}
                 targetRankIndex={targetRankIndex}
                 targetTrigger={targetTrigger}
             />
@@ -441,11 +411,8 @@ const defaultLegendItemList: LegendItem[] = [
     { value: 'moeTp', label: 'MoE Tensor Parallelism', color: '#D53F78', checked: true, disabled: false, visible: true },
 ];
 
-interface LegendContainerProps {
-    generateConditions: GenerateConditions | null;
-}
-
-const LegendContainer = ({ generateConditions }: LegendContainerProps): JSX.Element => {
+const LegendContainer = (): JSX.Element => {
+    const { generateConditions } = parallelismStore;
     const { t } = useTranslation('summary');
     const { parallelTypeList, setParallelTypeList } = useParallelSwitchConditions();
     const [parallelTypeOptions, setParallelTypeOptions] = useState<LegendItem[]>(defaultLegendItemList);

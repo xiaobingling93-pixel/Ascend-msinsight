@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ResizeTable } from 'ascend-resize';
 import { Advice } from 'ascend-utils/Common';
 import { AntdTableRow, GetSlowRankAdviseRes, TopElements } from '../../utils/interface';
-import { GenerateConditions } from '../communicatorContainer/CommunicatorContainer';
+import type { GenerateConditions } from '../../store/parallelism';
 
 interface SlowRankContainerProps {
     generateConditions: GenerateConditions;
@@ -45,7 +45,7 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
     const generateColumns = (dataKeys: string[]): Array<{dataIndex: string; key: string; title: string}> => {
         return dataKeys.map(key => ({
             dataIndex: key,
-            key: key,
+            key,
             title: t(key),
         }));
     };

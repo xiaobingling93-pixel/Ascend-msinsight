@@ -14,6 +14,7 @@ import {
     switchDirectoryHandler,
     frameLoadedHandler,
     updateClusterPageInfoHandler,
+    viewCommunicationDurationAnalysisHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -36,6 +37,7 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler<any>> = {
     updateClusterPageInfo: updateClusterPageInfoHandler,
     updateSession: updateSessionHandler,
     locateCommunication,
+    viewCommunicationDurationAnalysis: viewCommunicationDurationAnalysisHandler,
     switchLanguage: switchLanguageHandler,
     updateCommunicatorData: updateCommunicatorDataHandler,
     clusterBaselineToggle: baselineToggleHandler,

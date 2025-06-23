@@ -9,11 +9,11 @@ import type { EChartsOption } from 'echarts';
 import { merge } from 'lodash';
 import { PerformanceDataMap, Session } from '../../entity/session';
 import { FormatterParams, PerformanceDataItem } from '../../utils/interface';
-import { GenerateConditions } from '../communicatorContainer/CommunicatorContainer';
 import { Advice, safeStr } from 'ascend-utils';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import { GenerateConditions } from '../../store/parallelism';
 
 const VALUE_ALL = 'All';
 

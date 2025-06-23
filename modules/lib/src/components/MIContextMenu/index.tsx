@@ -8,6 +8,7 @@ import { useContextMenu } from './hooks/useContextMenu';
 import { useViewport } from '../../hooks/useViewport';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import styled from '@emotion/styled';
+import { useTranslation } from 'react-i18next';
 
 const ContextMenuBox = styled.div<{visible: boolean}>`
     z-index: 99999999;
@@ -25,15 +26,21 @@ const ContextMenuBox = styled.div<{visible: boolean}>`
         padding: 4px 16px;
         user-select: none;
 
-        &:hover {
-            background-color: ${(props): string => props.theme.primaryColor};
+        &:not(.disabled):hover{
+            background: ${(props): string => props.theme.primaryColorHover};
             color: #ffffff;
+        }
+        &.disabled{
+            color: ${(props): string => props.theme.textColorDisabled};
         }
     }
 `;
 
 export interface MenuItem {
+    name: string;
     label: string;
+    visible?: boolean;
+    disabled?: boolean;
     action?: () => void;
 }
 
@@ -89,8 +96,13 @@ export const ContextMenu: React.FC<Props> = ({ menuItems, onSelect, onShow, chil
     const menuSize = useResizeObserver(menuEl);
     const { vw, vh } = useViewport();
     const pos = usePosition({ coords, menuSize, vw, vh, menuEl });
+    const filteredMenuItems = menuItems.filter(item => item.visible);
+    const { t } = useTranslation();
 
     const handleClick = (item: MenuItem): void => {
+        if (item.disabled) {
+            return;
+        }
         setVisible(false);
         onSelect?.(item);
         item?.action?.();
@@ -113,7 +125,7 @@ export const ContextMenu: React.FC<Props> = ({ menuItems, onSelect, onShow, chil
             {children}
             {
                 visible &&
-                menuItems.length > 0 &&
+                filteredMenuItems.length > 0 &&
                 createPortal(
                     <ContextMenuBox
                         ref={handleMenuRef}
@@ -121,16 +133,17 @@ export const ContextMenu: React.FC<Props> = ({ menuItems, onSelect, onShow, chil
                         style={{ left: pos?.x, top: pos?.y }}
                     >
                         {
-                            menuItems.map(item => (
-                                <div
-                                    className="context-menu-item"
-                                    key={item.label}
+                            filteredMenuItems.map(item => {
+                                const { label, name, disabled } = item;
+                                return <div
+                                    className={`context-menu-item ${disabled ? 'disabled' : ''}`}
+                                    key={name}
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={() => handleClick(item)}
                                 >
-                                    {item.label}
-                                </div>
-                            ))
+                                    {t(label)}
+                                </div>;
+                            })
                         }
                     </ContextMenuBox>,
                     document.body,

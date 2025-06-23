@@ -151,7 +151,12 @@
     "slow rank advice": "Check if these groups/ranks are slowing down the cluster—longer sync times indicate worse cluster asynchrony, which increases the likelihood of performance bottlenecks.",
     "No problem": "There is no obvious fast or slow card problem in the current dimension.",
     "contextMenu": {
-      "Copy attributes": "Copy attributes"
+      "Copy attributes": "Copy attributes",
+      "Expand dimension": "Expand dimension",
+      "Collapse dimension": "Collapse dimension",
+      "View Communication Duration Analysis": "View Communication Duration Analysis",
+      "Set as Upper Bound": "Set as Upper Bound",
+      "Set as Lower Bound": "Set as Lower Bound"
     }
   }
 }

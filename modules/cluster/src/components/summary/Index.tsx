@@ -10,7 +10,7 @@ import { useEventBus } from '../../utils/eventBus';
 import { Filter } from './Filter';
 import { StatisticsTable } from './StatisticsTable';
 import BaseInfo from './BaseInfo';
-import { CommunicatorContainer, GenerateConditions } from '../communicatorContainer/CommunicatorContainer';
+import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
 import CollapsiblePanel from 'ascend-collapsible-panel';
@@ -32,6 +32,7 @@ import { ExpertLoadBalancingBox } from './expert-load-balancing';
 import { ClusterSelect } from '../ClusterSelect';
 import { Label } from '../Common';
 import { SlowRankTable } from './SlowRankTable';
+import parallelismStore, { defaultGenerateConditions } from '../../store/parallelism';
 
 const FlowChartContainer = styled.div`
     margin-top: 24px;
@@ -87,17 +88,6 @@ const defaultPerformanceChartConditions = {
     top: 'All',
 };
 
-const defaultGenerateConditions: GenerateConditions = {
-    algorithm: 'megatron-lm(tp-cp-ep-dp-pp)',
-    dimension: 'ep-dp-pp',
-    dpSize: 1,
-    ppSize: 1,
-    tpSize: 1,
-    epSize: 1,
-    cpSize: 1,
-    moeTpSize: 1,
-};
-
 const defaultSlowRankRes = {
     hasSlowRank: false,
     matchSuccess: false,
@@ -105,6 +95,7 @@ const defaultSlowRankRes = {
 };
 
 export const Index = observer(({ session, clusterPath }: { session: Session; clusterPath: string }): JSX.Element => {
+    const { generateConditions } = parallelismStore;
     const { t } = useTranslation('summary');
     const tips = useHit(true);
     const [isPipeline, setIsPipeline] = useState(false);
@@ -113,10 +104,9 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
     const [slowRankData, setSlowRankData] = useState<GetSlowRankAdviseRes>(defaultSlowRankRes);
     const [adviceContent, setAdviceContent] = useState<string[]>([]);
     const [performanceChartConditions, setPerformanceChartConditions] = useState<PerformanceChartConditions>(defaultPerformanceChartConditions);
-    const [generateConditions, setGenerateConditions] = useState<GenerateConditions>(defaultGenerateConditions);
     const isDefaultGenerateConditions: boolean = useMemo(() => {
         return isEqual(generateConditions, defaultGenerateConditions);
-    }, [generateConditions]);
+    }, [JSON.stringify(generateConditions)]);
 
     const getPerformanceData = async (): Promise<void> => {
         setPerformanceLoading(true);
@@ -206,10 +196,6 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
         setSlowRankData(slowRankRes);
     };
 
-    const handleGenerateConditionsChange = async (params: GenerateConditions): Promise<void> => {
-        setGenerateConditions(params);
-    };
-
     const handleFilterChange = (conditions: PerformanceChartConditions): void => {
         setPerformanceChartConditions(conditions);
     };
@@ -251,7 +237,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
     ]);
 
     useEffect(() => {
-        setGenerateConditions(defaultGenerateConditions);
+        parallelismStore.updateGenerateConditions(defaultGenerateConditions);
     }, [clusterPath]);
 
     return <Layout>
@@ -265,8 +251,6 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
         <CollapsiblePanel title={t('Parallel Strategy Analysis')}>
             <CommunicatorContainer
                 session={session}
-                generateConditions={generateConditions}
-                onGenerateConditionsChange={handleGenerateConditionsChange}
                 loading={performanceLoading}
                 clusterPath={clusterPath}
             />

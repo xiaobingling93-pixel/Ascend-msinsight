@@ -191,10 +191,6 @@ export class Rectangle extends Shape {
 
         this.drawInnerIndex(ctx);
 
-        if (this.name) {
-            this.drawInnerName(ctx);
-        }
-
         if (this.textHeight) {
             this.drawBottomText(ctx);
         }
@@ -241,6 +237,10 @@ export class Line extends Shape {
         this.rectList = list;
         this.parallelismSize = parallelismSize;
         this.getLineDetails();
+    }
+
+    get communicationGroup(): string {
+        return this.rectList.map(rect => rect.index).join(',');
     }
 
     drawLine(ctx: CanvasRenderingContext2D, color: string, [startX, startY, endX, endY]: LinePosition, bold?: boolean): void {

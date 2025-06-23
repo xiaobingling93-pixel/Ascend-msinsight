@@ -140,6 +140,16 @@ export const locateCommunication: NotificationHandler = (data): void => {
     });
 };
 
+export const viewCommunicationDurationAnalysisHandler: NotificationHandler<ConditionDataType> = (data): void => {
+    const { stage, pgName } = data;
+    updateData({
+        stage,
+        type: AnalysisType.COMMUNICATION_DURATION_ANALYSIS,
+        baselineIterationId: '',
+        pgName,
+    });
+};
+
 export const switchLanguageHandler: NotificationHandler = (data): void => {
     const session = store.sessionStore.activeSession;
     const lang = data.lang as 'zhCN' | 'enUS';
