@@ -159,7 +159,7 @@ void QueryMemoryComponentHandler::SelectResult(Dic::Protocol::MemoryComponentReq
     uint64_t pageSize = request.params.pageSize <= 0 ? DEFAULT_PAGE_SIZE : request.params.pageSize;
     uint64_t currentPage = request.params.currentPage < 1 ? 0 : request.params.currentPage - 1;
     uint64_t offset = currentPage * pageSize;
-    if (offset >= fullDiffResult.size()) {
+    if (offset != 0 && offset >= fullDiffResult.size()) {
         response.componentDiffDetails.clear();
     } else {
         for (size_t i = offset; i < offset + pageSize && i < fullDiffResult.size(); ++i) {
