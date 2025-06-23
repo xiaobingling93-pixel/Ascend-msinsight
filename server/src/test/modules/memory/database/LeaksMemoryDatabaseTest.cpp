@@ -123,11 +123,11 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelat
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
     memoryDatabase->QueryMemoryBlocks(params, blocks);
     uint64_t minTimestamp = memoryDatabase->QueryMemoryEventExtremumTimestamp("0", true);
-    const size_t expectSize = 13;
+    const size_t expectSize = 228;
     EXPECT_EQ(blocks.size(), expectSize);
     MemoryBlock &firstBlock = blocks[0];
-    const uint64_t expectStartTime = 8619844960;
-    const uint64_t expectEndTime = 10994650890;
+    const uint64_t expectStartTime = 7707721000;
+    const uint64_t expectEndTime = 42462343790;
     EXPECT_EQ(firstBlock.startTimestamp, expectStartTime);
     EXPECT_EQ(firstBlock.endTimestamp, expectEndTime);
     EXPECT_TRUE(firstBlock.size > 0 and firstBlock.size < params.maxSize);

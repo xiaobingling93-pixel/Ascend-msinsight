@@ -455,15 +455,15 @@ void LeaksMemoryDatabase::AppendMemoryBlockQueryConditionSqlByParams(const Leaks
     std::string minTimestampStr = std::to_string(minTimestamp);
     std::string errMsg;
     if (queryParams.endTimestamp > 0) {
-        querySql += " AND ({} - {}) >= {}  AND ({} - {}) <= {}";
+        querySql += " AND ((({} - {}) BETWEEN {} AND {}) OR (({} - {}) BETWEEN {} AND {}))";
 
         querySql = StringUtil::FormatSqlUsingPlaceHolder(querySql,
                                                          {std::string(BLOCK::START_TIMESTAMP),
                                                           minTimestampStr,
-                                                          std::to_string(queryParams.startTimestamp),
+                                                          std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp),
                                                           std::string(BLOCK::END_TIMESTAMP),
                                                           minTimestampStr,
-                                                          std::to_string(queryParams.endTimestamp)},
+                                                          std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp)},
                                                          errMsg);
     }
     if (queryParams.maxSize > 0) {
