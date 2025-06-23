@@ -674,7 +674,7 @@ std::vector<SourceFileLineDynamicCol> SourceInstructionParser::GetApiLinesDynami
     if (targetCore == apiCores.end()) {
         targetCore = apiCores.begin();
     }
-    size_t index = std::distance(apiCores.begin(), targetCore); // never below zero
+    size_t index = static_cast<size_t>(std::distance(apiCores.begin(), targetCore)); // never below zero
     for (const auto &item: sourceLinesMap[sourceName]) {
         SourceFileLineDynamicCol col;
         GetValueInTargetCore(item.stringColumnMap, col.stringColumnMap, index);

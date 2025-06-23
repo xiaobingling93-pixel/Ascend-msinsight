@@ -288,8 +288,8 @@ struct DetailsInterCoreLoadSubCoreDetail {
         }
         // 10 表示 每增加10%，level由MAX_LEVEL减少1
         if ((diff * 10 / minCycles) < static_cast<uint64_t>(maxLevel)) {
-            // 10 表示 每增加10%，level由MAX_LEVEL减少1
-            cycles.level = static_cast<uint64_t>(maxLevel) - diff * 10 / minCycles;
+            // 10 表示 每增加10%，level由MAX_LEVEL减少1;此处maxLevel=10, 无溢出风险
+            cycles.level = static_cast<int>(static_cast<uint64_t>(maxLevel) - diff * 10 / minCycles);
         }
         if (cycles.level < 1) {
             cycles.level = 1;
@@ -311,8 +311,8 @@ struct DetailsInterCoreLoadSubCoreDetail {
         }
         // 10 表示 每增加10%，level由MAX_LEVEL减少1
         if ((diff * 10 / minThroughput) < static_cast<uint64_t>(maxLevel)) {
-            // 10 表示 每增加10%，level由MAX_LEVEL减少1直到等于1
-            throughput.level = static_cast<uint64_t>(maxLevel) - diff * 10 / minThroughput;
+            // 10 表示 每增加10%，level由MAX_LEVEL减少1直到等于1;此处maxLevel为10, 无溢出风险
+            throughput.level = static_cast<int>(static_cast<uint64_t>(maxLevel) - diff * 10 / minThroughput);
         }
         if (throughput.level < 1) {
             throughput.level = 1;
