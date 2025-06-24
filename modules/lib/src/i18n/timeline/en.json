@@ -153,7 +153,8 @@
       "AI Core Request Error": "Failed to request the AICore frequency Analysis",
       "AI Core Frequency": "AI Core Frequency",
       "AI Core unproblematic": "The maximum frequency reduction does not exceed {{percent}}%",
-      "AI Core reduction": "The maximum frequency reduction exceeds {{percent}}%, which may lead to longer computation time. Please refer to the AI Core Freq lane for details"
+      "AI Core reduction": "The maximum frequency reduction exceeds {{percent}}%, which may lead to longer computation time. Please refer to the AI Core Freq lane for details",
+      "Click To AI Core Frequency": "Click To AI Core Frequency"
     },
     "RenderError": "Rendering failed. Please check if the data is correct",
     "Merged unit": "Merged unit",

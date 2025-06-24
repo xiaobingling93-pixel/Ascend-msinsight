@@ -153,7 +153,8 @@
       "AI Core Request Error": "请求AICore频率分析失败",
       "AI Core Frequency": "AI Core 频率分析",
       "AI Core unproblematic": "频率最大降频不超过{{percent}}%",
-      "AI Core reduction" :"频率最大降频超过{{percent}}%，可能会导致计算时间变长，具体请查看AI Core Freq泳道"
+      "AI Core reduction" :"频率最大降频超过{{percent}}%，可能会导致计算时间变长，具体请查看AI Core Freq泳道",
+      "Click To AI Core Frequency": "点击跳转AI Core Frequency"
     },
     "RenderError": "渲染失败，请检查数据是否正确",
     "Merged unit": "合并的泳道",

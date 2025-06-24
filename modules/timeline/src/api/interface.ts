@@ -40,6 +40,12 @@ export interface OpDetail {
     metaType?: string;
 }
 
+export interface UnitDetail {
+    cardId: string;
+    propsCardId: string;
+    pid: string;
+}
+
 // parseCards
 export interface ParseCardsParam {
     cards: string[];
