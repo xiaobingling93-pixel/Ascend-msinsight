@@ -413,6 +413,9 @@ template <> std::optional<document_t> ToResponseJson<ExpAnaAICoreFreqResponse>
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
+    JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
+    JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
+    JsonUtil::AddMember(body, "tid", response.body.tid, allocator);
     JsonUtil::AddMember(body, "hasProblem", response.body.hasProblem, allocator);
     JsonUtil::AddMember(body, "percent", response.body.percent, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);

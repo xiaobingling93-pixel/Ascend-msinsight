@@ -353,6 +353,9 @@ struct SystemViewAICoreFreqDetail {
 };
 
 struct ExpAnaAICoreFreqBody {
+    std::string rankId;
+    std::string pid;
+    std::string tid;
     bool hasProblem = false;
     uint64_t percent = 0;
 };

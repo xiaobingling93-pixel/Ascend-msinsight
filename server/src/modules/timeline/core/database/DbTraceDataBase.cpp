@@ -379,6 +379,7 @@ bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requ
 }
 
 bool DbTraceDataBase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+    Protocol::ExpAnaAICoreFreqBody &responseBody,
     std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq)
 {
     std::unique_ptr<SqliteResultSet> resultSet;
@@ -400,6 +401,7 @@ bool DbTraceDataBase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICore
         int col = resultStartIndex;
         detail.first = resultSet->GetUint64(col++);
         detail.second = resultSet->GetUint64(col++);
+        responseBody.pid = "AI Core Freq";
         maxFreq = std::max(maxFreq, detail.second);
         minFreq = std::min(minFreq, detail.second);
         freqs.emplace_back(detail);

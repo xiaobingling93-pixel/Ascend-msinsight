@@ -1282,6 +1282,7 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
 }
 
 bool TextTraceDatabase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+    Protocol::ExpAnaAICoreFreqBody &responseBody,
     std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq)
 {
     std::string sql = TextSqlConstant::GetAICoreViewDataSql();
@@ -1312,6 +1313,8 @@ bool TextTraceDatabase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICo
             ServerLog::Error("Invalid AI core freq data structure detected.");
             break;
         }
+        responseBody.pid = resultSet->GetString(col++);
+        responseBody.tid = resultSet->GetString(col++);
         maxFreq = std::max(maxFreq, detail.second);
         minFreq = std::min(minFreq, detail.second);
         freqs.emplace_back(detail);

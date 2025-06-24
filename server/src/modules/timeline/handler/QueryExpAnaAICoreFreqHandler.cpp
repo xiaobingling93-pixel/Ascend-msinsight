@@ -35,11 +35,13 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     uint64_t maxFreq = 0;
     uint64_t minFreq = UINT64_MAX;
     std::vector<std::pair<uint64_t, uint64_t>> freqs;
-    if (!database->QueryExpAnaAICoreFreqData(request.params, freqs, maxFreq, minFreq)
+    if (!database->QueryExpAnaAICoreFreqData(request.params, response.body, freqs, maxFreq, minFreq)
         || freqs.empty()) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get system view AI core freq table response data.");
     }
+    auto dbType = Timeline::DataBaseManager::Instance().GetDataType();
+    response.body.rankId = dbType == Timeline::DataType::TEXT ? request.params.rankId : database->GetDbPath();
     if (maxFreq != 0) {
         // 计算百分比需要乘以100
         response.body.percent = static_cast<uint64_t>(((float)(maxFreq - minFreq) / (float)maxFreq) * 100);

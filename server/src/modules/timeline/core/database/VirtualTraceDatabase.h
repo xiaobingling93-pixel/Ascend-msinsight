@@ -71,6 +71,7 @@ public:
     virtual bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
         Protocol::SystemViewBody &responseBody) = 0;
     virtual bool QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+        Protocol::ExpAnaAICoreFreqBody &responseBody,
         std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq) = 0;
     virtual LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name) = 0;
     virtual std::vector<std::string> QueryCoreType() = 0;

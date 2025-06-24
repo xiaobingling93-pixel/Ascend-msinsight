@@ -38,10 +38,11 @@ TEST_F(TestSuit, QuerySystemViewAICoreFreqData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SystemViewAICoreFreqParams requestParams;
+    Dic::Protocol::ExpAnaAICoreFreqBody responseBody;
     std::vector<std::pair<uint64_t, uint64_t>> freqs;
     uint64_t maxFreq = 0;
     uint64_t minFreq = UINT64_MAX;
-    database->QueryExpAnaAICoreFreqData(requestParams, freqs, maxFreq, minFreq);
+    database->QueryExpAnaAICoreFreqData(requestParams, responseBody, freqs, maxFreq, minFreq);
     int expectSize = 0;
     EXPECT_EQ(freqs.size(), expectSize);
 }

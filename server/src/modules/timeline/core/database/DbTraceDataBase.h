@@ -81,6 +81,7 @@ public:
     bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
                              Protocol::SystemViewBody &responseBody) override;
     bool QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+        Protocol::ExpAnaAICoreFreqBody &responseBody,
         std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq) override;
     LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name) override;
     std::vector<std::string> QueryCoreType() override;
