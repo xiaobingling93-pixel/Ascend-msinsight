@@ -198,7 +198,6 @@ Promise<CategoryEvents['flowDetailList']> => {
  * @param arr
  */
 function uniqueLinkLines(arr: CategoryEvents['flowDetailList']): CategoryEvents['flowDetailList'] {
-    const start = Date.now();
     const uniqueLinkLineMap: Map<string, CategoryEvents['flowDetailList'][number]> = new Map();
     const generateKey = (obj: CategoryEvents['flowDetailList'][number]): string => {
         return `${obj.category}_${obj.from.timestamp}/${obj.from.pid}-${obj.from.tid}-${obj.from.depth}_${obj.to.timestamp}/${obj.to.pid}-${obj.to.tid}-${obj.to.depth}`;
