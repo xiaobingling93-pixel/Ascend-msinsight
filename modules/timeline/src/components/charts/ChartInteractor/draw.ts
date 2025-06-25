@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
 import type { Theme } from '@emotion/react';
 import type { CustomCrossRenderer } from './custom';
 import type { Session } from '../../../entity/session';
@@ -13,20 +12,20 @@ import { getTextParser } from '../TimelineAxis';
 import { TIME_LINE_AXIS_HEIGHT_PX } from '../../ChartContainer/ChartContainer';
 import type { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { hashToNumber } from '../../../utils/colorUtils';
-import { UnitHeight } from '../../../entity/insight';
+import { LinkLine, UnitHeight } from '../../../entity/insight';
 import type { InsightUnit } from '../../../entity/insight';
 import type { ThreadMetaData } from '../../../entity/data';
-import { colorPalette, getTimeOffset } from '../../../insight/units/utils';
-import * as d3 from 'd3';
+import { colorPalette } from '../../../insight/units/utils';
 import { handlerEmptyString } from '../../../utils/string';
-import { isNil } from 'lodash';
+import { forEach, groupBy, isNil } from 'lodash';
+import { calculateLinkLines, LinkLineData } from './calculateLinkLines';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 export const MIN_BRUSH_SIZE = 2;
 export const PAGE_PADDING = 16;
 const MAX_RECURSIVE_COUNT = 10;
 
-interface DrawArrowOptions {
+interface DrawArrowOption {
     toX: number;
     toY: number;
     fromX: number;
@@ -35,19 +34,25 @@ interface DrawArrowOptions {
     angle: number;
     color: string;
 };
-export const drawArrow = (ctx: CanvasRenderingContext2D, { toX, toY, fromX, fromY, length, angle, color }: DrawArrowOptions): void => {
+
+function drawArrowPath(ctx: CanvasRenderingContext2D, option: Omit<DrawArrowOption, 'color'>): void {
+    const { toX, toY, fromX, fromY, length, angle } = option;
     const a = Math.atan2((toY - fromY), (toX - fromX));
     const xC = toX - (length * Math.cos(a + (angle * Math.PI / 180)));
     const yC = toY - (length * Math.sin(a + (angle * Math.PI / 180)));
     const xD = toX - (length * Math.cos(a - (angle * Math.PI / 180)));
     const yD = toY - (length * Math.sin(a - (angle * Math.PI / 180)));
-    ctx.save();
-    ctx.beginPath();
-    ctx.fillStyle = color;
     ctx.moveTo(toX, toY);
     ctx.lineTo(xC, yC);
     ctx.lineTo(xD, yD);
     ctx.lineTo(toX, toY);
+}
+
+export const drawArrow = (ctx: CanvasRenderingContext2D, option: DrawArrowOption): void => {
+    ctx.save();
+    ctx.fillStyle = option.color;
+    ctx.beginPath();
+    drawArrowPath(ctx, option);
     ctx.fill();
     ctx.closePath();
     ctx.restore();
@@ -481,7 +486,7 @@ export const drawMEventMask = (props: DrawCanvasArgs): void => {
 };
 
 const UNDRAW_HEIGHT = 45 + 2; // 45 指时间轴+旗帜轴的高度之和，2 指 useDraggableContainerEx css 中的 border-top: ${(p): string => p.theme.dividerColor} 2px solid;
-const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
+export const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
     const processHeight = heightMap.get(`${cardId}-${data.pid}`);
@@ -543,39 +548,35 @@ function sourceOrTargetLinkUnitIsHidden(
     return false;
 }
 
-function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: string, session: Session, ctx: CanvasRenderingContext2D, theme: Theme): void {
+function filterToShowLinkLine(data: Record<string, unknown>, checkedCategory: string): boolean {
     const { category, from, to, cardId } = data as unknown as FlowEvent;
     if (category !== checkedCategory) {
-        return;
+        return false;
     }
-    const li = d3.scaleLinear().range([0, ctx.canvas.clientWidth]).domain([session.domainRange.domainStart, session.domainRange.domainEnd]);
     const [targetCardId, sourceCardId] = [handlerEmptyString(to.rankId ?? '', cardId), handlerEmptyString(from.rankId ?? '', cardId)];
-    const [targetX, targetY] = [li(to.timestamp - getTimeOffset(session, { cardId: targetCardId, processId: to.pid })), getHeight(session, to, targetCardId)];
-    const [sourceX, sourceY] = [li(from.timestamp - getTimeOffset(session, { cardId: sourceCardId, processId: from.pid })),
-        getHeight(session, from, sourceCardId)];
-
     if (sourceOrTargetLinkUnitIsHidden({ targetCardId, sourceCardId, to, from })) {
-        return;
+        return false;
     }
     if ((cardIsCol.get(`${targetCardId}`) ?? processIsCol.get(`${targetCardId}-${to.pid}`)) &&
         (cardIsCol.get(`${sourceCardId}`) ?? processIsCol.get(`${sourceCardId}-${from.pid}`))) {
-        return;
+        return false;
     }
+    return true;
+}
+
+function filterInvalidYOfLinkLine(data: LinkLineData): boolean {
+    const { sourceY, targetY } = data;
     if ((sourceY === undefined || targetY === undefined)) {
-        return;
+        return false;
     }
     if (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT) {
-        return;
+        return false;
     }
-    const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
+    return true;
+}
 
-    const offset = ((targetX - sourceX) / 2);
-    ctx.beginPath();
-    ctx.moveTo(sourceX, sourceY);
-    ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
-    ctx.stroke();
-    ctx.closePath();
-    if (targetY >= UNDRAW_HEIGHT || sourceY >= UNDRAW_HEIGHT) {
+function batchDrawLinkLine(ctx: CanvasRenderingContext2D, dataList: LinkLineData[], theme: Theme): void {
+    const arrowOptions: Array<Omit<DrawArrowOption, 'color'>> = dataList.map(({ targetX, targetY, targetPos, offset }) => {
         const len = targetPos.length;
         let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
         fromX = fromX / len;
@@ -583,18 +584,33 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
         const yLen = Math.abs(fromY - targetY);
         const xLen = Math.abs(fromX - targetX);
         if (xLen === 0) {
-            return;
+            return undefined;
         }
-        drawArrow(ctx, {
+        return {
             toX: targetX,
             toY: targetY,
             fromX: targetX - offset,
             fromY: targetY + (((fromY - targetY) * Math.sqrt(yLen) / xLen) + Math.abs(fromY - targetY)),
             length: 10,
             angle: 30,
-            color: theme.selectedChartColor,
-        });
+        };
+    }).filter((item) => item !== undefined) as Array<Omit<DrawArrowOption, 'color'>>;
+    // draw line
+    ctx.beginPath();
+    for (const { targetX, targetY, sourceX, sourceY, offset } of dataList) {
+        ctx.moveTo(sourceX, sourceY);
+        ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
     }
+    ctx.stroke();
+    ctx.closePath();
+    // draw arrow
+    ctx.fillStyle = theme.selectedChartColor;
+    ctx.beginPath();
+    for (const option of arrowOptions) {
+        drawArrowPath(ctx, option);
+    }
+    ctx.fill();
+    ctx.closePath();
 }
 
 const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: Theme, pinnedAreaHeight: number): void => {
@@ -607,20 +623,18 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
     const checkedCategories = session.linkLineCategories;
     for (const checkedCategory of checkedCategories) {
         ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(checkedCategory, colorPalette.length)]];
-        Object.values(session.linkLines)
-            .forEach(datas => {
-                datas?.forEach((data) => {
-                    drawSingleLinkLine(data, checkedCategory, session, ctx, theme);
-                });
-            });
+        const rawList = Object.values(session.linkLines).flatMap((list) => list === undefined ? [] : list)
+            .filter((data) => filterToShowLinkLine(data, checkedCategory));
+        const dataList = calculateLinkLines(rawList, session, ctx).filter(filterInvalidYOfLinkLine);
+        batchDrawLinkLine(ctx, dataList, theme);
     }
-    Object.values(session.singleLinkLine)
-        .forEach(datas => {
-            datas?.forEach((data) => {
-                const { category } = data as unknown as FlowEvent;
-                ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
-                drawSingleLinkLine(data, category, session, ctx, theme);
-            });
-        });
+    const lineList: LinkLine = Object.values(session.singleLinkLine)
+        .flatMap((list) => list === undefined ? [] as LinkLine : list);
+    const categoryMap = groupBy(lineList, (item: FlowEvent) => item.category ?? '');
+    forEach(categoryMap, (list: any[], category: string): void => {
+        ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
+        const dataList = calculateLinkLines(list, session, ctx).filter(filterInvalidYOfLinkLine);
+        batchDrawLinkLine(ctx, dataList, theme);
+    });
     ctx.restore();
 };

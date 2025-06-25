@@ -788,8 +788,8 @@ export const TimelineMarkerElement = observer(({ session, theme }: TimelineMarke
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const { domainStart, domainEnd } = session.domainRange;
     const [width, ref] = useWatchResize<HTMLDivElement>('width');
-    // 竖线画板高度，根据DOM树的laneView节点高度动态调整
-    const height = session.totalHeight;
+    // 竖线画板高度，根据DOM树的laneView节点高度动态调整，最大不超过网页可见区域高(body)，包括border、margin等
+    const height = React.useMemo(() => Math.min(session.totalHeight, document.body.offsetHeight), [session.totalHeight]);
     const [verticalHeight, vertical] = useWatchResize<HTMLCanvasElement>('height');
     const flagCursor = React.useRef<HTMLCanvasElement>(null);
     const background = React.useRef<HTMLCanvasElement>(null);
