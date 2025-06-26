@@ -10,9 +10,10 @@ use std::os::windows::process::CommandExt;
 use std::process::ChildStdout;
 use std::{
     io::{BufRead, BufReader, Result},
-    process::{Child, Command, Stdio},
-    sync::{Arc, Mutex},
+    process::{Command, Stdio},
 };
+
+use crate::default::PID;
 
 #[cfg(windows)]
 fn query_child_pids(parent_pid: u32) -> Result<Vec<String>> {
@@ -111,7 +112,7 @@ fn kill_process_tree(parent_pid: String) -> Result<()> {
             .arg("/f")
             .arg("/t") // 终止包括子进程在内的所有进程
             .arg("/im")
-            .arg(parent_pid.to_string())
+            .arg(parent_pid)
             .creation_flags(0x08000000)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -122,7 +123,7 @@ fn kill_process_tree(parent_pid: String) -> Result<()> {
     {
         Command::new("kill")
             .arg("-9")
-            .arg(parent_pid.to_string())
+            .arg(parent_pid)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
@@ -140,17 +141,14 @@ fn kill_child_pids(child_pids: Vec<String>) {
     }
 }
 
-pub(crate) fn handle_close_requested(server_process: Arc<Mutex<Child>>) {
-    let mut server_process_guard =
-        server_process.lock().expect("Failed to lock server-process mutex");
-    let pid = server_process_guard.id();
-
-    match query_child_pids(pid) {
-        Ok(child_pids) => kill_child_pids(child_pids),
-        Err(e) => eprintln!("Err when query child pids {e}"),
-    }
-
-    if let Err(e) = server_process_guard.kill() {
-        eprintln!("server process could not be killed: {e}");
+pub fn handle_close_requested() {
+    unsafe {
+        match query_child_pids(PID) {
+            Ok(child_pids) => {
+                kill_child_pids(child_pids);
+                let _ = kill_process_tree(PID.to_string());
+            }
+            Err(e) => eprintln!("Err when query child pids {e}"),
+        }
     }
 }

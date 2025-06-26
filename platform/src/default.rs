@@ -7,9 +7,9 @@ use std::os::windows::process::CommandExt;
 use std::{
     env,
     env::current_exe,
+    net::{Ipv4Addr, SocketAddrV4, TcpListener},
     path::PathBuf,
-    process::{Child, Command},
-    sync::{Arc, Mutex},
+    process::Command,
 };
 
 use crate::webview;
@@ -58,27 +58,9 @@ fn server_path(root_path: &PathBuf) -> Option<PathBuf> {
     Some(server_path)
 }
 
-fn run_server(
-    root_path: &PathBuf,
-    cache_path: &PathBuf,
-    port: &mut String
-) -> Option<Mutex<Child>> {
-    let binding = server_path(root_path)?;
-    let Some(path) = binding.to_str() else { return None };
-
-    let output = Command::new(path)
-        .arg("--scan=9000")
-        .arg(format!("--logPath={}", cache_path.display()))
-        .output()
-        .expect("Failed to start MindStudio Insight server");
-
-    let scan_info = String::from_utf8_lossy(&output.stdout).to_string();
-
-    if scan_info.len() > 0 && scan_info.starts_with("Available port: ") {
-        port.push_str(scan_info.replace("Available port: ", "").trim());
-    } else {
-        return None;
-    };
+fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: u16) {
+    let binding = server_path(root_path).unwrap();
+    let Some(path) = binding.to_str() else { unreachable!() };
 
     let mut server_command = Command::new(path);
 
@@ -86,12 +68,14 @@ fn run_server(
     server_command.creation_flags(NO_WINDOW_FLAG);
 
     match server_command
-        .arg(format!("--wsPort={}", port))
+        .arg(format!("--wsPort={port}"))
         .arg(format!("--logPath={}", cache_path.display()))
         .spawn()
     {
-        Ok(child) => Some(Mutex::new(child)),
-        _ => None,
+        Ok(child) => unsafe {
+            PID = child.id();
+        },
+        _ => eprintln!("Failed to start server"),
     }
 }
 
@@ -111,7 +95,7 @@ fn home_dir() -> Option<PathBuf> {
 #[link(name = "shell32")]
 extern "system" {
     /// Tests whether the current user is a member of the Administrator's group.
-    /// 
+    ///
     /// ### FFI Signature
     /// ```c++
     /// BOOL IsUserAnAdmin();
@@ -123,7 +107,9 @@ extern "system" {
 fn is_admin() -> bool {
     /// ### Safety
     /// No any Memory Safety problems
-    unsafe { IsUserAnAdmin() }
+    unsafe {
+        IsUserAnAdmin()
+    }
 }
 
 #[cfg(windows)]
@@ -133,6 +119,19 @@ fn eq_prefix(lhs: &PathBuf, rhs: &PathBuf) -> bool {
         _ => false,
     }
 }
+
+fn find_first_available_port(start: u16, end: u16) -> Option<u16> {
+    for port in start..=end {
+        let addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port);
+        if TcpListener::bind(addr).is_ok() {
+            return Some(port);
+        }
+    }
+
+    None
+}
+
+pub static mut PID: u32 = u32::MAX;
 
 pub fn main() {
     let mut cache_path = home_dir()
@@ -187,9 +186,13 @@ pub fn main() {
         return;
     }
 
-    let mut port: String = String::new();
+    let Some(port) = find_first_available_port(9000, 9100) else {
+        eprintln!("No available port between 9000 and 9100");
+        return;
+    };
 
-    if let Some(child) = run_server(&root_path, &cache_path, &mut port) {
-        let _ = webview::run_script(Arc::new(child), &root_path, &port.as_str());
+    if let Ok((eventloop, webview)) = webview::run_script(&root_path, port) {
+        run_server(&root_path, &cache_path, port);
+        webview::run_event_loop(eventloop, webview)
     }
 }
