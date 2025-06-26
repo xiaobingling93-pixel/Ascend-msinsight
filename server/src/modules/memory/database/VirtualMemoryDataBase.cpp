@@ -805,6 +805,87 @@ void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListPar
     sql += " LIMIT ? offset ?";
 }
 
+static void PaddingNULL(std::vector<std::string> &points, const uint8_t count)
+{
+    if (count == 0) {
+        return;
+    }
+    const std::string stringNull = "NULL";
+    for (uint8_t i = 0; i < count; i++) {
+        points.emplace_back(stringNull);
+    }
+}
+
+void VirtualMemoryDataBase::BuildOverallLinesComponentPoints(const Protocol::ComponentDto &item,
+                                                             const std::vector<std::string> &streams,
+                                                             Protocol::MemoryPeak &peak,
+                                                             Points &points)
+{
+    peak.appReserved = std::max(peak.appReserved, item.totalReserved);
+    if (peak.hasPtaGe) {
+        PaddingNULL(points, 1);
+    }
+    if (!streams.empty()) {
+        PaddingNULL(points, 1);
+    }
+    if (peak.hasPtaGe) {
+        PaddingNULL(points, 1);
+    }
+    std::string reserved = std::to_string(item.totalReserved);
+    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+    if (peak.hasWorkspace) {
+        // workspaceLegends为内部定义vector, 其size不可能超过uint8, 此处无溢出风险
+        PaddingNULL(points, workspaceLegends.size());
+    }
+}
+
+void VirtualMemoryDataBase::BuildOverallLinesFrameworkPoints(const Protocol::ComponentDto &item,
+                                                             const std::vector<std::string> &streams,
+                                                             Protocol::MemoryPeak &peak,
+                                                             Points &points)
+{
+    peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
+    peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
+    peak.ptaGeActivated = std::max(peak.ptaGeActivated, item.totalActivated);
+    std::string allocated = std::to_string(item.totalAllocated);
+    points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+    if (!streams.empty()) {
+        std::string activated = std::to_string(item.totalActivated);
+        points.emplace_back(activated.substr(0, activated.length() - exLength));
+    }
+    std::string reserved = std::to_string(item.totalReserved);
+    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+    if (peak.hasApp) {
+        PaddingNULL(points, 1);
+    }
+    if (peak.hasWorkspace) {
+        PaddingNULL(points, workspaceLegends.size());
+    }
+}
+
+void VirtualMemoryDataBase::BuildOverallLinesWorkspacePoints(const Protocol::ComponentDto &item,
+                                                             const std::vector<std::string> &streams,
+                                                             Protocol::MemoryPeak &peak,
+                                                             Points &points)
+{
+    if (peak.hasPtaGe) {
+        PaddingNULL(points, 1);
+    }
+    if (!streams.empty()) {
+        PaddingNULL(points, 1);
+    }
+    if (peak.hasPtaGe) {
+        PaddingNULL(points, 1);
+    }
+    if (peak.hasApp) {
+        PaddingNULL(points, 1);
+    }
+    std::string allocated = std::to_string(item.totalAllocated);
+    std::string reserved = std::to_string(item.totalReserved);
+    points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+}
+
 /*
  * 将多个单条线的数据组装成[x,y,y,y,y]的格式。
  * 各元素分别表示标签"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved" "App Reserved"。
@@ -816,44 +897,23 @@ void VirtualMemoryDataBase::GetOverallLines(const componentDtoVector &componentD
     const std::vector<std::string> &streams)
 {
     GetOverallLinesLegends(componentDtoVec, legends, peak, streams);
-
-    const std::string stringNull = "NULL";
     for (auto &item: componentDtoVec) {
-        std::vector<std::string> points = {};
+        Points points = {};
+        std::string time = std::to_string(item.timesTamp);
+        points.emplace_back(time.substr(0, time.length() - exLength + 1));
+        if (item.component == COMPONENT_APP) {
+            BuildOverallLinesComponentPoints(item, streams, peak, points);
+            lines.emplace_back(points);
+            continue;
+        }
         if (item.component == COMPONENT_PTA_AND_GE || item.component == MIND_SPORE_GE
             || (isInference && item.component == COMPONENT_GE)) {
-            peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
-            peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
-            peak.ptaGeActivated = std::max(peak.ptaGeActivated, item.totalActivated);
-            std::string time = std::to_string(item.timesTamp);
-            points.emplace_back(time.substr(0, time.length() - exLength + 1));
-            std::string allocated = std::to_string(item.totalAllocated);
-            points.emplace_back(allocated.substr(0, allocated.length() - exLength));
-            if (!streams.empty()) {
-                std::string activated = std::to_string(item.totalActivated);
-                points.emplace_back(activated.substr(0, activated.length() - exLength));
-            }
-            std::string reserved = std::to_string(item.totalReserved);
-            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
-            if (peak.hasApp) {
-                points.emplace_back(stringNull);
-            }
+            BuildOverallLinesFrameworkPoints(item, streams, peak, points);
             lines.emplace_back(points);
-        } else if (item.component == COMPONENT_APP) {
-            peak.appReserved = std::max(peak.appReserved, item.totalReserved);
-            std::string time = std::to_string(item.timesTamp);
-            points.emplace_back(time.substr(0, time.length() - exLength + 1));
-            if (peak.hasPtaGe) {
-                points.emplace_back(stringNull);
-            }
-            if (!streams.empty()) {
-                points.emplace_back(stringNull);
-            }
-            if (peak.hasPtaGe) {
-                points.emplace_back(stringNull);
-            }
-            std::string reserved = std::to_string(item.totalReserved);
-            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            continue;
+        }
+        if (item.component == COMPONENT_WORKSPACE) {
+            BuildOverallLinesWorkspacePoints(item, streams, peak, points);
             lines.emplace_back(points);
         }
     }
@@ -864,12 +924,18 @@ void VirtualMemoryDataBase::GetOverallLinesLegends(const componentDtoVector &com
     const std::vector<std::string> &streams)
 {
     for (auto &item: componentDtoVec) {
+        if (item.component == COMPONENT_WORKSPACE) {
+            peak.hasWorkspace = true;
+            continue;
+        }
         if (item.component == COMPONENT_PTA_AND_GE || item.component == MIND_SPORE_GE
             || (isInference && item.component == COMPONENT_GE)) {
             peak.hasPtaGe = true;
-            } else if (item.component == COMPONENT_APP) {
-                peak.hasApp = true;
-            }
+            continue;
+        }
+        if (item.component == COMPONENT_APP) {
+            peak.hasApp = true;
+        }
     }
 
     for (const auto& legend : baseLegends) {
@@ -886,6 +952,9 @@ void VirtualMemoryDataBase::GetOverallLinesLegends(const componentDtoVector &com
     }
     if (peak.hasApp) {
         legends.emplace_back(appLegend);
+    }
+    if (peak.hasWorkspace) {
+        legends.insert(legends.end(), workspaceLegends.begin(), workspaceLegends.end());
     }
 }
 

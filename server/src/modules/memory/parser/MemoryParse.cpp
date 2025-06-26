@@ -488,7 +488,6 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
         std::vector<std::string> componentFiles = GetPeerDirOperatorFile(recordFile, npuModuleMemReg);
         if (operatorFiles.empty() && staticOpFiles.empty()) {
             ServerLog::Warn("There is no memory record file or static op mem file paired with ", recordFile);
-            continue;
         }
         results[rankId].recordFiles.insert(recordFile);
         results[rankId].operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());

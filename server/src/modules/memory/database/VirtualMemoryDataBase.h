@@ -14,6 +14,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
+using Points = std::vector<std::string>;
 class VirtualMemoryDataBase : public Database {
 public:
     explicit VirtualMemoryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};;
@@ -67,7 +68,9 @@ protected:
     const std::vector<std::string> baseLegends = {
         "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
     };
-
+    const std::vector<std::string> workspaceLegends = {
+        "Workspace Allocated", "Workspace Reserved"
+    };
     const std::vector<std::string> componentTimeLegends = {
         "Time (ms)"
     };
@@ -126,6 +129,7 @@ protected:
     const std::string MIND_SPORE = "MindSpore";
     const std::string COMPONENT_PTA = "PTA";
     const std::string COMPONENT_PTA_AND_GE = "PTA+GE";
+    const std::string COMPONENT_WORKSPACE = "WORKSPACE";
     const std::string MIND_SPORE_GE = "MindSpore+GE";
 
     std::vector<std::string> GetStreamLists(std::string deviceId, std::string deviceIdColumnName);
@@ -179,6 +183,18 @@ protected:
     std::string ExecuteQueryDeviceId(std::string &sql);
 
 private:
+    void BuildOverallLinesComponentPoints(const Protocol::ComponentDto &item,
+                                            const std::vector<std::string> &streams,
+                                            Protocol::MemoryPeak &peak,
+                                            Points &points);
+    void BuildOverallLinesFrameworkPoints(const Protocol::ComponentDto &item,
+                                            const std::vector<std::string> &streams,
+                                            Protocol::MemoryPeak &peak,
+                                            Points &points);
+    void BuildOverallLinesWorkspacePoints(const Protocol::ComponentDto &item,
+                                            const std::vector<std::string> &streams,
+                                            Protocol::MemoryPeak &peak,
+                                            Points &points);
     void GetOverallLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
                   std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                   const std::vector<std::string> &streams);

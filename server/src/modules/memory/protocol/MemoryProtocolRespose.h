@@ -249,6 +249,7 @@ struct MemoryPeak {
     bool hasPta = false;
     bool hasGe = false;
     bool hasApp = false;
+    bool hasWorkspace = false;
     double ptaGeAllocated = 0;
     double ptaGeReserved = 0;
     double ptaGeActivated = 0;
