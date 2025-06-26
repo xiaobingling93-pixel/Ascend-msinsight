@@ -119,7 +119,6 @@ def build():
         if os.path.exists(script_path):
             shutil.rmtree(script_path)
         shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(script_path, CLUSTER_ANALYSE), copy_function=shutil.copy2)
-        shutil.copytree(ADVISOR_DIR, os.path.join(script_path, ADVISOR), copy_function=shutil.copy2)
         shutil.copytree(PROF_COMMON_DIR, os.path.join(script_path, PROF_COMMON), copy_function=shutil.copy2)
     else:
         build_att = [
