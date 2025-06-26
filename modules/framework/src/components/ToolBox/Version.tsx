@@ -11,7 +11,7 @@ import { Popover } from 'ascend-components';
 import { ShortcutsModal } from '@/components/KbdShortcuts';
 
 // 软件首发年分
-const LAUNCH_YEAR = '2024';
+const LAUNCH_YEAR = '2023';
 const { version, modifyTime } = VersionInfo;
 const modifyYear = modifyTime.split('/')[0];
 const copyrightYear = modifyYear === LAUNCH_YEAR ? modifyYear : `${LAUNCH_YEAR}-${modifyYear}`;
