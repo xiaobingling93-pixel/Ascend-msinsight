@@ -155,7 +155,7 @@ export const useClick = <T extends ChartType>({
                 }
                 return;
             }
-            if (!mouseMoved) {
+            if (mousedownX !== null && !mouseMoved) {
                 handleMouseUp(e);
             }
         };
