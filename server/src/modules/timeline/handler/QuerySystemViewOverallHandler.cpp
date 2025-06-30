@@ -113,6 +113,7 @@ double QuerySystemViewOverallHandler::GetOverlapAnalysisData(SystemViewOverallHe
     tmpRes = {.totalTime = NumberUtil::DoubleReservedNDigits(e2eTime, TWO), .ratio = e2eRatio, .nums = 0, .avg = 0,
               .max = 0, .min = 0, .name = E2E_TIME, .children = {}, .level = 1,
         .id = std::to_string(overallHelper.idCounter++)};
+    responseBody.emplace_back(tmpRes);
     return e2eTime;
 }
 } // namespace Dic::Module::Timeline
