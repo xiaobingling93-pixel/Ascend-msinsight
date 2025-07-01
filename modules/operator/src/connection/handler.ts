@@ -105,3 +105,21 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
     }
     i18n.changeLanguage(lang);
 };
+
+export const allSuccessHandler: NotificationHandler = (data): void => {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            if (data.isAllPageParsed as boolean) {
+                // 为了触发界面的刷新，重新赋值session.dirInfo
+                session.dirInfo = { ...session.dirInfo };
+            }
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};

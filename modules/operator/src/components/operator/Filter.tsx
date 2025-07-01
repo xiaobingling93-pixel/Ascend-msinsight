@@ -6,7 +6,7 @@ import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, InputNumber } from 'ascend-components';
-import { getRankInfoKey, getRankInfoLabel, GroupCardRankInfosByHost, Label } from 'ascend-utils';
+import { getRankInfoKey, getRankInfoLabel, GroupCardRankInfosByHost, Label, transformCardIdInfo } from 'ascend-utils';
 import type { OptionDataType, OptionMapType, VoidFunction } from '../../utils/interface';
 import type { CardRankInfo, Session } from '../../entity/session';
 const OPERATOR_TYPE = 'Operator Type';
@@ -102,6 +102,11 @@ function handleChange<T>(key: keyof ConditionType, val: T): void {
             const rankOption = optionMap.rankOptions.find(({ value }) => value === val);
             condition.dbPath = rankOption?.dbPath ?? '';
             condition.rankId = rankOption?.rankId ?? '';
+        } else if (key === 'host') {
+            const hostOption = optionMap.hostOptions.find(item => item.value === condition.host);
+            const rankOptions = getRankOptions(hostOption?.cards ?? [], condition.host);
+            setOptions({ rankOptions });
+            handleChange('rankInfoKey', rankOptions[0]?.value ?? '');
         }
     });
 };
@@ -132,9 +137,6 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         observe(condition, () => {
             handleFilterChange({ ...condition, topK: condition.topK !== 0 ? condition.topK : condition.custom });
         });
-        observe(optionMap, () => {
-            setCondition();
-        });
     }, []);
 
     useEffect(() => {
@@ -147,27 +149,45 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         const hostOptions = hosts.map(item => (
             { label: item, value: item, cards: cardsMap.get(item) }
         ) as OptionDataType);
-        const host = hosts[0] ?? '';
+        let host = hosts[0] ?? '';
+        const cardIdInfo = transformCardIdInfo(session.dirInfo.rankId);
+        if (cardIdInfo.host !== '' && hosts.includes(cardIdInfo.host)) {
+            host = cardIdInfo.host;
+        }
         const rankOptions = getRankOptions(cardsMap.get(host) ?? [], host);
         setOptions({ hostOptions, rankOptions });
+        const found = rankOptions.find(({ rankId }) => rankId === session.dirInfo.rankId);
+        if (found) {
+            runInAction(() => {
+                condition.host = host;
+                condition.rankId = found.rankId;
+                condition.rankInfoKey = (found.value ?? '') as string;
+                condition.dbPath = found.dbPath ?? '';
+                condition.isCompare = session.dirInfo.isCompare ?? false;
+            });
+        }
     }, [session.allCardInfos]);
 
     useEffect(() => {
+        const cardIdInfo = transformCardIdInfo(session.dirInfo.rankId);
+        if (cardIdInfo.host !== '') {
+            const hostOption = optionMap.hostOptions.find(item => item.value === cardIdInfo.host);
+            const rankOptions = getRankOptions(hostOption?.cards ?? [], condition.host);
+            setOptions({ rankOptions });
+        }
+        if (!checkRankId(session.dirInfo.rankId)) {
+            return;
+        }
         runInAction(() => {
             condition.rankId = checkRankId(session.dirInfo.rankId) ? session.dirInfo.rankId : optionMap.rankOptions[0]?.rankId as string ?? '';
             const found = optionMap.rankOptions.find(({ rankId }) => rankId === condition.rankId);
             condition.rankInfoKey = (found?.value ?? '') as string;
             condition.dbPath = found?.dbPath ?? '';
             condition.isCompare = session.dirInfo.isCompare ?? false;
+            condition.host = cardIdInfo.host;
         });
         handleFilterChange({ ...condition, topK: condition.topK !== 0 ? condition.topK : condition.custom });
     }, [session.dirInfo]);
-
-    useEffect(() => {
-        const hostOption = optionMap.hostOptions.find(item => item.value === condition.host);
-        const rankOptions = getRankOptions(hostOption?.cards ?? [], condition.host);
-        setOptions({ rankOptions });
-    }, [condition.host]);
 
     useEffect(() => {
         const { total } = session;
@@ -204,6 +224,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                 ? <FormItem
                     name={t('Host')}
                     content={(<Select
+                        id={'select-host'}
                         value={condition.host}
                         style={{ width: 250 }}
                         onChange={(val: string): void => handleChange('host', val)}

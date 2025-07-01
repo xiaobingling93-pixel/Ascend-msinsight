@@ -5,7 +5,9 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
-import { getAdaptiveEchart, disposeAdaptiveEchart, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'ascend-utils';
+import {
+    getAdaptiveEchart, disposeAdaptiveEchart, chartVisbilityListener, chartColors, getDefaultChartOptions, customConsole as console,
+} from 'ascend-utils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';
@@ -136,7 +138,9 @@ const DetailChart = observer(({ condition, session }: {condition: ConditionType;
         return condition.group === 'Communication Operator Type' || condition.group === 'Communication Operator';
     };
     const updateOpTypeData = async (): Promise<void> => {
-        const res = await queryOperatorCategory(condition);
+        const res = await queryOperatorCategory(condition).catch((err: any) => {
+            console.error(err);
+        });
         if (res === null || res === undefined) {
             return;
         }
@@ -147,7 +151,9 @@ const DetailChart = observer(({ condition, session }: {condition: ConditionType;
         setOpTypeData(data);
     };
     const updateComputeData = async (): Promise<void> => {
-        const res = await queryOperatorComputeUnit(condition);
+        const res = await queryOperatorComputeUnit(condition).catch((err: any) => {
+            console.error(err);
+        });
         if (res === null || res === undefined) {
             return;
         }
@@ -170,7 +176,7 @@ const DetailChart = observer(({ condition, session }: {condition: ConditionType;
     });
     useEffect(() => {
         updateData();
-    }, [condition]);
+    }, [JSON.stringify(condition)]);
     useEffect(() => {
         renderChart();
     }, [opTypeData, computeData]);

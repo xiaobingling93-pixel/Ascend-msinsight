@@ -3,9 +3,10 @@
  */
 
 import { test as baseTest, expect, WebSocket } from '@playwright/test';
-import { OperatorPage } from '@/page-object';
-import { clearAllData, importData, setCompare, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
+import { FrameworkPage, OperatorPage } from '@/page-object';
+import { clearAllData, importData, setCompare, setupWebSocketListener, waitForResponse, waitForWebSocketEvent } from '@/utils';
 import { SelectHelpers } from '@/components';
+import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     operatorPage: OperatorPage;
@@ -28,7 +29,7 @@ const operatorImgMap = {
     compareRankRes: 'operator-compare-rank.png',
 };
 
-test.describe('Operator', () => {
+test.describe('Operator(SingleMachine)', () => {
     test.beforeEach(async ({ page, operatorPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await operatorPage.goto();
@@ -78,6 +79,111 @@ test.describe('Operator', () => {
             maxDiffPixels: 500,
         });
         await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
+    });
+
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
+    });
+});
+
+// 多机多卡测试
+test.describe('Operator(MultiMachines)', () => {
+    test.beforeEach(async ({ page, operatorPage, ws }) => {
+        const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await operatorPage.goto();
+        await clearAllData(page);
+        await importData(page, FilePath.MULTI_MACHINES);
+        await allCardParsedPromise;
+    });
+
+    // 多机多卡数据界面正常加载，切换卡序号正常显示
+    test('operator_multi_machine_display', async ({ page, operatorPage }) => {
+        const { operatorFrame, rankIdSelector } = operatorPage;
+        const seeMoreBtn = operatorFrame.getByRole('button', { name: 'See more' }).first();
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('1');
+        await seeMoreBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator-multi-machine.png', {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // 多机多卡数据切换机器时自动选中首张卡
+    test('test_pageDisplay_when_change_host', async ({ page, operatorPage }) => {
+        const { operatorFrame, hostSelector, rankIdSelector } = operatorPage;
+        const hostSelect = new SelectHelpers(page, hostSelector, operatorFrame);
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
+        await hostSelect.open();
+        await hostSelect.selectOption('ubuntu22044973785946912235777_0');
+        expect(await rankIdSelect.getValue()).toBe('8');
+        await hostSelect.open();
+        await hostSelect.selectOption('node18899436934890168541_0');
+        expect(await rankIdSelect.getValue()).toBe('0');
+    });
+
+    // 点击侧边栏目录树切换到对应的卡
+    test('test_pageDisplay_when_click_rank', async ({ page, operatorPage }) => {
+        const frameworkPage = new FrameworkPage(page);
+        const { operatorFrame, hostSelector, rankIdSelector } = operatorPage;
+        const hostSelect = new SelectHelpers(page, hostSelector, operatorFrame);
+
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
+        const dbHost0Rank1 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_1);
+        await dbHost0Rank1.click();
+        expect(await hostSelect.getValue()).toBe('node18899436934890168541_0');
+        expect(await rankIdSelect.getValue()).toBe('1');
+
+        const dbHost1Rank1 = frameworkPage.getRankLocator(FilePath.DB_HOST_1_RANK_0);
+        await dbHost1Rank1.click();
+        await page.waitForTimeout(1000);
+        expect(await hostSelect.getValue()).toBe('ubuntu22044973785946912235777_0');
+        expect(await rankIdSelect.getValue()).toBe('8');
+        await page.mouse.move(0, 0);
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator-multi-click-rank.png', {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // 切换工程测试
+    test('test_switch_project', async ({ page, operatorPage, ws }) => {
+        // 导入text类型数据，导入后会自动选中此数据0卡
+        const allCardParsedPromise = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
+        await importData(page, FilePath.TEXT);
+        await allCardParsedPromise;
+
+        const frameworkPage = new FrameworkPage(page);
+        const { operatorFrame, hostSelector, rankIdSelector } = operatorPage;
+        const hostSelect = new SelectHelpers(page, hostSelector, operatorFrame);
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
+
+        // text切换到db数据
+        // 选择db数据0卡，此时会重新加载
+        const dbRank0 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_0);
+        await dbRank0.click();
+        await allCardParsedPromise;
+        
+        await hostSelector.waitFor({ state: 'attached' });
+        const hostText = await hostSelect.getValue();
+        expect(hostText).toBe('node18899436934890168541_0');
+        const selectedText = await rankIdSelect.getValue();
+        expect(selectedText).toBe('0');
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator-text-to-db.png', {
+            maxDiffPixels: 500,
+        });
+
+        // db切换到text数据
+        const textRank1 = frameworkPage.getRankLocator(FilePath.TEXT_RANK_1);
+        await textRank1.click();
+        await allCardParsedPromise;
+
+        await hostSelector.waitFor({ state: 'detached' });
+        const selectedText2 = await rankIdSelect.getValue();
+        expect(selectedText2).toBe('1');
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator-db-to-text.png', {
+            maxDiffPixels: 500,
+        });
     });
 
     test.afterEach(async ({ page, ws }) => {

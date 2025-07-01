@@ -9,6 +9,7 @@ export class OperatorPage {
     readonly page: Page;
     readonly operatorFrame: FrameLocator;
     readonly groupIdSelector: Locator;
+    readonly hostSelector: Locator;
     readonly rankIdSelector: Locator;
     readonly topSelector: Locator;
 
@@ -16,6 +17,7 @@ export class OperatorPage {
         this.page = page;
         this.operatorFrame = page.frameLocator('#Operator');
         this.groupIdSelector = this.operatorFrame.locator('#select-groupId');
+        this.hostSelector = this.operatorFrame.locator('#select-host');
         this.rankIdSelector = this.operatorFrame.locator('#select-rankId');
         this.topSelector = this.operatorFrame.locator('#select-top');
     }

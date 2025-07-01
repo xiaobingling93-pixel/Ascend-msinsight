@@ -10,6 +10,7 @@ import {
     resetHandler,
     deleteCardHandler,
     switchLanguageHandler,
+    allSuccessHandler,
 } from './connection/handler';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
@@ -22,4 +23,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'module.reset': resetHandler,
     deleteCard: deleteCardHandler,
     switchLanguage: switchLanguageHandler,
+    allPagesSuccess: allSuccessHandler,
 };

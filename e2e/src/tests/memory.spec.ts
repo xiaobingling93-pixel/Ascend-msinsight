@@ -393,7 +393,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
     });
 });
 
-test.describe('Memory(Pytorch_Group_By_Component', () => {
+test.describe('Memory(Pytorch_Group_By_Component)', () => {
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
