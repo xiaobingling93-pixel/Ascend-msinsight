@@ -373,7 +373,13 @@ private:
         if (ofs.is_open()) {
             ofs << str << std::endl;
             ofs.flush();
-            currentSize += str.length();
+            if (str.length() >= INT_MAX) {
+                return;
+            }
+            int strLen = static_cast<int>(str.length());
+            if (currentSize <= INT_MAX - strLen) {
+                currentSize += strLen;
+            }
         }
     }
 

@@ -18,7 +18,7 @@ void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
     int maxThreadNum = MIN_SIZE;
     unsigned int cpuCount = SystemUtil::GetCpuCoreCount();
     if (cpuCount >= MIN_SIZE && cpuCount <= MAX_SIZE) {
-        maxThreadNum = cpuCount;
+        maxThreadNum = static_cast<int>(cpuCount);
     }
     static ThreadPool threadPool(maxThreadNum);
     std::string command = request->command;

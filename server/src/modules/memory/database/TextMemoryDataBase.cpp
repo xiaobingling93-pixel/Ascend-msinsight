@@ -320,7 +320,7 @@ uint64_t TextMemoryDataBase::QueryMinOperatorAllocationTime()
         if (result < 0) {
             min = 0;
         } else {
-            min = result;
+            min = static_cast<uint64_t>(result);
         }
     }
     sqlite3_finalize(stmt);
@@ -343,7 +343,7 @@ uint64_t TextMemoryDataBase::QueryMinRecordTimestamp()
         if (result < 0) {
             min = 0;
         } else {
-            min = result;
+            min = static_cast<uint64_t>(result);
         }
     }
     sqlite3_finalize(stmt);
@@ -366,7 +366,7 @@ uint64_t TextMemoryDataBase::QueryMinComponentTimestamp()
         if (result < 0) {
             min = 0;
         } else {
-            min = result;
+            min = static_cast<uint64_t>(result);
         }
     }
     sqlite3_finalize(stmt);

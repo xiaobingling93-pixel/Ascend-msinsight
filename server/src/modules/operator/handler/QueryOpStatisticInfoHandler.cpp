@@ -281,8 +281,8 @@ namespace Dic::Module::Operator {
 
         // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pagesize 默认是10条
         uint64_t dataSize = topKStatisticData.size();
-        uint64_t pageSize = (reqParams.pageSize == 0 ? 10 : reqParams.pageSize); // pageSize 默认是10条，此处防止除零操作
-        uint64_t offset = pageSize * (reqParams.current - 1);
+        uint64_t pageSize = (reqParams.pageSize <= 0 ? 10 : static_cast<uint64_t>(reqParams.pageSize)); // pageSize 默认是10条，此处防止除零操作
+        uint64_t offset = static_cast<uint64_t>(pageSize * (reqParams.current - 1));
         if (offset >= dataSize) {
             offset = dataSize - ((dataSize % pageSize) == 0 ? pageSize : (dataSize % pageSize));
         }

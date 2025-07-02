@@ -206,7 +206,7 @@ bool KernelParse::GetUtilizationColumns(const std::vector<std::string> &rowVecto
     size_t index = 0;
     auto it = std::find(rowVector.begin(), rowVector.end(), FIELD_AICORE_TIME);
     if (it != rowVector.end()) {
-        index =  std::distance(rowVector.begin(), it);
+        index =  static_cast<size_t>(std::distance(rowVector.begin(), it));
     }
     if (index == 0) {
         return true;

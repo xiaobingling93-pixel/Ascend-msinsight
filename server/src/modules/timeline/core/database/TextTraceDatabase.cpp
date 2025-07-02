@@ -1229,8 +1229,8 @@ bool TextTraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &m
         int64_t tempMin = sqlite3_column_int64(stmt, col++);
         int64_t tempDur = sqlite3_column_int64(stmt, col++);
         if (tempMin >= 0 && tempDur >= 0) {
-            min = tempMin;
-            max = min + tempDur;
+            min = static_cast<uint64_t>(tempMin);
+            max = static_cast<uint64_t>(min) + static_cast<uint64_t>(tempDur);
         }
     }
     sqlite3_finalize(stmt);

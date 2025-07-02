@@ -203,8 +203,8 @@ void QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request
         }
     }
     SortResult(request, filteredDiffResult);
-    uint64_t pageSize = request.params.pageSize <= 0 ? DEFAULT_PAGE_SIZE : request.params.pageSize;
-    uint64_t currentPage = request.params.currentPage < 1 ? 0 : request.params.currentPage - 1;
+    uint64_t pageSize = request.params.pageSize <= 0 ? DEFAULT_PAGE_SIZE : static_cast<uint64_t>(request.params.pageSize);
+    uint64_t currentPage = request.params.currentPage < 1 ? 0 : static_cast<uint64_t>(request.params.currentPage - 1);
     uint64_t offset = currentPage * pageSize;
     if (offset != 0 && offset >= filteredDiffResult.operatorDiffDetails.size()) {
         response.operatorDiffDetails.clear();

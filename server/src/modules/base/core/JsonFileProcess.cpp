@@ -185,9 +185,11 @@ bool JsonFileProcess::SeekPhEndPosition(std::ifstream &file, bool endFlag, int b
         Dic::Server::ServerLog::Error("Failed to find ph.");
         return false;
     }
+    int strLen = static_cast<int>(str.size());
+    int iOffset = static_cast<int>(offset);
     int pos = -1;
-    uint32_t leftCount = 0;
-    for (size_t i = offset; i < str.size(); ++i) {
+    int leftCount = 0;
+    for (int i = iOffset; i < strLen; ++i) {
         if (str[i] == '{') {
             leftCount++;
             continue;

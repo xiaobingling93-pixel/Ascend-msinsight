@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+#include <algorithm>
 #include "ProjectExplorerManager.h"
 #include "ProjectParserFactory.h"
 #include "DataBaseManager.h"
@@ -10,7 +11,6 @@
 #include "ParallelStrategyAlgorithmManager.h"
 #include "MegatronParallelStrategyAlgorithm.h"
 #include "MindSpeedParallelStrategyAlgorithm.h"
-#include <algorithm>
 #include "BaselineManagerService.h"
 using namespace Dic::Module::Summary;
 namespace Dic {
