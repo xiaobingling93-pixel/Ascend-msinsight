@@ -35,7 +35,7 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::LEAKS);
-        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("");
         ASSERT_TRUE(memoryDatabase != nullptr);
         ASSERT_TRUE(memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_2025.dat", false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
@@ -49,7 +49,7 @@ public:
             session->WaitForExit();
             Dic::Server::WsSessionManager::Instance().RemoveSession();
         }
-        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("");
         memoryDatabase->CloseDb();
         DataBaseManager::Instance().Clear();
     }

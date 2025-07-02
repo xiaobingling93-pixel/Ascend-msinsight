@@ -14,7 +14,7 @@ bool Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Pro
 {
     ParseCardsRequest &request = dynamic_cast<ParseCardsRequest &>(*requestPtr.get());
     for (size_t i = 0; i < request.params.cards.size() && i < request.params.fileIds.size(); i++) {
-        std::string item = request.params.cards[0];
+        std::string item = request.params.cards[i];
         std::pair<ProjectTypeEnum, std::vector<std::string>> filePathPair =
             ParserStatusManager::Instance().QueryPendingFilePath(item);
         if (std::empty(filePathPair.second)) {

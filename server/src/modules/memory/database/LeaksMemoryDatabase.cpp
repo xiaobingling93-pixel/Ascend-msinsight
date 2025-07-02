@@ -758,14 +758,51 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocati
     QueryMemoryAllocationsByStep(stmt, allocations);
     if (allocations.empty()) {
         ServerLog::Warn("Query allocation table. Failed to query latest allocation record: no data.");
+        sqlite3_finalize(stmt);
         return std::nullopt;
     }
     sqlite3_finalize(stmt);
     return allocations[0];
 }
 
-void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string &deviceId, uint64_t timestamp,
-    std::set<std::string> &owners)
+std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryNextAllocationAfterTimestamp(const std::string &deviceId,
+                                                                                               const std::string &eventType,
+                                                                                               uint64_t timestamp)
+{
+    std::string sql;
+    std::string errMsg;
+    std::string COL_TIMESTAMP(ALLOCATION::TIMESTAMP);
+    sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT * FROM {} WHERE {} == ? AND {} == ? AND {} >= ? "
+                                                "ORDER BY {} ASC LIMIT 1",
+                                                {memoryAllocationTable,
+                                                 std::string(ALLOCATION::DEVICE_ID),
+                                                 std::string(ALLOCATION::EVENT_TYPE),
+                                                 COL_TIMESTAMP, COL_TIMESTAMP},
+                                                errMsg);
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query allocation table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return std::nullopt;
+    }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, bindIdx++, eventType.c_str(), eventType.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, bindIdx++, timestamp > INT64_MAX ? INT64_MAX : timestamp);
+    std::vector<Memory::MemoryAllocation> allocations;
+    QueryMemoryAllocationsByStep(stmt, allocations);
+    if (allocations.empty()) {
+        ServerLog::Warn("Query allocation table. Failed to query latest allocation record: no data.");
+        sqlite3_finalize(stmt);
+        return std::nullopt;
+    }
+    sqlite3_finalize(stmt);
+    return allocations[0];
+}
+
+void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string &deviceId,
+                                                                        uint64_t timestamp,
+                                                                        std::set<std::string> &owners)
 {
     std::string sql;
     std::string errMsg;

@@ -21,6 +21,8 @@ public:
     }
     ~QueryLeaksMemoryAllocationHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+private:
+    void PaddingAllocations(std::vector<MemoryAllocation> &allocations, const LeaksMemoryAllocationParams &queryParams);
 };
 
 } // Memory

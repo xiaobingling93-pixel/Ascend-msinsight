@@ -182,6 +182,21 @@ TEST_F(LeaksMemoryDatabaseTest, QueryLatestAllocationWithinTimestamp)
     EXPECT_EQ(alloc->totalSize, expectTotalSize);
 }
 
+
+TEST_F(LeaksMemoryDatabaseTest, QueryNextAllocationAfterTimestamp)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    const std::string deviceId = "0";
+    const std::string eventType = "PTA";
+    const uint64_t expectDuration = 10000000;
+    const uint64_t timestamp =
+            memoryDatabase->QueryMemoryEventExtremumTimestamp(deviceId, true) + expectDuration;
+    auto alloc = memoryDatabase->QueryNextAllocationAfterTimestamp(deviceId, eventType, timestamp);
+    EXPECT_TRUE(alloc.has_value());
+    const uint64_t expectTotalSize = 7168;
+    EXPECT_EQ(alloc->totalSize, expectTotalSize);
+}
+
 TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlocksOwnersReleasedAfterTimestamp)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");

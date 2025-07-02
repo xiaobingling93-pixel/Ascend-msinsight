@@ -60,6 +60,9 @@ public:
     std::optional<Memory::MemoryAllocation> QueryLatestAllocationWithinTimestamp(const std::string &deviceId,
                                                                   const std::string &eventType,
                                                                   uint64_t timestamp);
+    std::optional<Memory::MemoryAllocation> QueryNextAllocationAfterTimestamp(const std::string &deviceId,
+                                                                              const std::string &eventType,
+                                                                              uint64_t timestamp);
     uint64_t QueryMemoryEventExtremumTimestamp(const std::string &deviceId, bool isMinimum);
     void InsertMemoryAllocationList(const std::vector<Memory::MemoryAllocation> &allocList);
     void InsertMemoryAllocation(const Memory::MemoryAllocation &alloc);
