@@ -69,10 +69,15 @@ export const frameLoadedHandler: NotificationHandler<ProjectCreateInfo> = async 
 export const switchDirectoryHandler: NotificationHandler<ProjectUpdateInfo> = (data: ProjectUpdateInfo): void => {
     try {
         const session = store.sessionStore.activeSession;
-        if (data.selectedProjectName === session?.selectedProjectName) {
-            resetStatus('Cluster');
-        } else {
-            resetStatus('Project');
+        const currentClusterParsed = data.pageInfo.cluster.clusterList.find(({ path }) => path === session.selectedClusterPath)?.parsed ?? false;
+
+        // 页面数据更新需要依赖selectedPath 和 clusterCompleted，当发现新值与原值一致，就不需要进行数据重置
+        if (!(session.selectedClusterPath === data.pageInfo.cluster.selectedClusterPath && currentClusterParsed === session.clusterCompleted)) {
+            if (data.selectedProjectName === session?.selectedProjectName) {
+                resetStatus('Cluster');
+            } else {
+                resetStatus('Project');
+            }
         }
         updateClusterListAndSelectedAndTimelineStatus(data.pageInfo.cluster, data.selectedProjectName, data.pageInfo.timeline.unitCount);
     } catch (error) {
