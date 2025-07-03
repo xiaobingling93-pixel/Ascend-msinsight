@@ -56,7 +56,6 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             });
             ins.on('dataZoom', (params: any) => {
                 const { startValue, endValue } = params.batch[0];
-                getFuncNewData(session, Math.floor(startValue), Math.ceil(endValue));
                 getBarNewData(session, Math.floor(startValue), Math.ceil(endValue));
             });
         });
@@ -137,7 +136,16 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                 <Line id='barLine' lineShow={lineShow} offset={offset} />
                 <MemoryBarChart session={session} setBarIns={setBarIns} />
             </div>
-            {session.memoryStamp ? <MemorySliceChart session={session} /> : <></>}
+            {session.memoryStamp
+                ? (
+                    <div style={{ position: 'relative' }}>
+                        <div style={{ position: 'absolute', left: '45%' }}>{`${t('Current Time')}: ${session.memoryStamp}ns`}</div>
+                        <MemorySliceChart session={session} />
+                    </div>
+                )
+                : (
+                    <></>
+                )}
         </div>
     );
 });

@@ -16,6 +16,7 @@
     "PTA_Model": "PTA Model",
     "Optimizer": "Optimizer",
     "Weight": "Weight",
-    "Gradient": "Gradient"
+    "Gradient": "Gradient",
+    "Current Time": "Current Time"
   }
 }

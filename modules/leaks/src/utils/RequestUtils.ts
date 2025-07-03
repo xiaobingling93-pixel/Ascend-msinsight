@@ -79,8 +79,8 @@ export const getLeaksGraphData = async (params: GraphParam): Promise<BlockData |
  * @param params 查询条件
  * @returns 查询结果
  */
-export const getMemoryDetailData = async (deviceId: string, timestamp: number): Promise<DetailData> => {
-    return window.request({ command: 'Memory/leaks/details', params: { deviceId, timestamp, relativeTime: true } });
+export const getMemoryDetailData = async (deviceId: string, timestamp: number, eventType: string): Promise<DetailData> => {
+    return window.request({ command: 'Memory/leaks/details', params: { deviceId, timestamp, eventType, relativeTime: true } });
 };
 /**
  * 获取函数调用详情

@@ -57,7 +57,7 @@ export const getBarNewData = async (session: any, startTimestamp?: number, endTi
 };
 export const getNewDetailData = async (session: any): Promise<void> => {
     try {
-        const memoryDatas = await getMemoryDetailData(session.deviceId, session.memoryStamp);
+        const memoryDatas = await getMemoryDetailData(session.deviceId, session.memoryStamp, session.eventType);
         runInAction(() => {
             session.memoryData = memoryDatas;
         });

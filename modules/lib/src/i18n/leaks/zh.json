@@ -16,6 +16,7 @@
     "PTA_Model": "模型占用",
     "Optimizer": "优化器",
     "Weight": "模型权重",
-    "Gradient": "梯度"
+    "Gradient": "梯度",
+    "Current Time": "当前时间"
   }
 }

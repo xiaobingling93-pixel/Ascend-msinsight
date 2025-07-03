@@ -25,8 +25,8 @@ interface InitParam {
 const getXAxis = (session: InitParam['session']): echarts.XAXisComponentOption => {
     return {
         type: 'value',
-        min: session.maxTime,
-        max: session.minTime,
+        min: session.minTime,
+        max: session.maxTime,
         axisLine: {
             show: true,
             lineStyle: {
@@ -216,7 +216,7 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
                 }
             }
         });
-    }, [threadId, JSON.stringify(blockData), session.maxTime, session.minTime, t]);
+    }, [threadId, JSON.stringify(blockData), JSON.stringify(allocationData), session.maxTime, session.minTime, t]);
     useEffect(() => {
         chartRef.current?.getInstance()?.dispatchAction({
             type: 'takeGlobalCursor',
