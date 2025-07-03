@@ -158,8 +158,8 @@ const mergeUnits = (session: Session): void => {
         unitParent.children.splice(insertIndex, 0, threadUnit);
 
         markMergedUnits(selectedUnits, unitParent.children);
-
         clearSelectedUnits(session);
+        session.renderTrigger = !session.renderTrigger;
     });
 };
 
@@ -229,6 +229,7 @@ const unmergeUnits = (session: Session): void => {
 
         unmarkMergedUnits(mergedThreadIds, children);
         clearSelectedUnits(session);
+        session.renderTrigger = !session.renderTrigger;
     });
 };
 
