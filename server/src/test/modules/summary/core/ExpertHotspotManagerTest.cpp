@@ -166,8 +166,8 @@ TEST_F(ExpertHotspotManagerTest, ParseHeatMapFromProfilingWithoutTraceDb)
     auto renderEngine = RenderEngine::Instance();
     renderEngine->SetDataEngineInterface(dataEngine);
     std::string errorMsg;
-    bool res = Dic::Module::Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, Dic::COMPARE);
-    EXPECT_EQ(res, true);
+    bool res = Dic::Module::Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, Dic::COMPARE, {"0"});
+    EXPECT_EQ(res, false);
     Clear();
     Dic::Module::ParserFactory::Reset();
 }

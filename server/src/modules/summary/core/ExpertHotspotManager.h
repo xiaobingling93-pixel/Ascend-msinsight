@@ -24,7 +24,7 @@ struct FillExpertDataParams {
 };
 
 struct ExtractHeatMapParams {
-    std::string fileId;
+    std::string rankId;
     FullDb::DataType dataType;
     std::vector<std::string> cannApiList;
     std::vector<std::string> hardwareOperatorList;
@@ -39,7 +39,8 @@ public:
             const std::string &modelStage, const std::string &version);
     static ModelInfo GetModelInfo(const std::string &clusterPath);
     static bool UpdateModelInfo(const std::string &clusterPath, ModelInfo &newModelInfo, std::string &errorMsg);
-    static bool UpdateHeatMapFromProfiling(std::string &errorMsg, const std::string &clusterPath);
+    static bool UpdateHeatMapFromProfiling(std::string &errorMsg, const std::string &clusterPath,
+                                           const std::vector<std::string> &rankIdList);
 private:
     // CANN层，每一个layer执行API
     const static inline std::vector<std::string> layerExecuteApiNameList = {"Prefill_layer::Execute",

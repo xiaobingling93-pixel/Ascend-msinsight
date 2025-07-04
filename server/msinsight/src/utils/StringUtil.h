@@ -22,6 +22,7 @@
 #endif
 #include <map>
 #include <iomanip>
+#include "NumberUtil.h"
 
 namespace Dic {
 class StringUtil {
@@ -93,6 +94,17 @@ public:
     static inline bool IsAllDigits(const std::string &str)
     {
         return std::all_of(str.begin(), str.end(), ::isdigit);
+    }
+
+    static inline int ExtractDigitRankIdFromHost(const std::string &str)
+    {
+        std::vector<std::string> splitList = StringUtil::Split(str, " ");
+        if (splitList.empty()) {
+            return -1;
+        }
+        // 处理字符串为 Host rankId 的场景，按空格分割后，
+        std::string rank = splitList.size() > 1 ? splitList[1] : str;
+        return IsAllDigits(rank) ? NumberUtil::StringToInt(rank) : -1;
     }
 
     static inline std::string AnonymousString(const std::string &str)

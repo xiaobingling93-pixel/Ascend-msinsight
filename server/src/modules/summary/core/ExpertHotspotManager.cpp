@@ -368,7 +368,7 @@ std::vector<ExpertHotspotStruct> ExpertHotspotManager::QueryExpertHotspotData(co
 bool ExpertHotspotManager::ExtractHeatMapFromTraceDb(const ExtractHeatMapParams &params, ModelInfo &modelInfo,
                                                      std::string &errorMsg)
 {
-    if (params.fileId.empty()) {
+    if (params.rankId.empty()) {
         errorMsg = "Fail to get extract heat map, file id is empty.";
         return false;
     }
@@ -379,18 +379,21 @@ bool ExpertHotspotManager::ExtractHeatMapFromTraceDb(const ExtractHeatMapParams 
     }
     // 获取cann层数据内容
     std::vector<FullDb::CompeteSliceDomain> cannApiSliceList = FullDb::RenderEngine::Instance()->
-        QuerySliceDetailByNameList(params.fileId, params.dataType, "CANN", params.cannApiList);
+        QuerySliceDetailByNameList(params.rankId, params.dataType, "CANN", params.cannApiList);
     if (cannApiSliceList.empty()) {
         return false;
     }
     // 获取计算算子数据内容
     std::vector<FullDb::CompeteSliceDomain> hardwareSliceList = FullDb::RenderEngine::Instance()->
-        QuerySliceDetailByNameList(params.fileId, params.dataType, "Ascend Hardware", params.hardwareOperatorList);
+        QuerySliceDetailByNameList(params.rankId, params.dataType, "Ascend Hardware", params.hardwareOperatorList);
     if (hardwareSliceList.empty()) {
         return false;
     }
-    std::string rankIdStr = Timeline::DataBaseManager::Instance().GetRankIdByFileId(params.fileId);
-    int rankId = NumberUtil::StringToInt(rankIdStr);
+    int rankId = StringUtil::ExtractDigitRankIdFromHost(params.rankId);
+    if (rankId < 0) {
+        errorMsg = "Fail to get extract heat map, invalid rank id.";
+        return false;
+    }
     modelInfo.rankNumber = std::max(rankId + 1, modelInfo.rankNumber);
     auto heatMapData = CalHeatMap(rankId, cannApiSliceList, hardwareSliceList, modelInfo);
     for (const auto &item: heatMapData) {
@@ -450,8 +453,13 @@ std::map<std::string, ExpertHotspotStruct> ExpertHotspotManager::CalHeatMap(
     return res;
 }
 
-bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, const std::string &clusterPath)
+bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, const std::string &clusterPath,
+                                                      const std::vector<std::string> &rankIdList)
 {
+    if (clusterPath.empty() || rankIdList.empty()) {
+        errorMsg = "Fail to update heatmap from profiling, invalid params.";
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     // 集群db不存在则直接返回
     if (database == nullptr) {
@@ -460,7 +468,7 @@ bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, con
     }
     // 删除已有数据（后续优化，通过状态表来记录状态）
     if (!database->DeleteExpertHotspot("", "profiling")) {
-        errorMsg = "Failed to clear old expert hotspot data, version: profiling";
+        errorMsg = "Failed to clear old expert hotspot data, version: profiling.";
         return false;
     }
     ModelInfo modelInfo;
@@ -469,8 +477,8 @@ bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, con
     cannApiList.insert(cannApiList.end(), layerExecuteApiNameList.begin(), layerExecuteApiNameList.end());
     cannApiList.insert(cannApiList.end(), groupedMatmulApiNameList.begin(), groupedMatmulApiNameList.end());
     cannApiList.insert(cannApiList.end(), lmHeadApiNameList.begin(), lmHeadApiNameList.end());
-    for (const auto &fileId: Timeline::DataBaseManager::Instance().GetAllRankId()) {
-        ExtractHeatMapParams params{fileId, dataType, cannApiList, groupedMatmulComputeNameList, clusterPath};
+    for (const auto &rankId: rankIdList) {
+        ExtractHeatMapParams params{rankId, dataType, cannApiList, groupedMatmulComputeNameList, clusterPath};
         if (!ExtractHeatMapFromTraceDb(params, modelInfo, errorMsg)) {
             return false;
         }

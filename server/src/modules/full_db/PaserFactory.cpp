@@ -292,6 +292,26 @@ std::string ProjectParserBase::GetDbPath(const std::string &filePath, const int 
     return path;
 }
 
+bool ProjectParserBase::ParseHeatMapToCluster(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos)
+{
+    bool res = false;
+    // 全量db和json场景需要存储集群和单卡的映射关系
+    for (const auto &cluster: clusterInfos) {
+        std::vector<std::string> rankIdList;
+        for (const auto &child: cluster->subParseFile) {
+            rankIdList.push_back(child->rankId);
+        }
+        std::string errorMsg;
+        bool tempRes = Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, cluster->parseFilePath, rankIdList);
+        if (!tempRes) {
+            ServerLog::Warn(errorMsg, " cluster path:", cluster->parseFilePath);
+        }
+        // 只要有一个解析成功就返回true
+        res = res | tempRes;
+    }
+    return res;
+}
+
 void ProjectParserBase::ParsePostProcess(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos)
 {
     // 全量db和json场景需要存储集群和单卡的映射关系
@@ -307,10 +327,9 @@ void ProjectParserBase::ParsePostProcess(const std::vector<std::shared_ptr<Parse
     auto event = std::make_unique<ParseHeatmapCompletedEvent>();
     if (!clusterInfos.empty()) {
         std::string errorMsg;
-        bool res = Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, clusterInfos[0]->parseFilePath);
+        bool res = ParseHeatMapToCluster(clusterInfos);
         event->body.parseResult = res;
         event->result = true;
-        event->body.errorMsg = errorMsg;
     } else {
         event->result = false;
         event->body.parseResult = false;

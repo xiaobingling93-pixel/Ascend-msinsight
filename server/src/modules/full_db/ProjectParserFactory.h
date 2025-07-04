@@ -60,6 +60,7 @@ public:
                                  const std::string &message);
     static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
     static void ParsePostProcess(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos);
+    static bool ParseHeatMapToCluster(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos);
     static void SendAllParseSuccess();
     static bool CheckIsOpenClusterTag(ProjectActionEnum action, ProjectTypeEnum curType,
                                       const std::string &projectName);
