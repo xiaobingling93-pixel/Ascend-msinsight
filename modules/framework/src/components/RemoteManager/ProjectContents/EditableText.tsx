@@ -43,7 +43,8 @@ function EditableText({ text = '' }: IProps): JSX.Element {
 
     // 退出编辑
     const exitEdit = async (): Promise<void> => {
-        if (editText !== '' && editText !== text) {
+        const trimmedContent = editText.trim();
+        if (trimmedContent !== '' && trimmedContent !== text) {
             const success = await updateProjectName(text, editText);
             if (success) {
                 setEditing(false);
