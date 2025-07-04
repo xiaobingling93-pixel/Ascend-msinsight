@@ -133,10 +133,9 @@ TEST_F(LeaksMemoryServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
     ASSERT_TRUE(memoryDatabase != nullptr);
     LeaksMemoryDetailTreeNode tree;
     const std::string deviceId = "7";
+    const std::string eventType = "PTA";
     const uint64_t expectDuration = 1000000;
-    const uint64_t timestamp =
-            memoryDatabase->QueryMemoryEventExtremumTimestamp(deviceId, true) + expectDuration;
-    LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(deviceId, expectDuration, tree, true);
+    LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(deviceId, expectDuration, eventType, tree, true);
     ServerLog::Error(tree.tag);
 }
 

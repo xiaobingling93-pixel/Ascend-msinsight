@@ -268,6 +268,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseValidParams)
     const uint64_t durationSecond = 15;
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
     requestPtr->params.deviceId = "1";
+    requestPtr->params.eventType = "PTA";
     requestPtr->params.timestamp = durationSecond * SECOND;
     requestPtr->params.relativeTime = true;
     bool result = handler.HandleRequest(std::move(requestPtr));

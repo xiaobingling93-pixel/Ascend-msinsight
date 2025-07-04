@@ -152,7 +152,7 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
                                                 std::map<std::string, const MemoryEvent *> &allocMap,
                                                 const BlockEventAttr &eventExtendAttr)
 {
-    if (event.event != "MALLOC" && event.event != "FREE") {
+    if (event.event != LEAKS_DUMP_EVENT::MALLOC && event.event != LEAKS_DUMP_EVENT::FREE) {
         return false;
     }
     if (eventExtendAttr.size == 0) {
@@ -162,7 +162,7 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
         return false;
     }
     // 如果是分配事件
-    if (event.event == "MALLOC") {
+    if (event.event == LEAKS_DUMP_EVENT::MALLOC) {
         // 已存在则忽略, 可能为重复申请
         if (allocMap.find(event.ptr + event.eventType) != allocMap.end()) {
             Server::ServerLog::Warn("An invalid memory allocation event[" + event.ptr +
@@ -174,7 +174,7 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
         allocMap[event.ptr + event.eventType] = &event;
     }
     // 如果是释放事件
-    if (event.event == "FREE") {
+    if (event.event == LEAKS_DUMP_EVENT::FREE) {
         // 内存分配表中未找到匹配的分配事件，则忽略
         if (allocMap.find(event.ptr + event.eventType) == allocMap.end()) {
             Server::ServerLog::Warn("An invalid memory free event[" + event.ptr +
@@ -226,10 +226,10 @@ void LeaksMemoryService::BuildBlockEventAttrFromEvent(const MemoryEvent &event, 
     }
     auto &json = jsonDoc.value();
     GetEventAttrWithDefaultValueByJson(json, eventAttr);
-    if (event.event == "FREE") {
+    if (event.event == LEAKS_DUMP_EVENT::FREE) {
         eventAttr.size = -std::abs(eventAttr.size);
     }
-    if (event.event == "MALLOC") {
+    if (event.event == LEAKS_DUMP_EVENT::MALLOC) {
         eventAttr.size = std::abs(eventAttr.size);
     }
 }
@@ -240,7 +240,7 @@ static void HandleOwnerSet(std::set<std::string> &owners)
     for (auto it1 = owners.begin(); it1 != owners.end(); ++it1) {
         for (auto it2 = std::next(it1); it2 != owners.end(); ++it2) {
             std::string lcp = StringUtil::FindLCP(*it1, *it2);
-            if (!lcp.empty() && !StringUtil::EndWith(lcp, "@")) {
+            if (!lcp.empty() && !StringUtil::EndWith(lcp, std::string(1, OWNER_STRING_DELIMITER))) {
                 owners.insert(lcp);
             }
         }
@@ -265,14 +265,19 @@ static std::vector<std::string> FindSubNodeTags(const std::string &tag, const st
         Server::ServerLog::Warn("[LeaksDetail]The tag of current node is invalid.");
         return subNodeTags;
     }
-    if (tag == LEAKS_MEMORY_ALLOC_OWNER_HAL) {
-        subNodeTags = std::vector<std::string>(LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_TAGS.begin(),
-                                               LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_TAGS.end());
+    if (tag == LEAKS_MEMORY_ALLOC_OWNER_HAL_CANN) {
+        subNodeTags = std::vector<std::string>(LEAKS_MEMORY_ALLOC_OWNER_CANN_BASE_TAGS.begin(),
+                                               LEAKS_MEMORY_ALLOC_OWNER_CANN_BASE_TAGS.end());
         return subNodeTags;
     }
-    long layer = std::count(tag.begin(), tag.end(), '@');
+    if (tag == LEAKS_MEMORY_ALLOC_OWNER_HAL_FRAMEWORK) {
+        subNodeTags = std::vector<std::string>(LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_BASE_TAGS.begin(),
+                                               LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_BASE_TAGS.end());
+        return subNodeTags;
+    }
+    long layer = std::count(tag.begin(), tag.end(), OWNER_STRING_DELIMITER);
     for (auto &owner : owners) {
-        if (std::count(owner.begin(), owner.end(), '@') <= layer) {
+        if (std::count(owner.begin(), owner.end(), OWNER_STRING_DELIMITER) <= layer) {
             continue;
         }
         if (owner.find(tag) == std::string::npos) {
@@ -308,7 +313,7 @@ void LeaksMemoryService::BuildMemoryAllocDetailTreeNode(const std::string &devic
     for (auto &subNodeOwnerTag : subNodeOwnerTags) {
         LeaksMemoryDetailTreeNode subNode;
         subNode.tag = subNodeOwnerTag;
-        subNode.size = database->QueryTotalSizeUtilTimestampUsingOwner(deviceId, timestamp, subNodeOwnerTag);
+        subNode.size = database->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, subNodeOwnerTag);
         subNode.name = LeaksMemoryDetailTreeNode::GetNodeNameByOwnerTag(subNodeOwnerTag);
         if (subNode.size > 0) {
             // 递归构造子节点
@@ -318,8 +323,11 @@ void LeaksMemoryService::BuildMemoryAllocDetailTreeNode(const std::string &devic
     }
 }
 
-bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId, const uint64_t &timestamp,
-                                                               LeaksMemoryDetailTreeNode &detailTree, bool relativeTime)
+bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId,
+                                                               const uint64_t &timestamp,
+                                                               const std::string &eventType,
+                                                               LeaksMemoryDetailTreeNode &detailTree,
+                                                               bool relativeTime)
 {
     auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
     if (database == nullptr) {
@@ -337,7 +345,9 @@ bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string
         return false;
     }
     // 构造固定层顶层-进程占用, 来自HAL最后一次分配的总内存
-    auto latestHALAllocation = database->QueryLatestAllocationWithinTimestamp(deviceId, "HAL", realTimestamp);
+    auto latestHALAllocation = database->QueryLatestAllocationWithinTimestamp(deviceId,
+                                                                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
+                                                                              realTimestamp);
     if (!latestHALAllocation.has_value()) {
         Server::ServerLog::Error("Parse memory alloc details failed: empty HAL allocation data");
         return false;
@@ -348,10 +358,13 @@ bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string
         return true;
     }
     detailTree.name = LEAKS_MEMORY_ALLOC_OWNER_HAL_NAME;
-    detailTree.tag = LEAKS_MEMORY_ALLOC_OWNER_HAL;
-    // 构造框架层 - ATB/MindSpore/PTA 总占用，所有owner带有PTA@ ATB@ 或 MINDSPORE@
-    std::set<std::string> owners(LEAKS_MEMORY_ALLOC_OWNER_BASE_TAGS);
-    database->QueryMemoryBlocksOwnersReleasedAfterTimestamp(deviceId, realTimestamp, owners);
+    if (eventType == LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL) {
+        detailTree.tag = LEAKS_MEMORY_ALLOC_OWNER_HAL_CANN; // 构造CANN层 - ATB/MindSpore/PTA占用，所有owner前缀为带有PTA/ATB/MINDSPORE
+    } else {
+        detailTree.tag = LEAKS_MEMORY_ALLOC_OWNER_HAL_FRAMEWORK; // 构造框架层 - ATB/MindSpore/PTA占用，所有owner前缀为带有PTA/ATB/MINDSPORE
+    }
+    std::set<std::string> owners(LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS);
+    database->QueryMemoryBlocksOwnersReleasedAfterTimestamp(deviceId, eventType, realTimestamp, owners);
     if (owners.empty()) {
         Server::ServerLog::Warn("Parse memory alloc details: empty data.");
         return true;
@@ -382,6 +395,15 @@ bool LeaksMemoryService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace)
     }
 
     return true;
+}
+
+bool LeaksMemoryService::IsValidMemoryEventType(const std::string &event, const std::string &eventType)
+{
+    if (EVENT_TYPE_MAP.find(event) == EVENT_TYPE_MAP.end()) {
+        return false;
+    }
+    const auto& eventTypes = EVENT_TYPE_MAP.at(event);
+    return eventTypes.find(eventType) != eventTypes.end();
 }
 }  // Memory
 }  // Module

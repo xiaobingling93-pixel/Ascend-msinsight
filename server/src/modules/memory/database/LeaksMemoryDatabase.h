@@ -45,14 +45,16 @@ public:
     void QueryMallocOrFreeEventTypeWithDeviceId(std::unordered_map<std::string, std::vector<std::string>> &resultMap);
     void QueryThreadIds(std::vector<uint64_t > &threadIds);
     void QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams, std::vector<Memory::MemoryBlock> &blocks);
-    void QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string &deviceId, uint64_t timestamp,
+    void QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string &deviceId,
+                                                       const std::string &eventType,
+                                                       uint64_t timestamp,
                                                        std::set<std::string> &owners);
     void QueryPythonTrace(const LeaksMemoryThreadPythonTraceParams &queryParams,
                           Memory::LeaksMemoryPythonTrace &trace);
     void QueryPythonTracesUsingTableName(const std::string &traceTableName,
                                          const LeaksMemoryThreadPythonTraceParams &queryParams,
                                          Memory::LeaksMemoryPythonTrace &trace);
-    uint64_t QueryTotalSizeUtilTimestampUsingOwner(const std::string &deviceId,
+    uint64_t QueryTotalSizeUntilTimestampUsingOwner(const std::string &deviceId,
                                                                         uint64_t timestamp,
                                                                         const std::string &owner);
     void QueryMemoryAllocations(const LeaksMemoryAllocationParams &queryParams,

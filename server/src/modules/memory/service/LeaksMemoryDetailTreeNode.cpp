@@ -17,11 +17,11 @@ bool LeaksMemoryDetailTreeNode::IsValidOwnerTag(const std::string &tag)
     if (tag.empty()) {
         return false;
     }
-    auto it = LEAKS_MEMORY_ALLOC_OWNER_BASE_TAGS.find(tag);
-    if (it != LEAKS_MEMORY_ALLOC_OWNER_BASE_TAGS.end()) {
+    auto it = LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS.find(tag);
+    if (it != LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS.end()) {
         return true;
     }
-    for (const auto &baseTag : LEAKS_MEMORY_ALLOC_OWNER_BASE_TAGS) {
+    for (const auto &baseTag : LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS) {
         if (tag.compare(0, baseTag.size(), baseTag) == 0) {
             return true;
         }
@@ -44,7 +44,7 @@ std::string LeaksMemoryDetailTreeNode::GetNodeNameByOwnerTag(const std::string &
     }
     std::string lcpOwnerTag;
     std::string resultName;
-    for (auto &baseTag : LEAKS_MEMORY_ALLOC_OWNER_BASE_TAGS) {
+    for (auto &baseTag : LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS) {
         std::string tempLCP = StringUtil::FindLCP(tag, baseTag);
         if (tempLCP.size() > lcpOwnerTag.size()) {
             lcpOwnerTag = tempLCP;

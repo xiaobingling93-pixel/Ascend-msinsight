@@ -19,9 +19,14 @@ bool QueryLeaksMemoryDetailHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-
+    if (!LeaksMemoryService::IsValidMemoryEventType(LEAKS_DUMP_EVENT::MALLOC, request.params.eventType)) {
+        errorMsg = "The eventType is invalid.";
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     if (!LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(request.params.deviceId, request.params.timestamp,
-        responsePtr->detail, request.params.relativeTime)) {
+                                                                   request.params.eventType, responsePtr->detail,
+                                                                   request.params.relativeTime)) {
         errorMsg = "Failed to query memory allocation detail.";
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;

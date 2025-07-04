@@ -201,19 +201,17 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlocksOwnersReleasedAfterTimestamp)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
     const std::string deviceId = "0";
+    const std::string eventType = "PTA";
     // 10s
     const uint64_t expectDuration = 10000000000;
     const uint64_t timestamp =
             memoryDatabase->QueryMemoryEventExtremumTimestamp(deviceId, true) + expectDuration;
     std::set<std::string> owners;
-    memoryDatabase->QueryMemoryBlocksOwnersReleasedAfterTimestamp(deviceId, timestamp, owners);
+    memoryDatabase->QueryMemoryBlocksOwnersReleasedAfterTimestamp(deviceId, eventType, timestamp, owners);
     EXPECT_FALSE(owners.empty());
     std::set<std::string> expectOwners = {
             "PTA",
             "PTA@model@weight",
-            "CANN@UNKNOWN",
-            "CANN@RUNTIME",
-            "CANN@APP"
     };
     EXPECT_EQ(owners, expectOwners);
 }
@@ -229,13 +227,13 @@ TEST_F(LeaksMemoryDatabaseTest, QueryTotalSizeUtilTimestampUsingOwner)
             memoryDatabase->QueryMemoryEventExtremumTimestamp(deviceId, true) + expectDuration;
     auto allocation =
             memoryDatabase->QueryLatestAllocationWithinTimestamp(deviceId, eventType, timestamp);
-    uint64_t cannTotalSize = memoryDatabase->QueryTotalSizeUtilTimestampUsingOwner(deviceId, timestamp, "CANN");
+    uint64_t cannTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, "CANN");
     uint64_t ptaTotalSize = memoryDatabase->
-            QueryTotalSizeUtilTimestampUsingOwner(deviceId, timestamp, "PTA");
+            QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, "PTA");
     uint64_t ptaModelTotalSize = memoryDatabase->
-            QueryTotalSizeUtilTimestampUsingOwner(deviceId, timestamp, "PTA@model");
+            QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, "PTA@model");
     uint64_t ptaOpTotalSize = memoryDatabase->
-            QueryTotalSizeUtilTimestampUsingOwner(deviceId, timestamp, "PTA@ops");
+            QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, "PTA@ops");
     const uint64_t expectCANNTotalSize = 31526918;
     const uint64_t expectPTATotalSize = 3542016;
     const uint64_t expectPTAModelTotalSize = 3072;

@@ -382,6 +382,7 @@ struct LeaksMemoryDetailParams {
     uint64_t timestamp;
     bool relativeTime;
     std::string deviceId;
+    std::string eventType;
 
     LeaksMemoryDetailParams() : timestamp(0), relativeTime(false) {}
 
@@ -391,8 +392,8 @@ struct LeaksMemoryDetailParams {
             errorMsg = "Invalid deviceId, detail: " + errorMsg;
             return false;
         }
-        if (deviceId.empty()) {
-            errorMsg = "Invalid deviceId, detail: deviceId is empty";
+        if (!CheckStrParamValid(deviceId, errorMsg) || !CheckStrParamValid(eventType, errorMsg)) {
+            errorMsg = "Invalid deviceId or eventType, detail: " + errorMsg;
             return false;
         }
         if (timestamp > INT64_MAX) {

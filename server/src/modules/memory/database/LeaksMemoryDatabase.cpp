@@ -801,16 +801,17 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryNextAllocation
 }
 
 void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string &deviceId,
+                                                                        const std::string &eventType,
                                                                         uint64_t timestamp,
                                                                         std::set<std::string> &owners)
 {
     std::string sql;
     std::string errMsg;
     sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT DISTINCT {} FROM {} "
-                                                "WHERE {} <= ? AND {} > ? AND {} == ?;",
+                                                "WHERE {} <= ? AND {} > ? AND {} == ? AND {} == ?;",
                                                 {std::string(BLOCK::OWNER), memoryBlockTable,
                                                  std::string(BLOCK::START_TIMESTAMP), std::string(BLOCK::END_TIMESTAMP),
-                                                 std::string(BLOCK::DEVICE_ID)},
+                                                 std::string(BLOCK::DEVICE_ID), std::string(BLOCK::EVENT_TYPE)},
                                                 errMsg);
     if (sql.empty()) {
         ServerLog::Error("[LeaksMemory] Failed to query block owners, error: ", errMsg);
@@ -830,6 +831,7 @@ void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const st
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, bindIdx++, eventType.c_str(), eventType.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string owner = sqlite3_column_string(stmt, col++);
@@ -841,9 +843,9 @@ void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const st
     sqlite3_finalize(stmt);
 }
 
-uint64_t LeaksMemoryDatabase::QueryTotalSizeUtilTimestampUsingOwner(const std::string &deviceId,
-                                                                    uint64_t timestamp,
-                                                                    const std::string &owner)
+uint64_t LeaksMemoryDatabase::QueryTotalSizeUntilTimestampUsingOwner(const std::string &deviceId,
+                                                                     uint64_t timestamp,
+                                                                     const std::string &owner)
 {
     std::string sql;
     std::string errMsg;

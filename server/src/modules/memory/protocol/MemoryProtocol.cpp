@@ -193,15 +193,16 @@ std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryDetailRequest(const json_t
         return nullptr;
     }
     if (!json.HasMember("params") || !json["params"].HasMember("deviceId") ||
-        !json["params"].HasMember("timestamp")) {
+        !json["params"].HasMember("timestamp") || !json["params"].HasMember("eventType")) {
         error = "Request[requestId=" + std::to_string(reqPtr->id) +
-                "] json lacks member params or deviceId or timestamp.";
+                "] json lacks member params or deviceId or timestamp or eventType.";
         return nullptr;
     }
     const json_t &param_json = json["params"];
     JsonUtil::SetByJsonKeyValue(reqPtr->params.timestamp, param_json, "timestamp");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.eventType, param_json, "eventType");
     return reqPtr;
 }
 
