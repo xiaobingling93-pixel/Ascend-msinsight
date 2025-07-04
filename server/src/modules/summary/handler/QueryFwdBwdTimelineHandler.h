@@ -19,7 +19,8 @@ public:
     ~QueryFwdBwdTimelineHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
-    static bool QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId);
+    static bool QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId,
+                                          const std::string &clusterPath);
     static std::map<std::string, PipelineFwdBwdTimelineByRank> dataMap;
 };
 

@@ -76,6 +76,10 @@ public:
     void SetClusterByFileId(const std::string& fileId, const std::string& cluster);
 
     std::string GetFileIdByClusterDbAndRankId(const std::string &clusterDb, const std::string &rankId);
+
+    void AddRankToCluster(const std::string& clusterId, const std::string& rank);
+
+    std::string GetRankInCluster(const std::string& clusterId, const std::string& rank);
 private:
     TrackInfoManager() = default;
     ~TrackInfoManager() = default;
@@ -111,7 +115,7 @@ private:
     std::unordered_map<std::string, std::set<std::string>> clusterDbToFileIdMap;
 
     /**
-     * @brief 键是fileId, 值是host + cluster + rankId + rankList 的拼写
+     * @brief 键是fileId, 值是rankList
      */
     std::unordered_map<std::string, std::vector<RankInfo>> fileIdToRankListMap;
 
@@ -119,6 +123,11 @@ private:
      * @brief 键是fileId,值是cluster
      */
     std::unordered_map<std::string, std::string> fileIdToClusterMap;
+
+    /**
+     * @brief key: clusterPath   value: rankSet , used in communication and summary
+     */
+    std::unordered_map<std::string, std::set<std::string>> clusterRankSetMap;
 
     uint64_t maxTrackId = 0;
     std::string GetRankId(const std::string &cardId);

@@ -37,7 +37,7 @@ bool QueryFwdBwdTimelineHandler::HandleRequest(std::unique_ptr<Protocol::Request
         response.body.rankLists.push_back(rankId);
         PipelineFwdBwdTimelineByRank rank = {rankId, {}, {}};
         dataMap.emplace(rankId, rank);
-        threadPool.AddTask(QueryFwdBwdTimelineByRank, rankId, request.params.stepId);
+        threadPool.AddTask(QueryFwdBwdTimelineByRank, rankId, request.params.stepId, request.params.clusterPath);
     }
 
     threadPool.WaitForAllTasks();
@@ -68,7 +68,8 @@ bool QueryFwdBwdTimelineHandler::HandleRequest(std::unique_ptr<Protocol::Request
     return true;
 }
 
-bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId)
+bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId,
+                                                           const std::string &clusterPath)
 {
     if (dataMap.find(rankId) == dataMap.end()) {
         return false;
@@ -78,7 +79,7 @@ bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineByRank(const std::string &ra
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
     if (database == nullptr) {
         // DB场景下无法根据rankId获取database
-        database = DataBaseManager::Instance().GetTraceDatabaseWithOutHost(rankId);
+        database = DataBaseManager::Instance().GetTraceDatabaseInCluster(clusterPath, rankId);
         if (database == nullptr) {
             ServerLog::Error("Failed to query fwd/bwd timeline data by rank due to null connection for database.");
             return false;

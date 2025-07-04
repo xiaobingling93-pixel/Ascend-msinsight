@@ -21,7 +21,7 @@ bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
         auto timelineDatabase = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(rank.iterationOrRankId);
         if (!timelineDatabase) {
             timelineDatabase =
-                Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(rank.iterationOrRankId);
+                Timeline::DataBaseManager::Instance().GetTraceDatabaseInCluster(clusterPath, rank.iterationOrRankId);
             if (!timelineDatabase) {
                 Server::ServerLog::Error("Failed to get connection to trace database when query byte alignment data.");
                 continue;

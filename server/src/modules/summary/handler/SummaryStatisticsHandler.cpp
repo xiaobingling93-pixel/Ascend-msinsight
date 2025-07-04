@@ -29,7 +29,7 @@ bool SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     }
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
     if (database == nullptr) {
-        database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
+        database = Timeline::DataBaseManager::Instance().GetTraceDatabaseInCluster(request.params.clusterPath, request.params.rankId);
         if (database == nullptr) {
             SendResponse(std::move(responsePtr), false, "Failed to get connection for get summary statistics.");
             return false;

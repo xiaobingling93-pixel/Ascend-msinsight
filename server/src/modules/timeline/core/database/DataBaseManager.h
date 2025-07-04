@@ -71,6 +71,8 @@ public:
     std::shared_ptr<FullDb::LeaksMemoryDatabase> GetLeaksMemoryDatabase(const std::string &fileId);
     std::vector<FullDb::LeaksMemoryDatabase *> GetAllLeaksMemoryDatabase();
     std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabaseByRankId(const std::string &rankId);
+    std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabaseWithCluster(const std::string &cluster,
+                                                                                   const std::string &rankId);
     std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDataBaseByFileId(const std::string &fileId);
     std::shared_ptr<Summary::VirtualSummaryDataBase> CreateSummaryDatabase(const std::string &rankId,
                                                                            const std::string &dbPath);
@@ -78,6 +80,8 @@ public:
 
     std::string GetDbPathByRankId(const std::string &rankId);
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseWithOutHost(const std::string &rankId);
+    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseInCluster(const std::string& clusterPath,
+                                                                    const std::string &rankId);
     DataType GetDataType();
     void SetDataType(DataType type);
     FileType GetFileType();

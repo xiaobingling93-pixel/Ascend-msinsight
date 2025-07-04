@@ -36,6 +36,7 @@ void TrackInfoManager::Reset()
     fileIdToRankListMap.clear();
     fileIdToClusterMap.clear();
     clusterDbToFileIdMap.clear();
+    clusterRankSetMap.clear();
 }
 
 void TrackInfoManager::UpdateHost(const std::string &cardId, const std::string &host)
@@ -197,6 +198,29 @@ std::string TrackInfoManager::GetFileIdByClusterDbAndRankId(const std::string &c
         // rankId有host的情况
         if (splitList.size() == splitSizeWithHost && splitList[1] == rankId) {
             return item.second;
+        }
+    }
+    return "";
+}
+
+void TrackInfoManager::AddRankToCluster(const std::string &clusterId, const std::string &rank)
+{
+    if (clusterId.empty() || rank.empty()) {
+        return;
+    }
+    clusterRankSetMap[clusterId].insert(rank);
+}
+
+std::string TrackInfoManager::GetRankInCluster(const std::string &clusterId, const std::string &rank)
+{
+    const auto &rankSet = clusterRankSetMap[clusterId];
+    for (const auto &it: rankSet) {
+        if (it == rank) {
+            return it;
+        }
+        auto rankWithOutHost = it.substr(it.find_last_of(" ") + 1);
+        if (rankWithOutHost == rank) {
+            return it;
         }
     }
     return "";

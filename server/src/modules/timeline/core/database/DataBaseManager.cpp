@@ -9,6 +9,7 @@
 #include "DbSummaryDataBase.h"
 #include "DbClusterDataBase.h"
 #include "BaselineManager.h"
+#include "TrackInfoManager.h"
 #include "DataBaseManager.h"
 
 namespace Dic {
@@ -530,6 +531,22 @@ std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId, co
 {
     std::string fileId = GetFileIdByRankId(rankId);
     return rankIdToDeviceIdMap[fileId + rankId];
+}
+
+std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDatabaseWithCluster(
+    const std::string &cluster, const std::string &rankId)
+{
+    auto clusterId = FileUtil::GetFileName(cluster);
+    auto rankIdWithHost = TrackInfoManager::Instance().GetRankInCluster(clusterId, rankId);
+    return GetSummaryDatabaseByRankId(rankIdWithHost);
+}
+
+std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseInCluster(
+    const std::string &clusterPath, const std::string &rankId)
+{
+    auto clusterId = FileUtil::GetFileName(clusterPath);
+    auto rankIdWithHost = TrackInfoManager::Instance().GetRankInCluster(clusterId, rankId);
+    return GetTraceDatabaseByRankId(rankIdWithHost);
 }
 } // end of namespace Timeline
 } // end of namespace Module

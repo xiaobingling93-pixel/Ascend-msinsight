@@ -146,6 +146,7 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
                               rankName};
             entry.rankInfo.emplace_back(rankInfo);
             TrackInfoManager::Instance().SetRankListByFileId(fileId, rankInfo);
+            TrackInfoManager::Instance().AddRankToCluster(parseFileInfo->clusterId, parseFileInfo->rankId);
             entry.parseFileList = jsonFiles;
         }
     }
@@ -756,6 +757,8 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
     }
     if (!clusterPrefix.empty()) {
         parseFileInfoRank->clusterId = FileUtil::GetFileName(cluster);
+    } else {
+        parseFileInfoRank->clusterId = FileUtil::GetFileName(info.fileName);
     }
     AddRankDeviceParseFileInfo(info, parseFileInfoRank);
 }

@@ -183,6 +183,7 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
                                                               rankName});
             DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, parsefileInfo->deviceId);
         }
+        TrackInfoManager::Instance().AddRankToCluster(parsefileInfo->clusterId, parsefileInfo->rankId);
         TrackInfoManager::Instance().SetClusterByFileId(file, parsefileInfo->clusterId);
     }
 }
@@ -429,6 +430,8 @@ void ProjectParserDb::BuildProjectFromParseFile(Dic::Module::Global::ProjectExpl
 
     if (!clusterPrefix.empty()) {
         parseFileInfoRank->clusterId = FileUtil::GetFileName(cluster);
+    } else {
+        parseFileInfoRank->clusterId = FileUtil::GetFileName(info.fileName);
     }
     AddRankDeviceParseFileInfo(info, parseFileInfoRank);
 }

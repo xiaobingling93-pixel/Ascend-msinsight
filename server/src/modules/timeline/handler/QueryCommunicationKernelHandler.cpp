@@ -27,7 +27,8 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
         }
         database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
         if (database == nullptr) {
-            database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
+            database = Timeline::DataBaseManager::Instance().GetTraceDatabaseInCluster(request.params.clusterPath,
+                                                                                       request.params.rankId);
             if (database == nullptr) {
                 SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get connection.");
                 return false;
@@ -50,10 +51,7 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
     auto clusterDbList = Timeline::DataBaseManager::Instance().GetAllClusterDatabase();
     bool flag = false;
     for (auto &clusterDb: clusterDbList) {
-        if (clusterDb == nullptr) {
-            continue;
-        }
-        if (!clusterDb->QueryIterationAndCommunicationGroup(request.params, response.body)) {
+        if (!clusterDb || !clusterDb->QueryIterationAndCommunicationGroup(request.params, response.body)) {
             continue;
         }
         flag = true;
