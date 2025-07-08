@@ -13,8 +13,8 @@ import { ResizeTable } from 'ascend-resize';
  * This Component is independent fetch data More Component,
  * but its params are from the selected detail row.
  */
-const useMoreUpdater = function<T extends Record<string, unknown>>(session: Session, fetchData: FetchDataMoreProps<T>['fetchData'], def: TableDataAdapter<T>): TableState {
-    const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
+const useMoreUpdater = function<T extends Record<string, unknown>>(session: Session, fetchData: FetchDataMoreProps<T>['fetchData'], def: TableDataAdapter<T>): TableState<T> {
+    const [state, setState] = React.useState<TableState<T>>(EMPTY_TABLE_STATE);
     const { selectedUnits, selectedDetailKeys, selectedDetails, selectedRange } = session;
     const recentUnits = React.useRef(selectedUnits);
     const recentRange = React.useRef(selectedRange);
@@ -31,7 +31,7 @@ const useMoreUpdater = function<T extends Record<string, unknown>>(session: Sess
                 }
                 setState({
                     dataSource: result,
-                    columns: parseColDef(def, session),
+                    columns: parseColDef<T>(def, session),
                     loading: false,
                 });
             }).catch(() => {

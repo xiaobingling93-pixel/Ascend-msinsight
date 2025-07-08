@@ -777,7 +777,7 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
     }, [sorter.field, sorter.order, page.current, page.pageSize]);
 
     return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
-        <ResizeTable
+        <ResizeTable<OpData>
             onChange={(pagination, filters, newSorter, extra): void => {
                 if (extra.action === 'sort') {
                     setSorter(newSorter as SorterResult<OpData>);

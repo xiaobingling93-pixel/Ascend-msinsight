@@ -140,7 +140,7 @@ export const useMoreUpdater = (session: Session, more: MoreDescriptor | undefine
         setState({ ...EMPTY_TABLE_STATE, loading: true });
         if (more && selectedDetail) {
             setState({
-                dataSource: selectedDetail[more.field] as object[],
+                dataSource: selectedDetail[more.field] as Array<Record<string, unknown>>,
                 columns: parseColDef(more, session),
                 rowKey: (more.rowKey ?? undefined) as (row: object) => string,
                 onExpand: onExpandForChildren(session, more.onExpand, setState),

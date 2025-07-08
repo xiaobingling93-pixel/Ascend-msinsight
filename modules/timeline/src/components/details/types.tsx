@@ -30,15 +30,15 @@ export interface MoreTableProps {
     isTree?: boolean;
 };
 
-export interface TableState<T = any> {
-    dataSource: Array<AutoKey<object>>;
+export interface TableState<T extends object = Record<string, unknown>> {
+    dataSource: Array<AutoKey<T>>;
     columns: Array<ColumnType<T> & { summary?: SummaryFunction<T> }>;
     rowKey?: (row: object) => string;
     onExpand?: (expanded: boolean, record: T) => void;
     loading: boolean;
 };
 
-export const EMPTY_TABLE_STATE: TableState = {
+export const EMPTY_TABLE_STATE: TableState<any> = {
     dataSource: [],
     columns: [],
     loading: false,
