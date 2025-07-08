@@ -48,7 +48,7 @@ export const dark: Theme = {
     deviceProcessActiveBackgroundColor: '#313131', // 设备和进程下拉框选中范围的背景颜色
     placeholderFontColor: 'rgb(100, 100, 100)',
     unitTagInfoBackgroundColor: 'rgb(255, 255, 255, 0.15)', // 泳道tag背景色
-    tooltipBGColor: '#404040',
+    tooltipBGColor: '#272c34',
     chartWrongBGColor: 'rgba(217, 72, 56, 0.1)',
     systemEventColor: '#DB6B42', // 系统事件背景色
     thumbIconBackgroundColor: 'rgb(171, 171, 171)', // 推荐入口主图标背景色

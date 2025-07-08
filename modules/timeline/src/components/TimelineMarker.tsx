@@ -17,7 +17,6 @@ import { Button } from 'ascend-components';
 import type { Session } from '../entity/session';
 import { getTimestamp } from '../utils/humanReadable';
 import { registerCrossUnitRenderer } from './charts/ChartInteractor';
-import { ReactComponent as GCIcon } from '../assets/images/insights/ark_gc.svg';
 import type { TimelineAxisFlag } from '../entity/timeMaker';
 import { ReactComponent as BrushIcon } from '../assets/images/timeline/ic_brush_black_lined.svg';
 import { platform } from '../platforms';
@@ -323,20 +322,22 @@ export const getMouse = (e: MouseEvent, current: HTMLCanvasElement): { x: number
  * @param session session
  * @param range 区间大小
  * @param domains 可用时间区间
- * @param current canvas画布元素dom节点
+ * @param elements canvas画布元素dom节点, tooltip元素dom节点
  */
 export const handleMouseMove = (e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>,
-    domains: number[], current: HTMLCanvasElement | null): void => {
+    domains: number[], elements: { canvas: HTMLCanvasElement | null; tooltip: HTMLDivElement | null }): void => {
+    const { canvas: current, tooltip } = elements;
     const [domainStart, domainEnd] = domains;
     const ctx = current?.getContext('2d');
 
-    if (!current || !ctx) {
+    if (!current || !ctx || !tooltip) {
         return;
     }
     const mouse = getMouse(e, current);
     adaptDpr(current, ctx);
     // 清空画布
     ctx.clearRect(0, 0, current.width, current.height);
+    tooltip.style.display = 'none';
 
     // 判断鼠标位置是否为空，如果鼠标不在画布中，则直接返回
     if (!mouse) {
@@ -356,6 +357,12 @@ export const handleMouseMove = (e: MouseEvent, session: Session, range: React.Mu
                 offsetX: flagXOffset,
                 anotherOffsetX: anotherMarkerTimestamp !== undefined ? xOffset(anotherMarkerTimestamp) : undefined,
             };
+            const tooltipBeginX = e.clientX + 10; // 10 是旗帜的正常宽度
+            tooltip.style.left = `${tooltipBeginX}px`;
+            tooltip.style.maxWidth = `calc(100vw - ${tooltipBeginX}px)`;
+            tooltip.style.top = `${e.clientY - 20}px`; // 20 是 tooltip 的固定高度
+            tooltip.style.display = 'block';
+            tooltip.innerText = flag.descriptionCache;
             break;
         }
     }
@@ -749,38 +756,42 @@ registerCrossUnitRenderer({
     triggers: session => [session.timelineMaker.selectedFlag],
 });
 
-// 点击gc按钮绘制gc图标提示
-registerCrossUnitRenderer({
-    action: (ctx, session, xScale, theme) => {
-        const gcActionTimeStamp = session.sharedState?.GCActionTimeStamp as number[] | undefined;
-        if (ctx !== null && gcActionTimeStamp !== undefined) {
-            gcActionTimeStamp.forEach(itemTimeStamp => {
-                const img = new Image();
-                let svg: SVGSVGElement | undefined;
-                document.querySelectorAll('svg').forEach(svgItem => {
-                    if (svgItem.id !== 'gc_icon') {
-                        return;
-                    }
-                    svg = svgItem;
-                });
-                if (!svg) {
-                    return;
-                }
-                const svgString = new XMLSerializer().serializeToString(svg);
-                const svgData = `data:image/svg+xml;base64,${btoa(svgString)}`;
-                img.src = svgData;
-                ctx.drawImage(img, xScale(itemTimeStamp), 32);
-            });
-        }
-    },
-    triggers: session => [
-        session.sharedState?.GCActionTimeStamp,
-    ],
-});
-
 const CanvasContainer = styled.div`
     width: 100%;
 `;
+
+const useFlagTooltip = (theme: Theme): React.MutableRefObject<HTMLDivElement | null> => {
+    const tooltipRef: React.MutableRefObject<HTMLDivElement | null> = React.useRef(null);
+    React.useEffect(() => {
+        const tooltipEl = document.createElement('div');
+        tooltipEl.id = 'flag-tooltip';
+        tooltipEl.style.position = 'absolute';
+        tooltipEl.style.left = '0px';
+        tooltipEl.style.top = '0px';
+        tooltipEl.style.maxHeight = '20px';
+        tooltipEl.style.padding = '0px 2px';
+        tooltipEl.style.border = '1px solid';
+        tooltipEl.style.pointerEvents = 'none';
+        tooltipEl.style.whiteSpace = 'nowrap';
+        tooltipEl.style.overflow = 'hidden';
+        tooltipEl.style.textOverflow = 'ellipsis';
+        tooltipEl.style.display = 'none';
+        document.body.appendChild(tooltipEl);
+        tooltipRef.current = tooltipEl; // 手动绑定 useRef.current
+        return () => {
+            document.body.removeChild(tooltipEl);
+            tooltipRef.current = null;
+        };
+    }, []);
+    React.useEffect(() => {
+        if (tooltipRef.current !== null) {
+            tooltipRef.current.style.background = theme.tooltipBGColor;
+            tooltipRef.current.style.color = theme.fontColor;
+            tooltipRef.current.style.borderColor = theme.borderColor;
+        }
+    }, [theme]);
+    return tooltipRef;
+};
 
 export const TimelineMarkerElement = observer(({ session, theme }: TimelineMarkerProps): JSX.Element => {
     const { t } = useTranslation();
@@ -791,11 +802,14 @@ export const TimelineMarkerElement = observer(({ session, theme }: TimelineMarke
     // 竖线画板高度，根据DOM树的laneView节点高度动态调整，最大不超过网页可见区域高(body)，包括border、margin等
     const height = React.useMemo(() => Math.min(session.totalHeight, document.body.offsetHeight), [session.totalHeight]);
     const [verticalHeight, vertical] = useWatchResize<HTMLCanvasElement>('height');
+    const flagTooltip = useFlagTooltip(theme);
     const flagCursor = React.useRef<HTMLCanvasElement>(null);
     const background = React.useRef<HTMLCanvasElement>(null);
 
     React.useEffect(() => {
-        const mouseMoveListener = (e: MouseEvent): void => handleMouseMove(e, session, range, [domainStart, domainEnd], flagCursor.current);
+        const mouseMoveListener = (e: MouseEvent): void => handleMouseMove(e, session, range, [domainStart, domainEnd], {
+            canvas: flagCursor.current, tooltip: flagTooltip.current,
+        });
         addEventListener('mousemove', mouseMoveListener);
         return () => {
             removeEventListener('mousemove', mouseMoveListener);
@@ -847,7 +861,6 @@ export const TimelineMarkerElement = observer(({ session, theme }: TimelineMarke
             width={width}
             height={TIME_MARKER_AXIS_HEIGHT}
             style={{ width, height: TIME_MARKER_AXIS_HEIGHT, position: 'absolute', top: 0, left: 0 }}/>
-        <GCIcon style={{ display: 'none' }} id="gc_icon" fill={themeInstance.getThemeType().buttonFontColor}/>
         <canvas ref={flagCursor} width={width} height={TIME_MARKER_AXIS_HEIGHT}
             style={{ width, height: TIME_MARKER_AXIS_HEIGHT, position: 'absolute', top: 0, left: 0 }}/>
         <canvas ref={vertical} width={width} height={height}
