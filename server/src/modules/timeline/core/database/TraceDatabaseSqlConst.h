@@ -237,7 +237,7 @@ public:
     static std::string GenerateAclnnQueryDbSql(const Protocol::KernelDetailsParams &params)
     {
         std::string sql =
-            "SELECT info.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, "
+            "SELECT task.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, "
             "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
             "task.streamId as tid, task.depth as depth "
             "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
