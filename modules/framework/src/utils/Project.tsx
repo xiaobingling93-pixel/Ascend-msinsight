@@ -108,14 +108,14 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         const { activeDataSource, dataSources } = session;
         const newProject = { ...project };
 
-        // 这里添加 session.isCluster 判断，如果是集群数据，也要重置 session 使 clusterCompleted = false, 确保 Summary 和 Communication 模块正常加载
-        if (session.isReset || session.isCluster) {
-            session.reset();
-        }
-
         // 如果目标内容就是当前选中内容，则不做任何处理直接返回
         if (newProject.projectName === activeDataSource.projectName && arraysValueEqual(newProject.projectPath, activeDataSource.projectPath)) {
             return;
+        }
+
+        // 这里添加 session.isCluster 判断，如果是集群数据，也要重置 session 使 clusterCompleted = false, 确保 Summary 和 Communication 模块正常加载
+        if (session.isReset || session.isCluster) {
+            session.reset();
         }
         openLoading();
         // 切换项目
