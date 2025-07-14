@@ -83,7 +83,7 @@ bool TraceFileSimulationParser::InitParser(const std::vector<std::string> &fileP
         auto splitFile = TraceFileSimulationParser::SplitFile(filePath);
         instance.fileProgressMap[rankId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
         if (splitFile.empty()) {
-            ServerLog::Error("Failed to split file.");
+            ServerLog::Error("Failed to split file. filePath: %", filePath);
             ParseEndCallBack(rankId, fileId, false, "Failed to split file: " + filePath);
             continue;
         }

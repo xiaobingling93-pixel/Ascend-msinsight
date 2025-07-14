@@ -23,7 +23,7 @@ bool QueryTableDataNameListHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     std::shared_ptr<TextTraceDatabase> databasePtr =
             std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(database);
     if (databasePtr == nullptr) {
-        ServerLog::Warn("Failed to get text connection when query table names,ID: ", request.params.rankId);
+        ServerLog::Warn("Failed to get text connection when query table names,ID: %", request.params.rankId);
         session.OnResponse(std::move(responsePtr));
         return false;
     }

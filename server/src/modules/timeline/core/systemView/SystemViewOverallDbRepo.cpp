@@ -193,7 +193,8 @@ std::vector<CpuCubeOpInfo> SystemViewOverallDbRepo::QueryCpuCubeOp(
         CpuCubeOpInfo cubeOp;
         cubeOp.pythonApi = GetOrUpdateStringCacheValue(database, database->GetDbPath(), resultSet->GetString("name"));
         if (cubeOp.pythonApi.empty()) {
-            ServerLog::Warn("Get empty python api when query cpu cube operators for system view overall");
+            ServerLog::Warn("Get empty python api when query cpu cube operators for system view overall. name: %",
+                resultSet->GetString("name"));
         }
         cubeOp.CheckCubeOp();
         if (cubeOp.isCubeOp) {
@@ -234,7 +235,9 @@ std::vector<OverallTmpInfo> SystemViewOverallDbRepo::QueryKernelEventsForSystemV
         kernelEvent.opType = GetOrUpdateStringCacheValue(database, database->GetDbPath(),
                                                          resultSet->GetString("opType"));
         if (kernelEvent.opName.empty() || kernelEvent.opType.empty()) {
-            Server::ServerLog::Warn("Get empty operator name or type when query kernel events for system view overall");
+            Server::ServerLog::Warn("Get empty operator name or type when query kernel events for system view overall."
+                " opName: %, opType: %", resultSet->GetString("opName"),
+                resultSet->GetString("opType"));
         }
         kernelEvent.startTime = resultSet->GetUint64("startTime");
         auto it = flowDict.find(kernelEvent.startTime);
@@ -368,7 +371,7 @@ bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const Sys
     uint64_t groupId = TraceDatabaseHelper::QueryCommunicationGroupIdByName(stmt, params.categoryList[1],
                                                                             deviceId);
     if (groupId == UINT64_MAX) {
-        ServerLog::Error("Group Name doesn't exist for Query Communication Ops Time Data By Group Name: ",
+        ServerLog::Error("Group Name doesn't exist for Query Communication Ops Time Data By Group Name: %",
                          params.categoryList[1]);
         return false;
     }

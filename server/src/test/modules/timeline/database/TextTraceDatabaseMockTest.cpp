@@ -1520,6 +1520,44 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithCounter)
     EXPECT_EQ(metaData[second]->children[second]->type, "thread");
 }
 
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithCounterInvalidJSON)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    const std::string processData = "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", "
+        "\"process_sort_index\") VALUES ('1', '1', NULL, NULL);";
+    const std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\","
+        " \"thread_sort_index\") VALUES (17, 'NPU Usage', '1', 'NPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\","
+        " \"thread_sort_index\") VALUES (18, 'CPU Usage', '1', 'CPU Usage', 0);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\","
+        " \"thread_sort_index\") VALUES (19, 'CPU1 Usage', '1', 'CPU1 Usage', 0);";
+    const std::string counterData = "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\","
+        " \"cat\", \"args\") VALUES (749, 'NPU Usage', '1', 1735124807612323800, NULL, '');\n" // counter args 为空
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\","
+        " \"cat\", \"args\") VALUES (750, 'CPU Usage', '1', 1735124807612323800, NULL, '{1:\"0.0\"}');\n"
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\","
+        " \"cat\", \"args\") VALUES (751, 'CPU1 Usage', '1', 1735124807612323800, NULL, '[1,\"0.0\"]');"; // counter args 中 key 不为字符串
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, processData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, counterData);
+    const std::string fileId = "9";
+    const uint8_t first = 0;
+    const std::vector<std::string> expectedDataType = {};
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(metaData[first]->type, "process");
+    EXPECT_EQ(metaData[first]->children.size(), 3);
+    EXPECT_EQ(metaData[first]->children[0]->metaData.dataType, expectedDataType);
+    EXPECT_EQ(metaData[first]->children[1]->metaData.dataType, expectedDataType);
+    EXPECT_EQ(metaData[first]->children[2]->metaData.dataType, expectedDataType);
+}
+
 TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithPidAndProcessNameIsSame)
 {
     std::recursive_mutex sqlMutex;

@@ -18,7 +18,7 @@ bool Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Pro
         std::pair<ProjectTypeEnum, std::vector<std::string>> filePathPair =
             ParserStatusManager::Instance().QueryPendingFilePath(item);
         if (std::empty(filePathPair.second)) {
-            ServerLog::Warn("Parse cards file path is empty");
+            ServerLog::Warn("Parse cards file path is empty. card: %", item);
             continue;
         }
         if (filePathPair.first == ProjectTypeEnum::TRACE) {

@@ -31,7 +31,7 @@ void QueryTableDataDetailHandler::ComputeTableDetail(const TableDataDetailReques
     std::shared_ptr<TextTraceDatabase> databasePtr =
         std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(database);
     if (databasePtr == nullptr) {
-        ServerLog::Warn("Failed to get text connection when query table detail,ID: ", request.params.rankId);
+        ServerLog::Warn("Failed to get text connection when query table detail,ID: %", request.params.rankId);
         return;
     }
     auto nameList = databasePtr->QueryTableDataNameList();

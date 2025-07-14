@@ -128,7 +128,7 @@ void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathAr
         auto splitFile = SplitFile(filePath);
         instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
         if (splitFile.empty()) {
-            ServerLog::Error("Failed to split file.");
+            ServerLog::Error("Failed to split file. filePath: %", filePath);
             ParseEndCallBack(fileId, "", false, "Failed to split file: " + filePath);
             continue;
         }

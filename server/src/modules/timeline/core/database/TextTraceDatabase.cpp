@@ -869,17 +869,21 @@ std::vector<std::string> TextTraceDatabase::GetCounterDataType(const std::string
         return type;
     }
     rapidjson::Document document;
-    try {
-        document.Parse(args.c_str(), args.length());
-    } catch (std::exception &e) {
-        ServerLog::Error("Get counter data type. Failed to parse json. ", args, e.what());
+    document.Parse(args.c_str(), args.length()); // 解析，Parse() 不会抛异常
+    if (document.HasParseError()) { // 通过HasParseError()来判断解析是否成功
+        ServerLog::Error("Get counter data type. Parse failed: ", document.GetParseError(), " at offset ",
+            document.GetErrorOffset());
+        return type;
+    }
+    if (!document.IsObject()) {
+        ServerLog::Error("Get counter data type. Parse json is not object: %", args);
         return type;
     }
     for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it) {
         if (it->name.IsString()) {
             type.emplace_back(it->name.GetString());
         } else {
-            ServerLog::Warn("Counter data type is not string. args:", args);
+            ServerLog::Warn("Counter data type is not string. args:", args, ". nameType: ", it->name.GetType());
         }
     }
     std::sort(type.begin(), type.end()); // 与metadata数据顺序一致，可能是因为使用json开源软件不一致

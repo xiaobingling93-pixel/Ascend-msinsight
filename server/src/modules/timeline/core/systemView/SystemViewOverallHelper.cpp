@@ -110,7 +110,8 @@ void SystemViewOverallHelper::SummarizeSystemViewOverall(SystemViewOverallRes &c
                 currentRes.nums += item.nums;
             } else {
                 currentRes.nums = UINT32_MAX;
-                ServerLog::Warn("Add operation failed when summarize overall metrics. Integer overflow.");
+                ServerLog::Warn("Add operation failed when summarize overall metrics. Integer overflow. name: %",
+                    item.name);
             }
             currentRes.max = std::max(currentRes.max, item.max);
             if (item.name != OVERALL_CAT_OTHER) {

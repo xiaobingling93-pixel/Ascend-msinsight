@@ -369,7 +369,7 @@ std::string DataBaseManager::GetDbPathByRankId(const std::string &rankId)
     std::string fileId = GetFileIdByRankId(rankId);
     auto it = traceDatabaseMap.find(fileId);
     if (it == traceDatabaseMap.end()) {
-        ServerLog::Error("Can't find db path for rank ", rankId);
+        ServerLog::Error("Can't find db path for rank: %", rankId);
         return "";
     }
     return it->second->GetDbPath();

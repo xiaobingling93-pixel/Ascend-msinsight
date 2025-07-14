@@ -158,6 +158,40 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
     EXPECT_EQ(filteredEvents.size(), 66); // 66个Conv类算子
 }
 
+// System View Overall: 累加计算溢出时防护
+TEST_F(SystemViewOverallTextRepoTest, AggregateComputingOverallMetricsOverflow)
+{
+    std::vector<SystemViewOverallRes> details;
+    Protocol::SystemViewOverallRes tmpRes = { .totalTime = 8873.76, .ratio = 6.5, // Computing Time = 8873.76, 6.5%
+        .nums = 0, .avg = 0, .max = 0, .min = UINT32_MAX, .name = OVERALL_CAT_COMPUTING, .children = {
+            SystemViewOverallRes { .totalTime = 8873.76, .ratio = 6.5, .nums = 0, .avg = 0, .max = 0,
+                .min = UINT32_MAX, .name = OVERALL_CAT_COMPUTING, .children = {
+                    SystemViewOverallRes { .totalTime = 8873.76, .ratio = 6.5, .nums = 1, .avg = 0,
+                        .max = 0, .min = UINT32_MAX, .name = "A-1" },
+                    SystemViewOverallRes { .totalTime = 8873.76, .ratio = 6.5, .nums = 1, .avg = 0,
+                        .max = 0, .min = UINT32_MAX, .name = "A-2" }
+                }
+            },
+            SystemViewOverallRes { .totalTime = 8873.76, .ratio = 6.5, .nums = 1, .avg = 0, .max = 0,
+                .min = UINT32_MAX, .name = OVERALL_CAT_COMPUTING, .children = {
+                    SystemViewOverallRes { .totalTime = 8873.76, .ratio = 6.5, .nums = 1, .avg = 0,
+                        .max = 0, .min = UINT32_MAX, .name = "B-1" },
+                    SystemViewOverallRes { .totalTime = 8873.76, .ratio = 6.5, .nums = UINT32_MAX - 1, .avg = 0,
+                        .max = 0, .min = UINT32_MAX, .name = "B-2" }
+                }
+            },
+        },
+        .level = 1 };
+    details.emplace_back(tmpRes);
+    SystemViewOverallHelper computeHelper;
+    computeHelper.AggregateComputingOverallMetrics(details);
+    EXPECT_EQ(details.size(), 1); // 1
+    EXPECT_EQ(details[0].nums, 1); // 2
+    EXPECT_EQ(details[0].children.size(), 2); // 2
+    EXPECT_EQ(details[0].children[0].nums, 2); // 2
+    EXPECT_EQ(details[0].children[1].nums, UINT32_MAX); // 2
+}
+
 // System View Overall: 查询过滤 duration > UINT64_MAX / 1000 的值
 TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestFilterDurationIsTooLong)
 {

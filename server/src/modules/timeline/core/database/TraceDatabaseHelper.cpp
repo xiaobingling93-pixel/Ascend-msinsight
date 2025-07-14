@@ -1387,7 +1387,7 @@ uint64_t TraceDatabaseHelper::CalculateUncoveredTime(const std::vector<Protocol:
             totalUncoveredTime += uncoveredTime;
         } else {
             // 实际数据很小，正常情况下不会溢出
-            ServerLog::Error("Accumulation overflow occurred when calculating the total uncovered time.");
+            ServerLog::Error("Accumulation overflow occurred when calculating total uncovered time: ", uncoveredTime);
             totalUncoveredTime += 0;
         }
         if (element.endTime > uncoveredEle.endTime) {
@@ -1948,19 +1948,19 @@ void TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(std::vector<Co
             Dic::document_t json;
             json.Parse(item.second.c_str());
             if (!json.IsObject()) {
-                ServerLog::Error("Args is not valid json format.");
+                ServerLog::Error("Args is not valid json format. raw: %", item.second);
                 continue;
             }
             if (!json.HasMember("size(Byte)") || !json["size(Byte)"].IsString()) {
-                ServerLog::Error("Args has no member size(Byte) or member is not int.");
+                ServerLog::Error("Args has no member size(Byte) or member is not int. raw: %", item.second);
                 continue;
             }
             if (!json.HasMember("transport type") || !json["transport type"].IsString()) {
-                ServerLog::Error("Args has no member transport type or member is not string.");
+                ServerLog::Error("Args has no member transport type or member is not string. raw: %", item.second);
                 continue;
             }
             if (!json.HasMember("link type") || !json["link type"].IsString()) {
-                ServerLog::Error("Args has no member link type or member is not string.");
+                ServerLog::Error("Args has no member link type or member is not string. raw: %", item.second);
                 continue;
             }
             CommunicationSmallOperatorInfo info;

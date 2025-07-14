@@ -1583,7 +1583,7 @@ bool DbTraceDataBase::QueryCounterMetadataGenerateInfo(const Dic::Module::Timeli
         return false;
     }
     if (!CheckTableExist(tableName)) {
-        ServerLog::Info("Query counter metadata failed, table ", tableName, " Not Exist.");
+        ServerLog::Warn("Query counter metadata failed, table ", tableName, " Not Exist.");
         return false;
     }
     sql = helper.GenerateDeviceMetadataSQL(type);

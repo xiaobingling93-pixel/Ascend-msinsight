@@ -5,7 +5,7 @@
 #include "DatabaseTest.cpp"
 #include "TextTraceDatabase.h"
 
-class TextTraceDatabaseTest : DatabaseTest {
+class TextTraceDatabaseTest : public DatabaseTest {
 };
 
 TEST_F(DatabaseTest, OpenDb)

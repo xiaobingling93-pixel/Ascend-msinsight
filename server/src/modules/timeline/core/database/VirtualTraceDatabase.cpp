@@ -38,7 +38,7 @@ uint64_t VirtualTraceDatabase::CalculateUncoveredTime(const std::vector<Protocol
             totalUncoveredTime += uncoveredTime;
         } else {
             // 实际数据很小，正常情况下不会溢出
-            ServerLog::Error("Accumulation overflow occurred when calculating the total uncovered time.");
+            ServerLog::Error("Accumulation overflow occurred when calculating total uncovered time: ", uncoveredTime);
             totalUncoveredTime += 0;
         }
         if (element.endTime > uncoveredEle.endTime) {
