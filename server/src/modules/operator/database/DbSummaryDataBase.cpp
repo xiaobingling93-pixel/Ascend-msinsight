@@ -106,8 +106,10 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
 bool DbSummaryDataBase::QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
+    // 这里JOIN一次TASK表的原因是查询具体算子时也JOIN了，当出现COMPUTE_TASK_INFO表中globalTaskId不在TASK表中的情况，不JOIN两者会不一致，但正常数据一般不会出现这种情况
     std::string sql = "SELECT count(*) as nums FROM " + TABLE_COMPUTE_TASK_INFO +
-            " WHERE taskType = (select id from STRING_IDS WHERE value = ?)";
+            " JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
+            " WHERE COMPUTE_TASK_INFO.taskType = (select id from STRING_IDS WHERE value = ?)";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
         int index = bindStartIndex;
