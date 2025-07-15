@@ -145,6 +145,7 @@ const CurveDetailTable = observer(({ session, curveSession }:
                             onOrderByChange={setOrderBy}
                             total={total}
                             rankId={curveSession.rankIdCondition.value}
+                            groupName={curveSession.groupId}
                         />
                     </Spin>
                 </>}

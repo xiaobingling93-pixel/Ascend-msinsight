@@ -755,7 +755,7 @@ std::vector<ColumnAtt> Database::QueryTableInfoByName(const std::string& tableNa
     if (!StringUtil::CheckSqlValid(tableName)) {
         return {};
     }
-    const std::string sql = "PRAGMA table_info(" + tableName + ");";
+    const std::string sql = "PRAGMA table_info('" + tableName + "');";
     auto stmt = CreatPreparedStatement(sql);
     if (!TryOpt(stmt, "Query table info failed to prepare sql!")) {
         return {};

@@ -40,6 +40,8 @@
       "Recover cards default offset": "Recover cards default offset",
       "Set base slice": "Set base slice",
       "Clear base slice": "Clear base slice",
+      "Generate Line Chart By Block": "Generate Duration Line Chart By Block",
+      "Generate Bubble Line Chart By Block": "Generate Bubble Line Chart By Block",
       "Lock selection area": "Lock selection area",
       "Unlock selection area": "Unlock selection area",
       "Set alias": "Set Alias",

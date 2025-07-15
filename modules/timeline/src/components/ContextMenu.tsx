@@ -20,6 +20,8 @@ import {
     actionEnableAutoUnitHeight,
     actionExpandAllUnits,
     actionFindInCommunication,
+    actionGenerateCurve,
+    actionGenerateBubbleCurve,
     actionFitToScreen,
     actionHideFlagEvents,
     actionHidePythonCallStack,
@@ -153,6 +155,8 @@ export const CONTEXT_MENU_SEPARATOR = 'separator';
 const contextMenuItems: ContextMenuItem[] = [
     // 特定操作
     actionFindInCommunication,
+    actionGenerateCurve,
+    actionGenerateBubbleCurve,
     actionSetCardAlias,
     actionParseCardsOfRelatedGroup,
     CONTEXT_MENU_SEPARATOR,

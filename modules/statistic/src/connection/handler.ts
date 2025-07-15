@@ -26,6 +26,26 @@ export const parseStatisticCompletedHandler: NotificationHandler = async (data):
     }
 };
 
+export const locateGroup: NotificationHandler = (data): void => {
+    try {
+        const { memoryStore } = store;
+        const curveSession = memoryStore.activeSession;
+        runInAction(() => {
+            if (!curveSession) {
+                return;
+            }
+            curveSession.groupId = data.group as string;
+            const exists = curveSession.groupCondition.some(item => item.label === curveSession.groupId);
+            if (!exists) {
+                curveSession.groupCondition.push({ label: curveSession.groupId, value: curveSession.groupId });
+            }
+            curveSession.rankIdCondition.value = data.fileId as string;
+        });
+    } catch (err) {
+        console.error(err);
+    }
+};
+
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore, memoryStore } = store;
@@ -58,15 +78,10 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
                 return;
             }
             const dataKeys = Object.keys(data);
-            const usableKeys: string[] = ['isCluster', 'unitcount'];
             dataKeys.forEach((key: any) => {
-                if (key === 'memoryRankIds') {
-                    const memoryRankIds = data.memoryRankIds as string[];
-                    session.iERankIds = [...new Set([...session.iERankIds, ...memoryRankIds])];
-                    return;
-                }
-                if (usableKeys.includes(key)) {
-                    (session as any)[key] = data[key];
+                if (key === 'iERankIds') {
+                    const iERankIds = data.iERankIds as string[];
+                    session.iERankIds = [...new Set([...session.iERankIds, ...iERankIds])];
                 }
             });
         });

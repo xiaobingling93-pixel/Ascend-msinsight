@@ -12,6 +12,7 @@ import type { CurveTable, DataDetail, RenderExpandRecord, TableColumn } from '..
 import { ResizeTable } from 'ascend-resize';
 import type { MenuProps, TableColumnsType } from 'antd';
 import { Dropdown } from 'antd';
+import connector from '../connection';
 
 interface IProps {
     tableData: CurveTable;
@@ -23,6 +24,7 @@ interface IProps {
     onOrderByChange: (orderBy: string) => void;
     total: number;
     rankId: string;
+    groupName: string;
 }
 
 const getTableColumns = function (
@@ -43,25 +45,63 @@ const getTableColumns = function (
         }),
     );
 };
-
+let selectedRecord: DataDetail | undefined;
+function redirectToTimeline(time: string, rankId: string, groupName: string, duration: string): void {
+    const last = groupName.lastIndexOf('_');
+    if (last === -1) return;
+    const secondLast = groupName.lastIndexOf('_', last - 1);
+    if (secondLast === -1) return; // 没有第二个下划线
+    let name = groupName.substring(0, secondLast);
+    let startTime = parseInt(time);
+    if (name.endsWith('_bubble')) {
+        const last = name.lastIndexOf('_');
+        name = name.substring(0, last);
+        startTime += parseInt(duration);
+    }
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'timeline',
+            toModuleEvent: 'findBlock',
+            params: {
+                startTime,
+                rankId,
+                name,
+            },
+        },
+    });
+}
 export const AntTableChart: React.FC<IProps> = (props) => {
     // 开发环境防止antd4 table组件报ResizeObserver loop错误，但会在没有数据时也显示有1条，生产环境不会报错也会正常显示
     const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []) as DataDetail[];
     const { t } = useTranslation('statistic');
     const {
         tableData, onRowSelected, current, pageSize,
-        onPageChange, total, onOrderChange, onOrderByChange,
+        onPageChange, total, onOrderChange, onOrderByChange, rankId, groupName,
     } = props;
     const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
-
+    const [open, setOpen] = useState<boolean>(false);
     const columns = useMemo(
         () => getTableColumns(tableData.columns, t),
         [tableData.columns, t],
     );
 
     const useMenuItems = (): MenuProps['items'] => {
-        return [];
+        if (selectedRecord === undefined || !open) {
+            return [];
+        }
+        return [
+            {
+                label: t('Find in Timeline'),
+                key: 'findInTimeline',
+                onClick: (): void => {
+                    if (selectedRecord !== undefined) {
+                        redirectToTimeline(selectedRecord.startTime as string, rankId, groupName, selectedRecord.duration as string);
+                    }
+                },
+            },
+        ];
     };
     const items = useMenuItems();
 
@@ -93,11 +133,16 @@ export const AntTableChart: React.FC<IProps> = (props) => {
                     setShouldBlockMouseLeave(false);
                     return;
                 }
+                setOpen(false);
                 onRowSelected?.(undefined, undefined);
             },
             onContextMenu: (event: any): void => {
                 event.preventDefault(); // 阻止默认的右键菜单
-                setShouldBlockMouseLeave(true);
+                selectedRecord = record;
+                if (selectedRecord.startTime !== undefined && selectedRecord.duration !== undefined) {
+                    setOpen(true);
+                    setShouldBlockMouseLeave(true);
+                }
             },
         };
     };

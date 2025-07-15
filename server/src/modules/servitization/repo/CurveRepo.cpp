@@ -52,7 +52,7 @@ std::vector<std::map<std::string, std::string>> CurveRepo::QueryDataByColumn(con
         columnName.emplace_back("\"" + item.key + "\"");
     }
     const std::string columnNames = StringUtil::join(columnName, ",");
-    std::string sql = "SELECT " + columnNames + " FROM " + tableName + " ORDER BY " + columnName.front();
+    std::string sql = "SELECT " + columnNames + " FROM '" + tableName + "' ORDER BY " + columnName.front();
     auto dataBase = context->GetDatabase(fileId);
     if (!TryOpt(dataBase, "Query data by column get connection failed!")) {
         return {};
@@ -92,7 +92,7 @@ std::vector<std::map<std::string, std::string>> CurveRepo::QueryDataByColumnPage
     }
     const std::string conditionName = columns[0].key;
     const std::string columnNames = StringUtil::join(columnName, ",");
-    std::string sql = "SELECT " + columnNames + " FROM " + query.viewName + " WHERE 1=1 ";
+    std::string sql = "SELECT " + columnNames + " FROM '" + query.viewName + "' WHERE 1=1 ";
     bool rangeIsValid = !query.start.empty() && !query.end.empty();
     bool rangeIsInteger = rangeIsValid && StringUtil::CheckSqlValid(query.start) &&
                           StringUtil::CheckSqlValid(query.end);
@@ -167,7 +167,7 @@ uint64_t CurveRepo::QueryCountByTableName(const PageQuery& query, const std::str
     if (!StringUtil::CheckSqlValid(query.viewName)) {
         return 0;
     }
-    std::string sql = "SELECT COUNT(*) as count FROM " + query.viewName + " WHERE 1 = 1 ";
+    std::string sql = "SELECT COUNT(*) as count FROM '" + query.viewName + "' WHERE 1 = 1 ";
     bool rangeIsValid = !query.start.empty() && !query.end.empty();
     bool rangeIsInteger = rangeIsValid && StringUtil::CheckSqlValid(query.start) &&
                           StringUtil::CheckSqlValid(query.end);

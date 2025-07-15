@@ -196,6 +196,18 @@ TEST_F(TimelineProtocolUtilTest, TestTableDataDatailResponseToJson)
     EXPECT_EQ(json, jsonStr);
 }
 
+TEST_F(TimelineProtocolUtilTest, TestCreateCurveResponseToJson)
+{
+    Dic::Protocol::CreateCurveResponse response;
+    response.body.curveName = "lllllllll";
+    auto jsonOp = Dic::Protocol::ToResponseJson(response);
+    EXPECT_EQ(jsonOp.has_value(), true);
+    const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
+    const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"create/"
+                                "curve\",\"moduleName\":\"unknown\",\"body\":{\"curveName\":\"lllllllll\"}}";
+    EXPECT_EQ(json, jsonStr);
+}
+
 TEST_F(TimelineProtocolUtilTest, TestUnitThreadsOperatorsResponseToJson)
 {
     Dic::Protocol::UnitThreadsOperatorsResponse response;

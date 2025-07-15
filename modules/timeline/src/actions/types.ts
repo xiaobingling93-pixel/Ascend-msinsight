@@ -52,7 +52,9 @@ export type ActionName =
   | 'unlockSelection'
   | 'setCardAlias'
   | 'mergeUnits'
-  | 'unmergeUnits';
+  | 'unmergeUnits'
+  | 'generateCurveByBlock'
+  | 'generateBubbleCurveByBlock';
 
 export interface Action {
     name: ActionName;

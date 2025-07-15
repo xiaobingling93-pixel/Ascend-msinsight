@@ -342,6 +342,20 @@ struct UnitCounterRequest : public Request {
     UnitCounterParams params;
 };
 
+struct CreateCurveParams {
+    std::string fileId;
+    std::string pid;
+    std::string tid;
+    std::string x;
+    std::vector<std::string> y;
+    std::string type;
+};
+
+struct CreateCurveRequest : public Request {
+    CreateCurveRequest() : Request(REQ_RES_CREATE_CURVE){};
+    CreateCurveParams params;
+};
+
 struct SystemViewOverallReqParam {
     std::string rankId;
     std::string deviceId;

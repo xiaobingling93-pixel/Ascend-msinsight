@@ -15,6 +15,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionRequest);
     jsonToReqFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesRequest);
+    jsonToReqFactory.emplace(REQ_RES_CREATE_CURVE, ToCreateCurveRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, ToUnitThreadTracesSummaryRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailRequest);
@@ -72,6 +73,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallResponseJson);
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToOverallMoreDetailsResponseJson);
     resToJsonFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqResponseJson);
+    resToJsonFactory.emplace(REQ_RES_CREATE_CURVE, ToCreateCurveResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -158,6 +160,26 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesRequest(const json_
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isHideFlagEvents, json["params"], "isHideFlagEvents");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToCreateCurveRequest(const json_t& json, std::string& error)
+{
+    std::unique_ptr<CreateCurveRequest> reqPtr = std::make_unique<CreateCurveRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (json["params"].HasMember("y") && json["params"]["y"].IsArray()) {
+        for (const auto& item : json["params"]["y"].GetArray()) {
+            reqPtr->params.y.emplace_back(JsonUtil::GetStringWithoutKey(item));
+        }
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileId, json["params"], "fileId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.x, json["params"], "x");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     return reqPtr;
 }
 
@@ -670,6 +692,11 @@ std::optional<document_t> TimelineProtocol::ToResetWindowResponseJson(const Resp
 std::optional<document_t> TimelineProtocol::ToSearchCountResponseJson(const Response &response)
 {
     return ToResponseJson<SearchCountResponse>(dynamic_cast<const SearchCountResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToCreateCurveResponseJson(const Response& response)
+{
+    return ToResponseJson<CreateCurveResponse>(dynamic_cast<const CreateCurveResponse&>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToSearchSliceResponseJson(const Response &response)

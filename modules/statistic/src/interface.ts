@@ -10,12 +10,13 @@ import {
     allSuccessHandler,
     switchLanguageHandler,
     switchDirectoryHandler,
-    parseStatisticCompletedHandler,
+    parseStatisticCompletedHandler, locateGroup,
 } from './connection/handler';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'parse/statisticCompleted': parseStatisticCompletedHandler,
     allPagesSuccess: allSuccessHandler,
+    locateGroup,
     'remote/remove': removeRemoteHandler,
     'remote/reset': removeRemoteHandler,
     'module.reset': removeRemoteHandler,

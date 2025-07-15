@@ -18,9 +18,10 @@ import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from 'ascend-i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
 import { savePageSetting, recoverPageSetting, updatePageSetting } from '../utils/PageSetting';
-import { customConsole as console, getRankInfoKey } from 'ascend-utils';
+import { getRankInfoKey } from 'ascend-utils';
 import React from 'react';
 import { RankInfo } from '../api/interface';
+import { queryOneKernel } from '../components/detailViews/Common';
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
@@ -623,6 +624,24 @@ export const clusterDurationCompletedHandler: NotificationHandler = (data): void
         event: 'frame:parseClusterDurationCompleted',
         body: { isCluster: clusterRes, clusterPath },
     });
+};
+
+export const findBlock: NotificationHandler = (data): void => {
+    try {
+        queryOneKernel({
+            rankId: data.rankId as string,
+            dbPath: data.rankId as string,
+            name: data.name as string,
+            timestamp: data.startTime as number,
+            duration: 0,
+        }).then(res => {
+            const temp = res as Record<string, any>;
+            const input = { id: temp.id as string, processId: temp.pid as string, depth: temp.depth as number, rankId: temp.rankId as string, threadId: temp.threadId as string, name: data.name as string, startTime: parseInt(data.startTime as string), duration: temp.duration };
+            locateUnitHandler(input);
+        });
+    } catch (err) {
+        console.error(err);
+    }
 };
 
 export const locateUnitHandler: NotificationHandler = (data): void => {

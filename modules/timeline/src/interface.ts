@@ -20,7 +20,7 @@ import {
     baselineAddHandler,
     removeBaselineHandler,
     updateProjectNameHandler,
-    resetRemoteHandler,
+    resetRemoteHandler, findBlock,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -65,4 +65,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     locateUnit: locateUnitHandler,
     switchLanguage: switchLanguageHandler,
     updateProjectName: updateProjectNameHandler,
+    findBlock,
 };

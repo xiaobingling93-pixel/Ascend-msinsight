@@ -21,6 +21,8 @@ template <>
 std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response);
 template <> std::optional<document_t> ToResponseJson<UnitThreadTracesSummaryResponse>(
     const UnitThreadTracesSummaryResponse &response);
+template <>
+std::optional<document_t> ToResponseJson<CreateCurveResponse>(const CreateCurveResponse& response);
 template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response);
 template <>
 std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response);

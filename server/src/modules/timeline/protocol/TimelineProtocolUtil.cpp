@@ -123,6 +123,18 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
 }
 
 template <>
+std::optional<document_t> ToResponseJson<CreateCurveResponse>(const CreateCurveResponse& response)
+{
+    document_t json(kObjectType);
+    auto& allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "curveName", response.body.curveName, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template <>
 std::optional<document_t> ToResponseJson<UnitThreadTracesSummaryResponse>(
     const UnitThreadTracesSummaryResponse &response)
 {
@@ -553,6 +565,7 @@ template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const On
     JsonUtil::AddMember(body, "id", response.body.id, allocator);
     JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
     JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
+    JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
     JsonUtil::AddMember(body, "threadId", response.body.threadId, allocator);
     JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
     JsonUtil::AddMember(body, "step", response.body.step, allocator);

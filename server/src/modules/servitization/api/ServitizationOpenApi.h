@@ -20,6 +20,7 @@ public:
      * @return
      */
     virtual std::vector<TaskInfo> ComputeTaskInfo(const std::string& path);
+    virtual bool CreateCurve(const std::string &fileId, const std::string &curve);
     virtual void Reset();
 
 protected:

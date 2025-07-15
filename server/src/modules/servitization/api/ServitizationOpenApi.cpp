@@ -94,8 +94,6 @@ bool ServitizationOpenApi::ValidIEFile(const std::string& path)
 void ServitizationOpenApi::ParseSingleFile(const std::string& filePath, const std::string& fileId)
 {
     context->InitDataBase(fileId, filePath);
-    const int sleepTime = 2000;
-    std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
     auto event = std::make_unique<Protocol::ParseStatisticCompletedEvent>();
     event->moduleName = Protocol::MODULE_IE;
     event->result = true;
@@ -104,5 +102,14 @@ void ServitizationOpenApi::ParseSingleFile(const std::string& filePath, const st
     event->rankIds = fileIds;
     event->fileId = filePath;
     SendEvent(std::move(event));
+}
+
+bool ServitizationOpenApi::CreateCurve(const std::string& fileId, const std::string& curve)
+{
+    if (curve.find("_curve' AS ") == std::string::npos) {
+        return false;
+    }
+    context->ExecuteScript(fileId, curve);
+    return true;
 }
 }  // namespace Dic::Module::IE

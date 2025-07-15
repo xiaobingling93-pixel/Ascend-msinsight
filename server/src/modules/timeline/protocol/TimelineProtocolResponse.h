@@ -84,6 +84,17 @@ struct UnitThreadTracesResponse : public Response {
     UnitThreadTracesBody body;
 };
 
+struct CreateCurveBody {
+    std::string curveName;
+};
+
+struct CreateCurveResponse : public Response {
+    CreateCurveResponse() : Response(REQ_RES_CREATE_CURVE)
+    {
+    }
+    CreateCurveBody body;
+};
+
 struct ThreadTracesSummary {
     uint64_t startTime = 0;
     uint64_t duration = 0;
@@ -505,6 +516,7 @@ struct KernelDetailsResponse : public Response {
 struct OneKernelBody {
     std::string id;
     uint64_t depth = {0};
+    uint64_t duration = 0;
     std::string threadId;
     std::string pid;
     std::string step;

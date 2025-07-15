@@ -5,6 +5,7 @@
 export { actionFitToScreen } from './actionFitToScreen';
 export { actionZoomIntoSelection } from './actionZoomIntoSelection';
 export { actionFindInCommunication } from './actionFindInCommunication';
+export { actionGenerateCurve, actionGenerateBubbleCurve } from './actionGenerateCurve';
 export { actionUndoZoom, actionResetZoom, actionZoomIn, actionZoomOut } from './actionZoom';
 export {
     actionUnpinAll,

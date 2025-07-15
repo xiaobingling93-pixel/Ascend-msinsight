@@ -1500,7 +1500,7 @@ bool TextTraceDatabase::QueryCommunicationKernelInfo(const std::string &name, co
 bool TextTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "SELECT id, track_id FROM " + sliceTable + " WHERE name = ? AND timestamp > ? AND timestamp < ?";
+    std::string sql = "SELECT id, duration, track_id FROM " + sliceTable + " WHERE name = ? AND timestamp > ? AND timestamp < ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query kernel depth and thread, fail to prepare sql.");
@@ -1532,6 +1532,7 @@ bool TextTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
         sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
         responseBody.id = std::to_string(id);
         responseBody.depth = depthCache[id];
+        responseBody.duration = resultSet->GetUint64("duration");
     }
     const OneKernelData &data = QueryKernelTid(trackId);
     responseBody.threadId = data.threadId;

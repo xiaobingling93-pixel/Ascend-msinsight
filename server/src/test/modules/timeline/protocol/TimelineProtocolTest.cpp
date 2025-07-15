@@ -377,6 +377,27 @@ TEST_F(ProtocolTest, ToTableDataDetailRequest)
     EXPECT_EQ(id, tempId);
 }
 
+TEST_F(ProtocolTest, ToCreateCurveRequest)
+{
+    const uint64_t tempId = 89;
+    Dic::Protocol::TimelineProtocol timelineProtocol;
+    timelineProtocol.Register();
+    std::string error;
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
+    Dic::JsonUtil::AddMember(json, "command", Dic::Protocol::REQ_RES_CREATE_CURVE, allocator);
+    timelineProtocol.FromJson(json, error);
+
+    Dic::json_t params(Dic::kObjectType);
+    Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
+    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
+    Dic::JsonUtil::AddMember(json, "params", params, allocator);
+    auto requestPtr = timelineProtocol.FromJson(json, error);
+    auto& request = dynamic_cast<Dic::Protocol::CreateCurveRequest&>(*requestPtr);
+    EXPECT_EQ(request.id, tempId);
+}
+
 TEST_F(ProtocolTest, ResponseToJson)
 {
     EXPECT_NO_THROW({

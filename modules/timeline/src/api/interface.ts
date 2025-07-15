@@ -203,7 +203,20 @@ export interface QueryCommunicationKernelDetailParams {
     name: string;
 }
 
+export interface CreateCurveParams {
+    fileId: string;
+    pid: string;
+    tid: string;
+    x: string;
+    y?: string[];
+    type?: string;
+}
+
 export interface QueryCommunicationKernelDetailResult {
     step: string;
     group: string;
+}
+
+export interface CreateCurveResult {
+    curveName: string;
 }

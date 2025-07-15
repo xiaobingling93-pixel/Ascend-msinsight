@@ -147,4 +147,5 @@ export const sendMap: Record<string, (to?: number) => void> = {
     threadIds: (to) => sendSessionKey('threadIds', to),
     memoryCardInfos: (to) => sendSessionKey('memoryCardInfos', to),
     operatorCardInfos: (to) => sendSessionKey('operatorCardInfos', to),
+    iERankIds: (to) => sendSessionKey('iERankIds', to),
 };

@@ -40,6 +40,8 @@
       "Recover cards default offset": "恢复所有卡的默认偏移量",
       "Set base slice": "设置基准算子",
       "Clear base slice": "清除基准算子",
+      "Generate Line Chart By Block": "生成该色块执行时间折线图",
+      "Generate Bubble Line Chart By Block": "生成该色块空泡折线图",
       "Lock selection area": "锁定框选区域",
       "Unlock selection area": "解锁框选区域",
       "Set alias": "设置别名",

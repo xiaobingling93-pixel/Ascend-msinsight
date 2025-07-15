@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { SearchBox, FlexDiv } from '../utils/styleUtils';
@@ -17,8 +17,6 @@ import { groupGet } from '../utils/RequestUtils';
 const CurveHeader = observer(({ session, curveSession }:
 { session: Session; curveSession: CurveSession}) => {
     const { t } = useTranslation('statistic');
-    const [groupByCondition, setgroupByCondition] = useState<Array<{ label: string; value: string }>>([]);
-
     const groupByOptions = async (rankId: string): Promise<void> => {
         const options: Array<{ label: string; value: string }> = [];
         const res = await groupGet({ rankId });
@@ -28,7 +26,9 @@ const CurveHeader = observer(({ session, curveSession }:
         if (options.length > 0) {
             onGroupByChanged(options[0].value);
         }
-        setgroupByCondition(options);
+        runInAction(() => {
+            curveSession.groupCondition = options;
+        });
     };
 
     const onRankIdChanged = (value: string): void => {
@@ -52,7 +52,6 @@ const CurveHeader = observer(({ session, curveSession }:
             };
             const rankId: string = curveSession.rankIdCondition.value;
             groupByOptions(rankId);
-            curveSession.groupCondition = groupByCondition;
         });
     }, [session.iERankIds.join('')]);
     const renderFields = (): JSX.Element[] => {
@@ -87,7 +86,7 @@ const CurveHeader = observer(({ session, curveSession }:
                             value={curveSession.groupId}
                             style={{ width: 180 }}
                             onChange={onGroupByChanged}
-                            options={groupByCondition}
+                            options={curveSession.groupCondition}
                         />
                     </FlexDiv>,
             },

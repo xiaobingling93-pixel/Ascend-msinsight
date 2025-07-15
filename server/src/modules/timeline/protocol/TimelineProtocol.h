@@ -27,6 +27,7 @@ private:
     static std::unique_ptr<Request> ToParseCardsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadTracesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadTracesSummaryRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToCreateCurveRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToThreadDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitFlowsRequest(const json_t &json, std::string &error);
@@ -60,6 +61,7 @@ private:
     static std::optional<document_t> ToSetCardAliasResponseJson(const Response &response);
     static std::optional<document_t> ToResetWindowResponseJson(const Response &response);
     static std::optional<document_t> ToSearchCountResponseJson(const Response &response);
+    static std::optional<document_t> ToCreateCurveResponseJson(const Response &response);
     static std::optional<document_t> ToSearchSliceResponseJson(const Response &response);
     static std::optional<document_t> ToRemoteDeleteResponseJson(const Response &response);
     static std::optional<document_t> ToFlowCategoryListResponse(const Response &response);

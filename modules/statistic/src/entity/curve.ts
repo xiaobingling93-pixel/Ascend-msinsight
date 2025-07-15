@@ -24,6 +24,8 @@ export interface TableInfo {
 export interface DataDetail {
     id?: string;
     name: string;
+    startTime?: string;
+    duration?: string;
 }
 
 /**

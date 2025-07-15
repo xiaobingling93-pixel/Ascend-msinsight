@@ -15,7 +15,10 @@ import {
     QueryOperatorDispatchParams,
     OperatorDispatchResult,
     QueryAllSameOperatorsDurationResult,
-    QueryAllSameOperatorsDurationParams, QueryCommunicationKernelDetailParams, QueryCommunicationKernelDetailResult,
+    QueryAllSameOperatorsDurationParams,
+    QueryCommunicationKernelDetailParams,
+    QueryCommunicationKernelDetailResult,
+    CreateCurveParams, CreateCurveResult,
 } from './interface';
 
 // 根据cardId集合解析timeline
@@ -70,4 +73,8 @@ export async function queryAllSameOperatorsDuration(params: QueryAllSameOperator
 
 export async function queryCommunicationKernelDetail(params: QueryCommunicationKernelDetailParams): Promise<QueryCommunicationKernelDetailResult> {
     return window.requestData('unit/kernelDetail', params, 'timeline');
+}
+
+export async function createCurve(params: CreateCurveParams): Promise<CreateCurveResult> {
+    return window.requestData('create/curve', params, 'timeline');
 }

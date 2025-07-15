@@ -29,6 +29,7 @@
 #include "QueryExpAnaAICoreFreqHandler.h"
 #include "QueryTableDataNameListHandler.h"
 #include "QueryTableDataDetailHandler.h"
+#include "CreateCurveHandler.h"
 #include "ParseCardsHandler.h"
 #include "RenderEngine.h"
 #include "DataEngine.h"
@@ -96,6 +97,8 @@ void TimelineModule::RegisterRequestHandlers()
                               std::make_unique<QueryOverallMoreDetailsHandler>());
     requestHandlerMap.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ,
                               std::make_unique<QueryExpAnaAICoreFreqHandler>());
+    requestHandlerMap.emplace(REQ_RES_CREATE_CURVE,
+                              std::make_unique<CreateCurveHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)
