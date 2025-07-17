@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ResizeTable } from 'ascend-resize';
+import { Tooltip } from 'ascend-components';
 import { Advice } from 'ascend-utils/Common';
 import { AntdTableRow, GetSlowRankAdviseRes, TopElements } from '../../utils/interface';
 import type { GenerateConditions } from '../../store/parallelism';
@@ -18,11 +19,14 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
     const { t } = useTranslation('summary');
     const [slowRankAnalysis, setSlowRankAnalysis] = useState<JSX.Element | null>(null);
     const generateHeaders = (topNElementData: TopElements): string[] => {
-        const fixedHeader = 'slowRankTopN';
+        let fixedHeader = 'slowGroupsTopN';
         const dynamicHeaders = [];
         if (topNElementData.dpSynchronizeTime !== undefined) { dynamicHeaders.push('dpSynchronizeTime'); }
         if (topNElementData.cpSynchronizeTime !== undefined) { dynamicHeaders.push('cpSynchronizeTime'); }
-        if (topNElementData.tpSynchronizeTime !== undefined) { dynamicHeaders.push('tpSynchronizeTime'); }
+        if (topNElementData.tpSynchronizeTime !== undefined) {
+            dynamicHeaders.push('tpSynchronizeTime');
+            fixedHeader = 'slowRanksTopN';
+        }
         return [fixedHeader, ...dynamicHeaders];
     };
 
@@ -42,11 +46,13 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
         });
     };
 
-    const generateColumns = (dataKeys: string[]): Array<{dataIndex: string; key: string; title: string}> => {
+    const generateColumns = (dataKeys: string[]): Array<{dataIndex: string; key: string; title: JSX.Element}> => {
         return dataKeys.map(key => ({
             dataIndex: key,
             key,
-            title: t(key),
+            title: (<Tooltip title={t(`SlowRank ToolTip.${key}`)}>
+                <span>{t(key)}</span>
+            </Tooltip>),
         }));
     };
 

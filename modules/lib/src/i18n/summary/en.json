@@ -143,7 +143,8 @@
     "Dump balanced": "Dump balanced",
     "Import data": "Import data",
     "Search": "Search",
-    "slowRankTopN": "Top 3 Slow Groups/Slow Ranks",
+    "slowRanksTopN": "Top 3 Slow Ranks",
+    "slowGroupsTopN": "Top 3 Slow Groups",
     "dpSynchronizeTime": "DP-Average Synchronization Time(us)",
     "cpSynchronizeTime": "CP-Average Synchronization Time(us)",
     "tpSynchronizeTime": "TP-Synchronization Time(us)",
@@ -157,6 +158,13 @@
       "View Communication Duration Analysis": "View Communication Duration Analysis",
       "Set as Upper Bound": "Set as Upper Bound",
       "Set as Lower Bound": "Set as Lower Bound"
+    },
+    "SlowRank ToolTip": {
+      "slowRanksTopN": "Top 3 Slow Ranks",
+      "slowGroupsTopN": "Top 3 Slow Groups",
+      "dpSynchronizeTime": "Maximum 'DP-Average Communication Time' of the DP communication domain in which it is located minus the 'DP-Average Communication Time' of the current element.",
+      "cpSynchronizeTime": "Maximum 'CP-Average Communication Time' of the CP communication domain in which it is located minus the 'CP-Average Communication Time' of the current element.",
+      "tpSynchronizeTime": "Maximum 'TP-communication time' of the TP-communication domain in which it is located minus the 'TP-communication time' of the current element."
     }
   }
 }

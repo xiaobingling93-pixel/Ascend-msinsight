@@ -143,7 +143,8 @@
     "Dump balanced": "Dump-均衡后",
     "Import data": "导入{{version}} dump 数据",
     "Search": "查询",
-    "slowRankTopN": "应关注Top3分组/慢卡",
+    "slowRanksTopN": "应关注Top3慢卡",
+    "slowGroupsTopN": "应关注Top3分组",
     "dpSynchronizeTime": "DP-组间同步平均耗时（us）",
     "cpSynchronizeTime": "CP-组间同步平均耗时（us）",
     "tpSynchronizeTime": "TP-卡间同步耗时（us）",
@@ -157,6 +158,13 @@
       "View Communication Duration Analysis": "查看通信耗时分析",
       "Set as Upper Bound": "设为最大筛选值",
       "Set as Lower Bound": "设为最小筛选值"
+    },
+    "SlowRank ToolTip": {
+      "slowRanksTopN": "应关注Top3慢卡",
+      "slowGroupsTopN": "应关注Top3分组",
+      "dpSynchronizeTime": "所在DP通信域最大'DP-平均通信时间' 减去 当前元素'TP-通信时间'",
+      "cpSynchronizeTime": "所在CP通信域最大'CP-平均通信时间' 减去 当前元素'CP-通信时间'",
+      "tpSynchronizeTime": "所在TP通信域最大'TP-通信时间' 减去 当前元素'TP-通信时间'"
     }
   }
 }

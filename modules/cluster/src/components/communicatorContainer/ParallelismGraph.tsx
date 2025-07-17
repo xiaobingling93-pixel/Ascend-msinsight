@@ -222,7 +222,7 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
     const [activeRectIndex, setActiveRectIndex] = useState<number | null>(null);
     const [hoveredRectIndex, setHoveredRectIndex] = useState<number | null>(null);
     const [responsiveSize, setResponsiveSize] = useState({ width: 0, height: 0 });
-    const { parallelTypeList, dyeingMode, startVal, endVal, reset: resetParallelSwitchConditions } = useParallelSwitchConditions();
+    const { parallelTypeList, dyeingMode, setDyeingMode, startVal, endVal } = useParallelSwitchConditions();
     const theme = useTheme();
     const { data, loading, isUpdated } = useFetchData(generateConditions);
     const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1, dimension } = generateConditions ?? {};
@@ -413,10 +413,26 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
             });
 
             setActiveRectIndex(null);
-            resetParallelSwitchConditions();
             resetPerformanceConditions();
         }
     }, [isUpdated.current]);
+
+    useEffect(() => {
+        const dyeingMode = dyeingModeMapping[parallelismStore.activeDimension] || 'None';
+        if (dyeingMode in session.rankDyeingData) {
+            setDyeingMode(dyeingMode);
+        } else {
+            setDyeingMode('None');
+        }
+    }, [parallelismStore.activeDimension, session.rankDyeingData]);
+
+    const dyeingModeMapping = {
+        'ep-dp': 'None',
+        'ep-dp-pp': 'dp',
+        'ep-dp-pp-cp': 'cp',
+        'ep-dp-pp-tp': 'tp',
+        'ep-dp-pp-cp-tp': 'tp',
+    };
 
     const scrollToRect = (drawer: CanvasDrawer): void => {
         const [firstExpandedRect, lastExpandedRect] = getFirstAndLastRect(drawer);
