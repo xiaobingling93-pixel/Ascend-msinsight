@@ -63,6 +63,10 @@ bool BaselineManagerService::CheckIsSupportCompare(const std::vector<ProjectExpl
         errorMsg = "The current project type does not support comparison function.";
         return false;
     }
+    if (!IsComparable(projectTypeEnum, curProjectTypeEnum)) {
+        errorMsg = "Comparison is not allowed for different data types.";
+        return false;
+    }
     return true;
 }
 

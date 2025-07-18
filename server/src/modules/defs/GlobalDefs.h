@@ -116,6 +116,14 @@ static inline bool isFileConflict(ProjectTypeEnum oldProjectType, ProjectTypeEnu
     return true;
 }
 
+static inline bool IsComparable(const ProjectTypeEnum &baselineProjectType, const ProjectTypeEnum &curProjectType)
+{
+    if (baselineProjectType == curProjectType) {
+        return true;
+    }
+    return !isFileConflict(baselineProjectType, curProjectType);
+}
+
 struct RankInfo {
     RankInfo() = default;
     RankInfo(std::string cluster, std::string host, std::string rankId, std::string deviceId, std::string rankName)
