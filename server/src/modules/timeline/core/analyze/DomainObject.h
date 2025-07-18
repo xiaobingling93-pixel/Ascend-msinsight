@@ -84,6 +84,7 @@ struct Process {
     std::string name;
     std::string label;
     uint32_t sortIndex = 0;
+    std::string parentPid = "0";
 };
 
 struct FlowPoint {

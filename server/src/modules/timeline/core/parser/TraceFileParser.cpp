@@ -95,6 +95,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
             return false;
         }
         auto threadMap = database->QueryAllThreadMap();
+        database->ExecSql("ALTER TABLE process ADD COLUMN parentPid TEXT DEFAULT '0';");
         TrackInfoManager::Instance().UpdateTrackIdMap(rankId, threadMap);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
         Timeline::TraceTime::Instance().UpdateCardTimeDuration(rankId, min, max);

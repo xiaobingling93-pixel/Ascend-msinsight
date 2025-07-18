@@ -1597,9 +1597,48 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithPidAndProcessNameIsS
     EXPECT_EQ(result, true);
     EXPECT_EQ(metaData.size(), expectProcessCount);
     EXPECT_EQ(metaData[first]->type, "process");
-    EXPECT_EQ(metaData[first]->metaData.processName, "Process 1");
+    EXPECT_EQ(metaData[first]->metaData.processName, "1");
     EXPECT_EQ(metaData[second]->type, "process");
-    EXPECT_EQ(metaData[second]->metaData.processName, "Process 319667");
+    EXPECT_EQ(metaData[second]->metaData.processName, "319667");
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithMutiLayerProcess)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    const std::string processData =
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\", "
+        "\"parentPid\") VALUES ('259836', '259836', 'ubuntu2204', 3, 'ubuntu2204');\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\", "
+        "\"parentPid\") VALUES ('260039', '260039', 'ubuntu2204,dp0', 4, 'dp0');\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\", "
+        "\"parentPid\") VALUES ('260041', '260041', 'ubuntu2204,dp0', 5, 'dp0');\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\", "
+        "\"parentPid\") VALUES ('1', '1', NULL, NULL, '0');INSERT INTO \"main\".\"process\" (\"pid\", "
+        "\"process_name\", \"label\", \"process_sort_index\", \"parentPid\") VALUES ('ubuntu2204', 'ubuntu2204', NULL, "
+        "1, '0');\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\", "
+        "\"parentPid\") VALUES ('dp0', 'dp0', NULL, 2, 'ubuntu2204');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, processData);
+    const std::string fileId = "9";
+    const uint8_t first = 0;
+    const uint8_t second = 1;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(metaData.size(), 2); // 2
+    EXPECT_EQ(metaData[first]->type, "process");
+    EXPECT_EQ(metaData[first]->metaData.processName, "1");
+    EXPECT_EQ(metaData[second]->type, "process");
+    EXPECT_EQ(metaData[second]->metaData.processName, "ubuntu2204");
+    EXPECT_EQ(metaData[second]->children[first]->metaData.processName, "dp0");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.processName, "260039");
+    EXPECT_EQ(metaData[second]->children[first]->children[second]->metaData.processName, "260041");
+    EXPECT_EQ(metaData[second]->children[second]->metaData.processName, "259836");
 }
 
 TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithPidAndProcessNameIsNotSame)

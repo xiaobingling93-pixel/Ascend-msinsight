@@ -1993,4 +1993,29 @@ void TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(std::vector<Comm
         result.emplace_back(item.second);
     }
 }
+
+void TraceDatabaseHelper::ComputeTree(std::vector<std::unique_ptr<Protocol::UnitTrack>>& metaData,
+                                      std::vector<Process>& processes,
+                                      std::vector<std::unique_ptr<Protocol::UnitTrack>>& tempMetaData)
+{
+    std::unordered_map<std::string, UnitTrack*> idToRawPtr;
+    std::unordered_map<std::string, std::unique_ptr<UnitTrack>> idToOwnerPtr;
+    // 创建所有节点，放到 owner map 中
+    for (auto& item : tempMetaData) {
+        std::string pid = item->metaData.processId;
+        idToRawPtr[pid] = item.get();
+        idToOwnerPtr[pid] = std::move(item);
+    }
+    // 建立树结构
+    for (auto& item : processes) {
+        std::string id = item.pid;
+        UnitTrack* node = idToRawPtr[id];
+        if (node->metaData.parentProcessId != "0" && idToRawPtr.count(node->metaData.parentProcessId)) {
+            UnitTrack* parent = idToRawPtr[node->metaData.parentProcessId];
+            parent->children.push_back(std::move(idToOwnerPtr[id]));
+        } else {
+            metaData.push_back(std::move(idToOwnerPtr[id]));
+        }
+    }
+}
 }

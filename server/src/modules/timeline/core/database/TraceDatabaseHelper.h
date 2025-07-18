@@ -270,6 +270,8 @@ static void ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLar
 static void ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
     std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
     std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
+static void ComputeTree(std::vector<std::unique_ptr<Protocol::UnitTrack>>& metaData, std::vector<Process>& processes,
+                        std::vector<std::unique_ptr<Protocol::UnitTrack>>& tempMetaData);
 
 private:
 /* Functions for BbTraceDataBase */

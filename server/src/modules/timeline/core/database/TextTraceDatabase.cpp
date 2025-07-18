@@ -716,6 +716,7 @@ bool TextTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<Process> processes = QueryAllProcess();
     std::map<std::string, std::vector<Thread>> threads = QueryAllThreadInfo();
     std::map<std::pair<std::string, std::string>, std::string> counters = QueryAllCounterInfo();
+    std::vector<std::unique_ptr<Protocol::UnitTrack>> tempMetaData;
     for (const auto &item: processes) {
         std::unique_ptr<Protocol::UnitTrack> process = std::make_unique<Protocol::UnitTrack>();
         process->type = "process";
@@ -723,12 +724,14 @@ bool TextTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         process->metaData.label = item.label;
         process->metaData.cardId = fileId;
         process->metaData.processId = item.pid;
+        process->metaData.parentProcessId = item.parentPid;
         std::vector<Thread> pthreads= threads[item.pid];
         for (const auto &tThread: pthreads) {
             AddThreadTrack(fileId, counters, process, tThread);
         }
-        metaData.emplace_back(std::move(process));
+        tempMetaData.emplace_back(std::move(process));
     }
+    TraceDatabaseHelper::ComputeTree(metaData, processes, tempMetaData);
     return true;
 }
 
@@ -766,8 +769,8 @@ void TextTraceDatabase::AddThreadTrack(const std::string &fileId,
 std::vector<Process> TextTraceDatabase::QueryAllProcess()
 {
     std::vector<Process> res;
-    std::string sql =
-        "SELECT pid, process_name, label, process_sort_index FROM process ORDER BY process_sort_index, process_name";
+    std::string sql = "SELECT pid, process_name, label, process_sort_index, parentPid FROM process ORDER BY "
+                      "process_sort_index, process_name";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query all process failed!.");
@@ -788,11 +791,12 @@ std::vector<Process> TextTraceDatabase::QueryAllProcess()
             if (processName != process.pid) {
                 process.name = resultSet->GetString("process_name") + " (" + process.pid + ")";
             } else {
-                process.name = "Process " + process.pid;
+                process.name = process.pid;
             }
         }
         process.label = resultSet->GetString("label");
         process.sortIndex = resultSet->GetUint32("process_sort_index");
+        process.parentPid = resultSet->GetString("parentPid");
         res.emplace_back(process);
     }
     return res;
