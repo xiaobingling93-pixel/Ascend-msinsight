@@ -1042,7 +1042,7 @@ bool TextTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
         SLICE_TABLE + " JOIN " + THREAD_TABLE + " USING (track_id) WHERE " + nameMatch;
     std::vector<std::string> sqls(trackQuery.size(), sql);
     sql = StringUtil::join(sqls, " UNION ALL ");
-    sql += " ORDER BY startTime LIMIT 1 OFFSET ?";
+    sql += " ORDER BY startTime ASC, track_id ASC, id ASC LIMIT 1 OFFSET ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query slice name failed!.");

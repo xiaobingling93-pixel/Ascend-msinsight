@@ -70,12 +70,12 @@ test.describe('Timeline(Operator)', () => {
         const { x: startX, y: startY } = boundingBox;
         await page.mouse.move(startX + 50, startY + 50);
         await page.mouse.down();
-        await page.mouse.move(startX + 200, startX - 200);
+        await page.mouse.move(startX + 200, startY + 50);
         await page.mouse.up();
         const tfoot = await timelineFrame.locator('tfoot');
+        expect(await tfoot.locator('tr > td').nth(3).innerText()).toBe('387');
         expect(await tfoot.locator('tr > td').nth(1).innerText()).toBe('0.008114 ms');
         expect(await tfoot.locator('tr > td').nth(2).innerText()).toBe('0.000021 ms');
-        expect(await tfoot.locator('tr > td').nth(3).innerText()).toBe('387');
     });
 
     // 算子调优-图形化窗格-点击算子

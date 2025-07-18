@@ -173,7 +173,7 @@ public:
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
         std::string sql = "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
             " FROM " + SLICE_TABLE + " JOIN " + THREAD_TABLE + " USING (track_id) WHERE " + nameMatch +
-            " ORDER BY timestamp LIMIT 1 OFFSET ?";
+            " ORDER BY timestamp ASC, track_id ASC, id ASC LIMIT 1 OFFSET ?";
         return sql;
     }
     static std::string GetComputeStatisticsSQL(const std::string &stepId)
