@@ -38,10 +38,10 @@ test.describe('Timeline(Trace_Json)', () => {
     // 算子调优-图形化窗格-框选
     test('test_compute_timeline_selectUnitsRange', async ({ timelinePage, page }) => {
         //timeline功能框选有bug，待修复
-        test.skip();
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(2);
         await secondUnitInfo.click();
+        await page.waitForTimeout(1000);
         const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
         const boundingBox = await chart.boundingBox();
         if (!boundingBox) {
@@ -50,10 +50,11 @@ test.describe('Timeline(Trace_Json)', () => {
         const { x: startX, y: startY } = boundingBox;
         await page.mouse.move(startX + 50, startY + 50);
         await page.mouse.down();
-        await page.mouse.move(startX + 200, startY + 100);
+        await page.waitForTimeout(100); // 模拟人类操作停顿
+        await page.mouse.move(startX + 200, startY + 100,{ steps: 20 });
         await page.mouse.up();
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('selectUnitsRange.png', { maxDiffPixels: 100 });
-        await expect(timelineFrame.locator('.ant-tabs-content-holder').nth(0)).toHaveScreenshot('selectUnitsRangeDetails.png', { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('select-units-range.png', { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('.ant-tabs-content-holder').nth(0)).toHaveScreenshot('select-units-range-slice-list.png', { maxDiffPixels: 100 });
     });
 
     // 算子调优-Slice List-框选-算子统计项

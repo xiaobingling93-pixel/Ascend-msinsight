@@ -36,6 +36,7 @@ test.describe('Communication', () => {
         await page.goto('/');
         await importData(page);
         await communicationPage.goto();
+        await page.mouse.move(0,0);
         if (await loadingDialog.count()) {
             await loadingDialog.waitFor({ state: 'detached' });
         }
