@@ -4,7 +4,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
-export type TabName = 'timeline' | 'memory' | 'operator' | 'summary' | 'communication' | 'Source' | 'details' | 'trace' | 'cache';
+export type TabName = 'timeline' | 'memory' | 'operator' | 'summary' | 'communication' | 'Source' | 'details' | 'trace' | 'cache' | 'leaks';
 export class FrameworkPage {
     readonly page: Page;
     // 顶部功能按钮
@@ -26,6 +26,7 @@ export class FrameworkPage {
     readonly communicationTab: Locator;
     readonly sourceTab: Locator;
     readonly detailsTab: Locator;
+    readonly leaksTab: Locator;
 
     // 删除全部弹窗
     readonly deleteAllDialog: Locator;
@@ -49,6 +50,7 @@ export class FrameworkPage {
         this.switchLanguageBtn = page.getByTestId('switch-lng');
         this.helpInfoBtn = page.getByTestId('help-icon');
         this.timelineTab = page.getByRole('menuitem', { name: 'Timeline' });
+        this.leaksTab = page.getByRole('menuitem', { name: 'Leaks' });
         this.memoryTab = page.getByRole('menuitem', { name: 'Memory' });
         this.operatorTab = page.getByRole('menuitem', { name: 'Operator' });
         this.summaryTab = page.getByRole('menuitem', { name: 'Summary' });

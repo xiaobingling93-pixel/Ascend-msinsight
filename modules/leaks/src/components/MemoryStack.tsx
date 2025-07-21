@@ -98,7 +98,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             <div style={{ marginLeft: 24, marginTop: 24 }}>
                 <Label name={t('ThreadID')} />
                 <Select
-                    id={'threadId'}
+                    id={'select-threadId'}
                     value={session.threadId}
                     size="middle"
                     onChange={(value): void => {
@@ -116,7 +116,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             <div style={{ marginLeft: 24 }}>
                 <Label name={t('DeviceID')} />
                 <Select
-                    id={'deviceId'}
+                    id={'select-deviceId'}
                     style={{ marginRight: 20 }}
                     value={session.deviceId}
                     size="middle"
@@ -131,7 +131,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                 />
                 <Label name={t('Type')} />
                 <Select
-                    id={'type'}
+                    id={'select-type'}
                     value={session.eventType}
                     size="middle"
                     onChange={(value): void => {
@@ -148,7 +148,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             </div>
             {session.memoryStamp
                 ? (
-                    <div style={{ position: 'relative' }}>
+                    <div id='detailsContent' style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '45%' }}>{`${t('Current Time')}: ${session.memoryStamp}ns`}</div>
                         <MemorySliceChart session={session} />
                     </div>

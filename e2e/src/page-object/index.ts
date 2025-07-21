@@ -10,3 +10,4 @@ export { SummaryPage } from './summary';
 export { CommunicationPage } from './communication';
 export { SourcePage } from './source';
 export { DetailsPage } from './details';
+export { LeaksPage } from './leaks';

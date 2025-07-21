@@ -28,6 +28,7 @@ export enum FilePath {
     // 专家负载均衡数据
     MOE_PROFILING = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\MoE_balancing\\profiling',
     MOE_DUMP = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\MoE_balancing\\dump',
+    LEAKS_DUMP='D:\\GUI_TEST_DATA 路徑测试\\系统调优\\leaks_dump_20250603145530.db'
 }
 
 export const WEBSOCKET_URL = 'ws://localhost:9000/';
