@@ -207,6 +207,7 @@ test.describe('Timeline', () => {
         const { flowBtn, timelineFrame } = timelinePage;
         const hcclUnit = timelineFrame.locator('#unitWrapperScroller').getByText('Ascend Hardware (2094647552)');
         await hcclUnit.click();
+        await page.waitForTimeout(1000);
         const LinkLineType = [
             'HostToDevice',
             'MsTx',
@@ -231,6 +232,7 @@ test.describe('Timeline', () => {
         const { flowBtn, timelineFrame } = timelinePage;
         const hcclUnit = timelineFrame.locator('#unitWrapperScroller').getByText('Python (2045554)');
         await hcclUnit.click();
+        await page.waitForTimeout(1000);
         const LinkLineType = [
             'async_task_queue',
             'fwdbwd',
