@@ -133,6 +133,113 @@ TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
     g_testDataBase.SaveKernelDetail({});
 }
 
+TEST_F(TextSummaryDatabaseTest, QueryTotalNumByAcceleratorCoreTypeCommunicationOldDataTest)
+{
+    std::vector<Kernel> list = {
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378722946000, 25.539, 11.041, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378713661000, 49.88, 0, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_broadcast__035_0_1", "hcom_broadcast_", "N/A", "HCCL",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_broadcast__035_1_1", "hcom_broadcast_", "N/A", "HCCL",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "Slice", "Slice", "dynamic", "AI_CORE",
+            1695115378723264800, 1.9795, 312.9515, 2, "", "", "", "", "", ""}
+    };
+    for (const auto& item : list) {
+        g_testDataBase.InsertKernelDetail(item, {});
+    }
+    g_testDataBase.SaveKernelDetail({});
+    int64_t total;
+    bool result = g_testDataBase.QueryTotalNumByAcceleratorCore("Communication", total);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(total, 2); // 2
+}
+
+TEST_F(TextSummaryDatabaseTest, QueryTotalNumByAcceleratorCoreTypeCommunicationNewDataTest)
+{
+    std::vector<Kernel> list = {
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378722946000, 25.539, 11.041, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378713661000, 49.88, 0, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_allReduce__491_4_1", "hcom_allReduce_", "N/A", "COMMUNICATION",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_allGather__491_5_1", "hcom_allGather_", "N/A", "COMMUNICATION",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_reduceScatter__491_6_1", "hcom_reduceScatter_", "N/A", "COMMUNICATION",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+    };
+    for (const auto& item : list) {
+        g_testDataBase.InsertKernelDetail(item, {});
+    }
+    g_testDataBase.SaveKernelDetail({});
+    int64_t total;
+    bool result = g_testDataBase.QueryTotalNumByAcceleratorCore("Communication", total);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(total, 3); // 3
+}
+
+TEST_F(TextSummaryDatabaseTest, QueryCommunicationOpDetailOldDataTest)
+{
+    std::vector<Kernel> list = {
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378722946000, 25.539, 11.041, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378713661000, 49.88, 0, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_broadcast__035_0_1", "hcom_broadcast_", "N/A", "HCCL",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_broadcast__035_1_1", "hcom_broadcast_", "N/A", "HCCL",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "Slice", "Slice", "dynamic", "AI_CORE",
+            1695115378723264800, 1.9795, 312.9515, 2, "", "", "", "", "", ""}
+    };
+    for (const auto& item : list) {
+        g_testDataBase.InsertKernelDetail(item, {});
+    }
+    g_testDataBase.SaveKernelDetail({});
+    CommunicationDetailParams params;
+    params.pageSize = 10; // 10
+    params.currentPage = 1;
+    std::vector<Protocol::CommunicationDetail> computeDetails;
+    bool result = g_testDataBase.QueryCommunicationOpDetail(params, computeDetails);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(computeDetails.size(), 2); // 2
+    EXPECT_EQ(computeDetails[0].name, "hcom_broadcast__035_0_1");
+    EXPECT_EQ(computeDetails[1].name, "hcom_broadcast__035_1_1");
+}
+
+TEST_F(TextSummaryDatabaseTest, QueryCommunicationOpDetailNewDataTest)
+{
+    std::vector<Kernel> list = {
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378722946000, 25.539, 11.041, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "ZerosLike", "dynamic", "AI_VECTOR",
+            1695115378713661000, 49.88, 0, 40, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_allReduce__491_4_1", "hcom_allReduce_", "N/A", "COMMUNICATION",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_allGather__491_5_1", "hcom_allGather_", "N/A", "COMMUNICATION",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+        {"0", "4", "", "hcom_reduceScatter__491_6_1", "hcom_reduceScatter_", "N/A", "COMMUNICATION",
+            1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""},
+    };
+    for (const auto& item : list) {
+        g_testDataBase.InsertKernelDetail(item, {});
+    }
+    g_testDataBase.SaveKernelDetail({});
+    CommunicationDetailParams params;
+    params.pageSize = 10; // 10
+    params.currentPage = 1;
+    std::vector<Protocol::CommunicationDetail> computeDetails;
+    bool result = g_testDataBase.QueryCommunicationOpDetail(params, computeDetails);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(computeDetails.size(), 3); // 3
+    EXPECT_EQ(computeDetails[0].name, "hcom_allReduce__491_4_1");
+    EXPECT_EQ(computeDetails[1].name, "hcom_allGather__491_5_1");
+    EXPECT_EQ(computeDetails[2].name, "hcom_reduceScatter__491_6_1"); // 2
+}
+
 TEST_F(TextSummaryDatabaseTest, QueryMinStartTimeTest)
 {
     uint64_t start = g_testDataBase.QueryMinStartTime();

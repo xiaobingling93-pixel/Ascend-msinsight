@@ -310,15 +310,20 @@ std::string TextSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
 bool TextSummaryDataBase::QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT count(*) as nums FROM " + TABLE_KERNEL + " WHERE accelerator_core = ?";
+    std::string sql;
+    if (name == "Communication") {
+        sql = "SELECT count(*) as nums FROM " + TABLE_KERNEL + " WHERE accelerator_core " + GetAcceleratorCoreSql(true);
+    } else {
+        sql = "SELECT count(*) as nums FROM " + TABLE_KERNEL + " WHERE accelerator_core = ?";
+    }
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result == SQLITE_OK) {
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Get total num failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    if (name != "Communication") {
         int index = bindStartIndex;
         sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
-    } else {
-        ServerLog::Error("Get total num failed! Failed to prepare sql.", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
-        return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int64(stmt, resultStartIndex);
@@ -335,12 +340,12 @@ std::string TextSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams 
         sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
               "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + TABLE_KERNEL +
-              " WHERE accelerator_core = ?  LIMIT ? offset ?";
+              " WHERE accelerator_core " + GetAcceleratorCoreSql(true) + "  LIMIT ? offset ?";
     } else {
         sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
               "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + TABLE_KERNEL +
-              " WHERE accelerator_core = ? " + orderBy + " LIMIT ? offset ?";
+              " WHERE accelerator_core " + GetAcceleratorCoreSql(true) + orderBy + " LIMIT ? offset ?";
     }
     return sql;
 }
@@ -349,7 +354,6 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     std::vector<Protocol::CommunicationDetail> &computeDetails)
 {
     std::string sql = GetCommSql(params);
-    std::string timeFlag = params.timeFlag;
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     int64_t offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
@@ -361,7 +365,6 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         return false;
     }
     sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
-    sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, params.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
     while (sqlite3_step(stmt) == SQLITE_ROW) {

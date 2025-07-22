@@ -358,7 +358,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         }
 
         const data = {
-            acceleratorCore: 'HCCL',
+            acceleratorCore: 'Communication',
             overlapped: list.find(item => item.overlapType === 'Communication(Overlapped)')?.duration,
             notOverlapped: list.find(item => item.overlapType === 'Communication(Not Overlapped)')?.duration,
         };
