@@ -19,6 +19,8 @@ public:
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+
+    static int GetTypeByName(const std::string &name);
 };
 }
 #endif // PROFILER_SERVER_OVERLAPANSREPO_H

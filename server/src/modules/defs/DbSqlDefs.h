@@ -98,12 +98,12 @@ inline std::string GetPythonSameNameDetailSql(const std::string &pidListStr)
     "   'pytorch' as tid, globalTid as pid from PYTORCH_API main join nameIds n on name = n.id join params p\n"
     "   where globalTid in (" + pidListStr + ") and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
 }
-inline std::string GetOverlapAnalysisSameNameDetailSql(const std::string &tidListStr)
+inline std::string GetOverlapAnalysisSameNameDetailSql(const int type)
 {
     return " overlap as (select startNs - p.minTime as timestamp, endNs - startNs as duration, 0 as depth, "
     " main.ROWID as id , type as tid, 'OVERLAP_ANALYSIS' as pid"
-    " from OVERLAP_ANALYSIS main join params p where deviceId = p.rankId and type in (" + tidListStr +
-    " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
+    " from OVERLAP_ANALYSIS main join params p where deviceId = p.rankId and type = " + std::to_string(type) +
+    " and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
 }
 // sql of singleUnitFlow
 const static std::string PYTORCH_UNIT_FLOW_SQL =

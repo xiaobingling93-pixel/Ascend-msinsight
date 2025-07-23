@@ -466,6 +466,53 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     EXPECT_EQ(result, false);
 }
 
+TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWareAndOverlap_NameInvalidForOverlap)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
+    std::string taskData =
+        "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") "
+        "VALUES (1742699319641107170, 1742699319641107190, 0, 72907, 7480, 1984976, 1, 4294967295, 2, 12658, "
+        "4294967295, 0);";
+    std::string overlapData =
+        "INSERT INTO \"main\".\"OVERLAP_ANALYSIS\" (\"id\", \"deviceId\", \"startNs\", \"endNs\", \"type\") VALUES "
+        "(103984, 0, 1742699321190093818, 1742699321190208301, 2);";
+    std::string strData = "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (1, 'EVENT_WAIT');";
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, strData);
+    database.SetDbPtr(db);
+    Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"2"}});
+    requestParams.name = "EVENT_WAIT";
+    requestParams.rankId = "0";
+    requestParams.startTime = 1742699319641100000;
+    requestParams.endTime = 1742699321190208302;
+    requestParams.pageSize = 10;
+    requestParams.orderBy = "duration";
+    requestParams.order = "DESC";
+    Dic::Protocol::UnitThreadsOperatorsBody responseBody;
+    const uint64_t minTimestamp = 0;
+    uint64_t trackId = TrackInfoManager::Instance().GetTrackId("", "17738580008830245", "2");
+    const std::vector<uint64_t> traceIds = {trackId};
+    bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceIds);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(responseBody.sameOperatorsDetails.size(), 1);
+    EXPECT_EQ(responseBody.sameOperatorsDetails[0].pid, "Ascend Hardware");
+}
+
 TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
 {
     std::recursive_mutex testMutex;

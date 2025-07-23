@@ -102,4 +102,14 @@ bool OverlapAnsRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteS
     competeSliceDomain = std::move(sliceVec[0]);
     return true;
 }
+
+int OverlapAnsRepo::GetTypeByName(const std::string &name)
+{
+    for (size_t index = 0; index < OVERLAP_TYPES.size(); index++) {
+        if (name == OVERLAP_TYPES[index]) {
+            return static_cast<int>(index);
+        }
+    }
+    return -1;
+}
 }

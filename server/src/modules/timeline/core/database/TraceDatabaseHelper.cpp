@@ -8,6 +8,7 @@
 #include "NpuInfoRepo.h"
 #include "Database.h"
 #include "TraceDatabaseHelper.h"
+#include "OverlapAnsRepo.h"
 
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
@@ -272,8 +273,10 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
         PROCESS_TYPE::MS_TX, PROCESS_TYPE::API, PROCESS_TYPE::OVERLAP_ANALYSIS
     };
     const bool uniqueDevice = IsDeviceIdUnique(requestParams.rankId);
+    const int overlapType = OverlapAnsRepo::GetTypeByName(requestParams.name);
     for (const auto type : types) {
-        withHeadSql += ", " + GetQueryThreadSameOperatorsDetailsHeadSql(tidListStr, pidListStr, type, uniqueDevice);
+        withHeadSql += ", " +
+            GetQueryThreadSameOperatorsDetailsHeadSql(tidListStr, pidListStr, uniqueDevice, overlapType, type);
     }
     const auto sameOperatorsDetailsSql = withHeadSql +
         " , all_same_operator_detail as (SELECT * from ascend UNION ALL " // PROCESS_TYPE::ASCEND_HARDWARE
@@ -289,7 +292,7 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
 }
 
 std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(const std::string &tidListStr,
-    const std::string &pidListStr, const PROCESS_TYPE type, const bool uniqueDevice)
+    const std::string &pidListStr, const bool uniqueDevice, const int overlapType, const PROCESS_TYPE type)
 {
     switch (type) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
@@ -303,7 +306,7 @@ std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(const
         case PROCESS_TYPE::API:
             return GetPythonSameNameDetailSql(pidListStr);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            return GetOverlapAnalysisSameNameDetailSql(tidListStr);
+            return GetOverlapAnalysisSameNameDetailSql(overlapType);
         default:
             return "";
     }
