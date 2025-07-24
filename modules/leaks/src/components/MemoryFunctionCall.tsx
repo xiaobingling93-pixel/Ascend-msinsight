@@ -10,8 +10,7 @@ import { Session } from '../entity/session';
 import { observer } from 'mobx-react';
 import { getFuncNewData } from './dataHandler';
 import { chartResize } from '../utils/utils';
-import { useTheme } from '@emotion/react';
-
+import { useTheme, type Theme } from '@emotion/react';
 const colorTypes: string[] = ['#8fd3e8', '#d95850', '#eb8146', '#ffb248', '#f2d643', '#ebdba4', '#fcce10', '#b5c334', '#1bca93'];
 const transData = (data: any): any => {
     return data.map((item: any, index: number) => ({
@@ -44,46 +43,54 @@ const getToolbox = (): echarts.ToolboxComponentOption => {
         top: 20,
     };
 };
-const getSeries = (session: Session): any => {
+const getRenderItem = (session: Session, theme: Theme, api: any): any => {
+    const level = api.value(0);
+    const start = api.coord([Math.max(api.value(1), session.minTime), level]);
+    const end = api.coord([Math.min(api.value(2), session.maxTime), level]);
+    const height = ((api.size([0, 1]) || [0, 20]) as number[])[1];
+    const width = end[0] - start[0];
+    const customRes = {
+        type: 'rect',
+        transition: ['shape'],
+        shape: {
+            x: start[0],
+            y: start[1],
+            width,
+            height: height - 2,
+        },
+        emphasis: { style: { stroke: '#000' } },
+        textContent: {
+            type: 'text',
+            style: {
+                text: api.value(3),
+                fill: '#000',
+                overflow: 'truncate',
+                width: width - 4,
+                fontSize: 11,
+            },
+        },
+        textConfig: {
+            position: 'inside',
+            inside: true,
+            local: true,
+        },
+        style: {
+            fill: api.visual('color'),
+            stroke: '',
+            lineWidth: 0,
+        },
+    };
+    if (session.searchFunc.includes(api.value(3))) {
+        customRes.style.stroke = theme.mode === 'dark' ? '#fff' : '#000';
+        customRes.style.lineWidth = 3;
+    }
+    return customRes;
+};
+const getSeries = (session: Session, theme: Theme): any => {
     return [
         {
             type: 'custom',
-            renderItem: (params: any, api: any): any => {
-                const level = api.value(0);
-                const start = api.coord([Math.max(api.value(1), session.minTime), level]);
-                const end = api.coord([Math.min(api.value(2), session.maxTime), level]);
-                const height = ((api.size([0, 1]) || [0, 20]) as number[])[1];
-                const width = end[0] - start[0];
-                return {
-                    type: 'rect',
-                    transition: ['shape'],
-                    shape: {
-                        x: start[0],
-                        y: start[1],
-                        width,
-                        height: height - 2,
-                    },
-                    emphasis: { style: { stroke: '#000' } },
-                    textContent: {
-                        type: 'text',
-                        style: {
-                            text: api.value(3),
-                            fill: '#000',
-                            overflow: 'truncate',
-                            width: width - 4,
-                            fontSize: 11,
-                        },
-                    },
-                    textConfig: {
-                        position: 'inside',
-                        inside: true,
-                        local: true,
-                    },
-                    style: {
-                        fill: api.visual('color'),
-                    },
-                };
-            },
+            renderItem: (params: any, api: any): any => getRenderItem(session, theme, api),
             encode: {
                 x: [0, 1, 2],
                 y: 0,
@@ -93,7 +100,7 @@ const getSeries = (session: Session): any => {
         },
     ];
 };
-const getOptions = (session: Session): EChartsOption => {
+const getOptions = (session: Session, theme: Theme): EChartsOption => {
     return {
         color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
         gradientColor: ['#f6efa6', '#d88273', '#bf444c'],
@@ -101,8 +108,8 @@ const getOptions = (session: Session): EChartsOption => {
             axisTick: {
                 show: false,
             },
-            min: session.maxTime,
-            max: session.minTime,
+            min: session.minTime,
+            max: session.maxTime,
             axisLine: {
                 show: false,
             },
@@ -127,7 +134,7 @@ const getOptions = (session: Session): EChartsOption => {
         axisPointer: {
             show: true,
         },
-        series: getSeries(session),
+        series: getSeries(session, theme),
         grid: {
             left: '6%',
             right: '4%',
@@ -142,28 +149,39 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
     const chartRef = useRef<ChartsHandle>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
-    const theme = useTheme();
+    const { funcData, deviceId, eventType, threadId, maxTime, minTime, synStartTime, synEndTime, searchFunc } = session;
+    const [startTime, setStartTime] = useState<number>(synStartTime);
+    const [endTime, setEndTime] = useState<number>(synEndTime);
+    const theme: Theme = useTheme();
     useEffect(() => {
-        if (session.deviceId !== '') {
-            setLoading(true);
+        if (deviceId === '') return;
+        setLoading(true);
+        if (startTime !== synStartTime || endTime !== synEndTime) {
+            setStartTime(synStartTime);
+            setEndTime(synEndTime);
+            getFuncNewData(session, synStartTime, synEndTime);
+        } else {
             getFuncNewData(session);
         }
-    }, [session.deviceId, session.eventType, session.threadId]);
+    }, [deviceId, eventType, threadId, synStartTime, synEndTime]);
     useEffect(() => {
-        setChartOptions(getOptions(session));
+        setChartOptions(getOptions(session, theme));
         if (chartRef.current !== null && chartRef.current !== undefined) {
             setFuncIns(chartRef.current.getInstance());
         }
         setLoading(false);
         chartResize(chartRef?.current?.getInstance());
-    }, [session.deviceId, session.eventType, JSON.stringify(session.funcData.traces), session.maxTime, session.minTime]);
+    }, [deviceId, eventType, JSON.stringify(funcData.traces), maxTime, minTime]);
+    useEffect(() => {
+        setChartOptions(getOptions(session, theme));
+    }, [JSON.stringify(searchFunc), theme.mode]);
     useEffect(() => {
         chartRef.current?.getInstance()?.dispatchAction({
             type: 'takeGlobalCursor',
             key: 'dataZoomSelect',
             dataZoomSelectActive: true,
         });
-    }, [chartOptions, theme]);
+    }, [chartOptions, theme.mode]);
     return (
         <MIChart
             ref={chartRef}

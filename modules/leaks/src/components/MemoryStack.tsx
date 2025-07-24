@@ -41,9 +41,9 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         if (!funcIns || !barIns) {
             return;
         }
-        funcIns.off('click');
+        funcIns.off('dblclick');
         barIns.off('legendselectchanged');
-        funcIns.on('click', (params: any) => {
+        funcIns.on('dblclick', (params: any) => {
             const data = params.value;
             const start: number = data[1];
             const end: number = data[2];
@@ -89,7 +89,6 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             cancelLine(mouseEnter, mouseMove, mouseLeave);
         };
     }, [session.deviceIds, session.threadIds]);
-
     useEffect(() => {
         linkageHandle();
     }, [funcIns, barIns]);
@@ -104,12 +103,27 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     onChange={(value): void => {
                         runInAction(() => {
                             session.threadId = value;
+                            session.searchFunc = [];
                         });
                     }}
                     options={session.threadOps}
                 />
+                <Label name={t('Search')} style={{ marginLeft: 24 }} />
+                <Select
+                    id={'select-funcName'}
+                    mode="multiple"
+                    value={session.searchFunc}
+                    style={{ width: 550 }}
+                    onChange={(val: string[]): void => {
+                        runInAction(() => { session.searchFunc = val; });
+                    }}
+                    options={session.funcOptions}
+                    showSearch={true}
+                    maxTagTextLength={10}
+                    maxTagCount={4}
+                />
             </div>
-            <div id='funcContent' style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
+            <div id="funcContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
                 <Line id='funcLine' lineShow={lineShow} offset={offset} />
                 {<MemoryFunctionCall session={session} setFuncIns={setFuncIns} />}
             </div>
@@ -142,13 +156,13 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     options={session.typeOpts}
                 />
             </div>
-            <div id='barContent' style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                <Line id='barLine' lineShow={lineShow} offset={offset} />
+            <div id="barContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
+                <Line id="barLine" lineShow={lineShow} offset={offset} />
                 <MemoryBarChart session={session} setBarIns={setBarIns} />
             </div>
             {session.memoryStamp
                 ? (
-                    <div id='detailsContent' style={{ position: 'relative' }}>
+                    <div id="detailsContent" style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '45%' }}>{`${t('Current Time')}: ${session.memoryStamp}ns`}</div>
                         <MemorySliceChart session={session} />
                     </div>

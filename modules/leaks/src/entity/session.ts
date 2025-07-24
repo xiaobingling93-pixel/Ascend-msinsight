@@ -24,6 +24,10 @@ export class Session {
     typeOpts: TypeOption[] = [];
     threadOps: TypeOption[] = [];
     legendSelect: any = {};
+    synStartTime: number = 0;
+    synEndTime: number = 0;
+    searchFunc: string[] = [];
+    funcOptions: any = [];
     constructor() {
         makeAutoObservable(this);
     }

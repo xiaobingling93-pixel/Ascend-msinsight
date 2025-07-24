@@ -16,6 +16,7 @@ export const getFuncNewData = async (session: any, startTimestamp?: number, endT
         const funcDatas = await getFuncData(funcParam);
         runInAction(() => {
             session.funcData = funcDatas;
+            session.funcOptions = [...new Set(funcDatas.traces.map(trace => trace.func))].map(func => ({ label: func, value: func }));
             session.maxTime = endTimestamp;
             session.minTime = startTimestamp;
         });

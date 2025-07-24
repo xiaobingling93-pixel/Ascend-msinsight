@@ -17,6 +17,7 @@
     "Optimizer": "优化器",
     "Weight": "模型权重",
     "Gradient": "梯度",
-    "Current Time": "当前时间"
+    "Current Time": "当前时间",
+    "Search": "搜索"
   }
 }

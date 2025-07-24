@@ -175,7 +175,9 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
     const chartRef = useRef<ChartsHandle>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
-    const { blockData, allocationData, deviceId, eventType, threadId } = session;
+    const { blockData, allocationData, deviceId, eventType, threadId, synStartTime, synEndTime } = session;
+    const [startTime, setStartTime] = useState<number>(synStartTime);
+    const [endTime, setEndTime] = useState<number>(synEndTime);
     const lineSource = allocationData.allocations.map((line: any) => [line.timestamp, line.totalSize]);
     const source: number[][] = useMemo(() => {
         const blockSource: number[][] = [];
@@ -196,20 +198,41 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
     const initParam: InitParam = { session, blockData, lineSource, source, t };
     const theme = useTheme();
     useEffect(() => {
-        if (deviceId !== '') {
-            setLoading(true);
+        if (deviceId === '') return;
+        setLoading(true);
+        if (startTime !== synStartTime || endTime !== synEndTime) {
+            setStartTime(synStartTime);
+            setEndTime(synEndTime);
+            getBarNewData(session, synStartTime, synEndTime);
+        } else {
             getBarNewData(session);
         }
-    }, [deviceId, eventType, threadId]);
+    }, [deviceId, eventType, threadId, synStartTime, synEndTime]);
     useEffect(() => {
         const param: EChartsOption = getOptions(initParam);
         setChartOptions(param);
-        if (chartRef.current !== null && chartRef.current !== undefined) {
-            setBarIns(chartRef.current?.getInstance());
+        const barIns: echarts.ECharts | null | undefined = chartRef.current?.getInstance();
+        if (barIns !== null && barIns !== undefined) {
+            setBarIns(barIns);
         }
         setLoading(false);
-        chartRef.current?.getInstance()?.getZr().off('click');
-        chartRef.current?.getInstance()?.getZr().on('click', (params) => {
+        barIns?.off('dblclick');
+        barIns?.on('dblclick', (params: any): void => {
+            const info = blockData.blocks[params.dataIndex];
+            if (!info) {
+                return;
+            }
+            runInAction(() => {
+                if (session.threadId !== info.threadId) {
+                    session.searchFunc = [];
+                }
+                session.threadId = info.threadId;
+                session.synStartTime = info.startTimestamp - 1;
+                session.synEndTime = info.endTimestamp + 1;
+            });
+        });
+        barIns?.getZr()?.off('click');
+        barIns?.getZr()?.on('click', (params) => {
             if (params.target?.constructor?.name === 'ECPolyline' || params.target?.constructor?.name === 'Polygon' ||
                 params.target?.constructor?.name === undefined) {
                 const pointInPixel = [params.offsetX, params.offsetY];
@@ -222,7 +245,7 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
                 }
             }
         });
-        chartResize(chartRef.current?.getInstance());
+        chartResize(barIns);
     }, [threadId, JSON.stringify(blockData), JSON.stringify(allocationData), session.maxTime, session.minTime, t]);
     useEffect(() => {
         chartRef.current?.getInstance()?.dispatchAction({
@@ -234,8 +257,8 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
     return (
         <MIChart
             ref={chartRef}
-            width='calc(100vw - 80px)'
-            height='500px'
+            width="calc(100vw - 80px)"
+            height="500px"
             loading={loading}
             options={chartOptions}
         />
