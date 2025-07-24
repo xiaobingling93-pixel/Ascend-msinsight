@@ -245,7 +245,7 @@ export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<stri
     havePythonFunction?: boolean;
     onceExpand?: boolean; // 只展开一次
 }
-// 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
+// recursiveSpreadUnits 已被删除，rendering 似乎不再使用 - 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
 // 增加initializing状态，用于用户点击session start按钮后，unit plugin start完成之前的状态设置
 // 解析状态在parseSucceess之后设置unit的phase为download
 export type UnitPhase = 'configuring' | 'initializing' | 'recording' | 'analyzing' | 'rendering' | 'download' | 'error' | 'loading';
@@ -366,62 +366,6 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
 };
 
 export { unitBase as unit };
-
-export const transparentUnit = <T extends MetaDataBase = MetaDataBase>(params:
-Pick<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
-    const transparentUnitClass = class implements InsightUnit {
-        isMultiDeviceHidden = false;
-        isUnitVisible = true;
-        isMerged = false;
-        isParseLoading = false; // 是否正在解析
-        shouldParse: boolean = false; // 是否需要解析
-        progress: number = 0; // 解析进度：实际解析进度
-        showProgress: boolean = false; // 解析进度：是否显示进度条
-        type = 'transparent' as const;
-        description = params.description;
-        pinType = params.pinType ?? 'copied';
-        buttons = params.buttons ?? [];
-        expandable = true;
-        children?: InsightUnit[] = params.spreadUnits ? [] : undefined;
-        metadata: T;
-        isExpanded = false;
-        isDisplay = true;
-        name = params.name;
-        spreadUnits = wrapSpread(params.spreadUnits);
-        phase: UnitPhase = 'configuring';
-        collapsible = true;
-
-        constructor(metadata: T) {
-            makeAutoObservable(this);
-            this.metadata = metadata;
-            const spreadUnits = params.spreadUnits;
-            if (spreadUnits?.phase === 'create') { spreadUnits.action(this); }
-        }
-
-        height(): number {
-            return 0;
-        }
-    };
-    return transparentUnitClass;
-};
-
-/**
- * Recursive expansion units
- *
- * @param unit parent unit
- * @param session session
- * @param phase phase
- */
-export const recursiveSpreadUnits = async (unit: InsightUnit, session: Session, phase: SpreadPhase): Promise<void> => {
-    if (unit.spreadUnits?.phase === phase) {
-        await unit.spreadUnits.action?.(unit, session);
-    }
-    if (unit.children) {
-        for (let index = 0; index < unit.children.length; index++) {
-            await recursiveSpreadUnits(unit.children[index], session, phase);
-        }
-    }
-};
 
 export interface UnitMatcher {
     target: (ele: InsightUnit) => boolean;

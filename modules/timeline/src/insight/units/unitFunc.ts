@@ -18,8 +18,9 @@ import { CounterUnit, ProcessUnit, ThreadUnit, LabelUnit } from './AscendUnit';
 
 const parentMetaDataTree = new Map();
 
-export function recursiveExpandUnit<T extends keyof MetaDataEnumType>(metaDataList: Array<InsightMetaData<T>>, parentUnit: InsightUnit): void {
-    if (metaDataList === undefined || parentUnit === undefined) {
+const MAX_RECURSIVE_COUNT = 10;
+export function recursiveExpandUnit<T extends keyof MetaDataEnumType>(metaDataList: Array<InsightMetaData<T>>, parentUnit: InsightUnit, depth: number = 0): void {
+    if (depth >= MAX_RECURSIVE_COUNT || metaDataList === undefined || parentUnit === undefined) {
         return;
     }
     for (const metaData of metaDataList) {
@@ -30,17 +31,17 @@ export function recursiveExpandUnit<T extends keyof MetaDataEnumType>(metaDataLi
                 const newUnit = newLane(metaData, parentUnit.metadata);
                 if (newUnit !== undefined) {
                     parentUnit.children?.push(newUnit);
-                    recursiveExpandUnit(metaData.children ?? [], newUnit);
+                    recursiveExpandUnit(metaData.children ?? [], newUnit, depth + 1);
                 }
             } else {
-                recursiveExpandUnit(metaData.children ?? [], existingUnit);
+                recursiveExpandUnit(metaData.children ?? [], existingUnit, depth + 1);
             }
         } else {
             const newUnit = newLane(metaData, parentUnit.metadata);
             if (newUnit !== undefined) {
                 parentUnit.children = [];
                 parentUnit.children.push(newUnit);
-                recursiveExpandUnit(metaData.children ?? [], newUnit);
+                recursiveExpandUnit(metaData.children ?? [], newUnit, depth + 1);
             }
         }
     }
