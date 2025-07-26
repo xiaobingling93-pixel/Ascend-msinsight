@@ -465,7 +465,7 @@ const sortData = (dataSource: InstrsColumnType[], sorter: Record<string, any>): 
         const aType = isNaN(Number(a[field])) ? typeof a[field] : 'number';
         const bType = isNaN(Number(b[field])) ? typeof b[field] : 'number';
         // 如果都是负数，不修改顺序
-        const isAllNegativeNumber = aType === 'number' && bType === 'number' && a[field] < 0 && b[field] < 0;
+        const isAllNegativeNumber = aType === 'number' && bType === 'number' && Number(a[field]) < 0 && Number(b[field]) < 0;
         if (isAllNegativeNumber) {
             return -1;
         }

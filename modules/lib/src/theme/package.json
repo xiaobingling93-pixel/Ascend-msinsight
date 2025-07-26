@@ -4,9 +4,6 @@
   "private": true,
   "main": "./index.js",
   "types": "./index.d.ts",
-  "dependencies": {
-    "@emotion/react": "11.11.0"
-  },
   "browserslist": {
     "production": [
       ">0.2%",

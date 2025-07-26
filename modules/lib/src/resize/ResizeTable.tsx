@@ -11,7 +11,7 @@ import { getColumnSearchProps } from './ColumnFilterWithSelection';
 import { copyTableToClipboard, limitInput, StyledEmpty } from '../utils/Common';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
 import { CaretRightIcon, CopyOutlinedIcon } from '../icon/Icon';
-import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
+import { EmotionJSX } from '@emotion/react/dist/declarations/src/jsx-namespace';
 
 const Support = React.forwardRef(
     (props: ResizeTableProps<any>) => {
