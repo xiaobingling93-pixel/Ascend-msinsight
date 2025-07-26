@@ -3,7 +3,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "MemoryProtocolRequest.h"
+#include "MemoryDetailProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "LeaksMemoryDatabase.h"

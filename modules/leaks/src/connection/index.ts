@@ -5,5 +5,5 @@ import { ClientConnector } from 'ascend-connection';
 
 export default new ClientConnector({
     getTargetWindow: (): any[] => [window.parent],
-    module: 'memory',
+    module: 'leaks',
 });

@@ -3,9 +3,7 @@
  */
 #include "LeaksMemoryDetailTreeNode.h"
 
-namespace Dic {
-namespace Module {
-namespace Memory {
+namespace Dic::Module::MemoryDetail {
 void LeaksMemoryDetailTreeNode::InsertSubNode(const std::string &subNodeName, uint64_t subNodeSize,
                                               const std::string &subNodeTag)
 {
@@ -56,6 +54,4 @@ std::string LeaksMemoryDetailTreeNode::GetNodeNameByOwnerTag(const std::string &
     }
     return resultName;
 }
-}  // Memory
-}  // Module
-}  // Dic
+}  // Dic::Module::MemoryDetail

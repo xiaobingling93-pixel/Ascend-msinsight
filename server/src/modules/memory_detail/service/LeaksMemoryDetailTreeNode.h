@@ -2,14 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_LEAKSMEMORYDETAILTREENODE_H
-#define PROFILER_SERVER_LEAKSMEMORYDETAILTREENODE_H
+#ifndef PROFILER_SERVER_MEMORY_DETAIL_TREE_H
+#define PROFILER_SERVER_MEMORY_DETAIL_TREE_H
 
 #include "pch.h"
 
 namespace Dic {
 namespace Module {
-namespace Memory {
+namespace MemoryDetail {
 // Leaks owner可能的表达前缀
 // 为便于构造树形结构逻辑Owner, 实际不存在
 const std::string LEAKS_MEMORY_ALLOC_OWNER_HAL_CANN = "HAL_CANN";
@@ -107,4 +107,4 @@ public:
 } // Memory
 } // Module
 } // Dic
-#endif // PROFILER_SERVER_LEAKSMEMORYDETAILTREENODE_H
+#endif // PROFILER_SERVER_MEMORY_DETAIL_TREE_H

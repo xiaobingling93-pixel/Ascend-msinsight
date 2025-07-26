@@ -60,6 +60,10 @@ struct Response : public ProtocolMessage {
     std::string command;
     std::optional<ErrorMessage> error;
 };
+struct JsonResponse : public Response {
+    explicit JsonResponse(const std::string &command) : Response(command) {}
+    [[nodiscard]] virtual std::optional<document_t> ToJson() const = 0;
+};
 struct Event : public ProtocolMessage {
     explicit Event(const std::string &e) : event(e)
     {
@@ -68,6 +72,10 @@ struct Event : public ProtocolMessage {
     ~Event() override = default;
     std::string event;
     bool result = false;
+};
+struct JsonEvent : public Event {
+    explicit JsonEvent(const std::string &e) : Event(e) {}
+    [[nodiscard]] virtual std::optional<document_t> ToJson() const = 0;
 };
 class ProtocolUtil {
 public:
@@ -89,6 +97,24 @@ public:
     // event
     static void SetEventJsonBaseInfo(const Event &event, document_t &json);
 
+    // common json to request
+    template <class SubRequest>
+    static std::unique_ptr<Request> BuildRequestFromJson(const json_t &json, std::string &error)
+    {
+        static_assert(std::is_same_v<std::unique_ptr<Request>, decltype(SubRequest::FromJson(json, error))>,
+                      "SubRequest must have a static FromJson method returning std::unique_ptr<Request>");
+        return SubRequest::FromJson(json, error);
+    }
+    // response to json
+    static std::optional<document_t> CommonResponseToJson(const Response &response)
+    {
+        try {
+            const auto& jsonResponse = dynamic_cast<const JsonResponse&>(response);
+            return jsonResponse.ToJson();
+        } catch (const std::bad_cast& e) {
+            return std::nullopt;
+        }
+    }
 protected:
     std::mutex mutex;
     using JsonToRequestFunc = std::function<std::unique_ptr<Request>(const json_t &, std::string &error)>;

@@ -22,6 +22,7 @@ const std::string MODULE_TIMELINE = "timeline";
 const std::string MODULE_SUMMARY = "summary";
 const std::string MODULE_COMMUNICATION = "communication";
 const std::string MODULE_MEMORY = "memory";
+const std::string MODULE_MEMORY_DETAIL = "memory_detail";
 const std::string MODULE_OPERATOR = "operator";
 const std::string MODULE_SOURCE = "source";
 const std::string MODULE_ADVISOR = "advisor";

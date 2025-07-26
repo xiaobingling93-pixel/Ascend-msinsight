@@ -4,8 +4,7 @@
 #include <gtest/gtest.h>
 #include <WsSessionManager.h>
 #include "WsSessionImpl.h"
-#include "MemoryProtocolRequest.h"
-#include "LeaksMemoryDatabase.h"
+#include "MemoryDetailProtocolRequest.h"
 #include "LeaksMemoryService.h"
 #include "QueryLeaksMemoryAllocationHandler.h"
 #include "QueryLeaksMemoryBlockHandler.h"
@@ -15,7 +14,7 @@
 #include "TraceTime.h"
 
 using namespace Dic::Module::Timeline;
-using namespace Dic::Module::Memory;
+using namespace Dic::Module::MemoryDetail;
 using namespace Dic::Protocol;
 using namespace Dic::Module::FullDb;
 using namespace Dic;
@@ -57,7 +56,7 @@ public:
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseInvalidParamsDeviceId)
 {
-    Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
+    QueryLeaksMemoryAllocationHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryAllocationRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "@:1:;";
@@ -68,7 +67,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseInvalidParamsDevi
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseInvalidParamsEventType)
 {
-    Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
+    QueryLeaksMemoryAllocationHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryAllocationRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "1";
@@ -80,7 +79,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseInvalidParamsEven
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationUseInvalidParamsTimestamp)
 {
-    Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
+    QueryLeaksMemoryAllocationHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryAllocationRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.startTimestamp = INT64_MAX;
@@ -92,7 +91,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationUseInvalidParamsTimes
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseNonExistsDeviceId)
 {
-    Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
+    QueryLeaksMemoryAllocationHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryAllocationRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "-1";
@@ -104,7 +103,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseNonExistsDeviceId
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseValidParamsWithoutTimeCondition)
 {
-    Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
+    QueryLeaksMemoryAllocationHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryAllocationRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "0";
@@ -116,7 +115,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseValidParamsWithou
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseValidParamsWithTimeAndRelativeCondition)
 {
-    Dic::Module::Memory::QueryLeaksMemoryAllocationHandler handler;
+    QueryLeaksMemoryAllocationHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryAllocationRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryAllocationRequest>();
     requestPtr->params.deviceId = "0";
@@ -131,7 +130,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryAllocationsUseValidParamsWithTi
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsDeviceId)
 {
-    Dic::Module::Memory::QueryLeaksMemoryBlockHandler handler;
+    QueryLeaksMemoryBlockHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.deviceId = "@:1:;";
@@ -143,7 +142,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsDeviceId)
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsTimestamp)
 {
-    Dic::Module::Memory::QueryLeaksMemoryBlockHandler handler;
+    QueryLeaksMemoryBlockHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.endTimestamp = 0;
@@ -157,7 +156,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsTimestamp
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsSize)
 {
-    Dic::Module::Memory::QueryLeaksMemoryBlockHandler handler;
+    QueryLeaksMemoryBlockHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.maxSize = 0;
@@ -171,7 +170,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsSize)
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsExceedSize)
 {
-    Dic::Module::Memory::QueryLeaksMemoryBlockHandler handler;
+    QueryLeaksMemoryBlockHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.maxSize = INT64_MAX;
@@ -184,7 +183,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseInvalidParamsExceedSiz
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithoutTimeAndSizeCondition)
 {
-    Dic::Module::Memory::QueryLeaksMemoryBlockHandler handler;
+    QueryLeaksMemoryBlockHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     requestPtr->params.deviceId = "0";
@@ -196,7 +195,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithoutTime
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithTimeCondition)
 {
-    Dic::Module::Memory::QueryLeaksMemoryBlockHandler handler;
+    QueryLeaksMemoryBlockHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     const uint64_t endTimestamp = 10000000;
@@ -211,7 +210,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithTimeCon
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithSizeCondition)
 {
-    Dic::Module::Memory::QueryLeaksMemoryBlockHandler handler;
+    QueryLeaksMemoryBlockHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryBlockRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryBlockRequest>();
     const uint64_t maxSize = 100000;
@@ -225,7 +224,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryBlocksUseValidParamsWithSizeCon
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithInjectDeviceId)
 {
-    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    QueryLeaksMemoryDetailHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
@@ -237,7 +236,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithInjec
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithNonExistsDeviceId)
 {
-    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    QueryLeaksMemoryDetailHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
@@ -250,7 +249,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithNonEx
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithBigRelativeTimestamp)
 {
-    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    QueryLeaksMemoryDetailHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
@@ -262,7 +261,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseInvalidParamsWithBigRe
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseValidParams)
 {
-    Dic::Module::Memory::QueryLeaksMemoryDetailHandler handler;
+    QueryLeaksMemoryDetailHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryDetailRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryDetailRequest>();
     const uint64_t durationSecond = 15;
@@ -277,7 +276,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryDetailUseValidParams)
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInjectDeviceId)
 {
-    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    QueryLeaksMemoryPythonTraceHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
@@ -289,7 +288,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInject
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInvalidThreadId)
 {
-    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    QueryLeaksMemoryPythonTraceHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
@@ -301,7 +300,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInvali
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInvalidTimestamp)
 {
-    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    QueryLeaksMemoryPythonTraceHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
@@ -314,7 +313,7 @@ TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseInvalidParamsWithInvali
 
 TEST_F(LeaksMemoryRequestHandlerTest, QueryMemoryTraceUseValidParams)
 {
-    Dic::Module::Memory::QueryLeaksMemoryPythonTraceHandler handler;
+    QueryLeaksMemoryPythonTraceHandler handler;
     std::unique_ptr<Dic::Protocol::LeaksMemoryTraceRequest> requestPtr =
             std::make_unique<Dic::Protocol::LeaksMemoryTraceRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;

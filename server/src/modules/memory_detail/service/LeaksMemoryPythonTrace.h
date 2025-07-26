@@ -8,7 +8,7 @@
 
 namespace Dic {
 namespace Module {
-namespace Memory {
+namespace MemoryDetail {
 struct PythonTraceSlice {
     std::string func;
     uint64_t startTimestamp;
@@ -30,7 +30,7 @@ struct LeaksMemoryPythonTrace {
 
     LeaksMemoryPythonTrace() : maxTimestamp(0), minTimestamp(INT64_MAX), threadId(0) {}
 
-    bool Empty()
+    [[nodiscard]] bool Empty() const
     {
         return slices.empty();
     }

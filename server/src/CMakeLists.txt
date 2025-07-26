@@ -75,6 +75,12 @@ include_directories(${SRC_HOME_DIR}/modules/communication/handler)
 include_directories(${SRC_HOME_DIR}/modules/communication/parser)
 include_directories(${SRC_HOME_DIR}/modules/communication/core)
 include_directories(${SRC_HOME_DIR}/modules/communication/advisor)
+include_directories(${SRC_HOME_DIR}/modules/memory_detail)
+include_directories(${SRC_HOME_DIR}/modules/memory_detail/database)
+include_directories(${SRC_HOME_DIR}/modules/memory_detail/entity)
+include_directories(${SRC_HOME_DIR}/modules/memory_detail/handler)
+include_directories(${SRC_HOME_DIR}/modules/memory_detail/protocol)
+include_directories(${SRC_HOME_DIR}/modules/memory_detail/service)
 # Operator
 include_directories(${SRC_HOME_DIR}/modules/operator)
 include_directories(${SRC_HOME_DIR}/modules/operator/database)
@@ -194,6 +200,13 @@ aux_source_directory(${SRC_HOME_DIR}/modules/servitization/handler DIC_MODULES_I
 aux_source_directory(${SRC_HOME_DIR}/modules/servitization/protocol DIC_MODULES_IE_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/servitization/repo DIC_MODULES_IE_REPO_SRC)
 
+# Memory Detail
+aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail DIC_MODULES_MEM_DETAIL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/database DIC_MODULES_MEM_DETAIL_DB_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/handler DIC_MODULES_MEM_DETAIL_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/service DIC_MODULES_MEM_DETAIL_SVC_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/protocol DIC_MODULES_MEM_DETAIL_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/entity DIC_MODULES_MEM_DETAIL_ENTITY_SRC)
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}
@@ -266,7 +279,13 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_IE_CONTEXT_SRC}
         ${DIC_MODULES_IE_HANDLER_SRC}
         ${DIC_MODULES_IE_PROTOCOL_SRC}
-        ${DIC_MODULES_IE_REPO_SRC})
+        ${DIC_MODULES_IE_REPO_SRC}
+        ${DIC_MODULES_MEM_DETAIL_SRC}
+        ${DIC_MODULES_MEM_DETAIL_SVC_SRC}
+        ${DIC_MODULES_MEM_DETAIL_DB_SRC}
+        ${DIC_MODULES_MEM_DETAIL_HANDLER_SRC}
+        ${DIC_MODULES_MEM_DETAIL_PROTOCOL_SRC}
+        ${DIC_MODULES_MEM_DETAIL_ENTITY_SRC})
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test|fuzz")
     enable_testing()

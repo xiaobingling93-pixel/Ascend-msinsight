@@ -13,10 +13,10 @@ namespace FullDb {
 using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Memory;
-namespace BLOCK = Dic::Module::Memory::MemoryBlockTableColumn;
-namespace ALLOCATION = Dic::Module::Memory::MemoryAllocationTableColumn;
-namespace EVENT = Dic::Module::Memory::MemoryEventTableColumn;
-namespace TRACE = Dic::Module::Memory::MemoryPythonTraceTableColumn;
+namespace BLOCK = Dic::Module::MemoryDetail::MemoryBlockTableColumn;
+namespace ALLOCATION = Dic::Module::MemoryDetail::MemoryAllocationTableColumn;
+namespace EVENT = Dic::Module::MemoryDetail::MemoryEventTableColumn;
+namespace TRACE = Dic::Module::MemoryDetail::MemoryPythonTraceTableColumn;
 void LeaksMemoryDatabase::Reset()
 {
     ServerLog::Info("Memory reset.");
@@ -141,7 +141,7 @@ bool LeaksMemoryDatabase::UpdateParseStatus(const std::string &status)
     return UpdateValueIntoStatusInfoTable(leaksMemoryParseStatus, status);
 }
 
-bool LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<Memory::MemoryEvent> &events)
+bool LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent> &events)
 {
     if (stmt == nullptr) {
         ServerLog::Error("Query memory events by step failed: stmt ptr is null.");
@@ -149,7 +149,7 @@ bool LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vecto
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Memory::MemoryEvent event{};
+        MemoryEvent event{};
         event.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         event.event = sqlite3_column_string(stmt, col++);
         event.eventType = sqlite3_column_string(stmt, col++);
@@ -195,7 +195,7 @@ bool LeaksMemoryDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
     return true;
 }
 
-bool LeaksMemoryDatabase::QueryEntireEventsTable(std::vector<Memory::MemoryEvent> &eventDetails)
+bool LeaksMemoryDatabase::QueryEntireEventsTable(std::vector<MemoryEvent> &eventDetails)
 {
     std::string sql = "select * from {} where {} not in ('N/A', '', 'host') order by {};";
     sql = StringUtil::FormatString(sql, TABLE_LEAKS_DUMP,
@@ -216,7 +216,7 @@ bool LeaksMemoryDatabase::QueryEntireEventsTable(std::vector<Memory::MemoryEvent
     return true;
 }
 
-void LeaksMemoryDatabase::InsertMemoryAllocationList(const std::vector<Memory::MemoryAllocation> &allocList)
+void LeaksMemoryDatabase::InsertMemoryAllocationList(const std::vector<MemoryAllocation> &allocList)
 {
     sqlite3_stmt *stmt = GetInsertAllocationsStmt(allocList.size());
     if (stmt == nullptr) {
@@ -242,7 +242,7 @@ void LeaksMemoryDatabase::InsertMemoryAllocationList(const std::vector<Memory::M
     }
 }
 
-void LeaksMemoryDatabase::InsertMemoryAllocation(const Memory::MemoryAllocation &alloc)
+void LeaksMemoryDatabase::InsertMemoryAllocation(const MemoryAllocation &alloc)
 {
     std::lock_guard<std::mutex> lock(cacheMutex);
     allocationCache.emplace_back(alloc);
@@ -252,7 +252,7 @@ void LeaksMemoryDatabase::InsertMemoryAllocation(const Memory::MemoryAllocation 
     }
 }
 
-void LeaksMemoryDatabase::InsertMemoryBlockList(const std::vector<Memory::MemoryBlock> &blocklist)
+void LeaksMemoryDatabase::InsertMemoryBlockList(const std::vector<MemoryBlock> &blocklist)
 {
     sqlite3_stmt *stmt = GetInsertBlocksStmt(blocklist.size());
     if (stmt == nullptr) {
@@ -283,7 +283,7 @@ void LeaksMemoryDatabase::InsertMemoryBlockList(const std::vector<Memory::Memory
     }
 }
 
-void LeaksMemoryDatabase::InsertMemoryBlock(const Memory::MemoryBlock &block)
+void LeaksMemoryDatabase::InsertMemoryBlock(const MemoryBlock &block)
 {
     std::lock_guard<std::mutex> lock(cacheMutex);
     blockCache.emplace_back(block);
@@ -298,7 +298,6 @@ bool LeaksMemoryDatabase::InitStmt()
     if (hasInitStmt) {
         return true;
     }
-    // LCOV_EXCL_BR_START
     std::string insertAllocationsSql = "INSERT INTO " + memoryAllocationTable +
             "(" + allocationColumnPattern +") VALUES (" + allocationValuePattern +")";
     std::string insertBlocksSql = "INSERT INTO " + memoryBlockTable +
@@ -307,7 +306,6 @@ bool LeaksMemoryDatabase::InitStmt()
         insertAllocationsSql.append(",("+allocationValuePattern+")");
         insertBlocksSql.append(",("+blockValuePattern+")");
     }
-    // LCOV_EXCL_BR_STOP
     if (sqlite3_prepare_v2(db, insertAllocationsSql.c_str(), -1, &insertAllocationStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert allocations statement. Error: ", sqlite3_errmsg(db));
         return false;
@@ -356,13 +354,11 @@ sqlite3_stmt *LeaksMemoryDatabase::GetInsertAllocationsStmt(uint64_t allocations
         stmt = insertAllocationStmt;
         sqlite3_reset(stmt);
     } else {
-        // LCOV_EXCL_BR_START
         std::string insertAllocationsSql = "INSERT INTO " + memoryAllocationTable +
                                            "(" + allocationColumnPattern +") VALUES (" + allocationValuePattern +")";
         for (uint64_t i = 0; i < allocationsLen - 1; ++i) {
             insertAllocationsSql.append(",("+allocationValuePattern+")");
         }
-        // LCOV_EXCL_BR_STOP
         if (sqlite3_prepare_v2(db, insertAllocationsSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insert allocations statement. Error: ", sqlite3_errmsg(db));
             return nullptr;
@@ -384,13 +380,11 @@ sqlite3_stmt *LeaksMemoryDatabase::GetInsertBlocksStmt(uint64_t blocksLen)
         stmt = insertBlockStmt;
         sqlite3_reset(stmt);
     } else {
-        // LCOV_EXCL_BR_START
         std::string insertBlocksSql = "INSERT INTO " + memoryBlockTable +
                                       "("+ blockColumnPattern +") VALUES (" + blockValuePattern + ")";
         for (uint64_t i = 0; i < blocksLen - 1; ++i) {
             insertBlocksSql.append(",("+blockValuePattern+")");
         }
-        // LCOV_EXCL_BR_STOP
         if (sqlite3_prepare_v2(db, insertBlocksSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insert blocks statement. Error: ", sqlite3_errmsg(db));
             return nullptr;
@@ -426,10 +420,8 @@ bool LeaksMemoryDatabase::DropMemoryAllocationAndBlockTable()
         ServerLog::Error("Failed to drop table. Database is not open.");
         return false;
     }
-    // LCOV_EXCL_BR_START
     std::string dropSql = "DROP TABLE IF EXISTS " + memoryAllocationTable + ";"
              "DROP TABLE IF EXISTS " + memoryBlockTable + ";";
-    // LCOV_EXCL_BR_STOP
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(dropSql);
 }
@@ -458,7 +450,7 @@ void LeaksMemoryDatabase::AppendMemoryBlockQueryConditionSqlByParams(const Leaks
     }
 }
 
-bool LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<Memory::MemoryBlock> &blocks)
+bool LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<MemoryBlock> &blocks)
 {
     if (stmt == nullptr) {
         ServerLog::Error("Query memory blocks by step failed: stmt ptr is null.");
@@ -466,7 +458,7 @@ bool LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vecto
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Memory::MemoryBlock block;
+        MemoryBlock block;
         block.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.ptr = sqlite3_column_string(stmt, col++);
         block.size = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
@@ -481,7 +473,7 @@ bool LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vecto
     return true;
 }
 void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams,
-                                            std::vector<Memory::MemoryBlock> &blocks)
+                                            std::vector<MemoryBlock> &blocks)
 {
     sqlite3_stmt *stmt;
     std::string querySql;
@@ -489,7 +481,6 @@ void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryP
     if (queryParams.relativeTime) {
         minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
     }
-    // LCOV_EXCL_BR_START
     querySql = "SELECT {}, {}, {}, "
                "({} - {}) AS {},"
                "({} - {}) AS {},"
@@ -519,7 +510,7 @@ void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryP
 }
 
 bool LeaksMemoryDatabase::QueryMemoryAllocationsByStep(sqlite3_stmt *stmt,
-                                                       std::vector<Memory::MemoryAllocation> &allocations)
+                                                       std::vector<MemoryAllocation> &allocations)
 {
     if (stmt == nullptr) {
         ServerLog::Error("Query memory blocks by step failed: stmt ptr is null.");
@@ -527,7 +518,7 @@ bool LeaksMemoryDatabase::QueryMemoryAllocationsByStep(sqlite3_stmt *stmt,
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Memory::MemoryAllocation allocation;
+        MemoryAllocation allocation;
         allocation.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         allocation.timestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         allocation.totalSize = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
@@ -540,7 +531,7 @@ bool LeaksMemoryDatabase::QueryMemoryAllocationsByStep(sqlite3_stmt *stmt,
 }
 
 void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationParams &queryParams,
-                                                 std::vector<Memory::MemoryAllocation> &allocations)
+                                                 std::vector<MemoryAllocation> &allocations)
 {
     sqlite3_stmt *stmt;
     std::string querySql;
@@ -667,7 +658,7 @@ void LeaksMemoryDatabase::QueryThreadIds(std::vector<uint64_t> &threadIds)
 bool LeaksMemoryDatabase::QueryEventsWithinTimeRangeByDeviceId(uint64_t startTimestamp,
                                                                uint64_t endTimestamp,
                                                                const std::string &deviceId,
-                                                               std::vector<Memory::MemoryEvent> &events)
+                                                               std::vector<MemoryEvent> &events)
 {
     if (startTimestamp > endTimestamp || startTimestamp >= INT64_MAX || endTimestamp >= INT64_MAX) {
         ServerLog::Error("Query events table: invalid time range");
@@ -692,7 +683,7 @@ bool LeaksMemoryDatabase::QueryEventsWithinTimeRangeByDeviceId(uint64_t startTim
     return true;
 }
 
-std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocationWithinTimestamp(
+std::optional<MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocationWithinTimestamp(
     const std::string &deviceId, const std::string &eventType, uint64_t timestamp)
 {
     std::string sql;
@@ -711,7 +702,7 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocati
     sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, bindIdx++, eventType.c_str(), eventType.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt, bindIdx++, timestamp > INT64_MAX ? INT64_MAX : timestamp);
-    std::vector<Memory::MemoryAllocation> allocations;
+    std::vector<MemoryAllocation> allocations;
     QueryMemoryAllocationsByStep(stmt, allocations);
     if (allocations.empty()) {
         ServerLog::Warn("Query allocation table. Failed to query latest allocation record: no data.");
@@ -722,9 +713,9 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocati
     return allocations[0];
 }
 
-std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryNextAllocationAfterTimestamp(const std::string &deviceId,
-                                                                                               const std::string &eventType,
-                                                                                               uint64_t timestamp)
+std::optional<MemoryAllocation> LeaksMemoryDatabase::QueryNextAllocationAfterTimestamp(const std::string &deviceId,
+                                                                                       const std::string &eventType,
+                                                                                       uint64_t timestamp)
 {
     std::string sql;
     std::string errMsg;
@@ -741,7 +732,7 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryNextAllocation
     sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, bindIdx++, eventType.c_str(), eventType.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt, bindIdx++, timestamp > INT64_MAX ? INT64_MAX : timestamp);
-    std::vector<Memory::MemoryAllocation> allocations;
+    std::vector<MemoryAllocation> allocations;
     QueryMemoryAllocationsByStep(stmt, allocations);
     if (allocations.empty()) {
         ServerLog::Warn("Query allocation table. Failed to query latest allocation record: no data.");

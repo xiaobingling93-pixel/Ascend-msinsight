@@ -6,15 +6,15 @@
 #define PROFILER_SERVER_LEAKSMEMORYSERVICE_H
 
 #include <utility>
-
-#include "MemoryDef.h"
+#include "pch.h"
+#include "MemoryDetailDefs.h"
 #include "LeaksMemoryDatabase.h"
 #include "LeaksMemoryDetailTreeNode.h"
-#include "MemoryProtocolRespose.h"
+#include "MemoryDetailProtocolResponse.h"
 
 namespace Dic {
 namespace Module {
-namespace Memory {
+namespace MemoryDetail {
 struct BlockEventAttr {
     std::string addr;
     int64_t size;

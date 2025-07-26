@@ -7,7 +7,7 @@
 #include <string>
 namespace Dic {
 namespace Module {
-namespace Memory {
+namespace MemoryDetail {
 namespace MemoryEventTableColumn {
     constexpr std::string_view ID = "ID";
     constexpr std::string_view EVENT = "Event";

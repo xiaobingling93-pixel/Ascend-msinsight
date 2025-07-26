@@ -3,13 +3,12 @@
  */
 #include <algorithm>
 #include <stack>
-#include "pch.h"
 #include "DataBaseManager.h"
 #include "LeaksMemoryService.h"
 
 namespace Dic {
 namespace Module {
-namespace Memory {
+namespace MemoryDetail {
 void LeaksMemoryService::ParserEnd(const std::string &rankId, bool result)
 {
     if (!result) {
@@ -22,12 +21,12 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
 {
     if (fileId.empty()) {
         auto event = std::make_unique<Protocol::LeaksParseSuccessEvent>();
-        event->moduleName = Protocol::MODULE_MEMORY;
+        event->moduleName = Protocol::MODULE_LEAKS;
         event->result = true;
         SendEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::LeaksParseSuccessEvent>();
-        event->moduleName = Protocol::MODULE_MEMORY;
+        event->moduleName = Protocol::MODULE_LEAKS;
         event->result = result;
         Protocol::LeaksParseSuccessEventBody body;
         if (event->result) {
@@ -68,13 +67,13 @@ bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
         return false;
     }
 
-    std::vector<Memory::MemoryEvent> events;
+    std::vector<MemoryEvent> events;
     database->QueryEntireEventsTable(events);
     if (events.empty()) {
         Server::ServerLog::Warn("No memory events could be found in leaks_db.");
         return false;
     }
-    Memory::LeaksMemoryService::ParseEventsToBlockAndAllocations(events, database);
+    LeaksMemoryService::ParseEventsToBlockAndAllocations(events, database);
     return true;
 }
 

@@ -3,7 +3,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "MemoryProtocolRequest.h"
+#include "MemoryDetailRequestHandler.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "LeaksMemoryDatabase.h"
@@ -12,6 +12,7 @@
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
+using namespace Dic::Module::MemoryDetail;
 using namespace Dic;
 
 class LeaksMemoryServiceTest : public ::testing::Test {

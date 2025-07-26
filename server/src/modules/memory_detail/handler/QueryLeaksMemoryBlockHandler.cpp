@@ -3,13 +3,11 @@
  */
 #include "ServerLog.h"
 #include "DataBaseManager.h"
-#include "MemoryProtocolRespose.h"
-#include "MemoryProtocolRequest.h"
 #include "QueryLeaksMemoryBlockHandler.h"
 
 namespace Dic {
 namespace Module {
-namespace Memory {
+namespace MemoryDetail {
 enum class SimpleBlockEventType {
     MALLOC = 0,
     FREE = 1

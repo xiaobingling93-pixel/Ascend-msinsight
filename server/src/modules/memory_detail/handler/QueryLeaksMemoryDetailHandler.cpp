@@ -7,7 +7,7 @@
 
 namespace Dic {
 namespace Module {
-namespace Memory {
+namespace MemoryDetail {
 bool QueryLeaksMemoryDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<LeaksMemoryDetailRequest &>(*requestPtr);

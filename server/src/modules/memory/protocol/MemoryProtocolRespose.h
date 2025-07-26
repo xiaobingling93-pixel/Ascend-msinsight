@@ -10,8 +10,6 @@
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 #include "MemoryDef.h"
-#include "LeaksMemoryDetailTreeNode.h"
-#include "LeaksMemoryPythonTrace.h"
 
 namespace Dic {
 namespace Protocol {
@@ -162,77 +160,6 @@ struct MemoryStaticOperatorListCompResponse : public Response {
 struct MemoryStaticOperatorSizeResponse : public Response {
     MemoryStaticOperatorSizeResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX) {}
     StaticOperatorSize size;
-};
-struct MemoryBlockItem : Dic::Module::Memory::MemoryBlock {
-    std::vector<std::pair<std::uint64_t, std::uint64_t>> path;
-    MemoryBlockItem() = default;
-    explicit MemoryBlockItem(const MemoryBlock &block)
-        : MemoryBlock(block) {}
-
-    void AddPathPoint(uint64_t timestamp, uint64_t size)
-    {
-        if (path.empty()) {
-            path.emplace_back(timestamp, size);
-            return;
-        }
-        std::pair<std::uint64_t, std::uint64_t> lastPoint = path.back();
-        // 如果新加入的点x值与最后一个点x值相同, 或者x值在最后一个点的x之前 视为无效点
-        if (timestamp <= lastPoint.first) {
-            return;
-        }
-        if (path.size() == 1) {
-            path.emplace_back(timestamp, size);
-            return;
-        }
-        // 如果新加入的点, y值与最后一个点的y值相同
-        std::pair<std::uint64_t, std::uint64_t> secondLastPoint = path[path.size()-2];
-        if (size == lastPoint.second && size == secondLastPoint.second) {
-            // 如果倒数第二个点、最后一个点、和新加入的点y值都相同, 则中间点可省略
-            path.back().first = timestamp;
-            return;
-        }
-        path.emplace_back(timestamp, size);
-    }
-};
-struct LeaksMemoryBlocksResponse : public Response {
-    LeaksMemoryBlocksResponse()
-        : Response (REQ_RES_LEAKS_MEMORY_BLOCKS),
-          minTimestamp(0),
-          maxTimestamp(0),
-          minSize(0),
-          maxSize(0),
-          totalNum(0) {}
-
-    std::vector<MemoryBlockItem> blocks;
-    uint64_t minTimestamp;
-    uint64_t maxTimestamp;
-    uint64_t minSize;
-    uint64_t maxSize;
-    uint64_t totalNum;
-};
-
-struct LeaksMemoryAllocationsResponse : public Response {
-    LeaksMemoryAllocationsResponse()
-        : Response(REQ_RES_LEAKS_MEMORY_ALLOCATIONS),
-          minTimestamp(0),
-          maxTimestamp(0) {}
-    uint64_t minTimestamp;
-    uint64_t maxTimestamp;
-    std::vector<Dic::Module::Memory::MemoryAllocation> allocations;
-};
-
-struct LeaksMemoryDetailsResponse : public Response {
-    LeaksMemoryDetailsResponse()
-        : Response(REQ_RES_LEAKS_MEMORY_DETAILS),
-          timestamp(0) {}
-    uint64_t timestamp;
-    LeaksMemoryDetailTreeNode detail;
-};
-
-struct LeaksMemoryTracesResponse : public Response {
-    LeaksMemoryTracesResponse()
-        : Response(REQ_RES_LEAKS_MEMORY_TRACES) {}
-    LeaksMemoryPythonTrace trace;
 };
 
 struct ComponentDto {

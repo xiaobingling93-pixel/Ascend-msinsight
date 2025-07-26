@@ -113,8 +113,8 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         ServerLog::Error("There is no Memory Data in this db file");
     } else if (type == FileType::LEAKS && !database->CheckTableDataInvalid(TABLE_LEAKS_DUMP)) {
         for (const auto& rankId: rankIds) {
-            Memory::LeaksMemoryService::ParserEnd(rankId, false);
-            Memory::LeaksMemoryService::ParseCallBack(rankId, false, "There is no Leaks Memory Data in this db file");
+            MemoryDetail::LeaksMemoryService::ParserEnd(rankId, false);
+            MemoryDetail::LeaksMemoryService::ParseCallBack(rankId, false, "There is no Leaks Memory Data in this db file");
         }
         ServerLog::Error("There is no Leaks Memory Data in this db file");
     } else {
@@ -285,21 +285,21 @@ void FullDbParser::InitLeaksMemory(const std::vector<std::string> &rankIds, cons
     for (const std::string& id : rankIds) {
         auto leaksMemoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
         if (leaksMemoryDatabase != nullptr && leaksMemoryDatabase->OpenDb(path, false)) {
-            if (Memory::LeaksMemoryService::ParseMemoryLeaksDumpEvents(id)) {
-                Memory::LeaksMemoryService::ParserEnd(id, true);
-                Memory::LeaksMemoryService::ParseCallBack(id, true, "");
+            if (MemoryDetail::LeaksMemoryService::ParseMemoryLeaksDumpEvents(id)) {
+                MemoryDetail::LeaksMemoryService::ParserEnd(id, true);
+                MemoryDetail::LeaksMemoryService::ParseCallBack(id, true, "");
             } else {
-                Memory::LeaksMemoryService::ParserEnd(id, false);
-                Memory::LeaksMemoryService::ParseCallBack(id, false,
-                                                          "An exception occurred while parsing the DB data: "
-                                                          "Please check the logs for details.");
+                MemoryDetail::LeaksMemoryService::ParserEnd(id, false);
+                MemoryDetail::LeaksMemoryService::ParseCallBack(id, false,
+                                                                "An exception occurred while parsing the DB data: "
+                                                                "Please check the logs for details.");
                 ServerLog::Error("Failed to connect or open leaks memory database.");
             }
         } else {
-            Memory::LeaksMemoryService::ParserEnd(id, false);
-            Memory::LeaksMemoryService::ParseCallBack(id, false,
-                                                      "An exception occurred while parsing the DB data: "
-                                                      "The database failed to open properly.");
+            MemoryDetail::LeaksMemoryService::ParserEnd(id, false);
+            MemoryDetail::LeaksMemoryService::ParseCallBack(id, false,
+                                                            "An exception occurred while parsing the DB data: "
+                                                            "The database failed to open properly.");
             ServerLog::Error("Failed to connect or open leaks memory database.");
         }
     }

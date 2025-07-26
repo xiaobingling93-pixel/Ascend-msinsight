@@ -5,16 +5,12 @@
 #ifndef PROFILER_SERVER_QUERYLEAKSMEMORYDETAILHANDLER_H
 #define PROFILER_SERVER_QUERYLEAKSMEMORYDETAILHANDLER_H
 
-#include "MemoryRequestHandler.h"
-#include "MemoryProtocolRequest.h"
-#include "MemoryProtocolRespose.h"
-#include "LeaksMemoryService.h"
-#include "LeaksMemoryDetailTreeNode.h"
+#include "MemoryDetailRequestHandler.h"
 
 namespace Dic {
 namespace Module {
-namespace Memory {
-class QueryLeaksMemoryDetailHandler : public MemoryRequestHandler {
+namespace MemoryDetail {
+class QueryLeaksMemoryDetailHandler : public MemoryDetailRequestHandler {
 public:
     QueryLeaksMemoryDetailHandler()
     {
