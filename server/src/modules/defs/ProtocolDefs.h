@@ -25,6 +25,7 @@ const std::string MODULE_MEMORY = "memory";
 const std::string MODULE_MEMORY_DETAIL = "memory_detail";
 const std::string MODULE_OPERATOR = "operator";
 const std::string MODULE_SOURCE = "source";
+const std::string MODULE_RL = "rl";
 const std::string MODULE_ADVISOR = "advisor";
 const std::string MODULE_JUPYTER = "jupyter";
 const std::string MODULE_IE = "IE";
@@ -187,6 +188,9 @@ const std::string EVENT_PARSE_JUPYTER_COMPLETED = "parse/jupyterCompleted";
 const std::string REQ_RES_IE_VIEW = "IE/usage/view";
 const std::string REQ_RES_IE_TABLE_VIEW = "IE/table/view";
 const std::string REQ_RES_IE_DATA_GROUP = "IE/group";
+
+// Reinforcement Learning 强化学习
+const std::string REQ_REQ_RL_PIPELINE = "RL/pipeline";
 
 const std::string KEY_BODY = "body";
 #pragma endregion

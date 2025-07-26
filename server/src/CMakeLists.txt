@@ -107,6 +107,12 @@ include_directories(${SRC_HOME_DIR}/modules/jupyter)
 include_directories(${SRC_HOME_DIR}/modules/jupyter/parser)
 include_directories(${SRC_HOME_DIR}/modules/jupyter/protocol)
 
+# Reinforcement Learning 强化学习
+include_directories(${SRC_HOME_DIR}/modules/rl)
+include_directories(${SRC_HOME_DIR}/modules/rl/core)
+include_directories(${SRC_HOME_DIR}/modules/rl/protocol)
+include_directories(${SRC_HOME_DIR}/modules/rl/handler)
+
 # servitization
 include_directories(${SRC_HOME_DIR}/modules/servitization)
 include_directories(${SRC_HOME_DIR}/modules/servitization/api)
@@ -207,6 +213,13 @@ aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/handler DIC_MODULES_M
 aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/service DIC_MODULES_MEM_DETAIL_SVC_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/protocol DIC_MODULES_MEM_DETAIL_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/entity DIC_MODULES_MEM_DETAIL_ENTITY_SRC)
+
+# Reinforcement Learning
+aux_source_directory(${SRC_HOME_DIR}/modules/rl DIC_MODULES_RL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/rl/core DIC_MODULES_RL_CORE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/rl/protocol DIC_MODULES_RL_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/rl/handler DIC_MODULES_RL_HANDLER_SRC)
+
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}
@@ -285,7 +298,12 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_MEM_DETAIL_DB_SRC}
         ${DIC_MODULES_MEM_DETAIL_HANDLER_SRC}
         ${DIC_MODULES_MEM_DETAIL_PROTOCOL_SRC}
-        ${DIC_MODULES_MEM_DETAIL_ENTITY_SRC})
+        ${DIC_MODULES_MEM_DETAIL_ENTITY_SRC}
+        ${DIC_MODULES_IE_REPO_SRC}
+        ${DIC_MODULES_RL_SRC}
+        ${DIC_MODULES_RL_CORE_SRC}
+        ${DIC_MODULES_RL_PROTOCOL_SRC}
+        ${DIC_MODULES_RL_HANDLER_SRC})
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test|fuzz")
     enable_testing()
