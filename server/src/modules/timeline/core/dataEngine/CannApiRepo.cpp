@@ -24,17 +24,6 @@ void CannApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQu
         sliceVec.emplace_back(sliceDomain);
     }
 }
-void CannApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds) {}
-uint64_t CannApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
-{
-    return 0;
-}
-void CannApiRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
-    std::vector<CompeteSliceDomain> &sliceVec)
-{}
-void CannApiRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
-    std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
-{}
 
 void CannApiRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
     std::vector<CompeteSliceDomain> &competeSliceVec)

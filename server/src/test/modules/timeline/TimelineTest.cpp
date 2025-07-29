@@ -1084,6 +1084,29 @@ TEST_F(TestSuit, QuerySliceByTimepointAndNameTest)
     EXPECT_EQ(slice.cardId, "0");
 }
 
+/**
+ * 测试 Text 的 textRepo 转成五种 SliceInterface 的情况
+ */
+TEST_F(TestSuit, TestDynamicCastOfMultiSliceInterface)
+{
+    TextRepository textRepo;
+    // 转 IBaseSliceRepo 成功
+    const auto baseSliceRepo = dynamic_cast<IBaseSliceRepo*>(&textRepo);
+    EXPECT_NE(baseSliceRepo, nullptr);
+    // 转 IPythonFuncSlice 成功
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(&textRepo);
+    EXPECT_NE(pythonFuncRepo, nullptr);
+    // 转 IFindSliceByNameList 成功
+    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(&textRepo);
+    EXPECT_NE(findSliceByNameList, nullptr);
+    // 转 IFindSliceByTimepointAndName 成功
+    const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(&textRepo);
+    EXPECT_NE(findSliceByTimepointAndName, nullptr);
+    // 转 ITextSlice 成功
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(&textRepo);
+    EXPECT_NE(textSliceRepo, nullptr);
+}
+
 TEST_F(TestSuit, QueryOverlapAnalysisDataTest)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");

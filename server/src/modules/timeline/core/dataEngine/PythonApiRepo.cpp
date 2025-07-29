@@ -101,13 +101,6 @@ uint64_t PythonApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &slic
     }
     return count;
 }
-void PythonApiRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
-    std::vector<CompeteSliceDomain> &sliceVec)
-{}
-
-void PythonApiRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
-    std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
-{}
 
 void PythonApiRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
     std::vector<CompeteSliceDomain> &competeSliceVec)

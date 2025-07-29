@@ -9,7 +9,9 @@
 #include "SimulationSliceRepoInterface.h"
 
 namespace Dic::Module::Timeline {
-class DataEngineInterface : public SliceRepoInterface, public FlowRepoInterface, public SimulationSliceRepoInterface {
+class DataEngineInterface : public IBaseSliceRepo, public IPythonFuncSlice, public ITextSlice,
+    public IFindSliceByTimepointAndName, public IFindSliceByNameList,
+    public FlowRepoInterface, public SimulationSliceRepoInterface {
 public:
     ~DataEngineInterface() override = default;
     virtual void SetRepositoryFactory(std::shared_ptr<RepositoryFactoryInterface>) = 0;

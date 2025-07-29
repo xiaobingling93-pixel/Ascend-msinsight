@@ -104,19 +104,6 @@ std::vector<uint64_t> HcclRepo::QueryGlobalTaskIdsByRank(const TrackInfo &trackI
     return globalIds;
 }
 
-void HcclRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds) {}
-uint64_t HcclRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
-{
-    return 0;
-}
-void HcclRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
-    std::vector<CompeteSliceDomain> &sliceVec)
-{}
-
-void HcclRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
-    std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
-{}
-
 void HcclRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
     std::vector<CompeteSliceDomain> &competeSliceVec)
 {

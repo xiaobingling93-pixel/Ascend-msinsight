@@ -68,7 +68,7 @@ public:
     bool QueryUnitsMetadata(const std::string &fileId,
                             std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
-    bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
+    bool QueryUnitFlows(const Protocol::UnitFlowsParams &requestParams,
                         Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId) override;
     bool SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
                       Protocol::SetCardAliasBody &responseBody) override;

@@ -45,10 +45,10 @@ public:
     void ComputeSliceDomainVecByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec);
     void ComputeAllThreadInfo(const ThreadQuery &flowQuery,
                               std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo);
-    void SetRepository(std::shared_ptr<SliceRepoInterface> repository);
+    void SetRepository(std::shared_ptr<IBaseSliceRepo> repository);
 
 private:
-    std::shared_ptr<SliceRepoInterface> repository;
+    std::shared_ptr<IBaseSliceRepo> repository;
     static bool CompareTimestampASC(const SliceDomain &first, const SliceDomain &second);
     static void AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
         uint64_t tmpSelfTime);

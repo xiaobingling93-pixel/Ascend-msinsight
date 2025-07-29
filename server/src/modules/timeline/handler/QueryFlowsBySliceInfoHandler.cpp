@@ -35,7 +35,7 @@ bool QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         TrackInfoManager::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     bool result;
     try {
-        result = database->QueryUintFlows(request.params, response.body, minTimestamp, trackId);
+        result = database->QueryUnitFlows(request.params, response.body, minTimestamp, trackId);
     }  catch (DatabaseException &e) {
         e.Log("Query flows by slice info Fail, ");
     }

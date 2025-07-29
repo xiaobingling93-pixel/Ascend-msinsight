@@ -35,7 +35,7 @@ RepositoryFactory::~RepositoryFactory()
     simulationRespoMap.clear();
 }
 
-std::shared_ptr<SliceRepoInterface> RepositoryFactory::GetSliceRespo(PROCESS_TYPE metaType)
+std::shared_ptr<IBaseSliceRepo> RepositoryFactory::GetSliceRespo(PROCESS_TYPE metaType)
 {
     if (sliceRespoMap.count(metaType) == 0) {
         return nullptr;

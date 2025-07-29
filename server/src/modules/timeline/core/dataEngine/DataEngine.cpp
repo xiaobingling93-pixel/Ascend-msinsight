@@ -37,7 +37,11 @@ void DataEngine::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<ui
     if (sliceRespo == nullptr) {
         return;
     }
-    sliceRespo->QuerySliceIdsByCat(sliceQuery, sliceIds);
+    const auto pythonFuncSliceRepo = dynamic_cast<IPythonFuncSlice*>(sliceRespo.get());
+    if (pythonFuncSliceRepo == nullptr) {
+        return;
+    }
+    pythonFuncSliceRepo->QuerySliceIdsByCat(sliceQuery, sliceIds);
 }
 
 uint64_t DataEngine::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
@@ -50,7 +54,11 @@ uint64_t DataEngine::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQu
     if (sliceRespo == nullptr) {
         return 0;
     }
-    const uint64_t count = sliceRespo->QueryPythonFunctionCountByTrackId(sliceQuery);
+    const auto pythonFuncSliceRepo = dynamic_cast<IPythonFuncSlice*>(sliceRespo.get());
+    if (pythonFuncSliceRepo == nullptr) {
+        return 0;
+    }
+    const uint64_t count = pythonFuncSliceRepo->QueryPythonFunctionCountByTrackId(sliceQuery);
     return count;
 }
 
@@ -65,7 +73,11 @@ void DataEngine::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sli
     if (sliceRespo == nullptr) {
         return;
     }
-    sliceRespo->QueryCompeteSliceVecByTimeRangeAndTrackId(sliceQuery, sliceVec);
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(sliceRespo.get());
+    if (textSliceRepo == nullptr) {
+        return;
+    }
+    textSliceRepo->QueryCompeteSliceVecByTimeRangeAndTrackId(sliceQuery, sliceVec);
 }
 
 void DataEngine::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
@@ -105,7 +117,11 @@ void DataEngine::QueryAllThreadInfo(const ThreadQuery &threadQuery,
     if (sliceRespo == nullptr) {
         return;
     }
-    sliceRespo->QueryAllThreadInfo(threadQuery, threadInfo);
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(sliceRespo.get());
+    if (textSliceRepo == nullptr) {
+        return;
+    }
+    textSliceRepo->QueryAllThreadInfo(threadQuery, threadInfo);
 }
 
 /**
@@ -189,7 +205,11 @@ bool DataEngine::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, Comp
     if (sliceRespo == nullptr) {
         return false;
     }
-    return sliceRespo->QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
+    const auto findByTimepointAndNameSliceRepo = dynamic_cast<IFindSliceByTimepointAndName*>(sliceRespo.get());
+    if (findByTimepointAndNameSliceRepo == nullptr) {
+        return false;
+    }
+    return findByTimepointAndNameSliceRepo->QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
 }
 
 bool DataEngine::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
@@ -203,6 +223,10 @@ bool DataEngine::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &para
     if (sliceRespo == nullptr) {
         return false;
     }
-    return sliceRespo->QuerySliceDetailInfoByNameList(params, res);
+    const auto findByNameListSliceRepo = dynamic_cast<IFindSliceByNameList*>(sliceRespo.get());
+    if (findByNameListSliceRepo == nullptr) {
+        return false;
+    }
+    return findByNameListSliceRepo->QuerySliceDetailInfoByNameList(params, res);
 }
 }

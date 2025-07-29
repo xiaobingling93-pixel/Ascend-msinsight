@@ -46,29 +46,6 @@ void OSRTApiRepo::QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(std::shared_ptr
     }
 }
 
-void OSRTApiRepo::QuerySliceIdsByCat(const Dic::Module::Timeline::SliceQuery &sliceQuery,
-                                     std::vector<uint64_t> &sliceIds)
-{
-    return;
-}
-
-uint64_t OSRTApiRepo::QueryPythonFunctionCountByTrackId(const Dic::Module::Timeline::SliceQuery &sliceQuery)
-{
-    return 0;
-}
-
-void OSRTApiRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const Dic::Module::Timeline::SliceQuery &sliceQuery,
-                                                            std::vector<CompeteSliceDomain> &sliceVec)
-{
-    return;
-}
-
-void OSRTApiRepo::QueryAllThreadInfo(const Dic::Module::Timeline::ThreadQuery &flowQuery,
-                                     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
-{
-    return;
-}
-
 void OSRTApiRepo::QueryCompeteSliceByIds(const Dic::Module::Timeline::SliceQuery &sliceQuery,
                                          const std::vector<uint64_t> &sliceIds,
                                          std::vector<CompeteSliceDomain> &competeSliceVec)

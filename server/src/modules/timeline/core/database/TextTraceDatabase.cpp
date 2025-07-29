@@ -537,7 +537,7 @@ std::map<uint64_t, std::pair<std::string, std::string>> TextTraceDatabase::Query
     return threadMap;
 }
 
-bool TextTraceDatabase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
+bool TextTraceDatabase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestParams,
     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
 {
     if (requestParams.isSimulation) {

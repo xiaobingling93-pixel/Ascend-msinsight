@@ -115,3 +115,23 @@ TEST_F(MstxRepoTest, TestQuerySliceDetailInfoWhenIdNotExistThenReturnFalse)
     bool result = mstxRepoMock.QuerySliceDetailInfo(query, slice);
     EXPECT_EQ(result, false);
 }
+
+/**
+ * 测试全量DB的 mstxRepo 转化 SliceInterface 的情况
+ */
+TEST_F(MstxRepoTest, TestDynamicCastOfMultiSliceInterface)
+{
+    std::shared_ptr<IBaseSliceRepo> mstxRepo = std::make_shared<MstxRepo>();
+    // 转 IPythonFuncSlice 失败
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(mstxRepo.get());
+    EXPECT_EQ(pythonFuncRepo, nullptr);
+    // 转 IFindSliceByNameList 失败
+    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(mstxRepo.get());
+    EXPECT_EQ(findSliceByNameList, nullptr);
+    // 转 IFindSliceByTimepointAndName 失败
+    const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(mstxRepo.get());
+    EXPECT_EQ(findSliceByTimepointAndName, nullptr);
+    // 转 ITextSlice 失败
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(mstxRepo.get());
+    EXPECT_EQ(textSliceRepo, nullptr);
+}

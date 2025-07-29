@@ -113,7 +113,7 @@ std::vector<FlowLocation> DbTraceDataBase::ConvertResultToFlowLocation(std::uniq
     return flowLocations;
 }
 
-bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
+bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestParams,
     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
 {
     auto stmt = CreatPreparedStatement();

@@ -790,7 +790,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsNotEmptyThenRetu
     const std::string fileId = "ll";
     const Dic::Protocol::UnitFlowsParams requestParams;
     Dic::Protocol::UnitFlowsBody responseBody;
-    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, false);
 }
 
@@ -822,7 +822,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsOneThenReturnFal
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
     Dic::Protocol::UnitFlowsBody responseBody;
-    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, false);
 }
 
@@ -867,7 +867,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsTwoThenReturnTru
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
     Dic::Protocol::UnitFlowsBody responseBody;
-    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, true);
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
@@ -915,7 +915,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenDeviceUniqueThenReturnTrue)
     requestParams.metaType = "CANN_API";
     Dic::Protocol::UnitFlowsBody responseBody;
     MockNpuInfoRepoFunc();
-    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, true);
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
@@ -967,7 +967,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenRankIdAndDeviceIdNotSame)
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
     Dic::Protocol::UnitFlowsBody responseBody;
-    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, true);
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "999");

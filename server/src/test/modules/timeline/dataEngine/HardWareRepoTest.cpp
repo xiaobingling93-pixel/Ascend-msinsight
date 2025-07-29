@@ -170,3 +170,23 @@ TEST_F(HardWareRepoTest, TestQuerySliceDetailInfoWhenSliceNotExistThenReturnFals
     bool result = hardWareRepo.QuerySliceDetailInfo(query, slice);
     EXPECT_EQ(result, false);
 }
+
+/**
+ * 测试全量DB的 hardWareRepo 转化 SliceInterface 的情况
+ */
+TEST_F(HardWareRepoTest, TestDynamicCastOfMultiSliceInterface)
+{
+    std::shared_ptr<IBaseSliceRepo> hardWareRepo = std::make_shared<HardWareRepo>();
+    // 转 IPythonFuncSlice 失败
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(hardWareRepo.get());
+    EXPECT_EQ(pythonFuncRepo, nullptr);
+    // 转 IFindSliceByNameList 成功
+    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(hardWareRepo.get());
+    EXPECT_NE(findSliceByNameList, nullptr);
+    // 转 IFindSliceByTimepointAndName 失败
+    const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(hardWareRepo.get());
+    EXPECT_EQ(findSliceByTimepointAndName, nullptr);
+    // 转 ITextSlice 失败
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(hardWareRepo.get());
+    EXPECT_EQ(textSliceRepo, nullptr);
+}

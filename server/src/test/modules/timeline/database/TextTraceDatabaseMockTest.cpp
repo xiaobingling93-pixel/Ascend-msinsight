@@ -1716,7 +1716,7 @@ TEST_F(TextTraceDatabaseMockTest, TestQuerySimulationUintFlows)
     Dic::Protocol::UnitFlowsBody responseBody;
     const uint64_t minTimestamp = 0;
     const uint64_t trackId = 15;
-    bool result = database.QueryUintFlows(requestParams, responseBody, minTimestamp, trackId);
+    bool result = database.QueryUnitFlows(requestParams, responseBody, minTimestamp, trackId);
     EXPECT_EQ(result, true);
 }
 

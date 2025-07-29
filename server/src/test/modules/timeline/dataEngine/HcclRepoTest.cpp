@@ -121,26 +121,23 @@ TEST_F(HcclRepoTest, test_QueryCompeteSliceByIds_group_track_with_empthIds)
 }
 
 /**
- * 测试全量DB的hccl下调用栈算子id
+ * 测试全量DB的hccl下转化 SliceInterface 的情况
  */
-TEST_F(HcclRepoTest, test_QuerySliceIdsByCat_normal)
+TEST_F(HcclRepoTest, TestDynamicCastOfMultiSliceInterface)
 {
-    HcclRepo hcclRepo;
-    SliceQuery sliceQuery;
-    std::vector<uint64_t> sliceIds;
-    hcclRepo.QuerySliceIdsByCat(sliceQuery, sliceIds);
-    EXPECT_EQ(sliceIds.size(), 0);
-}
-
-/**
- * 测试全量DB的hccl下调用栈算子个数
- */
-TEST_F(HcclRepoTest, test_QueryPythonFunctionCountByTrackId_normal)
-{
-    HcclRepo hcclRepo;
-    SliceQuery sliceQuery;
-    uint64_t count = hcclRepo.QueryPythonFunctionCountByTrackId(sliceQuery);
-    EXPECT_EQ(count, 0);
+    std::shared_ptr<IBaseSliceRepo> hcclRepo = std::make_shared<HcclRepo>();
+    // 转 IPythonFuncSlice 失败
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(hcclRepo.get());
+    EXPECT_EQ(pythonFuncRepo, nullptr);
+    // 转 IFindSliceByNameList 失败
+    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(hcclRepo.get());
+    EXPECT_EQ(findSliceByNameList, nullptr);
+    // 转 IFindSliceByTimepointAndName 失败
+    const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(hcclRepo.get());
+    EXPECT_EQ(findSliceByTimepointAndName, nullptr);
+    // 转 ITextSlice 失败
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(hcclRepo.get());
+    EXPECT_EQ(textSliceRepo, nullptr);
 }
 
 /**

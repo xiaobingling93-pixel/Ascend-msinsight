@@ -593,7 +593,7 @@ TEST_F(FullDbTestSuit, QueryUnitFLows)
     Protocol::UnitFlowsBody responseBody;
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
 
-    database->QueryUintFlows(requestParams, responseBody, minTimestamp, 0);
+    database->QueryUnitFlows(requestParams, responseBody, minTimestamp, 0);
     const uint64_t EXPECT_COUNT = 1;
 
     EXPECT_EQ(responseBody.unitAllFlows.size(), EXPECT_COUNT);

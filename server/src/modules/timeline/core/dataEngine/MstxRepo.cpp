@@ -39,18 +39,6 @@ void MstxRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery
         sliceVec.emplace_back(sliceDomain);
     }
 }
-void MstxRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds) {}
-uint64_t MstxRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
-{
-    return 0;
-}
-void MstxRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
-    std::vector<CompeteSliceDomain> &sliceVec)
-{}
-
-void MstxRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
-    std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
-{}
 
 void MstxRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
     std::vector<CompeteSliceDomain> &competeSliceVec)

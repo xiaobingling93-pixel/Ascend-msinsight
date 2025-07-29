@@ -13,7 +13,7 @@ namespace Dic::Module::Timeline {
 class RepositoryFactoryInterface {
 public:
     virtual ~RepositoryFactoryInterface() = default;
-    virtual std::shared_ptr<SliceRepoInterface> GetSliceRespo(PROCESS_TYPE) = 0;
+    virtual std::shared_ptr<IBaseSliceRepo> GetSliceRespo(PROCESS_TYPE) = 0;
     virtual std::shared_ptr<SimulationSliceRepoInterface> GetSimulationSliceRespo(PROCESS_TYPE) = 0;
     virtual std::shared_ptr<CounterRepoInterface> GetCounterRespo(PROCESS_TYPE) = 0;
     virtual std::shared_ptr<FlowRepoInterface> GetFlowRespo(PROCESS_TYPE) = 0;

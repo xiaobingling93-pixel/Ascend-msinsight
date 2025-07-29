@@ -6,31 +6,33 @@
 #include "FlowRepoInterface.h"
 #include "SimulationSliceRepoInterface.h"
 namespace Dic::Module::Timeline {
-class TextRepository : public SliceRepoInterface, public FlowRepoInterface, public SimulationSliceRepoInterface {
+class TextRepository : public IBaseSliceRepo, public IPythonFuncSlice, public ITextSlice,
+    public IFindSliceByTimepointAndName, public IFindSliceByNameList,
+    public FlowRepoInterface, public SimulationSliceRepoInterface {
 public:
     ~TextRepository() override = default;
-    /* *
+    /** @SliceRepoInterface IBaseSliceRepo
      * 根据trackId查询简单算子
      * @param sliceQuery
      * @param sliceVec
      */
     void QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
         std::vector<SliceDomain> &sliceVec) override;
-    /* *
+    /** @SliceRepoInterface IPythonFuncSlice
      * 根据TrackId查询所有调用栈算子的id,返回结果升序
      * @param sliceQuery
      * @param sliceIds
      */
     void QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds) override;
 
-    /* *
+    /** @SliceRepoInterface IPythonFuncSlice
      * 根据TrackId查询python function数据条数
      * @param sliceQuery
      * @return
      */
     uint64_t QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery) override;
 
-    /* *
+    /** @SliceRepoInterface ITextSlice
      * 查询时间范围内所有算子（包括与范围相交的）
      * @param sliceQuery
      * @param sliceVec
@@ -38,31 +40,15 @@ public:
     void QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
         std::vector<CompeteSliceDomain> &sliceVec) override;
 
-    /* *
-     * 查询时间范围内的所有连线点
+    /** @SliceRepoInterface ITextSlice
+     * 查询所有泳道线程和进程信息
      * @param flowQuery
-     * @param flowPointVec
+     * @param threadInfo
      */
-    void QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
-
-    /* *
-     * 根据连线点id查询所有连线点
-     * @param flowQuery
-     * @param flowPointVec
-     */
-    void QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
-
-    /* *
-     * 根据连线类别查询所有连线
-     * @param flowQuery
-     * @param flowPointVec
-     */
-    void QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
-
     void QueryAllThreadInfo(const ThreadQuery &flowQuery,
-        std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
+                            std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
 
-    /* *
+    /** @SliceRepoInterface IBaseSliceRepo
      * 根据Id集合查询完整算子信息
      * @param sliceQuery
      * @param sliceIds
@@ -71,14 +57,58 @@ public:
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
 
-    void QueryAllFlagSlice(const SliceQuery &sliceQuery, std::vector<CompeteSliceDomain> &competeSliceDomain) override;
-
+    /** @SliceRepoInterface IBaseSliceRepo
+     * 根据Id查询算子的shape和args信息
+     * @param sliceQuery
+     * @param competeSliceDomain
+     * @return
+     */
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
 
+    /** @SliceRepoInterface IFindSliceByTimepointAndName
+     * 根据给定的时刻和名字查询算子
+     * @param sliceQuery
+     * @param competeSliceDomain
+     * @return
+     */
+    bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+
+    /** @SliceRepoInterface IFindSliceByNameList
+     * 根据算子名查询算子明细列表
+     * @param params
+     * @param res
+     * @return
+     */
     bool QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
                                         std::vector<CompeteSliceDomain> &res) override;
 
-    bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+    /** @FlowRepoInterface
+     * 查询时间范围内的所有连线点
+     * @param flowQuery
+     * @param flowPointVec
+     */
+    void QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
+
+    /** @FlowRepoInterface
+     * 根据连线点id查询所有连线点
+     * @param flowQuery
+     * @param flowPointVec
+     */
+    void QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
+
+    /** @FlowRepoInterface
+     * 根据连线类别查询所有连线
+     * @param flowQuery
+     * @param flowPointVec
+     */
+    void QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
+
+    /** @SimulationSliceRepoInterface
+     * 查询所有 flag 算子
+     * @param sliceQuery
+     * @param competeSliceDomain
+     */
+    void QueryAllFlagSlice(const SliceQuery &sliceQuery, std::vector<CompeteSliceDomain> &competeSliceDomain) override;
 
 private:
     const std::vector<std::string> COMMUNICATION_LIST = {"HCCL", "COMMUNICATION"};

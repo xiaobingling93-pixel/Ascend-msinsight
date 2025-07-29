@@ -208,3 +208,23 @@ TEST_F(PythonApiRepoTest, TestQuerySliceByTimepointAndNameNormal)
     EXPECT_EQ(competeSliceDomain.duration, competeSliceDomain.endTime - competeSliceDomain.timestamp);
     EXPECT_EQ(competeSliceDomain.cardId, hostCardId);
 }
+
+/**
+ * 测试全量DB的 pythonApiRepo 转化 SliceInterface 的情况
+ */
+TEST_F(PythonApiRepoTest, TestDynamicCastOfMultiSliceInterface)
+{
+    std::shared_ptr<IBaseSliceRepo> pythonApiRepo = std::make_shared<PythonApiRepo>();
+    // 转 IPythonFuncSlice 成功
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(pythonApiRepo.get());
+    EXPECT_NE(pythonFuncRepo, nullptr);
+    // 转 IFindSliceByNameList 失败
+    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(pythonApiRepo.get());
+    EXPECT_EQ(findSliceByNameList, nullptr);
+    // 转 IFindSliceByTimepointAndName 成功
+    const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(pythonApiRepo.get());
+    EXPECT_NE(findSliceByTimepointAndName, nullptr);
+    // 转 ITextSlice 失败
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(pythonApiRepo.get());
+    EXPECT_EQ(textSliceRepo, nullptr);
+}

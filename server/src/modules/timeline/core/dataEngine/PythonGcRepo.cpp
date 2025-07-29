@@ -41,19 +41,6 @@ void PythonGcRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
     }
 }
 
-void PythonGcRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds) {}
-uint64_t PythonGcRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
-{
-    return 0;
-}
-void PythonGcRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
-    std::vector<CompeteSliceDomain> &sliceVec)
-{}
-
-void PythonGcRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
-    std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
-{}
-
 void PythonGcRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
     std::vector<CompeteSliceDomain> &competeSliceVec)
 {

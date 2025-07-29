@@ -183,3 +183,23 @@ TEST_F(OSRTApiRepoTest, QuerySliceDetailInfoExecuteSQLFailedTest)
     database->CloseDb();
     std::remove(completePath.c_str());
 }
+
+/**
+ * 测试全量DB的 osrtApiRepo 转化 SliceInterface 的情况
+ */
+TEST_F(OSRTApiRepoTest, TestDynamicCastOfMultiSliceInterface)
+{
+    std::shared_ptr<IBaseSliceRepo> osrtApiRepo = std::make_shared<OSRTApiRepo>();
+    // 转 IPythonFuncSlice 失败
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(osrtApiRepo.get());
+    EXPECT_EQ(pythonFuncRepo, nullptr);
+    // 转 IFindSliceByNameList 失败
+    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(osrtApiRepo.get());
+    EXPECT_EQ(findSliceByNameList, nullptr);
+    // 转 IFindSliceByTimepointAndName 失败
+    const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(osrtApiRepo.get());
+    EXPECT_EQ(findSliceByTimepointAndName, nullptr);
+    // 转 ITextSlice 失败
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(osrtApiRepo.get());
+    EXPECT_EQ(textSliceRepo, nullptr);
+}

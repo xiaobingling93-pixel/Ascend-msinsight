@@ -41,26 +41,23 @@ TEST_F(CannApiRepoTest, test_QueryCompeteSliceByIds_with_empthIds)
 }
 
 /**
- * 测试全量DB的cann下调用栈算子id
+ * 测试全量DB的 cannApiRepo 转化 SliceInterface 的情况
  */
-TEST_F(CannApiRepoTest, test_QuerySliceIdsByCat_normal)
+TEST_F(CannApiRepoTest, TestDynamicCastOfMultiSliceInterface)
 {
-    CannApiRepo cannApiRepo;
-    SliceQuery sliceQuery;
-    std::vector<uint64_t> sliceIds;
-    cannApiRepo.QuerySliceIdsByCat(sliceQuery, sliceIds);
-    EXPECT_EQ(sliceIds.size(), 0);
-}
-
-/**
- * 测试全量DB的cann下调用栈算子个数
- */
-TEST_F(CannApiRepoTest, test_QueryPythonFunctionCountByTrackId_normal)
-{
-    CannApiRepo cannApiRepo;
-    SliceQuery sliceQuery;
-    uint64_t count = cannApiRepo.QueryPythonFunctionCountByTrackId(sliceQuery);
-    EXPECT_EQ(count, 0);
+    std::shared_ptr<IBaseSliceRepo> cannApiRepo = std::make_shared<CannApiRepo>();
+    // 转 IPythonFuncSlice 失败
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(cannApiRepo.get());
+    EXPECT_EQ(pythonFuncRepo, nullptr);
+    // 转 IFindSliceByNameList 成功
+    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(cannApiRepo.get());
+    EXPECT_NE(findSliceByNameList, nullptr);
+    // 转 IFindSliceByTimepointAndName 失败
+    const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(cannApiRepo.get());
+    EXPECT_EQ(findSliceByTimepointAndName, nullptr);
+    // 转 ITextSlice 失败
+    const auto textSliceRepo = dynamic_cast<ITextSlice*>(cannApiRepo.get());
+    EXPECT_EQ(textSliceRepo, nullptr);
 }
 
 /**

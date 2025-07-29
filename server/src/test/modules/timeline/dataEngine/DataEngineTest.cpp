@@ -49,9 +49,9 @@ protected:
 
     class RespotoryFactoryMock : public Dic::Module::Timeline::RepositoryFactory {
     public:
-        std::shared_ptr<SliceRepoInterface> GetSliceRespo(PROCESS_TYPE)override
+        std::shared_ptr<IBaseSliceRepo> GetSliceRespo(PROCESS_TYPE)override
         {
-            std::shared_ptr<SliceRepoInterface> res = std::make_shared<SliceRepoMock>();
+            std::shared_ptr<IBaseSliceRepo> res = std::make_shared<SliceRepoMock>();
             return res;
         }
     };

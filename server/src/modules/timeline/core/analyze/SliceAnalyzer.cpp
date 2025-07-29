@@ -11,7 +11,7 @@ SliceAnalyzer::SliceAnalyzer()
     }
 };
 
-void SliceAnalyzer::SetRepository(std::shared_ptr<SliceRepoInterface> repositoryDependency)
+void SliceAnalyzer::SetRepository(std::shared_ptr<IBaseSliceRepo> repositoryDependency)
 {
     repository = repositoryDependency;
 }
@@ -228,8 +228,9 @@ void SliceAnalyzer::QueryPythonFuncIds(const SliceQuery &sliceQuery, std::vector
 {
     auto &instance = SliceCacheManager::Instance();
     std::string sliceCacheKey = std::to_string(sliceQuery.trackId);
+    const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(repository.get());
     if (instance.HavePythonFunction(sliceQuery.trackId)) {
-        uint64_t count = repository->QueryPythonFunctionCountByTrackId(sliceQuery);
+        uint64_t count = pythonFuncRepo != nullptr ? pythonFuncRepo->QueryPythonFunctionCountByTrackId(sliceQuery) : 0;
         if (count == 0) {
             instance.SetPythonFunctionStatus(sliceQuery.trackId, false);
         }
@@ -237,7 +238,9 @@ void SliceAnalyzer::QueryPythonFuncIds(const SliceQuery &sliceQuery, std::vector
     if (sliceQuery.isFilterPythonFunction && instance.HavePythonFunction(sliceQuery.trackId)) {
         pythonFunctionIds = instance.GetPythonFunctionIdVec(sliceCacheKey);
         if (std::empty(pythonFunctionIds)) {
-            repository->QuerySliceIdsByCat(sliceQuery, pythonFunctionIds);
+            if (pythonFuncRepo != nullptr) {
+                pythonFuncRepo->QuerySliceIdsByCat(sliceQuery, pythonFunctionIds);
+            }
             instance.PutPythonFunctionIdVec(sliceCacheKey, pythonFunctionIds);
         }
     }
@@ -247,8 +250,12 @@ void SliceAnalyzer::ComputeSliceDomainVecAndSelfTimeByTimeRange(const SliceQuery
     std::vector<CompeteSliceDomain> &sliceDomainVec, std::map<std::string, uint64_t> &selfTimeKeyValue)
 {
     std::vector<CompeteSliceDomain> allCompeteSliceVec;
+    const auto textRepo = dynamic_cast<ITextSlice*>(repository.get());
+    if (textRepo == nullptr) {
+        return;
+    }
     // 查询符合条件的所有算子
-    repository->QueryCompeteSliceVecByTimeRangeAndTrackId(sliceQuery, allCompeteSliceVec);
+    textRepo->QueryCompeteSliceVecByTimeRangeAndTrackId(sliceQuery, allCompeteSliceVec);
     if (std::empty(allCompeteSliceVec)) {
         return;
     }
@@ -352,6 +359,9 @@ bool SliceAnalyzer::CompareTimestampASC(const SliceDomain &first, const SliceDom
 void SliceAnalyzer::ComputeAllThreadInfo(const ThreadQuery &flowQuery,
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
 {
-    repository->QueryAllThreadInfo(flowQuery, threadInfo);
+    const auto textRepo = dynamic_cast<ITextSlice*>(repository.get());
+    if (textRepo != nullptr) {
+        textRepo->QueryAllThreadInfo(flowQuery, threadInfo);
+    }
 }
 }
