@@ -8,7 +8,6 @@ import type { ChartsHandle } from 'ascend-components/MIChart';
 import {
     queryFwpBwdTimeline,
     type QueryFwpBwdTimelineRes,
-    TraceItem,
 } from '../../utils/RequestUtils';
 import type { EChartsOption, CustomSeriesRenderItem } from 'echarts';
 import { merge } from 'lodash';
@@ -51,12 +50,31 @@ const nsToMs = (ns: number): number => {
     return ns / 1000000;
 };
 
-const colorMap: {[key in TraceItem['cname']]: keyof Theme['colorPalette']} = {
-    FP: 'deepBlue',
-    BP: 'limeGreen',
-    SEND: 'sunsetOrange',
-    RECV: 'tealGreen',
-    BATCH_SEND_RECV: 'royalPurple',
+export const colorPalette: Array<keyof Theme['colorPalette']> = [
+    'deepBlue',
+    'limeGreen',
+    'sunsetOrange',
+    'coralRed',
+    'tealGreen',
+    'royalPurple',
+    'aquaBlue',
+    'raspberryPink',
+    'vividBlue',
+    'vividRed',
+    'skyBlue',
+    'amethystPurple',
+];
+
+const colorMapping = new Map<string, number>();
+
+export const hashToNumber = (input: string, maxIndex: number): number => {
+    if (!colorMapping.has(input)) {
+        colorMapping.set(input, colorMapping.size);
+    }
+    if (maxIndex === 0) {
+        return 0;
+    }
+    return (colorMapping.get(input) ?? 0) % maxIndex;
 };
 
 //  指定维度的映射值
@@ -69,8 +87,8 @@ const valueMap = {
     name: 5,
 };
 
-const formatData = (dataSource: QueryFwpBwdTimelineRes | null, theme: Theme): {ranks: Ranks; data: SeriesDataItem[]} => {
-    const { rankList } = dataSource ?? {};
+const formatData = (dataSource: QueryFwpBwdTimelineRes, theme: Theme): {ranks: Ranks; data: SeriesDataItem[]; flowData: SeriesDataItem[]} => {
+    const { rankList, flowList } = dataSource ?? {};
     const data: SeriesDataItem[] = [];
     const ranks = rankList?.map(rank => rank.rank).reverse() ?? [];
 
@@ -83,14 +101,64 @@ const formatData = (dataSource: QueryFwpBwdTimelineRes | null, theme: Theme): {r
                     name,
                     value: [rank.rank, nsToMs(start), nsToMs((start + duration)), nsToMs(duration), component.component, addPrefix(name)],
                     itemStyle: {
-                        color: theme.colorPalette[colorMap[cname]],
+                        color: theme.colorPalette[colorPalette[hashToNumber(cname, colorPalette.length)]],
                     },
                 });
             });
         });
     });
+    const flowData: SeriesDataItem[] = flowList.map((flow) => {
+        return {
+            name: '',
+            value: [flow[0].rankId, nsToMs(flow[0].startTime), flow[1].rankId, nsToMs(flow[1].startTime)],
+            itemStyle: {
+                color: theme.colorPalette.tealGreen,
+            },
+        };
+    });
 
-    return { ranks, data };
+    return { ranks, data, flowData };
+};
+
+const renderLine: CustomSeriesRenderItem = (params, api) => {
+    const start = api.coord([api.value(1), api.value(0)]);
+    const end = api.coord([api.value(3), api.value(2)]);
+    const height = ((api.size?.([0, 1]) as number[])?.[1] ?? 0) * 0.3;
+    // 计算偏移量，使线条从算子中间开始
+    const offset = height / 2;
+    const startRectY = Math.round(start[1] + offset);
+    const endRectY = Math.round(end[1] + offset);
+    // 计算贝塞尔曲线的控制点
+    const controlPoint = [
+        (start[0] + end[0]) / 2, // 控制点X，位于起始点和终点的中间
+        Math.min(start[1], end[1]) - height / 1.5, // 控制点Y，位于起始点和终点之上
+    ];
+
+    // 绘制贝塞尔曲线
+    const bezierCurve = {
+        x1: start[0],
+        y1: startRectY,
+        x2: end[0],
+        y2: endRectY,
+        cpx1: controlPoint[0],
+        cpy1: controlPoint[1],
+    };
+
+    return {
+        type: 'group',
+        children: [
+            {
+                type: 'bezierCurve',
+                transition: ['shape'],
+                shape: bezierCurve,
+                style: {
+                    stroke: api.visual('color'),
+                    fill: 'none',
+                    lineWidth: 1,
+                },
+            },
+        ],
+    };
 };
 
 const renderRect: CustomSeriesRenderItem = (params, api) => {
@@ -195,6 +263,18 @@ const baseOptions: EChartsOption = {
             },
             clip: true,
         },
+        {
+            type: 'custom',
+            renderItem: renderLine,
+            itemStyle: {
+                opacity: 0.8,
+            },
+            encode: {
+                x: [1, 3],
+                y: [0, 2],
+            },
+            clip: true,
+        },
     ],
 };
 
@@ -241,7 +321,7 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
             }).finally(() => {
                 setLoading(false);
             });
-            const { data, ranks } = formatData(dataSource, theme);
+            const { data, ranks, flowData } = formatData(dataSource, theme);
             const height = Math.round(clamp((ranks.length * RANK_HEIGHT) + CHART_BASE_HEIGHT, 200, 1000));
             setChartHeight(`${height}px`);
             setChartOptions(merge({}, baseOptions, {
@@ -250,6 +330,7 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
                 },
                 series: [
                     { data },
+                    { data: flowData },
                 ],
             }));
         };

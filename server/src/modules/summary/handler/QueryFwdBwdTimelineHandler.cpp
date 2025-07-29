@@ -43,6 +43,7 @@ bool QueryFwdBwdTimelineHandler::HandleRequest(std::unique_ptr<Protocol::Request
     threadPool.WaitForAllTasks();
     threadPool.ShutDown();
 
+    CalFlowInfo(response.body.flowList, rankIds);
     // collect all data
     for (auto const &rankId : rankIds) {
         response.body.rankDataList.push_back(dataMap[rankId]);
@@ -106,15 +107,46 @@ bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineFromMstx(const std::string &
         ServerLog::Error("Fail to query fwd/bwd info from mstx.");
         return false;
     }
+    rank->componentDataList.push_back(fwdBwdData);
     // 从COMMUNICATION_OP表查询算子内容
     PipelineFwdBwdTimelineByComponent p2pOpData = {LANE_P2P_OP, {}};
     if (!database->QueryP2PCommunicationOpHaveConnectionId(p2pOpData.traceList)) {
-        ServerLog::Error("Fail to query p2p communication op.");
-        return false;
+        ServerLog::Warn("Query Fwd/Bwd timeline from mstx without p2p communication op info.");
+        return true;
     }
-    rank->componentDataList.push_back(fwdBwdData);
     rank->componentDataList.push_back(p2pOpData);
     return true;
+}
+
+void QueryFwdBwdTimelineHandler::CalFlowInfo(std::vector<FlowInfo> &flowList, const std::vector<std::string> &rankIds)
+{
+    std::map<std::string, std::vector<FlowPointInfo>> pointMap;
+    for (const auto &rank: rankIds) {
+        auto pipeline = dataMap[rank];
+        std::vector<Protocol::ThreadTraces> p2pTraceList;
+        for (auto &item: pipeline.componentDataList) {
+            if (item.component == LANE_P2P_OP) {
+                p2pTraceList = item.traceList;
+                break;
+            }
+        }
+        for (const auto &item: p2pTraceList) {
+            if (item.opConnectionId.empty()) {
+                continue;
+            }
+            FlowPointInfo point{rank, item.startTime};
+            pointMap[item.opConnectionId].push_back(point);
+        }
+    }
+    const size_t flowPointNumber = 2;
+    for (auto &item: pointMap) {
+        if (item.second.size() != flowPointNumber) {
+            continue;
+        }
+        FlowInfo flowInfo;
+        flowInfo.flowPointList = item.second;
+        flowList.push_back(flowInfo);
+    }
 }
 
 bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineFromFlow(const std::string &rankId, const std::string &stepId,

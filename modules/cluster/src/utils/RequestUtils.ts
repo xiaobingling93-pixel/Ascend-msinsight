@@ -191,7 +191,7 @@ export interface TraceItem {
     pid: string;
     tid: string;
     id: string;
-    cname: 'FP' | 'BP' | 'SEND' | 'RECV' | 'BATCH_SEND_RECV';
+    cname: string;
 }
 
 interface RankItem {
@@ -205,6 +205,12 @@ export interface QueryFwpBwdTimelineRes {
     minTime: number;
     maxTime: number;
     rankList: RankItem[];
+    flowList: Array<
+    Array<{
+        rankId: string;
+        startTime: number;
+    }>
+    >;
 }
 
 export const queryFwpBwdTimeline = async(params: ParamsWithClusterPath<QueryFwpBwdTimelineParams>): Promise<QueryFwpBwdTimelineRes> => {

@@ -321,9 +321,28 @@ std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(const P
         JsonUtil::AddMember(rankArrayJson, "componentList", componentsDetailList, allocator);
         rankDetailList.PushBack(rankArrayJson, allocator);
     }
+    std::optional<document_t> flowList = FlowListInfoToJson(response.body.flowList, allocator);
+    JsonUtil::AddMember(body, "flowList", flowList, allocator);
     JsonUtil::AddMember(body, "rankList", rankDetailList, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::optional<document_t>{std::move(json)};
+}
+
+std::optional<document_t> FlowListInfoToJson(const std::vector<FlowInfo> &flowList,
+                                             Document::AllocatorType &allocator)
+{
+    document_t flowListJson(kArrayType);
+    for (const auto &flow: flowList) {
+        json_t flowPointList(kArrayType);
+        for (const auto &point: flow.flowPointList) {
+            json_t pointJson(kObjectType);
+            JsonUtil::AddMember(pointJson, "rankId", point.rankId, allocator);
+            JsonUtil::AddMember(pointJson, "startTime", point.startTime, allocator);
+            flowPointList.PushBack(pointJson, allocator);
+        }
+        flowListJson.PushBack(flowPointList, allocator);
+    }
+    return std::optional<document_t>(std::move(flowListJson));
 }
 
 void GetArrangementsJson(const ParallelismArrangementResponse& response, document_t& json, json_t& body)

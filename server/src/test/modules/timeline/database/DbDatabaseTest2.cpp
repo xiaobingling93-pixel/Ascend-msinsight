@@ -776,7 +776,7 @@ TEST_F(DbDatabaseTest2, TestQueryFwdBwdDataByFlowWhenTableNotRight)
     EXPECT_EQ(fwdBwdData.size(), 0);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryFwdBwdFromMstxSucceess)
+TEST_F(DbDatabaseTest2, TestQueryFwdBwdFromMstxSuccess)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);

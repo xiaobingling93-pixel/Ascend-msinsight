@@ -70,6 +70,7 @@ struct ThreadTraces {
     std::string pid;
     std::string id;
     std::string cname;
+    std::string opConnectionId;
 };
 
 struct UnitThreadTracesBody {

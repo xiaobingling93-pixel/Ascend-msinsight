@@ -28,6 +28,7 @@ private:
         const std::shared_ptr<Dic::Module::Timeline::VirtualTraceDatabase> &database);
     static bool QueryFwdBwdTimelineFromMstx(const std::string &rankId, const std::string &stepId,
         const std::shared_ptr<Dic::Module::Timeline::VirtualTraceDatabase> &database);
+    static void CalFlowInfo(std::vector<FlowInfo> &flowList, const std::vector<std::string> &rankIds);
 };
 
 } // Dic::Module::Summary

@@ -123,8 +123,7 @@ struct FlowPointInfo {
 };
 
 struct FlowInfo {
-    FlowPointInfo to;
-    FlowPointInfo from;
+    std::vector<FlowPointInfo> flowPointList;
 };
 
 struct PipelineFwdBwdTimelineResponseBody {

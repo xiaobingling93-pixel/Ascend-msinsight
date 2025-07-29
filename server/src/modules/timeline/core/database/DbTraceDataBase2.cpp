@@ -103,8 +103,8 @@ bool DbTraceDataBase::QueryFwdBwdFromMstx(std::vector<Protocol::ThreadTraces> &t
         std::string name = resultSet->GetString("name");
         uint64_t startNs = resultSet->GetUint64("startNs");
         uint64_t endNs = resultSet->GetUint64("endNs");
-        uint64_t type = resultSet->GetUint64("type");
-        Protocol::ThreadTraces trace = {name, endNs - startNs, startNs, endNs, 0, LANE_FP_BP, "", "", name};
+        std::string type = std::to_string(resultSet->GetUint64("type"));
+        Protocol::ThreadTraces trace = {name, endNs - startNs, startNs, endNs, 0, LANE_FP_BP, "", "", type};
         traceList.push_back(trace);
     }
     return true;
@@ -140,6 +140,7 @@ bool DbTraceDataBase::QueryP2PCommunicationOpHaveConnectionId(std::vector<Protoc
         } else {
             trace.cname = MARKER_BATCH_SEND_RECV;
         }
+        trace.opConnectionId = resultSet->GetString("opConnectionId");
         traceList.push_back(trace);
     }
     return true;
