@@ -66,6 +66,7 @@
     "Bandwidth Formula": "带宽 = 数据量 / 算子执行耗时",
     "L2 Cache Hit Rate Formula": "L2 Cache命中率 = L2 Cache总命中次数 / (L2 Cache总命中次数 + L2 Cache总未命中次数)",
     "Cube Ratio Formula": "Cube利用率 = Cube时钟周期 / 总时钟周期",
-    "Vector Ratio Formula": "Vector利用率 = Vector时钟周期 / 总时钟周期"
+    "Vector Ratio Formula": "Vector利用率 = Vector时钟周期 / 总时钟周期",
+    "Active Bw(GB/s)": "活跃带宽(GB/s)"
   }
 }
