@@ -47,11 +47,7 @@ bool ParamsParser::ParseField(const std::string &data)
     if (pos != std::string::npos) {
         return ParseLogSize(data.substr(pos + symbolLogSize.length()));
     }
-    pos = data.find(symbolScan);
-    if (pos != std::string::npos) {
-        ParseScan(data.substr(pos + symbolScan.length()));
-        return true;
-    }
+
     pos = data.find(symbolEventDir);
     if (pos != std::string::npos) {
         return ParseEventDir(data.substr(pos + symbolEventDir.length()));
@@ -133,13 +129,6 @@ bool ParamsParser::ParseLogLevel(const std::string &logLevel)
         option.logLevel = logLevel;
     }
     return true;
-}
-
-void ParamsParser::ParseScan(const std::string &scan)
-{
-    if (!scan.empty()) {
-        option.scanPort = NumberUtil::TryParseInt(scan);
-    }
 }
 
 bool ParamsParser::ParseEventDir(const string &eventDir)

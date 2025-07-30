@@ -19,7 +19,6 @@ struct ParamsOption {
     string logLevel = "INFO";
     string logPath = "./";
     string eventDir;
-    int scanPort = -1;
 };
 
 class ParamsParser {
@@ -39,7 +38,6 @@ private:
     bool ParseLogPath(const std::string &logPath);
     bool ParseLogSize(const std::string &logSize);
     bool ParseLogLevel(const std::string &logLevel);
-    void ParseScan(const std::string &scan);
     bool ParseEventDir(const string &eventDir);
 
     const string symbolWsPort = "--wsPort=";
@@ -47,7 +45,6 @@ private:
     const string symbolLogPath = "--logPath=";
     const string symbolLogSize = "--logSize=";
     const string symbolLogLevel = "--logLevel=";
-    const string symbolScan = "--scan=";
     const string symbolEventDir = "--eventDir=";
     const int minPortNum = 9000;
     const int maxPortNum = 9100;
