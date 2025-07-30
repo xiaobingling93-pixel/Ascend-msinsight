@@ -388,6 +388,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         },
         renderTooltip: (data) => new Map([
             ['Name', data.name],
+            ['Duration', getDetailTimeDisplay(data.duration as number)],
         ]),
         config: {
             rowHeight: UnitHeight.STANDARD,

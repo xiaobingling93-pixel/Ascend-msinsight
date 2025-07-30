@@ -27,7 +27,8 @@ const Tooltip = styled.div<{ needReverse?: boolean }>(props => ({
     position: 'absolute',
     backgroundColor: props.theme.bgColorLight,
     color: props.theme.textColorSecondary,
-    borderRadius: 10,
+    border: `1px solid ${props.theme.borderColorLight}`,
+    borderRadius: 2,
     padding: '0 10px 0 10px',
     whiteSpace: 'pre',
     zIndex: 2,
@@ -73,9 +74,9 @@ const TooltipComp = (tooltipArg: TooltipArg): JSX.Element => {
         let row = 0;
         tooltipArg.content.forEach((value, key) => {
             trContent[row] = trContent[row] ?? [];
-            trContent[row].push(<td style={{ textAlign: 'right' }} key={`key_${key}`}>{trContent[row].length === 0 ? key : `  ${key}`}</td>);
+            trContent[row].push(<td style={{ textAlign: 'left' }} key={`key_${key}`}>{trContent[row].length === 0 ? key : `  ${key}`}</td>);
             trContent[row].push(<td key={`colon_${key}`}>:  </td>);
-            trContent[row].push(<td style={{ textAlign: 'right' }} key={`value_${key}`}>{value}</td>);
+            trContent[row].push(<td style={{ textAlign: 'left' }} key={`value_${key}`}>{value}</td>);
             row = (row + 1) % 5;
         });
         trContent.map((value, index) => {
