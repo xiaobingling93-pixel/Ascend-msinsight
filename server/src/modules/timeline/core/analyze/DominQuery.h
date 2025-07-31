@@ -57,6 +57,12 @@ struct SliceQueryByNameList {
     std::string processName;
     std::vector<std::string> nameList;
     PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
+    uint64_t startTime = 0;
+    uint64_t endTime = UINT64_MAX;
+
+    // 以下字段目前只有text场景有效，如果其他场景也需要，请注意代码适配
+    std::vector<std::string> processNameExclusion;
+    std::string processLabel;
 };
 
 struct FlowQuery {

@@ -195,6 +195,12 @@ std::vector<CompeteSliceDomain> RenderEngine::QuerySliceDetailByNameList(const s
     return res;
 }
 
+std::vector<CompeteSliceDomain> RenderEngine::QueryMstxRLDetail(const std::string &fileId, const DataType &type,
+    const std::vector<std::string> &nameList, uint64_t startTime, uint64_t endTime)
+{
+    return {};
+}
+
 void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, UnitThreadDetailBody &responseBody,
     uint64_t trackId)
 {

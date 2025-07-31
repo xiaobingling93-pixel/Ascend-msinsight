@@ -31,10 +31,12 @@ template<> std::optional<document_t> ToResponseJson<RLPipelineResponse>(const RL
         JsonUtil::AddMember(pipelineItem, "rankId", item.rankId, allocator);
         json_t nodeList(kArrayType);
         for (const auto &node: item.lists) {
-            json_t nodeJson(kArrayType);
-            JsonUtil::AddMember(nodeJson, "type", node.type, allocator);
+            json_t nodeJson(kObjectType);
+            JsonUtil::AddMember(nodeJson, "nodeType", node.nodeType, allocator);
             JsonUtil::AddMember(nodeJson, "startTime", node.startTime, allocator);
             JsonUtil::AddMember(nodeJson, "duration", node.duration, allocator);
+            JsonUtil::AddMember(nodeJson, "name", node.name, allocator);
+            JsonUtil::AddMember(nodeJson, "stageType", node.stageType, allocator);
             nodeList.PushBack(nodeJson, allocator);
         }
         JsonUtil::AddMember(pipelineItem, "lists", nodeList, allocator);

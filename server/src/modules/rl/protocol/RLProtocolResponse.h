@@ -12,10 +12,11 @@
 namespace Dic::Protocol {
 
 struct RLPipelineNode {
-    std::string type;
+    std::string nodeType;
     uint64_t startTime = 0;
     uint64_t duration = 0;
     std::string name;
+    std::string stageType;
 };
 
 struct RLPipelineItem {

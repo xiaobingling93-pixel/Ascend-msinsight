@@ -32,6 +32,8 @@ public:
         const std::string &metaType) override;
     std::vector<CompeteSliceDomain> QuerySliceDetailByNameList(const std::string &fileId,
         const DataType &type, const std::string &processName, const std::vector<std::string> &nameList);
+    std::vector<CompeteSliceDomain> QueryMstxRLDetail(const std::string &fileId, const DataType &type,
+        const std::vector<std::string> &nameList, uint64_t startTime = 0, uint64_t endTime = UINT64_MAX);
 
 private:
     std::shared_ptr<DataEngineInterface> dataEngine = nullptr;
