@@ -3,6 +3,7 @@
  */
 import React, { useEffect, useState, useRef } from 'react';
 import * as echarts from 'echarts';
+import { safeStr } from 'ascend-utils';
 import { MIChart } from 'ascend-components';
 import type { ChartsHandle } from 'ascend-components/MIChart';
 import { type EChartsOption } from 'echarts';
@@ -100,6 +101,21 @@ const getSeries = (session: Session, theme: Theme): any => {
         },
     ];
 };
+const getTooltip = (session: Session): echarts.TooltipComponentOption => {
+    return {
+        trigger: 'item',
+        formatter: function (params: any): string {
+            const info = session.funcData.traces[params.dataIndex];
+            if (!info) {
+                return '';
+            }
+            return safeStr(info.func);
+        },
+        textStyle: {
+            fontSize: 12,
+        },
+    };
+};
 const getOptions = (session: Session, theme: Theme): EChartsOption => {
     return {
         color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
@@ -134,9 +150,10 @@ const getOptions = (session: Session, theme: Theme): EChartsOption => {
         axisPointer: {
             show: true,
         },
+        tooltip: getTooltip(session),
         series: getSeries(session, theme),
         grid: {
-            left: '6%',
+            left: '8%',
             right: '4%',
         },
     };
@@ -185,8 +202,8 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
     return (
         <MIChart
             ref={chartRef}
-            height='500px'
-            width='calc(100vw - 80px)'
+            height="500px"
+            width="calc(100vw - 80px)"
             loading={loading}
             options={chartOptions}
         />

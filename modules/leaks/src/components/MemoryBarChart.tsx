@@ -165,7 +165,7 @@ const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): E
             show: true,
         },
         grid: {
-            left: '6%',
+            left: '8%',
             right: '4%',
         },
     };

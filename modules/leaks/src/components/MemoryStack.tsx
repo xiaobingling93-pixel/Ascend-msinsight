@@ -125,7 +125,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             </div>
             <div id="funcContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
                 <Line id='funcLine' lineShow={lineShow} offset={offset} />
-                {<MemoryFunctionCall session={session} setFuncIns={setFuncIns} />}
+                <MemoryFunctionCall session={session} setFuncIns={setFuncIns} />
             </div>
             <div style={{ marginLeft: 24 }}>
                 <Label name={t('DeviceID')} />

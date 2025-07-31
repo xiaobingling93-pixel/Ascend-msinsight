@@ -11,6 +11,6 @@ export const chartResize = (ins: echarts.ECharts | null | undefined): void => {
         width: width + 1,
     });
     ins.resize({
-        width,
+        width: 'auto',
     });
 };
