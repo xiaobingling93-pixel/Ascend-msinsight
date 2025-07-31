@@ -8,22 +8,24 @@ import { useTranslation } from 'react-i18next';
 import { MIChart } from 'ascend-components';
 import type { ChartsHandle } from 'ascend-components/MIChart';
 import { safeStr } from 'ascend-utils';
-import { type EChartsOption } from 'echarts';
-import type { BlockData } from '../utils/RequestUtils';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
-import { getBarNewData } from './dataHandler';
-import { chartResize } from '../utils/utils';
 import { useTheme } from '@emotion/react';
+import type { TFunction } from 'i18next';
+import { type EChartsOption } from 'echarts';
+import type { BlockData } from '../utils/RequestUtils';
+import { getBarNewData, getFuncNewData } from './dataHandler';
+import { chartResize } from '../utils/utils';
+import { Session } from '../entity/session';
 const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 interface InitParam {
-    session: any;
+    session: Session;
     blockData: BlockData;
     lineSource: number[][];
     source: number[][];
-    t: any;
+    t: TFunction;
 };
-const getXAxis = (session: InitParam['session']): echarts.XAXisComponentOption => {
+const getXAxis = (session: Session): echarts.XAXisComponentOption => {
     return {
         type: 'value',
         min: session.minTime,
@@ -70,7 +72,7 @@ const getYAxis = (): echarts.YAXisComponentOption => {
         },
     };
 };
-const getSeries = (t: InitParam['t'], source: InitParam['source'], lineSource: InitParam['lineSource']): any => {
+const getSeries = (t: TFunction, source: InitParam['source'], lineSource: InitParam['lineSource']): any => {
     return ([
         {
             type: 'custom',
@@ -116,7 +118,7 @@ const getSeries = (t: InitParam['t'], source: InitParam['source'], lineSource: I
         },
     ]);
 };
-const getLegend = (t: InitParam['t'], session: InitParam['session']): echarts.LegendComponentOption => {
+const getLegend = (t: TFunction, session: Session): echarts.LegendComponentOption => {
     return {
         data: [t('MemoryAllocations'), t('MemoryBlocks')],
         selected: session.legendSelect,
@@ -170,14 +172,12 @@ const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): E
         },
     };
 };
-const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarIns: (value: echarts.ECharts | null) => void }): React.ReactElement => {
+const MemoryBarChart = observer(({ session, setBarIns }: { session: Session; setBarIns: (value: echarts.ECharts | null) => void }): React.ReactElement => {
     const { t } = useTranslation('leaks');
     const chartRef = useRef<ChartsHandle>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
-    const { blockData, allocationData, deviceId, eventType, threadId, synStartTime, synEndTime } = session;
-    const [startTime, setStartTime] = useState<number>(synStartTime);
-    const [endTime, setEndTime] = useState<number>(synEndTime);
+    const { blockData, allocationData, deviceId, eventType, threadId, threadFlag } = session;
     const lineSource = allocationData.allocations.map((line: any) => [line.timestamp, line.totalSize]);
     const source: number[][] = useMemo(() => {
         const blockSource: number[][] = [];
@@ -198,16 +198,10 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
     const initParam: InitParam = { session, blockData, lineSource, source, t };
     const theme = useTheme();
     useEffect(() => {
-        if (deviceId === '') return;
+        if (deviceId === '' || threadFlag) return;
         setLoading(true);
-        if (startTime !== synStartTime || endTime !== synEndTime) {
-            setStartTime(synStartTime);
-            setEndTime(synEndTime);
-            getBarNewData(session, synStartTime, synEndTime);
-        } else {
-            getBarNewData(session);
-        }
-    }, [deviceId, eventType, threadId, synStartTime, synEndTime]);
+        getBarNewData(session);
+    }, [deviceId, eventType, threadId]);
     useEffect(() => {
         const param: EChartsOption = getOptions(initParam);
         setChartOptions(param);
@@ -225,10 +219,14 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
             runInAction(() => {
                 if (session.threadId !== info.threadId) {
                     session.searchFunc = [];
+                } else {
+                    const funcSet = new Set(session.searchFunc);
+                    session.searchFunc = funcSet.size ? session.funcOptions.filter((item: any) => funcSet.has(item.value)).map((i: any) => i.value) : [];
                 }
+                session.threadFlag = true;
                 session.threadId = info.threadId;
-                session.synStartTime = info.startTimestamp - 1;
-                session.synEndTime = info.endTimestamp + 1;
+                getBarNewData(session, info.startTimestamp, info.endTimestamp);
+                getFuncNewData(session, info.startTimestamp, info.endTimestamp);
             });
         });
         barIns?.getZr()?.off('click');

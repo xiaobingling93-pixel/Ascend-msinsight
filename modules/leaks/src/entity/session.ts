@@ -28,6 +28,8 @@ export class Session {
     synEndTime: number = 0;
     searchFunc: string[] = [];
     funcOptions: any = [];
+    threadFlag: boolean = false;
+    maxDepth: number = 0;
     constructor() {
         makeAutoObservable(this);
     }

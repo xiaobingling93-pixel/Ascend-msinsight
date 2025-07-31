@@ -64,6 +64,7 @@ export interface FuncData {
     minTimestamp: number;
     maxTimestamp: number;
     traces: Trace[];
+    maxDepth: number;
 }
 /**
  * 获取图表信息

@@ -145,6 +145,7 @@ const getOptions = (session: Session, theme: Theme): EChartsOption => {
                 show: false,
                 snap: true,
             },
+            max: session.maxDepth + 1,
         },
         toolbox: getToolbox(),
         axisPointer: {
@@ -166,21 +167,13 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
     const chartRef = useRef<ChartsHandle>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
-    const { funcData, deviceId, eventType, threadId, maxTime, minTime, synStartTime, synEndTime, searchFunc } = session;
-    const [startTime, setStartTime] = useState<number>(synStartTime);
-    const [endTime, setEndTime] = useState<number>(synEndTime);
+    const { funcData, deviceId, eventType, threadId, maxTime, minTime, searchFunc, threadFlag } = session;
     const theme: Theme = useTheme();
     useEffect(() => {
-        if (deviceId === '') return;
+        if (deviceId === '' || threadFlag) return;
         setLoading(true);
-        if (startTime !== synStartTime || endTime !== synEndTime) {
-            setStartTime(synStartTime);
-            setEndTime(synEndTime);
-            getFuncNewData(session, synStartTime, synEndTime);
-        } else {
-            getFuncNewData(session);
-        }
-    }, [deviceId, eventType, threadId, synStartTime, synEndTime]);
+        getFuncNewData(session);
+    }, [deviceId, eventType, threadId]);
     useEffect(() => {
         setChartOptions(getOptions(session, theme));
         if (chartRef.current !== null && chartRef.current !== undefined) {

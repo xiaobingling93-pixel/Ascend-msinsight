@@ -17,8 +17,11 @@ export const getFuncNewData = async (session: any, startTimestamp?: number, endT
         runInAction(() => {
             session.funcData = funcDatas;
             session.funcOptions = [...new Set(funcDatas.traces.map(trace => trace.func))].map(func => ({ label: func, value: func }));
+            const funcSet = new Set(session.searchFunc);
+            session.searchFunc = funcSet.size ? session.funcOptions.filter((item: any) => funcSet.has(item.value)).map((i: any) => i.value) : [];
             session.maxTime = endTimestamp;
             session.minTime = startTimestamp;
+            session.maxDepth = funcDatas.maxDepth;
         });
     } catch (error: any) {
         message.error(error.message);
@@ -44,6 +47,7 @@ export const getBarNewData = async (session: any, startTimestamp?: number, endTi
             if (startTimestamp === undefined && endTimestamp === undefined) {
                 session.maxTime = Math.max(blockDatas.maxTimestamp, allocationDatas.maxTimestamp, session.funcData.maxTimestamp);
                 session.minTime = Math.min(blockDatas.minTimestamp, allocationDatas.minTimestamp, session.funcData.minTimestamp);
+                session.threadFlag = false;
             }
             if (startTimestamp !== undefined && endTimestamp !== undefined) {
                 session.maxTime = endTimestamp;

@@ -66,6 +66,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             });
             ins.on('dataZoom', (params: any) => {
                 const { startValue, endValue } = params.batch[0];
+                getFuncNewData(session, Math.floor(startValue), Math.ceil(endValue));
                 getBarNewData(session, Math.floor(startValue), Math.ceil(endValue));
             });
         });
@@ -103,6 +104,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     onChange={(value): void => {
                         runInAction(() => {
                             session.threadId = value;
+                            session.threadFlag = false;
                             session.searchFunc = [];
                         });
                     }}
