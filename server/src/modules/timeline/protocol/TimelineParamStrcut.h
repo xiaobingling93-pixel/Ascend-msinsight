@@ -9,6 +9,10 @@
 #include <vector>
 #include <set>
 namespace Dic::Protocol {
+struct Filtercondition {
+    std::string col;
+    std::string content;
+};
 struct TableDataDetailParams {
     std::string rankId;
     uint64_t tableIndex = 0;
@@ -16,6 +20,7 @@ struct TableDataDetailParams {
     uint64_t currentPage = 0;
     std::string order;
     std::string orderBy;
+    std::vector<Filtercondition> filterconditions;
     bool CommonCheck(std::string& errorMsg)
     {
         static const uint64_t PAGE_LIMIT = 500;

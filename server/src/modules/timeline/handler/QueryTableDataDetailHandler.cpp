@@ -40,7 +40,6 @@ void QueryTableDataDetailHandler::ComputeTableDetail(const TableDataDetailReques
     }
     const std::string tableName = nameList[request.params.tableIndex].second;
     auto colums = databasePtr->QueryTableInfoByName(tableName);
-    uint64_t count = databasePtr->QueryCountByTableName(tableName);
     PageQuery query;
     query.fileId = request.params.rankId;
     query.curPage = request.params.currentPage;
@@ -48,7 +47,11 @@ void QueryTableDataDetailHandler::ComputeTableDetail(const TableDataDetailReques
     query.viewName = tableName;
     query.order = request.params.order;
     query.orderBy = request.params.orderBy;
+    for (const auto &item: request.params.filterconditions) {
+        query.pageFilters.push_back({item.col, item.content});
+    }
     auto datas = databasePtr->QueryDataByPage(query, colums);
+    uint64_t count = databasePtr->QueryCountByTableName(query, colums);
     for (const auto& item : colums) {
         TableColumn column;
         column.name = item.name;

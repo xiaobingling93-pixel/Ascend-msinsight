@@ -19,7 +19,10 @@ struct TableDatas {
     std::vector<std::map<std::string, std::string>> datas;
     uint64_t count = 0;
 };
-
+struct PageFilter {
+    std::string col;
+    std::string content;
+};
 struct PageQuery {
     uint64_t size = 0;
     uint64_t curPage = 0;
@@ -29,6 +32,7 @@ struct PageQuery {
     std::string viewName;
     std::string start;
     std::string end;
+    std::vector<PageFilter> pageFilters;
     uint64_t ComputeOffset() const
     {
         if (curPage == 0 || size == 0) {

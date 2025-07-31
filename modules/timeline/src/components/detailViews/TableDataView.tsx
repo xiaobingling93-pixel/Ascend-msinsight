@@ -5,12 +5,17 @@
 import { observer } from 'mobx-react';
 import React, { useState, useEffect } from 'react';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, type SelectContentViewProps } from './SystemView';
-import { ResizeTable } from 'ascend-resize';
+import { fetchColumnFilterProps, ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData, queryTableDataDetails } from './Common';
 interface TableData {
     columnAttr: any[];
     tableData: any[];
     totalNum: number;
+}
+
+interface FilterCondition {
+    col: string;
+    content: string;
 }
 export const TableDataDetail = observer((props: SelectContentViewProps & { selectKey: number }) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
@@ -21,10 +26,21 @@ export const TableDataDetail = observer((props: SelectContentViewProps & { selec
     const [column, setColumn] = useState<any[]>([]);
     const [isLoading, setLoading] = useState(false);
     const [condition, setCondition] = useState({ page, sorter });
+    const [filters, setFilters] = useState<any>();
     useEffect(() => {
         setCondition({ page, sorter });
     }, [sorter, page.current, page.pageSize]);
     useEffect(() => {
+        const filterconditions: FilterCondition[] = [];
+        if (filters !== undefined) {
+            Object.keys(filters).forEach(key => {
+                const filterValue = filters[key];
+                if (Array.isArray((filterValue)) && filterValue.length > 0) {
+                    const filterCondition = { col: key, content: filterValue[0] };
+                    filterconditions.push(filterCondition);
+                }
+            });
+        }
         const param = {
             rankId: props.card.cardId,
             dbPath: props.card.dbPath,
@@ -33,12 +49,13 @@ export const TableDataDetail = observer((props: SelectContentViewProps & { selec
             selectKey: props.selectKey as number,
             order: condition.sorter.order,
             orderBy: condition.sorter.field,
+            filterconditions,
         };
         setLoading(true);
         queryTableDataDetails(param).then((res) => {
             const datas = res as TableData;
             const cols = datas.columnAttr.map((item) => {
-                return { title: item.key as string, dataIndex: item.key, ...getDefaultColumData(item.key) };
+                return { title: item.key as string, dataIndex: item.key, ...getDefaultColumData(item.key), ...fetchColumnFilterProps(item.key, item.key) };
             });
             setColumn(cols);
             setDataSource(datas.tableData);
@@ -46,14 +63,15 @@ export const TableDataDetail = observer((props: SelectContentViewProps & { selec
             setLoading(false);
         });
     }, [condition.page.current, condition.page.pageSize,
-        condition.sorter.field, condition.sorter.order, props.selectKey, props.card]);
+        condition.sorter.field, condition.sorter.order, props.selectKey, props.card, filters]);
     return (
         <div style={{ height: '100%' }}>
             <ResizeTable
-                onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
+                onChange={(pagination: unknown, filters: any, newsorter: unknown, extra: {action: string}): void => {
                     if (extra.action === 'sort') {
                         setSorter(newsorter as typeof sorter);
                     }
+                    setFilters(filters);
                 }}
                 rowClassName={(record: any): string => {
                     return 'click-able';

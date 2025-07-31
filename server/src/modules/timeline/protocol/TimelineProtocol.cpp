@@ -535,6 +535,14 @@ std::unique_ptr<Request> TimelineProtocol::ToTableDataDetailRequest(const Dic::j
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    if (json["params"].HasMember("filterconditions") && json["params"]["filterconditions"].IsArray()) {
+        for (const auto &item : json["params"]["filterconditions"].GetArray()) {
+            Filtercondition filtercondition;
+            JsonUtil::SetByJsonKeyValue(filtercondition.col, item, "col");
+            JsonUtil::SetByJsonKeyValue(filtercondition.content, item, "content");
+            reqPtr->params.filterconditions.emplace_back(filtercondition);
+        }
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.tableIndex, json["params"], "selectKey");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");

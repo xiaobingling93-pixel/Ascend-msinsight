@@ -775,15 +775,30 @@ std::vector<ColumnAtt> Database::QueryTableInfoByName(const std::string& tableNa
     return res;
 }
 
-uint64_t Database::QueryCountByTableName(const std::string& tableName)
+uint64_t Database::QueryCountByTableName(const PageQuery& query,
+                                         const std::vector<ColumnAtt>& columns)
 {
-    if (!StringUtil::CheckSqlValid(tableName)) {
+    if (!StringUtil::CheckSqlValid(query.viewName)) {
         return 0;
     }
-    std::string sql = "SELECT COUNT(*) as count FROM " + tableName + " WHERE 1 = 1 ";
+    std::vector<std::string> columnName;
+    for (const auto& item : columns) {
+        columnName.emplace_back("\"" + item.key + "\"");
+    }
+    std::string sql = "SELECT COUNT(*) as count FROM " + query.viewName + " WHERE 1 = 1 ";
+    for (const auto& filter : query.pageFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
+        sql += " AND lower(" + filter.col + ") LIKE lower(?) ";
+    }
     auto stmt = CreatPreparedStatement(sql);
     if (!TryOpt(stmt, "Query count by table name failed to prepare sql!")) {
         return 0;
+    }
+    for (const auto &filter : query.pageFilters) {
+        std::string bindFilter = "%" + filter.content + "%";
+        stmt->BindParams(bindFilter);
     }
     auto result = stmt->ExecuteQuery();
     if (!TryOpt(result, "Query count by table name failed to get result!")) {
@@ -815,20 +830,14 @@ std::vector<std::map<std::string, std::string>> Database::QueryDataByPage(const 
         std::find(columnName.begin(), columnName.end(), "\"" + query.orderBy + "\"") == columnName.end()) {
         return {};
     }
-    const std::string columnNames = StringUtil::join(columnName, ",");
-    std::string sql = "SELECT " + columnNames + " FROM " + query.viewName + " WHERE 1=1 ";
-    std::string orderBySql;
-    if (!std::empty(query.order) && !std::empty(query.orderBy)) {
-        orderBySql = query.order == "descend" ? " ORDER BY \"" + query.orderBy + "\" DESC " :
-                                                " ORDER BY \"" + query.orderBy + "\" ASC ";
-    }
-    sql += orderBySql;
-    const std::string limitSql =
-        " LIMIT " + std::to_string(query.size) + " OFFSET " + std::to_string(query.ComputeOffset());
-    sql += limitSql;
+    std::string sql = ComputeDataPageSql(query, columnName);
     auto stmt = CreatPreparedStatement(sql);
     if (!TryOpt(stmt, "Query data by page failed to prepare sql!")) {
         return {};
+    }
+    for (const auto &filter : query.pageFilters) {
+        std::string bindFilter = "%" + filter.content + "%";
+        stmt->BindParams(bindFilter);
     }
     auto result = stmt->ExecuteQuery();
     if (!TryOpt(result, "Query data by page failed to get result!")) {
@@ -846,6 +855,34 @@ std::vector<std::map<std::string, std::string>> Database::QueryDataByPage(const 
         res.emplace_back(data);
     }
     return res;
+}
+
+std::string Database::ComputeDataPageSql(const PageQuery& query, std::vector<std::string>& columnName)
+{
+    std::string sql = ComputeConditionSql(query, columnName);
+    std::string orderBySql;
+    if (!std::empty(query.order) && !std::empty(query.orderBy)) {
+        orderBySql = query.order == "descend" ? " ORDER BY \"" + query.orderBy + "\" DESC " :
+                                                " ORDER BY \"" + query.orderBy + "\" ASC ";
+    }
+    sql += orderBySql;
+    const std::string limitSql =
+        " LIMIT " + std::to_string(query.size) + " OFFSET " + std::to_string(query.ComputeOffset());
+    sql += limitSql;
+    return sql;
+}
+
+std::string Database::ComputeConditionSql(const PageQuery& query, std::vector<std::string>& columnName)
+{
+    const std::string columnNames = StringUtil::join(columnName, ",");
+    std::string sql = "SELECT " + columnNames + " FROM " + query.viewName + " WHERE 1=1 ";
+    for (const auto& filter : query.pageFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
+        sql += " AND lower(" + filter.col + ") LIKE lower(?) ";
+    }
+    return sql;
 }
 
 }  // end of namespace Module
