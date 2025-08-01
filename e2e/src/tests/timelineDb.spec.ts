@@ -276,11 +276,13 @@ test.describe('Timeline(DB)', () => {
             button: 'right',
         });
         await timelineFrame.getByText('Pin (Same Group group_name_41)').click();
+        await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('communication_group_pin.png', { maxDiffPixels: 100 });
         await timelineFrame.locator('#pinnedUnitWrapperScroller').getByText('localhost.localdomain4978604445055226587_0 0_Communication (HCCL)_mp:Group').click({
             button: 'right',
         });
         await timelineFrame.getByText('Unpin (Same Group').click();
+        await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('communication_group_unpin.png', { maxDiffPixels: 100 });
     });
 
