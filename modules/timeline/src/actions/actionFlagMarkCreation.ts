@@ -27,5 +27,5 @@ export const actionFlagMarkCreation = register({
             addNewFlag(session, timestamp, timeDisplay);
         }
     },
-    keyTest: (event) => event.key === KEYS.K,
+    keyTest: (event) => event.key.toLowerCase() === KEYS.K,
 });

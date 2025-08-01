@@ -567,7 +567,7 @@ test.describe('Timeline', () => {
         await expect(bottomPanel).toHaveScreenshot('test-keyword-q.png', { maxDiffPixels:100 });
     });
 
-    // 快捷键 - 测试快捷键 K
+    // 快捷键 - 测试快捷键 k(小写)
     test('test_k', async ({ timelinePage, page }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -581,6 +581,23 @@ test.describe('Timeline', () => {
         await page.mouse.move(startX + 50, startY + 50);
         await expect(timelineFrame.locator('#main-container > div > div > div > p > kbd')).toHaveText('K');
         await page.keyboard.press('k');
+        await page.waitForTimeout(1000);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-k-flag.png', { maxDiffPixels:100 });
+    });
+
+    // 快捷键 - 测试快捷键 K(大写)
+    test('test_K', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const boundingBox = await chart.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.move(startX + 50, startY + 50);
+        await page.keyboard.press('K');
         await page.waitForTimeout(1000);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-k-flag.png', { maxDiffPixels:100 });
     });
