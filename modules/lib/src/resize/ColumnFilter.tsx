@@ -5,7 +5,7 @@ import React from 'react';
 import type { ColumnType } from 'antd/es/table';
 import { Input, Button } from '../components/index';
 import { SearchOutlined } from '@ant-design/icons';
-import type { FilterDropdownProps } from 'antd/es/table/interface';
+import type { FilterDropdownProps, Key } from 'antd/es/table/interface';
 import { limitInput } from '../utils/Common';
 import i18n from '../i18n';
 import { ButtonGroup } from './ColumnFilterWithSelection';
@@ -20,9 +20,13 @@ const handleSearch = (
     selectedKeys: string[],
     confirm: FilterDropdownProps['confirm'],
     dataIndex: string,
+    setSelectedKeys?: (selectedKeys: Key[]) => void,
 ): void => {
+    const trimmed = selectedKeys[0]?.trim() ?? '';
+
+    setSelectedKeys?.([trimmed]);
     confirm();
-    state.searchText = selectedKeys[0];
+    state.searchText = trimmed;
     state.searchedColumn = dataIndex;
 };
 const handleReset = (
@@ -47,13 +51,13 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
                     placeholder={`${i18n.t('buttonText:Search')} ${i18n.t(`filterColumnName:${columnTitle}`)}`}
                     value={selectedKeys[0]}
                     onChange={(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                    onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
                     style={{ marginBottom: 8, display: 'block' }}
                 />
                 <ButtonGroup>
                     <Button
                         type="primary"
-                        onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                        onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
                         icon={<SearchOutlined />} size="small" style={{ marginRight: 8 }}
                     >{i18n.t('buttonText:Search')}</Button>
                     <Button
@@ -64,7 +68,7 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
             </div>
         ),
         filterIcon: (filtered: boolean) => (
-                <ColumnFilterIcon/>
+            <ColumnFilterIcon/>
         ),
         onFilter: (value, record) =>
             record[dataIndex]

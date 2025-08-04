@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
 */
-import type { CompareFn, FilterConfirmProps } from 'antd/es/table/interface';
+import type { CompareFn, FilterConfirmProps, Key } from 'antd/es/table/interface';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from 'ascend-components';
@@ -298,7 +298,7 @@ export const Loading = ({ size = 20, style = {} }: { size?: number; style?: obje
 const filterDropdownCom = ({ setSelectedKeys, selectedKeys, handleSearch, confirm, dataIndex, clearFilters, handleReset }: {
     setSelectedKeys: (selectedKeys: React.Key[]) => void;
     selectedKeys: React.Key[];
-    handleSearch: (selectedKeys: string[], confirm: (param?: FilterConfirmProps) => void, index: string,) => void;
+    handleSearch: (selectedKeys: string[], confirm: (param?: FilterConfirmProps) => void, index: string, setSelectedKeys: (selectedKeys: Key[]) => void) => void;
     confirm: (param?: (FilterConfirmProps | undefined)) => void;
     dataIndex: string;
     clearFilters?: () => void;
@@ -311,13 +311,13 @@ const filterDropdownCom = ({ setSelectedKeys, selectedKeys, handleSearch, confir
                 value={selectedKeys[0] !== null && selectedKeys[0] !== undefined ? selectedKeys[0] : ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                     setSelectedKeys((e.target.value !== null && e.target.value !== undefined) ? [e.target.value] : [])}
-                onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
                 style={{ width: 168, marginBottom: 8, display: 'block' }}
             />
             <Space>
                 <Button
                     type="primary"
-                    onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                    onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
                     icon={<SearchOutlined />}
                     size="small"
                     style={{ width: 80 }}
@@ -336,15 +336,18 @@ const filterDropdownCom = ({ setSelectedKeys, selectedKeys, handleSearch, confir
     );
 };
 
-// eslint-disable-next-line max-lines-per-function
 export const getColumnSearchProps = ({ dataIndex, setSearchText, searchText, setSearchedColumn, searchedColumn }: SearchData): ColumnType<any> => {
     const handleSearch = (
         selectedKeys: string[],
         confirm: (param?: FilterConfirmProps) => void,
         index: string,
+        setSelectedKeys: (selectedKeys: Key[]) => void,
     ): void => {
+        const trimmed = selectedKeys[0]?.trim() ?? '';
+
+        setSelectedKeys([trimmed]);
         confirm();
-        setSearchText(selectedKeys[0]);
+        setSearchText(trimmed);
         setSearchedColumn(index);
     };
 
