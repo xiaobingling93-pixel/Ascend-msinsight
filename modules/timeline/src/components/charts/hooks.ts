@@ -9,6 +9,8 @@ import { logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
 import type { InsightUnit } from '../../entity/insight';
 import { useTheme } from '@emotion/react';
+import { getTimeOffset } from '../../insight/units/utils';
+import type { ThreadTraceRequest } from '../../entity/data';
 
 export interface Pos {
     x: number;
@@ -42,6 +44,7 @@ export const useData = <T extends ChartType>({ session, mapFunc, unit, metadata,
     const [datasState, setDatasState] = useState<ChartData<T>>([]);
     const requestedWidth = useRef(0);
     const theme = useTheme();
+    const timestampOffset = getTimeOffset(session, metadata as ThreadTraceRequest);
     useEffect(() => {
         if (width === 0) {
             setDatasState([]);
@@ -61,7 +64,7 @@ export const useData = <T extends ChartType>({ session, mapFunc, unit, metadata,
             runInAction(() => { unit.phase = 'download'; });
         });
     }, [session.phase, domainStart, domainEnd, endTimeAll, width,
-        session.unitsConfig.offsetConfig.timestampOffset,
+        timestampOffset,
         session.unitsConfig.filterConfig.pythonFunction,
         session.autoAdjustUnitHeight,
         session.areFlagEventsHidden,
