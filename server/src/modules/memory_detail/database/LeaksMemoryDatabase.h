@@ -13,8 +13,8 @@
 #include "TraceTime.h"
 #include "ParserStatusManager.h"
 #include "MemoryDetailProtocolRequest.h"
+#include "MemoryDetailEntities.h"
 #include "MemoryDetailDefs.h"
-#include "LeaksMemoryPythonTrace.h"
 #include "LeaksMemoryTableColumn.h"
 
 namespace Dic {

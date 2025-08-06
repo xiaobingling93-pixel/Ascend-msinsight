@@ -8,9 +8,9 @@
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 #include "MemoryDetailDefs.h"
+#include "MemoryDetailEntities.h"
 #include "LeaksMemoryTableColumn.h"
 #include "LeaksMemoryDetailTreeNode.h"
-#include "LeaksMemoryPythonTrace.h"
 
 namespace Dic::Protocol {
 using namespace Dic::Module::MemoryDetail;
