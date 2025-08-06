@@ -62,6 +62,10 @@ public:
     std::optional<MemoryAllocation> QueryNextAllocationAfterTimestamp(const std::string& deviceId,
                                                                       const std::string& eventType, uint64_t timestamp);
     uint64_t QueryMemoryEventExtremumTimestamp(const std::string& deviceId, bool isMinimum);
+    void QueryAllDeviceExtremumTimestamp(std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> &extreTsMap);
+    void QueryEventsByGroupId(const uint64_t groupId, const std::string &deviceId,
+                              bool relativeTime, std::vector<MemoryEvent> &events);
+
     void InsertMemoryAllocationList(const std::vector<MemoryAllocation>& allocList);
     void InsertMemoryAllocation(const MemoryAllocation& alloc);
     void InsertMemoryBlockList(const std::vector<MemoryBlock>& blocklist);
@@ -91,8 +95,8 @@ private:
 
     static std::string BuildQueryFiltersConditionSqlByParams(const FiltersParam &filtersParam);
     static std::string BuildQueryOrderSqlByParams(const OrderByParam &orderByParam);
-    void CommonBindFiltersParams(const FiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
-    void CommonBindPaginationParams(const PaginationParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
+    static void CommonBindFiltersParams(const FiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
+    static void CommonBindPaginationParams(const PaginationParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
     std::vector<std::string> GetPythonTraceTables();
     std::string GetCreateMemoryAllocationTableSql();
     std::string GetCreateMemoryBlockTableSql();

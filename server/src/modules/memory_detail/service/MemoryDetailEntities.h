@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_MEMORY_DETAIL_ENTITIES_H
 #define PROFILER_SERVER_MEMORY_DETAIL_ENTITIES_H
 
+#include "pch.h"
 #include "MemoryDetailDefs.h"
 
 namespace Dic::Module::MemoryDetail {
@@ -34,14 +35,57 @@ struct LeaksMemoryPythonTrace {
 };
 // [PYTHON_TRACE]
 
-// [EVENT] 事件扩展属性attr(json)实体
-struct BlockEventAttr {
-    std::string addr;
-    int64_t size{0};
+// [EVENT] 事件/内存块扩展属性
+inline const std::string BLOCK_EVENT_ATTR_SIZE_FIELD = "size";
+inline const std::string BLOCK_EVENT_ATTR_OWNER_FIELD = "owner";
+inline const std::string BLOCK_EVENT_ATTR_TOTAL_FIELD = "total";
+inline const std::string BLOCK_EVENT_ATTR_USED_FIELD = "used";
+inline const std::string BLOCK_EVENT_ATTR_GROUP_ID_FIELD = "allocation_id";
+inline const std::string BLOCK_ATTR_FIRST_ACCESS_FILED = "first_access_timestamp";
+inline const std::string BLOCK_ATTR_LAST_ACCESS_FILED = "last_access_timestamp";
+struct MemoryEventAttrs {
+    int64_t size{0}; // 对应内存事件涉及的内存大小, 如申请、释放大小；访问时tensor大小
     std::string owner;
     uint64_t total{0};
     uint64_t used{0};
-    int64_t mid{0};
+    uint64_t groupId{0};
+};
+struct MemoryBlockAttrs {
+    int64_t size{0}; // 内存块大小
+    uint64_t groupId{0}; // 组id
+    uint64_t firstAccessTimestamp{0};
+    uint64_t lastAccessTimestamp{0};
+    std::map<std::string, std::string> extendAttrs;
+
+    /***
+     * 将内存块attr转化为json
+     * @return
+     */
+    std::string ToJsonString();
+
+    /***
+     * 从json字符串构建BlockAttrs
+     * @param jsonString
+     * @return
+     */
+    static std::optional<MemoryBlockAttrs> FromJson(std::string jsonString);
+};
+/***
+ * 内存事件组
+ */
+struct EventGroup {
+    std::optional<MemoryEvent> mallocEvent{std::nullopt};
+    std::optional<MemoryEvent> freeEvent{std::nullopt};
+    std::vector<MemoryEvent> accessEvents;
+
+    EventGroup() = default;
+    /***
+     * 通过events快速构建一个eventGroup, 注意需要events已根据timestamp升序排序
+     * @param sortedEvents 事件数组，要求已经过排序
+     */
+    explicit EventGroup(std::vector<MemoryEvent> &sortedEvents);
+
+    void AddEvent(const MemoryEvent &event);
 };
 // [EVENT]
 } // Dic::Module::MemoryDetail

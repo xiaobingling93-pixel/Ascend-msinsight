@@ -276,7 +276,7 @@ void LeaksMemoryDatabase::InsertMemoryBlockList(const std::vector<MemoryBlock> &
         sqlite3_bind_int64(stmt, idx++, block.endTimestamp > INT64_MAX ? INT64_MAX : block.endTimestamp);
         sqlite3_bind_text(stmt, idx++, block.eventType.c_str(), block.eventType.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, block.owner.c_str(), block.owner.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, idx++, block.otherAttr.c_str(), block.otherAttr.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, block.attrJsonString.c_str(), block.attrJsonString.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, block.processId > INT64_MAX ? INT64_MAX : block.processId);
         sqlite3_bind_int64(stmt, idx++, block.threadId > INT64_MAX ? INT64_MAX : block.threadId);
     }
@@ -454,7 +454,7 @@ int64_t LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::ve
         block.endTimestamp = tmpUint64Num > minTimestamp ? tmpUint64Num - minTimestamp : 0;
         block.eventType = sqlite3_column_string(stmt, col++);
         block.owner = sqlite3_column_string(stmt, col++);
-        block.otherAttr = sqlite3_column_string(stmt, col++);
+        block.attrJsonString = sqlite3_column_string(stmt, col++);
         block.processId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.threadId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         blocks.emplace_back(block);
@@ -1079,6 +1079,7 @@ std::string LeaksMemoryDatabase::BuildQueryOrderSqlByParams(const OrderByParam& 
     return StringUtil::FormatString(" ORDER BY {} {} ",
                                     orderByParam.orderBy, orderByParam.desc ? "DESC" : "ASC");
 }
+
 void LeaksMemoryDatabase::CommonBindFiltersParams(const FiltersParam& queryParams, sqlite3_stmt* stmt, int &bindIdx)
 {
     for (auto &filterPair : queryParams.filters) {
@@ -1087,6 +1088,7 @@ void LeaksMemoryDatabase::CommonBindFiltersParams(const FiltersParam& queryParam
                           filterPattern.length(), SQLITE_TRANSIENT);
     }
 }
+
 void LeaksMemoryDatabase::CommonBindPaginationParams(const PaginationParam& queryParams, sqlite3_stmt* stmt,
                                                      int& bindIdx)
 {
@@ -1101,6 +1103,54 @@ void LeaksMemoryDatabase::CommonBindPaginationParams(const PaginationParam& quer
     sqlite3_bind_int64(stmt, bindIdx++, limit);
     sqlite3_bind_int64(stmt, bindIdx++, offset);
 }
+
+void LeaksMemoryDatabase::QueryEventsByGroupId(const uint64_t groupId, const std::string &deviceId,
+                                               const bool relativeTime, std::vector<MemoryEvent>& events)
+{
+    std::string sql = StringUtil::FormatString("SELECT * FROM {} WHERE {} like ? ORDER BY {}", TABLE_LEAKS_DUMP,
+                                               EVENT::ATTR, EVENT::TIMESTAMP);
+    std::string groupIdPattern = StringUtil::FormatString(R"(%"{}":"{}"%)", BLOCK_EVENT_ATTR_GROUP_ID_FIELD,
+                                                          std::to_string(groupId));
+    sqlite3_stmt* stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query events by group failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return;
+    }
+    uint64_t minTimestamp = 0;
+    if (relativeTime) {
+        minTimestamp = QueryMemoryEventExtremumTimestamp(deviceId, true);
+    }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, groupIdPattern.c_str(), groupIdPattern.length(), SQLITE_TRANSIENT);
+    QueryMemoryEventsByStep(stmt, events, minTimestamp, false);
+    sqlite3_finalize(stmt);
+}
+
+void LeaksMemoryDatabase::QueryAllDeviceExtremumTimestamp(
+    std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> &extreTsMap)
+{
+    std::string sql;
+    sql = StringUtil::FormatString("SELECT {},MIN({}),MAX({}) FROM {} WHERE {} NOT IN ('N/A','host') GROUP BY {}",
+                                   EVENT::DEVICE_ID, EVENT::TIMESTAMP, EVENT::TIMESTAMP, TABLE_LEAKS_DUMP,
+                                   EVENT::DEVICE_ID, EVENT::DEVICE_ID);
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query devices extremum timestamp failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string deviceId = sqlite3_column_string(stmt, col++);
+        uint64_t minTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        uint64_t maxTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        extreTsMap[deviceId] = std::make_pair(minTimestamp, maxTimestamp);
+    }
+    sqlite3_finalize(stmt);
+    return;
+}
+
 }  // FullDb
 }  // Module
 }  // Dic

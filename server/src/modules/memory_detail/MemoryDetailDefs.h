@@ -108,14 +108,14 @@ struct MemoryBlock {
     uint64_t endTimestamp{0};
     std::string owner;
     std::string eventType;
-    std::string otherAttr;
+    std::string attrJsonString;
     uint64_t processId{0};
     uint64_t threadId{0};
 
     MemoryBlock() = default;
     virtual ~MemoryBlock() = default;
     MemoryBlock(std::string ptr, std::string deviceId, uint64_t size, uint64_t startTs, uint64_t endTs,
-                std::string owner, std::string eventType, std::string otherAttr, uint64_t pid, uint64_t tid)
+                std::string owner, std::string eventType, std::string attrJsonString, uint64_t pid, uint64_t tid)
         : id(0),
           ptr(std::move(ptr)),
           deviceId(std::move(deviceId)),
@@ -124,7 +124,7 @@ struct MemoryBlock {
           endTimestamp(endTs),
           owner(std::move(owner)),
           eventType(std::move(eventType)),
-          otherAttr(std::move(otherAttr)),
+          attrJsonString(std::move(attrJsonString)),
           processId(pid),
           threadId(tid) {}
 };

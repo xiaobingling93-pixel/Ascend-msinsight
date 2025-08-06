@@ -56,7 +56,7 @@ static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blo
     JsonUtil::AddMember(json, "startTimestamp", blockPtr->startTimestamp, allocator);
     JsonUtil::AddMember(json, "endTimestamp", blockPtr->endTimestamp, allocator);
     JsonUtil::AddMember(json, "owner", blockPtr->owner, allocator);
-    JsonUtil::AddMember(json, "attr", blockPtr->otherAttr, allocator);
+    JsonUtil::AddMember(json, "attr", blockPtr->attrJsonString, allocator);
     JsonUtil::AddMember(json, "processId", blockPtr->processId, allocator);
     JsonUtil::AddMember(json, "threadId", blockPtr->threadId, allocator);
     JsonUtil::AddMember(json, "deviceId", blockPtr->deviceId, allocator);

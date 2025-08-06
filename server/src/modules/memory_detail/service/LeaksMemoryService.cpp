@@ -49,6 +49,24 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
         SendEvent(std::move(event));
     }
 }
+
+std::optional<ParseContext> LeaksMemoryService::BuildContext(std::shared_ptr<FullDb::LeaksMemoryDatabase>& db)
+{
+    if (db == nullptr) {
+        Server::ServerLog::Error("Cannot get leaks db connections from database manager");
+        return std::nullopt;
+    }
+    ParseContext context;
+    db->QueryEntireEventsTable(context.events);
+    if (context.events.empty()) {
+        Server::ServerLog::Warn("No memory events could be found in leaks_db.");
+        return std::nullopt;
+    }
+    db->QueryAllDeviceExtremumTimestamp(context.deviceExtremumTsMap);
+    context.db = db;
+    return context;
+}
+
 bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
 {
     auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
@@ -66,14 +84,12 @@ bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
         Server::ServerLog::Error("Cannot create memory allocation and memory block table.");
         return false;
     }
-
-    std::vector<MemoryEvent> events;
-    database->QueryEntireEventsTable(events);
-    if (events.empty()) {
-        Server::ServerLog::Warn("No memory events could be found in leaks_db.");
+    auto context = BuildContext(database);
+    if (!context.has_value()) {
+        Server::ServerLog::Error("Parse failed: build parse context failed.");
         return false;
     }
-    LeaksMemoryService::ParseEventsToBlockAndAllocations(events, database);
+    LeaksMemoryService::ParseEventsToBlockAndAllocations(*context);
     return true;
 }
 
@@ -95,66 +111,77 @@ uint64_t SafeCalculateAllocationSize(uint64_t currentSize, int64_t eventSize)
     return  0;
 }
 
-void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<MemoryEvent> &events,
-                                                          const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db)
+void LeaksMemoryService::ParseRemainMallocEvents(ParseContext &context)
 {
-    if (db == nullptr) {
-        Server::ServerLog::Error("Cannot parse event to blocks and allocations: invalid db connections");
-        return;
-    }
-    std::unordered_map<std::string, std::map<std::string, const MemoryEvent *>> deviceMallocMap;
-    std::unordered_map<std::string, uint64_t> deviceTotalSize;
-    std::unordered_map<std::string, uint64_t> deviceMaxTimestamp;
-    for (auto &event : events) {
-        BlockEventAttr eventExtendAttr;
-        BuildBlockEventAttrFromEvent(event, eventExtendAttr);
-        deviceMaxTimestamp[event.deviceId] = std::max(deviceMaxTimestamp[event.deviceId], event.timestamp);
-        auto &allocMap = deviceMallocMap[event.deviceId];
-        if (!SingleDeviceEventParse(db, event, allocMap, eventExtendAttr)) {
-            continue;
-        }
-        deviceTotalSize[event.deviceId + event.eventType] =
-                SafeCalculateAllocationSize(deviceTotalSize[event.deviceId + event.eventType],
-                                            eventExtendAttr.size);
-        // 构造allocation折线图元素
-        MemoryAllocation allocation(event.timestamp, deviceTotalSize[event.deviceId + event.eventType], event.deviceId,
-                                    event.eventType, false);
-        db->InsertMemoryAllocation(allocation);
-    }
-
-    for (auto &devicePair : deviceMallocMap) {
+    for (auto &devicePair : context.deviceMallocMap) {
         std::string deviceId = devicePair.first;
         std::map<std::string, const MemoryEvent *> allocMap = devicePair.second;
-        const std::uint64_t maxTimestamp = deviceMaxTimestamp[deviceId];
+        if (context.deviceExtremumTsMap.find(deviceId) == context.deviceExtremumTsMap.end()) {
+            Server::ServerLog::Error("Parse event failed, cannot found deviceId:%.", deviceId);
+            continue;
+        }
+        const std::uint64_t maxTimestamp = context.deviceExtremumTsMap.at(deviceId).second;
         for (auto &allocPair : allocMap) {
             auto &event = allocPair.second;
-            BlockEventAttr eventExtendAttr;
-            BuildBlockEventAttrFromEvent(*event, eventExtendAttr);
-            if (eventExtendAttr.size <= 0) {
+            MemoryEventAttrs eventAttrs;
+            BuildEventAttrs(*event, eventAttrs);
+            if (eventAttrs.size <= 0) {
                 Server::ServerLog::Warn("An invalid memory allocation event was detected: cannot get the valid 'size' "
                                         "attribute from the 'attr' field");
                 continue;
             }
             // 构造block
-            MemoryBlock block(event->ptr, event->deviceId, eventExtendAttr.size, event->timestamp, maxTimestamp,
-                              eventExtendAttr.owner, event->eventType, event->attr, event->processId, event->threadId);
-            db->InsertMemoryBlock(block);
+            MemoryBlock block(event->ptr, event->deviceId, eventAttrs.size, event->timestamp, maxTimestamp,
+                              eventAttrs.owner, event->eventType, event->attr, event->processId, event->threadId);
+            uint64_t minTimestamp = context.deviceExtremumTsMap.at(event->deviceId).first;
+            // 构造block扩展属性
+            auto blockAttrs = BuildMemoryBlockAttrsByMallocEvent(*event,
+                                                                 context.eventGroupMap[eventAttrs.groupId], minTimestamp);
+            block.attrJsonString = blockAttrs.has_value() ? blockAttrs->ToJsonString() : event->attr;
+            context.db->InsertMemoryBlock(block);
         }
     }
-    db->FlushMemoryBlocksCache();
-    db->FlushMemoryAllocationsCache();
-    db->UpdateParseStatus(FINISH_STATUS);
 }
 
-bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db,
-                                                const MemoryEvent &event,
-                                                std::map<std::string, const MemoryEvent *> &allocMap,
-                                                const BlockEventAttr &eventExtendAttr)
+void LeaksMemoryService::ParseEventsToBlockAndAllocations(ParseContext &context)
+{
+    if (context.db == nullptr) {
+        Server::ServerLog::Error("Cannot parse event to blocks and allocations: invalid db connections");
+        return;
+    }
+    for (auto &event : context.events) {
+        if (!context.CheckDeviceIdValid(event.deviceId)) {
+            Server::ServerLog::Error("Invalid device id: %.", event.deviceId);
+            continue;
+        }
+        MemoryEventAttrs eventAttrs;
+        BuildEventAttrs(event, eventAttrs);
+        if (eventAttrs.groupId > 0) {
+            context.eventGroupMap[eventAttrs.groupId].AddEvent(event);
+        }
+        if (!SingleDeviceEventParse(event, eventAttrs, context)) continue;
+        context.deviceTotalSize[event.deviceId + event.eventType] =
+                SafeCalculateAllocationSize(context.deviceTotalSize[event.deviceId + event.eventType], eventAttrs.size);
+        // 构造allocation折线图元素
+        MemoryAllocation allocation(event.timestamp, context.deviceTotalSize[event.deviceId + event.eventType],
+                                    event.deviceId, event.eventType, false);
+        context.db->InsertMemoryAllocation(allocation);
+    }
+    ParseRemainMallocEvents(context);
+    context.db->FlushMemoryBlocksCache();
+    context.db->FlushMemoryAllocationsCache();
+    context.db->UpdateParseStatus(FINISH_STATUS);
+}
+
+bool LeaksMemoryService::SingleDeviceEventParse(const MemoryEvent &event,
+                                                const MemoryEventAttrs &eventAttrs,
+                                                ParseContext &context)
 {
     if (event.event != LEAKS_DUMP_EVENT::MALLOC && event.event != LEAKS_DUMP_EVENT::FREE) {
         return false;
     }
-    if (eventExtendAttr.size == 0) {
+    auto &allocMap = context.deviceMallocMap[event.deviceId];
+    if (eventAttrs.size == 0) {
         Server::ServerLog::Warn("An invalid memory allocation/free event[" + event.ptr +
                                 "] was detected: cannot get the 'size' "
                                 "attribute from the 'attr' field.");
@@ -179,35 +206,40 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
                                                              "no corresponding allocation.", event.ptr));
             return false;
         }
-
         auto &allocEvent = allocMap[event.ptr + event.eventType];
-        BlockEventAttr allocEventAttr;
-        BuildBlockEventAttrFromEvent(*allocEvent, allocEventAttr);
+        MemoryEventAttrs allocEventAttrs;
+        BuildEventAttrs(*allocEvent, allocEventAttrs);
         // 构造block
-        MemoryBlock block(event.ptr, event.deviceId, std::abs(eventExtendAttr.size), allocEvent->timestamp,
-                          event.timestamp, allocEventAttr.owner, event.eventType,
+        MemoryBlock block(event.ptr, event.deviceId, std::abs(eventAttrs.size), allocEvent->timestamp,
+                          event.timestamp, allocEventAttrs.owner, event.eventType,
                           allocEvent->attr, event.processId, event.threadId);
-        db->InsertMemoryBlock(block);
+        uint64_t minTimestamp = context.deviceExtremumTsMap.at(event.deviceId).first;
+        // 构造block扩展属性
+        auto blockAttrs = BuildMemoryBlockAttrsByMallocEvent(*allocEvent,
+                                                             context.eventGroupMap[eventAttrs.groupId], minTimestamp);
+
+        block.attrJsonString = blockAttrs.has_value() ? blockAttrs->ToJsonString() : allocEvent->attr;
+        context.db->InsertMemoryBlock(block);
         // 从申请表中去除内存申请事件
         allocMap.erase(event.ptr + event.eventType);
     }
     return true;
 }
-void LeaksMemoryService::GetEventAttrWithDefaultValueByJson(json_t &json, BlockEventAttr &eventAttr)
+
+void LeaksMemoryService::GetEventAttrWithDefaultValueByJson(json_t &json, MemoryEventAttrs &eventAttrs)
 {
-    JsonUtil::SetByJsonKeyValue(eventAttr.addr, json, BLOCK_EVENT_ATTR_ADDR_FIELD);
-    JsonUtil::SetByJsonKeyValue(eventAttr.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
     std::string tmp_str = JsonUtil::GetString(json, BLOCK_EVENT_ATTR_SIZE_FIELD);
-    eventAttr.size = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
+    eventAttrs.size = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
     tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_TOTAL_FIELD);
-    eventAttr.total = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
+    eventAttrs.total = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
     tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_USED_FIELD);
-    eventAttr.used = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
-    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_MID_FIELD);
-    eventAttr.mid = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
-    JsonUtil::SetByJsonKeyValue(eventAttr.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
+    eventAttrs.used = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
+    JsonUtil::SetByJsonKeyValue(eventAttrs.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
+    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_GROUP_ID_FIELD);
+    eventAttrs.groupId = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
 }
-void LeaksMemoryService::BuildBlockEventAttrFromEvent(const MemoryEvent &event, BlockEventAttr &eventAttr)
+
+void LeaksMemoryService::BuildEventAttrs(const MemoryEvent &event, MemoryEventAttrs &eventAttr)
 {
     std::string attrStr = event.attr;
     if (attrStr.empty()) {
@@ -403,6 +435,29 @@ bool LeaksMemoryService::IsValidMemoryEventType(const std::string &event, const 
     }
     const auto& eventTypes = EVENT_TYPE_MAP.at(event);
     return eventTypes.find(eventType) != eventTypes.end();
+}
+
+std::optional<MemoryBlockAttrs> LeaksMemoryService::BuildMemoryBlockAttrsByMallocEvent(const MemoryEvent& mallocEvent,
+                                                                                       const EventGroup& eventGroup,
+                                                                                       const uint64_t minTimestamp)
+{
+    std::vector<MemoryEvent> groupEvents;
+    MemoryEventAttrs eventAttrs;
+    BuildEventAttrs(mallocEvent, eventAttrs);
+    MemoryBlockAttrs blockAttrs;
+    blockAttrs.size = eventAttrs.size;
+    blockAttrs.groupId = eventAttrs.groupId;
+    if (eventAttrs.groupId != 0 && !eventGroup.accessEvents.empty()) {
+        MemoryEvent firstAccess = eventGroup.accessEvents.front();
+        MemoryEvent lastAccess = eventGroup.accessEvents.back();
+        blockAttrs.firstAccessTimestamp = firstAccess.timestamp> 0 ? firstAccess.timestamp - minTimestamp : 0;
+        blockAttrs.lastAccessTimestamp = lastAccess.timestamp> 0 ? lastAccess.timestamp - minTimestamp : 0;
+    }
+    return blockAttrs;
+}
+bool ParseContext::CheckDeviceIdValid(const std::string& deviceId)
+{
+    return deviceExtremumTsMap.find(deviceId) != deviceExtremumTsMap.end();
 }
 }  // Memory
 }  // Module

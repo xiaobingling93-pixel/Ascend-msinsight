@@ -67,7 +67,7 @@ TEST_F(FileSelectorTest, TestContainFiles)
     std::vector<std::unique_ptr<File>> realChildrenFiles;
     bool exist = false;
     std::vector<std::string> files = {"ascend_pytorch_profiler.db", "cluster_analysis.db",
-                                      "leaks_dump_2025.dat", "msprof_0.db"};
+                                      "leaks_dump_20250806.dat", "msprof_0.db"};
     for (const auto &file : files) {
         std::string tmpPath = Dic::FileUtil::SplicePath(path, file);
         realChildrenFiles.emplace_back(std::make_unique<File>(file, tmpPath));

@@ -7,6 +7,7 @@
 
 #include <utility>
 #include "pch.h"
+#include "DataBaseManager.h"
 #include "MemoryDetailDefs.h"
 #include "MemoryDetailEntities.h"
 #include "LeaksMemoryDatabase.h"
@@ -16,13 +17,21 @@
 namespace Dic {
 namespace Module {
 namespace MemoryDetail {
+struct ParseContext {
+    std::vector<MemoryEvent> events;
+    std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> deviceExtremumTsMap;
+    std::unordered_map<std::string, std::map<std::string, const MemoryEvent *>> deviceMallocMap;
+    std::unordered_map<std::string, uint64_t> deviceTotalSize;
+    std::unordered_map<uint64_t, EventGroup> eventGroupMap;
+    std::shared_ptr<FullDb::LeaksMemoryDatabase> db;
 
+    bool CheckDeviceIdValid(const std::string &deviceId);
+};
 
 class LeaksMemoryService {
 public:
-    static void ParseEventsToBlockAndAllocations(const std::vector<MemoryEvent> &events,
-                                                 const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db);
-    static void BuildBlockEventAttrFromEvent(const MemoryEvent &event, BlockEventAttr &eventAttr);
+    static void ParseEventsToBlockAndAllocations(ParseContext &context);
+    static void BuildEventAttrs(const MemoryEvent &event, MemoryEventAttrs &eventAttr);
     static bool ParseMemoryLeaksDumpEvents(const std::string &fileId);
     static void ParserEnd(const std::string &rankId, bool result);
     static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
@@ -35,22 +44,21 @@ public:
     static bool ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace);
     // 判断eventType是否合法
     static bool IsValidMemoryEventType(const std::string &event, const std::string &eventType);
+    static std::optional<ParseContext> BuildContext(std::shared_ptr<FullDb::LeaksMemoryDatabase> &db);
 private:
-    static bool SingleDeviceEventParse(const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db, const MemoryEvent &event,
-                                       std::map<std::string, const MemoryEvent *> &allocMap,
-                                       const BlockEventAttr &eventExtendAttr);
+    static void ParseRemainMallocEvents(ParseContext &context);
+    static bool SingleDeviceEventParse(const MemoryEvent &event,
+                                       const MemoryEventAttrs &eventAttrs,
+                                       ParseContext &context);
     // 递归,depth从0开始
     static void BuildMemoryAllocDetailTreeNode(const std::string &deviceId,
                                         const uint64_t &timestamp,
                                         const std::set<std::string> &owners,
                                         LeaksMemoryDetailTreeNode &curNode, int depth);
-    static void GetEventAttrWithDefaultValueByJson(json_t &json, BlockEventAttr &eventAttr);
-    inline static const std::string BLOCK_EVENT_ATTR_SIZE_FIELD = "size";
-    inline static const std::string BLOCK_EVENT_ATTR_OWNER_FIELD = "owner";
-    inline static const std::string BLOCK_EVENT_ATTR_ADDR_FIELD = "addr";
-    inline static const std::string BLOCK_EVENT_ATTR_TOTAL_FIELD = "total";
-    inline static const std::string BLOCK_EVENT_ATTR_USED_FIELD = "used";
-    inline static const std::string BLOCK_EVENT_ATTR_MID_FIELD = "MID";
+    static void GetEventAttrWithDefaultValueByJson(json_t &json, MemoryEventAttrs &eventAttrs);
+    static std::optional<MemoryBlockAttrs> BuildMemoryBlockAttrsByMallocEvent(const MemoryEvent& mallocEvent,
+                                                                              const EventGroup& eventGroup,
+                                                                              const uint64_t minTimestamp = 0);
 };
 }  // Memory
 }  // Module
