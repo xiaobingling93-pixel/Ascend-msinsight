@@ -532,7 +532,7 @@ const ParallelSwitch = observer(({ session, onTargetRankIndexChange }: ParallelS
             setEndVal(max);
             setRange([min, max]);
         }
-    }, [dyeingMode]);
+    }, [dyeingMode, session.rankDyeingData]);
 
     return (
         <div className="flex items-center">
