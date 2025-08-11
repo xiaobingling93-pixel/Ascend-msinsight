@@ -13,7 +13,7 @@ bool RLPipelineHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     auto &request = dynamic_cast<Protocol::RLPipelineRequest &>(*requestPtr);
     std::unique_ptr<Protocol::RLPipelineResponse> responsePtr = std::make_unique<Protocol::RLPipelineResponse>();
     RLPipelineResponse &response = *responsePtr;
-    bool res = RLPipelineService::GetPipelineInfo(response);
+    bool res = RLPipelineService::Instance().GetPipelineInfo(response);
     SetBaseResponse(request, response);
     SendResponse(std::move(responsePtr), res);
     return true;

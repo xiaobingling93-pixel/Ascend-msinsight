@@ -1,0 +1,40 @@
+{
+  "config":[
+    {
+      "framework":"verl",
+      "algorithm":"grpo",
+      "tasks":[
+        {
+          "roleName":"actor",
+          "taskName":"generator_sequence",
+          "microBatches":[
+            {
+              "name":  "actor_micro_batch1",
+              "type": "FP"
+            },
+            {
+              "name": "actor_micro_batch2",
+              "type": "BP"
+            }
+          ]
+        },
+        {
+          "roleName": "ref",
+          "taskName": "update_ref",
+          "microBatches": []
+        }
+      ]
+    },
+    {
+      "framework": "mindspeed-RL",
+      "algorithm": "grpo",
+      "tasks": [
+        {
+          "roleName": "actor",
+          "taskName": "generator_sequence",
+          "microBatches": []
+        }
+      ]
+    }
+  ]
+}

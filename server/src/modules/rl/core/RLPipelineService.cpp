@@ -1,23 +1,16 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-
+#include "RLPipelineService.h"
 #include "DataBaseManager.h"
 #include "RenderEngine.h"
 #include "NumberSafeUtil.h"
 #include "TrackInfoManager.h"
 #include "RLMstxConfigManager.h"
 #include "ParserStatusManager.h"
-#include "RLPipelineService.h"
 
 namespace Dic::Module::RL {
-std::mutex RLPipelineService::mtx;
-uint64_t RLPipelineService::minTime = UINT64_MAX;
-uint64_t RLPipelineService::maxTime = 0;
-std::set<std::string> RLPipelineService::stageTypeList;
-std::unordered_map<std::string, RLPipelineItem> RLPipelineService::taskPipelineMap;
-std::unordered_map<std::string, RLPipelineItem> RLPipelineService::microBatchPipelineMap;
-
+using namespace Dic::Module::Timeline;
 void RLPipelineService::Clear()
 {
     std::lock_guard<std::mutex> lock(mtx);
@@ -92,17 +85,27 @@ void RLPipelineService::QueryPipelineByRankId(const std::string &rankIdWithHost)
     FillPipelineMap(originHostName, rankId, taskPipelineNodeList, taskPipelineMap);
 
     // 查询microBatch维度数据
-    std::vector<Protocol::RLPipelineNode> microBatchNodeList = QueryMicroBatchByTask(rankIdWithHost,
-                                                                                     taskPipelineNodeList);
+    std::vector<std::string> taskNames;
+    std::transform(taskPipelineNodeList.begin(), taskPipelineNodeList.end(), std::back_inserter(taskNames),
+                   [](const RLPipelineNode &node) {
+                       return node.name;
+                   });
+    auto rlMstxConfig = RLMstxConfigManager::Instance().GetMstxConfigByTaskName(taskNames);
+    std::vector<Protocol::RLPipelineNode> microBatchNodeList = QueryMicroBatchByTask(fileId,
+                                                                                     taskPipelineNodeList,
+                                                                                     rlMstxConfig);
     FillPipelineMap(originHostName, rankId, microBatchNodeList, microBatchPipelineMap);
 }
 
 bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
 {
     Clear();
-    ThreadPool threadPool = ThreadPool(4);
+    ThreadPool threadPool = ThreadPool(std::thread::hardware_concurrency());
     for (const auto &rankIdWithHost: FullDb::DataBaseManager::Instance().GetAllRankId()) {
-        threadPool.AddTask(QueryPipelineByRankId, rankIdWithHost);
+        threadPool.AddTask([this](std::string rankIdWithHost) {
+            QueryPipelineByRankId(rankIdWithHost);
+            },
+            rankIdWithHost);
     }
     threadPool.WaitForAllTasks();
     threadPool.ShutDown();
@@ -117,13 +120,15 @@ bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
 }
 
 std::vector<Protocol::RLPipelineNode> RLPipelineService::QueryMicroBatchByTask(const std::string &fileId,
-    const std::vector<Protocol::RLPipelineNode> &taskList)
+    const std::vector<Protocol::RLPipelineNode> &taskList, const RLMstxConfig &taskConfig)
 {
     std::vector<Protocol::RLPipelineNode> microBatchNodeList;
     for (const auto &item: taskList) {
         auto microBatchUnderTask = QueryMicroBatch(fileId,
-            RLMstxConfigManager::Instance().GetMstxConfigByTaskName(item.name), item);
-        microBatchNodeList.insert(microBatchNodeList.end(), microBatchUnderTask.begin(), microBatchUnderTask.end());
+            taskConfig, item);
+        std::transform(microBatchUnderTask.begin(), microBatchUnderTask.end(), std::back_inserter(microBatchNodeList), [](const auto& item) {
+            return item;
+        });
     }
     return microBatchNodeList;
 }
@@ -151,8 +156,59 @@ void RLPipelineService::FillAndProcessPipelineData(std::unordered_map<std::strin
 }
 
 std::vector<Protocol::RLPipelineNode> RLPipelineService::QueryMicroBatch(const std::string &fileId,
-    const RLMstxConfig &config, const RLPipelineNode &node)
+                                                                         const RLMstxConfig &config,
+                                                                         const RLPipelineNode &node)
 {
-    return std::vector<Protocol::RLPipelineNode>();
+    if (config.taskConfigMap.find(node.name) == config.taskConfigMap.end()) {
+        ServerLog::Error("[RL] task config not found when query micro batch");
+        return {};
+    }
+    /*
+     * 1. 整理所有microBatch
+     * 2. 在task的时间区间内过滤microBatch
+     * 3. 状态机算法处理microBatch的时间掩盖问题
+     */
+    const auto &taskConfig = config.taskConfigMap.at(node.name);
+    std::vector<std::string> microBatchNames;
+    microBatchNames.reserve(taskConfig.microBatchConfigs.size());
+    std::transform(taskConfig.microBatchConfigs.begin(), taskConfig.microBatchConfigs.end(),
+                   std::back_inserter(microBatchNames), [](const MicroBatchConfig &item) {
+                return item.batchName;
+            });
+    if (microBatchNames.empty()) {
+        return {};
+    }
+    FullDb::DataType type = DataBaseManager::Instance().GetDataType();
+    auto microBatchInDbs = RenderEngine::Instance()->QueryMstxRLDetail(fileId, type, microBatchNames, node.startTime,
+                                                                       NumberSafe::Add(node.startTime, node.duration));
+    if (microBatchInDbs.empty()) {
+        return {};
+    }
+    std::sort(microBatchInDbs.begin(), microBatchInDbs.end(), [](const CompeteSliceDomain& left, const CompeteSliceDomain& right) {
+        if (left.timestamp != right.timestamp) {
+            return left.timestamp < right.timestamp;
+        } else {
+            return left.duration > right.duration;
+        }
+    });
+    std::vector<Protocol::RLPipelineNode> res;
+    std::for_each(microBatchInDbs.begin(), microBatchInDbs.end(), [&res, &node, &taskConfig](const auto &sliceItem) {
+        RLPipelineNode microBatchNode;
+        microBatchNode.stageType = node.stageType;
+        microBatchNode.name = sliceItem.name;
+        microBatchNode.nodeType = taskConfig.microBatchConfigMap.at(microBatchNode.name).type;
+        microBatchNode.startTime = sliceItem.timestamp;
+        microBatchNode.duration = sliceItem.endTime - sliceItem.timestamp;
+        res.emplace_back(std::move(microBatchNode));
+    });
+
+    RLMicroBatchClassifier classifier;
+    return classifier.ClassifierMicroBatch(res);
+}
+
+RLPipelineService &RLPipelineService::Instance()
+{
+    static RLPipelineService service;
+    return service;
 }
 }

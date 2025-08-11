@@ -19,6 +19,11 @@ namespace Dic::Module::RL {
         std::string taskName;
         std::vector<MicroBatchConfig> microBatchConfigs;
         std::unordered_map<std::string, MicroBatchConfig> microBatchConfigMap;
+        void AddMicroBatchConf(MicroBatchConfig&& config)
+        {
+            microBatchConfigs.push_back(config);
+            microBatchConfigMap[config.batchName] = config;
+        }
     };
 
     struct RLMstxConfig {
@@ -26,6 +31,11 @@ namespace Dic::Module::RL {
         std::string algorithm;
         std::vector<TaskConfig> taskConfigs;
         std::unordered_map<std::string, TaskConfig> taskConfigMap;
+        void AddTaskConfig(TaskConfig&& config)
+        {
+            taskConfigs.push_back(config);
+            taskConfigMap[config.taskName] = config;
+        }
     };
 }
 #endif // PROFILER_SERVER_RLDOMAINOBJECT_H

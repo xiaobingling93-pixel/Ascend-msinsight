@@ -2,8 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 #include "RLMstxConfigManager.h"
+#include "ServerLog.h"
+#include "RLMstxConfigReader.h"
 #include <set>
-
+#include <unordered_set>
+#include <algorithm>
 namespace Dic::Module::RL {
     RLMstxConfigManager &RLMstxConfigManager::Instance()
     {
@@ -40,8 +43,68 @@ namespace Dic::Module::RL {
         return type;
     }
 
-    RLMstxConfig RLMstxConfigManager::GetMstxConfigByTaskName(const std::string &name)
+    RLMstxConfig RLMstxConfigManager::GetMstxConfigByTaskName(const std::vector<std::string> &taskNames)
     {
-        return {};
+        std::unordered_set<std::string> taskNameSet{taskNames.begin(), taskNames.end()};
+        auto it = std::find_if(config.begin(), config.end(), [&taskNameSet](const RLMstxConfig &configItem) {
+            for (const auto &taskConfig: configItem.taskConfigs) {
+                if (taskNameSet.count(taskConfig.taskName) == 0) {
+                    return false;
+                }
+            }
+            return true;
+        });
+        if (it == config.end()) {
+            // can't find total match config
+            Server::ServerLog::Warn("No total matching config could be found");
+            for (const std::string &taskName: taskNameSet) {
+                auto iterator = std::find_if(config.begin(), config.end(), [&taskName](const RLMstxConfig &configItem) {
+                    return configItem.taskConfigMap.find(taskName) != configItem.taskConfigMap.end();
+                });
+                if (iterator != config.end()) {
+                    return *iterator;
+                }
+            }
+            return {};
+        }
+        return *it;
     }
+
+void RLMstxConfigManager::InitConfig()
+{
+    RLMstxConfigReader reader;
+    config = reader.ReadConfigFile();
+    // config file not exist or empty, add default one
+    if (config.empty()) {
+        InitDefaultConf();
+    }
+}
+
+RLMstxConfigManager::RLMstxConfigManager()
+{
+    InitConfig();
+}
+
+void RLMstxConfigManager::InitDefaultConf()
+{
+    RLMstxConfig defaultConf = {
+        .framework = "verl",
+        .algorithm = "GRPO",
+    };
+    TaskConfig gs{.roleName = "ActorRollout", .taskName= "generate_sequences"};
+    TaskConfig reward{.roleName = "Reward", .taskName = "compute_log_prob"};
+    MicroBatchConfig fp{.batchName = "TransformerBlock", .type = "FP"};
+    MicroBatchConfig bp{.batchName = "TransformerLayer", .type = "BP"};
+    reward.AddMicroBatchConf(std::move(fp));
+    reward.AddMicroBatchConf(std::move(bp));
+    TaskConfig actor{.roleName = "Actor", .taskName = "update_actor"};
+    MicroBatchConfig fp1{.batchName = "TransformerBlock", .type = "FP"};
+    MicroBatchConfig bp1{.batchName = "TransformerLayer", .type = "BP"};
+    actor.AddMicroBatchConf(std::move(fp));
+    actor.AddMicroBatchConf(std::move(bp));
+    defaultConf.AddTaskConfig(std::move(gs));
+    defaultConf.AddTaskConfig(std::move(reward));
+    defaultConf.AddTaskConfig(std::move(actor));
+    config.push_back(defaultConf);
+}
 }

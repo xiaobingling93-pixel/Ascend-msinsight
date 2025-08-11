@@ -16,7 +16,8 @@
 #include "writer.h"
 #include "stringbuffer.h"
 #include "ServerLog.h"
-
+#include "FileUtil.h"
+#include "filereadstream.h"
 namespace Dic {
 using json_t = rapidjson::Value;
 using document_t = rapidjson::Document;
@@ -316,6 +317,33 @@ public:
         return result;
     }
 
+    static inline document_t ReadJsonFromFile(const std::string &filePath)
+    {
+        document_t document;
+        document.SetNull();
+        if (!FileUtil::CheckFilePath(filePath)) {
+            Server::ServerLog::Error("Invalid path, can't read json from file, path=", filePath);
+            return document;
+        }
+        FILE *file = std::fopen(filePath.c_str(), "r");
+        if (!file) {
+            Server::ServerLog::Error("open json file failed, path=", filePath);
+            return document;
+        }
+        std::string readBuffer;
+        readBuffer.reserve(65536);
+        rapidjson::FileReadStream is(file, readBuffer.data(), readBuffer.capacity());
+        rapidjson::Document doc;
+        doc.ParseStream(is);
+        std::fclose(file);
+
+        if (doc.HasParseError()) {
+            Server::ServerLog::Error("Parse failed when read file, error:", doc.GetParseError());
+            doc.SetNull();
+            return doc;
+        }
+        return doc;
+    }
 private:
     template <typename T> static inline void SetByJsonKeyValueHelper(std::optional<T> &src, const json_t &json,
         std::string_view key)

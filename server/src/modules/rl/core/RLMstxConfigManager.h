@@ -18,15 +18,19 @@ public:
     std::vector<RLMstxConfig> GetRLMstxConfig();
     std::vector<std::string> GetMstxTaskNameList();
     std::string GetTaskTypeByName(const std::string &name);
-    RLMstxConfig GetMstxConfigByTaskName(const std::string &name);
+
+    /**
+     * @brief 根据taskname获取匹配的配置项
+     */
+    RLMstxConfig GetMstxConfigByTaskName(const std::vector<std::string> &taskNames);
 private:
-    std::vector<RLMstxConfig> config = {{"verl", "megatron",
-                                         {{"ActorRollout", "generate_sequences", {}},
-                                          {"Reward", "compute_log_prob", {}},
-                                          {"Actor", "update_actor", {}},
-                                          {"Reference", "compute_ref_log_prob", {}}}}};
-    explicit RLMstxConfigManager() = default;
+    void InitConfig();
+    void InitDefaultConf();
+
+    explicit RLMstxConfigManager();
     ~RLMstxConfigManager() = default;
+
+    std::vector<RLMstxConfig> config;
 };
 }
 #endif // PROFILER_SERVER_RLMSTXCONFIGMANAGER_H

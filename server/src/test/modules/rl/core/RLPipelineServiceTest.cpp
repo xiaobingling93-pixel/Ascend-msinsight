@@ -40,7 +40,7 @@ class RLPipelineServiceTest : public ::testing::Test {
 TEST_F(RLPipelineServiceTest, GetPipelineInfoSuccess)
 {
     Protocol::RLPipelineResponse response;
-    bool res = Dic::Module::RL::RLPipelineService::GetPipelineInfo(response);
+    bool res = Dic::Module::RL::RLPipelineService::Instance().GetPipelineInfo(response);
     const uint64_t expectMinTime = 100;
     const uint64_t expectMaxTime = 1000;
     const uint64_t expectSize = 1;
