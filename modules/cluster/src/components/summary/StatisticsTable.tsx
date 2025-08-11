@@ -384,8 +384,8 @@ export const StatisticsTable = (props: {step: string; rankId: string; dbPath: st
     const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
-            <div>
-                <div data-testid="statistics-table-container" style={{ marginBottom: '20px' }}>
+            <div data-testid="statistics-table-container">
+                <div data-testid="computing-detail" style={{ marginBottom: '20px' }}>
                     <CollapsiblePanel
                         secondary
                         title={`${getTitle('compute', t)} ( Rank ${rankId} )`}
@@ -400,7 +400,7 @@ export const StatisticsTable = (props: {step: string; rankId: string; dbPath: st
                 {
                     !session.isFullDb
                         ? (
-                            <div style={{ marginBottom: '20px' }}>
+                            <div data-testid="communication-detail" style={{ marginBottom: '20px' }}>
                                 <CollapsiblePanel
                                     secondary
                                     title={`${t('CommunicationDetail')} ( Rank ${rankId} )`}

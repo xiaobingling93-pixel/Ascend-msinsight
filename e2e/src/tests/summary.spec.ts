@@ -199,7 +199,7 @@ test.describe('Summary', () => {
     });
 
     test('test_computingDetailTableAndCommunicationDetailTable_DetailsAndOrderBy', async ({ page, summaryPage }) => {
-        const { statisticsTableContainer, summaryFrame } = summaryPage;
+        const { computingDetail, communicationDetail, summaryFrame } = summaryPage;
 
         await summaryPage.changeDimensionTo('tp');
         await page.waitForTimeout(1000);
@@ -208,19 +208,22 @@ test.describe('Summary', () => {
         await summaryFrame.getByRole('row', { name: 'AI_CORE 157876 Details down' }).getByRole('button').click();
         await summaryFrame.getByRole('row', { name: 'Communication 266466 69898' }).getByRole('button').click();
         await page.mouse.move(0, 0);
-        await expect(statisticsTableContainer).toHaveScreenshot('statistics-table-details.png');
+        await expect(computingDetail).toHaveScreenshot('computing-details.png');
+        await expect(communicationDetail).toHaveScreenshot('communication-details.png');
 
         // 展开Details后切换页签
         await summaryFrame.getByText('4', { exact: true }).first().click();
         await summaryFrame.getByText('5', { exact: true }).nth(1).click();
         await page.mouse.move(0, 0);
-        await expect(statisticsTableContainer).toHaveScreenshot('statistics-table-details-page-change.png');
+        await expect(computingDetail).toHaveScreenshot('computing-details-page-change.png');
+        await expect(communicationDetail).toHaveScreenshot('communication-details-page-change.png');
 
         // 展开切换页签后测试排序
         await summaryFrame.locator('div').filter({ hasText: /^Duration\(μs\)$/ }).first().click();
         await summaryFrame.locator('div').filter({ hasText: /^Start Time\(ms\)$/ }).nth(1).click();
         await page.mouse.move(0, 0);
-        await expect(statisticsTableContainer).toHaveScreenshot('statistics-table-details-orderby.png');
+        await expect(computingDetail).toHaveScreenshot('computing-details-orderby.png');
+        await expect(communicationDetail).toHaveScreenshot('communication-details-orderby.png');
     });
 });
 
