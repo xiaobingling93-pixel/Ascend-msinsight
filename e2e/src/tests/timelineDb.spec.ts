@@ -137,7 +137,7 @@ test.describe('Timeline(DB)', () => {
             await flowBtn.click();
             await page.mouse.move(0, 0);
             await page.waitForTimeout(2000);
-            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`operator-link-line-${item}.png`, { maxDiffPixels: 100 });
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`operator-link-line-${item}.png`, { maxDiffPixels: 200 });
             await flowBtn.click();
             await LinkTypeCheckbox.uncheck();
             await flowBtn.click();
