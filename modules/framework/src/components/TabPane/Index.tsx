@@ -158,8 +158,8 @@ const Index = observer(({ session }: {session: Session}) => {
             return;
         }
         setScene(session.scene);
-        setDataCompose({ hasCachelineRecords: session.hasCachelineRecords });
-    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks]);
+        setDataCompose({ hasCachelineRecords: session.hasCachelineRecords, isRL: session.isRL });
+    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isRL]);
 
     // 添加监听新的页签加载后发送当前工程
     useEffect(() => {

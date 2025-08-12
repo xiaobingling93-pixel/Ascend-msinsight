@@ -125,8 +125,6 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: isDev ? 'http://localhost:3008/' : './plugins/RL/index.html',
         },
-        isDefault: true,
-        isCluster: true,
         isRL: true,
     },
 ];

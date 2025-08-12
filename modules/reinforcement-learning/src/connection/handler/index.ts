@@ -5,7 +5,7 @@
 import { NotificationHandler } from '@/connection/defs';
 import { setThemeHandler, switchLanguageHandler } from '@/connection/handler/settingsHandler';
 import { updateSessionHandler } from '@/connection/handler/updateSessionHandler';
-import { removeHandler, resetHandler, switchDirectoryHandler } from '@/connection/handler/removeHandler';
+import { removeHandler, resetHandler } from '@/connection/handler/removeHandler';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler<any>> = {
     setTheme: setThemeHandler,
@@ -13,5 +13,4 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler<any>> = {
     updateSession: updateSessionHandler,
     'remote/remove': removeHandler,
     'remote/reset': resetHandler,
-    switchDirectory: switchDirectoryHandler,
 };

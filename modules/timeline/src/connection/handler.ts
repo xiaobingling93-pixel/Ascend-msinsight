@@ -59,9 +59,20 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
+
+        if (!session) { return; }
+
+        // 第一次 parse/success 返回时，更新 isRL 字段
+        if (session.rankCardInfoMap.size === 0) {
+            connector.send({
+                event: 'updateSession',
+                body: {
+                    isRL: data.isRl,
+                },
+            });
+        }
         updateRankDbPathMap(unitData.rankList ?? [], unitData.dbPath);
         runInAction(() => {
-            if (!session) { return; }
             session.isFullDb = unitData.isFullDb;
             // parse suceess之后关闭进度条
             setUnitProgressByFileId(unitData, session);

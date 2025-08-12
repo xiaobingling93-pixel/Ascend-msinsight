@@ -155,8 +155,6 @@ export class Session {
             scene = 'Jupyter';
         } else if (this.isIE) {
             scene = 'IE';
-        } else if (this.isRL) {
-            scene = 'RL';
         } else {
             scene = 'Default';
         }
@@ -223,6 +221,7 @@ export class Session {
         this.isCluster = remove ? false : null;
         this.isBinary = remove ? false : null;
         this.isIE = remove ? false : null;
+        this.isRL = false;
         this.hasCachelineRecords = false;
         this.toIframeUrl = '';
         this.startTime = -1;

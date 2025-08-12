@@ -13,7 +13,7 @@ const App: React.FC = observer(() => {
             event: 'getParseStatus',
             body: {
                 from: 'RL',
-                requests: ['language', 'theme'],
+                requests: ['language', 'theme', 'parseCompleted'],
             },
         });
     }, []);

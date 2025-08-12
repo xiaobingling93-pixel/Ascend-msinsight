@@ -14,8 +14,3 @@ export const removeHandler: NotificationHandler = (): void => {
 export const resetHandler: NotificationHandler = (): void => {
     rootStore.reset();
 };
-
-// 切换项目
-export const switchDirectoryHandler: NotificationHandler = (): void => {
-    rootStore.reset();
-};
