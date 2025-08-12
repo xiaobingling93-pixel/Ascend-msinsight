@@ -145,12 +145,12 @@ void RLPipelineService::FillAndProcessPipelineData(std::unordered_map<std::strin
     std::sort(pipelineData.begin(), pipelineData.end(),
         [](const RLPipelineItem &pipelineA, const RLPipelineItem &pipelineB) {
             if (pipelineA.hostName != pipelineB.hostName) {
-                return pipelineA.hostName < pipelineB.hostName;
+                return pipelineA.hostName > pipelineB.hostName;
             }
             if (StringUtil::IsAllDigits(pipelineA.rankId) && StringUtil::IsAllDigits(pipelineB.rankId)) {
-                return StringUtil::StringToInt(pipelineA.rankId) < StringUtil::StringToInt(pipelineB.rankId);
+                return StringUtil::StringToInt(pipelineA.rankId) > StringUtil::StringToInt(pipelineB.rankId);
             } else {
-                return pipelineA.rankId < pipelineB.rankId;
+                return pipelineA.rankId > pipelineB.rankId;
             }
         });
 }
