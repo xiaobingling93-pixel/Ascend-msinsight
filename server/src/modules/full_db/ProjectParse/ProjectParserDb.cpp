@@ -408,7 +408,7 @@ void ProjectParserDb::BuildProjectFromParseFile(Dic::Module::Global::ProjectExpl
     parseFileInfoRank->curDirName = FileUtil::GetFileName(parsedFile);
     parseFileInfoRank->fileId = GetFileIdWithDb(parsedFile);
     // import single file
-    if (FileUtil::IsRegularFile(parsedFile) || parseFileInfoRank->subId == info.fileName) {
+    if (FileUtil::IsRegularFile(parsedFile) && parseFileInfoRank->subId == info.fileName) {
         parseFileInfoRank->subId = FileUtil::GetFileName(parsedFile);
         info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
         return;

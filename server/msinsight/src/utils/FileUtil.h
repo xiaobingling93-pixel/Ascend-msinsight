@@ -432,6 +432,14 @@ public:
             if (!FileUtil::FindFolders(path, folders, files)) {
                 return;
             }
+            // msprof db
+            static std::regex msprofRegex(R"(msprof_[0-9]{1,16}\.db$)");
+            bool findMsprofDb = std::any_of(files.begin(), files.end(), [](const std::string &file) {
+                return std::regex_match(file, msprofRegex);
+            });
+            if (!files.empty() && findMsprofDb) {
+                return CollectMatchdFiles(fileRegex, matchedFiles, path, files);
+            }
 
             auto dirs = {FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT),
                          FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT)};
