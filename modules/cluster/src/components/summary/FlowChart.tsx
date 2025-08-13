@@ -110,7 +110,7 @@ const formatData = (dataSource: QueryFwpBwdTimelineRes, theme: Theme): {ranks: R
     const flowData: SeriesDataItem[] = flowList.map((flow) => {
         return {
             name: '',
-            value: [flow[0].rankId, nsToMs(flow[0].startTime), flow[1].rankId, nsToMs(flow[1].startTime)],
+            value: [flow[0].rankId, nsToMs(flow[0].startTime), flow[1].rankId, nsToMs(flow[1].startTime), flow[0].opName, flow[1].opName],
             itemStyle: {
                 color: theme.colorPalette.tealGreen,
             },
@@ -274,6 +274,23 @@ const baseOptions: EChartsOption = {
                 y: [0, 2],
             },
             clip: true,
+            tooltip: {
+                formatter: function (params: any): string {
+                    return `
+                    <div class="formatter">
+                        <div class="row">${params.marker} ${safeStr(params.name)}</div>
+                        <div class="row">
+                            <div class="label">Send Op</div>
+                            <div class="value">${safeStr(params.value[4])}</div>
+                        </div>
+                        <div class="row">
+                            <div class="label">Receive Op</div>
+                            <div class="value">${safeStr(params.value[5])}</div>
+                        </div>
+                    </div>
+                    `;
+                },
+            },
         },
     ],
 };

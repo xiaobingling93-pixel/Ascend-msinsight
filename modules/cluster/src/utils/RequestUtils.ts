@@ -209,6 +209,7 @@ export interface QueryFwpBwdTimelineRes {
     Array<{
         rankId: string;
         startTime: number;
+        opName: string;
     }>
     >;
 }

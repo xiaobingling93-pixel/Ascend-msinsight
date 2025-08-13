@@ -134,7 +134,7 @@ void QueryFwdBwdTimelineHandler::CalFlowInfo(std::vector<FlowInfo> &flowList, co
             if (item.opConnectionId.empty()) {
                 continue;
             }
-            FlowPointInfo point{rank, item.startTime};
+            FlowPointInfo point{rank, item.startTime, item.name};
             pointMap[item.opConnectionId].push_back(point);
         }
     }

@@ -78,6 +78,7 @@ struct PipelineFwdBwdTimelineByRank {
 struct FlowPointInfo {
     std::string rankId;
     uint64_t startTime;
+    std::string opName;
 };
 
 struct FlowInfo {

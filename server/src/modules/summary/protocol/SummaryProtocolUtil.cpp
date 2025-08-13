@@ -269,6 +269,7 @@ std::optional<document_t> FlowListInfoToJson(const std::vector<FlowInfo> &flowLi
             json_t pointJson(kObjectType);
             JsonUtil::AddMember(pointJson, "rankId", point.rankId, allocator);
             JsonUtil::AddMember(pointJson, "startTime", point.startTime, allocator);
+            JsonUtil::AddMember(pointJson, "opName", point.opName, allocator);
             flowPointList.PushBack(pointJson, allocator);
         }
         flowListJson.PushBack(flowPointList, allocator);
