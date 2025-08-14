@@ -106,5 +106,17 @@ void RLMstxConfigManager::InitDefaultConf()
     defaultConf.AddTaskConfig(std::move(reward));
     defaultConf.AddTaskConfig(std::move(actor));
     config.push_back(defaultConf);
+
+    RLMstxConfig mindSpeedRlConf = {
+        .framework = "MindSpeed-RL",
+        .algorithm = "GRPO",
+    };
+    TaskConfig mindSpeedGS{.roleName = "ActorRollout", .taskName= "ActorHybridWorkerBase.generate_sequences"};
+    TaskConfig mindSpeedRef{.roleName = "Reference", .taskName = "IntegratedWorker.compute_ref_log_prob"};
+    TaskConfig mindSpeedActor{.roleName = "Actor", .taskName = "ActorRolloutHybrid.update_actor"};
+    mindSpeedRlConf.AddTaskConfig(std::move(mindSpeedGS));
+    mindSpeedRlConf.AddTaskConfig(std::move(mindSpeedRef));
+    mindSpeedRlConf.AddTaskConfig(std::move(mindSpeedActor));
+    config.push_back(mindSpeedRlConf);
 }
 }

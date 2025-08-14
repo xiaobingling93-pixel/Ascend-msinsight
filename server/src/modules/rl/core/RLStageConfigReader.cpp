@@ -51,8 +51,8 @@ bool RLMstxConfigReader::ConfigFormatValid(document_t &doc)
         return false;
     }
     auto &configs = doc["config"];
-    // 这里使用!any_of， 在出现错误配置时及时停止，不必再检查后面的配置
-    return !std::all_of(configs.Begin(), configs.End(), RLMstxConfigReader::MstxConfigCheck);
+    // 这里使用all_of， 在出现错误配置时及时停止，不必再检查后面的配置
+    return std::all_of(configs.Begin(), configs.End(), RLMstxConfigReader::MstxConfigCheck);
 }
 
 
@@ -94,7 +94,7 @@ void RLMstxConfigReader::SetConfigPath(const std::string &path)
 
 bool RLMstxConfigReader::MicroBatchConfigCheck(const json_t &microBatchJson)
 {
-    if (!microBatchJson.HasMember("microBatchName") || !microBatchJson["microBatchName"].IsString()) {
+    if (!microBatchJson.HasMember("name") || !microBatchJson["name"].IsString()) {
         Server::ServerLog::Error("field microBatchName needs, and it should be string type");
         return false;
     }
