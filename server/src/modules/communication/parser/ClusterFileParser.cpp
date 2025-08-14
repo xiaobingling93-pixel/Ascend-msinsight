@@ -194,6 +194,9 @@ bool ClusterFileParser::ParseClusterFiles()
     // 正常解析
     ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::RUNNING);
     bool parseRes = InitBaseInfoAndMatrixData();
+    if (!parseRes) {
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
+    }
     return parseRes;
 }
 
