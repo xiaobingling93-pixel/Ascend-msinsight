@@ -5,7 +5,7 @@
 import * as MindStudio from './mindstudio';
 import * as Private from './privateMindStudio';
 import * as staticMindStudio from './staticMindStudio';
-import { Signal } from '@lumino/signaling';
+import { Signal } from './utils/lumino/signaling';
 import { ServerConnection } from '@jupyterlab/services';
 
 export class DefaultMindStudio implements MindStudio.IMindStudio {

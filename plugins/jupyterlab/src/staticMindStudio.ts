@@ -5,7 +5,7 @@
 import * as MindStudio from './mindstudio';
 import { DefaultMindStudio } from './defaultMindStudio';
 import * as Private from './privateMindStudio';
-import { each, map, toArray } from '@lumino/algorithm';
+import { map } from './utils/lumino/algorithm';
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
@@ -98,17 +98,17 @@ export function listRunning(
                 throw new Error('Invalid mindstudio data');
             }
             // Update the local data store.
-            const urls = toArray(
+            const urls = Array.from(
                 map(data, (item: MindStudio.IModel) => {
                     return URLExt.join(instanceUrl, item.name);
                 })
             );
-            each(Object.keys(Private.running), (runningUrl: string) => {
-                if (urls.indexOf(runningUrl) === -1) {
-                    const mindstudio = Private.running[runningUrl];
-                    mindstudio.dispose();
+            for (const runningUrl of Object.keys(Private.running)) {
+                if (!urls.includes(runningUrl)) {
+                  const mindstudio = Private.running[runningUrl];
+                  mindstudio.dispose();
                 }
-            });
+            };
             return data;
         });
 }
@@ -146,9 +146,9 @@ export function shutdownAll(
 ): Promise<void> {
     const localSettings = settings || ServerConnection.makeSettings();
     return listRunning(localSettings).then(running => {
-        each(running, (s: MindStudio.IModel) => {
+        running.forEach((s: MindStudio.IModel) => {
             shutdown(s.name, localSettings);
-        });
+          });
     });
 }
 

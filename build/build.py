@@ -212,17 +212,18 @@ def build_jupyterlab(jupyterlab_version, os_name):
         return 0
 
     plugin_path = os.path.join(PROJECT_PATH, Const.JUPYTERLAB_PLUGINS_DIR)
-
+    requirements_path = os.path.join(plugin_path, 'requirements.txt')
+ 
     # 下载构建依赖
-    result = exec_command([Const.PIP, 'install', '--trusted-host', 'mirrors.tools.huawei.com', '-i',
-            'https://mirrors.tools.huawei.com/pypi/simple',
-            'jupyterlab==4.3.2', 'tornado==6.2', 'jupyter_packaging~=0.12.3'],
+    result = exec_command([Const.PIP, 'install', '--trusted-host', 'cmc.centralrepo.rnd.huawei.com', '-i',
+            'https://cmc.centralrepo.rnd.huawei.com/artifactory/pypi-central-repo/simple/',
+            '-r', requirements_path],
             plugin_path, 'jupyterlab_plugin')
     if result != 0:
         return 1
 
     # 设置npm代理
-    os.putenv('npm_config_registry', 'https://mirrors.tools.huawei.com/npm/')
+    set_npm_config()
 
     # 拷贝前后端资源
     jupyterlab_path = 'mindstudio_insight_jupyterlab'

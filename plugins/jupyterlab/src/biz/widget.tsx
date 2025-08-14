@@ -6,7 +6,6 @@ import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ReactWidget } from '@jupyterlab/apputils';
 import React from 'react';
 import * as MindStudio from '../mindstudio';
-import { Message } from '@lumino/messaging';
 import { MindStudioManager } from '../manager';
 import * as CommandIDs from '../commands';
 import { MindStudioInsightTab } from './MindStudioInsight';
@@ -92,11 +91,6 @@ export class MindStudioReactWidget extends ReactWidget {
   protected updateCurrentModel = (model: MindStudio.IModel | null): void => {
     this.currentMindStudioModel = model;
   };
-
-  protected onCloseRequest(msg: Message): void {
-    super.onCloseRequest(msg);
-    this.dispose();
-  }
 
   protected openMindStudio = (modelName: string): void => {
     this.app.commands.execute(CommandIDs.open, {

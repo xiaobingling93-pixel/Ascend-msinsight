@@ -46,17 +46,17 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyterlab/application": "^4.3.2",
-    "@jupyterlab/apputils": "^4.3.2",
-    "@jupyterlab/launcher": "^4.3.2",
-    "@jupyterlab/mainmenu": "^4.3.2",
-    "@jupyterlab/ui-components": "^4.3.2",
-    "@jupyterlab/running": "^4.3.2",
-    "@jupyterlab/coreutils": "^6.3.2",
-    "@jupyterlab/services": "^7.3.2"
+    "@jupyterlab/application": "^4.3.5",
+    "@jupyterlab/apputils": "^4.4.5",
+    "@jupyterlab/launcher": "^4.3.5",
+    "@jupyterlab/mainmenu": "^4.3.5",
+    "@jupyterlab/ui-components": "^4.3.5",
+    "@jupyterlab/running": "^4.3.5",
+    "@jupyterlab/coreutils": "^6.3.5",
+    "@jupyterlab/services": "^7.3.5"
   },
   "devDependencies": {
-    "@jupyterlab/builder": "^4.3.2",
+    "@jupyterlab/builder": "^4.3.5",
     "@types/json-schema": "^7.0.11",
     "@types/react": "^18.0.26",
     "@typescript-eslint/eslint-plugin": "^5.55.0",

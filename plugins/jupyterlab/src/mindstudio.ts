@@ -3,9 +3,9 @@
  */
 
 import * as staticMindStudio from './staticMindStudio';
-import { IDisposable } from '@lumino/disposable';
-import { ISignal } from '@lumino/signaling';
-import { JSONObject } from '@lumino/coreutils';
+import { IDisposable } from './utils/lumino/disposable';
+import { ISignal } from './utils/lumino/signaling';
+import { JSONObject } from './utils/lumino/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
 /**

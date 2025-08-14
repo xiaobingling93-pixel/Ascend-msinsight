@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import { ArrayExt } from '@lumino/algorithm';
-import { Signal, ISignal } from '@lumino/signaling';
-import { JSONExt } from '@lumino/coreutils';
+import { ArrayExt } from './utils/lumino/algorithm';
+import { Signal, ISignal } from './utils/lumino/signaling';
+import { JSONExt } from './utils/lumino/coreutils';
 import * as MindStudio from './mindstudio';
 import * as staticManager from './staticManager';
 import { ServerConnection } from '@jupyterlab/services';
@@ -193,8 +193,14 @@ export class MindStudioManager implements MindStudio.IManager {
 
   private async _refreshRunning(): Promise<void> {
     const models = await MindStudio.listRunning(this.serverSettings);
+    const currentModel = models.map(m => ({
+      name: m.name
+    }));
     this._isReady = true;
-    if (!JSONExt.deepEqual(models, this._models)) {
+    const previousModel = this._models.map(m => ({
+      name: m.name
+    }));
+    if (!JSONExt.deepEqual(currentModel, previousModel)) {
       const names = models.map(r => r.name);
       const toRemove: MindStudio.IMindStudio[] = [];
       for (const t of this._mindstudios) {
