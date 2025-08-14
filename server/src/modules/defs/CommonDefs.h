@@ -39,7 +39,7 @@ namespace Dic {
     const std::string ipynbSuffix = ".ipynb";
 
     const static std::vector<std::string> CANN_APIS = {"acl", "runtime", "model", "node", "hccl", "communication"};
-    const static std::vector<std::string> OVERLAP_TYPES = {"Computing", "Communication",
+    const static std::vector<std::string> OVERLAP_TYPES = {"Computing", "Communication ",
                                                            "Communication(Not Overlapped)", "Free"};
     const static std::string E2E_TIME = "E2E Time";
     const static std::string COMPUTING_TIME = "Computing Time";

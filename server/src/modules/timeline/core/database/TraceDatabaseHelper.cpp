@@ -350,6 +350,12 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
                 return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.startTime,
                                     requestParams.endTime);
             }
+        case PROCESS_TYPE::OVERLAP_ANALYSIS:
+            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                  "FROM " + TABLE_OVERLAP_ANALYSIS + " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? "
+                  "ORDER BY startNs;";
+            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId, requestParams.startTime,
+                                requestParams.endTime);
         case PROCESS_TYPE::CANN_API:
             sql = "with constValue as (select ? as minTime, ? as pid, ? as startTime, ? as endTime) "
                   "SELECT startNs - minTime as start_time, endNs - startNs as duration, endNs - minTime as end_time "

@@ -3,31 +3,18 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, Select } from 'ascend-components';
+import { Tooltip, Select, Tabs } from 'ascend-components';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import React, { useEffect, useRef, useState } from 'react';
-import { FilterIcon } from 'ascend-icon';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { FilterIcon, HelpIcon } from 'ascend-icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import type { InsightUnit } from '../entity/insight';
-import type { CardMetaData, ProcessMetaData } from '../entity/data';
+import type { CardMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
 import { useTranslation } from 'react-i18next';
-import i18n from 'ascend-i18n';
 
-const ChildrenContainer = styled.div`
-    color: ${(props): string => props.theme.textColorPrimary};
-    font-size: 12px;
-    user-select: none;
-
-    > div {
-      padding: 5px 11px;
-      cursor: pointer;
-      &:hover{
-        background: ${(props): string => props.theme.primaryColor};
-      }
-    }
-`;
+const DEFAULT_FILTER_KEY = 'Card';
 
 const CustomDiv = styled.div`
     display: flex;
@@ -110,122 +97,34 @@ const CustomDiv = styled.div`
     }
 `;
 
+const TabsWrapper = styled.div`
+    position: relative;
+`;
+
+const FixedTooltipWrapper = styled.div`
+    position: absolute;
+    top: 6px;
+    right: 40px;
+`;
+
 interface CompleteOptionProps {
     label: string;
     value: string;
 }
 
-type UseAutoCompleteHandlesReturnType = [
-    selectValue: string | null,
-    dropdownRenderr: () => JSX.Element,
-    isOpen: boolean,
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
-    completeOptions: CompleteOptionProps[],
-    handleChange: (value: string[]) => void,
-];
-const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnType => {
-    const [selectValue, setSelectValue] = useState<string | null>(null);
-    const [isOpen, setIsOpen] = useState<boolean>(false);
-    const { cardNames, unitNames } = useUnitsNameSet(session);
-    const [completeOptions, setCompleteOptions] = useState<CompleteOptionProps[]>([]);
-
-    // 切换项目时 session.projectName 改变，触发 selectValue 重置
-    useEffect(() => {
-        setSelectValue(null);
-    }, [session.projectName]);
-
-    useEffect(() => {
-        handleSearch('');
-    }, [selectValue]);
-
-    function dropdownRender(): JSX.Element {
-        return (
-            <ChildrenContainer data-testid={'select-options-filter-type'}>
-                <div key={'file'} onClick={(): void => {
-                    setSelectValue('Card Filter');
-                    setIsOpen(false);
-                }}>{i18n.t('Card Filter', { ns: 'timeline' })}</div>
-                <div key={'folder'} onClick={(): void => {
-                    setSelectValue('Units Filter');
-                    setIsOpen(false);
-                }}>{i18n.t('Units Filter', { ns: 'timeline' })}</div>
-            </ChildrenContainer>
-        );
-    };
-
-    const handleSearch = (value: string): void => {
-        const result: CompleteOptionProps[] = [];
-        let targetSet = new Set<string>();
-        if (selectValue === 'Units Filter') {
-            targetSet = unitNames;
-        }
-        if (selectValue === 'Card Filter') {
-            targetSet = cardNames;
-        }
-        targetSet.forEach((cardName) => {
-            if (cardName.toLowerCase().includes(value.toLowerCase())) {
-                result.push({ label: cardName, value: cardName });
-            }
-        });
-        setCompleteOptions(result);
-    };
-
-    const handleChange = (value: string[]): void => {
-        startFilter(session, value, selectValue);
-    };
-    return [selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange];
-};
-
-const CategorySearchContent = (session: Session): JSX.Element => {
-    const theme = useTheme();
-    const [selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange] = useAutoCompleteHandles(session);
-    const [selection, setSelection] = useState<string[]>([]);
-    useEffect(() => {
-        setSelection([]);
-        handleChange([]);
-    }, [completeOptions, session.doReset]);
-
-    return (
-        <CustomDiv theme={theme}>
-            <Select
-                id="select-filter-type"
-                value={selectValue === null ? null : i18n.t(selectValue, { ns: 'timeline' })}
-                dropdownRender={dropdownRender}
-                onDropdownVisibleChange={(open: boolean): void => setIsOpen(open)}
-                open={isOpen}
-                placeholder={i18n.t('Select filter type', { ns: 'timeline' })}
-                height={32} width={120}>
-            </Select>
-            <Select
-                id={'select-filter-content'}
-                mode="multiple"
-                allowClear
-                options={completeOptions}
-                width={280}
-                height={32}
-                value={selection}
-                onChange={(val: string[]): void => { setSelection(val); handleChange(val); }}
-            >
-            </Select>
-        </CustomDiv>
-    );
-};
-
-const startFilter = (session: Session, inputValue: string[], selectValue: string | null): void => {
+const startFilter = (session: Session, cardSelection: string[], unitSelection: string[]): void => {
     setAllUnitsDisplay(session);
-    if (inputValue.length === 0) {
+    if (cardSelection.length === 0 && unitSelection.length === 0) {
         return;
     }
-    switch (selectValue) {
-        case 'Card Filter':
-            doCardFilter(session.units, inputValue);
-            break;
-        case 'Units Filter':
-            doUnitsFilter(session.units, inputValue);
-            break;
-        default:
-            break;
+
+    if (cardSelection.length !== 0) {
+        doCardFilter(session.units, cardSelection);
     }
+    if (unitSelection.length !== 0) {
+        doUnitsFilter(session.units, unitSelection);
+    }
+
     session.singleLinkLine = {};
 };
 
@@ -254,10 +153,15 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
                 return;
             }
             let hasMatchUnit = false;
-            unit.children.forEach(processUnit => {
-                const isProcessUnitMatch = selectValues.includes((processUnit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, ''));
-                processUnit.isDisplay = isProcessUnitMatch || findMatchUnit(processUnit, selectValues);
-                hasMatchUnit = hasMatchUnit || processUnit.isDisplay;
+            unit.children.forEach(childUnit => {
+                let isUnitMatch = false;
+                if (childUnit.name === 'Thread') {
+                    isUnitMatch = selectValues.includes((childUnit.metadata as ThreadMetaData).threadName.replace(/\(\d{0,12}\)/, ''));
+                } else {
+                    isUnitMatch = selectValues.includes((childUnit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, ''));
+                }
+                childUnit.isDisplay = isUnitMatch || findMatchUnit(childUnit, selectValues);
+                hasMatchUnit = hasMatchUnit || childUnit.isDisplay;
             });
             if (!hasMatchUnit) {
                 unit.isDisplay = false;
@@ -276,8 +180,14 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             if (!unit.children) {
                 return;
             }
-            if (selectValues.includes(((unit.metadata as ProcessMetaData).processName))) {
-                setUnitDislay(unit);
+            if (unit.name === 'Thread') {
+                if (selectValues.includes(((unit.metadata as ThreadMetaData).threadName))) {
+                    setUnitDislay(unit);
+                }
+            } else {
+                if (selectValues.includes(((unit.metadata as ProcessMetaData).processName))) {
+                    setUnitDislay(unit);
+                }
             }
         });
     });
@@ -285,10 +195,15 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
 
 const findMatchUnit = (unit: InsightUnit, selectValues: string[]): boolean => {
     let hasMatchUnit = false;
-    unit.children?.forEach(processUnit => {
-        const isProcessUnitMatch = selectValues.includes((processUnit.metadata as ProcessMetaData).processName);
-        processUnit.isDisplay = isProcessUnitMatch || findMatchUnit(processUnit, selectValues);
-        hasMatchUnit = hasMatchUnit || processUnit.isDisplay;
+    unit.children?.forEach(childUnit => {
+        let isUnitMatch = false;
+        if (childUnit.name === 'Thread') {
+            isUnitMatch = selectValues.includes((childUnit.metadata as ThreadMetaData).threadName);
+        } else {
+            isUnitMatch = selectValues.includes((childUnit.metadata as ProcessMetaData).processName);
+        }
+        childUnit.isDisplay = isUnitMatch || findMatchUnit(childUnit, selectValues);
+        hasMatchUnit = hasMatchUnit || childUnit.isDisplay;
     });
     return hasMatchUnit;
 };
@@ -318,7 +233,16 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
             cardNames.add((unit.metadata as CardMetaData).cardName ?? '');
         }
         if (unit.name === 'Process' || unit.name === 'Label') {
-            unitNames.add((unit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, ''));
+            const metaDataName = (unit.metadata as ProcessMetaData).processName;
+            if (!metaDataName.toLowerCase().includes('process') && !metaDataName.toLowerCase().includes('thread')) {
+                unitNames.add(metaDataName.replace(/\(\d{0,12}\)/, '').trim());
+            }
+        }
+        if (unit.name === 'Thread') {
+            const metaDataName = (unit.metadata as ThreadMetaData).threadName;
+            if (metaDataName && metaDataName !== '' && ['pytorch', 'MsTx', 'Python GC', 'CANN'].includes(metaDataName)) {
+                unitNames.add(metaDataName.replace(/\(\d{0,12}\)/, '').trim());
+            }
         }
         if (unit.children) {
             for (const child of unit.children) {
@@ -331,6 +255,139 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
         visitUnit(unit);
     });
     return { cardNames, unitNames };
+};
+
+type UseAutoCompleteHandlesReturnType = [
+    setSelectValue: React.Dispatch<React.SetStateAction<string | null>>,
+    completeOptions: CompleteOptionProps[],
+    handleSearch: (value: string, label?: string | null) => void,
+    cardSelection: string[],
+    unitSelection: string[],
+    setCardSelection: React.Dispatch<React.SetStateAction<string[]>>,
+    setUnitSelection: React.Dispatch<React.SetStateAction<string[]>>,
+];
+const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnType => {
+    const [selectValue, setSelectValue] = useState<string | null>(null);
+    const { cardNames, unitNames } = useUnitsNameSet(session);
+    const [completeOptions, setCompleteOptions] = useState<CompleteOptionProps[]>([]);
+    const [cardSelection, setCardSelection] = useState<string[]>([]);
+    const [unitSelection, setUnitSelection] = useState<string[]>([]);
+
+    // 切换项目时 session.projectName 改变，触发 selectValue 重置
+    useEffect(() => {
+        setSelectValue(null);
+        setCardSelection([]);
+        setUnitSelection([]);
+    }, [session.projectName]);
+
+    useEffect(() => {
+        handleSearch('');
+    }, [selectValue]);
+
+    useEffect(() => {
+        startFilter(session, cardSelection, unitSelection);
+    }, [cardSelection, unitSelection]);
+
+    const handleSearch = (value: string, key = selectValue): void => {
+        const result: CompleteOptionProps[] = [];
+        let targetSet = new Set<string>();
+        if (key === 'Unit') {
+            targetSet = unitNames;
+        }
+        if (key === 'Card') {
+            targetSet = cardNames;
+        }
+        targetSet.forEach((cardName) => {
+            if (cardName.toLowerCase().includes(value.toLowerCase())) {
+                result.push({ label: cardName, value: cardName });
+            }
+        });
+        setCompleteOptions(result);
+    };
+
+    return [setSelectValue, completeOptions, handleSearch, cardSelection, unitSelection, setCardSelection, setUnitSelection];
+};
+
+const CategorySearchContent = (session: Session): JSX.Element => {
+    const theme = useTheme();
+    const [setSelectValue, completeOptions, handleSearch, cardSelection, unitSelection, setCardSelection, setUnitSelection] = useAutoCompleteHandles(session);
+    const [activeTabKey, setActiveTabKey] = useState<string>(DEFAULT_FILTER_KEY);
+    const { t } = useTranslation();
+
+    useEffect(() => {
+        setActiveTabKey(DEFAULT_FILTER_KEY);
+        handleTabChange(DEFAULT_FILTER_KEY);
+    }, [session.projectName]);
+
+    const filterTabItems = useMemo(() => [
+        {
+            label: t('Card Filter', { ns: 'timeline' }),
+            key: 'Card',
+            children: (
+                <Select
+                    id={'select-card-filter-content'}
+                    mode="multiple"
+                    allowClear
+                    placeholder={t('Please select card', { ns: 'timeline' })}
+                    options={completeOptions}
+                    width={280}
+                    height={32}
+                    value={cardSelection}
+                    onChange={(val: string[]) => setCardSelection(val)}
+                >
+                </Select>
+            ),
+        },
+        {
+            label: t('Units Filter', { ns: 'timeline' }),
+            key: 'Unit',
+            children: (
+                <Select
+                    id={'select-unit-filter-content'}
+                    mode="multiple"
+                    allowClear
+                    placeholder={t('Please select unit', { ns: 'timeline' })}
+                    options={completeOptions}
+                    width={280}
+                    height={32}
+                    value={unitSelection}
+                    onChange={(val: string[]) => setUnitSelection(val)}
+                >
+                </Select>
+            ),
+        },
+    ], [completeOptions, cardSelection, unitSelection, t]);
+
+    const handleTabChange = (activeKey: string): void => {
+        setActiveTabKey(activeKey);
+        const tab = filterTabItems.find(item => item.key === activeKey);
+        if (tab) {
+            const key = String(tab.key);
+            setSelectValue(key);
+            handleSearch('', key);
+        }
+    };
+
+    return (
+        <CustomDiv theme={theme}>
+            <TabsWrapper>
+                <Tabs
+                    type="card"
+                    size="small"
+                    tabBarGutter={4}
+                    activeKey={activeTabKey}
+                    onChange={handleTabChange}
+                    items={filterTabItems}
+                >
+                </Tabs>
+                <FixedTooltipWrapper>
+                    <Tooltip placement='bottom' title={t('Filter ToolTip', { ns: 'timeline' })}>
+                        <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20} />
+                    </Tooltip>
+                </FixedTooltipWrapper>
+            </TabsWrapper>
+        </CustomDiv>
+    );
 };
 
 export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Element | null => {

@@ -20,9 +20,10 @@ export class TimelinePage {
     readonly zoomOutBtn: Locator;
     readonly drawerBtn: Locator; // 底部面板收缩按钮
     readonly bottomPanel: Locator; // 底部面板
-    readonly selectFilterType: Locator;
-    readonly selectOptionFilterType: Locator;
-    readonly selectFilterContent: Locator;
+    readonly cardFilterTab: Locator;
+    readonly unitFilterTab: Locator;
+    readonly selectCardFilterContent: Locator;
+    readonly selectUnitFilterContent: Locator;
     readonly openInWindows: Locator;
 
     constructor(page: Page) {
@@ -40,9 +41,10 @@ export class TimelinePage {
         this.zoomOutBtn = this.timelineFrame.getByTestId('tool-zoom-out');
         this.drawerBtn = this.timelineFrame.getByTestId('drawer-btn').nth(2);
         this.bottomPanel = this.timelineFrame.locator('.bottomPanelContainer');
-        this.selectFilterType = this.timelineFrame.locator('#select-filter-type');
-        this.selectOptionFilterType = this.timelineFrame.getByTestId('select-options-filter-type');
-        this.selectFilterContent = this.timelineFrame.locator('#select-filter-content');
+        this.cardFilterTab = this.timelineFrame.getByRole('tab', { name: 'Card Filter' });
+        this.unitFilterTab = this.timelineFrame.getByRole('tab', { name: 'Units Filter' });
+        this.selectCardFilterContent = this.timelineFrame.locator('#select-card-filter-content');
+        this.selectUnitFilterContent = this.timelineFrame.locator('#select-unit-filter-content');
         this.openInWindows = this.timelineFrame.getByRole('button', { name: 'Open in Find Window' });
     }
 

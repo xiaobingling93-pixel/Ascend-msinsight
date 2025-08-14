@@ -1389,7 +1389,7 @@ void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
             if (process.operator bool()) {
                 metaData.emplace_back(std::move(process));
             }
-            process = GenerateBaseUnitTrack("process", path, std::to_string(pid), "process " + std::to_string(pid),
+            process = GenerateBaseUnitTrack("process", path, thread.first, "process " + std::to_string(pid),
                 ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
             curPid = pid;
         }

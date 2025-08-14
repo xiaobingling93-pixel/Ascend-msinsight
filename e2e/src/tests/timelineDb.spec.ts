@@ -148,17 +148,13 @@ test.describe('Timeline(DB)', () => {
 
     // 工具栏 - 泳道(card)过滤
     test('test_db_cardFilter', async ({ page, timelinePage }) => {
-        const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
-        const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
-        const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
+        const { filterBtn, timelineFrame, cardFilterTab, selectCardFilterContent } = timelinePage;
+        const filterContentSelector = new SelectHelpers(page, selectCardFilterContent, timelineFrame);
 
         await filterBtn.click();
         await page.mouse.move(0, 0);
 
-        await filterTypeSelector.open();
-        // 由于该 select 框下拉选项是自定义节点，不能使用 SelectHelpers 的 selectOption 方法取值
-        const option = selectOptionFilterType.getByText('Card Filter');
-        await option.click();
+        await cardFilterTab.click();
         await page.mouse.move(0, 0);
 
         await filterContentSelector.open();
@@ -170,17 +166,13 @@ test.describe('Timeline(DB)', () => {
 
     // 工具栏 - 泳道(unit)过滤
     test('test_db_unitFilter', async ({ page, timelinePage }) => {
-        const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
-        const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
-        const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
+        const { filterBtn, timelineFrame, unitFilterTab, selectUnitFilterContent } = timelinePage;
+        const filterContentSelector = new SelectHelpers(page, selectUnitFilterContent, timelineFrame);
 
         await filterBtn.click();
         await page.mouse.move(0, 0);
 
-        await filterTypeSelector.open();
-        // 由于该 select 框下拉选项是自定义节点，不能使用 SelectHelpers 的 selectOption 方法取值
-        const option = selectOptionFilterType.getByText('Units Filter');
-        await option.click();
+        await unitFilterTab.click();
 
         await page.mouse.move(0, 0);
         await filterContentSelector.open();
@@ -199,19 +191,14 @@ test.describe('Timeline(DB)', () => {
         await parseClusterCompletedRes;
         test.setTimeout(30_000);
         const { communicationFrame } = new CommunicationPage(page);
-        const { filterBtn, timelineFrame, selectFilterType,
-            selectOptionFilterType, selectFilterContent, unitWrapperScroller,
+        const { filterBtn, timelineFrame, unitFilterTab, selectUnitFilterContent, unitWrapperScroller,
             searchBtn, openInWindows } = timelinePage;
-        const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
-        const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
+        const filterContentSelector = new SelectHelpers(page, selectUnitFilterContent, timelineFrame);
 
         await filterBtn.click();
         await page.mouse.move(0, 0);
 
-        await filterTypeSelector.open();
-        // 由于该 select 框下拉选项是自定义节点，不能使用 SelectHelpers 的 selectOption 方法取值
-        const option = selectOptionFilterType.getByText('Units Filter');
-        await option.click();
+        await unitFilterTab.click();
 
         await page.mouse.move(0, 0);
         await filterContentSelector.open();
@@ -251,18 +238,13 @@ test.describe('Timeline(DB)', () => {
 
     // 同通信域泳道置顶
     test('test_db_same_communication_group', async ({ page, timelinePage, ws }) => {
-        const { filterBtn, timelineFrame, selectFilterType,
-            selectOptionFilterType, selectFilterContent } = timelinePage;
-        const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
-        const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
+        const { filterBtn, timelineFrame,  unitFilterTab, selectUnitFilterContent } = timelinePage;
+        const filterContentSelector = new SelectHelpers(page, selectUnitFilterContent, timelineFrame);
 
         await filterBtn.click();
         await page.mouse.move(0, 0);
 
-        await filterTypeSelector.open();
-        // 由于该 select 框下拉选项是自定义节点，不能使用 SelectHelpers 的 selectOption 方法取值
-        const option = selectOptionFilterType.getByText('Units Filter');
-        await option.click();
+        await unitFilterTab.click();
 
         await page.mouse.move(0, 0);
         await filterContentSelector.open();

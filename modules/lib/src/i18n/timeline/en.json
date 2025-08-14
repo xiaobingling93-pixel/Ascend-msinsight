@@ -15,6 +15,9 @@
     "Card Filter": "Card Filter",
     "Units Filter": "Units Filter",
     "Select filter type": "Select filter type",
+    "Please select card": "Please select card",
+    "Please select unit": "Please select unit",
+    "Filter ToolTip": "Filtering can be applied by card or by layer independently, or jointly by both",
     "contextMenu": {
       "Fit to screen": "Fit to screen",
       "Find in Communication": "Find in Communication",

@@ -15,6 +15,9 @@
     "Card Filter": "卡过滤",
     "Units Filter": "泳道过滤",
     "Select filter type": "选择过滤类型",
+    "Please select card": "请选择卡",
+    "Please select unit": "请选择泳道",
+    "Filter ToolTip": "可以分别按卡以及按层过滤，也可以同时按卡按层联合过滤",
     "contextMenu": {
       "Fit to screen": "整屏显示",
       "Find in Communication": "在通信中查找",
