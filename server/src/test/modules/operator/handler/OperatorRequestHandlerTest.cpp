@@ -18,14 +18,18 @@
 #include "ParamsParser.h"
 #include "ProjectExplorerManager.h"
 #include "WsSessionImpl.h"
-#include "../../../FullDbTestSuit.cpp"
+#include "RenderEngine.h"
+#include "../../../TestSuit.cpp"
+
 
 using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
 using namespace Dic::Module::Global;
 using namespace Dic::Module::Operator;
-class OperatorRequestHandlerTest : public ::testing::Test {
+using namespace Dic::Module::FullDb;
+
+class OperatorRequestHandlerTest : public TestSuit {
 public:
     static void SetUpTestSuite()
     {
@@ -60,6 +64,8 @@ public:
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
                 DataBaseManager::Instance().CreateSummaryDatabase("2", fullDbPath));
         summeryDatabase->OpenDb(fullDbPath, false);
+        auto renderEngine = GetRenderEngine();
+        ASSERT_TRUE(renderEngine != nullptr);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(fullDbPath, "2", "2");
     }
 

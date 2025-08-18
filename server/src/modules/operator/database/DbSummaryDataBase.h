@@ -80,6 +80,8 @@ private:
                               std::vector<Protocol::OperatorDetailInfoRes> &res);
     bool ExecSqlGetStatisticInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                                  std::vector<Protocol::OperatorStatisticInfoRes> &res);
+    bool AddCommunicationOpTableOpTypeIfNotExists();
+
     std::string blockDimColumnName;
 };
 

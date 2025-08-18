@@ -18,7 +18,8 @@ using namespace Server;
 using namespace Dic::Module::Timeline;
 bool DbSummaryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
-    auto result = Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion();
+    auto result = Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion()
+                  && AddCommunicationOpTableOpTypeIfNotExists();
     blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
     return result;
 }
@@ -272,17 +273,18 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
 
 std::string DbSummaryDataBase::GenStatSqlWithCommunication()
 {
-    return " SELECT * FROM (SELECT SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type, NAME.value as name,"
+    return " SELECT * FROM (SELECT TYPE.value as op_type, NAME.value as name,"
         " NULL AS input_shapes,NULL as accelerator_core,"
         " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
         " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0 / COUNT(0), 2) as avg_time,"
         " ROUND(max(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as max_time,"
         " ROUND(min(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as min_time "
         " FROM COMMUNICATION_OP JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName "
+        " JOIN STRING_IDS AS TYPE ON TYPE.id = COMMUNICATION_OP.opType "
         " JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
         " AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
         " WHERE NTASK.deviceId = ? "
-        " GROUP BY SUBSTR(NAME.value, 1, INSTR(NAME.value, '__'))"
+        " GROUP BY TYPE.value "
         " ORDER by total_time DESC LIMIT ?) subquery ";
 }
 
@@ -471,9 +473,11 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
     std::string sql;
     if (isCommunication) {
         std::string name = (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) ?
-            " SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) " : " NAME.value ";
+            " TYPE.value " : " NAME.value ";
         sql = "SELECT COUNT(*) as nums FROM ( SELECT " + name + " as name FROM COMMUNICATION_OP"
-            "   JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName WHERE " + name + " = ? ) subquery";
+              "  JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName "
+              "  JOIN STRING_IDS AS TYPE ON TYPE.id = COMMUNICATION_OP.opType"
+              "  WHERE " + name + " = ? ) subquery";
     } else {
         GenerateMoreInfoTotalNumForOther(sql, operatorGroup);
     }
@@ -941,8 +945,8 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSqlForHCCL(
     std::string name;
     std::string duration;
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) {
-        name = "SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as name ";
-        group = " GROUP by SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) ";
+        name = " TYPE.value as name ";
+        group = " GROUP by TYPE.value ";
         duration = " ROUND(sum(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 2) as duration";
     } else if (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_NAME_GROUP) {
         name = "NAME.value as name";
@@ -955,6 +959,7 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSqlForHCCL(
         " JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
         " AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
         " JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
+        " JOIN STRING_IDS AS TYPE ON TYPE.id = COMMUNICATION_OP.opType "
         " WHERE NTASK.deviceId = ? " +
         group +
         " ORDER BY duration DESC LIMIT ?"
@@ -971,11 +976,12 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForHCCL(std::string &sql
         " NULL AS output_formats"
         " FROM ("
         "  SELECT NULL as rank_id, NULL as step_id, NAME.value AS name,"
-        "  SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type,"
+        "  TYPE.value as op_type,"
         "  NULL as accelerator_core,COMMUNICATION_OP.startNs as start_time,"
         "  ROUND((COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 3) as duration,"
         "  ROUND(COMMUNICATION_OP.waitNs/1000.0, 3) as wait_time FROM COMMUNICATION_OP"
         "  JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
+        "  JOIN STRING_IDS AS TYPE ON TYPE.id = COMMUNICATION_OP.opType"
         "  JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
         "  AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
         "  WHERE NTASK.deviceId = ? "
@@ -1023,12 +1029,12 @@ std::string &DbSummaryDataBase::GenerateQueryDetailSqlForHCCL(std::string &sql) 
           " END AS startTime, duration, wait_time, NULL AS " + blockDimColumnName + ", NULL AS input_shapes,"
           " NULL AS input_data_types, NULL AS input_formats, NULL AS output_shapes, NULL AS output_data_types,"
           " NULL AS output_formats FROM ("
-          "  SELECT NULL as rank_id, NULL as step_id, NAME.value AS name,"
-          "  SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type,"
+          "  SELECT NULL as rank_id, NULL as step_id, NAME.value AS name, TYPE.value AS op_type, "
           "  NULL as accelerator_core,COMMUNICATION_OP.startNs as start_time,"
           "  ROUND((COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 3) as duration,"
           "  ROUND(COMMUNICATION_OP.waitNs/1000.0, 3) as wait_time FROM COMMUNICATION_OP"
           "  JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName "
+          "  JOIN STRING_IDS AS TYPE ON TYPE.id = COMMUNICATION_OP.opType"
           "  JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
           "  AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
           "  ORDER by duration DESC LIMIT ? ) subquery ";
@@ -1147,5 +1153,42 @@ bool DbSummaryDataBase::QueryBandwidthContentionMatMulData(std::vector<Bandwidth
         TABLE_COMPUTE_TASK_INFO + ".globalTaskId = " + TABLE_TASK + ".globalTaskId WHERE " + TABLE_STRING_IDS +
         ".value LIKE '%matmul%' ORDER BY startTime";
     return ExecuteQueryBandwidthContentionMatMulData(res, sql);
+}
+
+bool DbSummaryDataBase::AddCommunicationOpTableOpTypeIfNotExists()
+{
+    // 列存在直接返回true
+    if (CheckColumnExist(TABLE_COMMUNICATION_OP, "opType")) {
+        return true;
+    }
+    const std::string opTypeColumnName = "opType";
+    // 列不存在走添加列逻辑
+    std::string sql = StringUtil::FormatString("ALTER TABLE {} ADD COLUMN {} INTEGER DEFAULT -1;",
+                                               TABLE_COMMUNICATION_OP, opTypeColumnName);
+    if (!ExecSql(sql)) {
+        ServerLog::Error("Failed to add column % to table %", TABLE_COMMUNICATION_OP, opTypeColumnName);
+        return false;
+    }
+    // 依据name刷新一次opType
+    sql = StringUtil::FormatString("UPDATE {}  "
+                                   "SET opType = ( "
+                                   "  SELECT "
+                                   "    tid  "
+                                   "  FROM "
+                                   "    ( "
+                                   "      SELECT DISTINCT "
+                                   "        Name.id AS nid, "
+                                   "        TYPE.id AS tid  "
+                                   "      FROM "
+                                   "        {} "
+                                   "        JOIN STRING_IDS AS NAME ON NAME.id = {}.opName "
+                                   "    JOIN STRING_IDS AS TYPE ON TYPE.value = SUBSTR(NAME.value, 1, INSTR (NAME.value, '__'))) AS SUBVIEW  "
+                                   "WHERE "
+                                   "  SUBVIEW.nid == opName)", TABLE_COMMUNICATION_OP, TABLE_COMMUNICATION_OP, TABLE_COMMUNICATION_OP);
+    if (!ExecSql(sql)) {
+        ServerLog::Error("Failed to set opType from opName.");
+        return false;
+    }
+    return true;
 }
 }
