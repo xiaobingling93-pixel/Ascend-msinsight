@@ -751,6 +751,10 @@ bool DbTraceDataBase::InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> 
                                                 const std::string &rankId)
 {
     std::lock_guard<std::recursive_mutex> lockGuard(mutex);
+    if (!insertOverlapStmt) {
+        ServerLog::Error("Failed to InsertOverlap due to invalid pointer.");
+        return false;
+    }
     size_t size = overlapInfoList.size();
     size_t count = size / cacheSize;
     bool result = true;
@@ -1166,7 +1170,7 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
 bool DbTraceDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     this->hostPath = DbTraceDataBase::GetHostPath(dbPath);
-    return Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion() && SetConfig() && InitStmt();
+    return Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion() && SetConfig();
 }
 
 std::string DbTraceDataBase::GetHostPath(const std::string &filePath)
@@ -1239,6 +1243,50 @@ void DbTraceDataBase::InitMetaDataInfo()
     }
 }
 
+void DbTraceDataBase::CreateTemporaryTable()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    // 初始化所有全量查询功能需要的表，空表不影响展示，方便sql扩展
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!CheckTableExist(item.first)) {
+            ExecSql(item.second);
+        }
+    }
+}
+
+void DbTraceDataBase::AddHelperColumnsAndSetStatus()
+{
+    auto isVersionChange = IsDatabaseVersionChange();
+    if (!isVersionChange) {
+        return;
+    }
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+
+    if (isExistTask) {
+        if (!CheckColumnExist(TABLE_TASK, "depth")) {
+            ExecSql("alter table " + TABLE_TASK + " add depth integer;");
+        }
+        ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                " deviceId integer, startNs integer, endNs integer, type integer);");
+    }
+    if (isExistMstx) {
+        if (!CheckColumnExist(TABLE_MSTX_EVENTS, "depth")) {
+            ExecSql("alter table " + TABLE_MSTX_EVENTS + " add depth integer;");
+        } else {
+            ExecSql("update " + TABLE_MSTX_EVENTS + " set depth = null");
+        }
+    }
+    AddColumns2Table(isExistPytorch, TABLE_API, "depth", "integer");
+    AddColumns2Table(isExistCann, TABLE_CANN_API, "depth", "integer");
+    AddColumns2Table(isExistComputeTask, TABLE_COMPUTE_TASK_INFO, "waitNs",
+                     "INTEGER");
+    AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "waitNs", "integer");
+    AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "opConnectionId", "TEXT");
+    for (const auto &status: DB_STATUS_LIST) {
+        UpdateValueIntoStatusInfoTable(status, NOT_FINISH_STATUS);
+    }
+}
+
 bool DbTraceDataBase::InitStmt()
 {
     if (initStmt) {
@@ -1274,49 +1322,18 @@ bool DbTraceDataBase::InitStmt()
 
 bool DbTraceDataBase::SetConfig()
 {
-    auto isVersionChange = IsDatabaseVersionChange();
     if (!Database::SetConfig()) {
         return false;
     }
-
-    std::lock_guard<std::recursive_mutex> lock(mutex);
     isExistPytorch = CheckTableExist(TABLE_API);
     isExistCann = CheckTableExist(TABLE_CANN_API);
     isExistMstx = CheckTableExist(TABLE_MSTX_EVENTS);
     isExistCommOp = CheckTableExist(TABLE_COMMUNICATION_OP);
-    // 初始化所有全量查询功能需要的表，空表不影响展示，方便sql扩展
-    for (const auto &item: FULL_DB_TABLE_MAP) {
-        if (!CheckTableExist(item.first)) {
-            ExecSql(item.second);
-        }
-    }
-    QueryRankId();
-
-    if (isVersionChange) {
-        if (CheckTableExist(TABLE_TASK)) {
-            if (!CheckColumnExist(TABLE_TASK, "depth")) {
-                ExecSql("alter table " + TABLE_TASK + " add depth integer;");
-            }
-            ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    " deviceId integer, startNs integer, endNs integer, type integer);");
-        }
-        if (isExistMstx) {
-            if (!CheckColumnExist(TABLE_MSTX_EVENTS, "depth")) {
-                ExecSql("alter table " + TABLE_MSTX_EVENTS + " add depth integer;");
-            } else {
-                ExecSql("update " + TABLE_MSTX_EVENTS + " set depth = null");
-            }
-        }
-        AddColumns2Table(isExistPytorch, TABLE_API, "depth", "integer");
-        AddColumns2Table(isExistCann, TABLE_CANN_API, "depth", "integer");
-        AddColumns2Table(CheckTableExist(TABLE_COMPUTE_TASK_INFO), TABLE_COMPUTE_TASK_INFO, "waitNs",
-                         "INTEGER");
-        AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "waitNs", "integer");
-        AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "opConnectionId", "TEXT");
-        for (const auto &status: DB_STATUS_LIST) {
-            UpdateValueIntoStatusInfoTable(status, NOT_FINISH_STATUS);
-        }
-    }
+    isExistTask = CheckTableExist(TABLE_TASK);
+    isExistComputeTask = CheckTableExist(TABLE_COMPUTE_TASK_INFO);
+    // 临时表只在该数据库连接的生命周期内有效，连接断开后自动销毁
+    CreateTemporaryTable();
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     return ExecSql("PRAGMA case_sensitive_like=1;");
 }
 

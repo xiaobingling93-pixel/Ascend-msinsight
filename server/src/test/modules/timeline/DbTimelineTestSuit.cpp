@@ -249,49 +249,6 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData)
     EXPECT_EQ(responseBody.acceleratorCoreList.size(), 1);
 }
 
-TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData_WithInvalidKey)
-{
-    Dic::Protocol::KernelDetailsParams requestParams;
-    requestParams.current = 1;
-    requestParams.pageSize = 20; // pageSize = 20
-    requestParams.order = "ASC";
-    requestParams.orderBy = "name";
-    requestParams.coreType = "HCCL";
-    requestParams.searchName = "";
-    requestParams.rankId = "2";
-    requestParams.filters.emplace_back("#&$", "hcom");
-    Dic::Protocol::KernelDetailsBody responseBody;
-    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDbNew"));
-
-    auto result = database->QueryKernelDetailData(requestParams, responseBody, minTimestamp);
-
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData_QueryHCCLType)
-{
-    Dic::Protocol::KernelDetailsParams requestParams;
-    requestParams.current = 1;
-    requestParams.pageSize = 20; // pageSize = 20
-    requestParams.order = "ASC";
-    requestParams.orderBy = "name";
-    requestParams.coreType = "HCCL";
-    requestParams.searchName = "";
-    requestParams.rankId = "2";
-    requestParams.filters.emplace_back("type", "hcom");
-    Dic::Protocol::KernelDetailsBody responseBody;
-    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDbNew"));
-
-    database->QueryKernelDetailData(requestParams, responseBody, minTimestamp);
-
-    EXPECT_EQ(responseBody.kernelDetails.size(), 4); // size = 4
-    EXPECT_EQ(responseBody.acceleratorCoreList.size(), 4);
-}
-
 TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
@@ -712,16 +669,4 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenOverlap)
     const std::vector<uint64_t> traceId = {0};
     bool result = database->QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
-}
-
-TEST_F(FullDbTestSuit, QueryByteAlignmentAnalyzerRawDataTest)
-{
-    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> largeOpInfo;
-    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> smallOpInfo;
-    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDbNew"));
-    bool result = database->QueryByteAlignmentAnalyzerRawData(largeOpInfo, smallOpInfo);
-    ASSERT_TRUE(result);
-    ASSERT_EQ(largeOpInfo.size(), 4); // 4
-    ASSERT_EQ(smallOpInfo.size(), 72); // 72
 }

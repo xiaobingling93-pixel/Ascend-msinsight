@@ -61,6 +61,8 @@ public:
     ~DbTraceDataBase();
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
+    void AddHelperColumnsAndSetStatus();
+    bool InitStmt();
 
     // search
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
@@ -168,6 +170,8 @@ private:
     bool isExistCann = false;
     bool isExistMstx = false;
     bool isExistCommOp = false;
+    bool isExistTask = false;
+    bool isExistComputeTask = false;
 
     std::string host;
     std::string hostPath; // 记录到 card 之前的文件路径
@@ -184,7 +188,7 @@ private:
     std::vector<std::string> rankIds;
 
     bool SetConfig() override;
-    bool InitStmt();
+    void CreateTemporaryTable();
 
     void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);
     bool UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);

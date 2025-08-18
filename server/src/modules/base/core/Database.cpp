@@ -625,7 +625,6 @@ bool Database::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
-    std::string dbVersion = GetDataBaseVersion();
     std::lock_guard<std::recursive_mutex> lock(mutex);
     if (!ExecSql("PRAGMA journal_mode = WAL;PRAGMA synchronous = OFF;")) {
         return false;

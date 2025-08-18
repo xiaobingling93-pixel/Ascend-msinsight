@@ -85,16 +85,13 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     auto start = std::chrono::high_resolution_clock::now();
     std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineRankId(rankIds[0])) ?
         rankIds[0] : filePath;
-    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(dbId);
-    if (db == nullptr) {
-        ServerLog::Error("Failed to get connection.");
-        return;
-    }
-    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
+    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
+        Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(dbId));
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert virtual trace database to db trace dataBase in init open db.");
+        ServerLog::Error("Failed to get database connection in init open db.");
         return;
     }
+    database->AddHelperColumnsAndSetStatus();
     auto &threadPool = FullDbParser::Instance().threadPool;
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
@@ -133,40 +130,52 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
                                           std::unique_ptr<ThreadPool> &pool)
 {
     futures->emplace_back(pool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
+        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
+        if (!database) {
             return;
         }
-        GetTraceDatabase(dbId)->InitStringsCache();
+        database->InitStringsCache();
     }));
     futures->emplace_back(pool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
+        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
+        if (!database) {
             return;
         }
-        GetTraceDatabase(dbId)->InitMetaDataInfo();
+        database->InitMetaDataInfo();
     }));
     futures->emplace_back(pool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
+        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
+        if (!database) {
             return;
         }
-        GetTraceDatabase(dbId)->UpdateAllDepth();
+        if (!database->InitStmt()) {
+            return;
+        }
+        database->UpdateAllDepth();
     }));
     futures->emplace_back(pool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
+        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
+        if (!database) {
             return;
         }
-        GetTraceDatabase(dbId)->UpdateWaitTime();
+        database->UpdateWaitTime();
     }));
     futures->emplace_back(pool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
+        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
+        if (!database) {
             return;
         }
-        GetTraceDatabase(dbId)->InitConnectionCats();
+        database->InitConnectionCats();
     }));
     futures->emplace_back(pool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
+        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
+        if (!database) {
             return;
         }
-        GetTraceDatabase(dbId)->GenerateOverlapAnalysis();
+        if (!database->InitStmt()) {
+            return;
+        }
+        database->GenerateOverlapAnalysis();
     }));
 }
 
