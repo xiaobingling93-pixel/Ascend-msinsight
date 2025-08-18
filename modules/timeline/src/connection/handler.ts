@@ -419,9 +419,9 @@ const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
     } else {
         session.remoteAttrs.clear();
         session.units = [];
-        session.rankCardInfoMap.clear();
         session.pinnedUnits = [];
     }
+    session.rankCardInfoMap.clear();
 };
 
 const resetPage = (data?: Record<string, unknown>): void => {

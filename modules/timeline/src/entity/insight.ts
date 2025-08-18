@@ -472,13 +472,24 @@ export function setUnitPhaseByCardId(cardId: string, session: Session, phase: Un
  * @param session
  */
 export function setUnitProgressByFileId(unitData: any, session: Session): void {
-    session.units.forEach((sessionUnit) => {
-        if (sessionUnit.metadata.cardId === unitData.unit.metadata.cardId) {
-            sessionUnit.progress = 100;
-            sessionUnit.showProgress = false;
-            setTimeout((): void => {
-                sessionUnit.shouldParse = false; // 设置卡已经解析完成
-            }, 300); // 等待0.3s是为了给进度条加载完成的动画展现时间
-        }
-    });
+    const targetUnit = session.units.find(
+        (unit) => unit.metadata.cardId === unitData.unit.metadata.cardId,
+    );
+
+    if (!targetUnit) return;
+
+    // 更新基本状态
+    targetUnit.progress = 100;
+    targetUnit.showProgress = false;
+
+    // 延时更新 shouldParse
+    scheduleShouldParseUpdate(targetUnit);
+}
+
+function scheduleShouldParseUpdate(unit: any): void {
+    setTimeout(() => {
+        runInAction(() => {
+            unit.shouldParse = false; // 设置卡已经解析完成
+        });
+    }, 300); // 给进度条动画时间
 }

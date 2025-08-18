@@ -185,6 +185,7 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
     const [rankCondition, setRankCondition] = useState<ConditionType<CardRankInfo, number | undefined>>({ options: [], value: undefined });
     const [hostCondition, setHostCondition] = useState<HostConditionType>({ options: [], value: '' });
     const { t } = useTranslation('timeline');
+
     useEffect(() => {
         const cardList: CardRankInfo[] = [];
         for (const v of props.session.rankCardInfoMap.values()) {
@@ -209,9 +210,11 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
         const cardRankInfo = rankCondition.options[rankCondition.value];
         props.handleChange({ cardId: cardRankInfo.rankInfo.rankId, dbPath: cardRankInfo.dbPath });
     }, [rankCondition]);
+
     useEffect(() => {
         limitInput();
     }, []);
+
     const onRankIdChanged = (value: number): void => {
         setRankCondition({ ...rankCondition, value });
     };

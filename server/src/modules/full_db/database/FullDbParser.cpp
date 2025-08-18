@@ -17,6 +17,7 @@
 #include "RLMstxConfigManager.h"
 #include "RenderEngine.h"
 #include "FullDbParser.h"
+#include "TrackInfoManager.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Server;
@@ -60,6 +61,7 @@ void FullDbParser::Reset()
     for (auto &conn : connList) {
         conn->Stop();
     }
+    TrackInfoManager::Instance().Reset();
     DataBaseManager::Instance().ClearClusterDb();
     Timeline::DataBaseManager::Instance().Clear();
     Timeline::TraceTime::Instance().Reset();

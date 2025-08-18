@@ -195,23 +195,28 @@ const FindDetail = observer((props: FindDetailProps) => {
                 setRowData({ name: record.name ?? record.originOptimizer, ...record });
             }}>{t('Click')}</Button>),
     }];
+
     useEffect(() => {
         setAllCondition({ ...allCondition, page, sorter });
     }, [sorter, page.current, page.pageSize]);
+
     useEffect(() => {
         setAllCondition({ ...allCondition, doContextSearch: props.session.doContextSearch, page: defaultPage, selectCard: props.card });
         setPage(defaultPage);
     }, [props.session.doContextSearch, props.card.cardId]);
+
     useEffect(() => {
         updateData(allCondition.page, allCondition.sorter, props);
     }, [allCondition.sorter, allCondition.selectCard.cardId, allCondition.page.current,
         allCondition.page.pageSize, allCondition.doContextSearch, props.session.doReset]);
+
     useEffect(() => {
         if (rowData.name === null || rowData.name === undefined) {
             return;
         }
         handleFindSelected(rowData as SearchAllSlicesDetails, props);
     }, [rowData]);
+
     const updateData = async(pages: any, sorters: {field: string;order: string}, prop: FindDetailProps): Promise<void> => {
         if (props.card === undefined || props.card.cardId === '') {
             setDataSource([]);
@@ -237,6 +242,7 @@ const FindDetail = observer((props: FindDetailProps) => {
         setDataSource(data);
         setPage({ ...page, total: res.count });
     };
+
     return <CONTAINER>
         <ResizeTable
             onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
