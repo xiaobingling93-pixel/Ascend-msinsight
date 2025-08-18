@@ -1,12 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-#include "RLMstxConfigManager.h"
-#include "ServerLog.h"
-#include "RLMstxConfigReader.h"
 #include <set>
 #include <unordered_set>
 #include <algorithm>
+#include "ServerLog.h"
+#include "RLMstxConfigManager.h"
+#include "RLMstxConfigReader.h"
+
 namespace Dic::Module::RL {
     RLMstxConfigManager &RLMstxConfigManager::Instance()
     {
