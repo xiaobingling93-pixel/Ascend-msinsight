@@ -32,7 +32,9 @@ bool QueryLeaksMemoryPythonTraceHandler::HandleRequest(std::unique_ptr<Protocol:
         return true;
     }
     response.trace.threadId = request.params.threadId;
-    LeaksMemoryService::ParseThreadPythonTrace(response.trace);
+    if (request.allowTrim && response.trace.slices.size() > TRIM_THRESHOLD) {
+        response.trace.Trim(DEFAULT_TRIM_STRATEGY);
+    }
     SendResponse(std::move(responsePtr), true);
     return true;
 }

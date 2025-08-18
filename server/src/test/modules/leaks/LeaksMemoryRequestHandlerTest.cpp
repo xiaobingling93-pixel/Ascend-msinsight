@@ -39,7 +39,7 @@ public:
         ASSERT_TRUE(memoryDatabase != nullptr);
         ASSERT_TRUE(memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_20250806.dat", false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
-        ASSERT_TRUE(LeaksMemoryService::ParseMemoryLeaksDumpEvents("0"));
+        ASSERT_TRUE(LeaksMemoryService::ParseMemoryLeaksDumpEventsAndPythonTraces("0"));
     }
     static void TearDownTestSuite()
     {

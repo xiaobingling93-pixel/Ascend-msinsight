@@ -11,17 +11,31 @@
 namespace Dic::Module::MemoryDetail {
 // [PYTHON_TRACE] 内存调用栈火焰图相关实体
 struct PythonTraceSlice {
-    std::string func;
-    uint64_t startTimestamp;
-    uint64_t endTimestamp;
-    int depth;
+    int64_t id{0};
+    std::string func{"UNKNOWN"};
+    uint64_t startTimestamp{0};
+    uint64_t endTimestamp{0};
+    int depth{-1};
+    uint64_t processId{0};
+    uint64_t threadId{0};
 
-    PythonTraceSlice() : func("UNKNOWN"), startTimestamp(0), endTimestamp(0), depth(-1) {}
+    PythonTraceSlice() = default;
     PythonTraceSlice(std::string func, uint64_t startTimestamp, uint64_t endTimestamp, int depth)
         : func(std::move(func)),
           startTimestamp(startTimestamp),
           endTimestamp(endTimestamp),
           depth(depth) {}
+};
+/***
+ * 调用栈消减策略:
+ * FILTER_OUT_SMALL_FUNCTIONS: 过滤掉小函数(基于duration比例)
+ * COMPRESS_SMALL_FUNCTIONS: 压缩同一层级的小函数(同层级小函数 且 间隔较短，则合并成同一个块)
+ * COMPRESS_AND_FILTER: 两个策略同时应用
+ */
+enum class PythonTrimCompressStrategy {
+    ONLY_FILTER_OUT_SMALL_FUNCTIONS,
+    COMPRESS_SMALL_FUNCTIONS,
+    COMPRESS_AND_FILTER_SMALL_FUNCTIONS
 };
 
 struct LeaksMemoryPythonTrace {
@@ -32,6 +46,17 @@ struct LeaksMemoryPythonTrace {
     int maxDepth{};
 
     [[nodiscard]] bool Empty() const;
+
+    /***
+     * 基于策略进行压缩
+     * @param strategy 压缩策略
+     */
+    void Trim(const PythonTrimCompressStrategy &strategy);
+
+private:
+    [[nodiscard]] bool IsSmallSlice(const PythonTraceSlice &slice) const;
+    void DoCompress(std::vector<PythonTraceSlice> &waitForCompressSlices, const bool filterOutSmallFunc);
+    void DoCompressByDepth(std::vector<PythonTraceSlice> &depthSlices, const bool filterOutSmallFunc);
 };
 // [PYTHON_TRACE]
 

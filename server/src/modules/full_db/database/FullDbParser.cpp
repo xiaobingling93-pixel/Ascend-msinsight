@@ -104,8 +104,6 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         for (const auto &item: rankIds) {
             database->UpdateStartTime(item);
         }
-    } else {
-        threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
     }
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
@@ -297,7 +295,7 @@ void FullDbParser::InitLeaksMemory(const std::vector<std::string> &rankIds, cons
     for (const std::string& id : rankIds) {
         auto leaksMemoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
         if (leaksMemoryDatabase != nullptr && leaksMemoryDatabase->OpenDb(path, false)) {
-            if (MemoryDetail::LeaksMemoryService::ParseMemoryLeaksDumpEvents(id)) {
+            if (MemoryDetail::LeaksMemoryService::ParseMemoryLeaksDumpEventsAndPythonTraces(id)) {
                 MemoryDetail::LeaksMemoryService::ParserEnd(id, true);
                 MemoryDetail::LeaksMemoryService::ParseCallBack(id, true, "");
             } else {
@@ -314,6 +312,7 @@ void FullDbParser::InitLeaksMemory(const std::vector<std::string> &rankIds, cons
                                                             "The database failed to open properly.");
             ServerLog::Error("Failed to connect or open leaks memory database.");
         }
+        Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::FINISH_ALL);
     }
 }
 }

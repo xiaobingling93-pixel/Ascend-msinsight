@@ -376,6 +376,7 @@ struct LeaksMemoryDetailRequest : public Request {
 struct LeaksMemoryTraceRequest : public Request {
     LeaksMemoryTraceRequest() : Request(REQ_RES_LEAKS_MEMORY_TRACES) {};
     LeaksMemoryThreadPythonTraceParams params;
+    bool allowTrim{false};
 
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
@@ -392,6 +393,7 @@ struct LeaksMemoryTraceRequest : public Request {
         }
         const json_t& param_json = json["params"];
         JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
+        JsonUtil::SetByJsonKeyValue(reqPtr->allowTrim, param_json, "allowTrim");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.threadId, param_json, "threadId");

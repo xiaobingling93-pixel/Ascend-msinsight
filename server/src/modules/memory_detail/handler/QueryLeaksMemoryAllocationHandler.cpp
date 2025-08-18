@@ -52,7 +52,7 @@ void QueryLeaksMemoryAllocationHandler::PaddingAllocations(std::vector<MemoryAll
     }
     uint64_t minTimestamp = 0;
     if (queryParams.relativeTime) {
-        minTimestamp = memoryDatabase->QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
+        minTimestamp = memoryDatabase->GetGlobalMinTimestamp();
     }
     auto beforeAllocation = memoryDatabase->QueryLatestAllocationWithinTimestamp(queryParams.deviceId,
                                                                                  queryParams.eventType,

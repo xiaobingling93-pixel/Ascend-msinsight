@@ -35,7 +35,9 @@ public:
     void ReleaseStmt();
     sqlite3_stmt* GetInsertAllocationsStmt(uint64_t allocationsLen);
     sqlite3_stmt* GetInsertBlocksStmt(uint64_t blocksLen);
+    sqlite3_stmt* GetUpdatePythonTraceSliceStmt(uint64_t processId);
     bool CreateMemoryAllocationAndBlockTable();
+    bool AppendDepthColumnForPythonTraceTables();
     bool DropMemoryAllocationAndBlockTable();
     bool QueryEntireEventsTable(std::vector<MemoryEvent>& eventDetails);
     int64_t QueryEventsByRequestParams(const LeaksMemoryEventParams &queryParams, std::vector<MemoryEvent>& events);
@@ -61,17 +63,21 @@ public:
                                                                          uint64_t timestamp);
     std::optional<MemoryAllocation> QueryNextAllocationAfterTimestamp(const std::string& deviceId,
                                                                       const std::string& eventType, uint64_t timestamp);
-    uint64_t QueryMemoryEventExtremumTimestamp(const std::string& deviceId, bool isMinimum);
     void QueryAllDeviceExtremumTimestamp(std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> &extreTsMap);
     void QueryEventsByGroupId(const uint64_t groupId, const std::string &deviceId,
                               bool relativeTime, std::vector<MemoryEvent> &events);
-
+    std::vector<std::string> GetPythonTraceTables();
+    void UpdatePythonTraceSlice(const PythonTraceSlice &slice);
+    void UpdatePythonTraceSliceList(const std::vector<PythonTraceSlice> &slices, uint64_t processId);
     void InsertMemoryAllocationList(const std::vector<MemoryAllocation>& allocList);
     void InsertMemoryAllocation(const MemoryAllocation& alloc);
     void InsertMemoryBlockList(const std::vector<MemoryBlock>& blocklist);
     void InsertMemoryBlock(const MemoryBlock& block);
     void FlushMemoryBlocksCache();
     void FlushMemoryAllocationsCache();
+    void FlushPythonTraceCache();
+    uint64_t GetGlobalMinTimestamp() const;
+    uint64_t GetGlobalMaxTimestamp() const;
 
     bool withCallStackC = false;
     bool withCallStackPython = false;
@@ -100,9 +106,14 @@ private:
     static std::string BuildQueryOrderSqlByParams(const OrderByParam &orderByParam);
     static void CommonBindFiltersParams(const FiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
     static void CommonBindPaginationParams(const PaginationParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
-    std::vector<std::string> GetPythonTraceTables();
+    bool QueryAndSetGlobalExtremumTimestamp();
+    bool CheckGlobalExtremumTimestampValid() const;
+    bool ExecuteQueryAndSetGlobalExtremumTimestamp(const std::string &sql);
+    uint64_t GetProcessIdByPythonTraceTableName(const std::string &tableName);
     std::string GetCreateMemoryAllocationTableSql();
     std::string GetCreateMemoryBlockTableSql();
+    std::vector<std::string> GetAlterPythonTraceTablesAddDepthColumnSql();
+    bool SetCallStackExistsFlagByCheckColumn();
 
     // 内存折线图数据库中存储表名为memory_alloc, 包含优化前、后
     const std::string memoryAllocationTable = "memory_allocation";
@@ -122,6 +133,10 @@ private:
     const std::string blockValuePattern =
         StringUtil::CreateQuestionMarkString(std::size(MemoryBlockTableColumn::FULL_COLUMNS_WITHOUT_ID));
 
+    // Global Extremum Timestamp
+    uint64_t globalMinTimestamp = INT64_MAX;
+    uint64_t globalMaxTimestamp = 0;
+
     // Parse status info
     const std::string leaksMemoryParseStatus = "LEAKS_PARSE_STATUS";
     const uint64_t cacheSize = 100;
@@ -130,11 +145,11 @@ private:
 
     sqlite3_stmt* insertAllocationStmt = nullptr;
     sqlite3_stmt* insertBlockStmt = nullptr;
+    std::unordered_map<uint64_t, sqlite3_stmt*> updatePythonTraceDepthStmtPidMap;
     std::mutex cacheMutex;
     std::vector<MemoryAllocation> allocationCache;
     std::vector<MemoryBlock> blockCache;
-
-    bool SetCallStackExistsFlagByCheckColumn();
+    std::unordered_map<uint64_t, std::vector<PythonTraceSlice>> slicePidCache;
 };
 
 }  // namespace FullDb

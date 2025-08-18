@@ -83,12 +83,12 @@ struct MemoryEvent {
 };
 
 struct MemoryAllocation {
-    uint64_t id{};
-    uint64_t timestamp{};
-    uint64_t totalSize{};
+    uint64_t id{0};
+    uint64_t timestamp{0};
+    uint64_t totalSize{0};
     std::string deviceId;
     std::string eventType;
-    bool optimized{};
+    bool optimized{false};
 
     MemoryAllocation() = default;
     MemoryAllocation(uint64_t timestamp, uint64_t totalSize, std::string deviceId, std::string eventType,

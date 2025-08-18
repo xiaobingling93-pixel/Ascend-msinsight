@@ -41,6 +41,18 @@ bool LeaksMemoryDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
         CloseDb();
         return false;
     }
+    // 为python_trace表添加depth列(如果不存在)
+    if (!AppendDepthColumnForPythonTraceTables()) {
+        ServerLog::Error("[Leaks] Failed to add column depth for python trace table.");
+        CloseDb();
+        return false;
+    }
+    // 设置db的全局最大最小时间
+    if (!QueryAndSetGlobalExtremumTimestamp() || !CheckGlobalExtremumTimestampValid()) {
+        ServerLog::Error("[Leaks] Failed to query and set global extremum timestamp or timestamp invalid.");
+        CloseDb();
+        return false;
+    }
     if (!IsDatabaseVersionChange()) {
         return true;
     }
@@ -194,6 +206,7 @@ bool LeaksMemoryDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         PythonTraceSlice slice;
+        slice.id = sqlite3_column_int64(stmt, col++);
         slice.func = sqlite3_column_string(stmt, col++);
         int64_t tmpInt64 = sqlite3_column_int64(stmt, col++);
         if (tmpInt64 < 0) {
@@ -207,8 +220,12 @@ bool LeaksMemoryDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
             continue;
         }
         slice.endTimestamp = static_cast<uint64_t>(tmpInt64);
+        slice.threadId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        slice.processId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        slice.depth = sqlite3_column_int(stmt, col++);
         trace.minTimestamp = std::min(trace.minTimestamp, slice.startTimestamp);
         trace.maxTimestamp = std::max(trace.maxTimestamp, slice.endTimestamp);
+        trace.maxDepth = std::max(trace.maxDepth, slice.depth);
         trace.slices.push_back(slice);
     }
     return true;
@@ -234,6 +251,58 @@ bool LeaksMemoryDatabase::QueryEntireEventsTable(std::vector<MemoryEvent> &event
     QueryMemoryEventsByStep(stmt, eventDetails, 0, false);
     sqlite3_finalize(stmt);
     return true;
+}
+
+void LeaksMemoryDatabase::UpdatePythonTraceSliceList(const std::vector<PythonTraceSlice> &slices, uint64_t processId)
+{
+    sqlite3_stmt *stmt = GetUpdatePythonTraceSliceStmt(processId);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get update slice stmt.");
+        return;
+    }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    // 开始事务
+    if (!ExecSql("BEGIN TRANSACTION;")) {
+        ServerLog::Error("An error occurred while begin the transaction: ", sqlite3_errmsg(db));
+        return;
+    }
+    for (const auto &slice : slices) {
+        int idx = bindStartIndex;
+        sqlite3_bind_int64(stmt, idx++, slice.depth);
+        sqlite3_bind_int64(stmt, idx++, slice.id);
+        auto result  = sqlite3_step(stmt);
+        if (result != SQLITE_DONE) {
+            ServerLog::Error("Failed to update slice. slice id %, Error: %", slice.id, sqlite3_errmsg(db));
+            // 回滚事务
+            if (!ExecSql("ROLLBACK;")) {
+                ServerLog::Error("An error occurred while rolling back the transaction: ", sqlite3_errmsg(db));
+            }
+            return;
+        }
+        sqlite3_reset(stmt);
+    }
+    // 提交事务
+    if (!ExecSql("COMMIT;")) {
+        ServerLog::Error("An error occurred while commit the transaction: ", sqlite3_errmsg(db));
+    }
+}
+
+void LeaksMemoryDatabase::UpdatePythonTraceSlice(const PythonTraceSlice& slice)
+{
+    auto it = slicePidCache.find(slice.processId);
+    if (it == slicePidCache.end()) {
+        ServerLog::Warn("Cannot update python trace slice, process id not found");
+        return;
+    }
+    auto &sliceCache = it->second;
+    std::unique_lock<std::mutex> lock(cacheMutex);
+    sliceCache.emplace_back(slice);
+    if (sliceCache.size() == cacheSize) {
+        auto tempCache = std::move(sliceCache);
+        it->second = std::vector<PythonTraceSlice>(cacheSize);
+        lock.unlock();
+        UpdatePythonTraceSliceList(tempCache, slice.processId);
+    }
 }
 
 void LeaksMemoryDatabase::InsertMemoryAllocationList(const std::vector<MemoryAllocation> &allocList)
@@ -322,6 +391,26 @@ bool LeaksMemoryDatabase::InitStmt()
             "(" + allocationColumnPattern +") VALUES (" + allocationValuePattern +")";
     std::string insertBlocksSql = "INSERT INTO " + memoryBlockTable +
             "("+ blockColumnPattern +") VALUES (" + blockValuePattern + ")";
+
+    auto pythonTraceTables = GetPythonTraceTables();
+    for (auto &tableName : pythonTraceTables) {
+        uint64_t processId = GetProcessIdByPythonTraceTableName(tableName);
+        if (processId == 0) {
+            ServerLog::Warn("Cannot get processId from table: ", tableName);
+            continue;
+        }
+        std::string setDepthSql = StringUtil::FormatString("UPDATE {} SET {} = ? WHERE ROWID = ?;",
+                                                           StringUtil::StrJoin(pythonTraceTablePrefix, std::to_string(processId)),
+                                                           TRACE_TABLE::DEPTH);
+        updatePythonTraceDepthStmtPidMap[processId] = nullptr;
+        slicePidCache[processId] = std::vector<PythonTraceSlice>(cacheSize);
+        if (sqlite3_prepare_v2(db, setDepthSql.c_str(), -1, &updatePythonTraceDepthStmtPidMap[processId], nullptr)
+            != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare update python trace depth statement. Error: ", sqlite3_errmsg(db));
+            return false;
+        }
+    }
+
     for (uint64_t i = 0; i < cacheSize - 1; ++i) {
         insertAllocationsSql.append(",("+allocationValuePattern+")");
         insertBlocksSql.append(",("+blockValuePattern+")");
@@ -359,6 +448,11 @@ void LeaksMemoryDatabase::ReleaseStmt()
         sqlite3_finalize(insertBlockStmt);
         insertBlockStmt = nullptr;
     }
+    for (auto& [processId, stmt] : updatePythonTraceDepthStmtPidMap) {
+        if (stmt != nullptr) {
+            sqlite3_finalize(stmt);
+        }
+    }
 }
 
 sqlite3_stmt *LeaksMemoryDatabase::GetInsertAllocationsStmt(uint64_t allocationsLen)
@@ -387,7 +481,24 @@ sqlite3_stmt *LeaksMemoryDatabase::GetInsertAllocationsStmt(uint64_t allocations
     return stmt;
 }
 
-sqlite3_stmt *LeaksMemoryDatabase::GetInsertBlocksStmt(uint64_t blocksLen)
+sqlite3_stmt* LeaksMemoryDatabase::GetUpdatePythonTraceSliceStmt(uint64_t processId)
+{
+    sqlite3_stmt *stmt = nullptr;
+    auto it = updatePythonTraceDepthStmtPidMap.find(processId);
+    if (it == updatePythonTraceDepthStmtPidMap.end()) {
+        return stmt;
+    }
+    if (!hasInitStmt) {
+        InitStmt();
+    }
+    stmt = it->second;
+    if (stmt != nullptr) {
+        sqlite3_reset(stmt);
+    }
+    return stmt;
+}
+
+sqlite3_stmt* LeaksMemoryDatabase::GetInsertBlocksStmt(uint64_t blocksLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (blocksLen == 0) {
@@ -487,8 +598,7 @@ int64_t LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &que
         ServerLog::Error("Query blocks table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return -1;
     }
-    uint64_t minTimestamp = queryParams.relativeTime ?
-                                QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true) : 0;
+    uint64_t minTimestamp = queryParams.relativeTime ? globalMinTimestamp : 0;
     int64_t count = QueryMemoryBlocksByStep(stmt, blocks, minTimestamp, true);
     sqlite3_finalize(stmt);
     return count;
@@ -520,10 +630,7 @@ void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationPara
 {
     sqlite3_stmt *stmt;
     std::string querySql;
-    uint64_t minTimestamp = 0;
-    if (queryParams.relativeTime) {
-        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
-    }
+    uint64_t minTimestamp = queryParams.relativeTime ? globalMinTimestamp : 0;
     int optimized = queryParams.optimized ? 1 : 0;
     std::string minTimestampStr = std::to_string(minTimestamp);
     querySql = "SELECT {},"
@@ -559,34 +666,6 @@ void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationPara
     sqlite3_finalize(stmt);
 }
 
-uint64_t LeaksMemoryDatabase::QueryMemoryEventExtremumTimestamp(const std::string &deviceId, bool isMinimum)
-{
-    if (deviceId.empty()) {
-        ServerLog::Error("Query extremum timestamp failed: deviceId is empty.");
-        return false;
-    }
-    std::string sql;
-    std::string errMsg;
-    sql = StringUtil::FormatString("select {}({}) from {} where {} == ?;",
-                                   isMinimum ? "min" : "max",
-                                   EVENT::TIMESTAMP,
-                                   TABLE_LEAKS_DUMP,
-                                   EVENT::DEVICE_ID);
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Query extremum timestamp failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, 1, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
-    uint64_t extremumTimestamp;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        extremumTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
-    }
-    sqlite3_finalize(stmt);
-    return extremumTimestamp;
-}
 void LeaksMemoryDatabase::QueryDeviceIds(std::set<std::string> &deviceIdSet)
 {
     std::string sql;
@@ -644,11 +723,8 @@ std::string LeaksMemoryDatabase::BuildQueryEventsConditionSqlByParams(const Leak
                                                                       bool &timeCondition,
                                                                       bool &filtersCondition)
 {
-    uint64_t minTimestamp = 0;
+    uint64_t minTimestamp = queryParams.relativeTime ? globalMinTimestamp : 0;
     std::string conditionSql = " where ";
-    if (queryParams.relativeTime) {
-        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
-    }
     std::string minTimestampStr = std::to_string(minTimestamp);
     // 构造设备id参数
     conditionSql = StringUtil::StrJoin(conditionSql, StringUtil::FormatString(" {} = ? ", EVENT::DEVICE_ID));
@@ -685,11 +761,8 @@ std::string LeaksMemoryDatabase::BuildQueryBlocksConditionSqlByParams(const Leak
                                                                       bool& timeCondition,
                                                                       bool& filtersCondition)
 {
-    uint64_t minTimestamp = 0;
+    uint64_t minTimestamp = queryParams.relativeTime ? globalMinTimestamp : 0;
     std::string conditionSql = " where ";
-    if (queryParams.relativeTime) {
-        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
-    }
     std::string minTimestampStr = std::to_string(minTimestamp);
     // 构造设备id参数
     conditionSql = StringUtil::StrJoin(conditionSql, StringUtil::FormatString(" {} = ? ", BLOCK::DEVICE_ID));
@@ -808,9 +881,7 @@ int64_t LeaksMemoryDatabase::QueryEventsByRequestParams(const LeaksMemoryEventPa
         ServerLog::Error("Query events table by params failed. Failed to prepare sql.");
         return -1;
     }
-    int64_t count = QueryMemoryEventsByStep(stmt, events, queryParams.relativeTime ?
-                                              QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true) : 0,
-                                            true);
+    int64_t count = QueryMemoryEventsByStep(stmt, events, queryParams.relativeTime ? globalMinTimestamp : 0, true);
     sqlite3_finalize(stmt);
     return count;
 }
@@ -976,17 +1047,14 @@ void LeaksMemoryDatabase::QueryPythonTracesUsingTableName(const std::string &tra
     std::string errMsg;
     std::string COL_START_TIME(TRACE::START_TIME);
     std::string COL_END_TIME(TRACE::END_TIME);
-    uint64_t minTimestamp = 0;
-    if (queryParams.relativeTime) {
-        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
-    }
+    uint64_t minTimestamp = queryParams.relativeTime ? globalMinTimestamp : 0;
     std::string timeCondition;
     BuildTimeConditionForQueryPythonTraces(timeCondition, queryParams);
-    std::string sql = StringUtil::FormatString("SELECT {}, ({} - ?) AS START, ({} - ?) AS END FROM {} "
-                                               "WHERE NOT ({}) AND {} == ? AND END >= START "
-                                               "ORDER BY {}", TRACE::FUNC_INFO, COL_START_TIME,
-                                               COL_END_TIME, traceTableName, timeCondition,
-                                               TRACE::THREAD_ID, COL_START_TIME);
+    std::string sql = StringUtil::FormatString("SELECT {}, {}, ({} - ?) AS START, ({} - ?) AS END, {}, {}, {} FROM {} "
+                                               "WHERE NOT ({}) AND {} == ? AND END > START "
+                                               "ORDER BY {}", TRACE::ID, TRACE::FUNC_INFO, COL_START_TIME,
+                                               COL_END_TIME, TRACE::THREAD_ID, TRACE::PROCESS_ID, TRACE::DEPTH,
+                                               traceTableName, timeCondition, TRACE::THREAD_ID, COL_START_TIME);
     if (sql.empty()) {
         ServerLog::Error("[LeaksMemory] Failed to query python trace, error: ", errMsg);
         return;
@@ -1008,7 +1076,7 @@ void LeaksMemoryDatabase::QueryPythonTracesUsingTableName(const std::string &tra
 void LeaksMemoryDatabase::QueryPythonTrace(const LeaksMemoryThreadPythonTraceParams &queryParams,
     LeaksMemoryPythonTrace &trace)
 {
-    std::vector<std::string> traceTableNames = GetPythonTraceTables() ;
+    std::vector<std::string> traceTableNames = GetPythonTraceTables();
     if (traceTableNames.empty()) {
         ServerLog::Warn("Get python trace data. "
                          "There are no python trace tables found.");
@@ -1130,10 +1198,7 @@ void LeaksMemoryDatabase::QueryEventsByGroupId(const uint64_t groupId, const std
         ServerLog::Error("Query events by group failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
     }
-    uint64_t minTimestamp = 0;
-    if (relativeTime) {
-        minTimestamp = QueryMemoryEventExtremumTimestamp(deviceId, true);
-    }
+    uint64_t minTimestamp = relativeTime ? globalMinTimestamp : 0;
     int bindIdx = bindStartIndex;
     sqlite3_bind_text(stmt, bindIdx++, groupIdPattern.c_str(), groupIdPattern.length(), SQLITE_TRANSIENT);
     QueryMemoryEventsByStep(stmt, events, minTimestamp, false);
@@ -1188,6 +1253,113 @@ bool LeaksMemoryDatabase::SetCallStackExistsFlagByCheckColumn()
     withCallStackPython = callStackCols.find(callStackPython) != callStackCols.end();
     return true;
 }
+
+uint64_t LeaksMemoryDatabase::GetProcessIdByPythonTraceTableName(const std::string& tableName)
+{
+    if (StringUtil::StartWith(tableName, pythonTraceTablePrefix)) {
+        return NumberUtil::StringToUnsignedLongLong(tableName.substr(pythonTraceTablePrefix.length()));
+    }
+    return 0;
+}
+
+bool LeaksMemoryDatabase::AppendDepthColumnForPythonTraceTables()
+{
+    if (!isOpen) {
+        ServerLog::Error("[LeaksMemory] Failed to add depth for python trace. Database is not open.");
+        return false;
+    }
+    std::vector<std::string> sqlList = GetAlterPythonTraceTablesAddDepthColumnSql();
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    for (auto &sql : sqlList) {
+        if (!ExecSql(sql)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::vector<std::string> LeaksMemoryDatabase::GetAlterPythonTraceTablesAddDepthColumnSql()
+{
+    std::vector<std::string> sqlList;
+    std::vector<std::string> pythonTraceTables = GetPythonTraceTables();
+    for (auto &tableName : pythonTraceTables) {
+        if (CheckColumnExist(tableName, std::string(TRACE::DEPTH))) {
+            continue;
+        }
+        sqlList.emplace_back(StringUtil::FormatString("ALTER TABLE {} ADD COLUMN {} INTEGER DEFAULT -1;",
+                                                      tableName, TRACE::DEPTH));
+    }
+    return sqlList;
+}
+
+void LeaksMemoryDatabase::FlushPythonTraceCache()
+{
+    if (slicePidCache.empty()) {
+        return;
+    }
+    for (auto &sliceCachePair : slicePidCache) {
+        if (sliceCachePair.second.empty()) {
+            continue;
+        }
+        UpdatePythonTraceSliceList(sliceCachePair.second, sliceCachePair.first);
+        sliceCachePair.second.clear();
+    }
+}
+
+bool LeaksMemoryDatabase::QueryAndSetGlobalExtremumTimestamp()
+{
+    std::string queryEventExTSSql = StringUtil::FormatString("SELECT MIN({}), MAX({}) FROM {} WHERE {} != 'N/A';",
+                                                             EVENT::TIMESTAMP, EVENT::TIMESTAMP,
+                                                             TABLE_LEAKS_DUMP, EVENT::TIMESTAMP);
+    if (!ExecuteQueryAndSetGlobalExtremumTimestamp(queryEventExTSSql)) {
+        ServerLog::Error("Failed to query event extremum timestamp");
+        return false;
+    }
+    std::vector<std::string> pythonTraceTables = GetPythonTraceTables();
+    for (auto &tableName : pythonTraceTables) {
+        std::string queryTraceExTSSql = StringUtil::FormatString("SELECT MIN({}), MAX({}) FROM {} "
+                                                                 "WHERE {} != 'N/A' AND {} != 'N/A';",
+                                                                 TRACE::START_TIME, TRACE::END_TIME, tableName,
+                                                                 TRACE::START_TIME, TRACE::END_TIME);
+        if (!ExecuteQueryAndSetGlobalExtremumTimestamp(queryTraceExTSSql)) {
+            ServerLog::Error("Failed to query trace extremum timestamp");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool LeaksMemoryDatabase::ExecuteQueryAndSetGlobalExtremumTimestamp(const std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query extremum timestamp failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        int idx = resultStartIndex;
+        int64_t minTimestamp = sqlite3_column_int64(stmt, idx++);
+        int64_t maxTimestamp = sqlite3_column_int64(stmt, idx++);
+        if (minTimestamp <= 0 || maxTimestamp <= 0) {
+            ServerLog::Error("Query event extremum timestamp failed.Invalid timestamp: %,%", minTimestamp, maxTimestamp);
+            return false;
+        }
+        globalMinTimestamp = std::min(globalMinTimestamp, NumberUtil::Int64ToUint64(minTimestamp));
+        globalMaxTimestamp = std::max(globalMaxTimestamp, NumberUtil::Int64ToUint64(maxTimestamp));
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool LeaksMemoryDatabase::CheckGlobalExtremumTimestampValid() const
+{
+    return (globalMaxTimestamp > globalMinTimestamp) && globalMaxTimestamp < INT64_MAX && globalMinTimestamp > 0;
+}
+
+uint64_t LeaksMemoryDatabase::GetGlobalMinTimestamp() const { return globalMinTimestamp; }
+
+uint64_t LeaksMemoryDatabase::GetGlobalMaxTimestamp() const { return globalMaxTimestamp; }
 
 }  // FullDb
 }  // Module

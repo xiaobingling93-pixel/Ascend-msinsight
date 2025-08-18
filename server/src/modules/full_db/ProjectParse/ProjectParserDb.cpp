@@ -48,7 +48,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     ProjectTypeEnum curProjectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     response.body.isCluster = CheckIsOpenClusterTag(request.params.projectAction, curProjectTypeEnum,
                                                     projectInfos[0].projectName);
-    response.body.isLeaks = DataBaseManager::Instance().GetFileTypeByRankId("") == FileType::LEAKS;
+    response.body.isLeaks = DataBaseManager::Instance().GetFileType() == FileType::LEAKS;
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
     // add response to response queue in session

@@ -19,11 +19,11 @@ namespace Module {
 namespace MemoryDetail {
 struct ParseContext {
     std::vector<MemoryEvent> events;
-    std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> deviceExtremumTsMap;
     std::unordered_map<std::string, std::map<std::string, const MemoryEvent *>> deviceMallocMap;
     std::unordered_map<std::string, uint64_t> deviceTotalSize;
     std::unordered_map<uint64_t, EventGroup> eventGroupMap;
     std::shared_ptr<FullDb::LeaksMemoryDatabase> db;
+    std::set<std::string> deviceIds;
 
     bool CheckDeviceIdValid(const std::string &deviceId);
 };
@@ -32,7 +32,7 @@ class LeaksMemoryService {
 public:
     static void ParseEventsToBlockAndAllocations(ParseContext &context);
     static void BuildEventAttrs(const MemoryEvent &event, MemoryEventAttrs &eventAttr);
-    static bool ParseMemoryLeaksDumpEvents(const std::string &fileId);
+    static bool ParseMemoryLeaksDumpEventsAndPythonTraces(const std::string &fileId);
     static void ParserEnd(const std::string &rankId, bool result);
     static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
     static bool ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId,
@@ -41,7 +41,7 @@ public:
                                                       LeaksMemoryDetailTreeNode &detailTree,
                                                       bool relativeTime);
     // 传入slices必须为已按照startTimestamp升序排序的数组
-    static bool ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace);
+    static bool ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace, ParseContext &context);
     // 判断eventType是否合法
     static bool IsValidMemoryEventType(const std::string &event, const std::string &eventType);
     static std::optional<ParseContext> BuildContext(std::shared_ptr<FullDb::LeaksMemoryDatabase> &db);

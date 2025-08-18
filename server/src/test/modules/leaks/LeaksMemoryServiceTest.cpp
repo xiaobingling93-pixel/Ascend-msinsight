@@ -6,6 +6,7 @@
 #include "MemoryDetailRequestHandler.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
+#include "MemoryDetailEntities.h"
 #include "LeaksMemoryDatabase.h"
 #include "../../TestSuit.cpp"
 #include "LeaksMemoryService.h"
@@ -124,7 +125,19 @@ TEST_F(LeaksMemoryServiceTest, ParseLeaksDump)
     EXPECT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
     EXPECT_TRUE(memoryDatabase->CreateMemoryAllocationAndBlockTable());
     memoryDatabase->UpdateParseStatus(NOT_FINISH_STATUS);
-    EXPECT_TRUE(LeaksMemoryService::ParseMemoryLeaksDumpEvents("0"));
+    EXPECT_TRUE(LeaksMemoryService::ParseMemoryLeaksDumpEventsAndPythonTraces("0"));
+    std::vector<string> traceTables = memoryDatabase->GetPythonTraceTables();
+    EXPECT_EQ(traceTables.size(), 1);
+    std::string traceTable = traceTables[0];
+    std::vector<uint64_t> threadIds;
+    memoryDatabase->QueryThreadIds(threadIds);
+    EXPECT_FALSE(threadIds.empty());
+    LeaksMemoryThreadPythonTraceParams params;
+    params.threadId = threadIds[0];
+    LeaksMemoryPythonTrace trace;
+    memoryDatabase->QueryPythonTracesUsingTableName(traceTable, params, trace);
+    EXPECT_FALSE(trace.slices.empty());
+    EXPECT_EQ(trace.slices.front().depth, 0);
 }
 
 TEST_F(LeaksMemoryServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
@@ -137,31 +150,6 @@ TEST_F(LeaksMemoryServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
     const uint64_t expectDuration = 1000000;
     LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(deviceId, expectDuration, eventType, tree, true);
     ServerLog::Error(tree.tag);
-}
-
-TEST_F(LeaksMemoryServiceTest, ParseThreadPythonTraceInTimeRange)
-{
-    const uint64_t startTimestamp = 1000000;
-    const uint64_t durationSeconds = 15;
-    const uint64_t endTimestamp = startTimestamp + durationSeconds * SECOND;
-    const uint64_t threadId = 2621226;
-    LeaksMemoryThreadPythonTraceParams params;
-    params.startTimestamp = startTimestamp;
-    params.endTimestamp = endTimestamp;
-    params.relativeTime = true;
-    params.threadId = threadId;
-    params.deviceId = '1';
-    LeaksMemoryPythonTrace trace;
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-    ASSERT_TRUE(memoryDatabase != nullptr);
-    memoryDatabase->QueryPythonTrace(params, trace);
-    const size_t expectSize = 50;
-    const uint64_t expectMinTimestamp = 9324668200;
-    const uint64_t expectMaxTimestamp = 39310611890;
-    EXPECT_EQ(trace.slices.size(), expectSize);
-    LeaksMemoryService::ParseThreadPythonTrace(trace);
-    EXPECT_EQ(trace.minTimestamp, expectMinTimestamp);
-    EXPECT_EQ(trace.maxTimestamp, expectMaxTimestamp);
 }
 
 /***
@@ -193,4 +181,112 @@ TEST_F(LeaksMemoryServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
     EXPECT_TRUE(blockAttrs.has_value());
     EXPECT_EQ(blockAttrs->firstAccessTimestamp, eventGroup.accessEvents.front().timestamp);
     EXPECT_EQ(blockAttrs->lastAccessTimestamp, eventGroup.accessEvents.back().timestamp);
+}
+/***
+* 测试对trace进行Trim的三种策略
+* ====Trim前如下====
+*   |--------------------------------------func0---------------------------------------------|
+*    |func01||func02||-------func03-------|               |--------------func04------------|
+*                         |func031|
+*/
+
+
+/***
+*    ====测试仅过滤  Trim后如下=====
+*   |--------------------------------------func0---------------------------------------------|
+*                   |-------func03-------|               |--------------func04--------------|
+ *
+*/
+TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesOnlyFilter)
+{
+    // 构造测试数据
+    LeaksMemoryPythonTrace trace;
+    // 模拟时间范围在100000ns的情况
+    trace.maxTimestamp = 100000;
+    trace.minTimestamp = 0;
+    trace.maxDepth = 2;
+    trace.slices.emplace_back("func0", 0, 100, 0); // 0层单个较大块
+    trace.slices.emplace_back("func01", 1, 2, 1); // 1层小块
+    trace.slices.emplace_back("func02", 3, 4, 1); // 1层小间隙第二个小块
+    trace.slices.emplace_back("func03", 4, 30, 1); // 1层小间隙较大块
+    trace.slices.emplace_back("func04", 70, 99, 1); // 1层大间隙较大块
+    trace.slices.emplace_back("func031", 10, 11, 2); // 2层小块
+
+    // func01 func02 func031因为均为小块而被直接过滤
+    trace.Trim(PythonTrimCompressStrategy::ONLY_FILTER_OUT_SMALL_FUNCTIONS);
+    EXPECT_EQ(trace.slices.size(), 3);
+    // 按照开始时间进行排序
+    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice &a, const PythonTraceSlice &b) {
+        return a.startTimestamp < b.startTimestamp;
+    });
+    EXPECT_EQ(trace.slices[0].func, "func0");
+    EXPECT_EQ(trace.slices[1].func, "func03");
+    EXPECT_EQ(trace.slices[2].func, "func04");
+}
+/***
+*    ====测试仅合并同层级小块策略，不可合并小块被保留原样  Trim后如下=====
+*   |--------------------------------------func0---------------------------------------------|
+*    |---Merged---||-------func03-------|                 |--------------func04-------------|
+*                       |func031|
+*/
+TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesOnlyCompress)
+{
+    // 构造测试数据
+    LeaksMemoryPythonTrace trace;
+    trace.maxTimestamp = 100000;
+    trace.minTimestamp = 0;
+    trace.maxDepth = 2;
+    trace.slices.emplace_back("func0", 0, 100, 0); // 0层单个较大块
+    trace.slices.emplace_back("func01", 1, 2, 1); // 1层小块
+    trace.slices.emplace_back("func02", 3, 4, 1); // 1层小间隙第二个小块
+    trace.slices.emplace_back("func03", 4, 30, 1); // 1层小间隙较大块
+    trace.slices.emplace_back("func04", 70, 99, 1); // 1层大间隙较大块
+    trace.slices.emplace_back("func031", 10, 11, 2); // 2层小块
+
+    // func01 func02被合并 func031虽为小块但不可被合并因此保留
+    trace.Trim(PythonTrimCompressStrategy::COMPRESS_SMALL_FUNCTIONS);
+    EXPECT_EQ(trace.slices.size(), 5);
+    // 按照开始时间进行排序
+    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice &a, const PythonTraceSlice &b) {
+        return a.startTimestamp < b.startTimestamp;
+    });
+    EXPECT_EQ(trace.slices[0].func, "func0");
+    std::string MERGED_LINK = " -> ";
+    EXPECT_EQ(trace.slices[1].func, StringUtil::StrJoin("Merged: ", "func01", MERGED_LINK, "func02"));
+    EXPECT_EQ(trace.slices[2].func, "func03");
+    EXPECT_EQ(trace.slices[3].func, "func031");
+    EXPECT_EQ(trace.slices[4].func, "func04");
+}
+/***
+*    ====测试仅合并同层级小块且过滤小块策略  Trim后如下=====
+*   |--------------------------------------func0---------------------------------------------|
+*    |---Merged---||-------func03-------|                 |--------------func14-------------|
+*
+*/
+TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesCompressAndFilter)
+{
+    // 构造测试数据
+    LeaksMemoryPythonTrace trace;
+    trace.maxTimestamp = 100000;
+    trace.minTimestamp = 0;
+    trace.maxDepth = 2;
+    trace.slices.emplace_back("func0", 0, 100, 0); // 0层单个较大块
+    trace.slices.emplace_back("func01", 1, 2, 1); // 1层小块
+    trace.slices.emplace_back("func02", 3, 4, 1); // 1层小间隙第二个小块
+    trace.slices.emplace_back("func03", 4, 30, 1); // 1层小间隙较大块
+    trace.slices.emplace_back("func04", 70, 99, 1); // 1层大间隙较大块
+    trace.slices.emplace_back("func031", 10, 11, 2); // 2层小块
+
+    // func01 func02被合并 func031为小块被过滤
+    trace.Trim(PythonTrimCompressStrategy::COMPRESS_AND_FILTER_SMALL_FUNCTIONS);
+    EXPECT_EQ(trace.slices.size(), 4);
+    // 按照开始时间进行排序
+    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice &a, const PythonTraceSlice &b) {
+        return a.startTimestamp < b.startTimestamp;
+    });
+    EXPECT_EQ(trace.slices[0].func, "func0");
+    std::string MERGED_LINK = " -> ";
+    EXPECT_EQ(trace.slices[1].func, StringUtil::StrJoin("Merged: ", "func01", MERGED_LINK, "func02"));
+    EXPECT_EQ(trace.slices[2].func, "func03");
+    EXPECT_EQ(trace.slices[3].func, "func04");
 }

@@ -110,11 +110,13 @@ namespace MemoryBlockTableColumn {
     };
 }
 namespace MemoryPythonTraceTableColumn {
+    constexpr std::string_view ID = "ROWID"; // 表中无该列, 为sqlite表的隐藏列, 用于标识唯一一行
     constexpr std::string_view FUNC_INFO = "FuncInfo";
     constexpr std::string_view START_TIME = "`StartTime(ns)`";
     constexpr std::string_view END_TIME = "`EndTime(ns)`";
     constexpr std::string_view THREAD_ID = "`Thread Id`";
     constexpr std::string_view PROCESS_ID = "`Process Id`";
+    constexpr std::string_view DEPTH = "Depth"; // 源数据中无该列, 为便于后续做查询抽样, 在解析时生成
 }
 }
 #endif // PROFILER_SERVER_LEAKSMEMORYCOLUMN_H

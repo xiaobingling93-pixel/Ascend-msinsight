@@ -62,12 +62,12 @@ std::optional<ParseContext> LeaksMemoryService::BuildContext(std::shared_ptr<Ful
         Server::ServerLog::Warn("No memory events could be found in leaks_db.");
         return std::nullopt;
     }
-    db->QueryAllDeviceExtremumTimestamp(context.deviceExtremumTsMap);
+    db->QueryDeviceIds(context.deviceIds);
     context.db = db;
     return context;
 }
 
-bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
+bool LeaksMemoryService::ParseMemoryLeaksDumpEventsAndPythonTraces(const std::string &fileId)
 {
     auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
     if (database == nullptr) {
@@ -89,7 +89,26 @@ bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
         Server::ServerLog::Error("Parse failed: build parse context failed.");
         return false;
     }
-    LeaksMemoryService::ParseEventsToBlockAndAllocations(*context);
+    // 解析leaks_dump中的内存事件，生成memory_block及memory_allocation
+    ParseEventsToBlockAndAllocations(*context);
+    // 解析pythonTrace
+    std::vector<uint64_t> threadIds;
+    database->QueryThreadIds(threadIds);
+    for (auto threadId : threadIds) {
+        if (threadId == 0) {
+            Server::ServerLog::Warn("Parsing python trace skip invalid threadId: 0.");
+            continue;
+        }
+        LeaksMemoryThreadPythonTraceParams params;
+        params.threadId = threadId;
+        params.relativeTime = true;
+        LeaksMemoryPythonTrace trace;
+        database->QueryPythonTrace(params, trace);
+        if (!ParseThreadPythonTrace(trace, *context)) {
+            Server::ServerLog::Warn("Parsing python trace failed, threadId: ", threadId);
+        }
+    }
+    database->FlushPythonTraceCache();
     return true;
 }
 
@@ -116,11 +135,7 @@ void LeaksMemoryService::ParseRemainMallocEvents(ParseContext &context)
     for (auto &devicePair : context.deviceMallocMap) {
         std::string deviceId = devicePair.first;
         std::map<std::string, const MemoryEvent *> allocMap = devicePair.second;
-        if (context.deviceExtremumTsMap.find(deviceId) == context.deviceExtremumTsMap.end()) {
-            Server::ServerLog::Error("Parse event failed, cannot found deviceId:%.", deviceId);
-            continue;
-        }
-        const std::uint64_t maxTimestamp = context.deviceExtremumTsMap.at(deviceId).second;
+        const std::uint64_t maxTimestamp = context.db->GetGlobalMaxTimestamp();
         for (auto &allocPair : allocMap) {
             auto &event = allocPair.second;
             MemoryEventAttrs eventAttrs;
@@ -133,7 +148,7 @@ void LeaksMemoryService::ParseRemainMallocEvents(ParseContext &context)
             // 构造block
             MemoryBlock block(event->ptr, event->deviceId, eventAttrs.size, event->timestamp, maxTimestamp,
                               eventAttrs.owner, event->eventType, event->attr, event->processId, event->threadId);
-            uint64_t minTimestamp = context.deviceExtremumTsMap.at(event->deviceId).first;
+            uint64_t minTimestamp = context.db->GetGlobalMinTimestamp();
             // 构造block扩展属性
             auto blockAttrs = BuildMemoryBlockAttrsByMallocEvent(*event,
                                                                  context.eventGroupMap[eventAttrs.groupId], minTimestamp);
@@ -213,7 +228,7 @@ bool LeaksMemoryService::SingleDeviceEventParse(const MemoryEvent &event,
         MemoryBlock block(event.ptr, event.deviceId, std::abs(eventAttrs.size), allocEvent->timestamp,
                           event.timestamp, allocEventAttrs.owner, event.eventType,
                           allocEvent->attr, event.processId, event.threadId);
-        uint64_t minTimestamp = context.deviceExtremumTsMap.at(event.deviceId).first;
+        uint64_t minTimestamp = context.db->GetGlobalMinTimestamp();
         // 构造block扩展属性
         auto blockAttrs = BuildMemoryBlockAttrsByMallocEvent(*allocEvent,
                                                              context.eventGroupMap[eventAttrs.groupId], minTimestamp);
@@ -364,8 +379,8 @@ bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string
         Server::ServerLog::Error("Cannot get leaks db connections from database manager");
         return false;
     }
-    uint64_t minTimestamp = database->QueryMemoryEventExtremumTimestamp(deviceId, true);
-    uint64_t maxTimestamp = database->QueryMemoryEventExtremumTimestamp(deviceId, false);
+    uint64_t minTimestamp = database->GetGlobalMinTimestamp();
+    uint64_t maxTimestamp = database->GetGlobalMaxTimestamp();
     uint64_t realTimestamp = timestamp;
     if (relativeTime) {
         realTimestamp += minTimestamp;
@@ -404,15 +419,18 @@ bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string
     return true;
 }
 
-bool LeaksMemoryService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace)
+bool LeaksMemoryService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace, ParseContext &context)
 {
+    if (context.db == nullptr) {
+        Server::ServerLog::Warn("Failed to parse thread python trace: cannot get db connection.");
+        return false;
+    }
     std::stack<PythonTraceSlice *> callStack;
     for (auto &slice : trace.slices) {
         // 弹出栈中已经结束的func
         while (!callStack.empty() && callStack.top()->endTimestamp < slice.startTimestamp) {
             callStack.pop();
         }
-
         // 当前调用栈深度 = 栈的大小
         size_t callStackDepth = callStack.size();
         if (callStackDepth > INT_MAX) {
@@ -420,7 +438,7 @@ bool LeaksMemoryService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace)
             return false;
         }
         slice.depth = static_cast<int>(callStackDepth);
-        trace.maxDepth = std::max(slice.depth, trace.maxDepth);
+        context.db->UpdatePythonTraceSlice(slice);
         // 将当前函数入栈
         callStack.push(&slice);
     }
@@ -457,7 +475,7 @@ std::optional<MemoryBlockAttrs> LeaksMemoryService::BuildMemoryBlockAttrsByMallo
 }
 bool ParseContext::CheckDeviceIdValid(const std::string& deviceId)
 {
-    return deviceExtremumTsMap.find(deviceId) != deviceExtremumTsMap.end();
+    return deviceIds.find(deviceId) != deviceIds.end();
 }
 }  // Memory
 }  // Module
