@@ -9,6 +9,12 @@
 #include <unordered_map>
 
 namespace Dic::Module::RL {
+    enum class RLBackEndType {
+        Megatron,
+        FSDP,
+        Unknown
+    };
+
     struct MicroBatchConfig {
         std::string batchName;
         std::string type;

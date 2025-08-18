@@ -9,7 +9,7 @@
 #include "PytorchCallchainsTable.h"
 #include "StringIdsTable.h"
 namespace Dic::Module::Timeline {
-class PythonApiRepo : public IBaseSliceRepo, public IPythonFuncSlice, public IFindSliceByTimepointAndName {
+class PythonApiRepo : public IBaseSliceRepo, public IPythonFuncSlice, public IFindSliceByTimepointAndName, public IFindSliceByVagueNameAndTime {
 public:
     void QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
         std::vector<SliceDomain> &sliceVec) override;
@@ -22,6 +22,9 @@ public:
     ~PythonApiRepo() override = default;
 
     bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+
+    bool QuerySliceByVagueNameAndTime(const Dic::Module::Timeline::SliceQuery &sliceQuery,
+        std::vector<CompeteSliceDomain> &res) override;
 
 protected:
     std::unique_ptr<PytorchApiTable> pytorchApiTable = std::make_unique<PytorchApiTable>();

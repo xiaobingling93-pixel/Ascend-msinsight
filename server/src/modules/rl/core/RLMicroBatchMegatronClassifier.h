@@ -2,13 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_RLMICROBATCHCLASSIFIER_H
-#define PROFILER_SERVER_RLMICROBATCHCLASSIFIER_H
+#ifndef PROFILER_SERVER_RLMICROBATCHMEGATRONCLASSIFIER_H
+#define PROFILER_SERVER_RLMICROBATCHMEGATRONCLASSIFIER_H
 
+#include <queue>
 #include "RLDomainObject.h"
 #include "RLProtocolResponse.h"
-#include <vector>
-#include <queue>
+#include "RLMicroBatchClassifierBase.h"
 
 namespace Dic::Module::RL {
 using namespace Protocol;
@@ -31,19 +31,20 @@ using namespace Protocol;
  *      在正向传播阶段一个transformerBlock的范围内可能有n个transformerLayer
  *      对应在反向传播阶段 一个microBatch对应n个transformerLayer
  */
-
-enum State : int {
-    Init = 0,
-    FP = 1,
-    BP = 2
-};
-
-class RLMicroBatchClassifier {
+class RLMicroBatchMegatronClassifier : public RLMicroBatchClassifierBase {
 public:
+    virtual ~RLMicroBatchMegatronClassifier() = default;
+protected:
     /**
-     * @brief: 入口函数，返回处理后的结果
+     * @brief 查询数据
      */
-    std::vector<Protocol::RLPipelineNode> ClassifierMicroBatch(std::vector<RLPipelineNode> &nodes);
+    std::vector<Protocol::RLPipelineNode> QueryMicroBatchSlices(const std::string &fileId, const RLMstxConfig &config,
+        const Protocol::RLPipelineNode &taskNode) override;
+
+    /**
+     * @brief: 分类聚合
+     */
+    std::vector<Protocol::RLPipelineNode> MicroBatchClassifier(std::vector<RLPipelineNode> &nodes) override;
 
     void Clear();
 
@@ -63,11 +64,11 @@ private:
      */
     void SetStateAndNode(const RLPipelineNode &node, State state);
 
-    void InitStateProcess(std::vector<Protocol::RLPipelineNode> &res, const Protocol::RLPipelineNode& node);
+    void InitStateProcess(std::vector<Protocol::RLPipelineNode> &res, const Protocol::RLPipelineNode &node);
 
     void FPStateProcess(std::vector<Protocol::RLPipelineNode> &res, const RLPipelineNode &node);
 
-    void BPStateProcess(std::vector<Protocol::RLPipelineNode> &res, const RLPipelineNode& node);
+    void BPStateProcess(std::vector<Protocol::RLPipelineNode> &res, const RLPipelineNode &node);
 
 private:
     State state = Init;      // 当前的状态
@@ -76,4 +77,4 @@ private:
     RLPipelineNode current; // 当前节点
 };
 }
-#endif // PROFILER_SERVER_RLMICROBATCHCLASSIFIER_H
+#endif // PROFILER_SERVER_RLMICROBATCHMEGATRONCLASSIFIER_H

@@ -77,6 +77,15 @@ public:
                                               CompeteSliceDomain &competeSliceDomain) = 0;
 };
 
+class IFindSliceByVagueNameAndTime {
+public:
+    virtual ~IFindSliceByVagueNameAndTime() = default;
+    /**
+     * @brief 根据模糊名称和时间段查询算子
+     */
+    virtual bool QuerySliceByVagueNameAndTime(const SliceQuery& sliceQuery, std::vector<CompeteSliceDomain>& res) = 0;
+};
+
 class ITextSlice {
 public:
     virtual ~ITextSlice() = default;

@@ -105,6 +105,13 @@ public:
         return *this;
     }
 
+    Table &Like(std::string_view str, std::string value)
+    {
+        ConditionStr() += " AND " + std::string(str) + " LIKE ? ";
+        Values().emplace_back(value);
+        return *this;
+    }
+
     /* *
      * 调用此函数需要先校验inputs不为空
      * @param str

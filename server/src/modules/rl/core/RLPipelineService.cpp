@@ -8,6 +8,7 @@
 #include "TrackInfoManager.h"
 #include "RLMstxConfigManager.h"
 #include "ParserStatusManager.h"
+#include "RLMicroBatchClassifierFactory.h"
 
 namespace Dic::Module::RL {
 using namespace Dic::Module::Timeline;
@@ -19,6 +20,7 @@ void RLPipelineService::Clear()
     stageTypeList.clear();
     taskPipelineMap.clear();
     microBatchPipelineMap.clear();
+    rlBackEndType = RLBackEndType::Unknown;
 }
 
 std::vector<Protocol::RLPipelineNode> RLPipelineService::SearchNode(const std::string &rankId)
@@ -102,6 +104,9 @@ bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
     Clear();
     ThreadPool threadPool = ThreadPool(std::thread::hardware_concurrency());
     for (const auto &rankIdWithHost: FullDb::DataBaseManager::Instance().GetAllRankId()) {
+        if (rlBackEndType == RLBackEndType::Unknown) {
+            rlBackEndType = GetBackendType(rankIdWithHost);
+        }
         threadPool.AddTask([this](std::string rankIdWithHost) {
             QueryPipelineByRankId(rankIdWithHost);
             },
@@ -159,56 +164,32 @@ std::vector<Protocol::RLPipelineNode> RLPipelineService::QueryMicroBatch(const s
                                                                          const RLMstxConfig &config,
                                                                          const RLPipelineNode &node)
 {
-    if (config.taskConfigMap.find(node.name) == config.taskConfigMap.end()) {
-        ServerLog::Error("[RL] task config not found when query micro batch");
+    auto classifier = RLMicroBatchClassifierFactory::GetClassifier(rlBackEndType);
+    if (classifier == nullptr) {
         return {};
     }
-    /*
-     * 1. 整理所有microBatch
-     * 2. 在task的时间区间内过滤microBatch
-     * 3. 状态机算法处理microBatch的时间掩盖问题
-     */
-    const auto &taskConfig = config.taskConfigMap.at(node.name);
-    std::vector<std::string> microBatchNames;
-    microBatchNames.reserve(taskConfig.microBatchConfigs.size());
-    std::transform(taskConfig.microBatchConfigs.begin(), taskConfig.microBatchConfigs.end(),
-                   std::back_inserter(microBatchNames), [](const MicroBatchConfig &item) {
-                return item.batchName;
-            });
-    if (microBatchNames.empty()) {
-        return {};
-    }
-    FullDb::DataType type = DataBaseManager::Instance().GetDataType();
-    auto microBatchInDbs = RenderEngine::Instance()->QueryMstxRLDetail(fileId, type, microBatchNames, node.startTime,
-                                                                       NumberSafe::Add(node.startTime, node.duration));
-    if (microBatchInDbs.empty()) {
-        return {};
-    }
-    std::sort(microBatchInDbs.begin(), microBatchInDbs.end(), [](const CompeteSliceDomain& left, const CompeteSliceDomain& right) {
-        if (left.timestamp != right.timestamp) {
-            return left.timestamp < right.timestamp;
-        } else {
-            return left.duration > right.duration;
-        }
-    });
-    std::vector<Protocol::RLPipelineNode> res;
-    std::for_each(microBatchInDbs.begin(), microBatchInDbs.end(), [&res, &node, &taskConfig](const auto &sliceItem) {
-        RLPipelineNode microBatchNode;
-        microBatchNode.stageType = node.stageType;
-        microBatchNode.name = sliceItem.name;
-        microBatchNode.nodeType = taskConfig.microBatchConfigMap.at(microBatchNode.name).type;
-        microBatchNode.startTime = sliceItem.timestamp;
-        microBatchNode.duration = sliceItem.endTime - sliceItem.timestamp;
-        res.emplace_back(std::move(microBatchNode));
-    });
-
-    RLMicroBatchClassifier classifier;
-    return classifier.ClassifierMicroBatch(res);
+    return classifier->GetClassifiedMicroBatch(fileId, config, node);
 }
 
 RLPipelineService &RLPipelineService::Instance()
 {
     static RLPipelineService service;
     return service;
+}
+
+RLBackEndType RLPipelineService::GetBackendType(const std::string &rankId)
+{
+    SliceQuery query;
+    query.rankId = rankId;
+    query.name = "FullyShardedDataParallel.forward";
+    query.startTime = 0;
+    query.endTime = std::numeric_limits<uint64_t>::max();
+    PythonApiRepo apiRepo;
+    std::vector<CompeteSliceDomain> res;
+    apiRepo.QuerySliceByVagueNameAndTime(query, res);
+    if (!res.empty()) {
+        return RLBackEndType::FSDP;
+    }
+    return RLBackEndType::Megatron;
 }
 }

@@ -1281,26 +1281,33 @@ void DbTraceDataBase::AddHelperColumnsAndSetStatus()
     std::lock_guard<std::recursive_mutex> lock(mutex);
 
     if (isExistTask) {
-        if (!CheckColumnExist(TABLE_TASK, "depth")) {
+        if (!CheckColumnExist(TABLE_TASK, std::string(PytorchApiColumn::DEPTH))) {
             ExecSql("alter table " + TABLE_TASK + " add depth integer;");
         }
         ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 " deviceId integer, startNs integer, endNs integer, type integer);");
     }
     if (isExistMstx) {
-        if (!CheckColumnExist(TABLE_MSTX_EVENTS, "depth")) {
+        if (!CheckColumnExist(TABLE_MSTX_EVENTS, std::string(PytorchApiColumn::DEPTH))) {
             ExecSql("alter table " + TABLE_MSTX_EVENTS + " add depth integer;");
         } else {
             ExecSql("update " + TABLE_MSTX_EVENTS + " set depth = null");
         }
     }
-    AddColumns2Table(isExistPytorch, TABLE_API, "depth", "integer");
-    AddColumns2Table(isExistCann, TABLE_CANN_API, "depth", "integer");
+    if (isExistPytorch) {
+        if (!CheckColumnExist(TABLE_API, std::string(PytorchApiColumn::DEPTH))) {
+            ExecSql("alter table " + TABLE_API + " add depth integer;");
+        } else {
+            ExecSql("update " + TABLE_API + " set depth = NULL");
+        }
+    }
+    AddColumns2Table(isExistPytorch, TABLE_API, std::string(PytorchApiColumn::DEPTH), "integer");
+    AddColumns2Table(isExistCann, TABLE_CANN_API, std::string(PytorchApiColumn::DEPTH), "integer");
     AddColumns2Table(isExistComputeTask, TABLE_COMPUTE_TASK_INFO, "waitNs",
                      "INTEGER");
     AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "waitNs", "integer");
     AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "opConnectionId", "TEXT");
-    for (const auto &status: DB_STATUS_LIST) {
+    for (const auto &status : DB_STATUS_LIST) {
         UpdateValueIntoStatusInfoTable(status, NOT_FINISH_STATUS);
     }
 }

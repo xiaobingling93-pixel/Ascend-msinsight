@@ -38,6 +38,8 @@ struct SliceQuery {
      *
      */
     uint64_t timePoint = 0;
+
+    uint64_t depth{std::numeric_limits<uint64_t>::max()};
     bool isFilterPythonFunction = false;
     bool QueryThreadsCheck(std::string &error) const
     {

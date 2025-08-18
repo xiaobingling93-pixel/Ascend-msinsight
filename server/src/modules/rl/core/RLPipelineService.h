@@ -13,7 +13,7 @@
 #include "VirtualTraceDatabase.h"
 #include "DomainObject.h"
 #include "RLDomainObject.h"
-#include "RLMicroBatchClassifier.h"
+#include "RLMicroBatchMegatronClassifier.h"
 
 namespace Dic::Module::RL {
 class RLPipelineService {
@@ -33,12 +33,15 @@ private:
                                            std::vector<RLPipelineItem> &pipelineData);
     std::vector<Protocol::RLPipelineNode> QueryMicroBatch(const std::string &fileId, const RLMstxConfig &config,
             const Protocol::RLPipelineNode &node);
+
+    RLBackEndType GetBackendType(const std::string& rankId);
     std::mutex mtx;
     uint64_t minTime;
     uint64_t maxTime;
     std::set<std::string> stageTypeList;
     std::unordered_map<std::string, RLPipelineItem> taskPipelineMap;
     std::unordered_map<std::string, RLPipelineItem> microBatchPipelineMap;
+    RLBackEndType rlBackEndType{RLBackEndType::Unknown};
 };
 }
 #endif // PROFILER_SERVER_RLPIPELINESERVICE_H

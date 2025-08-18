@@ -100,11 +100,17 @@ void RLMstxConfigManager::InitDefaultConf()
     TaskConfig actor{.roleName = "Actor", .taskName = "update_actor"};
     MicroBatchConfig fp1{.batchName = "TransformerBlock", .type = "FP"};
     MicroBatchConfig bp1{.batchName = "TransformerLayer", .type = "BP"};
-    actor.AddMicroBatchConf(std::move(fp));
-    actor.AddMicroBatchConf(std::move(bp));
+    actor.AddMicroBatchConf(std::move(fp1));
+    actor.AddMicroBatchConf(std::move(bp1));
+    TaskConfig refLog{.roleName = "Reference", .taskName = "compute_ref_log_prob"};
+    MicroBatchConfig fp2{.batchName = "FullyShardedDataParallel.forward", .type = "FP"};
+    MicroBatchConfig bp2{.batchName = "autograd::engine", .type = "BP"};
+    refLog.AddMicroBatchConf(std::move(fp2));
+    refLog.AddMicroBatchConf(std::move(bp2));
     defaultConf.AddTaskConfig(std::move(gs));
     defaultConf.AddTaskConfig(std::move(reward));
     defaultConf.AddTaskConfig(std::move(actor));
+    defaultConf.AddTaskConfig(std::move(refLog));
     config.push_back(defaultConf);
 
     RLMstxConfig mindSpeedRlConf = {

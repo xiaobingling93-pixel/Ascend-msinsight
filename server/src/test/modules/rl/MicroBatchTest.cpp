@@ -2,23 +2,30 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include "RLMicroBatchClassifier.h"
+#include "RLMicroBatchMegatronClassifier.h"
 #include "gtest/gtest.h"
 
 using namespace Dic::Module::RL;
 
 class MicroBatchTest : public testing::Test {
 protected:
+    class MicroBatchMegaTronTest : public RLMicroBatchMegatronClassifier {
+    public:
+        std::vector<RLPipelineNode> Classifier(std::vector<RLPipelineNode> &items)
+        {
+            return RLMicroBatchMegatronClassifier::MicroBatchClassifier(items);
+        }
+    };
     std::vector<RLPipelineNode> generatorOneByOneData()
     {
         std::vector<RLPipelineNode> res;
-        RLPipelineNode fp1{.nodeType = "FP", .startTime= 0, .duration = 10, .name = "transformerBlock", .stageType = "rollout"};    // set [0,10]
+        RLPipelineNode fp1{"", "FP", 0, 10, "transformerBlock", "rollout"};    // set [0,10]
         res.push_back(fp1);
-        RLPipelineNode bp1{.nodeType = "BP", .startTime = 12, .duration = 10, .name = "transformerLayer", .stageType = "rollout"}; // set [12, 22]
+        RLPipelineNode bp1{"", "BP", 12, 10, "transformerLayer", "rollout"}; // set [12, 22]
         res.push_back(bp1);
-        RLPipelineNode fp2{.nodeType = "FP", .startTime = 24, .duration = 10, .name = "transformerBlock", .stageType = "rollout"}; // set [24, 34]
+        RLPipelineNode fp2{"", "FP", 24, 10, "transformerBlock", "rollout"}; // set [24, 34]
         res.push_back(fp2);
-        RLPipelineNode bp2{.nodeType = "BP", .startTime = 35, .duration = 2, .name = "transformerLayer", .stageType = "rollout"};   // set [35 , 37]
+        RLPipelineNode bp2{"", "BP", 35, 2, "transformerLayer", "rollout"};   // set [35 , 37]
         res.push_back(bp2);
         return res;
     }
@@ -26,19 +33,19 @@ protected:
     std::vector<RLPipelineNode> generatorData1()
     {
         std::vector<RLPipelineNode> res;
-        RLPipelineNode fp1{.nodeType = "FP", .startTime = 0, .duration = 50, .name = "transformerBlock", .stageType = "rollout"};   // set [0, 50]
+        RLPipelineNode fp1{"", "FP", 0, 50, "transformerBlock", "rollout"};   // set [0, 50]
         res.push_back(fp1);
-        RLPipelineNode bp1{.nodeType = "BP", .startTime = 1, .duration = 2, .name = "transformerLayer", .stageType = "rollout"};    // set [1, 2]
+        RLPipelineNode bp1{"", "BP", 1, 2, "transformerLayer", "rollout"};    // set [1, 2]
         res.push_back(bp1);
-        RLPipelineNode bp2{.nodeType = "BP", .startTime = 4, .duration = 4, .name = "transformerLayer", .stageType = "rollout"};    // set [4, 4]
+        RLPipelineNode bp2{"", "BP", 4, 4, "transformerLayer", "rollout"};    // set [4, 4]
         res.push_back(bp2);
-        RLPipelineNode fp2{.nodeType = "FP", .startTime = 51, .duration = 10, .name = "transformerBlock", .stageType = "rollout"};  // set [51, 61]
+        RLPipelineNode fp2{"", "FP", 51, 10, "transformerBlock", "rollout"};  // set [51, 61]
         res.push_back(fp2);
-        RLPipelineNode bp3{.nodeType = "BP", .startTime = 62, .duration = 2, .name = "transformerLayer", .stageType = "rollout"};   // set [62, 64]
+        RLPipelineNode bp3{"", "BP", 62, 2, "transformerLayer", "rollout"};   // set [62, 64]
         res.push_back(bp3);
-        RLPipelineNode bp4{.nodeType = "BP", .startTime = 65, .duration = 3, .name = "transformerLayer", .stageType = "rollout"};   // set [65, 68]
+        RLPipelineNode bp4{"", "BP", 65, 3, "transformerLayer", "rollout"};   // set [65, 68]
         res.push_back(bp4);
-        RLPipelineNode bp5{.nodeType = "BP", .startTime = 69, .duration = 10, .name = "transformerLayer", .stageType = "rollout"};  // set [69, 10]
+        RLPipelineNode bp5{"", "BP", 69, 10, "transformerLayer", "rollout"};  // set [69, 10]
         res.push_back(bp5);
         return res;
     }
@@ -47,8 +54,8 @@ protected:
 TEST_F(MicroBatchTest, normalOnebyOne)
 {
     auto originalData = generatorOneByOneData();
-    RLMicroBatchClassifier classifier;
-    auto res = classifier.ClassifierMicroBatch(originalData);
+    MicroBatchMegaTronTest classifier;
+    auto res = classifier.Classifier(originalData);
     EXPECT_EQ(res.size(), 4);       // expect size 4
     auto node1 = res[0];
     EXPECT_EQ(node1.nodeType, "FP");
@@ -71,8 +78,8 @@ TEST_F(MicroBatchTest, normalOnebyOne)
 TEST_F(MicroBatchTest, timeCover)
 {
     auto original = generatorData1();
-    RLMicroBatchClassifier classifier;
-    auto res = classifier.ClassifierMicroBatch(original);
+    MicroBatchMegaTronTest classifier;
+    auto res = classifier.Classifier(original);
     EXPECT_EQ(res.size(), 4);  // expect size 4
     auto node1 = res[0];
     EXPECT_EQ(node1.nodeType, "FP");

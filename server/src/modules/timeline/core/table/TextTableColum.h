@@ -179,6 +179,8 @@ constexpr std::string_view INPUT_SHAPES = "inputShapes";
 constexpr std::string_view CALL_CHAIN_ID = "callchainId";
 // 标记数据类型，op、queue、mstx还是python_trace，数据类型存于枚举表ENUM _API_TYPE中
 constexpr std::string_view TYPE = "type";
+// depth
+constexpr std::string_view DEPTH = "depth";
 }
 
 namespace StringIdsColumn {

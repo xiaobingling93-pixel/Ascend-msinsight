@@ -225,6 +225,43 @@ std::string PythonApiRepo::QuerySliceCallStack(const SliceQuery &sliceQuery, con
     return callStack;
 }
 
+bool PythonApiRepo::QuerySliceByVagueNameAndTime(const SliceQuery &sliceQuery, std::vector<CompeteSliceDomain> &res)
+{
+    auto ids = stringIdsTable->Select(StringIdsColumn::ID, StringIdsColumn::VALUE)
+        .Like(StringIdsColumn::VALUE, sliceQuery.name)
+        .ExcuteQuery(sliceQuery.rankId);
+    if (ids.empty()) {
+        ServerLog::Warn("Failed to query pytorch slice name by vague name");
+        return false;
+    }
+    std::vector<uint64_t> strIds(ids.size());
+    std::transform(ids.begin(), ids.end(), std::back_inserter(strIds), [](const auto &item) {
+        return item.id;
+    });
+    std::vector<PytorchApiPO> apiPos;
+    pytorchApiTable->Select(PytorchApiColumn::ID, PytorchApiColumn::TIMESTAMP, PytorchApiColumn::ENDTIME)
+        .GreaterEq(PytorchApiColumn::TIMESTAMP, sliceQuery.startTime)
+        .LessEq(PytorchApiColumn::ENDTIME, sliceQuery.endTime)
+        .In(PytorchApiColumn::NAME, strIds)
+        .OrderBy(PytorchApiColumn::TIMESTAMP, Timeline::TableOrder::ASC);
+    if (sliceQuery.depth != std::numeric_limits<uint64_t>::max()) {
+        pytorchApiTable->Eq(PytorchApiColumn::DEPTH, sliceQuery.depth);
+    }
+    pytorchApiTable->ExcuteQuery(sliceQuery.rankId, apiPos);
+    if (apiPos.empty()) {
+        ServerLog::Warn("No pytorch api find in vague name");
+        return false;
+    }
+    std::transform(apiPos.begin(), apiPos.end(), std::back_inserter(res), [&sliceQuery](const PytorchApiPO &item) {
+        CompeteSliceDomain slice;
+        slice.name = sliceQuery.name;
+        slice.timestamp = item.timestamp;
+        slice.endTime = item.endTime;
+        return slice;
+    });
+    return true;
+}
+
 bool PythonApiRepo::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
 {
     std::vector<StringIdsPO> strPOs;
