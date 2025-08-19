@@ -418,14 +418,14 @@ bool Database::CheckTableContainData(const std::string& tableName)
     return false;
 }
 
-
+// 该方法只能判断永久表是否存在，通过CREATE TEMP TABLE和CREATE TEMPORARY TABLE创建的临时表无法通过该方法判断
 bool Database::CheckTableExist(const std::string& tableName)
 {
     if ((!isOpen)) {
         ServerLog::Error("Failed Check Table. Database is closed or sql is empty.");
         return false;
     }
-    std::string sql = "SELECT name FROM sqlite_master WHERE type='table' AND name=?;";
+    std::string sql = "SELECT name FROM sqlite_schema WHERE type='table' AND name=?;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed prepare sql. ");

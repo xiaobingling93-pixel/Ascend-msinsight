@@ -20,11 +20,48 @@ void DeviceFlowRepo::AddDeviceFlowPoint(const FlowQuery &flowQuery, std::vector<
 void DeviceFlowRepo::AddHardWareMstxFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec,
     const std::vector<uint64_t> &connectionIds)
 {
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(flowQuery.fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get database connection when querying Hardware MSTX flow point.");
+        return;
+    }
+    AddHardWareMstxFlowPointExecuteSQL(flowQuery, flowPointVec, connectionIds, database);
+}
+
+void DeviceFlowRepo::AddHardWareMstxFlowPointExecuteSQL(const Dic::Module::Timeline::FlowQuery &flowQuery,
+    std::vector<FlowPoint> &flowPointVec, const std::vector<uint64_t> &connectionIds,
+    std::shared_ptr<VirtualTraceDatabase> database)
+{
+    // 因为MSTX按照domainId展示后必须连接MSTX_EVENTS表才能获取domainId，所以这里未使用Table类
     std::vector<TaskPO> taskPOS;
-    taskTable->Select(TaskColumn::ROW_ID, TaskColumn::TIMESTAMP)
-        .Select(TaskColumn::CONNECTION_ID, TaskColumn::STREAM_ID, TaskColumn::DECICED_ID)
-        .In(TaskColumn::CONNECTION_ID, connectionIds)
-        .ExcuteQuery(flowQuery.fileId, taskPOS);
+    std::string sql = "SELECT main.rowid AS id, main.startNs AS startNs, main.connectionId AS connectionId, "
+        "main.streamId AS streamId, main.deviceId AS deviceId, m.domainId AS domainId "
+        "FROM " + TABLE_TASK + " AS main INNER JOIN " + TABLE_MSTX_EVENTS +
+        " AS m ON main.connectionId = m.connectionId WHERE main.connectionId IN (" +
+        StringUtil::join(connectionIds, ", ") + ");";
+
+    auto stmt = database->CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare Hardware MSTX flow point query.");
+        return;
+    }
+    stmt->BindParams();
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to execute Hardware MSTX flow point query.");
+        return;
+    }
+    while (resultSet->Next()) {
+        TaskPO singleTask;
+        singleTask.connectionId = resultSet->GetUint64("connectionId");
+        singleTask.id = resultSet->GetUint64("id");
+        singleTask.timestamp = resultSet->GetUint64("startNs");
+        singleTask.deviceId = resultSet->GetUint64("deviceId");
+        singleTask.streamId = resultSet->GetUint64("streamId");
+        singleTask.domainId = resultSet->GetUint64("domainId");
+        taskPOS.emplace_back(singleTask);
+    }
+
     std::string host = hostInfoTable->GetHost(flowQuery.fileId);
     auto &instance = TrackInfoManager::Instance();
     for (const auto &item : taskPOS) {
@@ -36,7 +73,8 @@ void DeviceFlowRepo::AddHardWareMstxFlowPoint(const FlowQuery &flowQuery, std::v
         endPoint.id = item.id;
         endPoint.timestamp = item.timestamp > flowQuery.minTimestamp ? item.timestamp - flowQuery.minTimestamp : 0;
         endPoint.rankId = host + instance.GetRankId(host, std::to_string(item.deviceId));
-        endPoint.trackId = instance.GetTrackId(endPoint.rankId, hardWarePid, std::to_string(item.streamId));
+        endPoint.trackId = instance.GetTrackId(endPoint.rankId, hardWarePid,
+                                               std::to_string(item.streamId) + "_" + std::to_string(item.domainId));
         flowPointVec.emplace_back(endPoint);
     }
 }

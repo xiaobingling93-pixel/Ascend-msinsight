@@ -145,4 +145,87 @@ bool DbTraceDataBase::QueryP2PCommunicationOpHaveConnectionId(std::vector<Protoc
     }
     return true;
 }
+
+void DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const std::pair<std::string, std::string> &tableAndSql,
+                                                    uint64_t minTimestamp, const std::string &connectionId, const std::vector<uint64_t> &deviceIdList,
+                                                    std::vector<FlowLocation> &flowLocations)
+{
+    auto stmt = CreatPreparedStatement();
+    std::string sql = "with constValue as (select ? as minTime, ? as connectionId) " + tableAndSql.second +
+        " order by startTime ";
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (tableAndSql.first == "COMMUNICATION_OP" && deviceIdList.size() == 1) {
+        resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId, deviceIdList[0]);
+    } else {
+        resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId);
+    }
+
+    while (resultSet->Next()) {
+        auto metaType = resultSet->GetString("metaType");
+        auto rankId = resultSet->GetString("deviceId");
+        for (const auto &item: QueryRankIdAndDeviceMap()) {
+            if (rankId == item.second) {
+                rankId = item.first;
+            }
+        }
+        rankId = rankId.empty() ? path : QueryHostInfo() + rankId;
+        FlowLocation location {
+            .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
+            .metaType = metaType, .rankId = rankId,
+            .depth = resultSet->GetUint32("depth"), .timestamp = resultSet->GetUint64("startTime"),
+            .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
+            .name = stringsCache.at(path)[resultSet->GetString("name")]
+        };
+        if (tableAndSql.first == "TASK") {
+            std::string domainId = resultSet->GetString("domainId");
+            if (!domainId.empty()) {
+                std::string streamId = resultSet->GetString("tid");
+                location.tid = streamId + "_" + domainId;
+            }
+        }
+        flowLocations.push_back(location);
+    }
+}
+
+bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestParams,
+                                     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
+{
+    auto stmt = CreatPreparedStatement();
+    auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
+    if (!connectionId.has_value()) {
+        return false;
+    }
+    std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(requestParams.rankId);
+    std::string comSql = deviceIdList.size() == 1 ? COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE : COM_OP_UNIT_FLOW_SQL;
+    std::vector<FlowLocation> flowLocations;
+    std::map<std::string, std::string> sqlMap{{"PYTORCH_API", PYTORCH_UNIT_FLOW_SQL},
+        {"CANN_API", CANN_UNIT_FLOW_SQL}, {"TASK", TASK_UNIT_FLOW_SQL},
+        {"COMMUNICATION_OP", comSql}, {"MSTX_EVENTS", MSTX_UNIT_FLOW_SQL}};
+    for (const auto &item : sqlMap) {
+        ExecuteQueryUnitFlowsForTable(item, minTimestamp, connectionId.value(), deviceIdList, flowLocations);
+    }
+    if (flowLocations.size() < 2) { // 小于2表示没有连线
+        return false;
+    }
+    std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
+    for (size_t index = 1; index < flowLocations.size(); index++) {
+        UnitSingleFlow singleFlow;
+        singleFlow.id = connectionId.value();
+        singleFlow.from = flowLocations[index - 1];
+        singleFlow.to = flowLocations[index];
+        if (singleFlow.from.metaType == singleFlow.to.metaType && singleFlow.from.metaType == TABLE_API) {
+            singleFlow.cat = singleFlow.from.name == "Enqueue" ? "async_task_queue" : "fwdbwd";
+        }
+        singleFlow.cat = singleFlow.from.metaType == TABLE_CANN_API ? "HostToDevice" : singleFlow.cat;
+        singleFlow.cat = singleFlow.from.metaType == TABLE_MSTX_EVENTS ? "MsTx" : singleFlow.cat;
+        if (singleFlow.from.metaType == TABLE_API && singleFlow.to.metaType == TABLE_CANN_API) {
+            singleFlow.cat = "async_npu";
+        }
+        flowMap[singleFlow.cat].push_back(singleFlow);
+    }
+    for (const auto &item: flowMap) {
+        responseBody.unitAllFlows.push_back({ .cat = item.first, .flows = item.second });
+    }
+    return true;
+}
 }

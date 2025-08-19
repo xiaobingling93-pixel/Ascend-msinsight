@@ -41,21 +41,37 @@ const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
     {TABLE_COMMUNICATION_SCHEDULE_TASK, "create TEMPORARY table if not exists COMMUNICATION_SCHEDULE_TASK_INFO("
                                         "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, "
                                         "opType INTEGER);"},
-    {TABLE_NPU_INFO, "create TEMPORARY table if not exists NPU_INFO(id INTEGER primary key, name TEXT);"}
+    {TABLE_NPU_INFO, "create TEMPORARY table if not exists NPU_INFO(id INTEGER primary key, name TEXT);"},
+    {TABLE_STRING_IDS, "create TEMPORARY table if not exists STRING_IDS(id INTEGER primary key, value TEXT);"}
 };
 
 // sql of same operate detail
-inline std::string GetAscendSameNameDetailSql(const std::string &tidListStr)
+inline std::string GetAscendSameNameDetailSql(const std::vector<std::string> &tidList)
 {
-    return " ascend as (select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
+    std::string sql;
+    // 已经在DbTraceDataBase::QueryThreadSameOperatorsDetails中检查过tid sql注入风险
+    // Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
+    // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+    const std::string tidListStr = StringUtil::Join4SqlGroup(tidList);
+    sql = " ascend as (select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
     "   main.depth, main.ROWID as id, streamId as tid, 'Ascend Hardware' as pid from TASK main "
-    "   left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId left join " + TABLE_MSTX_EVENTS +
-    " m on  (m.connectionId = main.connectionId and  m.connectionId != " + WRONG_DATA +
-    " ) left join " + TABLE_COMMUNICATION_SCHEDULE_TASK +
+    "   left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId left join " +
+    TABLE_COMMUNICATION_SCHEDULE_TASK +
     " s on main.globalTaskId = s.globalTaskId "
-    "     join nameIds n on coalesce(c.name, m.message, s.name, main.taskType) = id join params p"
+    "     join nameIds n on coalesce(c.name, s.name, main.taskType) = id join params p"
     " where deviceId = p.rankId and streamId in (" + tidListStr +
-    " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
+    " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime";
+
+    sql += " union all select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
+        "main.depth, main.ROWID as id, streamId || '_' || m.domainId as tid, 'Ascend Hardware' as pid from TASK "
+        "as main inner join " + TABLE_MSTX_EVENTS + " as m on main.connectionId = m.connectionId "
+        "inner join nameIds n on m.message = id "
+        "inner join params p where deviceId = p.rankId "
+        " and streamId || '_' || m.domainId in (" + tidListStr + ")"
+        " and timestamp + duration >= p.startTime and timestamp <=p.endTime";
+
+    sql += ")";
+    return sql;
 }
 inline std::string GetHcclSameNameDetailSql(const std::string &tidListStr, const bool uniqueDevice)
 {
@@ -122,15 +138,13 @@ const static std::string MSTX_UNIT_FLOW_SQL =
         "     '' as deviceId from MSTX_EVENTS api join constValue "
         "     where api.connectionId = constValue.connectionId and api.connectionId != 4294967295";
 const static std::string TASK_UNIT_FLOW_SQL =
-      " select task.ROWID as id, streamId as tid, depth, startNs - constValue.minTime as startTime, "
-      "     endNs - startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, '' as name, "
-      "     deviceId from TASK task join constValue where task.connectionId = constValue.connectionId "
-      " and task.connectionId != " + WRONG_DATA + " "
-      " union all select task.ROWID as id, streamId as tid, task.depth,task.startNs - constValue.minTime as startTime, "
-      " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, taskType, "
-      "         deviceId from TASK task join constValue join MSTX_EVENTS CTI "
-      "         on task.connectionId = CTI.connectionId where task.connectionId = constValue.connectionId  "
-      " and task.connectionId != " + WRONG_DATA;
+      " select task.ROWID as id, task.streamId as tid, task.depth as depth,"
+      " task.startNs - constValue.minTime as startTime, "
+      " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, '' as name, "
+      " task.deviceId as deviceId, m.domainId as domainId from TASK task join constValue "
+      " left join MSTX_EVENTS m on task.connectionId = m.connectionId "
+      " where task.connectionId = constValue.connectionId "
+      " and task.connectionId != " + WRONG_DATA + " ";
 const static std::string COM_OP_UNIT_FLOW_SQL =
       " select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
       "     op.endNs - op.startNs as duration, 'HCCL' as pid, 'HCCL' as metaType, opName as name, "
@@ -150,16 +164,21 @@ const static std::string FULL_DB_UPDATE_TIME =
         "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
 
 // QueryThreadsByPid
-const static std::string ASCEND_THREADS_BY_PID =
-            "select main.startNs,main.endNs - main.startNs as duration,main.endNs, "
-            " coalesce(c.name, m.message, s.name, main.taskType) as name, main.depth "
-            " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
-            " c on c.globalTaskId = main.globalTaskId "
-            " left join " + TABLE_MSTX_EVENTS + " m on "
-            " (m.connectionId = main.connectionId and main.connectionId != " + WRONG_DATA + " ) " +
-            " left join " + TABLE_COMMUNICATION_SCHEDULE_TASK + " s on main.globalTaskId = s.globalTaskId"
-            " where deviceId = ? and streamId = ? and main.endNs >= ? AND main.startNs <= ?"
-            " ORDER BY main.depth ASC, main.startNs ASC;";
+const static std::string ASCEND_THREADS_EXCLUDING_MSTX_BY_PID =
+    "select main.startNs,main.endNs - main.startNs as duration,main.endNs, "
+    " coalesce(c.name, s.name, main.taskType) as name, main.depth "
+    " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
+    " c on c.globalTaskId = main.globalTaskId "
+    " left join " + TABLE_COMMUNICATION_SCHEDULE_TASK + " s on main.globalTaskId = s.globalTaskId"
+    " where deviceId = ? and streamId = ? and main.endNs >= ? AND main.startNs <= ?"
+    " and connectionId not in (select connectionId from " + TABLE_MSTX_EVENTS + ")"
+    " ORDER BY main.depth ASC, main.startNs ASC;";
+const static std::string ASCEND_THREADS_MSTX_BY_PID =
+    "SELECT main.startNs, main.endNs - main.startNs as duration, main.endNs, m.message AS name, main.depth "
+    "FROM " + TABLE_TASK + " AS main "
+    "INNER JOIN " + TABLE_MSTX_EVENTS + " AS m ON main.connectionId = m.connectionId "
+    "WHERE main.deviceId = ? AND main.streamId = ? AND m.domainId = ? AND main.endNs >= ? AND main.startNs <= ? "
+    "ORDER BY main.depth ASC, main.startNs ASC";
 
 const static std::string HCCL_THREADS_BY_PID =
             "with sub as ("

@@ -260,10 +260,6 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     const auto rankId = params.rankId;
     const auto minTimestamp = params.minTimestamp;
     const auto orderBy = params.orderBy;
-    // 已经在DbTraceDataBase::QueryThreadSameOperatorsDetails中检查过tid sql注入风险
-    const std::string tidListStr = StringUtil::Join4SqlGroup(params.tidList);
-    // pid 从内部数据中获取，无sql注入风险
-    const std::string pidListStr = StringUtil::Join4SqlGroup(params.pidList);
     std::string sql;
     uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
         (requestParams.current - 1) * requestParams.pageSize;
@@ -276,7 +272,7 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     const int overlapType = OverlapAnsRepo::GetTypeByName(requestParams.name);
     for (const auto type : types) {
         withHeadSql += ", " +
-            GetQueryThreadSameOperatorsDetailsHeadSql(tidListStr, pidListStr, uniqueDevice, overlapType, type);
+            GetQueryThreadSameOperatorsDetailsHeadSql(params, uniqueDevice, overlapType, type);
     }
     const auto sameOperatorsDetailsSql = withHeadSql +
         " , all_same_operator_detail as (SELECT * from ascend UNION ALL " // PROCESS_TYPE::ASCEND_HARDWARE
@@ -291,12 +287,17 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     return Execute(stmt, requestParams.pageSize, offset);
 }
 
-std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(const std::string &tidListStr,
-    const std::string &pidListStr, const bool uniqueDevice, const int overlapType, const PROCESS_TYPE type)
+std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(
+    const QUERY_THREAD_SAME_OPERATORS_PARAMS &params,
+    const bool uniqueDevice, const int overlapType, const PROCESS_TYPE type)
 {
+    // 已经在DbTraceDataBase::QueryThreadSameOperatorsDetails中检查过tid sql注入风险
+    const std::string tidListStr = StringUtil::Join4SqlGroup(params.tidList);
+    // pid 从内部数据中获取，无sql注入风险
+    const std::string pidListStr = StringUtil::Join4SqlGroup(params.pidList);
     switch (type) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            return GetAscendSameNameDetailSql(tidListStr);
+            return GetAscendSameNameDetailSql(params.tidList);
         case PROCESS_TYPE::HCCL:
             return GetHcclSameNameDetailSql(tidListStr, uniqueDevice);
         case PROCESS_TYPE::CANN_API:
@@ -386,8 +387,17 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
     auto processType = GetProcessType(metaData.metaType);
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            return ExecuteQuery(stmt, ASCEND_THREADS_BY_PID, rankId, metaData.tid,
-                                startTime, endTime);
+            // Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
+            // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+            if (metaData.tid.find('_') != std::string::npos) {
+                size_t pos = metaData.tid.find('_');
+                std::string streamId = metaData.tid.substr(0, pos);
+                std::string domainId = metaData.tid.substr(pos + 1);
+                return ExecuteQuery(stmt, ASCEND_THREADS_MSTX_BY_PID, rankId, streamId, domainId, startTime, endTime);
+            } else {
+                return ExecuteQuery(stmt, ASCEND_THREADS_EXCLUDING_MSTX_BY_PID, rankId, metaData.tid,
+                                    startTime, endTime);
+            }
         case PROCESS_TYPE::HCCL:
             return ExecuteQuery(stmt, HCCL_THREADS_BY_PID, rankId, metaData.tid, metaData.tid,
                                 startTime, endTime);

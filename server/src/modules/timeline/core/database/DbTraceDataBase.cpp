@@ -16,7 +16,7 @@
 
 namespace Dic::Module::FullDb {
 using namespace Server;
-static std::map<std::string, std::map<std::string, std::string>> stringsCache;
+std::map<std::string, std::map<std::string, std::string>> DbTraceDataBase::stringsCache = {};
 
 DbTraceDataBase::~DbTraceDataBase()
 {
@@ -56,7 +56,8 @@ bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     if (CheckTableExist(TABLE_TASK)) {
-        QueryOperateMetadata(fileId, metaData);
+        QueryAscendHardwareOperatorMetadata(fileId, metaData);
+        QueryHCCLOperatorMetadata(fileId, metaData);
         GenerateOverlapAnalysisMetadata(fileId, metaData);
     }
     QueryCounterMetadata(fileId, metaData);
@@ -86,77 +87,6 @@ bool DbTraceDataBase::GenerateOverlapAnalysisMetadata(const std::string &fileId,
 
 bool DbTraceDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
-    return true;
-}
-
-std::vector<FlowLocation> DbTraceDataBase::ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet)
-{
-    std::vector<FlowLocation> flowLocations;
-    while (resultSet->Next()) {
-        auto metaType = resultSet->GetString("metaType");
-        auto rankId = resultSet->GetString("deviceId");
-        for (const auto &item: QueryRankIdAndDeviceMap()) {
-            if (rankId == item.second) {
-                rankId = item.first;
-            }
-        }
-        rankId = rankId.empty() ? path : QueryHostInfo() + rankId;
-        FlowLocation location {
-                .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-                .metaType = metaType, .rankId = rankId,
-                .depth = resultSet->GetUint32("depth"), .timestamp = resultSet->GetUint64("startTime"),
-                .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
-                .name = stringsCache.at(path)[resultSet->GetString("name")]
-        };
-        flowLocations.push_back(location);
-    }
-    return flowLocations;
-}
-
-bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestParams,
-    Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
-{
-    auto stmt = CreatPreparedStatement();
-    auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
-    if (!connectionId.has_value()) {
-        return false;
-    }
-    std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(requestParams.rankId);
-    std::string comSql = deviceIdList.size() == 1 ? COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE : COM_OP_UNIT_FLOW_SQL;
-    std::string sql = "with constValue as (select ? as minTime, ? as connectionId)\n";
-    sql += PYTORCH_UNIT_FLOW_SQL + " union all ";
-    sql += CANN_UNIT_FLOW_SQL + " union all ";
-    sql += TASK_UNIT_FLOW_SQL + " union all " + comSql + " union all " + MSTX_UNIT_FLOW_SQL;
-    sql += " order by startTime ";
-    std::unique_ptr<SqliteResultSet> resultSet;
-    if (deviceIdList.size() == 1) {
-        resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId.value(), deviceIdList[0]);
-    } else {
-        resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId.value());
-    }
-    std::vector<FlowLocation> flowLocations = ConvertResultToFlowLocation(std::move(resultSet));
-    if (flowLocations.size() < 2) { // 小于2表示没有连线
-        return false;
-    }
-    std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
-    for (size_t index = 1; index < flowLocations.size(); index++) {
-        UnitSingleFlow singleFlow;
-        singleFlow.id = connectionId.value();
-        singleFlow.from = flowLocations[index - 1];
-        singleFlow.to = flowLocations[index];
-        if (singleFlow.from.metaType == singleFlow.to.metaType && singleFlow.from.metaType == TABLE_API) {
-            singleFlow.cat = singleFlow.from.name == "Enqueue" ? "async_task_queue" : "fwdbwd";
-        }
-        singleFlow.cat = singleFlow.from.metaType == TABLE_CANN_API ? "HostToDevice" : singleFlow.cat;
-        singleFlow.cat = singleFlow.from.metaType == TABLE_MSTX_EVENTS ? "MsTx" : singleFlow.cat;
-        if (singleFlow.from.metaType == TABLE_API && singleFlow.to.metaType == TABLE_CANN_API) {
-            singleFlow.cat = "async_npu";
-        }
-        flowMap[singleFlow.cat].push_back(singleFlow);
-    }
-    for (const auto &item: flowMap) {
-        responseBody.unitAllFlows.push_back({ .cat = item.first, .flows = item.second });
-    }
     return true;
 }
 
@@ -1086,8 +1016,10 @@ bool DbTraceDataBase::NeedUpdateDepth(const std::string &table)
 
 void DbTraceDataBase::UpdateAllDepth()
 {
-    std::string sql = "select format('%s-%s', deviceId, streamId) as key, ROWID as id,startNs, endNs from TASK "
-        "                      order by deviceId, streamId, startNs, globalTaskId;";
+    std::string sql = "SELECT format('%s-%s-%s', main.deviceId, main.streamId, m.domainId) AS key, "
+        "main.ROWID AS id, main.startNs, main.endNs FROM " + TABLE_TASK + " AS main "
+        "LEFT JOIN " + TABLE_MSTX_EVENTS + " AS m ON main.connectionId = m.connectionId "
+        "ORDER BY main.deviceId, main.streamId, m.domainId, main.startNs, main.globalTaskId;";
     if (CheckTableExist(TABLE_TASK) && NeedUpdateDepth(TABLE_TASK)) {
         UpdateDepth(sql, updateTaskDepthStmt);
     }
@@ -1283,6 +1215,8 @@ void DbTraceDataBase::AddHelperColumnsAndSetStatus()
     if (isExistTask) {
         if (!CheckColumnExist(TABLE_TASK, std::string(PytorchApiColumn::DEPTH))) {
             ExecSql("alter table " + TABLE_TASK + " add depth integer;");
+        } else {
+            ExecSql("update " + TABLE_TASK + " set depth = NULL;");
         }
         ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 " deviceId integer, startNs integer, endNs integer, type integer);");
@@ -1484,7 +1418,7 @@ std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(cons
     return unitTrack;
 }
 
-std::string DbTraceDataBase::GetHcclOperateMetaData(const std::string &fileId)
+std::string DbTraceDataBase::GetHcclOperatorMetaData(const std::string &fileId)
 {
     std::string sql = "with main as (select planeId, op.groupName, sids.value as groupNameValue from " +
         TABLE_COMMUNICATION_TASK_INFO + " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
@@ -1507,43 +1441,92 @@ std::string DbTraceDataBase::GetHcclOperateMetaData(const std::string &fileId)
     return sql;
 }
 
-bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
-                                           std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+bool DbTraceDataBase::QueryAscendHardwareOperatorMetadata(const std::string &fileId,
+                                                          std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    PROCESS_TYPE types[] = {PROCESS_TYPE::ASCEND_HARDWARE, PROCESS_TYPE::HCCL};
-    for (const auto &type : types) {
-        std::string sql;
-        switch (type) {
-            case PROCESS_TYPE::ASCEND_HARDWARE:
-                sql = "select streamId as tid, max(depth) as maxDepth,'Stream '||streamId as name from " + TABLE_TASK +
-                      " where deviceId = ? group by streamId";
-                break;
-            case PROCESS_TYPE::HCCL:
-                sql = GetHcclOperateMetaData(fileId);
-                break;
-            default:
-                break;
-        }
-        auto stmt = CreatPreparedStatement();
-        auto metaType = ENUM_TO_STR(type).value_or("");
-        // 临时增加对 HCCL 的特殊处理，之后将 PROCESS_TYPE::HCCL 换成 Communication
-        auto processName = type == PROCESS_TYPE::HCCL ? "Communication" : metaType;
-        auto process = GenerateBaseUnitTrack("process", fileId, metaType, processName, metaType);
-        try {
-            auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, GetDeviceId(fileId));
-            while (resultSet->Next()) {
-                auto thread = GenerateBaseUnitTrack("thread", fileId, process->metaData.processId, "", metaType);
-                std::string threadId = resultSet->GetString("tid");
-                ProcessThreadUnit(process, resultSet, thread, threadId, type);
+    // 这个函数会将Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
+    // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
+    // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
+    // 因为Device侧存在非MSTX事件，所以和MSTX_EVENTS连接必须左连接
+    // 和STRING_IDS表必须用左连接，不能内连接，因为只有新数据的domainId才会在STRING_IDS中有对应，老数据没有对应，如果内连接会导致SQL查不出老数据
+    // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+    PROCESS_TYPE type = PROCESS_TYPE::ASCEND_HARDWARE;
+    std::string sql = "SELECT table1.streamId AS tid, table2.domainId AS did, "
+        "table3.value AS dname, MAX(table1.depth) AS maxDepth "
+        "FROM " + TABLE_TASK + " AS table1 "
+        "LEFT JOIN " + TABLE_MSTX_EVENTS + " AS table2 "
+        "ON table1.connectionId = table2.connectionId "
+        "LEFT JOIN " + TABLE_STRING_IDS + " AS table3 "
+        "ON table2.domainId = table3.id "
+        "WHERE table1.deviceId = ? "
+        "GROUP BY table1.streamId, table2.domainId, table3.value "
+        "ORDER BY table1.streamId ASC, table2.domainId ASC NULLS LAST;";
+
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query Ascend Hardware operator metadata.");
+        return false;
+    }
+    std::string metaType = ENUM_TO_STR(type).value_or("");
+    std::string processName = metaType;
+    auto process = GenerateBaseUnitTrack("process", fileId, metaType, processName, metaType);
+    auto resultSet = stmt->ExecuteQuery(GetDeviceId(fileId));
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to execute query Ascend Hardware operator metadata.");
+        return false;
+    }
+
+    while (resultSet->Next()) {
+        std::string threadId = resultSet->GetString("tid");
+        auto thread = GenerateBaseUnitTrack("thread", fileId, process->metaData.processId, "", metaType);
+        std::string domainId = resultSet->GetString("did");
+        if (domainId.empty()) {
+            thread->metaData.threadId = threadId;
+            thread->metaData.threadName = "Stream " + threadId;
+        } else {
+            std::string domainName = resultSet->GetString("dname");
+            if (domainName.empty()) {
+                thread->metaData.threadId = threadId + "_" + domainId;
+                thread->metaData.threadName = "Stream " + threadId + " MSTX";
+            } else {
+                thread->metaData.threadId = threadId + "_" + domainId;
+                thread->metaData.threadName = "Stream " + threadId + " MSTX domain " + domainName;
             }
-        } catch (DatabaseException &e) {
-            ServerLog::Error("Query operate metadata, MetaType: ", metaType, " reason: ", e.What());
-            return false;
         }
-        UpdataCommucationThreadName(type, process);
-        if (!process->children.empty()) {
-            metaData.emplace_back(std::move(process));
+        thread->metaData.maxDepth = resultSet->GetInt32("maxDepth") + 1;
+        process->children.emplace_back(std::move(thread));
+    }
+
+    if (!process->children.empty()) {
+        metaData.emplace_back(std::move(process));
+    }
+    return true;
+}
+
+bool DbTraceDataBase::QueryHCCLOperatorMetadata(const std::string &fileId,
+                                                std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+{
+    PROCESS_TYPE type = PROCESS_TYPE::HCCL;
+    std::string sql = GetHcclOperatorMetaData(fileId);
+    auto stmt = CreatPreparedStatement();
+    auto metaType = ENUM_TO_STR(type).value_or("");
+    // 临时增加对 HCCL 的特殊处理，之后将 PROCESS_TYPE::HCCL 换成 Communication
+    auto processName = "Communication";
+    auto process = GenerateBaseUnitTrack("process", fileId, metaType, processName, metaType);
+    try {
+        auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, GetDeviceId(fileId));
+        while (resultSet->Next()) {
+            auto thread = GenerateBaseUnitTrack("thread", fileId, process->metaData.processId, "", metaType);
+            std::string threadId = resultSet->GetString("tid");
+            ProcessThreadUnit(process, resultSet, thread, threadId, type);
         }
+    } catch (DatabaseException &e) {
+        ServerLog::Error("Failed to query HCCL operator metadata, reason: ", e.What());
+        return false;
+    }
+    UpdataCommucationThreadName(type, process);
+    if (!process->children.empty()) {
+        metaData.emplace_back(std::move(process));
     }
     return true;
 }

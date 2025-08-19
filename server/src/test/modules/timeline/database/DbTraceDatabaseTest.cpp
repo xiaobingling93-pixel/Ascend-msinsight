@@ -64,6 +64,26 @@ protected:
         "CREATE TABLE PCIE (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,deviceId INTEGER);";
     std::string aiCoreSql =
         "CREATE TABLE AICORE_FREQ (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,deviceId INTEGER);";
+
+    std::string taskIncludingMSTXInsert1 =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) "
+        "VALUES (1742699319641107170, 1742699319641107190, 0, 4294967295, 7480, 1984976, 1, 4294967295, 2, 12658, "
+        "4294967295, 0),"
+        "(1729733883833924932, 1729733883833924952, 0, 4000000002, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924952, 1729733883833924992, 0, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0);";
+    std::string mstxTableInsert1 =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 239, 4000000001, 0),"
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 448, "
+        "4754301164515056, 4754301164515056, 240, 4000000002, 0);";
+    std::string stringIdsTableInsert1 =
+        "INSERT INTO STRING_IDS(id, value) VALUES (239, 'compute'), (240, 'communication'), "
+        "(447, 'start'), (448, 'hcom_allReduce')";
 };
 namespace Dic::Protocol {
 using namespace Dic::Module::Timeline;
@@ -513,6 +533,47 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     EXPECT_EQ(responseBody.sameOperatorsDetails[0].pid, "Ascend Hardware");
 }
 
+TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenHavingDeviceMSTXEvents)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
+    DatabaseTestCaseMockUtil::InsertData(db, taskIncludingMSTXInsert1);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert1);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert1);
+    database.SetDbPtr(db);
+    Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.processes.push_back(SimpleProcess {"Ascend Hardware", {"2", "2_239", "2_240"}});
+    requestParams.name = "start";
+    requestParams.rankId = "0";
+    requestParams.startTime = 1720000000000000000; // 1720000000000000000
+    requestParams.endTime = 1740000000000000000; // 1740000000000000000
+    requestParams.pageSize = 10; // 10
+    requestParams.orderBy = "duration";
+    requestParams.order = "DESC";
+    Dic::Protocol::UnitThreadsOperatorsBody responseBody;
+    const uint64_t minTimestamp = 0;
+    uint64_t trackId1 = TrackInfoManager::Instance().GetTrackId("0", "Ascend Hardware", "2");
+    uint64_t trackId2 = TrackInfoManager::Instance().GetTrackId("0", "Ascend Hardware", "2_239");
+    uint64_t trackId3 = TrackInfoManager::Instance().GetTrackId("0", "Ascend Hardware", "2_240");
+    const std::vector<uint64_t> traceIds = {trackId1, trackId2, trackId3};
+    bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceIds);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.sameOperatorsDetails.size(), 1);
+    EXPECT_EQ(responseBody.sameOperatorsDetails[0].pid, "Ascend Hardware");
+}
+
 TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
 {
     std::recursive_mutex testMutex;
@@ -777,7 +838,7 @@ TEST_F(DbTraceDatabaseTest, TestGetCounterUnitsAndDataTypesWhenACCPMU)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsNotEmptyThenReturnFalse)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsNotEmptyThenReturnFalse)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
@@ -794,7 +855,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsNotEmptyThenRetu
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsOneThenReturnFalse)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsOneThenReturnFalse)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
@@ -826,7 +887,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsOneThenReturnFal
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsTwoThenReturnTrue)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsTwoThenReturnTrue)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
@@ -873,7 +934,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsTwoThenReturnTru
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenDeviceUniqueThenReturnTrue)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenDeviceUniqueThenReturnTrue)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
@@ -922,7 +983,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenDeviceUniqueThenReturnTrue)
     RestoreRepoFunc();
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenRankIdAndDeviceIdNotSame)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenRankIdAndDeviceIdNotSame)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);

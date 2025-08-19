@@ -192,8 +192,10 @@ private:
 
     void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);
     bool UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
-    std::string GetHcclOperateMetaData(const std::string &fileId);
-    bool QueryOperateMetadata(const std::string &fileId,
+    std::string GetHcclOperatorMetaData(const std::string &fileId);
+    bool QueryAscendHardwareOperatorMetadata(const std::string &fileId,
+                                             std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool QueryHCCLOperatorMetadata(const std::string &fileId,
                               std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool GenerateOverlapAnalysisMetadata(const std::string &fileId,
                                          std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
@@ -223,7 +225,9 @@ private:
         uint64_t minTimestamp);
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
-    std::vector<Protocol::FlowLocation> ConvertResultToFlowLocation(std::unique_ptr<SqliteResultSet> resultSet);
+    void ExecuteQueryUnitFlowsForTable(const std::pair<std::string, std::string> &tableAndSql,
+        uint64_t minTimestamp, const std::string &connectionId, const std::vector<uint64_t> &deviceIdList,
+        std::vector<FlowLocation> &flowLocations);
     uint32_t SearchSliceNameCount(const Protocol::SearchCountParams &params);
 
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
@@ -233,6 +237,7 @@ private:
                                 uint64_t minTimestamp);
     void AddColumns2Table(const bool isExist, const std::string &tableName, const std::string &columnName,
                           const std::string &columnType);
+    static std::map<std::string, std::map<std::string, std::string>> stringsCache;
 };
 }
 

@@ -107,6 +107,13 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamTrackExist)
         "(1729733883833924932, 1729733883833924952, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
         "0);";
     DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     const uint8_t expectProcessCount = 2;
@@ -117,6 +124,96 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamTrackExist)
     EXPECT_EQ(metaData[0]->children.size(), expectHardWareCount);
     EXPECT_EQ(metaData[0]->children[0]->metaData.threadName, expectStreamName);
     EXPECT_EQ(metaData[0]->children[0]->metaData.cardId, fileId);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithoutDomain)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    std::string taskTableInsert =
+        "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1729733883833924932, 1729733883833924952, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924952, 1729733883833924992, 7, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0);";
+    std::string mstxTableInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 65535, 4000000001, 0);";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
+    std::string fileId = "7";
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    const uint8_t expectProcessCount = 2;
+    const uint8_t expectHardWareCount = 2;
+    database.QueryUnitsMetadata(fileId, metaData);
+    ASSERT_EQ(metaData.size(), expectProcessCount);
+    ASSERT_EQ(metaData[0]->children.size(), expectHardWareCount);
+    EXPECT_EQ(metaData[0]->children[0]->metaData.threadName, "Stream 2 MSTX");
+    EXPECT_EQ(metaData[0]->children[0]->metaData.cardId, fileId);
+    EXPECT_EQ(metaData[0]->children[1]->metaData.threadName, "Stream 2");
+    EXPECT_EQ(metaData[0]->children[1]->metaData.cardId, fileId);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithDomain)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string taskTableInsert =
+        "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1729733883833924932, 1729733883833924952, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924952, 1729733883833924992, 7, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0);";
+    std::string mstxTableInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 239, 4000000001, 0);";
+    std::string stringIdsTableInsert =
+        "INSERT INTO STRING_IDS(id, value) VALUES (239, 'compute'), (447, 'start')";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
+    std::string fileId = "7";
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    const uint8_t expectProcessCount = 2;
+    const uint8_t expectHardWareCount = 2;
+    database.QueryUnitsMetadata(fileId, metaData);
+    ASSERT_EQ(metaData.size(), expectProcessCount);
+    ASSERT_EQ(metaData[0]->children.size(), expectHardWareCount);
+    EXPECT_EQ(metaData[0]->children[0]->metaData.threadName, "Stream 2 MSTX domain compute");
+    EXPECT_EQ(metaData[0]->children[0]->metaData.cardId, fileId);
+    EXPECT_EQ(metaData[0]->children[1]->metaData.threadName, "Stream 2");
+    EXPECT_EQ(metaData[0]->children[1]->metaData.cardId, fileId);
 }
 
 /**
@@ -168,6 +265,13 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExist)
     DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
     DatabaseTestCaseMockUtil::InsertData(db, commucationInfoInsertSql);
     DatabaseTestCaseMockUtil::InsertData(db, commucationOpInsertSql);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     const uint8_t expectProcessCount = 3;
@@ -209,6 +313,13 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenDeviceUnique)
     DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
     DatabaseTestCaseMockUtil::InsertData(db, commucationOpInsertSql);
     MockNpuInfoRepoFunc();
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
     std::string fileId = "0";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     const uint8_t expectProcessCount = 3;
@@ -254,6 +365,13 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrong)
     DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
     DatabaseTestCaseMockUtil::InsertData(db, commucationInfoInsertSql);
     DatabaseTestCaseMockUtil::InsertData(db, commucationOpInsertSql);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     const uint8_t expectProcessCount = 3;
@@ -303,19 +421,24 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExistVersion_1_1_0)
     DatabaseTestCaseMockUtil::InsertData(db, commucationOpInsertSql);
     DatabaseTestCaseMockUtil::InsertData(db, stringIdsInsertSql);
     database.SetDbPtr(db);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     const uint8_t expectProcessCount = 3;
-    const uint8_t first = 0;
-    const uint8_t second = 1;
-    const uint8_t three = 2;
+    const uint8_t two = 2;
     const std::string expectPlaneName = "Plane 0";
     database.QueryUnitsMetadata(fileId, metaData);
     EXPECT_EQ(metaData.size(), expectProcessCount);
-    EXPECT_EQ(metaData[second]->children.size(), three);
-    EXPECT_EQ(metaData[second]->children[first]->metaData.groupNameValue, groupNameValue);
-    EXPECT_EQ(metaData[second]->children[second]->metaData.threadName, expectPlaneName);
-    EXPECT_EQ(metaData[second]->children[second]->metaData.groupNameValue, "");
+    EXPECT_EQ(metaData[1]->children.size(), two);
+    EXPECT_EQ(metaData[1]->children[0]->metaData.groupNameValue, groupNameValue);
+    EXPECT_EQ(metaData[1]->children[1]->metaData.threadName, expectPlaneName);
+    EXPECT_EQ(metaData[1]->children[1]->metaData.groupNameValue, "");
 }
 
 
@@ -357,6 +480,13 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrongVersion_1_1_0
     DatabaseTestCaseMockUtil::InsertData(db, commucationOpInsertSql);
     DatabaseTestCaseMockUtil::InsertData(db, stringIdsInsertSql);
     database.SetDbPtr(db);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     const uint8_t expectProcessCount = 3;

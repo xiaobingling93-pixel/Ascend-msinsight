@@ -11,7 +11,7 @@
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 using namespace Dic::Global::PROFILER::MockUtil;
 using namespace Dic::Module::FullDb;
-class DeviceFlowRepoTest : public ::testing::Test {
+class DeviceFlowRepoTest : public DeviceFlowRepo, public ::testing::Test {
 protected:
     void SetUp() override
     {
@@ -22,6 +22,31 @@ protected:
     {
         TrackInfoManager::Instance().Reset();
     }
+
+    std::string taskCreate =
+        "CREATE TABLE TASK (startNs INTEGER,endNs INTEGER,deviceId INTEGER,connectionId "
+        "INTEGER,globalTaskId INTEGER,globalPid INTEGER,taskType INTEGER,contextId INTEGER,streamId "
+        "INTEGER,taskId INTEGER,modelId INTEGER, depth integer);";
+    std::string mstxCreate =
+        "CREATE TABLE MSTX_EVENTS (startNs INTEGER,endNs INTEGER,eventType INTEGER,rangeId "
+        "INTEGER,category INTEGER,message INTEGER,globalTid INTEGER,endGlobalTid "
+        "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
+    std::string taskInsert =
+        "INSERT INTO TASK(startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) "
+        "VALUES (1742699319641107170, 1742699319641107190, 0, 4294967295, 7480, 1984976, 1, 4294967295, 2, 12658, "
+        "4294967295, 0),"
+        "(1729733883833924932, 1729733883833924952, 0, 4000000002, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924952, 1729733883833924992, 0, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0);";
+    std::string mstxInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 239, 4000000001, 0),"
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 448, "
+        "4754301164515056, 4754301164515056, 240, 4000000002, 0);";
 };
 
 DeviceFlowRepo GetDeviceFlowRepoMock()
@@ -73,4 +98,34 @@ TEST_F(DeviceFlowRepoTest, test_AddDeviceFlowPoint)
     deviceFlowRepo.AddDeviceFlowPoint(flowQuery, flowPointVec);
     int expectCount = 1;
     EXPECT_EQ(flowPointVec.size(), expectCount);
+}
+
+TEST_F(DeviceFlowRepoTest, AddHardWareMstxFlowPointExecuteSQLTest)
+{
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find("server");
+    currPath = currPath.substr(0, index);
+    std::string dbPath = R"(test/data/msprof/)";
+    std::string completePath = currPath + dbPath + "DeviceFlowRepoTest.db";
+    std::recursive_mutex mutex;
+    std::shared_ptr<VirtualTraceDatabase> database = std::make_shared<DbTraceDataBase>(mutex);
+    database->OpenDb(completePath, false);
+    database->ExecSql(taskCreate);
+    database->ExecSql(mstxCreate);
+    database->ExecSql(taskInsert);
+    database->ExecSql(mstxInsert);
+
+    FlowQuery flowQuery;
+    flowQuery.minTimestamp = 0;
+    std::vector<uint64_t> connectionIds = {4000000001, 4000000002};
+    std::vector<FlowPoint> flowPointVec;
+    AddHardWareMstxFlowPointExecuteSQL(flowQuery, flowPointVec, connectionIds, database);
+    const size_t expectedSize = 2;
+    ASSERT_EQ(flowPointVec.size(), expectedSize);
+    EXPECT_EQ(flowPointVec[0].flowId, "4000000002");
+    EXPECT_EQ(flowPointVec[0].id, 2); // 2
+    EXPECT_EQ(flowPointVec[1].flowId, "4000000001");
+    EXPECT_EQ(flowPointVec[1].id, 3); // 3
+    database->CloseDb();
+    std::remove(completePath.c_str());
 }

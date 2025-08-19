@@ -19,6 +19,10 @@ public:
     void SetCommucationOpTable(std::unique_ptr<CommucationOpTable> commucationOpTablePtr);
     void SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr);
 
+protected:
+    void AddHardWareMstxFlowPointExecuteSQL(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec,
+        const std::vector<uint64_t> &connectionIds, std::shared_ptr<VirtualTraceDatabase> database);
+
 private:
     const std::string hcclPid = "HCCL";
     const std::string hardWarePid = "Ascend Hardware";

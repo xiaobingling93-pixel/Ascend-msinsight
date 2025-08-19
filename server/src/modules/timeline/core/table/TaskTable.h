@@ -19,6 +19,7 @@ struct TaskPO {
     uint64_t streamId = 0;
     uint64_t taskId = 0;
     uint64_t modelId = 0;
+    uint64_t domainId = 0;
 };
 class TaskTable : public Table<TaskPO> {
 public:

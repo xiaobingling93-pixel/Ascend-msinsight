@@ -299,8 +299,8 @@ private:
 
     static std::string GetOrderByCondition(const EventsViewParams &params);
     static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId);
-    static std::string GetQueryThreadSameOperatorsDetailsHeadSql(const std::string &tidListStr,
-        const std::string &pidListStr, bool uniqueDevice, int overlapType, PROCESS_TYPE type);
+    static std::string GetQueryThreadSameOperatorsDetailsHeadSql(const QUERY_THREAD_SAME_OPERATORS_PARAMS &params,
+        bool uniqueDevice, int overlapType, PROCESS_TYPE type);
 
     static std::string GetSingleSearchNameWithLockRangeSql(const std::string &path, const TrackQuery &singleQuery);
 
