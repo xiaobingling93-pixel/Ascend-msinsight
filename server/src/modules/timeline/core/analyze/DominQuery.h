@@ -4,6 +4,7 @@
 #ifndef PROFILER_SERVER_SLICEQUERY_H
 #define PROFILER_SERVER_SLICEQUERY_H
 #include <string>
+#include <limits>
 #include "DomainObject.h"
 
 namespace Dic::Module::Timeline {
