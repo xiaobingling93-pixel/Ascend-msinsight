@@ -14,13 +14,16 @@ struct SqliteDbTableColumn {
     bool visible{true};
     bool sortable{false};
     bool searchable{false};
+    bool rangeFilterable{false};
 
-    SqliteDbTableColumn(std::string_view name, std::string_view key, bool visible, bool sortable, bool searchable)
+    SqliteDbTableColumn(std::string_view name, std::string_view key, bool visible, bool sortable,
+                        bool searchable, bool rangeFilterable)
         : name(name),
           key(key),
           visible(visible),
           sortable(sortable),
-          searchable(searchable) {}
+          searchable(searchable),
+          rangeFilterable(rangeFilterable) {}
 
     SqliteDbTableColumn(std::string_view name, std::string_view key)
         : name(name),
@@ -53,19 +56,19 @@ namespace MemoryEventTableColumn {
     constexpr std::string_view CALL_STACK_PYTHON = "`Call Stack(Python)`";
     constexpr std::string_view CALL_STACK_C = "`Call Stack(C)`";
     inline const std::vector<SqliteDbTableColumn> FIELD_FULL_COLUMNS = {
-        {ID, "id", true, true, false}, // ID, 事件ID
-        {EVENT, "event", true, false, true}, // Event, 事件类型
-        {EVENT_TYPE, "eventType", true, true, true}, // Event Type, 事件子类型
-        {NAME, "name", true, true, true}, // Name, 名称
-        {TIMESTAMP, "timestamp", true, true, false}, // Timestamp(ns), 发生时间
-        {PROCESS_ID, "processId", true, true, true}, // Process ID, 进程ID
-        {THREAD_ID, "threadId", true, true, true}, // Thread ID, 线程ID
+        {ID, "id", true, true, false, false}, // ID, 事件ID
+        {EVENT, "event", true, false, true, false}, // Event, 事件类型
+        {EVENT_TYPE, "eventType", true, true, true, false}, // Event Type, 事件子类型
+        {NAME, "name", true, true, true, false}, // Name, 名称
+        {TIMESTAMP, "timestamp", true, true, false, true}, // Timestamp(ns), 发生时间
+        {PROCESS_ID, "processId", true, true, true, false}, // Process ID, 进程ID
+        {THREAD_ID, "threadId", true, true, true, false}, // Thread ID, 线程ID
         {DEVICE_ID, "deviceId"},
-        {PTR, "ptr", true, true, true}, // Ptr, 内存地址
-        {ATTR, "attr", true, false, true}, // Attr, 特有属性
+        {PTR, "ptr", true, true, true, false}, // Ptr, 内存地址
+        {ATTR, "attr", true, false, true, false}, // Attr, 特有属性
         // 可选列
-        {CALL_STACK_PYTHON, "callStackPython", true, false, true}, // Call Stack(Python), Python调用栈
-        {CALL_STACK_C, "callStackC", true, false, true} // Call Stack(C), C调用栈
+        {CALL_STACK_PYTHON, "callStackPython", true, false, true, false}, // Call Stack(Python), Python调用栈
+        {CALL_STACK_C, "callStackC", true, false, true, false} // Call Stack(C), C调用栈
     };
 }
 namespace MemoryAllocationTableColumn {
@@ -95,18 +98,18 @@ namespace MemoryBlockTableColumn {
     constexpr std::string_view FULL_COLUMNS_WITHOUT_ID[] = {DEVICE_ID, ADDR, SIZE, START_TIMESTAMP,
                                                             END_TIMESTAMP, EVENT_TYPE, OWNER,
                                                             ATTR, PROCESS_ID, THREAD_ID};
-    inline const std::vector<SqliteDbTableColumn>  FIELD_FULL_COLUMNS = {
-        {ID, "id", true, true, false}, // ID, 内存块ID
+    inline const std::vector<SqliteDbTableColumn> FIELD_FULL_COLUMNS = {
+        {ID, "id", true, true, false, false}, // ID, 内存块ID
         {DEVICE_ID, "deviceId"},
-        {ADDR, "addr", true, true, true}, // Addr, 内存地址
-        {SIZE, "size", true, true, false}, // Size, 内存块大小
-        {START_TIMESTAMP, "startTimestamp", true, true, false}, // Malloc Timestamp(ns), 申请时间
-        {END_TIMESTAMP, "endTimestamp", true, true, false}, // Free Timestamp(ns), 释放时间
-        {EVENT_TYPE, "eventType", false, true, true}, // 事件子类型
-        {OWNER, "owner", true, true, true}, // 内存块持有者(标签)
-        {PROCESS_ID, "processId", true, true, true}, // Process Id, 进程ID
-        {THREAD_ID, "threadId", true, true, true}, // Thread Id, 线程ID
-        {ATTR, "attr", true, false, true} // Attr, 特有属性
+        {ADDR, "addr", true, true, true, false}, // Addr, 内存地址
+        {SIZE, "size", true, true, false, true}, // Size, 内存块大小
+        {START_TIMESTAMP, "startTimestamp", true, true, false, true}, // Malloc Timestamp(ns), 申请时间
+        {END_TIMESTAMP, "endTimestamp", true, true, false, true}, // Free Timestamp(ns), 释放时间
+        {EVENT_TYPE, "eventType", false, true, true, false}, // 事件子类型
+        {OWNER, "owner", true, true, true, false}, // 内存块持有者(标签)
+        {PROCESS_ID, "processId", true, true, true, false}, // Process Id, 进程ID
+        {THREAD_ID, "threadId", true, true, true, false}, // Thread Id, 线程ID
+        {ATTR, "attr", true, false, true, false} // Attr, 特有属性
     };
 }
 namespace MemoryPythonTraceTableColumn {

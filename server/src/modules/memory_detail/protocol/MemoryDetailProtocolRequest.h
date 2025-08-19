@@ -17,7 +17,8 @@ namespace EVENT_TABLE = Dic::Module::MemoryDetail::MemoryEventTableColumn;
 namespace TRACE_TABLE = Dic::Module::MemoryDetail::MemoryPythonTraceTableColumn;
 
 const uint64_t MAX_LEAKS_MEMORY_BLOCK_SIZE = 1 * 1024 * 1024 * 1024;
-
+const int64_t COMMON_RANGE_VALUE_MAX = 1000000000000;
+const int64_t COMMON_RANGE_VALUE_MIN = 0;
 class PaginationParam {
 public:
     int64_t currentPage{};
@@ -57,12 +58,12 @@ public:
         if (!json.HasMember("filters")) {
             return true;
         }
-        const json_t& filters_json = json["filters"];
-        if (!filters_json.IsObject()) {
+        const json_t& filtersJson = json["filters"];
+        if (!filtersJson.IsObject()) {
             errorMsg = "Failed to set filters params from param json object: filter json is null or type invalid";
             return false;
         }
-        for (auto member = filters_json.MemberBegin(); member != filters_json.MemberEnd(); member++) {
+        for (auto member = filtersJson.MemberBegin(); member != filtersJson.MemberEnd(); member++) {
             auto &key  = member->name;
             auto &value = member->value;
             if (!key.IsString() || !value.IsString()) {
@@ -76,7 +77,11 @@ public:
                 errorMsg = StringUtil::FormatString("Invalid filter, detail: Non-exist column '{}'", strKey);
                 return false;
             }
-            filters.emplace(std::string(columnIt->name), strValue);
+            if (!columnIt->searchable) {
+                errorMsg = StringUtil::FormatString("Invalid filter, detail: column '{}' is not searchable", strKey);
+                return false;
+            }
+            filters.emplace(StringUtil::FormatString("_{}", columnIt->key), strValue);
         }
         return true;
     }
@@ -112,13 +117,71 @@ public:
             errorMsg = "Failed to set orderBy param from param json object: Non-exist column " + orderByStr;
             return false;
         }
-        orderBy = std::string(columnIt->name);
+        if (!columnIt->sortable) {
+            errorMsg = StringUtil::FormatString("Invalid order, detail: column '{}' is not sortable",
+                                                columnIt->name);
+            return false;
+        }
+        orderBy = StringUtil::FormatString("_{}", columnIt->key);
         JsonUtil::SetByJsonKeyValue(desc, json, "desc");
         return true;
     }
 };
 
-struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam {
+class RangeFiltersParam {
+public:
+    std::unordered_map<std::string, std::pair<double, double>> rangeFilters;
+
+    bool SetRangeFiltersFromJson(const json_t &json,
+                                 const std::vector<SqliteDbTableColumn> &columns,
+                                 std::string &errorMsg)
+    {
+        if (!json.IsObject()) {
+            errorMsg = "Failed to set range filters params from param json object: json is null or type invalid";
+            return false;
+        }
+        // 没有rangeFilters字段或rangeFilters为空代表不做范围过滤，合法
+        if (!json.HasMember("rangeFilters") || json["rangeFilters"].MemberCount() == 0) {
+            return true;
+        }
+        const json_t& rangeFiltersJson = json["rangeFilters"];
+        if (!rangeFiltersJson.IsObject()) {
+            errorMsg = "Failed to set range filters params from param json object: filter json is null or type invalid";
+            return false;
+        }
+        for (auto member = rangeFiltersJson.MemberBegin(); member != rangeFiltersJson.MemberEnd(); member++) {
+            auto &key  = member->name;
+            auto &value = member->value;
+            if (!key.IsString() || !value.IsArray()) {
+                errorMsg = "Failed to set range filters params from param json object: format error.";
+                return false;
+            }
+            std::string strKey = key.GetString();
+            auto rangeJson = value.GetArray();
+            if (rangeJson.Size() != 2 || !rangeJson[0].IsNumber() || !rangeJson[1].IsNumber()) {
+                errorMsg = StringUtil::FormatString("Invalid range array size or range array type.");
+                return false;
+            }
+            std::pair<double, double> rangePair;
+            rangePair.first = rangeJson[0].GetDouble();
+            rangePair.second = rangeJson[1].GetDouble();
+            auto const columnIt = FindColumnByKey(strKey, columns);
+            if (columnIt == columns.end()) {
+                errorMsg = StringUtil::FormatString("Invalid filter, detail: Non-exist column '{}'", strKey);
+                return false;
+            }
+            if (!columnIt->rangeFilterable) {
+                errorMsg = StringUtil::FormatString("Invalid range filter, "
+                                                    "detail: column '{}' is not range filterable", strKey);
+                return false;
+            }
+            rangeFilters.emplace(StringUtil::FormatString("_{}", columnIt->key), rangePair);
+        }
+        return true;
+    }
+};
+
+struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, RangeFiltersParam {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
     uint64_t minSize;
@@ -249,7 +312,7 @@ struct LeaksMemoryThreadPythonTraceParams {
     }
 };
 
-struct LeaksMemoryEventParams : public PaginationParam, FiltersParam, OrderByParam {
+struct LeaksMemoryEventParams : public PaginationParam, FiltersParam, OrderByParam, RangeFiltersParam {
     std::string deviceId;
     uint64_t startTimestamp{};
     uint64_t endTimestamp{};
@@ -271,6 +334,19 @@ struct LeaksMemoryEventParams : public PaginationParam, FiltersParam, OrderByPar
             errorMsg = StringUtil::FormatString("Invalid timestamp, detail: exceeds the range of [{},{}]",
                                                 "0", std::to_string(INT64_MAX));
             return false;
+        }
+        for (auto [colName, rangePair] : rangeFilters) {
+            if (rangePair.first < COMMON_RANGE_VALUE_MIN || rangePair.second < COMMON_RANGE_VALUE_MIN) {
+                errorMsg = StringUtil::FormatString("Invalid range value, detail: less than ",
+                                                    std::to_string(COMMON_RANGE_VALUE_MIN));
+                return false;
+            }
+
+            if (rangePair.first > COMMON_RANGE_VALUE_MAX || rangePair.second > COMMON_RANGE_VALUE_MAX) {
+                errorMsg = StringUtil::FormatString("Invalid range value, detail: greater than ",
+                                                    std::to_string(COMMON_RANGE_VALUE_MAX));
+                return false;
+            }
         }
         return PaginationParam::Check(errorMsg);
     }
@@ -306,9 +382,15 @@ struct LeaksMemoryBlockRequest : public Request {
         if (reqPtr->isTable) {
             reqPtr->params.SetPaginationParamFromJson(param_json);
             if (!reqPtr->params.SetFiltersFromJson(param_json, BLOCK_TABLE::FIELD_FULL_COLUMNS, error)) {
+                Server::ServerLog::Error("Failed set filters from json param: %", error);
                 return nullptr;
             }
             if (!reqPtr->params.SetOrderFromJson(param_json, BLOCK_TABLE::FIELD_FULL_COLUMNS, error)) {
+                Server::ServerLog::Error("Failed set order from json param: %", error);
+                return nullptr;
+            }
+            if (!reqPtr->params.SetRangeFiltersFromJson(param_json, BLOCK_TABLE::FIELD_FULL_COLUMNS, error)) {
+                Server::ServerLog::Error("Failed set range filters from json param: %", error);
                 return nullptr;
             }
         } else {
@@ -425,9 +507,15 @@ struct LeaksMemoryEventRequest : public Request {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
         reqPtr->params.SetPaginationParamFromJson(param_json);
         if (!reqPtr->params.SetFiltersFromJson(param_json, EVENT_TABLE::FIELD_FULL_COLUMNS, error)) {
+            Server::ServerLog::Error("Failed set filters from json param: %", error);
             return nullptr;
         }
         if (!reqPtr->params.SetOrderFromJson(param_json, EVENT_TABLE::FIELD_FULL_COLUMNS, error)) {
+            Server::ServerLog::Error("Failed set order from json param: %", error);
+            return nullptr;
+        }
+        if (!reqPtr->params.SetRangeFiltersFromJson(param_json, EVENT_TABLE::FIELD_FULL_COLUMNS, error)) {
+            Server::ServerLog::Error("Failed set range filters from json param: %", error);
             return nullptr;
         }
         return reqPtr;

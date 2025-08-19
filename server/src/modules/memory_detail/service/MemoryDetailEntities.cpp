@@ -157,6 +157,7 @@ std::string MemoryBlockAttrs::ToJsonString()
     }
     return JsonUtil::JsonDump(blockAttrJson);
 }
+
 std::optional<MemoryBlockAttrs> MemoryBlockAttrs::FromJson(std::string jsonString)
 {
     MemoryBlockAttrs attrs;

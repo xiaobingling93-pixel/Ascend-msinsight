@@ -87,6 +87,7 @@ static document_t ToTableHeaderJson(const SqliteDbTableColumn &tableHeader,
     JsonUtil::AddMember(headerJson, "key", std::string(tableHeader.key), allocator);
     JsonUtil::AddMember(headerJson, "sortable", tableHeader.sortable, allocator);
     JsonUtil::AddMember(headerJson, "searchable", tableHeader.searchable, allocator);
+    JsonUtil::AddMember(headerJson, "rangeFilterable", tableHeader.rangeFilterable, allocator);
     return headerJson;
 }
 

@@ -84,9 +84,9 @@ public:
 
 private:
     int64_t QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events,
-                                    uint64_t minTimestamp, const bool withExtraCountCol);
+                                    const bool withExtraCountCol);
     int64_t QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<MemoryBlock>& blocks,
-                                    uint64_t minTimestamp, const bool withExtraCountCol);
+                                    const bool withExtraCountCol);
     bool QueryMemoryAllocationsByStep(sqlite3_stmt* stmt, std::vector<MemoryAllocation>& allocations);
     bool QueryMemoryPythonTracesByStep(sqlite3_stmt* stmt, LeaksMemoryPythonTrace& trace);
     std::string BuildQueryEventsConditionSqlByParams(const LeaksMemoryEventParams &queryParams,
@@ -104,7 +104,9 @@ private:
 
     static std::string BuildQueryFiltersConditionSqlByParams(const FiltersParam &filtersParam);
     static std::string BuildQueryOrderSqlByParams(const OrderByParam &orderByParam);
+    static std::string BuildQueryRangeFiltersConditionSqlByParams(const RangeFiltersParam &rangeFiltersParam);
     static void CommonBindFiltersParams(const FiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
+    static void CommonBindRangeFiltersParams(const RangeFiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
     static void CommonBindPaginationParams(const PaginationParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
     bool QueryAndSetGlobalExtremumTimestamp();
     bool CheckGlobalExtremumTimestampValid() const;
@@ -112,6 +114,8 @@ private:
     uint64_t GetProcessIdByPythonTraceTableName(const std::string &tableName);
     std::string GetCreateMemoryAllocationTableSql();
     std::string GetCreateMemoryBlockTableSql();
+    std::string GetSelectEventsFullColumns(const bool relativeTime);
+    std::string GetSelectBlocksFullColumns(const bool relativeTime);
     std::vector<std::string> GetAlterPythonTraceTablesAddDepthColumnSql();
     bool SetCallStackExistsFlagByCheckColumn();
 
