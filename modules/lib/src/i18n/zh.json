@@ -157,7 +157,9 @@
     "Generate": "生成",
     "Open in Find Window": "在发现窗口打开",
     "Search": "搜索",
-    "Reset": "重置"
+    "Reset": "重置",
+    "Min": "最小值",
+    "Max": "最大值"
   },
   "filterColumnName": {
     "Name": "名称",

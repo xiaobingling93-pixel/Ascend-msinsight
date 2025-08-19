@@ -156,7 +156,9 @@
     "Generate": "Generate",
     "Open in Find Window": "Open in Find Window",
     "Search": "Search",
-    "Reset": "Reset"
+    "Reset": "Reset",
+    "Min": "Min",
+    "Max": "Max"
   },
   "filterColumnName": {
     "Name": "Name",

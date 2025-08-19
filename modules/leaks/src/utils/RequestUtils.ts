@@ -62,6 +62,7 @@ export interface BlockParam {
     currentPage?: number;
     pageSize?: number;
     filters?: { [key: string]: string };
+    rangeFilters?: { [key: string]: number[] };
 }
 export interface EventParam {
     deviceId: string;
@@ -73,6 +74,7 @@ export interface EventParam {
     currentPage?: number;
     pageSize?: number;
     filters?: { [key: string]: string };
+    rangeFilters?: { [key: string]: number[] };
 }
 export interface DetailData {
     size: number;

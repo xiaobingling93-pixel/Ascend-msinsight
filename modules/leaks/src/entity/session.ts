@@ -51,7 +51,9 @@ export class Session {
     blocksOrderBy: string = '';
     eventsOrderBy: string = '';
     blocksFilters: { [key: string]: string } = {};
+    blocksRangeFilters: { [key: string]: number[] } = {};
     eventsFilters: { [key: string]: string } = {};
+    eventsRangeFilters: { [key: string]: number[] } = {};
     //  底部表格分页相关变量
     blocksCurrentPage: number = 1;
     eventsCurrentPage: number = 1;

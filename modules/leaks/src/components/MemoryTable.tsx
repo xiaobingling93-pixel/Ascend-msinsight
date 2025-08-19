@@ -27,6 +27,7 @@ const MemoryTable = observer(({ session }: { session: Session }): React.ReactEle
                 session.blocksOrder = '';
                 session.blocksOrderBy = '';
                 session.blocksFilters = {};
+                session.blocksRangeFilters = {};
             } else {
                 session.eventsTableData = [];
                 session.eventsTableHeader = [];
@@ -36,6 +37,7 @@ const MemoryTable = observer(({ session }: { session: Session }): React.ReactEle
                 session.eventsOrder = '';
                 session.eventsOrderBy = '';
                 session.eventsFilters = {};
+                session.eventsRangeFilters = {};
             }
         });
     };

@@ -65,6 +65,8 @@ const restore = (session: any): void => {
     session.blocksOrder = '';
     session.blocksOrderBy = '';
     session.blocksFilters = {};
+    session.blocksRangeFilters = {};
+    session.eventsRangeFilters = {};
     session.eventsTableData = [];
     session.eventsTableHeader = [];
     session.eventsCurrentPage = 1;

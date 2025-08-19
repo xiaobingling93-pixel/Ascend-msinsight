@@ -35,17 +35,36 @@ const getTableColumns = (t: TFunction, session: Session): any => {
         };
         if (col.searchable) {
             return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', '')) };
+        } else if (col.rangeFilterable) {
+            return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', ''), true) };
         } else {
             return item;
         }
     });
 };
-
+const handleFilters = (filters: any, session: Session): void => {
+    const newFilters: { [key: string]: string } = {};
+    const newRangeFilters: { [key: string]: number[] } = {};
+    const oldFilters = Object.keys(filters);
+    oldFilters.forEach((key: string) => {
+        const isRange = filters[key]?.length === 2;
+        if (isRange) {
+            newRangeFilters[key] = filters[key].map(Number);
+        } else {
+            if (filters[key]?.[0] !== undefined) { newFilters[key] = filters[key]?.[0]; }
+        }
+    });
+    runInAction(() => {
+        session.eventsFilters = newFilters;
+        session.eventsRangeFilters = newRangeFilters;
+    });
+};
 const EventsTable = observer(({ session }: { session: Session }): React.ReactElement => {
     const { t } = useTranslation('leaks');
     const {
         deviceId, eventsTableData, eventsTableHeader, eventsCurrentPage, tableKey,
-        eventsPageSize, eventsTotal, eventsOrder, eventsOrderBy, eventsFilters, maxTime, minTime,
+        eventsPageSize, eventsTotal, eventsOrder, eventsOrderBy, eventsFilters,
+        eventsRangeFilters, maxTime, minTime,
     } = session;
     const [loading, setLoading] = useState(false);
     const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []);
@@ -62,16 +81,7 @@ const EventsTable = observer(({ session }: { session: Session }): React.ReactEle
             });
         }
         if (extra.action === 'filter') {
-            const newFilters: { [key: string]: string } = {};
-            const oldFilters = Object.keys(filters);
-            oldFilters.forEach((key: string) => {
-                if (filters[key]?.[0] !== undefined) {
-                    newFilters[key] = filters[key]?.[0];
-                }
-            });
-            runInAction(() => {
-                session.eventsFilters = newFilters;
-            });
+            handleFilters(filters, session);
         }
     };
     const onChange = (newCurrent: number, newPageSize: number): void => {
@@ -85,12 +95,12 @@ const EventsTable = observer(({ session }: { session: Session }): React.ReactEle
         setLoading(true);
         getEventTableData(session);
         setLoading(false);
-    }, [deviceId, maxTime, minTime, eventsCurrentPage, eventsPageSize, eventsOrder, eventsOrderBy, JSON.stringify(eventsFilters)]);
+    }, [deviceId, maxTime, minTime, eventsCurrentPage, eventsPageSize, eventsOrder, eventsOrderBy, JSON.stringify(eventsFilters), JSON.stringify(eventsRangeFilters)]);
     return (
         <>
             <ResizeTable
                 columns={columns}
-                dataSource={eventsTableData.length === 0 ? defaultDataSource : eventsTableData.map((item: any, index: number) => ({ ...item, key: `${item.name}_${index}` }))}
+                dataSource={eventsTableData.length === 0 ? defaultDataSource : eventsTableData.map((item: any, index: number) => ({ ...item, key: `${item.id}_${index}` }))}
                 onChange={onTableChange}
                 pagination={{
                     current: eventsCurrentPage,

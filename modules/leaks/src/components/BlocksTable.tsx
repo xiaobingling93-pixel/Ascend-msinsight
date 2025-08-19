@@ -35,17 +35,36 @@ const getTableColumns = (t: TFunction, session: Session): any => {
         };
         if (col.searchable) {
             return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', '')) };
+        } else if (col.rangeFilterable) {
+            return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', ''), true) };
         } else {
             return item;
         }
     });
 };
-
+const handleFilters = (filters: any, session: Session): void => {
+    const newFilters: { [key: string]: string } = {};
+    const newRangeFilters: { [key: string]: number[] } = {};
+    const oldFilters = Object.keys(filters);
+    oldFilters.forEach((key: string) => {
+        const isRange = filters[key]?.length === 2;
+        if (isRange) {
+            newRangeFilters[key] = filters[key].map(Number);
+        } else {
+            if (filters[key]?.[0] !== undefined) { newFilters[key] = filters[key]?.[0]; }
+        }
+    });
+    runInAction(() => {
+        session.blocksFilters = newFilters;
+        session.blocksRangeFilters = newRangeFilters;
+    });
+};
 const BlocksTable = observer(({ session }: { session: Session }): React.ReactElement => {
     const { t } = useTranslation('leaks');
     const {
         deviceId, eventType, blocksTableData, blocksTableHeader, tableKey,
-        blocksCurrentPage, blocksPageSize, blocksTotal, blocksOrder, blocksOrderBy, blocksFilters, maxTime, minTime,
+        blocksCurrentPage, blocksPageSize, blocksTotal, blocksOrder, blocksOrderBy,
+        blocksFilters, blocksRangeFilters, maxTime, minTime,
     } = session;
     const [loading, setLoading] = useState(false);
     const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []);
@@ -62,16 +81,7 @@ const BlocksTable = observer(({ session }: { session: Session }): React.ReactEle
             });
         }
         if (extra.action === 'filter') {
-            const newFilters: { [key: string]: string } = {};
-            const oldFilters = Object.keys(filters);
-            oldFilters.forEach((key: string) => {
-                if (filters[key]?.[0] !== undefined) {
-                    newFilters[key] = filters[key]?.[0];
-                }
-            });
-            runInAction(() => {
-                session.blocksFilters = newFilters;
-            });
+            handleFilters(filters, session);
         }
     };
     const onChange = (newCurrent: number, newPageSize: number): void => {
@@ -85,12 +95,12 @@ const BlocksTable = observer(({ session }: { session: Session }): React.ReactEle
         setLoading(true);
         getBlockTableData(session);
         setLoading(false);
-    }, [deviceId, eventType, maxTime, minTime, blocksCurrentPage, blocksPageSize, blocksOrder, blocksOrderBy, JSON.stringify(blocksFilters)]);
+    }, [deviceId, eventType, maxTime, minTime, blocksCurrentPage, blocksPageSize, blocksOrder, blocksOrderBy, JSON.stringify(blocksFilters), JSON.stringify(blocksRangeFilters)]);
     return (
         <>
             <ResizeTable
                 columns={columns}
-                dataSource={blocksTableData.length === 0 ? defaultDataSource : blocksTableData.map((item: any, index: number) => ({ ...item, key: `${item.name}_${index}` }))}
+                dataSource={blocksTableData.length === 0 ? defaultDataSource : blocksTableData.map((item: any, index: number) => ({ ...item, key: `${item.id}_${index}` }))}
                 onChange={onTableChange}
                 pagination={{
                     current: blocksCurrentPage,

@@ -89,6 +89,9 @@ export const getBlockTableData = async (session: any): Promise<void> => {
         if (Object.keys(session.blocksFilters).length > 0) {
             blockParam.filters = session.blocksFilters;
         }
+        if (Object.keys(session.blocksRangeFilters).length > 0) {
+            blockParam.rangeFilters = session.blocksRangeFilters;
+        }
         const blockTableData = await getBlockDetails(blockParam);
         runInAction(() => {
             session.blocksTableData = blockTableData.blocks;
@@ -115,6 +118,9 @@ export const getEventTableData = async (session: any): Promise<void> => {
         }
         if (Object.keys(session.eventsFilters).length > 0) {
             eventParam.filters = session.eventsFilters;
+        }
+        if (Object.keys(session.eventsRangeFilters).length > 0) {
+            eventParam.rangeFilters = session.eventsRangeFilters;
         }
         const eventTableData = await getEventDetails(eventParam);
         runInAction(() => {
