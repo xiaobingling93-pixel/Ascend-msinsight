@@ -24,6 +24,7 @@
     "Restore default state": "恢复默认状态",
     "sessionTitle": {
       "Communication": "通信算子缩略图",
+      "Potential Slow Rank List": "可能的慢卡列表",
       "MatrixModel": "通信矩阵",
       "VisualizedCommunicationTime": "通信时长",
       "DataAnalysisCommunicationTime": "通信时长数据分析",
@@ -155,6 +156,37 @@
       "middle：带宽处于中位数的通信算子",
       "bottom：带宽最低的通信算子，bottomN 即为前 N 低",
       "在分类不为 total 时，将鼠标悬停在热力图上可查看具体通信算子名称"
-    ]
+    ],
+    "slowRankList": {
+      "TitleTooltip": [
+        "在当前通信域内，存在较明显快慢卡问题。请关注与快卡通信时长差异较大的卡与通信算子，其差值可能存在一定优化空间。",
+        "若想进一步定位造成以上快慢卡差异原因，可在上方的通信算子缩略图中右键相应通信算子，点击 “跳转至时间线视图”，通过对比快慢卡，确认差异根源。"
+      ],
+      "NoSlowRankDesc": "当前通信域各卡通信时间较为均衡，未发现明显慢卡。",
+      "Index": "排序",
+      "Rank ID": "卡号",
+      "Action": "操作",
+      "Operator Name": "算子名称",
+      "Elapse Time(ms)": "耗时(ms)",
+      "Elapse Time Difference(ms)": "耗时差值(ms)",
+      "Fastest Rank Elapse Time(ms)": "最快卡耗时(ms)",
+      "Elapse Time on Current Rank(ms)": "在当前卡中的耗时(ms)",
+      "Elapse Time on Fastest Rank(ms)": "在最快卡中的耗时(ms)",
+      "Find in Communication": "在图中高亮",
+      "RankTable": {
+        "tooltip":{
+          "ElapseTimeDifference": "当前卡与最快卡通信算子总耗时的差值（= 最快卡耗时 - 当前卡耗时），可一定程度反映可减少的通信时间",
+          "ElapseTime": "卡内的通信算子总耗时",
+          "FastestRankElapseTime": "最快卡内的通信算子总耗时"
+        }
+      },
+      "ExpandedTable": {
+        "tooltip":{
+          "ElapseTimeDifference": "该算子在当前卡与最快卡上的耗时差值（= 该算子在最快卡耗时 - 该算子在当前卡耗时），可一定程度反映可减少的通信时间（假设通信均衡）",
+          "ElapseTimeOnCurrentRank": "该算子在当前卡内的耗时",
+          "ElapseTimeOnFastestRank": "该算子在最快卡内的耗时"
+        }
+      }
+    }
   }
 }

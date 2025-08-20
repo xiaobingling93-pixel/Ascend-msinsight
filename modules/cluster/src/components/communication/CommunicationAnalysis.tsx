@@ -12,13 +12,16 @@ import CommunicationTimeTable from './CommunicationTimeTable';
 import CommunicationTimeChart, { type DataItem } from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import { notNullObj } from '../Common';
-import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
+import { getSlowRankList, queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
 import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
 import AdviceLabel, { type CommunicationAdvice } from './CommunicationDuration/AdviceLabel';
 import Operators from './CommunicationDuration/Opertators';
+import DiffTimeTable from './DiffTimeTable';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import { GetSlowRankListResult } from '../../utils/interface';
 
 interface showDataType {
     chartData: [];
@@ -101,6 +104,25 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
         setShowData, conditions, rankId, dbPath, returnHome, loading,
     } = props;
     const { t } = useTranslation('communication');
+    const [loadingSlowRank, setLoadingSlowRank] = useState(false);
+    const [slowRankData, setSlowRankData] = useState<GetSlowRankListResult | null>(null);
+    const slowRankTooltipContent = t('slowRankList.TitleTooltip', { returnObjects: true }) as string[];
+    const slowRankTooltipList = slowRankTooltipContent.map((item, index) => <div style={{ padding: '6px 0' }} key={index}>{item}</div>);
+
+    useEffect(() => {
+        const fetchData = async (): Promise<void> => {
+            setLoadingSlowRank(true);
+            const res = await getSlowRankList(conditions).finally(() => {
+                setLoadingSlowRank(false);
+            });
+            setSlowRankData(res);
+        };
+
+        if (conditions.type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS) {
+            fetchData();
+        }
+    }, [conditions]);
+
     return (
         <Layout>
             {/* 筛选条件 */}
@@ -110,7 +132,26 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
             {/* 通信用时分析 */}
             <div className={'communication'} style={{ display: conditions.type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS ? 'block' : 'none' }}>
                 <div>
-                    <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} loading={loading} session={session}/>
+                    <CollapsiblePanel title={t('sessionTitle.Communication')}>
+                        <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} loading={loading} session={session}/>
+
+                        {
+                            slowRankData?.hasAdvice && !session.isCompare
+                                ? <CollapsiblePanel
+                                    title={t('sessionTitle.Potential Slow Rank List')}
+                                    secondary
+                                    collapsible
+                                    tooltip={slowRankTooltipList}
+                                >
+                                    <DiffTimeTable
+                                        data={slowRankData.data}
+                                        loading={loadingSlowRank}
+                                    ></DiffTimeTable>
+                                </CollapsiblePanel>
+                                : null
+                        }
+                    </CollapsiblePanel>
+
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData} session={session}
                         conditions={conditions} updateSort={(data): void => {

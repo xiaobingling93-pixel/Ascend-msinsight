@@ -190,10 +190,21 @@ body {
 .justify-around{justify-content: space-around;}
 .justify-evenly{justify-content: space-evenly;}
 
+.ml-6{margin-left: 6px}
+.mr-6{margin-right: 6px}
+.mt-6{margin-top: 6px}
+.mb-6{margin-bottom: 6px}
+
 .ml-24{margin-left: 24px}
 .mr-24{margin-right: 24px}
+.mt-24{margin-top: 24px}
+.mb-24{margin-bottom: 24px}
+
+.ml-20{margin-left: 20px}
+.mr-20{margin-right: 20px}
 .mt-20{margin-top: 20px}
 .mb-20{margin-bottom: 20px}
+
 .mb-30{margin-bottom: 30px}
 .mi-page {padding: 16px;height: 100vh;min-width: 900px;background: var(--mi-bg-color-dark);}
 .mi-page .mi-page-content{position:relative;border-radius: var(--mi-border-radius-base);height: calc(100vh - 32px);background: var(--mi-bg-color);padding: 16px 0;overflow: auto;}

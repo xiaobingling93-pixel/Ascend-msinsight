@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
+import { AnalysisType } from '../components/communication/Filter';
+
 export interface ErrorInfo {
     code: number;
     message?: string;
@@ -193,4 +195,36 @@ export interface WrapBandwidthDataParams {
 
 export interface PacketAndBandwidthChartsParams extends WrapBandwidthDataParams {
     locale: string;
+}
+
+export interface GetSlowRankListParams {
+    iterationId: string;
+    stage: string;
+    type: AnalysisType;
+    operatorName: string;
+    pgName?: string;
+    baselineIterationId: string;
+    isCompare: boolean;
+}
+
+export interface SlowRankOpListItem {
+    name: string;
+    startTime: number;
+    elapseTime: number;
+    diffTime: number;
+    maxTime: number;
+    maxStartTime: number;
+}
+
+export interface SlowRankListItem {
+    rankId: number;
+    maxTotalElapseTime: number;
+    totalElapseTime: number;
+    totalDiffTime: number;
+    opList: SlowRankOpListItem[];
+}
+
+export interface GetSlowRankListResult {
+    hasAdvice: boolean;
+    data: SlowRankListItem[];
 }

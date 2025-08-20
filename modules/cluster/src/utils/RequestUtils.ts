@@ -14,6 +14,8 @@ import {
     PacketAndBandwidthChartsParams,
     GetSlowRankAdvise,
     GetSlowRankAdviseRes,
+    GetSlowRankListResult,
+    GetSlowRankListParams,
 } from './interface';
 import { createCancelableApi } from 'ascend-utils';
 import { store } from '../store';
@@ -293,3 +295,8 @@ export async function queryTimelineUnitKernelDetail(params: {
 }): Promise<any> {
     return await window.requestData('unit/kernelDetail', withClusterPath(params), 'timeline');
 }
+
+// 通信时序图慢卡分析列表
+export const getSlowRankList = async(params: GetSlowRankListParams): Promise<GetSlowRankListResult> => {
+    return await window.requestData('communication/duration/slow-rank/list', withClusterPath(params));
+};

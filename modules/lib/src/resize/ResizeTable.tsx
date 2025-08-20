@@ -345,9 +345,9 @@ const getFullExpandable = (expandable?: any): any => {
     if (expandable === null || expandable === undefined || typeof expandable !== 'object') {
         return null;
     }
-    const expandIcon = <T extends { children?: unknown[] }>({ expanded, onExpand, record }:
-    { expanded: boolean; onExpand: (record: T, event: React.MouseEvent<any>) => void; record: T }): React.ReactNode => {
-        if (record.children !== null && record.children !== undefined && record.children.length > 0) {
+    const expandIcon = <T extends { children?: unknown[] }>({ expandable: _expandable, expanded, onExpand, record }:
+    { expandable: boolean; expanded: boolean; onExpand: (record: T, event: React.MouseEvent<any>) => void; record: T }): React.ReactNode => {
+        if (_expandable) {
             return <CaretRightIcon onClick={(e): void => {
                 e.stopPropagation();
                 onExpand(record, e);

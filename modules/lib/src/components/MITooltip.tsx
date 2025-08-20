@@ -33,7 +33,9 @@ export const MITooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle,
 };
 
 export const MITooltipHelp: React.FC<TooltipProps> = ({ ...props }: TooltipProps) => {
+    const theme = useTheme();
+
     return <MITooltip {...props}>
-        <QuestionCircleOutlined />
+        <QuestionCircleOutlined style={{ color: theme.icon }} />
     </MITooltip>;
 };

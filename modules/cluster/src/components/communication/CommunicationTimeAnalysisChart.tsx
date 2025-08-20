@@ -12,13 +12,22 @@ import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'ascend-components';
 import { type MenuProps, message, Spin } from 'antd';
 import connector from '../../connection';
-import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
 import { type Theme } from '@emotion/react';
 import { disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions, safeStr } from 'ascend-utils';
 import { ClickOperatorItem, CompareData, type ErrorInfo, FormatterParams } from '../../utils/interface';
 import { queryTimelineUnitKernelDetail } from '../../utils/RequestUtils';
+import { useEventBus } from '../../utils/eventBus';
+
+interface OnClickSlowRankOpCallbackParams {
+    startValue: number;
+    endValue: number;
+    rankId: number;
+    name: string;
+}
+
+type RectItemValues = [number, number, number, number, number, string];
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -97,8 +106,8 @@ const getRenderData = ({ item, rankId, source, theme }: {item: OperatorTimeItem;
     const duration = nsToMs(item.duration);
     const endTime = startTime + duration;
     return {
-        name: item.operatorName,
-        value: [rankId, startTime, endTime, duration, source],
+        name: `${rankId}-${item.operatorName}`,
+        value: [rankId, startTime, endTime, duration, source, item.operatorName],
         itemStyle: {
             normal: {
                 color: theme.colorPalette[colorPalette[hashToNumber(item.operatorName, colorPalette.length)]],
@@ -110,7 +119,7 @@ const getRenderData = ({ item, rankId, source, theme }: {item: OperatorTimeItem;
 const baseSeire = {
     type: 'custom',
     itemStyle: {
-        opacity: 0.8,
+        opacity: 1,
     },
     encode: {
         x: [1, 2],
@@ -157,6 +166,13 @@ function getRenderItem(isCompare: boolean): any {
                 shape: rectShape,
                 name: 'op',
                 style: api.style(),
+                emphasis: {
+                    style: {
+                        stroke: '#999999',
+                        lineWidth: 1,
+                        opacity: 0.6,
+                    },
+                },
             }
         );
     };
@@ -172,7 +188,7 @@ function getTooltip({ isCompare }: { isCompare: boolean }): any {
                 getName = isBaseline ? getBaselineName : getCompareName;
             }
             tooltipMarkup += getTipLineStr('Rank ID', `${params.value[0]}`);
-            tooltipMarkup += getTipLineStr(getName('Operator Name'), `${params.name}`);
+            tooltipMarkup += getTipLineStr(getName('Operator Name'), `${params.value[5]}`);
             tooltipMarkup += getTipLineStr(getName('Start Time'), `${numberToStr(params.value[1])}ms`);
             tooltipMarkup += getTipLineStr(getName('Elapse Time'), `${numberToStr(params.value[3])}ms`);
             return tooltipMarkup;
@@ -207,16 +223,22 @@ const option: any = {
             labelFormatter: '',
             start: 0,
             end: 100,
+            xAxisIndex: 0,
+            bottom: 10,
+            height: 20,
+            borderColor: '#d2dbee80',
         },
         {
             type: 'slider',
             filterMode: 'weakFilter',
             showDataShadow: false,
-            left: '95%',
-            yAxisIndex: 0,
             labelFormatter: '',
             start: 0,
             end: 100,
+            yAxisIndex: 0,
+            right: 10,
+            width: 20,
+            borderColor: '#d2dbee80',
         },
         {
             type: 'inside',
@@ -225,6 +247,8 @@ const option: any = {
         },
     ],
     grid: {
+        left: 100,
+        right: 120,
         height: DEFAULT_INNER_CHART_HEIGHT,
     },
     xAxis: {
@@ -269,10 +293,10 @@ interface OpDetail {
 }
 let selectedOpDetail: OpDetail | null;
 
-function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDownVisible: (_: boolean) => void): void {
+function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDownVisible: (_: boolean) => void): echarts.ECharts | null {
     const chartDom = document.getElementById('hccl');
     if (chartDom === null) {
-        return;
+        return null;
     }
     disposeAdaptiveEchart(chartDom);
     const myChart = getAdaptiveEchart(chartDom);
@@ -280,10 +304,9 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     dataSource?.data?.forEach((item) => rankDbPathMap.set(item.rankId, item.dbPath));
     myChart.on('contextmenu', { element: 'op' }, (e: echarts.ECElementEvent): void => {
         setDropDownVisible(true);
-
-        const [rankId, timestamp, , duration] = e.value as number[];
+        const [rankId, timestamp, , duration,, operatorName] = e.value as RectItemValues;
         selectedOpDetail = {
-            name: e.name,
+            name: operatorName,
             rankId,
             dbPath: rankDbPathMap.get(rankId.toString()) ?? '',
             timestamp: msToNs(timestamp),
@@ -293,6 +316,8 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     if (dataSource !== undefined) {
         myChart.setOption(wrapData(dataSource, session.isCompare));
     }
+
+    return myChart;
 }
 
 function calculateDataHeight(dataSource: AnalysisChartData): number {
@@ -392,7 +417,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
     const menuItems = useMenuItems(session);
     const chartRef = useRef<HTMLDivElement>(null);
     const scrollContainer = document.querySelector('.mi-page-content');
-    const { t } = useTranslation('communication', { keyPrefix: 'sessionTitle' });
+    const chartInst = useRef<echarts.ECharts | null>(null);
 
     // 修复echarts的dataZoom开启鼠标滚轮缩放时，页面不滚动的问题
     const syncScroll = (e: WheelEvent): void => {
@@ -408,8 +433,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
     useEffect(() => {
         setTimeout(() => {
             setChartHeight(getChartHeight(dataSource));
-            InitCharts(dataSource, session, setDropDownVisible);
-
+            chartInst.current = InitCharts(dataSource, session, setDropDownVisible);
             chartRef.current?.addEventListener('wheel', syncScroll, true);
         });
 
@@ -418,30 +442,70 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
         };
     }, [dataSource]);
 
-    return <CollapsiblePanel title={t('Communication')}>
-        {session.durationFileCompleted
-            ? <Dropdown
-                menu={{
-                    items: menuItems,
-                    onClick: (): void => setDropDownVisible(false),
-                    onBlur: (e: React.FocusEvent<HTMLUListElement, Element>): void => {
-                        const hasItem = menuItems?.findIndex(item =>
-                            (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
-                        if (!hasItem) {
-                            setDropDownVisible(false);
-                        }
-                    },
-                }}
-                trigger={['contextMenu']}
-                open={dropDownVisible}
-                autoFocus
-            >
-                <Spin spinning={loading} delay={400}>
-                    <div ref={chartRef} id={'hccl'} style={{ width: 'calc(100vw - 80px)', height: chartHeight }}></div>
-                </Spin>
-            </Dropdown>
-            : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div>}
-    </CollapsiblePanel>;
+    useEventBus('onClickSlowRankOp', (res): void => {
+        const { startValue, endValue, name, rankId } = res as OnClickSlowRankOpCallbackParams;
+        chartInst.current?.dispatchAction({
+            type: 'dataZoom',
+            startValue,
+            endValue,
+        });
+
+        chartInst.current?.dispatchAction({
+            type: 'dataZoom',
+            dataZoomIndex: 1, // 指定纵轴
+            start: 0,
+            end: 100,
+        });
+
+        // 先取消所有高亮
+        chartInst.current?.dispatchAction({
+            type: 'downplay',
+            seriesIndex: 0,
+        });
+
+        // 再高亮具体算子
+        chartInst.current?.dispatchAction({
+            type: 'highlight',
+            seriesIndex: 0,
+            name: `${rankId}-${name}`,
+        });
+
+        setTimeout(() => {
+            chartInst.current?.dispatchAction({
+                type: 'downplay',
+                seriesIndex: 0,
+                name: `${rankId}-${name}`,
+            });
+        }, 5000);
+
+        chartRef.current?.scrollIntoView({
+            block: 'center',
+            behavior: 'smooth',
+        });
+    });
+
+    return session.durationFileCompleted
+        ? <Dropdown
+            menu={{
+                items: menuItems,
+                onClick: (): void => setDropDownVisible(false),
+                onBlur: (e: React.FocusEvent<HTMLUListElement, Element>): void => {
+                    const hasItem = menuItems?.findIndex(item =>
+                        (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
+                    if (!hasItem) {
+                        setDropDownVisible(false);
+                    }
+                },
+            }}
+            trigger={['contextMenu']}
+            open={dropDownVisible}
+            autoFocus
+        >
+            <Spin spinning={loading} delay={400}>
+                <div ref={chartRef} id={'hccl'} style={{ width: 'calc(100vw - 80px)', height: chartHeight }}></div>
+            </Spin>
+        </Dropdown>
+        : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div>;
 });
 
 export default CommunicationTimeAnalysisChart;

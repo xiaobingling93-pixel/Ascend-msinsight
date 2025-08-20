@@ -24,6 +24,7 @@
     "Packet Size(MB)": "Packet Size(MB)",
     "sessionTitle": {
       "Communication": "Communication",
+      "Potential Slow Rank List": "Slow Rank List",
       "MatrixModel": "Matrix Model",
       "VisualizedCommunicationTime": "Visualized Communication Time",
       "DataAnalysisCommunicationTime": "Data Analysis of Communication Time",
@@ -155,6 +156,37 @@
       "middle: Operator at the median bandwidth level",
       "bottom: Operator with the lowest bandwidth; bottomN shows the N lowest ones",
       "When the category is not 'total', hover over the heatmap to see the specific operator names"
-    ]
+    ],
+    "slowRankList": {
+      "TitleTooltip": [
+        "Noticeable fast-slow communication imbalance exists in the current domain. Pay attention to ranks and operators with large communication time gaps versus fast rank, as these may offer optimization opportunities.",
+        "To further investigate the causes, right-click the corresponding communication operator in the Communication chart above and select “Find in Timeline” to compare fast and slow ranks and identify the root cause."
+      ],
+      "NoSlowRankDesc": "The communication time across ranks in the current communication domain is relatively balanced, and no obvious slow rank was detected.",
+      "Index": "Index",
+      "Rank ID": "Rank ID",
+      "Action": "Action",
+      "Operator Name": "Operator Name",
+      "Elapse Time Difference(ms)": "Elapse Time Difference(ms)",
+      "Elapse Time(ms)": "Elapse Time(ms)",
+      "Fastest Rank Elapse Time(ms)": "Fastest Rank Elapse Time(ms)",
+      "Elapse Time on Current Rank(ms)": "Elapse Time on Current Rank(ms)",
+      "Elapse Time on Fastest Rank(ms)": "Elapse Time on Fastest Rank(ms)",
+      "Find in Communication": "Find in Communication",
+      "RankTable": {
+        "tooltip": {
+          "ElapseTimeDifference": "Time difference in total communication operators between the current rank and the fastest rank (= Fastest Rank Elapsed Time − Current Rank Elapsed Time). It roughly reflects the potential reducible communication time",
+          "ElapseTime": "Total communication operator elapsed time on the current rank",
+          "FastestRankElapseTime": "Total communication operator elapsed time on the fastest rank"
+        }
+      },
+      "ExpandedTable": {
+        "tooltip": {
+          "ElapseTimeDifference": "Elapsed time difference of this operator between the current rank and the fastest rank (= elapsed time on the fastest rank − elapsed time on the current rank). It roughly reflects the potential reducible communication time, assuming balanced communication",
+          "ElapseTimeOnCurrentRank": "Elapsed time of this operator on the current rank",
+          "ElapseTimeOnFastestRank": "Elapsed time of this operator on the fastest rank"
+        }
+      }
+    }
   }
 }

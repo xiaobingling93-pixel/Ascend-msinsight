@@ -5,7 +5,9 @@
 import React, { type ReactNode, type CSSProperties, useState, forwardRef, useRef, useImperativeHandle } from 'react';
 import styled from '@emotion/styled';
 import { ExpandIcon, CollapseIcon } from '../icon/Icon';
+import { MITooltipHelp } from '../components';
 
+type RenderFunction = () => ReactNode;
 interface CollapsiblePanelProps {
     title: ReactNode;
     collapsible?: boolean; // 是否可展开收起
@@ -19,6 +21,7 @@ interface CollapsiblePanelProps {
     id?: string;
     testId?: string; // 用于 playwright 用例
     destroy?: boolean;
+    tooltip?: ReactNode | RenderFunction;
 }
 
 const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
@@ -36,7 +39,7 @@ const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
   }
 `;
 export const CollapsiblePanel = forwardRef<HTMLDivElement, CollapsiblePanelProps>((props, ref): JSX.Element => {
-    const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle, defaultOpen = true, id, testId, destroy = true } = props;
+    const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle, defaultOpen = true, id, testId, destroy = true, tooltip } = props;
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -59,10 +62,16 @@ export const CollapsiblePanel = forwardRef<HTMLDivElement, CollapsiblePanelProps
     return (
         <PanelContainer ref={containerRef} secondary={secondary} style={style} id={id} data-testid={testId} className="mi-collapsible-panel">
             <div className="panel-header" onClick={togglePanel} style={headerStyle}>
-                {icon}{title}
+                <div className={'flex align-center'}>
+                    <div className={'mr-6'}>{icon}{title}</div>
+                    { tooltip && <MITooltipHelp title={tooltip}></MITooltipHelp>}
+                </div>
             </div>
-            {destroy ? <>{isOpen && <div className="panel-content" style={contentStyle}>{children}</div>}</>
-                : <div className="panel-content" style={{ ...contentStyle, display: isOpen ? contentStyle?.display : 'none' }}>{children}</div>}
+            {
+                destroy
+                    ? <>{isOpen && <div className="panel-content" style={contentStyle}>{children}</div>}</>
+                    : <div className="panel-content" style={{ ...contentStyle, display: isOpen ? contentStyle?.display : 'none' }}>{children}</div>
+            }
         </PanelContainer>
     );
 });
