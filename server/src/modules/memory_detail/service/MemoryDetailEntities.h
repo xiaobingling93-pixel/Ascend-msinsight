@@ -66,20 +66,65 @@ inline const std::string BLOCK_EVENT_ATTR_OWNER_FIELD = "owner";
 inline const std::string BLOCK_EVENT_ATTR_TOTAL_FIELD = "total";
 inline const std::string BLOCK_EVENT_ATTR_USED_FIELD = "used";
 inline const std::string BLOCK_EVENT_ATTR_GROUP_ID_FIELD = "allocation_id";
-inline const std::string BLOCK_ATTR_FIRST_ACCESS_FILED = "first_access_timestamp";
-inline const std::string BLOCK_ATTR_LAST_ACCESS_FILED = "last_access_timestamp";
-struct MemoryEventAttrs {
+inline const std::string ACCESS_EVENT_ATTR_TYPE = "type";
+inline const std::string ACCESS_EVENT_ATTR_DTYPE = "dtype";
+inline const std::string ACCESS_EVENT_ATTR_SHAPE = "shape";
+struct MemoryEventBaseAttrs {
     int64_t size{0}; // 对应内存事件涉及的内存大小, 如申请、释放大小；访问时tensor大小
-    std::string owner;
+    uint64_t groupId{0};
+
+    virtual void SetByJson(const json_t &json);
+};
+
+struct MallocFreeEventAttrs : public MemoryEventBaseAttrs {
     uint64_t total{0};
     uint64_t used{0};
-    uint64_t groupId{0};
+    std::string owner;
+
+    void SetByJson(const json_t &json) override;
 };
+
+struct AccessEventAttrs : public  MemoryEventBaseAttrs {
+    std::string type;
+    std::string dtype;
+    std::string shape;
+
+    void SetByJson(const json_t &json) override;
+};
+
+/***
+ * 从json字符串构建EventAttrs
+ * @tparam T eventAttr的派生类，包括MallocFreeEventAttr和AccessEventAttr或基类BaseAttr
+ * @param jsonString
+ * @return
+ */
+template <typename T>
+std::optional<T> BuildEventAttrsFromJson(const std::string &jsonString)
+{
+    static_assert(std::is_base_of_v<MemoryEventBaseAttrs, T>,
+                  "T must be derived from MemoryEventBaseAttrs or be MemoryEventBaseAttrs itself");
+    if (jsonString.empty()) {
+        Server::ServerLog::Warn("Invalid json string: empty string.");
+        return std::nullopt;
+    }
+    std::string parseError;
+    auto jsonDoc = JsonUtil::TryParse(jsonString, parseError);
+    if (!parseError.empty()) {
+        Server::ServerLog::Warn("Parse json string to event attrs failed: ", parseError);
+        return std::nullopt;
+    }
+    if (!jsonDoc.has_value()) {
+        Server::ServerLog::Warn("Parse json string to event attrs failed: empty json object");
+        return std::nullopt;
+    }
+    auto eventAttrs = std::make_optional<T>();
+    auto &json = jsonDoc.value();
+    eventAttrs->SetByJson(json);
+    return eventAttrs;
+}
+
 struct MemoryBlockAttrs {
-    int64_t size{0}; // 内存块大小
     uint64_t groupId{0}; // 组id
-    uint64_t firstAccessTimestamp{0};
-    uint64_t lastAccessTimestamp{0};
     std::map<std::string, std::string> extendAttrs;
 
     /***
@@ -102,6 +147,7 @@ struct EventGroup {
     std::optional<MemoryEvent> mallocEvent{std::nullopt};
     std::optional<MemoryEvent> freeEvent{std::nullopt};
     std::vector<MemoryEvent> accessEvents;
+    int64_t groupId;
 
     EventGroup() = default;
     /***

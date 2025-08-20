@@ -74,36 +74,27 @@ TEST_F(LeaksMemoryServiceTest, ParseEventsToAllocationsAndBlocks)
 TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithEmptyAttr)
 {
     MemoryEvent event;
-    event.attr = "";
-    MemoryEventAttrs eventAttr;
-    eventAttr.size = 0;
-    LeaksMemoryService::BuildEventAttrs(event, eventAttr);
-    EXPECT_EQ(eventAttr.size, 0);
-    EXPECT_EQ(eventAttr.owner, "");
+    auto attrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>("");
+    EXPECT_FALSE(attrs.has_value());
 }
 
 TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithInvalidJsonAttr)
 {
     MemoryEvent event;
-    event.attr = "{]";
-    MemoryEventAttrs eventAttr;
-    eventAttr.size = 0;
-    LeaksMemoryService::BuildEventAttrs(event, eventAttr);
-    EXPECT_EQ(eventAttr.size, 0);
-    EXPECT_EQ(eventAttr.owner, "");
+    auto attrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>("{]");
+    EXPECT_FALSE(attrs.has_value());
 }
 
 TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithValidJsonAttr)
 {
     MemoryEvent event;
-    event.attr = R"({"addr": "20617055174656", "size": "7849984", "total": "132120576",
-"used": "116313600", "owner": "PTA@init_model"})";
-    MemoryEventAttrs eventAttr;
-    eventAttr.size = 0;
-    LeaksMemoryService::BuildEventAttrs(event, eventAttr);
+    event.event = LEAKS_DUMP_EVENT::MALLOC;
+    auto eventAttr = BuildEventAttrsFromJson<MallocFreeEventAttrs>(
+        R"({"addr": "20617055174656", "size": "7849984", "total": "132120576","used": "116313600", "owner": "PTA@init_model"})");
+    ASSERT_TRUE(eventAttr.has_value());
     const int64_t expectSize = 7849984;
-    EXPECT_EQ(eventAttr.size, expectSize);
-    EXPECT_EQ(eventAttr.owner, "PTA@init_model");
+    EXPECT_EQ(eventAttr->size, expectSize);
+    EXPECT_EQ(eventAttr->owner, "PTA@init_model");
 }
 
 TEST_F(LeaksMemoryServiceTest, ParserEnd)
@@ -158,7 +149,7 @@ TEST_F(LeaksMemoryServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
 TEST_F(LeaksMemoryServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-    EXPECT_TRUE(memoryDatabase != nullptr);
+    ASSERT_TRUE(memoryDatabase != nullptr);
     const uint64_t groupId = 1910;
     std::vector<MemoryEvent> events;
     memoryDatabase->QueryEventsByGroupId(groupId, "1", true, events);
@@ -177,10 +168,8 @@ TEST_F(LeaksMemoryServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
     memoryDatabase->QueryMemoryBlocks(queryParams, false, blocks);
     EXPECT_EQ(blocks.size(), 1);
     MemoryBlock block = blocks[0];
-    auto blockAttrs = MemoryBlockAttrs::FromJson(block.attrJsonString);
-    EXPECT_TRUE(blockAttrs.has_value());
-    EXPECT_EQ(blockAttrs->firstAccessTimestamp, eventGroup.accessEvents.front().timestamp);
-    EXPECT_EQ(blockAttrs->lastAccessTimestamp, eventGroup.accessEvents.back().timestamp);
+    EXPECT_EQ(block.firstAccessTimestamp, eventGroup.accessEvents.front().timestamp);
+    EXPECT_EQ(block.lastAccessTimestamp, eventGroup.accessEvents.back().timestamp);
 }
 /***
 * 测试对trace进行Trim的三种策略

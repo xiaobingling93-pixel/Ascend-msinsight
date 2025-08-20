@@ -113,6 +113,9 @@ struct MemoryBlock {
     std::string attrJsonString;
     uint64_t processId{0};
     uint64_t threadId{0};
+    int64_t firstAccessTimestamp{-1};
+    int64_t lastAccessTimestamp{-1};
+    uint64_t maxAccessInterval{0};
 
     MemoryBlock() = default;
     virtual ~MemoryBlock() = default;

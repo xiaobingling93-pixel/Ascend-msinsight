@@ -11,10 +11,10 @@ namespace Dic::Module::MemoryDetail {
 struct SqliteDbTableColumn {
     std::string_view name;
     std::string_view key;
-    bool visible{true};
-    bool sortable{false};
-    bool searchable{false};
-    bool rangeFilterable{false};
+    bool visible{true}; // 是否可见
+    bool sortable{false}; // 是否可排序
+    bool searchable{false}; // 是否可搜索
+    bool rangeFilterable{false}; // 是否可范围过滤
 
     SqliteDbTableColumn(std::string_view name, std::string_view key, bool visible, bool sortable,
                         bool searchable, bool rangeFilterable)
@@ -70,6 +70,9 @@ namespace MemoryEventTableColumn {
         {CALL_STACK_PYTHON, "callStackPython", true, false, true, false}, // Call Stack(Python), Python调用栈
         {CALL_STACK_C, "callStackC", true, false, true, false} // Call Stack(C), C调用栈
     };
+    inline const std::set<std::string_view> TIMESTAMP_COLUMN_SET = {
+        TIMESTAMP
+    };
 }
 namespace MemoryAllocationTableColumn {
     constexpr std::string_view ID = "id";
@@ -95,10 +98,15 @@ namespace MemoryBlockTableColumn {
     constexpr std::string_view ATTR = "attr";
     constexpr std::string_view PROCESS_ID = "processId";
     constexpr std::string_view THREAD_ID = "threadId";
+    constexpr std::string_view FIRST_ACCESS_TIMESTAMP = "firstAccessTimestamp";
+    constexpr std::string_view LAST_ACCESS_TIMESTAMP = "lastAccessTimestamp";
+    constexpr std::string_view MAX_ACCESS_INTERVAL = "maxAccessInterval";
     constexpr std::string_view FULL_COLUMNS_WITHOUT_ID[] = {DEVICE_ID, ADDR, SIZE, START_TIMESTAMP,
                                                             END_TIMESTAMP, EVENT_TYPE, OWNER,
-                                                            ATTR, PROCESS_ID, THREAD_ID};
-    inline const std::vector<SqliteDbTableColumn> FIELD_FULL_COLUMNS = {
+                                                            ATTR, PROCESS_ID, THREAD_ID,
+                                                            FIRST_ACCESS_TIMESTAMP, LAST_ACCESS_TIMESTAMP,
+                                                            MAX_ACCESS_INTERVAL};
+    inline const std::vector<SqliteDbTableColumn>  FIELD_FULL_COLUMNS = {
         {ID, "id", true, true, false, false}, // ID, 内存块ID
         {DEVICE_ID, "deviceId"},
         {ADDR, "addr", true, true, true, false}, // Addr, 内存地址
@@ -109,7 +117,13 @@ namespace MemoryBlockTableColumn {
         {OWNER, "owner", true, true, true, false}, // 内存块持有者(标签)
         {PROCESS_ID, "processId", true, true, true, false}, // Process Id, 进程ID
         {THREAD_ID, "threadId", true, true, true, false}, // Thread Id, 线程ID
-        {ATTR, "attr", true, false, true, false} // Attr, 特有属性
+        {ATTR, "attr", true, false, true, false}, // Attr, 特有属性
+        {FIRST_ACCESS_TIMESTAMP, "firstAccessTimestamp", true, false, false, true},
+        {LAST_ACCESS_TIMESTAMP, "lastAccessTimestamp", true, false, false, true},
+        {MAX_ACCESS_INTERVAL, "maxAccessInterval", true, false, false, true}
+    };
+    inline const std::set<std::string_view> TIMESTAMP_COLUMN_SET = {
+        START_TIMESTAMP, END_TIMESTAMP, FIRST_ACCESS_TIMESTAMP, LAST_ACCESS_TIMESTAMP
     };
 }
 namespace MemoryPythonTraceTableColumn {

@@ -51,7 +51,10 @@
       "owner": "Owner",
       "processId": "Process ID",
       "threadId": "Thread ID",
-      "size": "Size"
+      "size": "Size(bytes)",
+      "firstAccessTimestamp": "First Access Timestamp(ns)",
+      "lastAccessTimestamp": "Last Access Timestamp(ns)",
+      "maxAccessInterval": "Max Access Interval(ns)"
     }
   }
 }

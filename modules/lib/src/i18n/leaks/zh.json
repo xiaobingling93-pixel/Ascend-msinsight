@@ -51,7 +51,10 @@
       "owner": "申请者",
       "processId": "进程ID",
       "threadId": "线程ID",
-      "size": "内存块大小"
+      "size": "内存块大小(bytes)",
+      "firstAccessTimestamp": "首次访问时间(ns)",
+      "lastAccessTimestamp": "末次访问时间(ns)",
+      "maxAccessInterval": "最大访问时间间隔(ns)"
     }
   }
 }

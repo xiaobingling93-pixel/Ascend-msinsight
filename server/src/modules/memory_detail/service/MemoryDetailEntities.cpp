@@ -112,15 +112,43 @@ void LeaksMemoryPythonTrace::DoCompressByDepth(std::vector<PythonTraceSlice>& de
 // [PYTHON_TRACE]
 
 // [EVENT]
+void MemoryEventBaseAttrs::SetByJson(const json_t& json)
+{
+    size = NumberUtil::StringToLongLong(JsonUtil::GetString(json, BLOCK_EVENT_ATTR_SIZE_FIELD));
+    groupId = NumberUtil::StringToUnsignedLongLong(JsonUtil::GetString(json, BLOCK_EVENT_ATTR_GROUP_ID_FIELD));
+}
+
+void MallocFreeEventAttrs::SetByJson(const json_t &json)
+{
+    MemoryEventBaseAttrs::SetByJson(json);
+    total = NumberUtil::StringToUnsignedLongLong(JsonUtil::GetString(json, BLOCK_EVENT_ATTR_TOTAL_FIELD));
+    used = NumberUtil::StringToUnsignedLongLong(JsonUtil::GetString(json, BLOCK_EVENT_ATTR_USED_FIELD));
+    owner = JsonUtil::GetString(json, BLOCK_EVENT_ATTR_OWNER_FIELD);
+}
+
+void AccessEventAttrs::SetByJson(const json_t& json)
+{
+    MemoryEventBaseAttrs::SetByJson(json);
+    type = JsonUtil::GetString(json, ACCESS_EVENT_ATTR_TYPE);
+    dtype = JsonUtil::GetString(json, ACCESS_EVENT_ATTR_DTYPE);
+    shape = JsonUtil::GetString(json, ACCESS_EVENT_ATTR_SHAPE);
+}
+
 EventGroup::EventGroup(std::vector<MemoryEvent>& sortedEvents)
 {
     for (auto &event : sortedEvents) {
-            AddEvent(event);
+        AddEvent(event);
     }
 }
 
 void EventGroup::AddEvent(const MemoryEvent& event)
 {
+    if (mallocEvent.has_value() && event.ptr != mallocEvent->ptr) {
+        Server::ServerLog::Warn("The event with empty ptr will be discarded: eventId=%, processId=%",
+                                event.id, event.processId);
+        return;
+    }
+
     if (event.event == LEAKS_DUMP_EVENT::MALLOC) {
         if (mallocEvent.has_value()) {
             Server::ServerLog::Warn("Duplicated malloc events in the same group.");
@@ -138,7 +166,9 @@ void EventGroup::AddEvent(const MemoryEvent& event)
         return;
     }
     if (event.event == LEAKS_DUMP_EVENT::ACCESS) {
-        accessEvents.push_back(event);
+        if (accessEvents.empty() || event.timestamp > accessEvents.back().timestamp) {
+            accessEvents.push_back(event);
+        }
     }
 }
 // [EVENT]
@@ -148,10 +178,7 @@ std::string MemoryBlockAttrs::ToJsonString()
 {
     document_t blockAttrJson(kObjectType);
     auto& allocator = blockAttrJson.GetAllocator();
-    JsonUtil::AddMember(blockAttrJson, BLOCK_EVENT_ATTR_SIZE_FIELD, size, allocator);
     JsonUtil::AddMember(blockAttrJson, BLOCK_EVENT_ATTR_GROUP_ID_FIELD, groupId, allocator);
-    JsonUtil::AddMember(blockAttrJson, BLOCK_ATTR_FIRST_ACCESS_FILED, firstAccessTimestamp, allocator);
-    JsonUtil::AddMember(blockAttrJson, BLOCK_ATTR_LAST_ACCESS_FILED, lastAccessTimestamp, allocator);
     for (auto &attrPair : extendAttrs) {
         JsonUtil::AddMember(blockAttrJson, attrPair.first, attrPair.second, allocator);
     }
@@ -168,10 +195,20 @@ std::optional<MemoryBlockAttrs> MemoryBlockAttrs::FromJson(std::string jsonStrin
         return std::nullopt;
     }
     auto &attrsJson = attrsJsonDoc.value();
-    JsonUtil::SetByJsonKeyValue(attrs.size, attrsJson, "size");
     JsonUtil::SetByJsonKeyValue(attrs.groupId, attrsJson, "allocation_id");
-    JsonUtil::SetByJsonKeyValue(attrs.firstAccessTimestamp, attrsJson, "first_access_timestamp");
-    JsonUtil::SetByJsonKeyValue(attrs.lastAccessTimestamp, attrsJson, "last_access_timestamp");
+    for (auto member = attrsJson.MemberBegin(); member != attrsJson.MemberEnd(); member++) {
+        auto &key = member->name;
+        auto &value = member->value;
+        if (!key.IsString() || !value.IsString()) {
+            Server::ServerLog::Warn("Attr json member key/value must be string.");
+            continue;
+        }
+        std::string keyStr = key.GetString();
+        if (keyStr.empty() || keyStr == BLOCK_EVENT_ATTR_GROUP_ID_FIELD) {
+            continue;
+        }
+        attrs.extendAttrs[keyStr] = value.GetString();
+    }
     return attrs;
 }
 // [BLOCK]

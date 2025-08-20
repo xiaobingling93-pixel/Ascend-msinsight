@@ -138,20 +138,18 @@ void LeaksMemoryService::ParseRemainMallocEvents(ParseContext &context)
         const std::uint64_t maxTimestamp = context.db->GetGlobalMaxTimestamp();
         for (auto &allocPair : allocMap) {
             auto &event = allocPair.second;
-            MemoryEventAttrs eventAttrs;
-            BuildEventAttrs(*event, eventAttrs);
-            if (eventAttrs.size <= 0) {
+            auto eventAttrs = BuildEventAttrsFromJson<MallocFreeEventAttrs>(event->attr);
+            if (!eventAttrs.has_value() || eventAttrs->size <= 0) {
                 Server::ServerLog::Warn("An invalid memory allocation event was detected: cannot get the valid 'size' "
                                         "attribute from the 'attr' field");
                 continue;
             }
             // 构造block
-            MemoryBlock block(event->ptr, event->deviceId, eventAttrs.size, event->timestamp, maxTimestamp,
-                              eventAttrs.owner, event->eventType, event->attr, event->processId, event->threadId);
-            uint64_t minTimestamp = context.db->GetGlobalMinTimestamp();
+            MemoryBlock block(event->ptr, event->deviceId, eventAttrs->size, event->timestamp, maxTimestamp,
+                              eventAttrs->owner, event->eventType, event->attr, event->processId, event->threadId);
             // 构造block扩展属性
-            auto blockAttrs = BuildMemoryBlockAttrsByMallocEvent(*event,
-                                                                 context.eventGroupMap[eventAttrs.groupId], minTimestamp);
+            auto blockAttrs = MemoryBlockAttrs::FromJson(event->attr);
+            SetMemoryBlockExtendByEventGroup(block, blockAttrs->groupId, context);
             block.attrJsonString = blockAttrs.has_value() ? blockAttrs->ToJsonString() : event->attr;
             context.db->InsertMemoryBlock(block);
         }
@@ -169,14 +167,17 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(ParseContext &context)
             Server::ServerLog::Error("Invalid device id: %.", event.deviceId);
             continue;
         }
-        MemoryEventAttrs eventAttrs;
-        BuildEventAttrs(event, eventAttrs);
-        if (eventAttrs.groupId > 0) {
-            context.eventGroupMap[eventAttrs.groupId].AddEvent(event);
+        auto eventAttrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>(event.attr);
+        if (eventAttrs.has_value() && eventAttrs->groupId > 0) {
+            context.eventGroupMap[eventAttrs->groupId].groupId = eventAttrs->groupId;
+            context.eventGroupMap[eventAttrs->groupId].AddEvent(event);
         }
-        if (!SingleDeviceEventParse(event, eventAttrs, context)) continue;
+        if (!SingleDeviceEventParse(event, context)) continue;
+        if (event.event == LEAKS_DUMP_EVENT::FREE) {
+            eventAttrs->size = -std::abs(eventAttrs->size);
+        }
         context.deviceTotalSize[event.deviceId + event.eventType] =
-                SafeCalculateAllocationSize(context.deviceTotalSize[event.deviceId + event.eventType], eventAttrs.size);
+                SafeCalculateAllocationSize(context.deviceTotalSize[event.deviceId + event.eventType], eventAttrs->size);
         // 构造allocation折线图元素
         MemoryAllocation allocation(event.timestamp, context.deviceTotalSize[event.deviceId + event.eventType],
                                     event.deviceId, event.eventType, false);
@@ -189,14 +190,14 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(ParseContext &context)
 }
 
 bool LeaksMemoryService::SingleDeviceEventParse(const MemoryEvent &event,
-                                                const MemoryEventAttrs &eventAttrs,
                                                 ParseContext &context)
 {
     if (event.event != LEAKS_DUMP_EVENT::MALLOC && event.event != LEAKS_DUMP_EVENT::FREE) {
         return false;
     }
     auto &allocMap = context.deviceMallocMap[event.deviceId];
-    if (eventAttrs.size == 0) {
+    auto attrs = BuildEventAttrsFromJson<MallocFreeEventAttrs>(event.attr);
+    if (!attrs.has_value() || attrs->size == 0) {
         Server::ServerLog::Warn("An invalid memory allocation/free event[" + event.ptr +
                                 "] was detected: cannot get the 'size' "
                                 "attribute from the 'attr' field.");
@@ -222,18 +223,13 @@ bool LeaksMemoryService::SingleDeviceEventParse(const MemoryEvent &event,
             return false;
         }
         auto &allocEvent = allocMap[event.ptr + event.eventType];
-        MemoryEventAttrs allocEventAttrs;
-        BuildEventAttrs(*allocEvent, allocEventAttrs);
+        auto allocAttrs = BuildEventAttrsFromJson<MallocFreeEventAttrs>(allocEvent->attr);
         // 构造block
-        MemoryBlock block(event.ptr, event.deviceId, std::abs(eventAttrs.size), allocEvent->timestamp,
-                          event.timestamp, allocEventAttrs.owner, event.eventType,
+        MemoryBlock block(event.ptr, event.deviceId, std::abs(allocAttrs->size), allocEvent->timestamp,
+                          event.timestamp, allocAttrs->owner, event.eventType,
                           allocEvent->attr, event.processId, event.threadId);
-        uint64_t minTimestamp = context.db->GetGlobalMinTimestamp();
         // 构造block扩展属性
-        auto blockAttrs = BuildMemoryBlockAttrsByMallocEvent(*allocEvent,
-                                                             context.eventGroupMap[eventAttrs.groupId], minTimestamp);
-
-        block.attrJsonString = blockAttrs.has_value() ? blockAttrs->ToJsonString() : allocEvent->attr;
+        SetMemoryBlockExtendByEventGroup(block, allocAttrs->groupId, context);
         context.db->InsertMemoryBlock(block);
         // 从申请表中去除内存申请事件
         allocMap.erase(event.ptr + event.eventType);
@@ -241,43 +237,6 @@ bool LeaksMemoryService::SingleDeviceEventParse(const MemoryEvent &event,
     return true;
 }
 
-void LeaksMemoryService::GetEventAttrWithDefaultValueByJson(json_t &json, MemoryEventAttrs &eventAttrs)
-{
-    std::string tmp_str = JsonUtil::GetString(json, BLOCK_EVENT_ATTR_SIZE_FIELD);
-    eventAttrs.size = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
-    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_TOTAL_FIELD);
-    eventAttrs.total = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
-    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_USED_FIELD);
-    eventAttrs.used = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
-    JsonUtil::SetByJsonKeyValue(eventAttrs.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
-    tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_GROUP_ID_FIELD);
-    eventAttrs.groupId = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
-}
-
-void LeaksMemoryService::BuildEventAttrs(const MemoryEvent &event, MemoryEventAttrs &eventAttr)
-{
-    std::string attrStr = event.attr;
-    if (attrStr.empty()) {
-        return;
-    }
-    std::string parseError;
-    auto jsonDoc = JsonUtil::TryParse(attrStr, parseError);
-    if (!parseError.empty()) {
-        Server::ServerLog::Warn("The leaks dump 'attr' field is invalid json string.");
-        return;
-    }
-    if (!jsonDoc.has_value()) {
-        return;
-    }
-    auto &json = jsonDoc.value();
-    GetEventAttrWithDefaultValueByJson(json, eventAttr);
-    if (event.event == LEAKS_DUMP_EVENT::FREE) {
-        eventAttr.size = -std::abs(eventAttr.size);
-    }
-    if (event.event == LEAKS_DUMP_EVENT::MALLOC) {
-        eventAttr.size = std::abs(eventAttr.size);
-    }
-}
 // 该方法用于寻找当前owner set中两两字符串的最长相同前缀，并添加到owners中, 暴力枚举,时间复杂度O(n^2), 后续考虑优化为Trie树
 static void HandleOwnerSet(std::set<std::string> &owners)
 {
@@ -455,24 +414,31 @@ bool LeaksMemoryService::IsValidMemoryEventType(const std::string &event, const 
     return eventTypes.find(eventType) != eventTypes.end();
 }
 
-std::optional<MemoryBlockAttrs> LeaksMemoryService::BuildMemoryBlockAttrsByMallocEvent(const MemoryEvent& mallocEvent,
-                                                                                       const EventGroup& eventGroup,
-                                                                                       const uint64_t minTimestamp)
+void LeaksMemoryService::SetMemoryBlockExtendByEventGroup(MemoryBlock& block, const uint64_t groupId,
+                                                          ParseContext &context)
 {
-    std::vector<MemoryEvent> groupEvents;
-    MemoryEventAttrs eventAttrs;
-    BuildEventAttrs(mallocEvent, eventAttrs);
     MemoryBlockAttrs blockAttrs;
-    blockAttrs.size = eventAttrs.size;
-    blockAttrs.groupId = eventAttrs.groupId;
-    if (eventAttrs.groupId != 0 && !eventGroup.accessEvents.empty()) {
-        MemoryEvent firstAccess = eventGroup.accessEvents.front();
-        MemoryEvent lastAccess = eventGroup.accessEvents.back();
-        blockAttrs.firstAccessTimestamp = firstAccess.timestamp> 0 ? firstAccess.timestamp - minTimestamp : 0;
-        blockAttrs.lastAccessTimestamp = lastAccess.timestamp> 0 ? lastAccess.timestamp - minTimestamp : 0;
+    blockAttrs.groupId = groupId;
+    block.attrJsonString = blockAttrs.ToJsonString();
+    uint64_t minTimestamp = context.db->GetGlobalMinTimestamp();
+    EventGroup eventGroup = context.eventGroupMap[groupId];
+    if (groupId == 0 || eventGroup.accessEvents.empty()) {
+        block.firstAccessTimestamp = minTimestamp - 1;
+        block.lastAccessTimestamp = minTimestamp - 1;
+        block.maxAccessInterval = 0;
+        return;
     }
-    return blockAttrs;
+    uint64_t maxInterval = 0;
+    block.firstAccessTimestamp = eventGroup.accessEvents.front().timestamp;
+    block.lastAccessTimestamp = eventGroup.accessEvents.back().timestamp;
+    uint64_t preAccessTs = block.firstAccessTimestamp;
+    for (auto &accessEvent : eventGroup.accessEvents) {
+        uint64_t interval = accessEvent.timestamp > preAccessTs ? accessEvent.timestamp - preAccessTs : 0;
+        maxInterval = std::max(interval, maxInterval);
+    }
+    block.maxAccessInterval = maxInterval;
 }
+
 bool ParseContext::CheckDeviceIdValid(const std::string& deviceId)
 {
     return deviceIds.find(deviceId) != deviceIds.end();

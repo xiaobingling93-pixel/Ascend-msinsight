@@ -110,6 +110,9 @@ std::string LeaksMemoryDatabase::GetCreateMemoryBlockTableSql()
                             "  {} text(255),"
                             "  {} TEXT(255),"
                             "  {} integer,"
+                            "  {} integer,"
+                            "  {} integer,"
+                            "  {} integer,"
                             "  {} integer"
                             ");";
     createSql = StringUtil::FormatString(createSql,
@@ -125,7 +128,10 @@ std::string LeaksMemoryDatabase::GetCreateMemoryBlockTableSql()
                                          BLOCK::OWNER,
                                          BLOCK::ATTR,
                                          BLOCK::PROCESS_ID,
-                                         BLOCK::THREAD_ID);
+                                         BLOCK::THREAD_ID,
+                                         BLOCK::FIRST_ACCESS_TIMESTAMP,
+                                         BLOCK::LAST_ACCESS_TIMESTAMP,
+                                         BLOCK::MAX_ACCESS_INTERVAL);
     return createSql;
 }
 
@@ -360,6 +366,9 @@ void LeaksMemoryDatabase::InsertMemoryBlockList(const std::vector<MemoryBlock> &
         sqlite3_bind_text(stmt, idx++, block.attrJsonString.c_str(), block.attrJsonString.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, block.processId > INT64_MAX ? INT64_MAX : block.processId);
         sqlite3_bind_int64(stmt, idx++, block.threadId > INT64_MAX ? INT64_MAX : block.threadId);
+        sqlite3_bind_int64(stmt, idx++, block.firstAccessTimestamp > INT64_MAX ? INT64_MAX : block.firstAccessTimestamp);
+        sqlite3_bind_int64(stmt, idx++, block.lastAccessTimestamp > INT64_MAX ? INT64_MAX : block.lastAccessTimestamp);
+        sqlite3_bind_int64(stmt, idx++, block.maxAccessInterval > INT64_MAX ? INT64_MAX : block.maxAccessInterval);
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
@@ -582,6 +591,9 @@ int64_t LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::ve
         block.processId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.threadId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.attrJsonString = sqlite3_column_string(stmt, col++);
+        block.firstAccessTimestamp = sqlite3_column_int64(stmt, col++);
+        block.lastAccessTimestamp = sqlite3_column_int64(stmt, col++);
+        block.maxAccessInterval = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         blocks.emplace_back(block);
     }
     return count;
@@ -1385,18 +1397,18 @@ std::string LeaksMemoryDatabase::GetSelectEventsFullColumns(const bool relativeT
 {
     std::string columns = "COUNT(*) OVER()";
     for (const auto &columnObj : EVENT::FIELD_FULL_COLUMNS) {
-        if (!relativeTime || columnObj.name != EVENT::TIMESTAMP) {
-            if (columnObj.name == EVENT::CALL_STACK_C && !withCallStackC) {
-                continue;
-            }
-            if (columnObj.name == EVENT::CALL_STACK_PYTHON && !withCallStackPython) {
-                continue;
-            }
-            columns.append(StringUtil::FormatString(", {} AS _{}", columnObj.name, columnObj.key));
+        if (columnObj.name == EVENT::CALL_STACK_C && !withCallStackC) {
             continue;
         }
-        columns.append(StringUtil::FormatString(", {} - {} AS _{}",
-                                                EVENT::TIMESTAMP, std::to_string(GetGlobalMinTimestamp()), columnObj.key));
+        if (columnObj.name == EVENT::CALL_STACK_PYTHON && !withCallStackPython) {
+            continue;
+        }
+        if (EVENT::TIMESTAMP_COLUMN_SET.find(columnObj.name) !=  EVENT::TIMESTAMP_COLUMN_SET.end() && relativeTime) {
+            columns.append(StringUtil::FormatString(", {} - {} AS _{}", columnObj.name,
+                                                    std::to_string(GetGlobalMinTimestamp()), columnObj.key));
+            continue;
+        }
+        columns.append(StringUtil::FormatString(", {} AS _{}", columnObj.name, columnObj.key));
     }
     return columns;
 }
@@ -1405,12 +1417,12 @@ std::string LeaksMemoryDatabase::GetSelectBlocksFullColumns(const bool relativeT
 {
     std::string columns = "COUNT(*) OVER()";
     for (auto &columnObj : BLOCK::FIELD_FULL_COLUMNS) {
-        if (!relativeTime || (columnObj.name != BLOCK::START_TIMESTAMP && columnObj.name != BLOCK::END_TIMESTAMP)) {
-            columns.append(StringUtil::FormatString(", {} AS _{}", columnObj.name, columnObj.key));
+        if (BLOCK::TIMESTAMP_COLUMN_SET.find(columnObj.name) !=  BLOCK::TIMESTAMP_COLUMN_SET.end() && relativeTime) {
+            columns.append(StringUtil::FormatString(", {} - {} AS _{}", columnObj.name,
+                                                    std::to_string(GetGlobalMinTimestamp()), columnObj.key));
             continue;
         }
-        columns.append(StringUtil::FormatString(", {} - {} AS _{}", columnObj.name,
-                                                std::to_string(GetGlobalMinTimestamp()), columnObj.key));
+        columns.append(StringUtil::FormatString(", {} AS _{}", columnObj.name, columnObj.key));
     }
     return columns;
 }

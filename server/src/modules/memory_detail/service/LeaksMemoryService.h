@@ -31,7 +31,6 @@ struct ParseContext {
 class LeaksMemoryService {
 public:
     static void ParseEventsToBlockAndAllocations(ParseContext &context);
-    static void BuildEventAttrs(const MemoryEvent &event, MemoryEventAttrs &eventAttr);
     static bool ParseMemoryLeaksDumpEventsAndPythonTraces(const std::string &fileId);
     static void ParserEnd(const std::string &rankId, bool result);
     static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
@@ -48,17 +47,14 @@ public:
 private:
     static void ParseRemainMallocEvents(ParseContext &context);
     static bool SingleDeviceEventParse(const MemoryEvent &event,
-                                       const MemoryEventAttrs &eventAttrs,
                                        ParseContext &context);
     // 递归,depth从0开始
     static void BuildMemoryAllocDetailTreeNode(const std::string &deviceId,
                                         const uint64_t &timestamp,
                                         const std::set<std::string> &owners,
                                         LeaksMemoryDetailTreeNode &curNode, int depth);
-    static void GetEventAttrWithDefaultValueByJson(json_t &json, MemoryEventAttrs &eventAttrs);
-    static std::optional<MemoryBlockAttrs> BuildMemoryBlockAttrsByMallocEvent(const MemoryEvent& mallocEvent,
-                                                                              const EventGroup& eventGroup,
-                                                                              const uint64_t minTimestamp = 0);
+    static void SetMemoryBlockExtendByEventGroup(MemoryBlock& block, const uint64_t groupId,
+                                                 ParseContext &context);
 };
 }  // Memory
 }  // Module

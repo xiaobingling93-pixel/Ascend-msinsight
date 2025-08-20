@@ -61,6 +61,9 @@ static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blo
     JsonUtil::AddMember(json, "threadId", blockPtr->threadId, allocator);
     JsonUtil::AddMember(json, "deviceId", blockPtr->deviceId, allocator);
     JsonUtil::AddMember(json, "eventType", blockPtr->eventType, allocator);
+    JsonUtil::AddMember(json, "firstAccessTimestamp", blockPtr->firstAccessTimestamp, allocator);
+    JsonUtil::AddMember(json, "lastAccessTimestamp", blockPtr->lastAccessTimestamp, allocator);
+    JsonUtil::AddMember(json, "maxAccessInterval", blockPtr->maxAccessInterval, allocator);
     document_t pathJson(kArrayType);
     if (withPath) {
         const std::shared_ptr<MemoryBlockItem> blockItemPtr = std::dynamic_pointer_cast<MemoryBlockItem>(blockPtr);
