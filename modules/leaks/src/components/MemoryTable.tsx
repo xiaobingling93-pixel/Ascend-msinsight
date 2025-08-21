@@ -42,6 +42,7 @@ const MemoryTable = observer(({ session }: { session: Session }): React.ReactEle
                 session.lazyUsedThreshold = { perT: null, valueT: null };
                 session.delayedFreeThreshold = { perT: null, valueT: null };
                 session.longIdleThreshold = { perT: null, valueT: null };
+                session.onlyInefficient = false;
             }
         });
     };

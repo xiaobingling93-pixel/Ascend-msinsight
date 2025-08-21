@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,12 @@ const ThresholdModal = observer(({ session, open, setOpen }: { session: Session;
     const [delayedThre, setDelayedThre] = useState(delayedFreeThreshold);
     const [longThre, setLongThre] = useState(longIdleThreshold);
     const [showInefficient, setShowInefficient] = useState(onlyInefficient);
+    useEffect(() => {
+        setLazyThre(lazyUsedThreshold);
+        setDelayedThre(delayedFreeThreshold);
+        setLongThre(longIdleThreshold);
+        setShowInefficient(onlyInefficient);
+    }, [JSON.stringify(lazyUsedThreshold), JSON.stringify(delayedFreeThreshold), JSON.stringify(longIdleThreshold), onlyInefficient]);
     const onOk = (): void => {
         runInAction(() => {
             session.lazyUsedThreshold = lazyThre;

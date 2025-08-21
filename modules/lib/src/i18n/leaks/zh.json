@@ -59,7 +59,7 @@
     "setThreshold": "过滤低效显存",
     "lazyUsedThreshold": "提前申请阈值",
     "delayedFreeThreshold": "延迟释放阈值",
-    "longIdleThreshold": "空闲过长阈值",
+    "longIdleThreshold": "过长闲置阈值",
     "or": "或",
     "early-alloc": "提前申请",
     "late-free": "延迟释放",
