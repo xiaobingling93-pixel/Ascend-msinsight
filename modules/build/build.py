@@ -30,6 +30,8 @@ MODULES_MAP = {
     'reinforcement-learning': 'RL',
 }
 
+BUILD_PROCESS_COUNT = 4 if platform.system() == 'Windows' else min(multiprocessing.cpu_count(), len(MODULES_MAP))
+
 
 def clean():
     modules = list(MODULES_MAP.keys())
@@ -95,7 +97,7 @@ def parallel_build():
         return 1
 
     modules = list(MODULES_MAP.keys())
-    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), len(MODULES_MAP)))
+    pool = multiprocessing.Pool(processes=BUILD_PROCESS_COUNT)
     results = pool.map(build_module, modules)
     pool.close()
     pool.join()
