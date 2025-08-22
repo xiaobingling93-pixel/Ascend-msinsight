@@ -112,60 +112,50 @@ public:
         return *this;
     }
 
-    /* *
+    template<typename Y>
+    static inline constexpr bool is_one_of_basic_types = std::disjunction_v<
+            std::is_same<Y, uint32_t>,
+            std::is_same<Y, uint64_t>,
+            std::is_same<Y, std::string>
+    >;
+
+    template<typename Y>
+    std::string SaveParamListAndGetPlaceholderStr(const std::vector<Y> &inputList)
+    {
+        static_assert(is_one_of_basic_types<Y>, "Fail to save param and get placeholder str, unknown type.");
+        std::string res;
+        for (size_t i = 0; i < inputList.size(); ++i) {
+            if (i == 0) {
+                res.append("?");
+            } else {
+                res.append(", ?");
+            }
+            Values().emplace_back(inputList[i]);
+        }
+        return res;
+    }
+
+    /**
      * 调用此函数需要先校验inputs不为空
      * @param str
      * @param inputs
      * @return
      */
-    Table &In(std::string_view str, const std::vector<uint64_t> &inputs)
+    template<typename Y>
+    Table &In(std::string_view str, const std::vector<Y> &inputs)
     {
         ConditionStr() += " AND " + std::string(str) + " IN ( ";
-        std::string inputStr = StringUtil::join(inputs, ", ");
-        ConditionStr() += inputStr;
-        ConditionStr() += " ) ";
+        std::string placeholderStr = SaveParamListAndGetPlaceholderStr(inputs);
+        ConditionStr() += placeholderStr + " ) ";
         return *this;
     }
 
-    /**
-     * 如果inputs存在任何一个sql注入，数据查询为空
-     * @param str
-     * @param inputs
-     * @return
-     */
-    Table &In(std::string_view str, const std::vector<std::string> &inputs)
-    {
-        ConditionStr() += " AND " + std::string(str) + " IN ( ";
-        bool sqlInject = false;
-        for (const auto &item: inputs) {
-            if (!StringUtil::CheckSqlValid(item)) {
-                sqlInject = true;
-                break;
-            }
-        }
-        if (!sqlInject) {
-            std::string inputStr = StringUtil::Join4SqlGroup(inputs);
-            ConditionStr() += inputStr;
-        }
-        ConditionStr() += " ) ";
-        return *this;
-    }
-
-    Table &NotIn(std::string_view str, const std::vector<std::string> &inputs)
+    template<typename Y>
+    Table &NotIn(std::string_view str, const std::vector<Y> &inputs)
     {
         ConditionStr() += " AND " + std::string(str) + " NOT IN ( ";
-        bool sqlInject = false;
-        for (const auto &item: inputs) {
-            if (!StringUtil::CheckSqlValid(item)) {
-                sqlInject = true;
-                break;
-            }
-        }
-        if (!sqlInject) {
-            std::string inputStr = StringUtil::Join4SqlGroup(inputs);
-            ConditionStr() += inputStr;
-        }
-        ConditionStr() += " ) ";
+        std::string placeholderStr = SaveParamListAndGetPlaceholderStr(inputs);
+        ConditionStr() += placeholderStr + " ) ";
         return *this;
     }
 
