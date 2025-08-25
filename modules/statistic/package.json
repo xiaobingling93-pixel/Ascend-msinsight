@@ -4,8 +4,8 @@
   "private": true,
   "homepage": "./",
   "scripts": {
-    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
-    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
+    "start": "cross-env NODE_OPTIONS='--openssl-legacy-provider --max_old_space_size=4096' craco start",
+    "build": "cross-env NODE_OPTIONS='--openssl-legacy-provider --max_old_space_size=4096' NODE_ENV=production  GENERATE_SOURCEMAP=false CI=false craco build",
     "build:dev": "cross-env GENERATE_SOURCEMAP=true CI=false craco build",
     "test": "set REACT_APP_TEST=1&&set CI=true&&react-scripts test --watchAll=false  --coverage",
     "test:dev": "set REACT_APP_TEST=1&&react-scripts test",

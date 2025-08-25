@@ -4,8 +4,8 @@
   "private": true,
   "homepage": "./",
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
+    "start": "cross-env NODE_OPTIONS='--openssl-legacy-provider --max_old_space_size=4096' craco start",
+    "build": "cross-env NODE_OPTIONS='--openssl-legacy-provider --max_old_space_size=4096' craco build",
     "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\RL\\ /E /I /Y",
     "publishLinux": "cp -rf ./build/* ../framework/public/plugins/RL"
   },
