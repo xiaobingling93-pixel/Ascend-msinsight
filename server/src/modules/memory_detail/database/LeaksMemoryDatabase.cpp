@@ -457,6 +457,7 @@ void LeaksMemoryDatabase::ReleaseStmt()
         insertBlockStmt = nullptr;
     }
     for (auto& [processId, stmt] : updatePythonTraceDepthStmtPidMap) {
+        (void)(processId);
         if (stmt != nullptr) {
             sqlite3_finalize(stmt);
         }
@@ -765,7 +766,8 @@ std::string LeaksMemoryDatabase::BuildQueryEventsConditionSqlByParams(const Leak
 std::string LeaksMemoryDatabase::BuildQueryRangeFiltersConditionSqlByParams(const RangeFiltersParam& rangeFiltersParam)
 {
     std::string sql;
-    for (auto [colName, rangePair] : rangeFiltersParam.rangeFilters) {
+    for (const auto& [colName, rangePair] : rangeFiltersParam.rangeFilters) {
+        (void)(rangePair);
         sql.append(StringUtil::FormatString(" AND ({} BETWEEN ? AND ?) ", colName));
     }
     return sql;
@@ -1203,7 +1205,8 @@ void LeaksMemoryDatabase::CommonBindFiltersParams(const FiltersParam& queryParam
 void LeaksMemoryDatabase::CommonBindRangeFiltersParams(const RangeFiltersParam& queryParams, sqlite3_stmt* stmt,
                                                        int& bindIdx)
 {
-    for (auto [colName, rangePair] : queryParams.rangeFilters) {
+    for (const auto& [colName, rangePair] : queryParams.rangeFilters) {
+        (void)(colName);
         sqlite3_bind_double(stmt, bindIdx++, rangePair.first);
         sqlite3_bind_double(stmt, bindIdx++, rangePair.second);
     }

@@ -348,6 +348,7 @@ std::vector<std::shared_ptr<VirtualClusterDatabase>> DataBaseManager::GetAllClus
 {
     std::vector<std::shared_ptr<VirtualClusterDatabase>> res;
     for (auto& [key, value]: clusterDatabaseMap) {
+        (void)(key);
         res.push_back(value);
     }
     return res;

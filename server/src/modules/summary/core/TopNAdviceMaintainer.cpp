@@ -10,6 +10,7 @@ double GetTotalSynchronizeTime(const AdviceInfoForSlowRank &info)
 {
     double total = 0.0;
     for (const auto &[pg, t] : info.synchronizeTime) {
+        (void)(pg);
         total += t;
     }
     return total;

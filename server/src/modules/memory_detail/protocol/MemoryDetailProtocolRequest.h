@@ -265,7 +265,8 @@ struct LeaksMemoryEventParams : public PaginationParam, FiltersParam, OrderByPar
                                                 "0", std::to_string(INT64_MAX));
             return false;
         }
-        for (auto [colName, rangePair] : rangeFilters) {
+        for (const auto&  [colName, rangePair] : rangeFilters) {
+            (void)(colName);
             if (rangePair.first < COMMON_RANGE_VALUE_MIN || rangePair.second < COMMON_RANGE_VALUE_MIN) {
                 errorMsg = StringUtil::FormatString("Invalid range value, detail: less than ",
                                                     std::to_string(COMMON_RANGE_VALUE_MIN));
