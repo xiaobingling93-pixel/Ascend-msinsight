@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
 import { register } from './register';
 
 import { KEYS } from 'ascend-utils';
@@ -12,7 +15,7 @@ export const actionFlagMarkCreation = register({
     perform: (session): void => {
         if (!session.showCreateFlagMarkKey) { return; }
         if (session.selectedRange !== undefined) { // flag range
-            const [s, e] = session.selectedRange.toSorted((a, b) => a - b);
+            const [s, e] = [...session.selectedRange].sort((a, b) => a - b);
             const rangeStartTimeDisplay = getTimestamp(s, { precision: session.isNsMode ? 'ns' : 'ms' });
             runInAction(() => {
                 session.timelineMaker.oldMarkedRange = session.selectedRange;
