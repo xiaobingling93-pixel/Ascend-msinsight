@@ -62,7 +62,14 @@ const createContentNormal = (content: number | string | Array<number | string> |
                 title: key,
                 dataIndex: key,
                 ...getDefaultColumData(key),
-                sorter: (a: any, b: any) => a[key] - b[key],
+                sorter: (a: any, b: any) => {
+                    const numA = Number(a[key]);
+                    const numB = Number(b[key]);
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB;
+                    }
+                    return a[key].localeCompare(b[key]);
+                },
             }));
             const dataSource = content as object[];
             return <ResizeTable
