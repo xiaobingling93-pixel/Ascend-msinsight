@@ -32,7 +32,7 @@ test.describe('Timeline(DB)', () => {
         parseClusterCompletedRes = waitForResponse(await ws, (res) => res?.event === 'parse/clusterCompleted');
         await importData(page, FilePath.DB_2025330);
         await allPagesSuccessRes;
-        const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Host', { exact: true });
+        const secondLayerUnit = timelineFrame.locator('#main-container').getByText('process 115778');
         await expect(secondLayerUnit).toBeVisible();
     });
 
@@ -117,9 +117,9 @@ test.describe('Timeline(DB)', () => {
     // 工具栏 - 算子连线
     test('test_operatorLinkLine', async ({ page, timelinePage }) => {
         const { flowBtn, timelineFrame } = timelinePage;
-        await timelineFrame.locator('div:nth-child(12) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
+        await timelineFrame.locator('div:nth-child(4) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
         await page.waitForTimeout(100);
-        await timelineFrame.locator('div:nth-child(13) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
+        await timelineFrame.locator('div:nth-child(15) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
         const LinkLineType = [
             'HostToDevice',
             'MSTX',
@@ -175,8 +175,6 @@ test.describe('Timeline(DB)', () => {
         await filterContentSelector.selectOption('Ascend Hardware');
         await filterBtn.click();
         await page.mouse.move(0, 0);
-        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
-        await secondUnitInfo.click();
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('units-filter.png', { maxDiffPixels: 100 });
     });
@@ -201,9 +199,6 @@ test.describe('Timeline(DB)', () => {
         await filterContentSelector.selectOption('Communication');
         await filterBtn.click();
         await page.mouse.move(0, 0);
-        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
-        await secondUnitInfo.click();
-
         await unitWrapperScroller.getByText('Communication').click();
         await searchBtn.click();
         const inputLocator = timelineFrame.locator('.insight-category-search-overlay input').nth(2);
@@ -267,8 +262,8 @@ test.describe('Timeline(DB)', () => {
     test('test_db_context_menu_click_ShowInEventsView', async ({ timelinePage, page }) => {
         const { timelineFrame, bottomPanel } = timelinePage;
         timelineFrame.locator('#unitWrapperScroller');
-        await timelineFrame.locator('div:nth-child(12) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
-        await timelineFrame.locator('div:nth-child(13) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
+        await timelineFrame.locator('div:nth-child(4) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
+        await timelineFrame.locator('div:nth-child(15) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
         await timelineFrame.locator('#unitWrapperScroller div').filter({ hasText: /^Stream 2$/ }).nth(3).click({
             button: 'right',
         });
