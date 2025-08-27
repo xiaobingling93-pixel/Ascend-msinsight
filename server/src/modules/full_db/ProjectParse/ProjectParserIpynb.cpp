@@ -32,7 +32,7 @@ void ProjectParserIpynb::Parser(const std::vector<ProjectExplorerInfo> &projectI
     if (CmdUtil::ExecuteCmdWithResult("jupyter-lab --version", jupyterVersionResult)
         && !jupyterVersionResult.empty()) {
         IpynbImportResponse(request, projectInfos[0], true);
-        JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, path);
+        JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, TraceIdManager::GetTraceId(), path);
     } else {
         SendParseFailEvent("", "", "Jupyter env is not ready.");
         IpynbImportResponse(request, projectInfos[0], false);

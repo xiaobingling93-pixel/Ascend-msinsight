@@ -38,7 +38,7 @@ bool TraceFileSimulationParser::Parse(const std::vector<std::string> &filePathAr
 {
     ServerLog::Info("start parse. file id:", rankId);
     ParserStatusManager::Instance().SetParserStatus(rankId, ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, filePathArr, rankId, fileId);
+    threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), filePathArr, rankId, fileId);
     return true;
 }
 
@@ -89,11 +89,11 @@ bool TraceFileSimulationParser::InitParser(const std::vector<std::string> &fileP
         }
 
         for (const auto &pos : splitFile) {
-            auto future = instance.threadPool->AddTask(ParseTask, filePath, rankId, fileId, pos);
+            auto future = instance.threadPool->AddTask(ParseTask, TraceIdManager::GetTraceId(), filePath, rankId, fileId, pos);
             futures->emplace_back(std::move(future));
         }
     }
-    instance.threadPool->AddTask(EndParseTask, rankId, filePathArr, futures, start, fileId);
+    instance.threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankId, filePathArr, futures, start, fileId);
     return true;
 }
 

@@ -453,6 +453,7 @@ void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorer
     auto clusterParse = [isCluster, projectType, this, &projectInfos](const std::shared_ptr<ParseFileInfo> &cluster) {
         ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(
             ClusterProcess,
+            TraceIdManager::GetTraceId(),
             cluster,
             isCluster,
             projectType,
@@ -460,7 +461,8 @@ void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorer
             projectInfos[0].projectName);
     };
     std::for_each(clusterFilePath.begin(), clusterFilePath.end(), clusterParse);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ParsePostProcess, clusterFilePath);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ParsePostProcess,
+        TraceIdManager::GetTraceId(), clusterFilePath);
 }
 // LCOV_EXCL_BR_STOP
 

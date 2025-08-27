@@ -12,6 +12,15 @@ namespace Module {
 using namespace Dic::Protocol;
 using namespace Dic::Server;
 
+bool ModuleRequestHandler::HandleRequestEntrance(std::unique_ptr<Request> requestPtr)
+{
+    unsigned int id = requestPtr->id;
+    ServerLog::Info("Start handle request, module = ", moduleName, ", command = ", command, ", id = ", id);
+    bool res = HandleRequest(std::move(requestPtr));
+    ServerLog::Info("End handle request, module = ", moduleName, ", command = ", command, ", id = ", id);
+    return res;
+}
+
 const std::string ModuleRequestHandler::GetError()
 {
     return error;

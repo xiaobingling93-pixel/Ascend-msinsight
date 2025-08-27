@@ -102,7 +102,7 @@ bool KernelParse::Parse(const RankEntry &rankEntry)
     SetParseCallBack();
     Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + rankEntry.rankId,
                                                               Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, kernelFiles, rankEntry.rankId, rankEntry.fileId);
+    threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), kernelFiles, rankEntry.rankId, rankEntry.fileId);
     return true;
 }
 
@@ -515,7 +515,7 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths,
     // 初始化解析状态
     Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + rankId,
                                                               Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, kernelFile, rankId, fileId);
+    threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), kernelFile, rankId, fileId);
     return true;
 }
 

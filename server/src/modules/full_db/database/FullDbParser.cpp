@@ -47,7 +47,7 @@ bool FullDbParser::Parse(const std::vector<std::string> &rankIds, const std::str
         Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::INIT);
     }
     auto &instance = FullDbParser::Instance();
-    instance.threadPool->AddTask(InitOpenDb, fileId, rankIds);
+    instance.threadPool->AddTask(InitOpenDb, TraceIdManager::GetTraceId(), fileId, rankIds);
     return true;
 }
 
@@ -101,10 +101,12 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
     if (type != FileType::LEAKS) {
         BuildProfilingInitTask(futures, dbId, threadPool);
-        threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
+        threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankIds, filePath, futures, start);
         for (const auto &item: rankIds) {
             database->UpdateStartTime(item);
         }
+    } else {
+        threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankIds, filePath, futures, start);
     }
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
@@ -139,14 +141,14 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
             return;
         }
         database->InitStringsCache();
-    }));
+    }, TraceIdManager::GetTraceId()));
     futures->emplace_back(pool->AddTask([dbId]() {
         std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
         if (!database) {
             return;
         }
         database->InitMetaDataInfo();
-    }));
+    }, TraceIdManager::GetTraceId()));
     futures->emplace_back(pool->AddTask([dbId]() {
         std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
         if (!database) {
@@ -156,21 +158,21 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
             return;
         }
         database->UpdateAllDepth();
-    }));
+    }, TraceIdManager::GetTraceId()));
     futures->emplace_back(pool->AddTask([dbId]() {
         std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
         if (!database) {
             return;
         }
         database->UpdateWaitTime();
-    }));
+    }, TraceIdManager::GetTraceId()));
     futures->emplace_back(pool->AddTask([dbId]() {
         std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
         if (!database) {
             return;
         }
         database->InitConnectionCats();
-    }));
+    }, TraceIdManager::GetTraceId()));
     futures->emplace_back(pool->AddTask([dbId]() {
         std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
         if (!database) {
@@ -180,7 +182,7 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
             return;
         }
         database->GenerateOverlapAnalysis();
-    }));
+    }, TraceIdManager::GetTraceId()));
 }
 
 void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,

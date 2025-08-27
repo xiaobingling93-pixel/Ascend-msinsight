@@ -56,8 +56,6 @@ void ModuleManager::OnDispatchModuleRequest(std::unique_ptr<Request> request)
         ServerLog::Error("Invalid session found when dispatch");
         return;
     }
-    ServerLog::Info("Dispatch to module, module = ", moduleName,
-                    ", command = ", request->command, ", request id = ", request->id);
     moduleMap.at(moduleName)->OnRequest(std::move(request));
 }
 } // end of namespace Module

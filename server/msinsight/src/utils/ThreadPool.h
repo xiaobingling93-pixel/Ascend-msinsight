@@ -13,6 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "SafeQueue.h"
+#include "TraceIdManager.h"
 
 namespace Dic {
 class ThreadPool {
@@ -32,14 +33,17 @@ public:
      * @return the future of the result, future.get() throw exception of the task.
      */
     template<typename F, typename ...Args>
-    auto AddTask(F &&f, Args &&...args) -> std::future<decltype(f(args...))>
+    auto AddTask(F &&f, const std::string &parentTraceId, Args &&...args) -> std::future<decltype(f(args...))>
     {
         std::function<decltype(f(args...))()> func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
         auto task = std::make_shared<std::packaged_task<decltype(f(args...))()>>(func);
-        std::function<void()> warpperFunc = [task]() {
+        std::function<void()> wrapperFunc = [task, parentTraceId]() {
+            std::string curTraceId = TraceIdManager::GenerateTraceId();
+            std::string traceId = parentTraceId == "" ? curTraceId : parentTraceId + "_" + curTraceId;
+            TraceIdManager::SetTraceId(traceId);
             (*task)();
         };
-        taskQueue.Push(warpperFunc);
+        taskQueue.Push(wrapperFunc);
         taskCv.notify_one();
         return task->get_future();
     }

@@ -110,7 +110,8 @@ void ParserIE::ParserTraceData(const std::unordered_map<std::string, std::string
                                                     rankEntry.second,
                                                     rankEntry.second);
     }
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess,
+                                                                                 TraceIdManager::GetTraceId());
 }
 
 void ParserIE::SetParseCallBack(FileParser &fileParser)

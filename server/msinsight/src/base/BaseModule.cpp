@@ -29,10 +29,11 @@ void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
     auto &requestHandler = requestHandlerMap.at(command);
     if (requestHandler->IsAsync()) {
         threadPool.AddTask([&requestHandler, requestPtr = request.release()]() {
-            requestHandler->HandleRequest(std::unique_ptr<Protocol::Request>(requestPtr));
-        });
+            requestHandler->HandleRequestEntrance(std::unique_ptr<Protocol::Request>(requestPtr));
+            }, "");
     } else {
-        requestHandler->HandleRequest(std::move(request));
+        TraceIdManager::SetTraceId(TraceIdManager::GenerateTraceId());
+        requestHandler->HandleRequestEntrance(std::move(request));
     }
 };
 } // end of namespace Module

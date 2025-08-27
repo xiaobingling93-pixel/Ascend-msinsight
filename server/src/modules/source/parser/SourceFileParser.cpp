@@ -77,7 +77,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths,
     file.close();
     ConvertToData();
     Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, rankId, fileId);
+    threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), rankId, fileId);
     return true;
 }
 
@@ -195,10 +195,10 @@ bool SourceFileParser::InitParser(const std::string &rankId, const std::string &
 
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &pos : adjustTraceFilePos) {
-        auto future = instance.threadPool->AddTask(ParseTask, rankId, pos, fileId);
+        auto future = instance.threadPool->AddTask(ParseTask, TraceIdManager::GetTraceId(), rankId, pos, fileId);
         futures->emplace_back(std::move(future));
     }
-    instance.threadPool->AddTask(EndParseTask, rankId, futures, fileId);
+    instance.threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankId, futures, fileId);
     return true;
 }
 

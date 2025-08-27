@@ -37,7 +37,8 @@ bool QueryFwdBwdTimelineHandler::HandleRequest(std::unique_ptr<Protocol::Request
         response.body.rankLists.push_back(rankId);
         PipelineFwdBwdTimelineByRank rank = {rankId, {}, {}};
         dataMap.emplace(rankId, rank);
-        threadPool.AddTask(QueryFwdBwdTimelineByRank, rankId, request.params.stepId, request.params.clusterPath);
+        threadPool.AddTask(QueryFwdBwdTimelineByRank, TraceIdManager::GetTraceId(),
+                           rankId, request.params.stepId, request.params.clusterPath);
     }
 
     threadPool.WaitForAllTasks();

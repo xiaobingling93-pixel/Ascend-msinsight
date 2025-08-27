@@ -241,6 +241,7 @@ void ProjectParserJson::ParserTraceData(const std::map<std::string, RankEntry> &
     auto clusterParse = [projectTypeEnum, isShowCluster, &projectInfos, this](const auto &item) {
         Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(
             ProjectParserJson::ClusterProcess,
+            TraceIdManager::GetTraceId(),
             item,
             projectTypeEnum,
             isShowCluster,
@@ -248,7 +249,8 @@ void ProjectParserJson::ParserTraceData(const std::map<std::string, RankEntry> &
             projectInfos[0].projectName);
     };
     std::for_each(clusterInfos.begin(), clusterInfos.end(), clusterParse);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ParsePostProcess, clusterInfos);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ParsePostProcess,
+        TraceIdManager::GetTraceId(), clusterInfos);
 }
 
 bool ProjectParserJson::isSimulation(std::string filePath)
@@ -315,7 +317,7 @@ void ProjectParserJson::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInf
             parseClusterResult = PARSE_RESULT_OK;
             dataPathToDbMap[clusterInfo->parseFilePath].push_back(clusterFileParser.GetClusterDbPath());
             ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
-                                                                                clusterFileParser);
+                TraceIdManager::GetTraceId(), clusterFileParser);
         } else {
             ServerLog::Warn("Failed to parse cluster files.");
             parseClusterResult = PARSE_RESULT_FAIL;
@@ -550,7 +552,7 @@ void ProjectParserJson::ParserClusterBaseline(const Global::ProjectExplorerInfo 
             [](ClusterFileParser parser) -> bool {
                 return parser.ParseClusterStep2Files();
             },
-            clusterFileParser);
+            TraceIdManager::GetTraceId(), clusterFileParser);
     }
 }
 // LCOV_EXCL_BR_STOP
@@ -627,7 +629,8 @@ void ProjectParserJson::ParseBaselineTraceFile(const std::vector<std::string> &j
     if (!Memory::MemoryParse::Instance().Parse(std::vector<std::string>(), rankId, filePath, fileId)) {
         ServerLog::Warn("Failed to parse baseline memory files.");
     }
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess,
+        TraceIdManager::GetTraceId());
 }
 
 void ProjectParserJson::ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,

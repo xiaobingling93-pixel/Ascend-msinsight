@@ -48,7 +48,7 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths,
     Timeline::DataBaseManager::Instance().CreateMemoryDataBase(rankId, dbPath);
     Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + rankId,
                                                               Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, memoryFilePairs, rankId);
+    threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), memoryFilePairs, rankId);
     return true;
 }
 
@@ -530,7 +530,7 @@ bool MemoryParse::Parse(const RankEntry &rankEntry)
     for (const auto& memoryFile : memoryFiles) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + memoryFile.first,
                                                                   Timeline::ParserStatus::INIT);
-        threadPool->AddTask(PreParseTask, memoryFile.second, memoryFile.first);
+        threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), memoryFile.second, memoryFile.first);
     }
     return true;
 }

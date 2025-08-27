@@ -9,6 +9,7 @@ class ModuleRequestHandler {
 public:
     ModuleRequestHandler() = default;
     virtual ~ModuleRequestHandler() = default;
+    bool HandleRequestEntrance(std::unique_ptr<Request> requestPtr);
     virtual const std::string GetError();
     virtual bool HandleRequest(std::unique_ptr<Request> requestPtr) = 0;
     virtual bool IsAsync();

@@ -110,7 +110,7 @@ bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
         threadPool.AddTask([this](std::string rankIdWithHost) {
             QueryPipelineByRankId(rankIdWithHost);
             },
-            rankIdWithHost);
+            TraceIdManager::GetTraceId(), rankIdWithHost);
     }
     threadPool.WaitForAllTasks();
     threadPool.ShutDown();

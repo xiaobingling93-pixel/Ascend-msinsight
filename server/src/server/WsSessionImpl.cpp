@@ -5,6 +5,7 @@
 #include "TimeUtil.h"
 #include "ModuleManager.h"
 #include "ProtocolManager.h"
+#include "TraceIdManager.h"
 #include "WsSessionImpl.h"
 
 namespace Dic {
@@ -182,8 +183,11 @@ void WsSessionImpl::SendResponse(const Protocol::Response &response)
     }
     std::string responseStr = JsonUtil::JsonDump(json.value());
     responseStr = StringUtil::ToUtf8Str(responseStr);
+    std::string traceId = TraceIdManager::GetTraceId();
     // send header + response
-    loop->defer([this, responseStr, response]() {
+    loop->defer([this, responseStr, response, traceId]() {
+        // 发送消息的traceId和调用SendResponse的traceId保持一致
+        TraceIdManager::SetTraceId(traceId);
         bool res = Send(responseStr);
         ServerLog::Info("Send response status: ", res, ", response result: ", response.result, ", command: ",
                         response.command, ", request id = ", response.requestId, ", response id = ", response.id);
@@ -200,8 +204,10 @@ void WsSessionImpl::SendEvent(Protocol::Event &event)
     }
     std::string eventStr = JsonUtil::JsonDump(json.value());
     eventStr = StringUtil::ToUtf8Str(eventStr);
+    std::string traceId = TraceIdManager::GetTraceId();
     // send header + response
-    loop->defer([this, eventStr, event]() {
+    loop->defer([this, eventStr, event, traceId]() {
+        TraceIdManager::SetTraceId(traceId);
         bool res = Send(eventStr);
         ServerLog::Info("Send event status: ", res, ", event result: ", event.result, ", event name:", event.event,
                         ", event id = ", event.id);

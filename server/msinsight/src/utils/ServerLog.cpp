@@ -1,6 +1,7 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 
 #include "ServerLog.h"
+#include "TraceIdManager.h"
 #include "LogUtil.h"
 
 namespace Dic::Server {
@@ -60,8 +61,13 @@ void ServerLog::SetCurrentLogPath(const std::string& path)
 const std::string ServerLog::GetLogHead(const LogLevel &level)
 {
     std::string head;
+    std::string traceId = TraceIdManager::GetTraceId();
     head.append(LogPrefix::Instance().TimePrefix()).append("|")
-        .append(LogPrefix::Instance().LevelPrefix(level)).append(" ");
+        .append(LogPrefix::Instance().LevelPrefix(level));
+    if (!traceId.empty()) {
+        head.append("[TraceId=").append(traceId).append("]");
+    }
+    head.append(" ");
     return head;
 }
 void ServerLog::RecordImpl(const LogLevel &level, std::vector<std::string> &logStrList)
