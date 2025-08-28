@@ -31,6 +31,17 @@ const nsToMs = (ns: number): number => {
     return ns / 1000000;
 };
 
+const getEmphasisText = (value: string): string => {
+    const maxLength = 18;
+    const head = 13;
+    const tail = 4;
+
+    if (value.length > maxLength) {
+        return value.substring(0, head) + '...' + value.substring(value.length - tail);
+    }
+    return value;
+};
+
 // Host 机器别名映射（由于长度原因，y轴刻度显示别名）
 const hostAliasMap: Map<string, string> = new Map();
 
@@ -213,7 +224,7 @@ const renderMicroBatchRect: CustomSeriesRenderItem = (_, api) => {
 
 const baseOptions: EChartsOption = {
     grid: {
-        left: 100,
+        left: 140,
         right: 100,
     },
     toolbox: {
@@ -243,7 +254,7 @@ const baseOptions: EChartsOption = {
                 </div>
                 <div class="row">
                     <div class="label">Host</div>
-                    <div class="value">${safeStr(params.value[valueMap.host])}</div>
+                    <div class="value">${safeStr(params.value[valueMap.host]) || '-'}</div>
                 </div>
                 <div class="row">
                     <div class="label">Rank</div>
@@ -299,7 +310,8 @@ const baseOptions: EChartsOption = {
                 const result = splitLabelByRank(value);
                 const host = result?.before ? `${hostAliasMap.get(result.before)}` : '';
                 const rank = result?.after ? `Rank ${result?.after}` : '';
-                return `${host} ${rank}`;
+
+                return getEmphasisText(`${host} ${rank}`);
             },
         },
     },
