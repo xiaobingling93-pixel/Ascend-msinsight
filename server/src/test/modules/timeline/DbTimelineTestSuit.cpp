@@ -265,7 +265,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
 
     auto counterData = std::vector<Protocol::UnitCounterData>();
     database->QueryUnitCounter(params, minTimestamp, counterData);
-    EXPECT_EQ(counterData.size(), 1);
+    EXPECT_EQ(counterData.size(), 2);
 
     params.pid = "LLC";
     params.metaType = "LLC";
@@ -273,7 +273,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
     params.threadId = "LLC 0 read/Hit Rate";
     counterData.clear();
     database->QueryUnitCounter(params, minTimestamp, counterData);
-    EXPECT_EQ(counterData.size(), 3); // size = 3
+    EXPECT_EQ(counterData.size(), 4); // size = 4
 
     params.pid = "DDR";
     params.metaType = "DDR";
@@ -281,7 +281,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
     params.threadId = "Read";
     counterData.clear();
     database->QueryUnitCounter(params, minTimestamp, counterData);
-    EXPECT_EQ(counterData.size(), 5); // size = 5
+    EXPECT_EQ(counterData.size(), 6); // size = 6
 
     params.metaType = "Ascend Hardware";
     EXPECT_EQ(database->QueryUnitCounter(params, minTimestamp, counterData), false);

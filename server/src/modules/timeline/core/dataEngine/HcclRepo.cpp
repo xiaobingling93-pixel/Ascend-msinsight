@@ -273,6 +273,7 @@ void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomai
     std::string dataTypeName = QueryDataTypeName(sliceQuery, targetTaskInfo);
     std::string linkTypeName = QueryLinkTypeName(sliceQuery, targetTaskInfo);
     std::string rdmaTypeName = QueryRdmaTypeName(sliceQuery, targetTaskInfo);
+    std::string bandwidth = QueryBandwidth(sliceQuery, targetPO);
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::NOTIFY_ID, notifyId, allocator);
@@ -290,9 +291,10 @@ void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomai
         JsonUtil::AddConstMember(json, globalDstRank, GetRealRankByLocalRank(targetTaskInfo.dstRank, ranks), allocator);
     }
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::TRANSPORT_TYPE, transPortName, allocator);
-    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::SIZE, size, allocator);
+    JsonUtil::AddConstMember(json, std::string(CommucationTaskInfoColumn::SIZE) + "(Byte)", size, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::DATA_TYPE, dataTypeName, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::LINK_TYPE, linkTypeName, allocator);
+    JsonUtil::AddConstMember(json, std::string(CommucationTaskInfoColumn::BANDWIDTH) + "(B/s)", bandwidth, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::RDMA_TYPE, rdmaTypeName, allocator);
     competeSliceDomain.args = JsonUtil::JsonDump(json);
 }
@@ -315,6 +317,19 @@ std::optional<ParallelGroupInfo> HcclRepo::GetGroupInfoByGroupNameId(const uint6
         return std::nullopt;
     }
     return MetaDataCacheManager::Instance().GetParallelGroupInfo(groupNameItr->second);
+}
+
+std::string HcclRepo::QueryBandwidth(const SliceQuery &sliceQuery, const TaskPO &targetPO)
+{
+    std::vector<CommucationTaskInfoPO> commucationTaskInfoPOs =
+            commucationTaskInfoTable->Select(CommucationTaskInfoColumn::BANDWIDTH)
+            .Eq(CommucationTaskInfoColumn::GLOBAL_TASK_ID, targetPO.globalTaskId)
+            .ExcuteQuery(sliceQuery.rankId);
+    std::string bandwidth;
+    if (!std::empty(commucationTaskInfoPOs)) {
+        bandwidth = std::to_string(commucationTaskInfoPOs[0].bandwidth);
+    }
+    return bandwidth;
 }
 
 std::string HcclRepo::QueryRdmaTypeName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo)

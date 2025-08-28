@@ -1170,7 +1170,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenPython)
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like ?)  SELECT api.ROWID as id, 'pytorch' as "
         "tid, api.globalTid as pid, api.startNs as timestamp, api.endNs as endTime, api.depth from "
         "PYTORCH_API  api join ids on ids.id = api.name WHERE api.globalTid = ? AND api.startNs >= ? AND "
-        "api.endNs <= ?  ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+        "api.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenCann)
@@ -1189,7 +1189,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenCann)
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like '%'||?||'%')  SELECT cann.connectionId as "
         "id, cann.globalTid as pid, cann.type as tid, cann.startNs as timestamp, cann.endNs as endTime, "
         "cann.depth from CANN_API  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND "
-        "startNs >= ? AND endNs <= ?  ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+        "startNs >= ? AND endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenMstx)
@@ -1208,7 +1208,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenMstx)
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT "
         "mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, mstx.endNs as "
         "endTime, mstx.depth from MSTX_EVENTS  mstx join ids on ids.id = mstx.message WHERE globalTid = ? "
-        "AND startNs >= ? AND endNs <= ?  ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+        "AND startNs >= ? AND endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHardWare)
@@ -1232,7 +1232,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHardWare)
         "join MSTX_EVENTS m on  (m.connectionId = main.connectionId and  m.connectionId != 4294967295 ) left join "
         "COMMUNICATION_SCHEDULE_TASK_INFO s on main.globalTaskId = s.globalTaskId WHERE main.deviceId = ? AND "
         "main.streamId = ? AND main.startNs >= ? AND main.endNs <= ?) hadware  join ids on ids.id = hadware.name  "
-        "ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+        "ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHccl)
@@ -1251,7 +1251,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHccl)
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT op.opId "
         "as id, 'HCCL' as pid, op.groupName||'group' as tid, op.startNs as timestamp, op.endNs as endTime, "
         "0 as depth from COMMUNICATION_OP op join ids on id = op.opName WHERE op.groupName = ? AND "
-        "op.startNs >= ? AND op.endNs <= ?  ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+        "op.startNs >= ? AND op.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenPython)
@@ -1362,7 +1362,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHcclPlane)
         "'HCCL' as pid, ci.groupName||'_'||ci.planeId as tid, main.startNs as timestamp, main.endNs as endTime, "
         "main.depth from TASK main join COMMUNICATION_TASK_INFO ci on ci.globalTaskId = main.globalTaskId join ids on "
         "ids.id = ci.taskType WHERE main.deviceId = ? and ci.groupName = ? AND ci.planeId = ? AND main.startNs >= ? "
-        "AND main.endNs <= ? ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+        "AND main.endNs <= ? ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, ProcessByteAlignmentAnalyzerDataForDbTest)

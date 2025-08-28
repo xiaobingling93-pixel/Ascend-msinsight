@@ -28,6 +28,7 @@ const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWA
                                                    { PROCESS_TYPE::SAMPLE_PMU, "SAMPLE_PMU_TIMELINE" },
                                                    { PROCESS_TYPE::HCCS, "HCCS" },
                                                    { PROCESS_TYPE::DDR, "DDR" },
+                                                   { PROCESS_TYPE::QOS, "QOS" },
                                                    { PROCESS_TYPE::ACC_PMU, "ACC_PMU" },
                                                    { PROCESS_TYPE::AI_CORE, "AICORE_FREQ" },
                                                    { PROCESS_TYPE::NPU_MEM, "NPU_MEM" },

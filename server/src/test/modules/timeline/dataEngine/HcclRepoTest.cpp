@@ -548,9 +548,9 @@ TEST_F(HcclRepoTest, TestPlaneQueryGroupSliceDetailInfo)
     EXPECT_EQ(slice.endTime, expectEnd);
     const std::string expectArgs =
         "{\"notifyId\":\"0\",\"streamId\":\"16\",\"taskId\":\"3730\",\"contextId\":\"4294967295\",\"taskType\":"
-        "\"kkkk\",\"srcRank\":\"1\",\"dstRank\":\"2\",\"transportType\":\"LOCAL\",\"size\":\"40\",\"dataType\":"
+        "\"kkkk\",\"srcRank\":\"1\",\"dstRank\":\"2\",\"transportType\":\"LOCAL\",\"size(Byte)\":\"40\",\"dataType\":"
         "\"INT16\","
-        "\"linkType\":\"PCIE\",\"rdmaType\":\"RDMA_SEND_OP\"}";
+        "\"linkType\":\"PCIE\",\"bandwidth(B/s)\":\"\",\"rdmaType\":\"RDMA_SEND_OP\"}";
     EXPECT_EQ(slice.args, expectArgs);
 }
 
@@ -593,8 +593,8 @@ TEST_F(HcclRepoTest, TestPlaneQueryGroupSliceDetailInfoWithGroupInfo)
     const std::string expectArgs =
             "{\"notifyId\":\"0\",\"streamId\":\"16\",\"taskId\":\"3730\",\"contextId\":\"4294967295\",\"taskType\":"
             "\"kkkk\",\"srcRank\":\"1\",\"dstRank\":\"2\",\"globalSrcRank\":\"5\",\"globalDstRank\":\"6\","
-            "\"transportType\":\"LOCAL\",\"size\":\"40\",\"dataType\":"
-            "\"INT16\",\"linkType\":\"PCIE\",\"rdmaType\":\"RDMA_SEND_OP\"}";
+            "\"transportType\":\"LOCAL\",\"size(Byte)\":\"40\",\"dataType\":"
+            "\"INT16\",\"linkType\":\"PCIE\",\"bandwidth(B/s)\":\"\",\"rdmaType\":\"RDMA_SEND_OP\"}";
     EXPECT_EQ(slice.args, expectArgs);
     MetaDataCacheManager::Instance().Clear();
 }

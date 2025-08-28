@@ -145,4 +145,37 @@ void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(
         result.children.emplace_back(group);
     }
 }
+
+std::vector<UnitCounterData> VirtualTraceDatabase::DownSampleUnitCounterData(const std::vector<UnitCounterData>& dataList, size_t targetSize)
+{
+    if (targetSize == 0) {
+        return dataList;
+    }
+
+    std::vector<UnitCounterData> sampledData;
+    if (dataList.empty()) {
+        return sampledData;
+    }
+
+    size_t totalSize = dataList.size();
+    if (totalSize <= targetSize) {
+        // 数据量本来就小，不用采样
+        return dataList;
+    }
+
+    // 每个桶的步长
+    double step = static_cast<double>(totalSize) / targetSize;
+
+    sampledData.reserve(targetSize);
+
+    for (size_t i = 0; i < targetSize; ++i) {
+        size_t index = static_cast<size_t>(i * step);
+        if (index >= totalSize) {
+            index = totalSize - 1;
+        }
+        sampledData.push_back(dataList[index]);
+    }
+
+    return sampledData;
+}
 }

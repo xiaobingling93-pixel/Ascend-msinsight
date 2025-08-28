@@ -454,12 +454,10 @@ std::vector<std::string> ProjectParserBase::SearchDeviceInfo(const std::string &
             break;
         }
     }
-    if (profDir.empty()) {  // 未找到PROF目录
-        return {};
-    }
     std::smatch match;
     std::vector<std::string> res;
-    auto subDir = FileUtil::GetSubDirs(FileUtil::SplicePath(searchPath, profDir));
+    auto subDir = profDir.empty() ? FileUtil::GetSubDirs(searchPath) :
+            FileUtil::GetSubDirs(FileUtil::SplicePath(searchPath, profDir));
     for (const auto &dir: subDir) {
         std::string fileName = dir;
         if (!std::regex_search(fileName, match, deviceRegex)) {

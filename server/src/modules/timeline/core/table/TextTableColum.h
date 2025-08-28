@@ -111,6 +111,7 @@ constexpr std::string_view TRANSPORT_TYPE = "transportType";
 constexpr std::string_view SIZE = "size";
 constexpr std::string_view DATA_TYPE = "dataType";
 constexpr std::string_view LINK_TYPE = "linkType";
+constexpr std::string_view BANDWIDTH = "bandwidth";
 constexpr std::string_view OP_ID = "opId";
 }
 

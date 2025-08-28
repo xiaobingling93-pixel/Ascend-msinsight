@@ -1142,6 +1142,7 @@ bool TextTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, ui
         }
     }
     if (!dataList.empty()) {
+        dataList = DownSampleUnitCounterData(dataList, counterSampleSize);
         dataList.emplace_back(unitCounterData);
     }
     return true;

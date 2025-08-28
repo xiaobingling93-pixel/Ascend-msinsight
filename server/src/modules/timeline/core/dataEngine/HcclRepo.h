@@ -71,6 +71,8 @@ private:
 
     std::string QueryRdmaTypeName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo);
 
+    std::string QueryBandwidth(const SliceQuery &sliceQuery, const TaskPO &targetPO);
+
     void SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
         const TaskPO &targetPO, CommucationTaskInfoPO &targetTaskInfo);
 

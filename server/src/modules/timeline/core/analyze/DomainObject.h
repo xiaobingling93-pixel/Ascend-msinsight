@@ -139,6 +139,7 @@ enum class PROCESS_TYPE {
     STARS_SOC,
     NPU_MEM,
     HCCS,
+    QOS,
     PCIE,
     NIC,
     SAMPLE_PMU,

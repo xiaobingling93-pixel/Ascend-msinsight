@@ -22,7 +22,7 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
         PROCESS_TYPE::HOST_DISK_USAGE, PROCESS_TYPE::HOST_MEM_USAGE, PROCESS_TYPE::HOST_NETWORK_USAGE};
     const std::vector<PROCESS_TYPE> deviceCounterEvents = {PROCESS_TYPE::AI_CORE, PROCESS_TYPE::ACC_PMU,
         PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC, PROCESS_TYPE::NPU_MEM, PROCESS_TYPE::HBM, PROCESS_TYPE::LLC,
-        PROCESS_TYPE::SAMPLE_PMU, PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS};
+        PROCESS_TYPE::SAMPLE_PMU, PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS, PROCESS_TYPE::QOS};
     if (std::find(hostCounterEvents.begin(), hostCounterEvents.end(),
                   Timeline::TraceDatabaseHelper::GetProcessType(params.metaType)) != hostCounterEvents.end()) {
         try {
@@ -44,10 +44,18 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
         ServerLog::Error("Counter event type % is not supported.", params.metaType);
         return false;
     }
+    std::string curArgs;
+    UnitCounterData unitCounterData;
     while (resultSet->Next()) {
-        Protocol::UnitCounterData unitCounterData;
         unitCounterData.timestamp = resultSet->GetUint64("startTime");
         unitCounterData.valueJsonStr = resultSet->GetString("args");
+        if (unitCounterData.valueJsonStr != curArgs) {
+            dataList.emplace_back(unitCounterData);
+            curArgs = unitCounterData.valueJsonStr;
+        }
+    }
+    if (!dataList.empty()) {
+        dataList = DownSampleUnitCounterData(dataList, counterSampleSize);
         dataList.emplace_back(unitCounterData);
     }
     return true;

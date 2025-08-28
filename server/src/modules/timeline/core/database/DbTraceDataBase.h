@@ -82,7 +82,6 @@ public:
     bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                           std::vector<Protocol::UnitCounterData> &dataList) override;
-
     bool QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
                                     Protocol::SummaryStatisticsBody &responseBody) override;
     bool QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,

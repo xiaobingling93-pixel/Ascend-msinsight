@@ -358,15 +358,16 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
             return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId, requestParams.startTime,
                                 requestParams.endTime);
         case PROCESS_TYPE::CANN_API:
-            sql = "with constValue as (select ? as minTime, ? as pid, ? as startTime, ? as endTime) "
-                  "SELECT startNs - minTime as start_time, endNs - startNs as duration, endNs - minTime as end_time "
-                  "    FROM " + TABLE_CANN_API + " join constValue WHERE globalTid = pid "
-                  " AND start_time >= startTime AND start_time <= endTime "
-                  " UNION SELECT startNs -minTime as start_time,endNs - startNs as duration,"
-                  "    endNs - minTime as end_time from  " + TABLE_API + " join constValue "
-                  " WHERE globalTid = pid AND start_time >= startTime AND start_time <= endTime ORDER BY start_time;";
-            return ExecuteQuery(stmt, sql, minTimestamp, requestParams.processId,
-                                requestParams.startTime, requestParams.endTime);
+            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                  "    FROM " + TABLE_CANN_API + " WHERE globalTid = ? "
+                  " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
+                  " UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
+                  "    endNs - ? as end_time from  " + TABLE_API +
+                  " WHERE globalTid = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
+            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
+                                requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
+                                minTimestamp, minTimestamp, requestParams.processId,
+                                requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
         case PROCESS_TYPE::MS_TX:
             sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time"
                   " from " + TABLE_MSTX_EVENTS + " WHERE globalTid = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
@@ -1562,7 +1563,7 @@ std::string TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(const Search
         }
     }
     sql = sql + StringUtil::join(sqls, " UNION ALL ");
-    std::string orderBy = " ORDER BY timestamp DESC  LIMIT 1 OFFSET ?";
+    std::string orderBy = " ORDER BY timestamp ASC LIMIT 1 OFFSET ?";
     sql += orderBy;
     return sql;
 }
@@ -1888,12 +1889,12 @@ std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact,
 std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
     const std::string &path)
 {
-    const std::string order = "descend";
+    const std::string order = "ascend";
     const std::string orderByField = "timestamp";
     std::string sql;
     std::string nameMatch = " select id from STRING_IDS where ";
     std::string orderKey = orderByField == "timestamp" ? "startTime" : orderByField;
-    std::string orderBy = " ORDER BY " + orderKey + (order == "descend" ? " DESC" : "ASC");
+    std::string orderBy = " ORDER BY " + orderKey + (order == "ascend" ? " ASC" : "DESC");
     nameMatch.append(isMatchCase ? " value like " : "lower(value) like lower(");
     nameMatch.append(isMatchExact ? "?" : "'%'||?||'%'");
     nameMatch.append(isMatchCase ? " " : ")");

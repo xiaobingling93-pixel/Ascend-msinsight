@@ -78,4 +78,10 @@ void CommucationTaskInfoTable::OpIdHandle(CommucationTaskInfoPO &commucationTask
 {
     commucationTaskInfoPO.opId = resultSet->GetUint64(CommucationTaskInfoColumn::OP_ID);
 }
+
+void CommucationTaskInfoTable::BandwidthHandle(CommucationTaskInfoPO &commucationTaskInfoPO,
+    const std::unique_ptr<SqliteResultSet> &resultSet)
+{
+    commucationTaskInfoPO.bandwidth = resultSet->GetDouble(CommucationTaskInfoColumn::BANDWIDTH);
+}
 }

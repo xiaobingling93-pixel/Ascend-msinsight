@@ -47,6 +47,7 @@ void CounterEventHelper::RegisterDeviceMap()
     RegisterDeviceNICMap();
     RegisterDevicePCIeMap();
     RegisterDeviceHCCSMap();
+    RegisterDeviceQOSMap();
 }
 
 void CounterEventHelper::RegisterDeviceAICoreFreqMap()
@@ -211,6 +212,12 @@ void CounterEventHelper::RegisterDeviceHCCSMap()
         {"HCCS", "HCCS", "txThroughput", "HCCS/txThroughput", "Bandwidth(B/s)"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::HCCS,
         {"HCCS", "HCCS", "rxThroughput", "HCCS/rxThroughput", "Bandwidth(B/s)"}});
+}
+
+void CounterEventHelper::RegisterDeviceQOSMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::QOS,
+      {"QOS", "QOS", "bandwidth", "{eventName:s}/Bandwidth", "Bandwidth(B/s)"}});
 }
 
 std::string CounterEventHelper::GenerateHostMetadataSQL(const PROCESS_TYPE type)

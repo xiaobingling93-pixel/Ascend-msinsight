@@ -22,6 +22,7 @@ struct CommucationTaskInfoPO {
     uint64_t size = 0;
     uint64_t dataType = 0;
     uint64_t linkType = 0;
+    double bandwidth = 0;
     uint64_t opId = 0;
 };
 class CommucationTaskInfoTable : public Table<CommucationTaskInfoPO> {
@@ -47,6 +48,7 @@ protected:
             { CommucationTaskInfoColumn::SIZE, SizeHandle },
             { CommucationTaskInfoColumn::DATA_TYPE, DataTypeHandle },
             { CommucationTaskInfoColumn::LINK_TYPE, LinkTypeHandle },
+            { CommucationTaskInfoColumn::BANDWIDTH, BandwidthHandle },
             { CommucationTaskInfoColumn::OP_ID, OpIdHandle } };
 
         return assignMap;
@@ -85,6 +87,8 @@ protected:
     static void LinkTypeHandle(CommucationTaskInfoPO &commucationTaskInfoPO,
         const std::unique_ptr<SqliteResultSet> &resultSet);
     static void OpIdHandle(CommucationTaskInfoPO &commucationTaskInfoPO,
+        const std::unique_ptr<SqliteResultSet> &resultSet);
+    static void BandwidthHandle(CommucationTaskInfoPO &commucationTaskInfoPO,
         const std::unique_ptr<SqliteResultSet> &resultSet);
 };
 }

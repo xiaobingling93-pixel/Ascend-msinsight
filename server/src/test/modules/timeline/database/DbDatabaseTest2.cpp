@@ -1085,6 +1085,41 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPUQuerySuccess)
     EXPECT_EQ(args, "{\"B\":28036571136}");
 }
 
+TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenQOSQuerySuccess)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    std::string stringTable = "CREATE TABLE STRING_IDS (id INTEGER, value VARCHAR);";
+    std::string qosTable = "CREATE TABLE QOS (deviceId NUMERIC,eventName NUMERIC,bandwidth NUMERIC,timestampNs NUMERIC)";
+    DatabaseTestCaseMockUtil::CreateTable(db, stringTable);
+    DatabaseTestCaseMockUtil::CreateTable(db, qosTable);
+    DatabaseTestCaseMockUtil::InsertData(db, "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES "
+                                             "(2, 'QoS 0:OTHERS');");
+    DatabaseTestCaseMockUtil::InsertData(db, "INSERT INTO \"main\".\"QOS\" (\"deviceId\", \"eventName\", \"bandwidth\", "
+                                             "\"timestampNs\") VALUES (0, 2, 3611295744, 1750410162487673272);");
+    database.SetDbPtr(db);
+
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::UnitCounterParams requestParams;
+    requestParams.metaType = "QOS";
+    requestParams.threadId = "QoS 0:OTHERS/Bandwidth";
+    const uint64_t expectStartTime = 1750410162487673272;
+    const uint64_t rangeTime = 1000000;
+    requestParams.startTime = expectStartTime - rangeTime;
+    requestParams.endTime = expectStartTime + rangeTime;
+    const uint64_t minTimestamp = 0;
+    const std::string rankId = "0";
+
+    auto resultSet = Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId);
+    resultSet->Next();
+    auto startTime = resultSet->GetUint64("startTime");
+    auto args = resultSet->GetString("args");
+    EXPECT_EQ(startTime, expectStartTime);
+    EXPECT_EQ(args, "{\"Bandwidth(B/s)\":3611295744}");
+}
+
 TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSimple)
 {
     std::recursive_mutex testMutex;
