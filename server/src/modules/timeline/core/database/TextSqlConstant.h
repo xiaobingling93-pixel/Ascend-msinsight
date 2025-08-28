@@ -319,7 +319,7 @@ public:
     static std::string GenerateAclnnQueryTextSql(const Protocol::KernelDetailsParams &params)
     {
         std::string sql =
-            "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration / 1000 as duration, "
+            "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
             "t.pid as pid, t.tid as tid, t.track_id as track_id "
             "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
             "JOIN " + PROCESS_TABLE + " p ON p.pid = t.pid "
@@ -333,7 +333,7 @@ public:
     static std::string GenerateOperatorDispatchQueryTextSql(const Protocol::KernelDetailsParams &params)
     {
         std::string sql =
-            "SELECT s.id AS id, s.name AS name, s.timestamp - ? AS startTime, s.duration / 1000 AS duration, "
+            "SELECT s.id AS id, s.name AS name, s.timestamp - ? AS startTime, s.duration AS duration, "
             "  t.pid AS pid, t.tid AS tid, t.track_id AS track_id "
             "FROM " + SLICE_TABLE + " s "
             "  JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
@@ -365,7 +365,7 @@ public:
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
 
         std::string sql =
-            "SELECT kd.name as name, kd.op_type as type, kd.start_time - ? as startTime, kd.duration as duration, "
+            "SELECT kd.name as name, kd.op_type as type, kd.start_time - ? as startTime, (kd.duration * 1000) as duration, "
             "t.pid as pid, t.tid as tid, t.track_id as track_id, s.id as id, "
             "lower(kd.input_data_types) as input,  lower(kd.output_data_types) as output "
             "FROM " + KERNEL_DETAIL + " kd "
@@ -390,7 +390,7 @@ public:
     {
         std::string sql = "WITH data AS ( "
             "SELECT kd.deviceId, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
-            "s.duration / 1000 as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
+            "s.duration as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
             "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
             "FROM " +
             KERNEL_DETAIL +
@@ -415,7 +415,7 @@ public:
     static std::string QueryAffinityOptimizerTextSql(const std::string &optimizers, const std::string &orderBy,
                                                      const std::string &order)
     {
-        std::string sql = "Select (s.timestamp - ?) as startTime, (s.duration / 1000) as duration, s.name as name, "
+        std::string sql = "Select (s.timestamp - ?) as startTime, s.duration as duration, s.name as name, "
             "t.pid as pid, t.tid as tid, s.id as id, t.track_id as track_id "
             "From " + SLICE_TABLE + " s Join " + THREAD_TABLE + " t ON s.track_id = t.track_id "
             "WHERE s.name IN ( " + optimizers + ") order by " + orderBy + " " + order;

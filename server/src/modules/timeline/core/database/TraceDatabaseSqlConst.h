@@ -239,7 +239,7 @@ public:
     {
         std::string sql =
             "SELECT task.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, "
-            "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
+            "task.startNs - ? as startTime, (task.endNs - task.startNs) as duration, 'Ascend Hardware' as pid, "
             "task.streamId as tid, task.depth as depth "
             "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
             "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
@@ -261,7 +261,7 @@ public:
             "  ca.ROWID as id, "
             "  s.value as name, "
             "  ca.startNs - ? as startTime, "
-            "  (ca.endNs - ca.startNs) / 1000 as duration, "
+            "  (ca.endNs - ca.startNs) as duration, "
             "  ca.globalTid as pid, "
             "  ca.type as tid, "
             "  ca.depth as depth "
@@ -294,7 +294,7 @@ public:
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
 
         std::string sql = "SELECT info.ROWID as id, s2.value as name, s1.value as type, s0.value as unit, "
-            "t.startNs - ? as startTime, (t.endNs - t.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
+            "t.startNs - ? as startTime, (t.endNs - t.startNs) as duration, 'Ascend Hardware' as pid, "
             "t.streamId as tid, t.depth as depth, lower(s3.value) as input, lower(s4.value) as output "
             "FROM COMPUTE_TASK_INFO info "
             "JOIN STRING_IDS s0 ON info.taskType = s0.id "
@@ -320,7 +320,7 @@ public:
     {
         std::string sql = "WITH data AS ( "
             "SELECT info.ROWID as id, task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
-            "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
+            "task.startNs - ? as startTime, (task.endNs - task.startNs) as duration, 'Ascend Hardware' as pid, "
             "task.streamId as tid, task.depth as depth, "
             "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
             "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
@@ -342,7 +342,7 @@ public:
         const std::string &order)
     {
         std::string sql =
-            "SELECT py.ROWID as id, py.startNs - ? as startTime, (py.endNs - py.startNs) / 1000 as duration, "
+            "SELECT py.ROWID as id, py.startNs - ? as startTime, (py.endNs - py.startNs) as duration, "
             "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
             "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
             "WHERE str.value IN (" + optimizers + ") ORDER BY " + orderBy + " " + order;

@@ -37,7 +37,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
                               "Please check the rationality of the data.");
             return false;
         }
-        one.baseInfo.duration = (item.duration - item.timestamp) / THOUSAND; // duration里存储的是end time，前端需要的是us
+        one.baseInfo.duration = item.duration - item.timestamp; // duration里存储的是end time，前端需要的是ns
         one.baseInfo.depth = item.depth;
         one.originAPI = item.type;
         one.replaceAPI = item.metaType;

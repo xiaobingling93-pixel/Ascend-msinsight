@@ -54,13 +54,12 @@ const OperatorDispatch = observer((props: SelectContentViewProps) => {
 
 export const handleAdvisorSelected = async (rowData: BaseSummaryRowItemType, props: BaseSummaryProps): Promise<void> => {
     const queryName = rowData.name ?? rowData.originOptimizer ?? '';
-    const nsDuration = Number((rowData.duration * 1000).toFixed(0));
     const res = await queryOneKernel({
         rankId: rowData.rankId,
         dbPath: rowData.dbPath,
         name: queryName,
         timestamp: rowData.startTime,
-        duration: nsDuration,
+        duration: rowData.duration,
     });
     const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
 
@@ -71,7 +70,7 @@ export const handleAdvisorSelected = async (rowData: BaseSummaryRowItemType, pro
         dbPath: rowData.dbPath,
         timestamp: rowData.startTime,
         depth,
-        duration: nsDuration,
+        duration: rowData.duration,
         name: queryName,
     });
 };

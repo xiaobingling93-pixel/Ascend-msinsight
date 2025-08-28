@@ -130,7 +130,7 @@ export const useKernelDetails = (): TableColumnsType<any> => {
 
 const commonExpertColums: ColumData[] = [
     { title: 'Start Time', dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },
-    { title: 'Duration(us)', dataIndex: 'duration', ...getDefaultColumData('duration') },
+    { title: 'Duration(ns)', dataIndex: 'duration', ...getDefaultColumData('duration') },
     { title: 'Process Id', dataIndex: 'pid', ...getDefaultColumData('pid') },
     { title: 'Thread Id', dataIndex: 'tid', ...getDefaultColumData('tid') },
 ];
