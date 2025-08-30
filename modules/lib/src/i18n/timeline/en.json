@@ -11,6 +11,7 @@
     "Host": "Host Name",
     "Offset": "Offset",
     "All": "All",
+    "Line Warning": "The number of connection types cannot exceed 10. Please cancel some and select again!",
     "None": "None",
     "Card Filter": "Card Filter",
     "Units Filter": "Units Filter",
