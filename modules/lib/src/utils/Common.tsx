@@ -15,6 +15,7 @@ import { AlarmIcon, BulbIcon } from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
 import { KEYS, getShortcutKey, isMac } from './key';
 export { customConsole } from './Console';
+export { Decimal } from './Decimal';
 export {
     BaseContainer,
     MIDescriptions,
