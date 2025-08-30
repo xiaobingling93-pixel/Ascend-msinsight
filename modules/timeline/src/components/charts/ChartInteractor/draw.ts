@@ -596,7 +596,9 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
     ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
     ctx.clip();
     ctx.beginPath();
-    const checkedCategories = session.linkLineCategories;
+    const tempCategories = session.linkLineCategories;
+    const checkedCategories = [...tempCategories];
+    checkedCategories.push(session.ridLineType);
     for (const checkedCategory of checkedCategories) {
         ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(checkedCategory, colorPalette.length)]];
         const rawList = Object.values(session.linkLines).flatMap((list) => list === undefined ? [] : list)

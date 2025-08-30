@@ -20,6 +20,7 @@ import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-conta
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { MoreContainer, StyledMoreCard } from './BottomPanel';
 import { DETAIL_HEADER_HEIGHT_ETC_PX } from './detailViews/SystemView';
+import { runInAction } from 'mobx';
 
 interface DetailProps<T extends Record<string, unknown>> {
     session: Session;
@@ -207,6 +208,10 @@ export const SelectedDataBottomPanel = observer(<T extends Record<string, unknow
     const sliceDetailData = data as AscendSliceDetail;
     const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: 800 });
     const [dataLink, setDataLink] = useState<string>('');
+    runInAction(() => {
+        session.ridLineType = dataLink;
+        session.renderTrigger = !session.renderTrigger;
+    });
     useEffect(() => {
         setDataLink('');
     }, [renderFields]);

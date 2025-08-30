@@ -198,6 +198,11 @@ export class Session {
      * 锁定的泳道
      */
     lockUnit: InsightUnit[] = [];
+
+    /**
+     * 表格点击的连线类型
+     */
+    ridLineType: string = '';
     buttons: Array<FC<{ session: Session }>>;
 
     // set this field with a new matcher to trigger jump-to-target-lane

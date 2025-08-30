@@ -18,7 +18,7 @@ import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
 import { CardMetaData, type HostMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
 import i18n from 'ascend-i18n';
-import { Spin } from 'antd';
+import { message, Spin } from 'antd';
 
 const FilterContainer = styled.div`
     display: flex;
@@ -49,6 +49,19 @@ const categoryMap: { [key: string]: string } = { MsTx: 'MSTX' };
 
 const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCategories, setCheckedCategories }) => {
     const isChecked = checkedCategories.includes(category);
+    if (checkedCategories.length >= 10 && !isChecked) {
+        return (
+            <p style={{ marginBottom: 0 }}>
+                <Checkbox
+                    checked={false}
+                    onChange={(): void => {
+                        message.warning(i18n.t('Line Warning', { ns: 'timeline' }));
+                    }}>
+                    {categoryMap[category] ?? category}
+                </Checkbox>
+            </p>
+        );
+    }
     return (
         <p style={{ marginBottom: 0 }}>
             <Checkbox
@@ -214,45 +227,51 @@ function uniqueLinkLines(arr: CategoryEvents['flowDetailList']): CategoryEvents[
     return [...uniqueLinkLineMap.values()];
 }
 
-const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<string>): UseFetchLinkLines => React.useMemo(() => new Map(
-    displayCategories.map(category => [
-        category,
-        customDebounce(async (session: Session): Promise<CategoryEvents['flowDetailList']> => {
-            const { domainStart, domainEnd } = session.domainRange;
-            const { domain: { timePerPx } } = session;
-            let res: CategoryEvents['flowDetailList'] = [];
-            for (const unit of getCardUnits(session.units)) {
-                if (!unit.isExpanded) {
-                    continue;
-                }
-                const metadata = unit.metadata as ProcessMetaData;
-                const timestampOffset = getTimeOffset(session, metadata);
-                const host = (unit.parent?.metadata as HostMetaData)?.host ?? '';
-                const { dataSource, cardId, dbPath } = metadata;
-                const config = {
-                    dataSource,
-                    host,
-                    category,
-                    timestampOffset,
-                    domainStart,
-                    domainEnd,
-                    timePerPx,
-                };
-                if (cardId === undefined) { continue; }
-                let cardLinkLines: CategoryEvents['flowDetailList'] = [];
-                if (cardId?.endsWith('Host')) {
-                    cardLinkLines = await queryLinkLinesForHostCards(unit, viewedCardIdSet, session, config);
-                } else if (session.isFullDb && (category === 'fwdbwd' || category === 'async_task_queue')) {
+const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<string>, ridLineType: string): UseFetchLinkLines => React.useMemo(() => {
+    const allAisplayCategories = [...displayCategories];
+    if (ridLineType.length > 0 && !allAisplayCategories.includes(ridLineType)) {
+        allAisplayCategories.push(ridLineType);
+    }
+    return new Map(
+        allAisplayCategories.map(category => [
+            category,
+            customDebounce(async (session: Session): Promise<CategoryEvents['flowDetailList']> => {
+                const { domainStart, domainEnd } = session.domainRange;
+                const { domain: { timePerPx } } = session;
+                let res: CategoryEvents['flowDetailList'] = [];
+                for (const unit of getCardUnits(session.units)) {
+                    if (!unit.isExpanded) {
+                        continue;
+                    }
+                    const metadata = unit.metadata as ProcessMetaData;
+                    const timestampOffset = getTimeOffset(session, metadata);
+                    const host = (unit.parent?.metadata as HostMetaData)?.host ?? '';
+                    const { dataSource, cardId, dbPath } = metadata;
+                    const config = {
+                        dataSource,
+                        host,
+                        category,
+                        timestampOffset,
+                        domainStart,
+                        domainEnd,
+                        timePerPx,
+                    };
+                    if (cardId === undefined) { continue; }
+                    let cardLinkLines: CategoryEvents['flowDetailList'] = [];
+                    if (cardId?.endsWith('Host')) {
+                        cardLinkLines = await queryLinkLinesForHostCards(unit, viewedCardIdSet, session, config);
+                    } else if (session.isFullDb && (category === 'fwdbwd' || category === 'async_task_queue')) {
                     // 全量db情况下，只允许 host 下的卡查询 'fwdbwd'、'async_task_queue' 连线，作为 device 的卡不做任何查询操作
-                } else {
-                    cardLinkLines = await fetchLinkLineForCard(viewedCardIdSet, session, { ...config, cardId, dbPath });
+                    } else {
+                        cardLinkLines = await fetchLinkLineForCard(viewedCardIdSet, session, { ...config, cardId, dbPath });
+                    }
+                    res = res.concat(cardLinkLines);
                 }
-                res = res.concat(cardLinkLines);
-            }
-            return uniqueLinkLines(res);
-        }),
-    ]),
-), [displayCategories, viewedCardIdSet]);
+                return uniqueLinkLines(res);
+            }),
+        ]),
+    );
+}, [displayCategories, viewedCardIdSet, ridLineType]);
 
 const useGetCategories = (session: Session, isSuspend: boolean): {categories: string[]; loading: boolean} => {
     const [categories, setCategories] = React.useState<string[]>([]);
@@ -322,6 +341,7 @@ const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: M
                     }
                 });
             });
+        newLines[session.ridLineType] = await fetchLinkLinesMap.get(session.ridLineType)?.(session);
         runInAction(() => {
             session.linkLines = newLines;
             session.renderTrigger = !session.renderTrigger;
@@ -330,14 +350,11 @@ const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: M
     };
 };
 
-const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
+const LinkLineFilterBody = observer(({ session, isSuspend, checkedCategories, setCheckedCategories }:
+{ session: Session; isSuspend: boolean; checkedCategories: string[]; setCheckedCategories: React.Dispatch<React.SetStateAction<string[]>> }): JSX.Element => {
     let { categories: displayCategories, loading } = useGetCategories(session, isSuspend);
-    const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
     const [inputValue, setInput] = React.useState<string>();
-    const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedExpandedCardIdSet);
     const isEmptyData = displayCategories.length === 0;
-    const updateLinkLines = React.useCallback(updateSessionLineData(checkedCategories, fetchLinkLinesMap, session),
-        [checkedCategories, session.viewedExpandedCardIdSet]);
     const onInputChange = action((e: ChangeEvent<HTMLInputElement>): void => {
         const inputContent = e.target.value;
         const trimmedValue = inputContent.trim();
@@ -346,15 +363,6 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
     if (inputValue !== undefined && inputValue.length > 0) {
         displayCategories = displayCategories.filter(str => str.toLowerCase().includes(inputValue.toLowerCase()));
     }
-    const dependencyParam = [session.domainRange.domainStart,
-        session.domainRange.domainEnd,
-        checkedCategories,
-        session?.unitsConfig.offsetConfig.timestampOffset,
-        session.viewedExpandedCardIdSet];
-    const updateLineData = (): void => {
-        updateLinkLines();
-    };
-    React.useEffect(updateLineData, dependencyParam);
     React.useEffect(() => {
         setCheckedCategories([]);
     }, [session.doReset]);
@@ -373,7 +381,13 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
                         />)}
                 </FilterList>
                 {!isEmptyData && <FilterButtonLine>
-                    <Button type={'primary'} onClick={(): void => setCheckedCategories([...displayCategories])}>
+                    <Button type={'primary'} onClick={(): void => {
+                        if (displayCategories.length > 10) {
+                            message.warning(i18n.t('Line Warning', { ns: 'timeline' }));
+                            return;
+                        }
+                        setCheckedCategories([...displayCategories]);
+                    }}>
                         {i18n.t('timeline:All')}
                     </Button>
                     <Button onClick={((): void => setCheckedCategories([]))}>
@@ -391,6 +405,19 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
         isEmphasize: false,
         isSuspend: false,
     });
+    const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
+    const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedExpandedCardIdSet, session.ridLineType);
+    const updateLinkLines = React.useCallback(updateSessionLineData(checkedCategories, fetchLinkLinesMap, session),
+        [checkedCategories, session.viewedExpandedCardIdSet, session.ridLineType]);
+    const updateLineData = (): void => {
+        updateLinkLines();
+    };
+    const dependencyParam = [session.domainRange.domainStart,
+        session.domainRange.domainEnd,
+        checkedCategories,
+        session?.unitsConfig.offsetConfig.timestampOffset,
+        session.viewedExpandedCardIdSet, session.ridLineType];
+    React.useEffect(updateLineData, dependencyParam);
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });
@@ -398,7 +425,12 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
     const ref = useRef<HTMLButtonElement>(null);
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
-            title={<LinkLineFilterBody session={session} isSuspend={customButtonProps.isSuspend} />}
+            title={<LinkLineFilterBody
+                session={session}
+                isSuspend={customButtonProps.isSuspend}
+                checkedCategories={checkedCategories}
+                setCheckedCategories={setCheckedCategories}
+            />}
             trigger="click"
             onOpenChange={onTooltipVisibleChange}
             overlayInnerStyle={{ borderRadius: 2 }}
