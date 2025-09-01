@@ -236,7 +236,7 @@ TEST_F(TimelineProtocolUtilTest, TestAllSuccessEventToJson)
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr =
         "{\"type\":\"event\",\"id\":0,\"event\":\"allPagesSuccess\",\"moduleName\":\"unknown\",\"body\":{"
-        "\"isAllPageParsed\":false,\"cardOffsets\":[{\"cardId\":\"\",\"offset\":0}],\"minTime\":0}}";
+        "\"isAllPageParsed\":false,\"cardOffsets\":[{\"cardId\":\"\",\"offset\":0}],\"minTime\":\"0\"}}";
     EXPECT_EQ(json, jsonStr);
 }
 

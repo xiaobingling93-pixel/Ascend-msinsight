@@ -732,7 +732,7 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
             if (data.isAllPageParsed as boolean) {
                 session.isPending = false;
                 session.isParserLoading = false;
-                session.startTime = data.minTime as number;
+                session.startTime = data.minTime as string;
             }
             session.units.forEach((unit) => {
                 unit.alignStartTimestamp = offsetMap.get((unit.metadata as CardMetaData).cardId);
