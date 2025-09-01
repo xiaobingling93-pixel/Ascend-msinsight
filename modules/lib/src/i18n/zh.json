@@ -159,7 +159,8 @@
     "Search": "搜索",
     "Reset": "重置",
     "Min": "最小值",
-    "Max": "最大值"
+    "Max": "最大值",
+    "limitMinMax": "最小值不能大于最大值"
   },
   "filterColumnName": {
     "Name": "名称",

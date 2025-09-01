@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React from 'react';
+import { message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import { Input, Button, InputNumber } from '../components/index';
 import { SearchOutlined } from '@ant-design/icons';
@@ -56,7 +57,11 @@ const handleRange = (
     setSelectedKeys?: (selectedKeys: string[]) => void,
 ): void => {
     const min = selectedKeys[0] === undefined ? '0' : String(selectedKeys[0]);
-    const max = selectedKeys[1] === undefined ? '0' : String(selectedKeys[1]);
+    const max = selectedKeys[1] === undefined ? '1000000000000' : String(selectedKeys[1]);
+    if (Number(min) > Number(max)) {
+        message.error(i18n.t('buttonText:limitMinMax'));
+        return;
+    }
     setSelectedKeys?.([min, max]);
     confirm();
     state.searchMin = '';
@@ -66,14 +71,16 @@ const handleRange = (
 const handleRangeReset = (
     clearFilters: () => void,
     confirm: FilterDropdownProps['confirm'],
-    selectedKeys: string[],
     dataIndex: string,
+    setSelectedKeys: (selectedKeys: string[]) => void,
 ): void => {
     state.searchText = '';
     state.searchMin = '';
     state.searchMax = '';
+    state.searchedColumn = dataIndex;
     clearFilters();
-    handleRange(selectedKeys as string[], confirm, dataIndex);
+    setSelectedKeys([]);
+    confirm();
 };
 const filterSearch = (params: FilterProps, columnTitle: string) => {
     const { setSelectedKeys, selectedKeys, confirm, clearFilters, dataIndex } = params;
@@ -105,11 +112,11 @@ const filterSearch = (params: FilterProps, columnTitle: string) => {
 };
 const rangeChange = (value: ValueType | null, selectedKeys: FilterProps['selectedKeys'], setSelectedKeys: FilterProps['setSelectedKeys'], key: number) => {
     const newSelectKeys = [...selectedKeys];
-    if (value) {
+    if (value !== null) {
         newSelectKeys[key] = String(value);
-        setSelectedKeys(value ? newSelectKeys : []);
+        setSelectedKeys(newSelectKeys);
     } else {
-        newSelectKeys[key] = '0';
+        newSelectKeys[key] = undefined as unknown as Key;
         setSelectedKeys(newSelectKeys);
     }
 }
@@ -143,7 +150,7 @@ const filterRange = (params: FilterProps) => {
                 size="small" style={{ marginRight: 8 }}
             >{i18n.t('buttonText:Search')}</Button>
             <Button
-                onClick={(): void => clearFilters && handleRangeReset(clearFilters, confirm, selectedKeys as string[], dataIndex)}
+                onClick={(): void => clearFilters && handleRangeReset(clearFilters, confirm, dataIndex, setSelectedKeys)}
                 size="small"
             >{i18n.t('buttonText:Reset')}</Button>
         </ButtonGroup>

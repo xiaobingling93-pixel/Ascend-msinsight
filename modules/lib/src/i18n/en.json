@@ -158,7 +158,8 @@
     "Search": "Search",
     "Reset": "Reset",
     "Min": "Min",
-    "Max": "Max"
+    "Max": "Max",
+    "limitMinMax": "The minimum value cannot exceed the maximum value"
   },
   "filterColumnName": {
     "Name": "Name",
