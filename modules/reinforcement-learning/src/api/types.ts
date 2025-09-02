@@ -23,6 +23,8 @@ export interface TraceDataItem {
 }
 
 export interface GetTraceDataResults {
+    backendType: string;
+    framework: string;
     taskData: TraceDataItem[];
     microBatchData: TraceDataItem[];
     stageTypeList: string[];
