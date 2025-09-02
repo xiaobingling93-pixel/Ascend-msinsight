@@ -20,6 +20,8 @@ export { MIDynamicTooltip as DynamicTooltip } from './MIDynamicTooltip';
 export { MITabs as Tabs } from './MITabs';
 export { ContextMenu } from './MIContextMenu';
 export { Legend } from './Legend';
+export { Text } from './MIText';
+
 export {
     Col,
     Row,

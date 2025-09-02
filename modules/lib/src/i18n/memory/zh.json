@@ -58,6 +58,7 @@
     "Baseline": "基线数据",
     "Comparison": "比对数据",
     "Loading": "正在加载...",
+    "SamplingNotice": "因数据量较大，当前仅显示采样结果；放大至较小范围时，将展示完整数据点。",
     "searchCriteria": {
       "RankId": "卡序号",
       "GroupBy": "分组方式",

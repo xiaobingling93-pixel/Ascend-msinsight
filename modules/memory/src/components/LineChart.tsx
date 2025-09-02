@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import { Text } from 'ascend-components';
 import type { Graph } from '../entity/memory';
 import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
@@ -14,6 +15,8 @@ import { type Theme, useTheme } from '@emotion/react';
 
 // 最大不分页的折线图图例数量，超过该数量图例分页展示
 const MAX_PLAIN_LEGENDS_COUNT = 9;
+// 当数据点数 > 该阈值时启用 LTTB 降采样
+const LTTB_THRESHOLD_POINTS = 200_0000;
 const ChartDesc = styled.div`
     color: ${(props): string => props.theme.textColor};
     margin-bottom: 24px;
@@ -100,8 +103,12 @@ const _getOriginOption = (props: IProps, theme: Theme): echarts.EChartsOption =>
 };
 
 const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.EChartsOption => {
+    const isLargeData = graph.rows.length > LTTB_THRESHOLD_POINTS;
     const lineSerie: echarts.SeriesOption = {
         type: 'line',
+        animation: !isLargeData,
+        showSymbol: !isLargeData,
+        sampling: isLargeData ? 'lttb' : undefined,
         connectNulls: true,
         emphasis: {
             label: {
@@ -132,6 +139,20 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
     return newOption;
 };
 
+const handleDataZoom = (myChart: echarts.ECharts, dz: any, dataLength: number, seriesLength: number): void => {
+    // 估算可视区数据量（按 startValue/endValue 或 start/end 百分比）
+    const startIdx = dz.startValue ?? Math.floor(dataLength * (dz.start ?? 0) / 100);
+    const endIdx = dz.endValue ?? Math.floor(dataLength * (dz.end ?? 100) / 100);
+    const visibleCount = endIdx - startIdx + 1;
+
+    myChart.setOption({
+        series: Array.from({ length: seriesLength }, () => ({
+            sampling: visibleCount < 20000 ? undefined : 'lttb',
+            showSymbol: visibleCount < 5000,
+        })),
+    }, { lazyUpdate: true });
+};
+
 const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefObject<number[]>,
     props: IProps, theme: Theme): void => {
     const { graph, onSelectionChanged } = props;
@@ -149,8 +170,16 @@ const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefOb
         });
     });
 
-    myChart.on('dataZoom', (param: any) => {
-        onSelectionChanged?.(param.batch[0].startValue, param.batch[0].endValue);
+    myChart.on('dataZoom', (params: any) => {
+        const dz = params.batch?.[0];
+        if (!dz) return;
+
+        onSelectionChanged?.(dz.startValue, dz.endValue);
+
+        const dataLength = graph.rows.length;
+        if (dataLength > LTTB_THRESHOLD_POINTS) {
+            handleDataZoom(myChart, dz, dataLength, graph.columns.length);
+        }
     });
 
     myChart.on('restore', () => {
@@ -252,6 +281,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     const { t, i18n } = useTranslation('memory');
     const locale = i18n.language?.slice(0, 2);
     const theme = useTheme();
+    const [isSampling, setIsSampling] = React.useState(false);
 
     React.useLayoutEffect(() => {
         const element = graphRef.current;
@@ -259,6 +289,8 @@ export const LineChart: React.FC<IProps> = (props) => {
             return () => {};
         }
         element.oncontextmenu = (): boolean => { return false; };
+
+        setIsSampling(graph.rows.length > LTTB_THRESHOLD_POINTS);
 
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed', { locale });
         onSelectionChanged?.(0, -1);
@@ -283,6 +315,12 @@ export const LineChart: React.FC<IProps> = (props) => {
 
     return (
         <div>
+            {
+                isSampling && <div className={'mb-6'}>
+                    <Text type={'warning'}>{t('SamplingNotice')}</Text>
+                </div>
+            }
+
             {graph.title !== undefined && graph.title?.length !== 0
                 ? <ChartDesc>{title}{chartCharacter}</ChartDesc>
                 : null

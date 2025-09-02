@@ -13,7 +13,7 @@ import { Graph, MemoryCurve } from '../entity/memory';
 import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
 import { MemorySession, GroupBy } from '../entity/memorySession';
-import { memoryCurveGet } from '../utils/RequestUtils';
+import { memoryCurveGetCancelable } from '../utils/RequestUtils';
 
 const DynamicLineChart = observer(({ session, memorySession, isDark }:
 { session: Session; memorySession: MemorySession; isDark: boolean }) => {
@@ -49,7 +49,9 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
     const onMemoryCurveGet = (): void => {
         setCurveSpin(true);
         const rankValue = memorySession.getSelectedRankValue();
-        memoryCurveGet({ rankId: rankValue.rankInfo.rankId, dbPath: rankValue.dbPath, type: memorySession.groupId, isCompare }).then((resp) => {
+        const { invoke } = memoryCurveGetCancelable;
+
+        invoke({ rankId: rankValue.rankInfo.rankId, dbPath: rankValue.dbPath, type: memorySession.groupId, isCompare }).then((resp) => {
             // Reset the select range to null when rankId changes
             runInAction(() => {
                 memorySession.selectedRange = undefined;
