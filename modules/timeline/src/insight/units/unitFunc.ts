@@ -144,7 +144,7 @@ function checkMetaData<T extends keyof MetaDataEnumType>(unitMetaData: any, para
 
 export function createStatusParam(method: string, params: Record<string, unknown>): string {
     const processParams = params as unknown as ThreadTraceRequest;
-    return `cardId${processParams.cardId}&processId${processParams.processId}&type${processParams.metaType}&s${processParams.startTime}&e${processParams.endTime}`;
+    return `cardId${processParams.cardId}&processId${processParams.processId}&metaType${processParams.metaType}&unitType${processParams.unitType}&s${processParams.startTime}&e${processParams.endTime}`;
 }
 
 export function createCounterParam(method: string, params: Record<string, unknown>): string {

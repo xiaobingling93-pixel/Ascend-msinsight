@@ -324,7 +324,25 @@ bool TraceDatabaseHelper::IsDeviceIdUnique(const std::string &fileId)
     return deviceIdList.size() == 1;
 }
 
-std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryLabelTracesSummary(
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
+    const std::string& rankId, uint64_t minTimestamp)
+{
+    std::string sql;
+    auto processType = GetProcessType(requestParams.metaType);
+    switch (processType) {
+        case PROCESS_TYPE::CANN_API:
+            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                  " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND depth = 0 "
+                  " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
+            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
+                requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
+        default:
+            throw DatabaseException("unsupported type while query label trace summary!");
+    }
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryProcessTracesSummary(
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
     const std::string& rankId, uint64_t minTimestamp)
 {
@@ -359,11 +377,11 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
                                 requestParams.endTime);
         case PROCESS_TYPE::CANN_API:
             sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                  "    FROM " + TABLE_CANN_API + " WHERE globalTid = ? "
+                  " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND depth = 0 "
                   " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
                   " UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
-                  "    endNs - ? as end_time from  " + TABLE_API +
-                  " WHERE globalTid = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
+                  "    endNs - ? as end_time from  " + TABLE_API + " WHERE globalTid = ? AND depth = 0 "
+                  " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
             return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
                                 requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
                                 minTimestamp, minTimestamp, requestParams.processId,
@@ -374,7 +392,18 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
             return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
                                 requestParams.startTime, requestParams.endTime);
         default:
-            throw DatabaseException("unsupported type!");
+            throw DatabaseException("unsupported type while query process trace summary!");
+    }
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
+    const std::string& rankId, uint64_t minTimestamp)
+{
+    if (requestParams.unitType == "label") {
+        return QueryLabelTracesSummary(stmt, requestParams, rankId, minTimestamp);
+    } else {
+        return QueryProcessTracesSummary(stmt, requestParams, rankId, minTimestamp);
     }
 }
 

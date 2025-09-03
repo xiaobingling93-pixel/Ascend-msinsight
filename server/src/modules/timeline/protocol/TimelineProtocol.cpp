@@ -194,6 +194,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesSummaryRequest(cons
     JsonUtil::SetByJsonKeyValue(reqPtr->params.processId, json["params"], "processId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.unitType, json["params"], "unitType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;
 }

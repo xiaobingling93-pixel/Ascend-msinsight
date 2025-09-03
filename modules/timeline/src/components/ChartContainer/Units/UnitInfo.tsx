@@ -23,7 +23,7 @@ import { Checkbox, Tooltip } from 'ascend-components';
 import { StartIcon, PinIcon, UnPinIcon } from 'ascend-icon';
 import { StyledButton } from '../../base/StyledButton';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
-import { CardUnit, ThreadUnit } from '../../../insight/units/AscendUnit';
+import { CardUnit, ROOT_UNIT, ThreadUnit } from '../../../insight/units/AscendUnit';
 import { UnitProgress } from '../../charts/UnitProgress';
 // trace/platform
 import { platform } from '../../../platforms';
@@ -108,6 +108,20 @@ const TagDiv = styled.div`
     }
 `;
 
+const RootLabelDiv = styled.div`
+    overflow: hidden;
+    white-space: nowrap;
+
+    .label-content {
+        background-color: ${(props): string => `${props.theme.bgColorCommon}bd`};
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 11px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+`;
+
 interface DefaultInfoProps {
     session: Session;
     unit: KeyedInsightUnit;
@@ -122,9 +136,8 @@ interface DefaultInfoProps {
 
 const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProps): JSX.Element => {
     const tag = (typeof unit.tag === 'string') ? `${unit.tag}` : unit.tag?.(session, unit.metadata) ?? undefined;
-    // 判断是否为HCCL的group甬道，并且rank列表不为空
-    const isGroupUnit = unit instanceof ThreadUnit && unit.metadata.groupNameValue !== '' && unit.metadata.rankList.length > 0;
-    const tooltip = isGroupUnit ? `(${(unit.metadata.rankList.join(', '))})` : name;
+    const tooltipInfo = getDefaultInfoTooltipTitle(unit, name);
+    const allNumeric = tooltipInfo.cardNames?.every(str => str.trim() !== '' && !isNaN(Number(str))) ?? false;
     return <DefaultInfoContainer>
         <div
             key={ `${getAutoKey(unit)} lane info` }
@@ -143,8 +156,24 @@ const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProp
                     }
                     return null;
                 })}
-                <Tooltip title={tooltip}>
-                    <span className="insight-lane-info-name">{name}</span>
+                <Tooltip title={tooltipInfo.content}>
+                    <div style={{ width: '100%' }}>
+                        <div className="insight-lane-info-name">{name}</div>
+                        <div>
+                            {
+                                (unit instanceof ROOT_UNIT && tooltipInfo.cardNames && tooltipInfo.cardNames.length > 0) &&
+                                <RootLabelDiv>
+                                    <div className="label-content">
+                                        Card: {
+                                            tooltipInfo.cardNames.length > 1 && allNumeric
+                                                ? `${Math.min(...tooltipInfo.cardNames.map(Number))}-${Math.max(...tooltipInfo.cardNames.map(Number))}`
+                                                : tooltipInfo.cardNames[0]
+                                        }
+                                    </div>
+                                </RootLabelDiv>
+                            }
+                        </div>
+                    </div>
                 </Tooltip>
             </div>
             { !isEmpty(tag) && <div className={ 'insight-lane-info-tag-info' }>
@@ -154,6 +183,42 @@ const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProp
         <ConfigBar unit={unit} session={session} {...props} />
     </DefaultInfoContainer>;
 });
+
+interface TooltipInfo {
+    content: string | JSX.Element;
+    cardNames?: string[];
+}
+
+const getDefaultInfoTooltipTitle = (unit: KeyedInsightUnit, name: string): TooltipInfo => {
+    // 判断是否为HCCL的group甬道，并且rank列表不为空
+    const isGroupUnit = unit instanceof ThreadUnit && unit.metadata.groupNameValue !== '' && unit.metadata.rankList.length > 0;
+    if (unit instanceof ROOT_UNIT) {
+        if (!(unit.children && unit.children.length > 0)) {
+            return { content: '' };
+        }
+        let clusterName: string = '';
+        const cardNames: string[] = [];
+        // 遍历root泳道下的card泳道
+        for (const childUnit of unit.children) {
+            const metaData = childUnit.metadata as CardMetaData;
+            clusterName = metaData.cluster;
+            cardNames.push(metaData.cardName);
+        }
+        return {
+            content: (
+                <>
+                    {`Host: ${unit.metadata.host}`}<br/>
+                    {`Cluster: ${clusterName}`}<br/>
+                    {`Card: ${cardNames.join(', ')}`}
+                </>
+            ),
+            cardNames,
+        };
+    } else if (isGroupUnit) {
+        return { content: `(${unit.metadata.rankList.join(', ')})` };
+    }
+    return { content: name };
+};
 
 const shouldDisplayStickyButton = (session: Session, isHovered: boolean, hasPinButton: boolean, _isPinned: boolean): boolean => {
     return session.phase === 'download' && ((hasPinButton && isHovered) || _isPinned);

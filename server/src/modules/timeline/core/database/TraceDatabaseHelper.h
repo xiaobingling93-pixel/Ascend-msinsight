@@ -319,6 +319,10 @@ private:
     static bool CalculateParallelParameter(const std::vector<Protocol::ThreadTraces> &fwdTraceList,
         const std::vector<Protocol::ThreadTraces> &bwdTraceList,
         uint64_t minBwdStartTime, std::pair<uint16_t, uint16_t> &parameter);
+    static std::unique_ptr<SqliteResultSet> QueryProcessTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
+        const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
+    static std::unique_ptr<SqliteResultSet> QueryLabelTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
+        const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
 };
 };
 

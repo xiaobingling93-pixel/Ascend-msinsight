@@ -49,6 +49,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             startTime: 0,
             endTime: 1,
             metaType: '',
+            unitType: '',
         }, 0)).toBe(false);
     });
 
@@ -63,6 +64,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             startTime: 0,
             endTime: 1,
             metaType: '',
+            unitType: '',
         }, 0)).toBe(true);
     });
 
@@ -77,6 +79,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             startTime: 0,
             endTime: 1,
             metaType: '',
+            unitType: '',
         }, 0)).toBe(true);
     });
 
@@ -91,6 +94,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             startTime: 0,
             endTime: 1,
             metaType: '',
+            unitType: '',
         }, 0)).toBe(true);
     });
 });

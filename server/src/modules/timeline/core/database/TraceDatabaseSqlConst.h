@@ -105,7 +105,7 @@ const std::string QUERY_HOST_METADATA_CANN_SQL =
     " a join ENUM_API_TYPE EAL on a.type = EAL.id "
     " group by type, globalTid order by globalTid, type desc";
 const std::string QUERY_HOST_METADATA_PYTORCH_SQL =
-    " select 'pytorch' as name, globalTid, 'pytorch' as type,"
+    " select 'PyTorch' as name, globalTid, 'pytorch' as type,"
     " max(depth) as maxDepth from PYTORCH_API"
     " a group by globalTid order by globalTid";
 const std::string QUERY_HOST_METADATA_OSRT_SQL =

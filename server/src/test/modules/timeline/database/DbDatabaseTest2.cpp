@@ -526,12 +526,12 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
     const uint64_t second = 1;
     const uint64_t third = 2;
     EXPECT_EQ(metaData.size(), expectSize);
-    EXPECT_EQ(metaData[first]->metaData.processName, "process 288224");
+    EXPECT_EQ(metaData[first]->metaData.processName, "Process 288224");
     EXPECT_EQ(metaData[first]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[first]->children[first]->metaData.threadId, "292753");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.threadId, "");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.processId, "1237912654215057");
-    EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
+    EXPECT_EQ(metaData[second]->metaData.processName, "Process 3931124");
     EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "3931572");
@@ -539,7 +539,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
     EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.metaType, "MSTX_EVENTS");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.threadId, "65535");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.processId, "16884049020452276");
-    EXPECT_EQ(metaData[third]->metaData.processName, "process 2045554");
+    EXPECT_EQ(metaData[third]->metaData.processName, "Process 2045554");
     EXPECT_EQ(metaData[third]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[third]->children[first]->metaData.threadId, "2045554");
     EXPECT_EQ(metaData[third]->children[first]->children[first]->metaData.threadId, "pytorch");
@@ -569,12 +569,12 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack
     const uint64_t first = 0;
     const uint64_t second = 1;
     EXPECT_EQ(metaData.size(), expectSize);
-    EXPECT_EQ(metaData[first]->metaData.processName, "process 288224");
+    EXPECT_EQ(metaData[first]->metaData.processName, "Process 288224");
     EXPECT_EQ(metaData[first]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[first]->children[first]->metaData.threadId, "292753");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.threadId, "");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.processId, "1237912654215057");
-    EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
+    EXPECT_EQ(metaData[second]->metaData.processName, "Process 3931124");
     EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "3931572");

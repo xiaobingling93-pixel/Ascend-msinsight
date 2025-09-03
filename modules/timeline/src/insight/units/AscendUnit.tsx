@@ -508,42 +508,63 @@ function maskedNotSelectData<T extends ChartType>(session: Session, handle: Char
     }
 }
 
-const SummaryChart = chart({
-    type: 'status',
-    mapFunc: async (session: Session, metaData: unknown) => {
-        const processMetaData = metaData as ProcessMetaData;
-        const timestampOffset = getTimeOffset(session, processMetaData);
-        const requestParam = {
-            cardId: processMetaData.cardId,
-            dbPath: processMetaData.dbPath,
-            processId: processMetaData.processId,
-            metaType: processMetaData.metaType,
-            startTime: Math.floor(Math.max(0, timestampOffset)),
-            endTime: Math.ceil(Math.max(0, (session.endTimeAll ?? 0) + timestampOffset)),
-            dataSource: processMetaData.dataSource,
-            timePerPx: session.domain.timePerPx,
-        };
-        const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
-        try {
-            const request = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
-            if (request === undefined) {
-                return [];
-            }
-            const threadTraceList = request.data as ProcessData[];
-            const res: StatusData[] = [];
-            // 泳道chart返回数据减去时间偏移
-            threadTraceList.forEach((data) => {
-                res.push({
-                    startTime: data.startTime - timestampOffset,
-                    duration: data.duration,
-                    name: '',
-                    type: '',
-                });
-            });
-            return res;
-        } catch (e) {
+async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
+    metaData: T,
+    session: Session,
+    unitType: string,
+): Promise<StatusData[]> {
+    const timestampOffset = getTimeOffset(session, metaData);
+
+    const requestParam = {
+        cardId: metaData.cardId,
+        dbPath: metaData.dbPath,
+        processId: metaData.processId,
+        metaType: metaData.metaType,
+        unitType: unitType,
+        startTime: Math.floor(Math.max(0, timestampOffset)),
+        endTime: Math.ceil(Math.max(0, (session.endTimeAll ?? 0) + timestampOffset)),
+        dataSource: metaData.dataSource,
+        timePerPx: session.domain.timePerPx,
+    };
+
+    const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
+    try {
+        const request = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
+        if (request === undefined) {
             return [];
         }
+        const threadTraceList = request.data as ProcessData[];
+        const res: StatusData[] = [];
+        // 泳道chart返回数据减去时间偏移
+        threadTraceList.forEach((data) => {
+            res.push({
+                startTime: data.startTime - timestampOffset,
+                duration: data.duration,
+                name: '',
+                type: '',
+            });
+        });
+        return res;
+    } catch (e) {
+        return [];
+    }
+}
+
+const ProcessSummaryChart = chart({
+    type: 'status',
+    mapFunc: async (session: Session, metaData: unknown) => {
+        return await createSummaryChart(metaData as ProcessMetaData, session, 'process');
+    },
+    config: {
+        rowHeight: UnitHeight.STANDARD,
+    },
+    height: UnitHeight.UPPER,
+});
+
+const LabelSummaryChart = chart({
+    type: 'status',
+    mapFunc: async (session: Session, metaData: unknown) => {
+        return await createSummaryChart(metaData as LabelMetaData, session, 'label');
     },
     config: {
         rowHeight: UnitHeight.STANDARD,
@@ -562,7 +583,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
     },
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',
-    chart: SummaryChart,
+    chart: ProcessSummaryChart,
     renderInfo: (session: Session, metadata: ProcessMetaData, thisUnit) => {
         return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName}` : `${metadata.processName}`;
     },
@@ -572,6 +593,7 @@ export const LabelUnit = unit<LabelMetaData>({
     name: 'Label',
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',
+    chart: LabelSummaryChart,
     renderInfo: (session: Session, metadata: LabelMetaData, thisUnit) => {
         return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName}`;
     },

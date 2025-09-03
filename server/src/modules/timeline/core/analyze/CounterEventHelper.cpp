@@ -59,13 +59,13 @@ void CounterEventHelper::RegisterDeviceAICoreFreqMap()
 void CounterEventHelper::RegisterDeviceAccPMUMap()
 {
     deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
-        {"ACC_PMU", "ACC_PMU", "readBwLevel", "Accelerator {accId}/readBwLevel", "Level"}});
+        {"ACC PMU", "ACC_PMU", "readBwLevel", "Accelerator {accId}/readBwLevel", "Level"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
-        {"ACC_PMU", "ACC_PMU", "writeBwLevel", "Accelerator {accId}/writeBwLevel", "Level"}});
+        {"ACC PMU", "ACC_PMU", "writeBwLevel", "Accelerator {accId}/writeBwLevel", "Level"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
-        {"ACC_PMU", "ACC_PMU", "readOstLevel", "Accelerator {accId}/readOstLevel", "Level"}});
+        {"ACC PMU", "ACC_PMU", "readOstLevel", "Accelerator {accId}/readOstLevel", "Level"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
-        {"ACC_PMU", "ACC_PMU", "writeOstLevel", "Accelerator {accId}/writeOstLevel", "Level"}});
+        {"ACC PMU", "ACC_PMU", "writeOstLevel", "Accelerator {accId}/writeOstLevel", "Level"}});
 }
 
 void CounterEventHelper::RegisterDeviceDDRMap()
@@ -87,9 +87,9 @@ void CounterEventHelper::RegisterDeviceStarsSocMap()
 void CounterEventHelper::RegisterDeviceNPUMEMMap()
 {
     deviceCounterEventMap.insert({PROCESS_TYPE::NPU_MEM,
-        {"NPU_MEM", "NPU_MEM", "ddr", "{type:s}/DDR", "B"}});
+        {"NPU MEM", "NPU_MEM", "ddr", "{type:s}/DDR", "B"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::NPU_MEM,
-        {"NPU_MEM", "NPU_MEM", "hbm", "{type:s}/HBM", "B"}});
+        {"NPU MEM", "NPU_MEM", "hbm", "{type:s}/HBM", "B"}});
 }
 
 void CounterEventHelper::RegisterDeviceHBMMap()
@@ -109,11 +109,11 @@ void CounterEventHelper::RegisterDeviceLLCMap()
 void CounterEventHelper::RegisterDeviceSamplePMUMap()
 {
     deviceCounterEventMap.insert({PROCESS_TYPE::SAMPLE_PMU,
-        {"SAMPLE_PMU_TIMELINE", "SAMPLE_PMU_TIMELINE", "freq", "{coreType:s} Core {coreId}/Freq", "Mhz"}});
+        {"SAMPLE PMU TIMELINE", "SAMPLE_PMU_TIMELINE", "freq", "{coreType:s} Core {coreId}/Freq", "Mhz"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::SAMPLE_PMU,
-        {"SAMPLE_PMU_TIMELINE", "SAMPLE_PMU_TIMELINE", "usage", "{coreType:s} Core {coreId}/Usage", "Usage(%)"}});
+        {"SAMPLE PMU TIMELINE", "SAMPLE_PMU_TIMELINE", "usage", "{coreType:s} Core {coreId}/Usage", "Usage(%)"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::SAMPLE_PMU,
-        {"SAMPLE_PMU_TIMELINE", "SAMPLE_PMU_TIMELINE", "totalCycle", "{coreType:s} Core {coreId}/Total Cycle",
+        {"SAMPLE PMU TIMELINE", "SAMPLE_PMU_TIMELINE", "totalCycle", "{coreType:s} Core {coreId}/Total Cycle",
          "Cycle"}});
 }
 

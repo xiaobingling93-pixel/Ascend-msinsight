@@ -780,6 +780,7 @@ export interface ThreadTraceRequest {
     startTime: number;
     endTime: number;
     metaType: string;
+    unitType: string;
 };
 
 export interface CounterRequest {

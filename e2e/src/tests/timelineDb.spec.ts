@@ -241,8 +241,6 @@ test.describe('Timeline(DB)', () => {
         await filterContentSelector.setValue('Communication');
         await filterContentSelector.selectOption('Communication');
         await filterBtn.click();
-        await timelineFrame.locator('#unitWrapperScroller').click();
-        await timelineFrame.locator('.insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').first().click();
         await timelineFrame.locator('.insight-unit-fold').first().click();
         await timelineFrame.getByText('mp:Group group_name_41').click({
             button: 'right',

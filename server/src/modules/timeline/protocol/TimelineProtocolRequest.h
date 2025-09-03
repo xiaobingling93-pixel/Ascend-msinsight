@@ -114,6 +114,7 @@ struct UnitThreadTracesSummaryParams {
     std::string cardId;
     std::string processId;
     std::string metaType;
+    std::string unitType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     bool CheckParams(uint64_t minTime, std::string &warnMsg) const

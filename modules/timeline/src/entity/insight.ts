@@ -250,8 +250,11 @@ export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<stri
 // 解析状态在parseSucceess之后设置unit的phase为download
 export type UnitPhase = 'configuring' | 'initializing' | 'recording' | 'analyzing' | 'rendering' | 'download' | 'error' | 'loading';
 
-const heightOf = (chartDesc: InsightUnit['chart']): number => {
+const heightOf = (chartDesc: InsightUnit['chart'], name: string): number => {
     if (chartDesc === undefined) {
+        if (name === 'Root') {
+            return UnitHeight.UPPER;
+        }
         return UnitHeight.STANDARD;
     }
     return Array.isArray(chartDesc) ? chartDesc.reduce((prev, cur) => prev + cur.height + 1, 0) - 1 : chartDesc.height;
@@ -360,7 +363,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
             return params.renderInfo?.(session, this.metadata, this) ?? null;
         };
 
-        height = (): number => heightOf(this.chart);
+        height = (): number => heightOf(this.chart, this.name);
     };
     return basicUnitClass;
 };
