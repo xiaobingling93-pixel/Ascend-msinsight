@@ -83,13 +83,17 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
     };
 
     useEffect(() => {
-        if (memorySession.selectedRankId === '') {
-            setLineChartData(undefined);
-            setMemoryCurveData(undefined);
-            return;
-        }
-        onMemoryCurveGet();
-    }, [memorySession.selectedRankId, memorySession.groupId, t, session.isAllMemoryCompletedSwitch]);
+        const timer = setTimeout(() => {
+            if (memorySession.selectedRankId === '') {
+                setLineChartData(undefined);
+                setMemoryCurveData(undefined);
+                return;
+            }
+            onMemoryCurveGet();
+        });
+
+        return () => clearTimeout(timer);
+    }, [memorySession.selectedRankId, memorySession.groupId, t, session.isAllMemoryCompletedSwitch, isCompare]);
 
     useEffect(() => {
         runInAction(() => {
@@ -98,10 +102,6 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
             memorySession.current = 1;
             memorySession.pageSize = 10;
         });
-        if (memorySession.selectedRankId === '') {
-            return;
-        }
-        onMemoryCurveGet();
     }, [isCompare]);
 
     return (

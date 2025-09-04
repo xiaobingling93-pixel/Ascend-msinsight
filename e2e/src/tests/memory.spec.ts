@@ -129,6 +129,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const { memoryFrame } = memoryPage;
         await setCompare(page, memoryFrame,{ baseline:FilePath.TEXT_330_RANK_0,comparison:FilePath.TEXT_330_RANK_1 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
+        await memoryFrame.locator('.ant-spin-spinning').first().waitFor({ state: 'hidden' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('compare-rank.png', {
             maxDiffPixels: 500,
         });
@@ -470,6 +471,7 @@ test.describe('Memory(Pytorch_Group_By_Component)', () => {
         const { memoryFrame } = memoryPage;
         await setCompare(page, memoryFrame, { baseline:FilePath.TEXT_330_RANK_0,comparison:FilePath.TEXT_330_RANK_1 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
+        await memoryFrame.locator('.ant-spin-spinning').waitFor({ state: 'hidden' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-compare-group-by-component.png', {
             maxDiffPixels: 500,
         });
