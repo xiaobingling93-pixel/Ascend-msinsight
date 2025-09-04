@@ -20,17 +20,17 @@ PLUGIN_DIR = os.path.join(os.path.dirname(MODULES_DIR), MODULES_DIR, 'framework'
 
 MODULES_MAP = {
     'cluster': 'Cluster',
+    'reinforcement-learning': 'RL',
+    'jupyter': 'Jupyter',
     'memory': 'Memory',
     'operator': 'Operator',
-    'timeline': 'Timeline',
     'compute': 'Compute',
-    'jupyter': 'Jupyter',
     'statistic': 'Statistic',
     'leaks': 'Leaks',
-    'reinforcement-learning': 'RL',
+    'timeline': 'Timeline',
 }
 
-BUILD_PROCESS_COUNT = 4 if platform.system() == 'Windows' else min(multiprocessing.cpu_count(), len(MODULES_MAP))
+BUILD_PROCESS_COUNT = 3 if platform.system() == 'Windows' else min(multiprocessing.cpu_count(), len(MODULES_MAP))
 
 
 def clean():
