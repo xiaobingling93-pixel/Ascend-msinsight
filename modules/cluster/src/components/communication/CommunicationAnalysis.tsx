@@ -144,6 +144,8 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
                                     tooltip={slowRankTooltipList}
                                 >
                                     <DiffTimeTable
+                                        fastTotalElapseTime={slowRankData.fastTotalElapseTime}
+                                        fastRankId={slowRankData.fastRankId}
                                         data={slowRankData.data}
                                         loading={loadingSlowRank}
                                     ></DiffTimeTable>

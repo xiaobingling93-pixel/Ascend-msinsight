@@ -5,7 +5,7 @@
 import React, { ReactNode } from 'react';
 import { type TableColumnsType } from 'antd';
 import styled from '@emotion/styled';
-import { Button, MITooltipHelp } from 'ascend-components';
+import { Button, MITooltipHelp, Text } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import { SlowRankListItem, SlowRankOpListItem } from '../../utils/interface';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,8 @@ import eventBus from '../../utils/eventBus';
 import { Decimal } from 'ascend-utils';
 
 interface DiffTimeTableProps {
+    fastTotalElapseTime: number;
+    fastRankId: number;
     data: SlowRankListItem[];
     loading: boolean;
 }
@@ -59,12 +61,6 @@ const useRankColumns = (): TableColumnsType<SlowRankListItem> => {
             title: <ColumnTitle name={t('Elapse Time(ms)')} tooltip={t('RankTable.tooltip.ElapseTime')}></ColumnTitle>,
             dataIndex: 'totalElapseTime',
             key: 'totalElapseTime',
-            render: usToMs,
-        },
-        {
-            title: <ColumnTitle name={t('Fastest Rank Elapse Time(ms)')} tooltip={t('RankTable.tooltip.FastestRankElapseTime')}></ColumnTitle>,
-            dataIndex: 'maxTotalElapseTime',
-            key: 'maxTotalElapseTime',
             render: usToMs,
         },
     ];
@@ -124,7 +120,7 @@ const useOpColumns = (): TableColumnsType<ExpandedDataType> => {
     ];
 };
 
-const DiffTimeTable: React.FC<DiffTimeTableProps> = ({ data, loading }) => {
+const DiffTimeTable: React.FC<DiffTimeTableProps> = ({ data, fastTotalElapseTime, fastRankId, loading }) => {
     const rankColumns = useRankColumns();
     const opColumns = useOpColumns();
     const { t } = useTranslation('communication', { keyPrefix: 'slowRankList' });
@@ -150,17 +146,23 @@ const DiffTimeTable: React.FC<DiffTimeTableProps> = ({ data, loading }) => {
 
     return (
         data?.length > 0
-            ? <ResizeTable
-                loading={loading}
-                columns={rankColumns}
-                dataSource={data}
-                expandable={{
-                    expandedRowRender,
-                    rowExpandable: (record) => record.opList && record.opList.length > 0,
-                }}
-                rowKey={(row) => row.rankId}
-                pagination={false}
-            />
+            ? <>
+                <div className={'mb-6'}>
+                    <Text type={'warning'}>{t('SlowRankDesc', { fastTotalElapseTime: usToMs(fastTotalElapseTime), fastRankId })}</Text>
+                </div>
+
+                <ResizeTable
+                    loading={loading}
+                    columns={rankColumns}
+                    dataSource={data}
+                    expandable={{
+                        expandedRowRender,
+                        rowExpandable: (record) => record.opList && record.opList.length > 0,
+                    }}
+                    rowKey={(row) => row.rankId}
+                    pagination={false}
+                />
+            </>
             : <StyledAlert>{t('NoSlowRankDesc')}</StyledAlert>
     );
 };

@@ -159,9 +159,10 @@
     ],
     "slowRankList": {
       "TitleTooltip": [
-        "在当前通信域内，存在较明显快慢卡问题。请关注与快卡通信时长差异较大的卡与通信算子，其差值可能存在一定优化空间。",
+        "“快慢卡”是相对的概念，快卡即集群中率先完成计算任务的卡。快慢卡不同步，一般表现为快卡存在耗时较长的通信算子，且等待时间占比较高。",
         "若想进一步定位造成以上快慢卡差异原因，可在上方的通信算子缩略图中右键相应通信算子，点击 “跳转至时间线视图”，通过对比快慢卡，确认差异根源。"
       ],
+      "SlowRankDesc": "在当前通信域内，存在较明显快慢卡问题。请关注与快卡通信时长差异较大的卡与通信算子，其差值可能存在一定优化空间。最快卡ID：{{fastRankId}}，最快卡耗时：{{fastTotalElapseTime}}ms",
       "NoSlowRankDesc": "当前通信域各卡通信时间较为均衡，未发现明显慢卡。",
       "Index": "排序",
       "Rank ID": "卡号",
@@ -169,7 +170,6 @@
       "Operator Name": "算子名称",
       "Elapse Time(ms)": "耗时(ms)",
       "Elapse Time Difference(ms)": "耗时差值(ms)",
-      "Fastest Rank Elapse Time(ms)": "最快卡耗时(ms)",
       "Elapse Time on Current Rank(ms)": "在当前卡中的耗时(ms)",
       "Elapse Time on Fastest Rank(ms)": "在最快卡中的耗时(ms)",
       "Find in Communication": "在图中高亮",

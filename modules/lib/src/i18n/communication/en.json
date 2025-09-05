@@ -159,9 +159,10 @@
     ],
     "slowRankList": {
       "TitleTooltip": [
-        "Noticeable fast-slow communication imbalance exists in the current domain. Pay attention to ranks and operators with large communication time gaps versus fast rank, as these may offer optimization opportunities.",
+        "“Fast and slow ranks” is a relative concept. A fast rank refers to a rank that completes computation tasks earlier within the cluster. When fast and slow ranks are not synchronized, it is usually observed that the fast rank spends longer on communication operators, with a high proportion of waiting time.",
         "To further investigate the causes, right-click the corresponding communication operator in the Communication chart above and select “Find in Timeline” to compare fast and slow ranks and identify the root cause."
       ],
+      "SlowRankDesc": "Noticeable fast-slow communication imbalance exists in the current domain. Pay attention to ranks and operators with large communication time gaps versus fast rank, as these may offer optimization opportunities. Fastest rank ID：{{fastRankId}}, Fastest rank elapsed time：{{fastTotalElapseTime}}ms",
       "NoSlowRankDesc": "The communication time across ranks in the current communication domain is relatively balanced, and no obvious slow rank was detected.",
       "Index": "Index",
       "Rank ID": "Rank ID",
@@ -169,7 +170,6 @@
       "Operator Name": "Operator Name",
       "Elapse Time Difference(ms)": "Elapse Time Difference(ms)",
       "Elapse Time(ms)": "Elapse Time(ms)",
-      "Fastest Rank Elapse Time(ms)": "Fastest Rank Elapse Time(ms)",
       "Elapse Time on Current Rank(ms)": "Elapse Time on Current Rank(ms)",
       "Elapse Time on Fastest Rank(ms)": "Elapse Time on Fastest Rank(ms)",
       "Find in Communication": "Find in Communication",
