@@ -91,31 +91,25 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
     const topOptions = getTopOptions(session.arrangementRankCount);
 
     return (<div style={{ marginBottom: 24 }}>
+        <Label name={t('Step')} />
+        <Select
+            id="select-step"
+            value={conditions.step}
+            style={{ width: 120 }}
+            onChange={(val: string): void => handleChange('step', val)}
+            options={stepOptions}
+        />
         {
-            !session.isFullDb &&
-            <>
-                <Label name={t('Step')} />
-                <Select
-                    id="select-step"
-                    value={conditions.step}
+            session.isCompare &&
+            <FormItem name={t('Baseline Step')}
+                content={ <Select
+                    id="select-baseline-step"
+                    value={conditions.baselineStep}
                     style={{ width: 120 }}
-                    onChange={(val: string): void => handleChange('step', val)}
-                    options={stepOptions}
-                />
-                {
-                    session.isCompare &&
-                    <FormItem name={t('Baseline Step')}
-                        content={ <Select
-                            id="select-baseline-step"
-                            value={conditions.baselineStep}
-                            style={{ width: 120 }}
-                            onChange={(val: string): void => handleChange('baselineStep', val)}
-                            options={baselineStepOptions}
-                        />}
-                    />
-                }
-            </>
-
+                    onChange={(val: string): void => handleChange('baselineStep', val)}
+                    options={baselineStepOptions}
+                />}
+            />
         }
         <Label name={t('RankGroup')}/>
         <Select
