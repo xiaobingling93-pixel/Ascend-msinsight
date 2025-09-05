@@ -358,7 +358,7 @@ void ClusterService::FindSlowRankByCommDuration(const std::shared_ptr<VirtualClu
     std::set<RankDetailsForSlowRank> rankDetails;
     for (const auto& commInfo : commTimeForRankDim) {
         if (commInfo.rankSet == params.stage) {
-            rankDetails.insert({commInfo.rankId, 0.0, commInfo.commTime, 0.0, {}});
+            rankDetails.insert({commInfo.rankId, 0.0, commInfo.commTime, {}});
         }
     }
     if (rankDetails.size() <= 1) {
@@ -368,6 +368,8 @@ void ClusterService::FindSlowRankByCommDuration(const std::shared_ptr<VirtualClu
     }
     // get fastest rank and top N slow rank
     fastestRank = *rankDetails.begin();
+    body.fastRankId = fastestRank.rankId;
+    body.fastTotalElapseTime = fastestRank.totalElapseTime;
     int cnt = 0;
     double thresholdComm = thresholdForSlowRank * fastestRank.totalElapseTime;
     for (auto it = rankDetails.rbegin(); it != rankDetails.rend() && cnt < slowRankCnt; ++it, ++cnt) {
@@ -378,8 +380,6 @@ void ClusterService::FindSlowRankByCommDuration(const std::shared_ptr<VirtualClu
             rankDetail.rankId = it->rankId;
             rankDetail.totalDiffTime = NumberUtil::DoubleReservedNDigits(commTimeDiff, doubleReservedNum);
             rankDetail.totalElapseTime = NumberUtil::DoubleReservedNDigits(it->totalElapseTime, doubleReservedNum);
-            rankDetail.maxTotalElapseTime = NumberUtil::DoubleReservedNDigits(fastestRank.totalElapseTime,
-                                                                              doubleReservedNum);
             body.slowRankList.emplace_back(rankDetail);
         }
     }

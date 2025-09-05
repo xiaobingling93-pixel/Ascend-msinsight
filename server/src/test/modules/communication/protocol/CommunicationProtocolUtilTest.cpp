@@ -353,11 +353,9 @@ TEST_F(CommunicationProtocolUtilTest, TestCommunicationSlowRankAnalysisResponse)
 {
     CommunicationSlowRankAnalysisResponse response;
     response.body.hasAdvice = true;
-    RankDetailsForSlowRank slowRank;
-    slowRank.rankId = "1";
-    slowRank.totalDiffTime = 100; // 100
-    slowRank.totalElapseTime = 200; // 200
-    slowRank.maxTotalElapseTime = 300; // 300
+    response.body.fastRankId = "7";
+    response.body.fastTotalElapseTime = 300; // 300
+    RankDetailsForSlowRank slowRank = {"1", 100, 200, {}}; // 100 200
     OpDetailsForSlowRank op1 = {"op1", 10, 10, 10, 10, 10}; // 10
     OpDetailsForSlowRank op2 = {"op2", 20, 20, 20, 20, 20}; // 20
     slowRank.opDetails.push_back(op1);
@@ -371,6 +369,10 @@ TEST_F(CommunicationProtocolUtilTest, TestCommunicationSlowRankAnalysisResponse)
     auto body = jsonOptional.value()["body"].GetObj();
     ASSERT_TRUE(body.HasMember("hasAdvice"));
     EXPECT_TRUE(body["hasAdvice"].GetBool());
+    ASSERT_TRUE(body.HasMember("fastRankId"));
+    EXPECT_EQ(body["fastRankId"].GetString(), response.body.fastRankId);
+    ASSERT_TRUE(body.HasMember("fastTotalElapseTime"));
+    EXPECT_EQ(body["fastTotalElapseTime"].GetDouble(), response.body.fastTotalElapseTime);
 
     ASSERT_TRUE(body.HasMember("data"));
     auto data = body["data"].GetArray();
@@ -383,8 +385,6 @@ TEST_F(CommunicationProtocolUtilTest, TestCommunicationSlowRankAnalysisResponse)
     EXPECT_EQ(slowRankDetail["totalDiffTime"].GetDouble(), slowRank.totalDiffTime);
     ASSERT_TRUE(slowRankDetail.HasMember("totalElapseTime"));
     EXPECT_EQ(slowRankDetail["totalElapseTime"].GetDouble(), slowRank.totalElapseTime);
-    ASSERT_TRUE(slowRankDetail.HasMember("maxTotalElapseTime"));
-    EXPECT_EQ(slowRankDetail["maxTotalElapseTime"].GetDouble(), slowRank.maxTotalElapseTime);
 
     ASSERT_TRUE(slowRankDetail.HasMember("opList"));
     auto opDetails = slowRankDetail["opList"].GetArray();
