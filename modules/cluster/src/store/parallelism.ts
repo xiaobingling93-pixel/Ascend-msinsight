@@ -45,7 +45,6 @@ class ParallelismStore {
 
     get dimensionOptionsData (): DimensionOption[] {
         const optionsList: DimensionOption[] = [
-            { key: 'ep-dp', tooltipKey: 'DPDimensionTooltip', label: 'DP' },
             { key: 'ep-dp-pp', tooltipKey: 'PPDimensionTooltip', label: 'DP + PP' },
             { key: 'ep-dp-pp-cp', tooltipKey: 'CPDimensionTooltip', label: 'DP + PP + CP' },
             {
@@ -54,9 +53,9 @@ class ParallelismStore {
                 label: this.generateConditions.cpSize === 1 ? 'DP + PP + TP' : 'DP + PP + CP + TP',
             },
         ];
-        // 无 CP 维度时，选中 DP 维度
+        // 无 CP 维度时，选中 默认维度
         if (this.generateConditions.cpSize === 1 && this.generateConditions.dimension === 'ep-dp-pp-cp') {
-            this.updateGenerateConditions({ dimension: 'ep-dp' });
+            this.updateGenerateConditions({ dimension: 'ep-dp-pp' });
         }
 
         return optionsList.filter(option => {

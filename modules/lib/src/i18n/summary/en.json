@@ -46,6 +46,8 @@
     "Computation/CommunicationDescribe": [
       "Computing = Sum of kernel time on NPU",
       "Computing(Not Overlapped) = Computing - Computing_Communication Overlapped",
+      "Preparing time = The time from the start of each step to the first computation/communication operator, which is also considered Free Time in the Overlap Analysis",
+      "Free time = The time on the NPU when it is neither computing nor communicating; Preparing Time is not included in this",
       "Total Time = Computing(Not Overlapped) + Computing_Communication Overlapped + Communication(Not Overlapped) + Free",
       "Total Computing Ratio = Computing / Total Time",
       "Communication Ratio = Communication(Not Overlapped) / Total Time"
@@ -53,6 +55,8 @@
     "Computation/CommunicationDescribeWithPreparing": [
       "Total Computing = Sum of kernel time on NPU",
       "Pure Computing = Computing - Computing_Communication Overlapped",
+      "Preparing time = The time from the start of each step to the first computation/communication operator, which is also considered Free Time in the Overlap Analysis",
+      "Free time = The time on the NPU when it is neither computing nor communicating; Preparing Time is not included in this",
       "Total Time = Preparing + Computing(Not Overlapped) + Computing_Communication Overlapped + Communication(Not Overlapped) + Free",
       "Total Computing Ratio = Computing / Total Time",
       "Communication Ratio = Communication(Not Overlapped) / Total Time"
