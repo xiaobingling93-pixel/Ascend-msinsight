@@ -5,8 +5,8 @@
 #include <unordered_set>
 #include <algorithm>
 #include "ServerLog.h"
-#include "RLMstxConfigManager.h"
 #include "RLMstxConfigReader.h"
+#include "RLMstxConfigManager.h"
 
 namespace Dic::Module::RL {
     RLMstxConfigManager &RLMstxConfigManager::Instance()

@@ -4,10 +4,10 @@
 
 #ifndef PROFILER_SERVER_RLMICROBATCHCLASSIFIERFACTORY_H
 #define PROFILER_SERVER_RLMICROBATCHCLASSIFIERFACTORY_H
+#include <memory>
 #include "RLDomainObject.h"
 #include "RLMicroBatchMegatronClassifier.h"
 #include "RLMicroBatchFSDPClassifier.h"
-#include <memory>
 namespace Dic::Module::RL {
 class RLMicroBatchClassifierFactory {
 public:
