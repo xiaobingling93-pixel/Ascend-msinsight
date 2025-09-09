@@ -365,11 +365,12 @@ const LinkLineFilterBody = observer(({ session, isSuspend, checkedCategories, se
     }
     React.useEffect(() => {
         setCheckedCategories([]);
+        setInput('');
     }, [session.doReset]);
     return (
         <Spin spinning={loading} delay={400}>
             <FilterContainer>
-                <Input size="middle" allowClear onChange={onInputChange} style={{ width: '100%', marginBottom: 10 }}></Input>
+                <Input size="middle" allowClear value={inputValue} onChange={onInputChange} style={{ width: '100%', marginBottom: 10 }}></Input>
                 <FilterList>
                     {isEmptyData
                         ? <StyledEmpty />
