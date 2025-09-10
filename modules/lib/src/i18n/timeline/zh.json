@@ -4,7 +4,7 @@
     "Timestamp Offset": "时间戳偏移",
     "Slice Detail": "选中详情",
     "Slice List": "选中列表",
-    "Find": "发现",
+    "Find": "查找",
     "Details": "详情",
     "System View": "系统视图",
     "Rank ID": "卡序号",
@@ -20,7 +20,7 @@
     "Please select unit": "请选择泳道",
     "Filter ToolTip": "可以分别按卡以及按层过滤，也可以同时按卡按层联合过滤",
     "contextMenu": {
-      "Fit to screen": "整屏显示",
+      "Fit to screen": "全屏显示",
       "Find in Communication": "在通信中查找",
       "Zoom into selection": "放大所选内容",
       "Undo Zoom": "撤消缩放",
