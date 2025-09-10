@@ -185,6 +185,9 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, clusterPa
         const unitcount = session?.unitcount;
         if (unitcount && unitcount <= 64) {
             parallelismStore.activeDimension = 'ep-dp-pp-cp-tp';
+            if (equal) {
+                setShowRank(true);
+            }
         }
         form.setFieldsValue({ dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize, algorithm });
         parallelismStore.updateGenerateConditions({ algorithm, ppSize, tpSize, cpSize, dpSize, epSize, moeTpSize });
