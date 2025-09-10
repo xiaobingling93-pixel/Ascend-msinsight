@@ -135,10 +135,6 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 {
     ClusterBaseInfo baseInfo;
     baseInfo.filePath = selectedPath;
-    baseInfo.collectDuration = 0;
-    auto now = std::chrono::system_clock::now();
-    // 转换为毫秒数
-    baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
     if (textDb == nullptr) {
         ServerLog::Error("Can't get cluster database when sava cluster base info.");
@@ -155,8 +151,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
         }
     }
     textDb->InsertClusterBaseInfo(baseInfo);
-    ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",
-                    baseInfo.collectStartTime);
+    ServerLog::Info("End save cluster base info data into db, path: ", selectedPath);
 }
 
 bool ClusterFileParser::InitCommunicationGroupInfo(std::vector<CommGroupParallelInfo> &groupInfos)

@@ -25,6 +25,7 @@ public:
         const std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params,
         CommInfoMap &commInTpDimension);
 private:
+    static bool UpdateStartTimeAndDuration(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db);
     static std::vector<IndicatorDataStruct> GetPerformanceDataByDimension(
         std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params);
     static void MergeParallelismPerformance(std::vector<IndicatorDataStruct> &compare,

@@ -58,6 +58,7 @@ public:
     virtual bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
         std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
+    virtual bool UpdateCollectTimeInfo(const Protocol::SummaryBaseInfo &baseInfo) = 0;
     virtual bool QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,
         Protocol::CommunicationKernelBody &responseBody) = 0;
     virtual bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config, std::string &level) = 0;
@@ -151,6 +152,7 @@ protected:
         const std::string &rankId, const std::string &sql);
     bool ExecuteQueryRetransmissionAnalyzerData(
         std::vector<RetransmissionClassificationInfo> &data, const std::string &sql);
+    bool ExecuteUpdateCollectTimeInfo(const Protocol::SummaryBaseInfo &baseInfo, const std::string& sql);
 
     sqlite3_stmt *GetExpertHotspotInsertStmt(uint64_t paramLen);
     sqlite3_stmt *InitExpertHotspotInsertStmt(uint64_t paramLen);

@@ -12,6 +12,35 @@ using namespace Dic::Module::Summary;
 using namespace Dic::Module::Global;
 using namespace Dic::Protocol;
 using namespace Dic::Module;
+
+bool SummaryService::UpdateStartTimeAndDuration(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db)
+{
+    uint64_t min = UINT64_MAX;
+    uint64_t max = 0;
+    db->QueryExtremumTimestamp(min, max); // time unit of min, max: ns
+    if (min > max) {
+        ServerLog::Warn("Fail to get extremum timestamp when query summary base info.");
+        return false;
+    }
+    // time unit of collectStartTime: ms, time unit of collectDuration: us
+    baseInfo.collectStartTime = static_cast<int64_t>(
+        NumberUtil::CeilingClamp(min / (numberThousands * numberThousands), static_cast<uint64_t>(INT64_MAX)));
+    baseInfo.collectDuration =
+        NumberUtil::CeilingClamp((max - min) / numberThousands, static_cast<uint64_t>(INT64_MAX));
+    // time unit of step trace data: us
+    std::unordered_map<std::uint32_t, StepStatistic> rankStepTraceData{}; // key: rankId, value: step trace data
+    db->QueryAllPerformanceDataByStep("All", rankStepTraceData);
+    for (const auto &stepTraceData : rankStepTraceData) {
+        baseInfo.collectDuration = stepTraceData.second.npuTotalTime > baseInfo.collectDuration ?
+            stepTraceData.second.npuTotalTime : baseInfo.collectDuration;
+    }
+    if (!db->UpdateCollectTimeInfo(baseInfo)) {
+        ServerLog::Warn("Failed to update database for cluster base info.");
+        return false;
+    }
+    return true;
+}
+
 bool SummaryService::QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db)
 {
     // db在外层进行校验 必不为空
@@ -19,17 +48,11 @@ bool SummaryService::QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared
         ServerLog::Warn("Fail to query summary base info.");
         return false;
     }
-    uint64_t min = UINT64_MAX;
-    uint64_t max = 0;
-    db->QueryExtremumTimestamp(min, max);
-    if (min > max) {
-        ServerLog::Warn("Fail to get extremum timestamp when query summary base info.");
+    if ((baseInfo.collectStartTime == 0 || baseInfo.collectDuration == 0.0) &&
+        !UpdateStartTimeAndDuration(baseInfo, db)) {
+        ServerLog::Warn("Fail to update start time and duration for summary base info.");
         return false;
     }
-    baseInfo.collectStartTime = static_cast<int64_t>(
-        NumberUtil::CeilingClamp(min / (numberThousands * numberThousands), static_cast<uint64_t>(INT64_MAX)));
-    baseInfo.collectDuration =
-        NumberUtil::CeilingClamp((max - min) / numberThousands, static_cast<uint64_t>(INT64_MAX));
     return true;
 }
 void SummaryService::QueryCompareSummaryBaseInfo(const SummaryTopRankRequest &request, SummaryTopRankResponse &response)

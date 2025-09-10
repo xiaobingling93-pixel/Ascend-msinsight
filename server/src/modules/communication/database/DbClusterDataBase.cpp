@@ -45,33 +45,40 @@ void DbClusterDataBase::UpdateClusterParseStatus(std::string status)
 bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
 {
     baseInfo.filePath = GetDbPath();
-    int64_t dataSize = FileUtil::GetFileSize(baseInfo.filePath.c_str());
-    std::string baseInfoSql = "select (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
-        "ClusterStepTraceTime where \"index\" !='' AND type = 'rank')) as rank , (select json_group_array(step) from ("
-        "select DISTINCT step from " + TABLE_STEP_TRACE_TIME +
-        " where \"index\" !='')) as step, '" + std::to_string(dataSize) + "' as dataSize ";
+    baseInfo.dataSize = static_cast<double>(FileUtil::GetFileSize(baseInfo.filePath.c_str())) / MB_SIZE;
+
+    // try to get base info
+    std::string tryToGetBaseInfoSql = "SELECT key, value FROM " + TABLE_CLUSTER_BASE_INFO +
+                                      " WHERE key IN ('ranks', 'steps', 'collect_start_time', 'collect_duration');";
+    ExecuteQueryBaseInfo(baseInfo, tryToGetBaseInfoSql);
+    if (baseInfo.stepNum && baseInfo.rankCount && baseInfo.collectStartTime && baseInfo.collectDuration != 0) {
+        return true;
+    }
+
+    // query base info from ClusterStepTraceTime and update ClusterBaseInfo
+    std::string baseInfoSql = "INSERT OR REPLACE INTO " + TABLE_CLUSTER_BASE_INFO + " (key, value) VALUES "
+        " ('ranks', (select json_group_array(\"index\") "
+        "            from (select DISTINCT \"index\" "
+        "                  from " + TABLE_STEP_TRACE_TIME +
+        "                  where \"index\" !='' AND type = 'rank'))), "
+        " ('steps', (select json_group_array(step) "
+        "            from (select DISTINCT step "
+        "                  from " + TABLE_STEP_TRACE_TIME +
+        "                  where \"index\" !='')));";
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
     if (baseInfoResult != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare Query base info statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query base info from ClusterStepTraceTime. error:", sqlite3_errmsg(db));
         return false;
     }
-    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
-        int coll = resultStartIndex;
-        std::string ranks = sqlite3_column_string(stmtBaseInfo, coll++);
-        if (!ranks.empty()) {
-            baseInfo.rankList = JsonUtil::JsonToVector(ranks);
-        }
-        std::string steps = sqlite3_column_string(stmtBaseInfo, coll++);
-        if (!steps.empty()) {
-            baseInfo.stepList = JsonUtil::JsonToVector(steps);
-        }
-        baseInfo.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
-        baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(UINT_MAX));
-        baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(UINT_MAX));
+    auto res = sqlite3_step(stmtBaseInfo);
+    if (res != SQLITE_DONE) {
+        ServerLog::Error("Failed to update base info for db cluster. error:", sqlite3_errmsg(db));
+        return false;
     }
     sqlite3_finalize(stmtBaseInfo);
-    return true;
+    return ExecuteQueryBaseInfo(baseInfo, tryToGetBaseInfoSql); // 更新后再次查询
 }
 
 std::map<std::string, std::string> DbClusterDataBase::QueryBaseInfoByKeys(const std::vector<std::string> &keys)
@@ -113,6 +120,13 @@ bool DbClusterDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     std::string sql = "SELECT MIN(start_timestamp) * 1000 as minTime, MAX(start_timestamp) * 1000 as maxTime "
                       "FROM " + TABLE_COMM_ANALYZER_TIME + " WHERE start_timestamp != 0";
     return ExecuteQueryExtremumTimestamp(sql, min, max);
+}
+
+bool DbClusterDataBase::UpdateCollectTimeInfo(const Protocol::SummaryBaseInfo &baseInfo)
+{
+    std::string sql = "INSERT OR REPLACE INTO " + TABLE_CLUSTER_BASE_INFO + " (key, value) values "
+        " ('collect_start_time', ?), ('collect_duration', ?);";
+    return ExecuteUpdateCollectTimeInfo(baseInfo, sql);
 }
 
 bool DbClusterDataBase::QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,

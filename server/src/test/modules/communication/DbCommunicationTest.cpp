@@ -259,6 +259,20 @@ TEST_F(DbCommunicationTest, QueryExtremumTimestampSuccess)
     EXPECT_EQ(max, expectMax);
 }
 
+TEST_F(DbCommunicationTest, UpdateCollectTimeInfoSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    SummaryBaseInfo baseInfo;
+    baseInfo.collectStartTime = 1718682999267391232;
+    baseInfo.collectDuration = 123.45;
+    bool res = database->UpdateCollectTimeInfo(baseInfo);
+    EXPECT_EQ(res, true);
+    SummaryBaseInfo ans;
+    database->QueryBaseInfo(ans);
+    EXPECT_EQ(baseInfo.collectStartTime, ans.collectStartTime);
+    EXPECT_EQ(baseInfo.collectDuration, ans.collectDuration);
+}
+
 TEST_F(DbCommunicationTest, QueryOperatorListSuccess)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);

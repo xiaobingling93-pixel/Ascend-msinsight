@@ -43,6 +43,7 @@ public:
     bool QueryOperatorList(Protocol::DurationListParams &requestParams,
         std::vector<OperatorTimeDo> &operatorTimeDoList) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
+    bool UpdateCollectTimeInfo(const Protocol::SummaryBaseInfo &baseInfo) override;
     bool QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,
                                              Protocol::CommunicationKernelBody &responseBody) override;
     bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config, std::string &level) override;

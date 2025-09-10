@@ -63,6 +63,14 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &bas
     }
     baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(UINT_MAX));
     baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(UINT_MAX));
+    std::string startTime = CollectionUtil::FindValueByKey(info, "collect_start_time", CollectionUtil::EMPTY_STRING);
+    std::string duration = CollectionUtil::FindValueByKey(info, "collect_duration", CollectionUtil::EMPTY_STRING);
+    if (!startTime.empty()) {
+        baseInfo.collectStartTime = NumberUtil::StringToLongLong(startTime);
+    }
+    if (!duration.empty()) {
+        baseInfo.collectDuration = NumberUtil::StringToDouble(duration);
+    }
     sqlite3_finalize(stmtBaseInfo);
     return true;
 }
@@ -745,7 +753,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllPerformanceDataByStep(const std::str
         one.freeTime = resultSet->GetDouble("free");
         one.prepareTime = resultSet->GetDouble("preparing");
         one.pureCommunicationExcludeReceiveTime = resultSet->GetDouble("exclude_receive");
-        one.npuTotalTime = one.computingTime + one.pureCommunicationTime + one.freeTime;
+        one.npuTotalTime = one.computingTime + one.pureCommunicationTime + one.freeTime + one.prepareTime;
         uint32_t rankIdNum = StringUtil::StringToUint32(one.rankId);
         if (rankIdNum != UINT32_MAX) {
             data.emplace(rankIdNum, one);
@@ -1188,6 +1196,34 @@ bool VirtualClusterDatabase::ExecuteQueryRetransmissionAnalyzerData(
         info.minElapseTime = sqlite3_column_double(stmt, col++);
         info.maxRDMATransitTime = sqlite3_column_double(stmt, col++);
         data.emplace_back(info);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool VirtualClusterDatabase::ExecuteUpdateCollectTimeInfo(const Protocol::SummaryBaseInfo &baseInfo,
+    const std::string& sql)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for update collect time for cluster base info. Error:",
+                         sqlite3_errmsg(db));
+        return false;
+    }
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get stmt for update collect time for cluster base info.");
+        return false;
+    }
+    std::string valueCollectStartTime = std::to_string(baseInfo.collectStartTime);
+    std::string valueCollectDuration = std::to_string(baseInfo.collectDuration);
+    int index = bindStartIndex;
+    sqlite3_bind_text(stmt, index++, valueCollectStartTime.c_str(), valueCollectStartTime.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, valueCollectDuration.c_str(), valueCollectDuration.length(), SQLITE_TRANSIENT);
+    auto result = sqlite3_step(stmt);
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Fail to update collect time for cluster base info. error: ", sqlite3_errmsg(db));
+        return false;
     }
     sqlite3_finalize(stmt);
     return true;
