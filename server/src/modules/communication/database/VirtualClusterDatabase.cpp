@@ -3,6 +3,7 @@
  */
 #include <map>
 #include <ConstantDefs.h>
+#include <algorithm>
 #include "pch.h"
 #include "NumDefs.h"
 #include "CollectionUtil.h"
@@ -753,7 +754,8 @@ bool VirtualClusterDatabase::ExecuteQueryAllPerformanceDataByStep(const std::str
         one.freeTime = resultSet->GetDouble("free");
         one.prepareTime = resultSet->GetDouble("preparing");
         one.pureCommunicationExcludeReceiveTime = resultSet->GetDouble("exclude_receive");
-        one.npuTotalTime = one.computingTime + one.pureCommunicationTime + one.freeTime + one.prepareTime;
+        one.npuTotalTime = one.computingTime + one.pureCommunicationTime + one.freeTime;
+        one.npuTotalTime += std::max(0.0, one.prepareTime);
         uint32_t rankIdNum = StringUtil::StringToUint32(one.rankId);
         if (rankIdNum != UINT32_MAX) {
             data.emplace(rankIdNum, one);

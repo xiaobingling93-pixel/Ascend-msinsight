@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <cfloat>
+#include <algorithm>
 #include "NumberUtil.h"
 #include "ServerLog.h"
 #include "StringUtil.h"
@@ -346,6 +347,7 @@ void BaseParallelStrategyAlgorithm::CalculatePerformanceDataWithTpDimension(
         one.indicators.emplace(KEY_STAGE_TIME, NumberUtil::DoubleReservedNDigits(item.stageTime, reservedNum));
         one.indicators.emplace(KEY_BUBBLE_TIME, NumberUtil::DoubleReservedNDigits(item.bubbleTime, reservedNum));
         double e2eTime = item.computingTime + item.pureCommunicationTime + item.freeTime;
+        e2eTime += std::max(0.0, item.prepareTime);
         one.indicators.emplace(KEY_COMPUTING_RATIO, e2eTime == 0 ? 0 :
             NumberUtil::DoubleReservedNDigits(item.computingTime / e2eTime * PERCENTAGE_RATIO_SCALE, reservedNum));
         one.indicators.emplace(KEY_COMMUNICATION_RATIO, e2eTime == 0 ? 0 :
@@ -628,6 +630,7 @@ void BaseParallelStrategyAlgorithm::CalAdviceInfo(const std::string &tmpDimensio
         min.freeDiff = std::min(min.freeDiff, item.indicators[KEY_FREE_TIME]);
         sum += item.indicators[KEY_TOTAL_COMPUTING_TIME] + item.indicators[KEY_COMMUNICATION_NOT_OVERLAPPED] +
                item.indicators[KEY_FREE_TIME];
+        sum += std::max(0.0, item.indicators[KEY_PREPARING_TIME]);
     }
     if (!indicatorData.empty() && sum != 0) {
         AnalyzePerformanceAdviceWithDpCpPpTpDimension(max, min, sum / indicatorData.size(), advices);
