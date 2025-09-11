@@ -7,7 +7,7 @@ import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } f
 import { useTranslation } from 'react-i18next';
 import { Button, Form, InputGroup, InputNumber, InputSplit, Select, Tabs, Tooltip } from 'ascend-components';
 import { message, Popconfirm, Spin } from 'antd';
-import eventBus from '../../utils/eventBus';
+import eventBus, { useEventBus } from '../../utils/eventBus';
 import styled from '@emotion/styled';
 import { FormInstance } from 'antd/lib/form';
 import { Loading, ParallelismGraph } from './ParallelismGraph';
@@ -528,6 +528,11 @@ const ParallelSwitch = observer(({ session, onTargetRankIndexChange }: ParallelS
         }
         onTargetRankIndexChange(targetIndex);
     }, [onTargetRankIndexChange]);
+
+    useEventBus('selectSlowRanksTopNum', (num): void => {
+        setRankIndex(num as number);
+        handleFindRank(num as number);
+    });
 
     useEffect(() => {
         const { min = null, max = null } = session.rankDyeingData[dyeingMode] ?? {};

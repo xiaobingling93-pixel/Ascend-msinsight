@@ -9,6 +9,7 @@ import { Tooltip } from 'ascend-components';
 import { Advice } from 'ascend-utils/Common';
 import { AntdTableRow, GetSlowRankAdviseRes, TopElements } from '../../utils/interface';
 import type { GenerateConditions } from '../../store/parallelism';
+import eventBus from '../../utils/eventBus';
 
 interface SlowRankContainerProps {
     generateConditions: GenerateConditions;
@@ -37,6 +38,7 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
         return tableData.map((item, index) => {
             const rowData: AntdTableRow = {
                 key: `${item.index}`,
+                index: item.index,
             };
             rowData[headers[0]] = `${item.name} ${t('number')}(${item.index})`;
             for (let i = 1; i < headers.length; i++) {
@@ -46,6 +48,10 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
         });
     };
 
+    const selectNum = (row: TopElements): void => {
+        eventBus.emit('selectSlowRanksTopNum', row.index);
+    };
+
     const generateColumns = (dataKeys: string[]): Array<{dataIndex: string; key: string; title: JSX.Element}> => {
         return dataKeys.map(key => ({
             dataIndex: key,
@@ -53,6 +59,7 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
             title: (<Tooltip title={t(`SlowRank ToolTip.${key}`)}>
                 <span>{t(key)}</span>
             </Tooltip>),
+            ...(['slowRanksTopN', 'slowGroupsTopN'].includes(key) ? { render: (text: string, row: TopElements) => <a onClick={(): void => selectNum(row)}>{text}</a> } : {}),
         }));
     };
 

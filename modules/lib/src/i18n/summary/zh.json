@@ -149,11 +149,11 @@
     "Search": "查询",
     "slowRanksTopN": "应关注Top3慢卡",
     "slowGroupsTopN": "应关注Top3分组",
-    "dpSynchronizeTime": "DP-组间同步平均耗时（us）",
-    "cpSynchronizeTime": "CP-组间同步平均耗时（us）",
-    "tpSynchronizeTime": "TP-卡间同步耗时（us）",
+    "dpSynchronizeTime": "DP-平均通信时间差值（us）",
+    "cpSynchronizeTime": "CP-平均通信时间差值（us）",
+    "tpSynchronizeTime": "TP-通信时间差值（us）",
     "number": "序号",
-    "slow rank advice": "请关注如下分组是否拖累了整网。同一通信域内，同步耗时越久，说明集群快慢卡不同步问题越严重。",
+    "slow rank advice": "请关注如下分组/卡是否拖累了整网。同一通信域内，通信时间差值越大，说明集群快慢卡不同步问题越严重。此部分差值可认为，存在一定优化空间。可右键慢卡所在通信域连线，跳转至“通信页签->通信耗时分析” ，进一步确认快慢卡差异来源。",
     "No problem": "当前维度无明显快慢卡问题",
     "contextMenu": {
       "Copy attributes": "复制属性",
@@ -166,7 +166,7 @@
     "SlowRank ToolTip": {
       "slowRanksTopN": "应关注Top3慢卡",
       "slowGroupsTopN": "应关注Top3分组",
-      "dpSynchronizeTime": "所在DP通信域最大'DP-平均通信时间' 减去 当前元素'TP-通信时间'",
+      "dpSynchronizeTime": "所在DP通信域最大'DP-平均通信时间' 减去 当前元素'DP-通信时间'",
       "cpSynchronizeTime": "所在CP通信域最大'CP-平均通信时间' 减去 当前元素'CP-通信时间'",
       "tpSynchronizeTime": "所在TP通信域最大'TP-通信时间' 减去 当前元素'TP-通信时间'"
     }

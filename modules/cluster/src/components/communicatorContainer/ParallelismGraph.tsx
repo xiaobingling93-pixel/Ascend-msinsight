@@ -10,7 +10,7 @@ import { observer } from 'mobx-react';
 import { CanvasDrawer, Frame, Line, Rectangle } from './shape';
 import { runInAction } from 'mobx';
 import { getDyeingColor, groupFrames } from './ContainerUtils';
-import eventBus from '../../utils/eventBus';
+import eventBus, { useEventBus } from '../../utils/eventBus';
 import styled from '@emotion/styled';
 import { useParallelSwitchConditions } from './Context';
 import { useTheme } from '@emotion/react';
@@ -233,6 +233,7 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
     const locateTargetAnim = useLocateAnim(canvasContainerRef);
     const [contextMenuRect, setContextMenuRect] = useState<Rectangle | null>(null);
     const [contextMenuLine, setContextMenuLine] = useState<Line | null>(null);
+    const [autoActiveNum, setAutoActiveNum] = useState<number>(-1);
     const tooltipsData = useTooltipsData({
         hoveredRectIndex,
         data,
@@ -376,6 +377,10 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
             width: rectWidth,
             height: rectHeight,
         });
+        if (autoActiveNum > -1) {
+            setActiveRectIndex(autoActiveNum);
+            setAutoActiveNum(-1);
+        }
     }, [canvasDrawer, targetRankIndex]);
 
     useEffect(() => {
@@ -507,6 +512,10 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
     useEffect(() => {
         handleScrollToTarget();
     }, [targetTrigger]);
+
+    useEventBus('selectSlowRanksTopNum', (num) => {
+        setAutoActiveNum(num as number);
+    });
 
     const onClickCanvas: React.MouseEventHandler<HTMLDivElement> = (event): void => {
         const { offsetX, offsetY } = event.nativeEvent;
