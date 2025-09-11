@@ -1262,8 +1262,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenApi)
     params.metaType = "PYTORCH_API";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId;
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, false);
 }
 
@@ -1276,8 +1276,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWare)
     params.metaType = "Ascend Hardware";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId;
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, false);
 }
 
@@ -1291,8 +1291,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWareAndTidIsNotEmpty)
     params.tid = "ppp";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId;
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, false);
 }
 
@@ -1335,15 +1335,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithoutMSTX)
     params.threadIdList = {"2"};
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId = "7";
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId = "7";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     ASSERT_TRUE(res);
     ASSERT_EQ(body.eventDetailList.size(), 3); // 3
 
     auto stmt2 = database.CreatPreparedStatement();
     params.threadIdList = {"3"};
     body.eventDetailList.clear();
-    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, rankId);
+    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, deviceId);
     ASSERT_TRUE(res);
     ASSERT_EQ(body.eventDetailList.size(), 3); // 3
 }
@@ -1389,8 +1389,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithInvalidDomain)
     params.threadIdList = {"2_65535"};
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId = "7";
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId = "7";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     ASSERT_TRUE(res);
     ASSERT_EQ(body.eventDetailList.size(), 1);
     EXPECT_EQ(dynamic_cast<DeviceEventDetail *>(body.eventDetailList[0].get())->threadName, "Stream 2 MSTX");
@@ -1398,7 +1398,7 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithInvalidDomain)
     auto stmt2 = database.CreatPreparedStatement();
     params.threadIdList = {"2"};
     body.eventDetailList.clear();
-    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, rankId);
+    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, deviceId);
     ASSERT_TRUE(res);
     ASSERT_EQ(body.eventDetailList.size(), 1);
 }
@@ -1444,8 +1444,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithValidDomain)
     params.threadIdList = {"2_2967"};
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId = "7";
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId = "7";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     ASSERT_TRUE(res);
     ASSERT_EQ(body.eventDetailList.size(), 1);
     EXPECT_EQ(dynamic_cast<DeviceEventDetail *>(body.eventDetailList[0].get())->threadName, "Stream 2 MSTX domain cat");
@@ -1453,7 +1453,7 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithValidDomain)
     auto stmt2 = database.CreatPreparedStatement();
     params.threadIdList = {"2"};
     body.eventDetailList.clear();
-    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, rankId);
+    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, deviceId);
     ASSERT_TRUE(res);
     ASSERT_EQ(body.eventDetailList.size(), 1);
 }
@@ -1482,8 +1482,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCann)
     params.pid = "1237912654215057";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId = "0";
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, true);
     ASSERT_EQ(body.eventDetailList.size(), 1);
     EXPECT_EQ(body.eventDetailList[0]->name, "cann_test");
@@ -1516,8 +1516,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCannWithHccl)
     params.pid = "1237912654215057";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId = "0";
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, true);
     EXPECT_EQ(body.eventDetailList.size(), 1);
     EXPECT_EQ(body.eventDetailList[0]->name, "cann_test");
@@ -1559,8 +1559,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHccl)
     params.pageSize = 10;
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId = "0";
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, true);
     ASSERT_EQ(body.eventDetailList.size(), 1);
     EXPECT_EQ(body.eventDetailList[0]->name, "hcom_broadcast__559_0_1");
@@ -1603,8 +1603,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHcclAndTidNotEmpty)
     params.pageSize = 10;
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId = "0";
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, true);
     ASSERT_EQ(body.eventDetailList.size(), 1);
     EXPECT_EQ(body.eventDetailList[0]->name, "hcom_broadcast__559_0_1");
@@ -1619,8 +1619,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlap)
     params.metaType = "OVERLAP_ANALYSIS";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId;
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, false);
 }
 
@@ -1634,8 +1634,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlapAndTidNotEmpty)
     params.tid = "kkkkkkkk";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId;
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, false);
 }
 
@@ -1649,8 +1649,8 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOther)
     params.tid = "kkkkkkkk";
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
-    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    const std::string deviceId;
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, false);
 }
 

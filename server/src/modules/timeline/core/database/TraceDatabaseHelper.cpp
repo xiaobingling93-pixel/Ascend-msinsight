@@ -590,22 +590,22 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <Sqlit
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& deviceId)
 {
     std::string sql =
         "SELECT main.ROWID as id, si.value AS name, main.startNs AS start, main.endNs - main.startNs as duration, "
-        "'Stream '||streamId as threadName, main.depth, 'Ascend Hardware' as processId, streamId as threadId, "
-        "deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
+        "'Stream '||streamId as threadName, main.depth, 'Ascend Hardware' as processId, streamId as threadId "
+        "FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
         "on CTI.globalTaskId = main.globalTaskId "
         " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId "
         " LEFT JOIN MSTX_EVENTS mstx ON main.connectionId = mstx.connectionId "
         " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, mstx.message, main.taskType)"
         " WHERE main.deviceId = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), deviceId);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& deviceId)
 {
     // Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
     // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
@@ -614,7 +614,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
     // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
     std::string sql =
         "SELECT main.ROWID as id, si.value AS name, main.startNs AS start, main.endNs - main.startNs as duration, "
-        "'Stream '||streamId as threadName, deviceId AS rankId, main.depth, 'Ascend Hardware' as processId, "
+        "'Stream '||streamId as threadName, main.depth, 'Ascend Hardware' as processId, "
         "streamId as threadId FROM TASK AS main "
         " LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
         " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId "
@@ -630,7 +630,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
         " UNION ALL "
         "SELECT main.ROWID as id, si.value AS name, main.startNs AS start, main.endNs - main.startNs as duration, "
         "'Stream '|| streamId || ' MSTX' || (CASE WHEN si2.value IS NULL THEN '' ELSE ' domain ' || si2.value END) "
-        "AS threadName, deviceId AS rankId, main.depth, 'Ascend Hardware' as processId, "
+        "AS threadName, main.depth, 'Ascend Hardware' as processId, "
         "streamId || '_' || domainId as threadId FROM TASK AS main "
         " INNER JOIN MSTX_EVENTS mstx ON main.connectionId = mstx.connectionId "
         " INNER JOIN STRING_IDS AS si ON si.id = mstx.message "
@@ -645,11 +645,11 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
     if (stmt == nullptr) {
         throw DatabaseException("Failed to prepare sql.");
     }
-    stmt->BindParams(rankId);
+    stmt->BindParams(deviceId);
     for (const auto &item: params.threadIdList) {
         stmt->BindParams(item);
     }
-    stmt->BindParams(rankId);
+    stmt->BindParams(deviceId);
     for (const auto &item: params.threadIdList) {
         stmt->BindParams(item);
     }
@@ -661,75 +661,43 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& deviceId)
 {
     if (!TraceDatabaseHelper::IsDeviceIdUnique(params.rankId)) {
-        std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
-                          "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-                          "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
-                          "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
-                          "where opId in (select opId from tmp group by opId)) "
-                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
-                          "groupName||'group' as threadId, "
-                          "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName, "
-                          "? AS rankId from sub ";
-        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, rankId);
+        std::string sql = QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_NOT_UNIQUE;
+        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), deviceId);
     } else {
-        std::string sql = "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
-                          "si.value as name, groupName from COMMUNICATION_OP "
-                          "LEFT JOIN STRING_IDS AS si ON si.id = opName) "
-                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
-                          "groupName||'group' as threadId, "
-                          "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName, "
-                          "? AS rankId from sub ";
-        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId);
+        std::string sql = QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_UNIQUE;
+        return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition));
     }
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& deviceId)
 {
     if (!TraceDatabaseHelper::IsDeviceIdUnique(params.rankId)) {
-        std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
-                          "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-                          "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
-                          "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
-                          "where opId in (select opId from tmp group by opId)) "
-                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
-                          "groupName||'group' as threadId, ? AS threadName, ? AS rankId from sub "
-                          "WHERE groupName||'group' = ? ";
+        std::string sql = QUERY_EVENTS_VIEW_FOR_GROUP_DEVICE_ID_NOT_UNIQUE;
         return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
-                                                 rankId, params.threadName, rankId, params.tid);
+                                                 deviceId, params.threadName, params.tid);
     } else {
-        std::string sql = "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
-                          "si.value as name, groupName "
-                          "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName) "
-                          "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
-                          "groupName||'group' as threadId, ? AS threadName, ? AS rankId from sub "
-                          "WHERE groupName||'group' = ? ";
+        std::string sql = QUERY_EVENTS_VIEW_FOR_GROUP_DEVICE_ID_UNIQUE;
         return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.threadName,
-                                                 rankId, params.tid);
+                                                 params.tid);
     }
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& deviceId)
 {
-    std::string sql = "select OVERLAP_ANALYSIS.ROWID as id, type AS name, startNs as start, "
-                      "endNs - startNs as duration, type AS threadName, "
-                      "0 as depth, 'OVERLAP_ANALYSIS' as processId, type as threadId, "
-                      "deviceId AS rankId from OVERLAP_ANALYSIS where deviceId = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId);
+    std::string sql = QUERY_EVENTS_VIEW_FOR_OVERLAP;
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), deviceId);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4OverlapSub(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& deviceId)
 {
-    std::string sql = "select OVERLAP_ANALYSIS.ROWID as id, type AS name, startNs as start, "
-                      "endNs - startNs as duration, type AS threadName, "
-                      "0 as depth, 'OVERLAP_ANALYSIS' as processId, type as threadId, "
-                      "deviceId AS rankId from OVERLAP_ANALYSIS where deviceId = ? AND type = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.tid);
+    std::string sql = QUERY_EVENTS_VIEW_FOR_OVERLAP_SUB;
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), deviceId, params.tid);
 }
 
 std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -755,9 +723,18 @@ std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <S
     return nullptr;
 }
 
-void GetEventsViewResultSet4DbDetails(std::unique_ptr<SqliteResultSet>& resultSet, PROCESS_TYPE metaType,
+void GetEventsViewResultSet4DbDetails(std::unique_ptr<SqliteResultSet>& resultSet,
+                                      const Protocol::EventsViewParams &params,
                                       uint64_t minTimestamp, std::vector<std::unique_ptr<EventDetail>>& details)
 {
+    PROCESS_TYPE metaType = TraceDatabaseHelper::GetProcessType(params.metaType);
+    std::string rankIdWithoutHost;
+    size_t index = params.rankId.rfind(" ");
+    if (index != std::string::npos) {
+        rankIdWithoutHost = params.rankId.substr(index + 1);
+    } else {
+        rankIdWithoutHost = params.rankId;
+    }
     while (resultSet->Next()) {
         auto ptr = std::make_unique<EventDetail>();
         // 根据泳道类型，创建对应子类对象的指针，填充特有数据
@@ -769,7 +746,7 @@ void GetEventsViewResultSet4DbDetails(std::unique_ptr<SqliteResultSet>& resultSe
         } else {
             auto devicePtr = std::make_unique<DeviceEventDetail>();
             devicePtr->threadName = resultSet->GetString("threadName");
-            devicePtr->rankId =  resultSet->GetString("rankId");
+            devicePtr->rankId = rankIdWithoutHost;
             ptr = std::move(devicePtr);
         }
         // 父类指针，填充公共数据
@@ -793,7 +770,7 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
 {
     auto metaType = TraceDatabaseHelper::GetProcessType(params.metaType);
     std::vector<std::unique_ptr<EventDetail>> details;
-    GetEventsViewResultSet4DbDetails(resultSet, metaType, minTimestamp, details);
+    GetEventsViewResultSet4DbDetails(resultSet, params, minTimestamp, details);
     body.count = details.size();
     body.currentPage = params.currentPage;
     body.pageSize = params.pageSize;
@@ -830,7 +807,7 @@ std::string TraceDatabaseHelper::GetOrderByCondition(const Protocol::EventsViewP
 }
 
 std::unique_ptr<SqliteResultSet> QueryEventsViewResultSet(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    const Protocol::EventsViewParams &params, std::string &orderByCondition, const std::string& rankId,
+    const Protocol::EventsViewParams &params, std::string &orderByCondition, const std::string& deviceId,
     const PROCESS_TYPE &metaType)
 {
     switch (metaType) { // 根据不同的泳道类型，调用不同的query查询数据表
@@ -842,21 +819,21 @@ std::unique_ptr<SqliteResultSet> QueryEventsViewResultSet(std::unique_ptr <Sqlit
             return GetEventsViewResult4CANNAPI(stmt, orderByCondition, params);
         case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
             if (params.threadIdList.empty() && params.threadName.empty()) {
-                return QueryEventsView4Hardware(stmt, orderByCondition, params, rankId);
+                return QueryEventsView4Hardware(stmt, orderByCondition, params, deviceId);
             } else {
-                return QueryEventsView4Stream(stmt, orderByCondition, params, rankId);
+                return QueryEventsView4Stream(stmt, orderByCondition, params, deviceId);
             }
         case Protocol::PROCESS_TYPE::HCCL:
             if (params.tid.empty() && params.threadName.empty()) {
-                return QueryEventsView4DeviceHCCL(stmt, orderByCondition, params, rankId);
+                return QueryEventsView4DeviceHCCL(stmt, orderByCondition, params, deviceId);
             } else {
-                return QueryEventsView4Group(stmt, orderByCondition, params, rankId);
+                return QueryEventsView4Group(stmt, orderByCondition, params, deviceId);
             }
         case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:
             if (params.tid.empty() && params.threadName.empty()) {
-                return QueryEventsView4Overlap(stmt, orderByCondition, params);
+                return QueryEventsView4Overlap(stmt, orderByCondition, params, deviceId);
             } else {
-                return QueryEventsView4OverlapSub(stmt, orderByCondition, params);
+                return QueryEventsView4OverlapSub(stmt, orderByCondition, params, deviceId);
             }
         default:
             ServerLog::Warn("No defined query way");
@@ -866,7 +843,7 @@ std::unique_ptr<SqliteResultSet> QueryEventsViewResultSet(std::unique_ptr <Sqlit
 
 bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp,
-    const std::string& rankId)
+    const std::string& deviceId)
 {
     std::string orderByCondition = GetOrderByCondition(params);
     if (orderByCondition.empty()) {
@@ -875,7 +852,7 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
     auto metaType = GetProcessType(params.metaType);
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
-        resultSet = QueryEventsViewResultSet(stmt, params, orderByCondition, rankId, metaType);
+        resultSet = QueryEventsViewResultSet(stmt, params, orderByCondition, deviceId, metaType);
     } catch (DatabaseException &de) {
         ServerLog::Error("Query events view data for DB. Execute query failed: ", de.What());
         return false;

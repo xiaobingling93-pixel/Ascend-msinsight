@@ -180,7 +180,7 @@ static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::uni
      const Protocol::UnitThreadsOperatorsParams &requestParams, const QUERY_THREAD_SAME_OPERATORS_PARAMS& params);
 static bool QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp,
-    const std::string& rankId);
+    const std::string& deviceId);
 /* Functions for JsonTraceDataBase */
 static bool QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);

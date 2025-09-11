@@ -215,6 +215,52 @@ const static std::string MS_TX_THREAD_BY_PID =
         TABLE_MSTX_EVENTS +
         " where globalTid = ? and domainId = ? and endNs >= ? AND startNs <= ? ORDER BY startNs";
 
+// QueryEventsViewData4Db
+const static std::string QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_NOT_UNIQUE =
+    "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
+    "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+    "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
+    "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
+    "where opId in (select opId from tmp group by opId)) "
+    "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+    "groupName||'group' as threadId, "
+    "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName "
+    "from sub ";
+const static std::string QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_UNIQUE =
+    "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
+    "si.value as name, groupName from COMMUNICATION_OP "
+    "LEFT JOIN STRING_IDS AS si ON si.id = opName) "
+    "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+    "groupName||'group' as threadId, "
+    "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName "
+    "from sub ";
+const static std::string QUERY_EVENTS_VIEW_FOR_GROUP_DEVICE_ID_NOT_UNIQUE =
+    "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
+    "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+    "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
+    "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
+    "where opId in (select opId from tmp group by opId)) "
+    "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+    "groupName||'group' as threadId, ? AS threadName from sub "
+    "WHERE groupName||'group' = ? ";
+const static std::string QUERY_EVENTS_VIEW_FOR_GROUP_DEVICE_ID_UNIQUE =
+    "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
+    "si.value as name, groupName "
+    "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName) "
+    "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
+    "groupName||'group' as threadId, ? AS threadName from sub "
+    "WHERE groupName||'group' = ? ";
+const static std::string QUERY_EVENTS_VIEW_FOR_OVERLAP =
+    "select OVERLAP_ANALYSIS.ROWID as id, type AS name, startNs as start, "
+    "endNs - startNs as duration, type AS threadName, "
+    "0 as depth, 'OVERLAP_ANALYSIS' as processId, type as threadId "
+    "from OVERLAP_ANALYSIS where deviceId = ? ";
+const static std::string QUERY_EVENTS_VIEW_FOR_OVERLAP_SUB =
+    "select OVERLAP_ANALYSIS.ROWID as id, type AS name, startNs as start, "
+    "endNs - startNs as duration, type AS threadName, "
+    "0 as depth, 'OVERLAP_ANALYSIS' as processId, type as threadId "
+    "from OVERLAP_ANALYSIS where deviceId = ? AND type = ? ";
+
 class DbSqlDefs {
 public:
 static std::string GetConnectionCatSql()
