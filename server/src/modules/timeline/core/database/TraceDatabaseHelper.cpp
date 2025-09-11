@@ -324,9 +324,8 @@ bool TraceDatabaseHelper::IsDeviceIdUnique(const std::string &fileId)
     return deviceIdList.size() == 1;
 }
 
-std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryLabelTracesSummary(
-    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
-    const std::string& rankId, uint64_t minTimestamp)
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryLabelTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
 {
     std::string sql;
     auto processType = GetProcessType(requestParams.metaType);
@@ -342,69 +341,115 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryLabelTracesSummary(
     }
 }
 
-std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryProcessTracesSummary(
-    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
-    const std::string& rankId, uint64_t minTimestamp)
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryProcessTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
 {
-    std::string sql;
     auto processType = GetProcessType(requestParams.metaType);
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                  "FROM " + TABLE_TASK + " WHERE deviceId = ? AND start_time >= ? "
-                  "AND start_time <= ? AND depth = 0 ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
-                                requestParams.startTime, requestParams.endTime);
+            return QueryHardwareTracesSummary(rankId, minTimestamp, stmt, requestParams);
         case PROCESS_TYPE::HCCL:
-            if (!IsDeviceIdUnique(requestParams.cardId)) {
-                sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                      "FROM " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO + " info "
-                      " on main.globalTaskId = info.globalTaskId"
-                      " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
-                return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
-                                    requestParams.startTime, requestParams.endTime);
-            } else {
-                sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                      "FROM " + TABLE_COMMUNICATION_OP + " where start_time >= ? AND start_time <= ? ORDER BY startNs;";
-                return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.startTime,
-                                    requestParams.endTime);
-            }
+            return QueryCommunicationTracesSummary(rankId, minTimestamp, stmt, requestParams);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                  "FROM " + TABLE_OVERLAP_ANALYSIS + " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? "
-                  "ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId, requestParams.startTime,
-                                requestParams.endTime);
+            return QueryOverlapTracesSummary(rankId, minTimestamp, stmt, requestParams);
+        case PROCESS_TYPE::PROCESS:
+            return QueryProcessUnitTracesSummary(rankId, minTimestamp, stmt, requestParams);
         case PROCESS_TYPE::CANN_API:
-            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                  " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND depth = 0 "
-                  " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
-                  " UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
-                  "    endNs - ? as end_time from  " + TABLE_API + " WHERE globalTid = ? AND depth = 0 "
-                  " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
-                                requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
-                                minTimestamp, minTimestamp, requestParams.processId,
-                                requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
+            return QueryCannTracesSummary(rankId, minTimestamp, stmt, requestParams);
         case PROCESS_TYPE::MS_TX:
-            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time"
-                  " from " + TABLE_MSTX_EVENTS + " WHERE globalTid = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
-                                requestParams.startTime, requestParams.endTime);
+            return QueryMstxTracesSummary(rankId, minTimestamp, stmt, requestParams);
         default:
             throw DatabaseException("unsupported type while query process trace summary!");
     }
 }
 
-std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
-    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
-    const std::string& rankId, uint64_t minTimestamp)
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
 {
     if (requestParams.unitType == "label") {
-        return QueryLabelTracesSummary(stmt, requestParams, rankId, minTimestamp);
+        return QueryLabelTracesSummary(rankId, minTimestamp, stmt, requestParams);
     } else {
-        return QueryProcessTracesSummary(stmt, requestParams, rankId, minTimestamp);
+        return QueryProcessTracesSummary(rankId, minTimestamp, stmt, requestParams);
     }
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryHardwareTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
+{
+    std::string sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+          "FROM " + TABLE_TASK + " WHERE deviceId = ? AND start_time >= ? "
+                                 "AND start_time <= ? AND depth = 0 ORDER BY startNs;";
+    return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
+                        requestParams.startTime, requestParams.endTime);
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryCommunicationTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
+{
+    std::string sql;
+    if (!IsDeviceIdUnique(requestParams.cardId)) {
+        sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+              "FROM " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO + " info "
+              " on main.globalTaskId = info.globalTaskId"
+              " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
+        return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
+                            requestParams.startTime, requestParams.endTime);
+    } else {
+        sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+              "FROM " + TABLE_COMMUNICATION_OP + " where start_time >= ? AND start_time <= ? ORDER BY startNs;";
+        return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.startTime,
+                            requestParams.endTime);
+    }
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryOverlapTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
+{
+    std::string sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                      "FROM " + TABLE_OVERLAP_ANALYSIS + " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? "
+                      "ORDER BY startNs;";
+    return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId, requestParams.startTime,
+                        requestParams.endTime);
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryCannTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
+{
+    std::string  sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                       " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND depth = 0 "
+                       " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
+                       " UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
+                       "    endNs - ? as end_time from  " + TABLE_API + " WHERE globalTid = ? AND depth = 0 "
+                       " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
+    return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
+                        minTimestamp, minTimestamp, requestParams.processId,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryMstxTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
+{
+    std::string sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time from " +
+            TABLE_MSTX_EVENTS + " WHERE globalTid = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
+    return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
+                        requestParams.startTime, requestParams.endTime);
+}
+
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryProcessUnitTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
+{
+    uint64_t pid = NumberUtil::StringToUnsignedLongLong(requestParams.processId) >> 32;
+    std::string sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
+                      " FROM " + TABLE_CANN_API + " WHERE (globalTid >> 32) = ? AND depth = 0 "
+                      " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
+                      " UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
+                      "    endNs - ? as end_time from  " + TABLE_API + " WHERE (globalTid >> 32) = ? AND depth = 0 "
+                      " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
+    return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, pid,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
+                        minTimestamp, minTimestamp, pid,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt,

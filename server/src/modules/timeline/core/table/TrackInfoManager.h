@@ -58,6 +58,7 @@ public:
     void UpdateHost(const std::string &cardId, const std::string &host);
     void UpdateHostCardId(const std::string &cardId, const std::string &hostCardId);
     void UpdateDeviceMap(const std::string &cardId, const std::unordered_map<std::string, std::string> deviceMap);
+    void UpdateDeviceToRankIdMap(const std::string &cardId, const std::string &rankId);
     void UpdateTrackIdMap(const std::string &fileId,
         const std::map<uint64_t, std::pair<std::string, std::string>> &threadMap);
     std::string GetRankId(const std::string &host, const std::string &deviceId);

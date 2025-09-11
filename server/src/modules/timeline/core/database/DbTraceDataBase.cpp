@@ -70,7 +70,7 @@ bool DbTraceDataBase::GenerateOverlapAnalysisMetadata(const std::string &fileId,
                                                       std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     auto metaType = ENUM_TO_STR(PROCESS_TYPE::OVERLAP_ANALYSIS).value_or("");
-    auto overlap_analysis = GenerateBaseUnitTrack("process", fileId, metaType, metaType, metaType);
+    auto overlap_analysis = GenerateBaseUnitTrack("process", fileId, metaType, "Overlap Analysis", metaType);
     if (stringsCache.find(path) == stringsCache.end()) {
         stringsCache[path] = {}; // 初始化空的映射
     }
@@ -566,8 +566,8 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     try {
-        resultSet = TraceDatabaseHelper::QueryThreadTracesSummary(stmt, requestParams,
-                                                                  GetDeviceId(requestParams.cardId), minTimestamp);
+        resultSet = TraceDatabaseHelper::QueryThreadTracesSummary(GetDeviceId(requestParams.cardId),
+                                                                  minTimestamp, stmt, requestParams);
     } catch (DatabaseException &e) {
         ServerLog::Error("Query thread traces summary failed, ", e.What());
         return false;
@@ -1350,7 +1350,7 @@ void DbTraceDataBase::DealHostMetadata(const std::string &fileId, std::vector<st
                 metaData.emplace_back(std::move(process));
             }
             process = GenerateBaseUnitTrack("process", fileId, thread.first, "Process " + std::to_string(pid),
-                ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+            ENUM_TO_STR(PROCESS_TYPE::PROCESS).value());
             curPid = pid;
         }
         auto threadUnit = GenerateBaseUnitTrack("process", fileId, thread.first, "Thread " + std::to_string(tid),

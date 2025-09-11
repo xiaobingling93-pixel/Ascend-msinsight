@@ -47,7 +47,7 @@ uint64_t HostFlowRepo::QueryEnqueueNameId(const FlowQuery &flowQuery)
     uint64_t nameId = 0;
     std::vector<StringIdsPO> stringIdsPOS;
     stringIdsTable->Select(StringIdsColumn::ID)
-        .Eq(StringIdsColumn::VALUE, "Enqueue")
+        .Like(StringIdsColumn::VALUE, "Enqueue%")
         .ExcuteQuery(flowQuery.fileId, stringIdsPOS);
     if (!std::empty(stringIdsPOS)) {
         nameId = stringIdsPOS[0].id;
@@ -72,7 +72,7 @@ void HostFlowRepo::QueryAsyncTaskQueue(const FlowQuery &flowQuery, std::vector<F
 {
     std::vector<StringIdsPO> stringIdsPOS;
     stringIdsTable->Select(StringIdsColumn::ID)
-        .Eq(StringIdsColumn::VALUE, "Enqueue")
+        .Like(StringIdsColumn::VALUE, "Enqueue%")
         .ExcuteQuery(flowQuery.fileId, stringIdsPOS);
     if (std::empty(stringIdsPOS)) {
         return;

@@ -566,6 +566,7 @@ TEST_F(FullDbTestSuit, QueryUnitFLows)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Protocol::UnitFlowsParams requestParams;
+    requestParams.rankId = "2";
     requestParams.metaType = "Ascend Hardware";
     requestParams.id = "0";
     Protocol::UnitFlowsBody responseBody;

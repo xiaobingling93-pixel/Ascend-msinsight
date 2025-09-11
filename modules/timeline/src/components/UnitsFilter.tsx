@@ -240,7 +240,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
         }
         if (unit.name === 'Thread') {
             const metaDataName = (unit.metadata as ThreadMetaData).threadName;
-            if (metaDataName && metaDataName !== '' && ['pytorch', 'MsTx', 'Python GC', 'CANN'].includes(metaDataName)) {
+            if (metaDataName && metaDataName !== '' && ['pytorch', 'mstx', 'python gc', 'cann', 'os runtime api'].includes(metaDataName.toLowerCase())) {
                 unitNames.add(metaDataName.replace(/\(\d{0,12}\)/, '').trim());
             }
         }

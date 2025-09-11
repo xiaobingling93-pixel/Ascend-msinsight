@@ -216,7 +216,9 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
         return false;
     }
     for (auto &item: flowLocations) {
-        item.rankId = requestParams.rankId;
+        if (item.rankId == path) {
+            item.rankId = requestParams.rankId;
+        }
     }
     std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
     for (size_t index = 1; index < flowLocations.size(); index++) {
@@ -224,8 +226,11 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
         singleFlow.id = connectionId.value();
         singleFlow.from = flowLocations[index - 1];
         singleFlow.to = flowLocations[index];
+        if (singleFlow.from.rankId != singleFlow.to.rankId) {
+            continue;
+        }
         if (singleFlow.from.metaType == singleFlow.to.metaType && singleFlow.from.metaType == TABLE_API) {
-            singleFlow.cat = singleFlow.from.name == "Enqueue" ? "async_task_queue" : "fwdbwd";
+            singleFlow.cat = singleFlow.from.name.find("Enqueue") != std::string::npos ? "async_task_queue" : "fwdbwd";
         }
         singleFlow.cat = singleFlow.from.metaType == TABLE_CANN_API ? "HostToDevice" : singleFlow.cat;
         singleFlow.cat = singleFlow.from.metaType == TABLE_MSTX_EVENTS ? "MsTx" : singleFlow.cat;

@@ -85,8 +85,8 @@ static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &s
                                      uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data,
                                      const std::string filePath);
 
-static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
-        const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
+static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
 static std::vector<uint64_t> GetDeviceIdList(const std::string &fileId);
 static bool IsDeviceIdUnique(const std::string &fileId);
 static void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
@@ -319,10 +319,22 @@ private:
     static bool CalculateParallelParameter(const std::vector<Protocol::ThreadTraces> &fwdTraceList,
         const std::vector<Protocol::ThreadTraces> &bwdTraceList,
         uint64_t minBwdStartTime, std::pair<uint16_t, uint16_t> &parameter);
-    static std::unique_ptr<SqliteResultSet> QueryProcessTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
-        const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
-    static std::unique_ptr<SqliteResultSet> QueryLabelTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
-        const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
+    static std::unique_ptr<SqliteResultSet> QueryProcessTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
+    static std::unique_ptr<SqliteResultSet> QueryLabelTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
+    static std::unique_ptr<SqliteResultSet> QueryHardwareTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
+    static std::unique_ptr<SqliteResultSet> QueryCommunicationTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
+    static std::unique_ptr<SqliteResultSet> QueryOverlapTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
+    static std::unique_ptr<SqliteResultSet> QueryCannTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
+    static std::unique_ptr<SqliteResultSet> QueryMstxTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
+    static std::unique_ptr<SqliteResultSet> QueryProcessUnitTracesSummary(const std::string& rankId, uint64_t minTimestamp,
+        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
 };
 };
 

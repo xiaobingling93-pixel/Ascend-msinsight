@@ -111,6 +111,15 @@ void TrackInfoManager::UpdateDeviceMap(const std::string &cardId,
     }
 }
 
+void TrackInfoManager::UpdateDeviceToRankIdMap(const std::string &cardId, const std::string &rankId)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    if (cardId.empty() || rankId.empty()) {
+        return;
+    }
+    deviceIdToRankIdMap[cardId] = rankId;
+}
+
 void TrackInfoManager::UpdateHostCardId(const std::string &cardId, const std::string &hostCardId)
 {
     std::unique_lock<std::mutex> lock(trackMutex);

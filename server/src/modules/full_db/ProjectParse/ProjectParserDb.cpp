@@ -166,6 +166,7 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
             DataBaseManager::Instance().SetRankIdFileIdMapping(host + rank, file);
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
             TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankIdDeviceMap);
+            TrackInfoManager::Instance().UpdateDeviceToRankIdMap(host + parsefileInfo->deviceId, rank);
             TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
             TrackInfoManager::Instance().SetRankListByFileId(file,
                                                              {clusterId,
