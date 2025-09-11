@@ -95,7 +95,7 @@ interface UseFetchDataReturns {
     error?: Error;
 }
 
-const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns => {
+const useFetchData = (params: GenerateConditions | null, session: Session): UseFetchDataReturns => {
     const [data, setData] = useState<ParallelismArrangementResult>();
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error>();
@@ -122,6 +122,10 @@ const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns =>
     useEffect(() => {
         const isDefaultParams = params?.dpSize === 1 && params?.tpSize === 1 && params?.ppSize === 1 && params.cpSize === 1 && params?.epSize === 1;
         if (params !== null && !isDefaultParams) {
+            fetchData();
+        }
+        const unitcount = session?.unitcount;
+        if (unitcount && unitcount <= 64 && isDefaultParams) {
             fetchData();
         }
     }, [JSON.stringify(params)]);
@@ -224,7 +228,7 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
     const [responsiveSize, setResponsiveSize] = useState({ width: 0, height: 0 });
     const { parallelTypeList, dyeingMode, setDyeingMode, startVal, endVal } = useParallelSwitchConditions();
     const theme = useTheme();
-    const { data, loading, isUpdated } = useFetchData(generateConditions);
+    const { data, loading, isUpdated } = useFetchData(generateConditions, session);
     const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1, dimension } = generateConditions ?? {};
     const locateTargetAnim = useLocateAnim(canvasContainerRef);
     const [contextMenuRect, setContextMenuRect] = useState<Rectangle | null>(null);
