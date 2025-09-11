@@ -107,6 +107,7 @@ export const CommunicatorContainer = observer(({ session, loading, clusterPath }
 CommunicatorContainerProps) => {
     const { t } = useTranslation('summary');
     const [showRank, setShowRank] = useState(false);
+    const [isNoData, setIsNoData] = useState(true);
 
     return (
         <div style={{ marginBottom: 24 }}>
@@ -114,11 +115,13 @@ CommunicatorContainerProps) => {
                 session={session}
                 showRank={showRank}
                 setShowRank={setShowRank}
+                isNoData={isNoData}
+                setIsNoData={setIsNoData}
                 clusterPath={clusterPath}
             />}
 
             {
-                showRank
+                showRank && !isNoData
                     ? <div style={{ position: 'relative' }}>
                         {
                             loading &&
@@ -130,7 +133,20 @@ CommunicatorContainerProps) => {
                             <CommunicatorContent session={session} />
                         </ParallelSwitchConditionsProvider>
                     </div>
-                    : <div className={'noDataTip'}>{t('NoDataTip')}</div>
+                    : <>
+                        <div style={{ display: 'none' }}>
+                            {
+                                loading &&
+                                <Loading style={{ paddingTop: 100 }}>
+                                    <Spin spinning={loading} />
+                                </Loading>
+                            }
+                            <ParallelSwitchConditionsProvider>
+                                <CommunicatorContent session={session} />
+                            </ParallelSwitchConditionsProvider>
+                        </div>
+                        <div className={'noDataTip'}>{t('NoDataTip')}</div>
+                    </>
             }
         </div>
     );
@@ -148,6 +164,8 @@ interface CommunicatorHeaderProps {
     session: Session;
     showRank: boolean;
     setShowRank: React.Dispatch<React.SetStateAction<boolean>>;
+    isNoData: boolean;
+    setIsNoData: React.Dispatch<React.SetStateAction<boolean>>;
     clusterPath: string;
 }
 interface CollectedConfiguration {
@@ -158,7 +176,7 @@ interface CollectedConfiguration {
     cpSize: number;
     moeTpSize: number;
 }
-const CommunicatorHeader = observer(({ session, showRank, setShowRank, clusterPath }: CommunicatorHeaderProps) => {
+const CommunicatorHeader = observer(({ session, showRank, setShowRank, isNoData, setIsNoData, clusterPath }: CommunicatorHeaderProps) => {
     const { generateConditions, dimensionOptionsData } = parallelismStore;
     const [form] = Form.useForm();
     const collectedConfiguration = useRef<CollectedConfiguration | null>(null);
@@ -181,6 +199,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, clusterPa
             setShowRank(false);
         } else {
             setShowRank(true);
+            setIsNoData(false);
         }
         const unitcount = session?.unitcount;
         if (unitcount && unitcount <= 64) {
@@ -227,6 +246,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, clusterPa
             await setParallelStrategy({ ...values });
             parallelismStore.updateGenerateConditions({ ...values, dimension: generateConditions.dimension });
             setShowRank(true);
+            setIsNoData(false);
             eventBus.emit('activeCommunicator', undefined);
         } catch (e) {
             const errMsg = (e as ErrorInfo)?.message;
@@ -245,7 +265,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, clusterPa
 
     return <>
         <FormDom collectedConfiguration={collectedConfiguration} onClickGenerate={clickGenerate} form={form}/>
-        {showRank && <Tabs
+        {showRank && !isNoData && <Tabs
             type="card"
             size="small"
             tabBarGutter={4}
