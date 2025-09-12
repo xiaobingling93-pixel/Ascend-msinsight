@@ -63,20 +63,12 @@ test.describe('Communication', () => {
         // 筛选通信域
         const communicationGroupSelect = new SelectHelpers(page, communicationGroupSelector, communicationFrame);
         await communicationGroupSelect.open();
+        await communicationGroupSelect.selectOption('(0, 1, 2, 3, 4, 5, 6, 7):6979938994784791964:');
 
-        const optionUnsignedText = '(0, 1, 2, 3, 4, 5, 6, 7)';
-        const optionSignedText = 'tp-dp-cp:(0, 1, 2, 3, 4, 5, 6, 7)';
-        const optionUnsigned = communicationFrame.locator(`.ant-select-item-option[title='${optionUnsignedText}']`);
-
-        if ((await optionUnsigned.count()) > 0) {
-            await communicationGroupSelect.selectOption(optionUnsignedText);
-        } else {
-            await communicationGroupSelect.selectOption(optionSignedText);
-        }
         // 筛选算子名称
         const operatorNameSelect = new SelectHelpers(page, operatorNameSelector, communicationFrame);
         await operatorNameSelect.open();
-        await operatorNameSelect.selectOption('allgather-top1');
+        await operatorNameSelect.selectOption('allreduce-bottom1');
         await page.waitForTimeout(1000);
         await page.mouse.move(0, 0);
         await expect(fullPage).toHaveScreenshot('page-loaded.png');

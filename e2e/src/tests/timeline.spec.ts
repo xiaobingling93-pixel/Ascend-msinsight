@@ -4,7 +4,7 @@
 
 import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { TimelinePage, SystemView, CommunicationPage } from '@/page-object';
-import { clearAllData, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
+import { clearAllData, dragSelect, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { InputHelpers, SelectHelpers } from '@/components';
 
 interface TestFixtures {
@@ -696,10 +696,11 @@ test.describe('Timeline', () => {
             return;
         }
         const { x: startX, y: startY } = chartInfo;
-        await page.mouse.move(startX + 50, startY + 80);
-        await page.mouse.down();
-        await page.mouse.move(startX + 200, startY + 150);
-        await page.mouse.up();
+        await dragSelect(page, {
+            x:startX + 50, y:startY + 80,
+        },{
+            x:startX + 200, y:startY + 150,
+        });
         // 右键锁定
         await clickMenu(chart.first(), timelineFrame, 'Lock selection area');
         await chart.first().click();

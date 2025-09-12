@@ -168,3 +168,29 @@ export async function waitForAllParsed(page: Page, tabPage: any): Promise<void> 
     await parsingProgress.waitFor({ state: 'hidden' });
     await tabPage.goto();
 }
+
+/**
+ * 在页面上框选一段范围
+ * @param page Playwright Page 实例
+ * @param start 起点坐标 { x, y }
+ * @param end 终点坐标 { x, y }
+ * @param steps 鼠标移动的步数（越大越平滑，默认 20）
+ */
+export async function dragSelect(
+    page: Page,
+    start: { x: number; y: number },
+    end: { x: number; y: number },
+    steps = 10,
+) {
+    // 移动到起点
+    await page.mouse.move(start.x, start.y);
+
+    // 按下鼠标左键
+    await page.mouse.down();
+
+    // 拖动到终点
+    await page.mouse.move(end.x, end.y, { steps });
+
+    // 松开鼠标
+    await page.mouse.up();
+}

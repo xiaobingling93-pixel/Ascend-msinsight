@@ -163,7 +163,7 @@ test.describe('Operator(MultiMachines)', () => {
         const dbRank0 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_0);
         await dbRank0.click();
         await allCardParsedPromise;
-        
+
         await hostSelector.waitFor({ state: 'attached' });
         const hostText = await hostSelect.getValue();
         expect(hostText).toBe('node18899436934890168541_0');
@@ -179,6 +179,7 @@ test.describe('Operator(MultiMachines)', () => {
         await allCardParsedPromise;
 
         await hostSelector.waitFor({ state: 'detached' });
+        await page.waitForTimeout(400);
         const selectedText2 = await rankIdSelect.getValue();
         expect(selectedText2).toBe('1');
         await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator-db-to-text.png', {
