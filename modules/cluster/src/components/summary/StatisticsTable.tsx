@@ -13,6 +13,7 @@ import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } 
 import { ResizeTable } from 'ascend-resize';
 import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
+import { observer } from 'mobx-react-lite';
 
 const useComputingStatisticsColumns = (): ColumnsType => {
     const { t } = useTranslation('summary');
@@ -379,8 +380,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     />;
 };
 
-export const StatisticsTable = (props: {step: string; rankId: string; dbPath: string; session: Session }): JSX.Element => {
-    const { rankId = '', dbPath = '', step = '', session } = props;
+export const StatisticsTable = observer(({ rankId, dbPath, step, session }: {step: string; rankId: string; dbPath: string; session: Session }): JSX.Element => {
     const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
@@ -418,4 +418,4 @@ export const StatisticsTable = (props: {step: string; rankId: string; dbPath: st
             </div>)
         : <></>
     ;
-};
+});
