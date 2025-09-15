@@ -36,8 +36,8 @@ export class TraceStore {
             this.traceData = res;
             this.stageTypeList = res.stageTypeList;
             this.formData = {
-                framework: res.framework ?? 'Unknown',
-                algorithm: res.backendType ?? 'Unknown',
+                framework: res.framework || 'Unknown',
+                algorithm: res.backendType || 'Unknown',
             };
         } catch (error) {
             message.error('请求失败，请稍后重试');
