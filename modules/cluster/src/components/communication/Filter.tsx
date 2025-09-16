@@ -12,7 +12,6 @@ import { Label, toSortedStage, getAllNumberFromString } from '../Common';
 import type { CompareData, optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
-import type { partitionMode } from '../communicatorContainer/ContainerUtils';
 import { ClusterSelect } from '../ClusterSelect';
 
 export interface ConditionDataType {
@@ -193,38 +192,6 @@ function isNumberPairsFormat(str: string): boolean {
     return pattern.test(str);
 }
 
-// 通过stage获取对应的并行策略，存在多个并行策略时，策略间使用'/'进行分割
-function getParallelStrategyByStage(partitionModes: partitionMode[], stage: string): string {
-    const strategyList: string[] = [
-        'tp-cp',
-        'tp-dp',
-        'tp-dp-cp',
-        'mp',
-        'pp',
-        'tp',
-        'cp',
-        'dp-cp',
-        'dp',
-        'mp_exp',
-        'dp_modulo_exp_cp',
-        'dp_modulo_exp',
-        'tp_exp',
-        'exp',
-    ];
-    const matchingKeys: string[] = [];
-    partitionModes.forEach((obj) => {
-        const found = obj.communicators.some(communicator => communicator.value === stage);
-        if (found && strategyList.includes(obj.mode)) {
-            matchingKeys.push(obj.mode);
-        }
-    });
-    if (matchingKeys.length === 0) {
-        return '';
-    } else {
-        return matchingKeys.join('/');
-    }
-}
-
 // 对比stage数据，先对长度进行排序（长的排前面），再对内容排序（首数字小的排前面）
 function compareStageInfo(stageA: string, stageB: string): number {
     const aRankList = getAllNumberFromString(stageA);
@@ -247,13 +214,12 @@ function compareStageInfo(stageA: string, stageB: string): number {
 const getStageOptions = async (condition: {iterationId: string;baselineIterationId: string}, session: Session): Promise<optionDataType[]> => {
     const res: {data: [{group: string; parallelStrategy: string; groupIdHash: {compare: string; baseline: string}}] } = await queryStages({ ...condition, isCompare: session.isCompare });
     const list = res?.data ?? [];
-    const modes = session.selectedClusterPath === session.communicatorData.clusterPath ? session.communicatorData.partitionModes : [];
     const options: optionDataType[] = list
         .map(item => {
             // 如果stage是由数字组成，则对数据进行重排序，否则不做任何处理（p2p的情况）
             const stageAfterSort = isNumberPairsFormat(item.group) ? toSortedStage(item.group) : item.group;
-            // 并行策略 如果该数据后端传回来已有该数据，则直接使用，如果没有才进行并行策略的匹配
-            const strategy = item.parallelStrategy ? item.parallelStrategy : getParallelStrategyByStage(modes, stageAfterSort);
+            // 并行策略 如果该数据后端传回来已有该数据，则直接使用，如果没有则显示group id的hash值
+            const strategy = item.parallelStrategy;
             // value使用group id的hash值，考虑对比场景，使用两个hash值拼接而成，
             const value = generateStageKeyValue(item.groupIdHash.compare, item.groupIdHash.baseline);
             // label的显示格式为 并行策略：通信域，如果并行策略不存在，则在通信域后面加上groupId的hash值信息
