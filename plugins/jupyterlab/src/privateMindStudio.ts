@@ -12,7 +12,7 @@ const MINDSTUDIO_SERVICE_URL = '';
 
 const MINDSTUDIO_STATIC_CONFIG_URL = '';
 
-const MINDSTUDIO_URL = '/resources/frontend/index.html';
+const MINDSTUDIO_URL = '/resources/profiler/frontend/index.html';
 
 const MINDSTUDIO_IFRAME_CONFIG_URL = '/mindstudio_insight_jupyterlab/get_iframe_config';
 
