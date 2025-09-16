@@ -62,7 +62,7 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
             ...(['slowRanksTopN', 'slowGroupsTopN'].includes(key) ? { render: (text: string, row: TopElements) => <a onClick={(): void => selectNum(row)}>{text}</a> } : {}),
         }));
     };
-
+    const isDefaultParams = generateConditions?.dpSize === 1 && generateConditions?.tpSize === 1 && generateConditions?.ppSize === 1 && generateConditions.cpSize === 1 && generateConditions?.epSize === 1;
     const fetchData = async (): Promise<void> => {
         const params = {
             ...generateConditions,
@@ -75,7 +75,7 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
             setSlowRankAnalysis(null);
             return;
         }
-        if (!slowRankRes.hasSlowRank) {
+        if (!slowRankRes.hasSlowRank && !isDefaultParams) {
             const res: JSX.Element = (
                 <div data-testid={'slow-rank-expert-advice'}>
                     <Advice text={t('No problem')} />
