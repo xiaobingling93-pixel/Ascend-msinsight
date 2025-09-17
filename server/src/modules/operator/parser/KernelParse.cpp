@@ -330,14 +330,14 @@ inline void KernelParse::ParseStartTimeInfoData(const std::map<std::string, size
     const std::vector<std::string> &row, const std::string &fileId, Kernel &kernel)
 {
     const std::string& timestamp = row[dataMap.at(FIELD_START_TIME)];
-    kernel.startTime =  NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(timestamp));
+    kernel.startTime =  NumberUtil::TimestampUsToNsStable(timestamp);
 }
 
 inline void KernelParse::ParseTaskStartTimeInfoData(const std::map<std::string, size_t> &dataMap,
     const std::vector<std::string> &row, const std::string &fileId, Kernel &kernel)
 {
     const std::string& timestamp = row[dataMap.at(FIELD_TASK_START_TIME)];
-    kernel.startTime =  NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(timestamp));
+    kernel.startTime =  NumberUtil::TimestampUsToNsStable(timestamp);
 }
 
 inline void KernelParse::ParseAICoreMetricsInfoData(const std::map<std::string, size_t> &dataMap,
@@ -357,11 +357,6 @@ bool KernelParse::ProcessHeaderGetParseFunc(std::shared_ptr<TextSummaryDataBase>
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
     const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> &parseProcessList)
 {
-    // 获取每一列，更新db表
-    if (!GetUtilizationColumns(rowVector, columns) or !db->ExtendColumns(TABLE_KERNEL, columns) or
-        !db->InitStmt(columns)) {
-        return false;
-    }
     // 检查表头并拿到每一类数据对应的解析函数
     if (!CheckHeaderFieldAndFilterParseFunc(rowVector, parseProcessList)) {
         return false;
@@ -369,6 +364,11 @@ bool KernelParse::ProcessHeaderGetParseFunc(std::shared_ptr<TextSummaryDataBase>
     // 拿到每一类数据在哪一列，存储在dataMap中
     for (size_t i = 0; i < rowVector.size(); ++i) {
         dataMap[rowVector[i]] = i;
+    }
+    // 获取每一列，更新db表
+    if (!GetUtilizationColumns(rowVector, columns) or !db->ExtendColumns(TABLE_KERNEL, columns) or
+        !db->InitStmt(columns)) {
+        return false;
     }
     return true;
 }

@@ -269,3 +269,12 @@ TEST(NumberUtil, TruncateNumberString)
         EXPECT_EQ(NumberUtil::TruncateNumberString(testItem.first), testItem.second);
     }
 }
+
+TEST(NumberUtil, TimestampUsToNsStableReturnValid) {
+    EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNsStable("1695297849996490.053011100000"));
+    EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNsStable("1695297849996490.0535"));
+    EXPECT_EQ(1757124456975771780, NumberUtil::TimestampUsToNsStable("1757124456975771.780"));
+    EXPECT_EQ(0, NumberUtil::TimestampUsToNsStable("1757124456975771.qw0"));
+    EXPECT_EQ(0, NumberUtil::TimestampUsToNsStable("qad123.780"));
+    EXPECT_EQ(0, NumberUtil::TimestampUsToNsStable("12122qq975771.780"));
+}
