@@ -21,7 +21,7 @@
   "style": "style/index.css",
   "scripts": {
     "build": "npm run build:lib && npm run build:labextension:dev",
-    "build:prod": "npm run clean && npm run build:lib:prod && npm run build:labextension",
+    "build:prod": "npm dedupe && npm run clean && npm run build:lib:prod && npm run build:labextension",
     "build:labextension": "jupyter labextension build .",
     "build:labextension:dev": "jupyter labextension build --development True .",
     "build:lib": "tsc --sourceMap",
@@ -46,14 +46,14 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyterlab/application": "^4.3.5",
-    "@jupyterlab/apputils": "^4.4.5",
-    "@jupyterlab/launcher": "^4.3.5",
-    "@jupyterlab/mainmenu": "^4.3.5",
-    "@jupyterlab/ui-components": "^4.3.5",
-    "@jupyterlab/running": "^4.3.5",
-    "@jupyterlab/coreutils": "^6.3.5",
-    "@jupyterlab/services": "^7.3.5"
+    "@jupyterlab/application": "4.3.5",
+    "@jupyterlab/apputils": "4.3.5",
+    "@jupyterlab/launcher": "4.3.5",
+    "@jupyterlab/mainmenu": "4.3.5",
+    "@jupyterlab/ui-components": "4.3.5",
+    "@jupyterlab/running": "4.3.5",
+    "@jupyterlab/coreutils": "6.3.5",
+    "@jupyterlab/services": "7.3.5"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^4.3.5",
@@ -78,6 +78,16 @@
     "typescript": "~5.0.2",
     "yjs": "^13.5.0"
   },
+  "overrides": {
+    "@jupyterlab/application": "4.3.5",
+    "@jupyterlab/apputils": "4.3.5",
+    "@jupyterlab/launcher": "4.3.5",
+    "@jupyterlab/mainmenu": "4.3.5",
+    "@jupyterlab/ui-components": "4.3.5",
+    "@jupyterlab/running": "4.3.5",
+    "@jupyterlab/coreutils": "6.3.5",
+    "@jupyterlab/services": "7.3.5"
+  },
   "sideEffects": [
     "style/*.css",
     "style/index.js"
@@ -93,7 +103,7 @@
           "pip"
         ],
         "base": {
-          "name": "mindstudio_insight_jupyterlab"
+          "name": "@MindStudio/mindstudio_insight_jupyterlab"
         }
       }
     },

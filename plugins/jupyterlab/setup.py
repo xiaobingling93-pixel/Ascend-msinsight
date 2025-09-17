@@ -28,8 +28,8 @@ jstargets = [
 
 # 指定要复制的文件进行打包
 data_files_spec = [
-    (f"share/jupyter/labextensions/{PROJECT_NAME}", str(lab_path), "**/*"),
-    (f"share/jupyter/labextensions/{PROJECT_NAME}", str(HERE), "install.json"),
+    (f"share/jupyter/labextensions/@MindStudio/{PROJECT_NAME}", str(lab_path), "**/*"),
+    (f"share/jupyter/labextensions/@MindStudio/{PROJECT_NAME}", str(HERE), "install.json"),
     (f"etc/jupyter/jupyter_server_config.d", str(config_path), "mindstudio_insight_jupyterlab.json")
 ]
 data_files = get_data_files(data_files_spec)
