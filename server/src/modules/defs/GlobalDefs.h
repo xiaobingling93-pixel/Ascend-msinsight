@@ -64,6 +64,7 @@ enum class ProjectTypeEnum {
 
 inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {
     ProjectTypeEnum::DB,
+    ProjectTypeEnum::DB_NPUMONITOR,
     ProjectTypeEnum::TEXT_CLUSTER,
     ProjectTypeEnum::SIMULATION,
     ProjectTypeEnum::TRACE,
@@ -87,6 +88,7 @@ inline std::unordered_map<ProjectTypeEnum, uint8_t> projectTypeGroup = {
     {ProjectTypeEnum::SIMULATION, 3},
     {ProjectTypeEnum::TRACE, 2},
     {ProjectTypeEnum::DB_CLUSTER, 1},
+    {ProjectTypeEnum::DB_NPUMONITOR, 1}
 };
 
 static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTypeEnum)

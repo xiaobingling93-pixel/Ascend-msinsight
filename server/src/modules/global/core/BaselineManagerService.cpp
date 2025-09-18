@@ -110,7 +110,8 @@ bool BaselineManagerService::InitBaselineData(const Protocol::BaselineSettingReq
     // 获取解析类型（以进一步调用对应解析类）
     ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
     // 设置baseline数据库的类型
-    Timeline::DataType type = parserType == ParserType::DB ? Timeline::DataType::DB : Timeline::DataType::TEXT;
+    Timeline::DataType type = (parserType == ParserType::DB || parserType == ParserType::DB_NPUMONITOR)?
+        Timeline::DataType::DB : Timeline::DataType::TEXT;
     Timeline::DataBaseManager::Instance().SetBaselineDataType(type);
     // 调用工厂进行内容解析
     std::shared_ptr<ProjectParserBase> parser = ParserFactory::GetProjectParser(parserType);

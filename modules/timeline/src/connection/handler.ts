@@ -258,7 +258,8 @@ const createBaselineCard = (session: Session | undefined, result: TimelineCard[]
         if ((metadata.dataSource.dataPath as string[]) === undefined) {
             return false;
         }
-        return metadata.dataSource.remote !== dataSource.remote || (metadata.dataSource.dataPath as string[]).includes(singleDataPath);
+        // metadata.dbPath===singleDataPath的判断仅用于npumonitor场景
+        return metadata.dataSource.remote !== dataSource.remote || (metadata.dataSource.dataPath as string[]).includes(singleDataPath) || metadata.dbPath === singleDataPath;
     });
     if (isSamePath) { return; }
     session.phase = 'download';

@@ -6,6 +6,8 @@
 #include "ServerLog.h"
 #include "DataBaseManager.h"
 #include "ProjectAnalyze.h"
+#include "FullDbParser.h"
+#include "BaselineManager.h"
 
 namespace Dic {
 namespace Module {
@@ -46,6 +48,43 @@ void ProjectParserDbNPUMonitor::BuildProjectExploreInfo(Dic::Module::Global::Pro
         parseFileInfoRank->fileId = parsedFile;
         info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
     }
+}
+
+void ProjectParserDbNPUMonitor::ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
+                                               Global::BaselineInfo &baselineInfo)
+{
+    // 该函数主要复用ProjectParserDb::ParserBaseline()的逻辑，除去了找文件的步骤，因为npumonitor数据的parsedFilePath就是db文件的路径，不需要额外查找
+    if (projectInfo.fileInfoMap.empty()) {
+        return;
+    }
+
+    DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
+
+    auto hostInfoMap = GetReportFiles({ projectInfo });
+    if (std::empty(hostInfoMap)) {
+        Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+        baselineInfo.errorMessage = "NPU monitor db get host info failed!";
+        return;
+    }
+    FilterHostMap(hostInfoMap, baselineInfo.parsedFilePath);
+    if (std::empty(hostInfoMap.begin()->second) || std::empty(hostInfoMap.begin()->second.begin()->second)) {
+        Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+        baselineInfo.errorMessage = "NPU monitor db get rank info failed!";
+        return;
+    }
+    std::string rankId = hostInfoMap.begin()->first + hostInfoMap.begin()->second.begin()->second[0];
+
+    baselineInfo.rankId = rankId;
+    baselineInfo.cardName = "Baseline_" + rankId;
+    baselineInfo.host = hostInfoMap.begin()->first;
+    baselineInfo.fileId = baselineInfo.parsedFilePath;
+    Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(baselineInfo.rankId, baselineInfo.parsedFilePath)) {
+        ServerLog::Error("Failed to create baseline connection pool for NPU monitor. ");
+    }
+    FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ baselineInfo.rankId },
+        baselineInfo.parsedFilePath);
 }
 
 ProjectAnalyzeRegister<ProjectParserDbNPUMonitor> pRegDBNPUMonitor(ParserType::DB_NPUMONITOR);
