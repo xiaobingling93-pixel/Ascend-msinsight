@@ -970,18 +970,14 @@ bool TextClusterDatabase::QuerySlowOpByCommDuration(const Protocol::DurationList
 
 std::vector<CommInfoUnderRank> TextClusterDatabase::GetCommTimeForRankDim(const std::string &stepId)
 {
-    std::string sql;
-    if (stepId.empty() || stepId == "All") {
-        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapse_time) * 1000, 3) as commTime, g.rank_set as rankSet FROM "
-            + TABLE_TIME_INFO + " as t LEFT JOIN (SELECT rank_set, group_id_hash FROM " + TABLE_GROUP_ID +
-            " group by group_id_hash) as g ON t.op_suffix = g.group_id_hash "
-            "WHERE op_name != 'Total Op Info' group by t.rank_id, g.rank_set";
-    } else {
-        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapse_time) * 1000, 3) as commTime, g.rank_set as rankSet FROM "
-            + TABLE_TIME_INFO + " as t LEFT JOIN (SELECT rank_set, group_id_hash FROM " + TABLE_GROUP_ID +
-            " group by group_id_hash) as g ON t.op_suffix = g.group_id_hash "
-            "WHERE op_name != 'Total Op Info' AND iteration_id = ? group by t.rank_id, g.rank_set";
+    std::string sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapse_time) * 1000, 3) as commTime, g.rank_set as "
+                      " rankSet, g.group_id_hash as groupIdHash, g.pg_name as pgName FROM " + TABLE_TIME_INFO +
+                      " as t LEFT JOIN (SELECT rank_set, group_id_hash, pg_name FROM "+ TABLE_GROUP_ID + " group by "
+                      "group_id_hash) as g ON t.op_suffix = g.group_id_hash WHERE op_name = 'Total Op Info'";
+    if (!stepId.empty() && stepId != "All") {
+        sql += " AND iteration_id = ? ";
     }
+    sql += " group by t.rank_id, g.group_id_hash";
     return ExecuteGetCommTimeForRankDim(sql, stepId);
 }
 

@@ -846,6 +846,8 @@ std::vector<CommInfoUnderRank> VirtualClusterDatabase::ExecuteGetCommTimeForRank
         info.rankId = resultSet->GetString("rankId");
         info.commTime = resultSet->GetDouble("commTime");
         info.rankSet = resultSet->GetString("rankSet");
+        info.groupIdHash = resultSet->GetString("groupIdHash");
+        info.pgName = resultSet->GetString("pgName");
         res.push_back(info);
     }
     return res;

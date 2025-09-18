@@ -456,9 +456,7 @@ void ClusterService::FindSlowRankByCommDuration(const std::shared_ptr<VirtualClu
     std::vector<CommInfoUnderRank> commTimeForRankDim = database->GetCommTimeForRankDim(params.iterationId);
     std::set<RankDetailsForSlowRank> rankDetails;
     for (const auto& commInfo : commTimeForRankDim) {
-        std::vector<std::string> rankList = StringUtil::SplitStringWithParenthesesByComma(commInfo.rankSet);
-        std::string rankSet = StringUtil::JoinNumberStrWithParenthesesByOrder(rankList);
-        if (rankSet == params.stage) {
+        if (commInfo.groupIdHash == params.groupIdHash) {
             rankDetails.insert({commInfo.rankId, 0.0, commInfo.commTime, {}});
         }
     }

@@ -297,6 +297,7 @@ struct CommInfoUnderRank {
     std::string rankId;
     std::string rankSet;
     std::string pgName;
+    std::string groupIdHash;
 };
 
 struct AdviceInfoForSlowRank {
