@@ -7,6 +7,7 @@ export enum FilePath {
     TEXT_330 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data', // 给 Memory 模块使用
     TEXT_330_RANK_0 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data\\ubuntu2204_3929556_20250411014455476_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     TEXT_330_RANK_1 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data\\ubuntu2204_3929557_20250411014455475_ascend_pt\\ASCEND_PROFILER_OUTPUT',
+    MEMORY_DB = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\profiler_llm_result_db',
     DB = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level2_ACLAICORE_db',
     MIND_SPORE = 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\profile',
     DB_2025330 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_9.0.RC1.B090_db',

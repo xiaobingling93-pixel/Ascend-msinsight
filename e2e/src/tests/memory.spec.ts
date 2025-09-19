@@ -488,3 +488,98 @@ test.describe('Memory(Pytorch_Group_By_Component)', () => {
         await clearAllData(page, ws);
     });
 });
+
+test.describe('Memory(DB)', () => {
+    test.beforeEach(async ({ page, memoryPage, ws }) => {
+        const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await memoryPage.goto();
+        await clearAllData(page);
+        await importData(page, FilePath.TEXT_330);
+        await allCardParsedPromise;
+    });
+
+    // db场景下memory界面加载
+    test('loadMemoryPageSuccess_when_dataParseSuccess', async ({ page, memoryPage }) => {
+        const { memoryFrame, rankIdSelector } = memoryPage;
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('0');
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('db_memory_show.png', {
+            maxDiffPixels: 500,
+        });
+    });
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
+    });
+
+    // db场景下顶部过滤条件改变界面加载
+    test('change_filterCondition', async ({ page, memoryPage }) => {
+        const { memoryFrame, rankIdSelector, groupIdSelector } = memoryPage;
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
+        const groupIdSelect = new SelectHelpers(page, groupIdSelector, memoryFrame);
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('4');
+        await groupIdSelect.open();
+        await groupIdSelect.selectOption('Stream');
+        await memoryFrame.getByText('loading').first().waitFor({ state: 'hidden' });
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('db_memory_changeFilters.png', {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // db场景下底部表格条件查询后结果加载
+    test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
+        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor, queryBtn } = memoryPage;
+        const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
+        const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
+        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
+        await nameInput.setValue('aten::empty_strided');
+        expect(await nameInput.expectValueToBe('aten::empty_strided'));
+        expect(await minSizeInput.expectValueToBe('0'));
+        expect(await maxSizeInput.expectValueToBe('421916'));
+        await queryBtn.waitFor({ state: 'visible' });
+        await queryBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page').locator('.mi-collapsible-panel').nth(1)).toHaveScreenshot('db_memory_tableData.png', {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // db场景下底部表格条件重置后结果加载
+    test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
+        const { memoryFrame, maxSizeInputor, queryBtn, resetBtn } = memoryPage;
+        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
+        const tableWrapper = memoryFrame.locator('.mi-page').locator('.panel-content').nth(1);
+        await page.mouse.move(0, 0);
+        await expect(tableWrapper).toHaveScreenshot('db_memory_table_reset.png', {
+            maxDiffPixels: 500,
+        });
+        await maxSizeInput.setValue('1000');
+        await queryBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(tableWrapper).toHaveScreenshot('db_memory_table_reset_change.png', {
+            maxDiffPixels: 500,
+        });
+        await resetBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(tableWrapper).toHaveScreenshot('db_memory_table_reset.png', {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // 表格右键跳转至Timeline
+    test('test_redirectToTimeline_when_rightClickTable', async ({ page, memoryPage }) => {
+        const { memoryFrame } = memoryPage;
+        const { fullPage } = new TimelinePage(page);
+        await memoryFrame.getByRole('cell', { name: 'aten::empty_strided' }).first().click({
+            button: 'right',
+        });
+        await memoryFrame.getByText('Find in Timeline').click();
+        await page.mouse.move(0, 0);
+        await expect(fullPage).toHaveScreenshot('db_memory_redirectToTimeline.png', {
+            maxDiffPixels: 500,
+        });
+    });
+}); 
