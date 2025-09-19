@@ -168,11 +168,15 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             }
         });
 
-        const setUnitDislay = (unit: InsightUnit): void => {
+        const setUnitDisplay = (unit: InsightUnit, loopIndex = 0): void => {
+            const MaxLoop = 100;
+            if (loopIndex > MaxLoop) {
+                return;
+            }
             unit.isDisplay = true;
             if (unit.children) {
                 for (const child of unit.children) {
-                    setUnitDislay(child);
+                    setUnitDisplay(child, loopIndex++);
                 }
             }
         };
@@ -182,11 +186,11 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             }
             if (unit.name === 'Thread') {
                 if (selectValues.includes(((unit.metadata as ThreadMetaData).threadName))) {
-                    setUnitDislay(unit);
+                    setUnitDisplay(unit);
                 }
             } else {
                 if (selectValues.includes(((unit.metadata as ProcessMetaData).processName))) {
-                    setUnitDislay(unit);
+                    setUnitDisplay(unit);
                 }
             }
         });
@@ -209,18 +213,22 @@ const findMatchUnit = (unit: InsightUnit, selectValues: string[]): boolean => {
 };
 
 const setAllUnitsDisplay = (session: Session): void => {
-    const setUnitDislay = (unit: InsightUnit): void => {
+    const setUnitDisplay = (unit: InsightUnit, loopIndex = 0): void => {
+        const MaxLoop = 100;
+        if (loopIndex > MaxLoop) {
+            return;
+        }
         runInAction(() => {
             unit.isDisplay = true;
         });
         if (unit.children) {
             for (const child of unit.children) {
-                setUnitDislay(child);
+                setUnitDisplay(child, loopIndex++);
             }
         }
     };
     for (const unit of session.units) {
-        setUnitDislay(unit);
+        setUnitDisplay(unit);
     }
 };
 
@@ -228,7 +236,11 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
     const cardNames = new Set<string>();
     const unitNames = new Set<string>();
 
-    const visitUnit = (unit: InsightUnit): void => {
+    const visitUnit = (unit: InsightUnit, loopIndex = 0): void => {
+        const MaxLoop = 100;
+        if (loopIndex > MaxLoop) {
+            return;
+        }
         if (unit.name === 'Card' && !unit.isMultiDeviceHidden) {
             cardNames.add((unit.metadata as CardMetaData).cardName ?? '');
         }
@@ -246,7 +258,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
         }
         if (unit.children) {
             for (const child of unit.children) {
-                visitUnit(child);
+                visitUnit(child, loopIndex++);
             }
         }
     };
@@ -381,7 +393,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 >
                 </Tabs>
                 <FixedTooltipWrapper>
-                    <Tooltip placement='bottom' title={t('Filter ToolTip', { ns: 'timeline' })}>
+                    <Tooltip placement="bottom" title={t('Filter ToolTip', { ns: 'timeline' })}>
                         <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20} />
                     </Tooltip>
                 </FixedTooltipWrapper>
