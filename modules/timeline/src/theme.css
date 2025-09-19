@@ -96,3 +96,27 @@
     inset -3px 0 0 0 var(--selectedChartBorderColor),
     inset 0 -3px 0 0 var(--selectedChartBorderColor);
 }
+
+.in-time-line-load {
+    position: relative;
+    padding-right: 20px;
+}
+
+.in-time-line-load::after {
+    content: '';
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border: 2px solid #ddd;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}

@@ -20,6 +20,7 @@ import {
     QueryCommunicationKernelDetailResult,
     CreateCurveParams, CreateCurveResult,
 } from './interface';
+import connector from '../connection';
 
 // 根据cardId集合解析timeline
 export const parseCards = async(param: ParseCardsParam): Promise<any> => {
@@ -43,6 +44,16 @@ export const getOverallMetrics = async (params: GetOverallMetricsParams): Promis
             }
         });
     };
+
+    if (res.data.length === 0) {
+        return new Promise((resolve) => {
+            connector.addListener('OverallMetrics', async () => {
+                const result = await window.requestData('systemView/overall', params, 'timeline');
+                addCatField(result.data);
+                resolve(result);
+            });
+        });
+    }
     addCatField(res.data);
     return res;
 };

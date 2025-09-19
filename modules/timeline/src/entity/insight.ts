@@ -232,6 +232,7 @@ export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<stri
     height: () => number;
     isMultiDeviceHidden: boolean; // 判断是否是单 Host 多 Device 中需要隐藏的泳道
     isDisplay: boolean;
+    isOverlapAnalysisLoading: boolean;
     children?: InsightUnit[];
     type: 'basic' | 'transparent';
     phase: string;
@@ -320,6 +321,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
 
         expandable = false;
         isExpanded = false;
+        isOverlapAnalysisLoading = true;
         isDisplay = true;
         detail = transformDetail(params.detail);
         bottomPanelRender = params.bottomPanelRender;

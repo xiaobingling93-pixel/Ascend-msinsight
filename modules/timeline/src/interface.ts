@@ -21,6 +21,7 @@ import {
     removeBaselineHandler,
     updateProjectNameHandler,
     resetRemoteHandler, findBlock,
+    parseUnitCompletedHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -46,6 +47,7 @@ const PARSE_CLUSTER_COMPLETED = 'parse/clusterCompleted';
 const PARSE_CLUSTER_STEP2_COMPLETED = 'parse/clusterStep2Completed';
 const BASELINE_ADD = 'baseline/add';
 const BASELINE_REMOVE = 'baseline/remove';
+const PARSE_UNIT_COMPLETED = 'parse/unitCompleted';
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [REMOTE_SAVE_PAGE_SETTING]: savePageSettingRemoteHandler,
     [REMOTE_IMPORT]: importRemoteHandler,
@@ -66,4 +68,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     switchLanguage: switchLanguageHandler,
     updateProjectName: updateProjectNameHandler,
     findBlock,
+    [PARSE_UNIT_COMPLETED]: parseUnitCompletedHandler,
 };
