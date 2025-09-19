@@ -74,7 +74,8 @@ std::vector<int> CurveContainer::ComputeDataIndex(const std::vector<size_t>& ind
                                                   int b)
 {
     uint64_t start = b * bucketSize;
-    uint64_t end = std::min(m, start + bucketSize);
+    uint64_t tempM = m;
+    uint64_t end = std::min(tempM, start + bucketSize);
     std::vector<int> indexRes;
     for (size_t col = 1; col <= legends.size() - 1; col++) {
         double minVal = std::numeric_limits<double>::infinity();
