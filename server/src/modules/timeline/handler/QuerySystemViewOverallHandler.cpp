@@ -6,6 +6,7 @@
 #include "TraceTime.h"
 #include "SystemViewOverallRepoInterface.h"
 #include "SystemViewOverallRepoFactory.h"
+#include "SystemViewOverallCacheManager.h"
 #include "QuerySystemViewOverallHandler.h"
 
 namespace Dic::Module::Timeline {
@@ -13,32 +14,54 @@ using namespace Dic::Server;
 bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SystemViewOverallRequest &>(*requestPtr);
-    SystemViewOverallHelper overallHelper;
     std::unique_ptr<SystemViewOverallResponse> responsePtr = std::make_unique<SystemViewOverallResponse>();
     SystemViewOverallResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
-    if (database == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Failed to get connection for system view overall statistics.");
-        return false;
-    }
+
     std::string error;
     request.params.page.Check(error);
     if (!std::empty(error)) {
         SendResponse(std::move(responsePtr), false, error);
         return false;
     }
+    // query cache
+    std::vector<SystemViewOverallRes> overallDetails =
+        SystemViewOverallCacheManager::Instance().GetOverallData(request.fileId);
+    if (!overallDetails.empty()) {
+        response.details = overallDetails;
+    } else if (CalOverallData(request, response, error)) {
+        SystemViewOverallCacheManager::Instance().SetOverallData(request.fileId, response.details);
+    } else {
+        SendResponse(std::move(responsePtr), false, error);
+        return false;
+    }
+
+    response.pageParam.total = response.details.size();
+    response.pageParam.current = request.params.page.current;
+    response.pageParam.pageSize = request.params.page.pageSize;
+    SendResponse(std::move(responsePtr), true);
+    return true;
+}
+
+bool QuerySystemViewOverallHandler::CalOverallData(SystemViewOverallRequest &request,
+                                                   SystemViewOverallResponse &response, std::string &error)
+{
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
+    if (database == nullptr) {
+        error = "Failed to get connection for system view overall statistics.";
+        return false;
+    }
+    SystemViewOverallHelper overallHelper;
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
-        SendResponse(std::move(responsePtr), false, "Failed to get deviceId for system view overall statistics.");
+        error = "Failed to get deviceId for system view overall statistics.";
         return false;
     }
     request.params.deviceId = deviceId;
     // 执行一层级Overlap查询，结果存放在overallHelper.overlapInfos, 并显式返回e2eTime
     overallHelper.e2eTime = GetOverlapAnalysisData(overallHelper, database, request, response.details);
     if (overallHelper.e2eTime == 0.0) {
-        SendResponse(std::move(responsePtr), false,
-                     "Failed to query system view overall. Overlap information query incomplete or missing.");
+        error = "Failed to query system view overall. Overlap information query incomplete or missing.";
         return false;
     }
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
@@ -49,7 +72,7 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     }
     // Computing拆解
     if (!repoPtr->QueryDataForComputingOverallMetric(request.params, overallHelper, database)) {
-        ServerLog::Error("Failed to get computing data for system view overall.");  // Computing部分失败，但是继续剩下的查询
+        ServerLog::Warn("Failed to get computing data for system view overall.");  // Computing部分失败，但是继续剩下的查询
     }
     if (!overallHelper.kernelEvents.empty()) {
         // 若kernel details含有效pmu数据，则进行Computing Overall统计，否则跳过Computing拆解
@@ -58,10 +81,6 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     }
     // Communication拆解
     repoPtr->QueryCommunicationOverlapOverallInfos(request.params, overallHelper, response.details, database);
-    response.pageParam.total = response.details.size();
-    response.pageParam.current = request.params.page.current;
-    response.pageParam.pageSize = request.params.page.pageSize;
-    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

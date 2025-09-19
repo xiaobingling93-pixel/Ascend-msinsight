@@ -6,6 +6,7 @@
 #include "SimulationSliceCacheManager.h"
 #include "SliceCacheManager.h"
 #include "SpinLockGuard.h"
+#include "SystemViewOverallCacheManager.h"
 #include "DomainObject.h"
 namespace Dic::Module::Timeline {
 class CacheManager {
@@ -26,6 +27,7 @@ public:
     {
         simulationSliceCacheManager.ClearAll();
         sliceCacheManager.Clear();
+        overallCacheManager.ClearAll();
     }
 
     /**
@@ -42,6 +44,7 @@ private:
     ~CacheManager() = default;
     SimulationSliceCacheManager &simulationSliceCacheManager = SimulationSliceCacheManager::Instance();
     SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
+    SystemViewOverallCacheManager &overallCacheManager = SystemViewOverallCacheManager::Instance();
     SpinLock mutex;
 };
 }
