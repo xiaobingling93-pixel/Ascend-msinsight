@@ -768,13 +768,14 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
 
 std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
 {
+    // 仅当导入单json或者csv时会进入如下if，以保证单目录导入两个json或csv后db文件不会相互覆盖
+    if (!FileUtil::IsFolder(filePath)) {
+        return FileUtil::GetSingleFileIdWithDb(filePath);
+    }
+
     std::string rankId = FileUtil::GetProfilerFileId(FileUtil::SplicePath(filePath, "mindstudio_data.db"));
     std::string dbPath;
-    if (FileUtil::IsFolder(filePath)) {
-        dbPath = FileUtil::SplicePath(filePath, "mindstudio_data.db");
-    } else {
-        dbPath = FileUtil::SplicePath(FileUtil::GetParentPath(filePath), "mindstudio_data.db");
-    }
+    dbPath = FileUtil::SplicePath(filePath, "mindstudio_data.db");
     return FileUtil::GetDbPath(dbPath, rankId);
 }
 

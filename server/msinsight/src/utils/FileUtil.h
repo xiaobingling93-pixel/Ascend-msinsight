@@ -368,7 +368,7 @@ public:
 
     static std::string GetProfilerFileId(const std::string &filePath);
 
-    static std::string GetBinFileIdWithDb(const std::string &filePath);
+    static std::string GetSingleFileIdWithDb(const std::string &filePath);
 
     static std::string GetDbPath(const std::string &filePath);
 

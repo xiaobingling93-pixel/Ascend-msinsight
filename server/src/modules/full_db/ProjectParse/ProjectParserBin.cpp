@@ -118,7 +118,7 @@ std::vector<std::pair<std::string, std::string>> ProjectParserBin::GetSimulation
 {
     body.isCluster = false;
     std::vector<std::pair<std::string, std::string>> files;
-    std::string fileId = FileUtil::GetBinFileIdWithDb(selectFilePath);
+    std::string fileId = FileUtil::GetSingleFileIdWithDb(selectFilePath);
     if (fileId.empty()) {
         ServerLog::Error("File id is empty");
         return files;
@@ -154,7 +154,7 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
         return;
     }
     std::string filePath = projectInfo.subParseFileInfo[0]->parseFilePath;
-    std::string fileId = FileUtil::GetBinFileIdWithDb(filePath);
+    std::string fileId = FileUtil::GetSingleFileIdWithDb(filePath);
     std::string rankId = filePath;
     baselineInfo.rankId = rankId;
     baselineInfo.cardName = "Baseline_" + rankId;
@@ -199,7 +199,7 @@ void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projec
     parseFileInfo->type = ParseFileType::COMPUTE;
     parseFileInfo->curDirName = FileUtil::GetFileName(parsedFile);
     parseFileInfo->subId = parsedFile;
-    parseFileInfo->fileId = FileUtil::GetBinFileIdWithDb(parsedFile);
+    parseFileInfo->fileId = FileUtil::GetSingleFileIdWithDb(parsedFile);
     projectInfo.AddSubParseFileInfo(parseFileInfo);
 }
 

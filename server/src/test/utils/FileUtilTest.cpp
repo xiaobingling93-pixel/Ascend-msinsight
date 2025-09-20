@@ -114,7 +114,7 @@ TEST(TestUtil, TestIdBuilder)
 
 TEST(TestUtil, GetFileId)
 {
-    EXPECT_EQ(FileUtil::GetBinFileIdWithDb("test"), "test_mindstudio_insight_data.db");
+    EXPECT_EQ(FileUtil::GetSingleFileIdWithDb("test"), "test_mindstudio_insight_data.db");
 }
 
 TEST(TestUtil, TestGetFileSizeNullFileName)
