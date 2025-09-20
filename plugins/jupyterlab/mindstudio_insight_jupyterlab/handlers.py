@@ -240,7 +240,7 @@ class IFrameStaticFileHandler(StaticFileHandler):
 
 def setup_handlers(web_app):
     web_app.settings["shutdown_hook"] = shutdown_hook
-    host_pattern = ".{1,255}$"
+    host_pattern = "^[A-Za-z0-9.-]{1,255}$"
     base_url = web_app.settings["base_url"]
 
     iframe_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_iframe_config")

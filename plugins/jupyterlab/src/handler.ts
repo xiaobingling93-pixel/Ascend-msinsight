@@ -5,6 +5,23 @@
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
+function sanitize(obj: any, loopIndex = 0): any {
+  const MaxLoop = 1000;
+  if (loopIndex > MaxLoop) {
+      return;
+  }
+  if (obj && typeof obj === "object") {
+    for (const key of Object.keys(obj)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") {
+        delete obj[key];
+      } else {
+        sanitize(obj[key], loopIndex++);
+      }
+    }
+  }
+  return obj;
+}
+
 /**
  * Call the API extension
  *
@@ -38,6 +55,7 @@ export async function requestAPI<T>(
   if (data.length > 0) {
     try {
       data = JSON.parse(data);
+      data = sanitize(data);
     } catch (error) {
       data = {};
     }
