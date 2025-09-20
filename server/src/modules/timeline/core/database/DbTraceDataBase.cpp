@@ -845,7 +845,11 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             std::string deviceId = sqlite3_column_string(stmt, resultStartIndex);
             std::string rankId = sqlite3_column_string(stmt, resultStartIndex + 1);
-            rankAndDeviceMap[rankId] = deviceId;
+            // rankId存在多个映射值时取较大值，为-1时丢弃
+            if (deviceId == "-1") {
+                continue;
+            }
+            rankAndDeviceMap[rankId] = StringUtil::StrNumMax(deviceId, rankAndDeviceMap[rankId]);
         }
         sqlite3_finalize(stmt);
         return rankAndDeviceMap;

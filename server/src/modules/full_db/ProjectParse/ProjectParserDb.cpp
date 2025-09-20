@@ -156,9 +156,9 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
             auto rankIdDeviceMap = database->QueryRankIdAndDeviceMap();
             auto deviceIdInMem = database->GetDeviceIdFromMemoryTable();
             if (rankIdDeviceMap.find(rank) != rankIdDeviceMap.end()) {
-                parsefileInfo->deviceId = rankIdDeviceMap[rank];
+                parsefileInfo->deviceId = StringUtil::StrNumMax(rankIdDeviceMap[rank], parsefileInfo->deviceId);
             } else if (!deviceIdInMem.empty() && parsefileInfo->type != DEVICE_CHIP) {
-                parsefileInfo->deviceId = deviceIdInMem;
+                parsefileInfo->deviceId = StringUtil::StrNumMax(deviceIdInMem, parsefileInfo->deviceId);
             }
             std::string rankName = rank;
             hostMap[host][file].push_back(rank);
