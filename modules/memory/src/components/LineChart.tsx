@@ -14,6 +14,7 @@ import { type Theme, useTheme } from '@emotion/react';
 
 // 最大不分页的折线图图例数量，超过该数量图例分页展示
 const MAX_PLAIN_LEGENDS_COUNT = 9;
+const SHOW_ALL_SYMBOL_THRESHOLD = 1000;
 const ChartDesc = styled.div`
     color: ${(props): string => props.theme.textColor};
     margin-bottom: 24px;
@@ -101,9 +102,10 @@ const _getOriginOption = (props: IProps, theme: Theme): echarts.EChartsOption =>
 };
 
 const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.EChartsOption => {
-    const lineSerie: echarts.SeriesOption = {
+    const lineSeries: echarts.SeriesOption = {
         type: 'line',
         connectNulls: true,
+        showAllSymbol: graph.rows.length < SHOW_ALL_SYMBOL_THRESHOLD ? true : 'auto',
         emphasis: {
             label: {
                 show: true,
@@ -130,7 +132,7 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
         {
             source: [graph.columns, ...graph.rows],
         },
-        series: Array(graph.columns.length - 1).fill(lineSerie),
+        series: Array(graph.columns.length - 1).fill(lineSeries),
     };
     return newOption;
 };
