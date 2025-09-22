@@ -72,7 +72,7 @@ const BaseMISelect = <T extends DefaultOptionType>(props: MISelectProps<T>): JSX
 };
 
 const StyledMISelect = styled(BaseMISelect)`
-    height: ${(props): number => props.height ?? 32}px;
+    height: ${(props): string => props.height ? `${props.height}px` : 'auto'};
     width: ${(props): string => {
         if (typeof props.width === 'string') {
             if (!isNaN(Number(props.width))) {

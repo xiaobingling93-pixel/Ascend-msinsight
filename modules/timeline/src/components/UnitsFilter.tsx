@@ -343,7 +343,6 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                     placeholder={t('Please select card', { ns: 'timeline' })}
                     options={completeOptions}
                     width={280}
-                    height={32}
                     value={cardSelection}
                     onChange={(val: string[]) => setCardSelection(val)}
                 >
@@ -361,7 +360,6 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                     placeholder={t('Please select unit', { ns: 'timeline' })}
                     options={completeOptions}
                     width={280}
-                    height={32}
                     value={unitSelection}
                     onChange={(val: string[]) => setUnitSelection(val)}
                 >
