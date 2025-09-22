@@ -32,7 +32,7 @@ export enum FilePath {
     LEAKS_DUMP='D:\\GUI_TEST_DATA 路徑测试\\系统调优\\leaks_dump_20250603145530.db',
     MS_RANK_0 = 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\profile\\test123_3028773_20250617091627998_ascend_ms',
     // Summary专家建议 集群数据
-    EXPERT_ADVICE = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\B080_test_level2_ArithmeticUtilization_text'
+    EXPERT_ADVICE = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\db场景-专家建议'
 }
 
 export const WEBSOCKET_URL = 'ws://localhost:9000/';

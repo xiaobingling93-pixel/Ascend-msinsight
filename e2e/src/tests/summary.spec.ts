@@ -252,8 +252,8 @@ test.describe('Summary(Expert Advice Slow Rank)', () => {
     test('test_expertAdvice_when_changeDimensionTab', async ({ page, summaryPage }) => {
         const { summaryFrame, parallelismExpertAdvice, parallelismGraphLoading } = summaryPage;
         const defaultTab = 'DP + PP + CP + TP';
-        const dimensionTabs = ['DP + PP', 'DP + PP + CP'];
-        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 8, tpSize: 8, dpSize: 8, cpSize: 8, epSize: 8 });
+        const dimensionTabs = ['DP + PP'];
+        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 1, tpSize: 8, dpSize: 1, cpSize: 1, epSize: 1 });
 
         await parallelismGraphLoading.waitFor({ state: 'hidden' });
         await page.mouse.move(0, 0);
