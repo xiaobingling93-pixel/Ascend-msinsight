@@ -3,27 +3,43 @@
  */
 import React from 'react';
 import { observer } from 'mobx-react';
-import { Popconfirm, Tooltip } from 'antd';
+import { Popconfirm, Tooltip, message } from 'antd';
 import { DeleteIcon } from 'ascend-icon';
 import { removeDataPath, removeProject } from '@/utils/Project';
 import { useTranslation } from 'react-i18next';
 import { openLoading } from '@/utils/useLoading';
+import type { Session } from '@/entity/session';
 
 interface IProps {
     isProject: boolean;
     projectIndex: number;
     dataPathIndex?: number;
     dataPath?: string;
+    session?: Session;
+    projectName?: string;
 }
-const DeleteConfirm = observer(({ isProject, projectIndex, dataPath }: IProps) => {
+const DeleteConfirm = observer(({ isProject, projectIndex, dataPath, session, projectName }: IProps) => {
     const { t } = useTranslation('framework');
+    let isSelectBaseline = false;
     const confirm = (): void => {
-        openLoading();
-        if (isProject) {
-            removeProject(projectIndex);
+        if (session) {
+            const { compareSet: { baseline, comparison } } = session;
+            if (isProject) {
+                isSelectBaseline = baseline.filePath.startsWith(projectName as string) || comparison.filePath.startsWith(projectName as string);
+            } else {
+                isSelectBaseline = baseline.filePath.startsWith(dataPath as string) || comparison.filePath.startsWith(dataPath as string);
+            }
+        }
+        if (isSelectBaseline) {
+            message.warning(t('BaselineDataComparisonDataCannotDeleted'));
         } else {
-            if (dataPath !== undefined) {
-                removeDataPath(projectIndex, dataPath);
+            openLoading();
+            if (isProject) {
+                removeProject(projectIndex);
+            } else {
+                if (dataPath !== undefined) {
+                    removeDataPath(projectIndex, dataPath);
+                }
             }
         }
     };

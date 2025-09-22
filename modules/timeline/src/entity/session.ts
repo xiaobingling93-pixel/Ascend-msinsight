@@ -129,6 +129,9 @@ export class Session {
         zoomHistory: [],
     };
 
+    // 是否更新覆盖RankId
+    isNeedResetRankId: boolean = true;
+
     pinnedUnits: InsightUnit[] = [];
     icon?: JSX.Element;
     caches: Caches | null = null;

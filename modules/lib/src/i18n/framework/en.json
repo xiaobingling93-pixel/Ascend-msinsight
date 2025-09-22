@@ -10,6 +10,7 @@
     "DeleteAllConfirmDescribe": "Are you sure to delete all projects?",
     "DeleteConfirmDescribe": "Are you sure to delete the selected projects?",
     "DeleteProjectConfirmDescribe": "Are you sure to delete this project?",
+    "BaselineDataComparisonDataCannotDeleted": "Baseline data and comparison data cannot be deleted",
     "DeleteItemConfirmDescribe": "Are you sure to delete this item?",
     "File Explorer": "File Explorer",
     "FileSearchDescribe": "Enter the file path and press enter to search",

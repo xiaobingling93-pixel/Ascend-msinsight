@@ -166,7 +166,7 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
                     {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, fileType: layerType, filePath: data.path, rankId: data.rankId })}
                 </span>
                 {data.type === 'CLUSTER' || (<div className={`btn-box ${isLeaf ? 'leaf' : ''}`} onClick={(e): void => e.stopPropagation()}>
-                    <DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path}/>
+                    <DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path} session={session} projectName={projectName} />
                 </div>)}
             </span>
         </Tooltip>,
@@ -211,7 +211,7 @@ const getTreeData = (session: Session): ProjectTreeDataNode[] => {
                         <EditableText text={dataSource.projectName}/></span>
                     <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
                         <ImportDataBtn projectName={dataSource.projectName} session={session}/>
-                        <DeleteConfirm isProject={true} projectIndex={dataSourceIndex}/>
+                        <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} session={session} projectName={dataSource.projectName} />
                     </div>
                 </span>
             </Tooltip>,

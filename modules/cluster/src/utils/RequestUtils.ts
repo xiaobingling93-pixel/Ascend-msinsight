@@ -73,7 +73,6 @@ export const queryOperators = async(param: {iterationId: string ;stage: string; 
  * @return {[]} 返回算子名数组[0,1,2,3]
  */
 export const queryMatrixOperators = async(param: {iterationId: string ;stage: string; pgName: string; groupIdHash: string}): Promise<any> => {
-    console.log(param);
     return window.requestData('communication/matrix/sortOpNames', withClusterPath(param));
 };
 
