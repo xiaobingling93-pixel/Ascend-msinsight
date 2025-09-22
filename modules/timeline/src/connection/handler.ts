@@ -201,9 +201,7 @@ const initUnitSessionInfo = (session: Session, result: ImportResult, dataSource:
 
 const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSource: DataSource, isNeedResetRankId: boolean): void => {
     if (!session) { return; }
-    if (result.reset as boolean) {
-        resetPage({ dataSource });
-    }
+    if (result.reset as boolean) { resetPage({ dataSource }); }
     initUnitSessionInfo(session, result, dataSource);
     const hostInfo = groupBy(result.result, (item: ImportCardInfo) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {

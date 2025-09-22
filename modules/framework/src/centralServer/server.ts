@@ -23,7 +23,7 @@ import { updateRankMap } from '@/utils/Rank';
 import { transformFile, updateProject } from '@/utils/Project';
 import { closeLoading } from '@/utils/useLoading';
 import { updateDataScene } from '@/components/TabPane/Index';
-import { store } from '@/store';
+import { Session } from '@/entity/session';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
@@ -46,7 +46,7 @@ export const isExistedRemote = function(host: ConnectHost): boolean {
     return CONNECTION_MAP.has(getConnectionMapKey(host));
 };
 
-export const addDataPath = async function(project: Project, action: ProjectAction, isConflict: boolean): Promise<boolean> {
+export const addDataPath = async function(project: Project, action: ProjectAction, isConflict: boolean, session: Session): Promise<boolean> {
     if (!isExistedRemote(GLOBAL_HOST)) {
         const connected = await connectRemote(GLOBAL_HOST);
         if (!connected) {
@@ -75,7 +75,6 @@ export const addDataPath = async function(project: Project, action: ProjectActio
             return false;
         }
         // 时间线需要判断是整体添加还是在项目内添加
-        const session = store.sessionStore.activeSession;
         const { activeDataSource } = session;
         const projectAddFile = params?.projectAction !== ProjectAction.ADD_FILE || activeDataSource?.projectName !== params?.projectName;
 
