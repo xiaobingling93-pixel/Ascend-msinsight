@@ -481,7 +481,16 @@ int FileUtil::FindDbOrJsonType(const std::string &path, int depth,
         }
         hasJson = hasJson || std::regex_match(file, jsonRegex);
     }
-
+    // Ascend 目录优先
+    bool ascendFolderExist = std::any_of(folders.begin(), folders.end(), [](const std::string &folder) {
+        return folder.find(ASCEND_PROFILER_OUTPUT) != std::string::npos;
+    });
+    if (ascendFolderExist) {
+        folders.erase(
+            std::remove_if(folders.begin(), folders.end(), [](const std::string &folder) {
+                return folder.find(ASCEND_PROFILER_OUTPUT) == std::string::npos;
+            }), folders.end());
+    }
     for (const auto &folder: folders) {
         std::string tmpPath = FileUtil::SplicePath(path, folder);
         int result = FindDbOrJsonType(tmpPath, depth + 1, jsonRegex, dbRegex);
