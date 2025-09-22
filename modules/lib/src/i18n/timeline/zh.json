@@ -22,6 +22,7 @@
     "contextMenu": {
       "Fit to screen": "全屏显示",
       "Find in Communication": "在通信中查找",
+      "Find in Communication Warning": "未在通信页面找到该通信算子",
       "Zoom into selection": "放大所选内容",
       "Undo Zoom": "撤消缩放",
       "Reset Zoom": "重置缩放",

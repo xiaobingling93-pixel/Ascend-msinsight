@@ -22,6 +22,7 @@
     "contextMenu": {
       "Fit to screen": "Fit to screen",
       "Find in Communication": "Find in Communication",
+      "Find in Communication Warning": "The communication operator was not found on the communication page",
       "Zoom into selection": "Zoom into selection",
       "Undo Zoom": "Undo Zoom",
       "Reset Zoom": "Reset Zoom",
