@@ -117,6 +117,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
     JsonUtil::AddMember(body, "maxDepth", response.body.maxDepth, allocator);
     JsonUtil::AddMember(body, "currentMaxDepth", response.body.currentMaxDepth, allocator);
     JsonUtil::AddMember(body, "havePythonFunction", response.body.havePythonFunction, allocator);
+    JsonUtil::AddMember(body, "isLoading", response.body.isLoading, allocator);
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
@@ -181,7 +182,8 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
             processesJson.PushBack(processJson, allocator);
         }
         JsonUtil::AddMember(threadsJson, "processes", processesJson, allocator);
-        JsonUtil::AddMember(threadsJson, "metaType", sliceGroupItem.metaType, allocator);
+        std::vector<std::string> metaTypeList(sliceGroupItem.metaTypeList.begin(), sliceGroupItem.metaTypeList.end());
+        JsonUtil::AddMember(threadsJson, "metaTypeList", metaTypeList, allocator);
         data.PushBack(threadsJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);
@@ -736,6 +738,7 @@ std::optional<document_t> ToResponseJson<SystemViewOverallResponse>(const System
     JsonUtil::AddMember(body, "count", response.pageParam.total, allocator);
     JsonUtil::AddMember(body, "pageSize", response.pageParam.pageSize, allocator);
     JsonUtil::AddMember(body, "current", response.pageParam.current, allocator);
+    JsonUtil::AddMember(body, "isLoading", response.isLoading, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
@@ -965,6 +968,20 @@ template <> std::optional<document_t> ToEventJson<ParseHeatmapCompletedEvent>(co
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
     JsonUtil::AddMember(body, "errorMsg", event.body.errorMsg, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template <> std::optional<document_t> ToEventJson<ParseUnitCompletedEvent>(const ParseUnitCompletedEvent &event)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
+    JsonUtil::AddMember(body, "errorMsg", event.body.errorMsg, allocator);
+    JsonUtil::AddMember(body, "unitName", event.body.unitName, allocator);
+    JsonUtil::AddMember(body, "dbId", event.body.dbId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

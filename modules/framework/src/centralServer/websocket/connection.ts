@@ -55,17 +55,19 @@ export class Connection {
         const protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (initHost.jupyterlabProxy) {
             const { host, search } = window.location;
-            const path = `${window.location.pathname.replace(/\/resources\/frontend/, `/proxy/${initHost.port}/resources/frontend`)}`;
+            const path = `${window.location.pathname.replace(/\/resources\/profiler\/frontend/, `/proxy/${initHost.port}/resources/profiler/frontend`)}`;
             const uri = protocol + host + path + search;
             this._ws = new WebSocket(uri);
             runInAction(() => {
-                session.toIframeUrl = `${protocol}${host}${window.location.pathname.replace(/\/resources\/frontend\/.*/, `/proxy/${initHost.port}`)}`;
+                session.toIframeUrl = `${protocol}${host}${window.location.pathname.replace(/\/resources\/profiler\/frontend\/.*/, `/proxy/${initHost.port}`)}`;
             });
         } else if (!window.location.pathname.includes('/proxy/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
-            this._ws = new WebSocket(`${protocol}${hostname}:${initHost.port}${window.location.search}`);
+            let pathname = location.pathname && location.pathname !== '/' ? location.pathname.replace(/\/resources\/profiler\/frontend\/index.html/, '') : '';
+            pathname = pathname.replace(/\/index.html/, '');
+            this._ws = new WebSocket(`${protocol}${hostname}${pathname}:${initHost.port}${window.location.search}`);
             runInAction(() => {
-                session.toIframeUrl = `${protocol}${hostname}:${initHost.port}`;
+                session.toIframeUrl = `${protocol}${hostname}${pathname}:${initHost.port}`;
             });
         } else {
             const { location } = window;

@@ -14,10 +14,9 @@
 #include "CollectionTimeService.h"
 #include "LeaksMemoryDatabase.h"
 #include "LeaksMemoryService.h"
-#include "RLMstxConfigManager.h"
-#include "RenderEngine.h"
 #include "TrackInfoManager.h"
 #include "CacheManager.h"
+#include "ParseUnitManager.h"
 #include "FullDbParser.h"
 
 namespace Dic::Module::FullDb {
@@ -100,14 +99,15 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
     if (type != FileType::LEAKS) {
-        BuildProfilingInitTask(futures, dbId, threadPool);
-        threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankIds, filePath, futures, start);
         for (const auto &item: rankIds) {
             database->UpdateStartTime(item);
         }
-    } else {
-        threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankIds, filePath, futures, start);
+        BuildProfilingInitTask(futures, dbId, threadPool);
     }
+    // EndParseTask中会等待所有future执行完成，然后发送parse/success事件，最后在执行一些需要异步完成的解析任务
+    threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankIds, filePath, futures, start);
+
+    // Init Memory
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false, dbId);
@@ -123,6 +123,8 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     } else {
         InitMemory(rankIds, filePath);
     }
+
+    // Init Operator
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
         for (const auto& rankId: rankIds) {
             FullDb::DbSummaryDataBase::ParserEnd(rankId, filePath, false, "");
@@ -159,9 +161,6 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
         }
         // sqlite同一时刻只支持一个数据库连接进行写操作，以下4个线程都是写操作，并发可能导致某个线程写失败
         database->UpdateAllDepth();
-        database->UpdateWaitTime();
-        database->InitConnectionCats();
-        database->GenerateOverlapAnalysis();
     }, TraceIdManager::GetTraceId()));
 }
 
@@ -190,6 +189,8 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
         }
         db->SetDataBaseVersion();
     }
+    // 保证下面任务的执行在发送了parse/success之后
+    ParseUnitManager::Instance().ExecuteAll({dbId});
 }
 
 void FullDbParser::ParserCallBack(std::string rankId, const std::string &fileId, bool result)

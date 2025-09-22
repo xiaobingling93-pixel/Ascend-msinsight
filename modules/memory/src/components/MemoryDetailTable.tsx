@@ -292,7 +292,6 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         setDetailTableData();
     }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
         session.isAllMemoryCompletedSwitch, memorySession.order, memorySession.orderBy, t]);
-
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
             {memorySession.groupId === GroupBy.COMPONENT

@@ -192,6 +192,48 @@ public:
         }
     }
 
+    static inline int64_t TimestampUsToNsStable(std::string us)
+    {
+        us.erase(0, us.find_first_not_of(" \t\n\r"));
+        us.erase(us.find_last_not_of(" \t\n\r") + 1);
+        if (us.empty()) {
+            return 0;
+        }
+        size_t dotPos = us.find('.');
+        std::string integerPart;
+        std::string decimalPart;
+
+        if (dotPos == std::string::npos) {
+            integerPart = us;
+            decimalPart = "";
+        } else {
+            integerPart = us.substr(0, dotPos);
+            decimalPart = us.substr(dotPos + 1);
+        }
+
+        // 截取小数前3位，不足补0
+        if (decimalPart.length() < 3) {
+            decimalPart.append(3 - decimalPart.length(), '0');
+        } else {
+            decimalPart = decimalPart.substr(0, 3); // 只取前3位
+        }
+
+        std::string nsStr = integerPart + decimalPart;
+
+        // 使用 stringstream 安全转 int64_t 避免 stoll/stold 精度问题
+        try {
+            std::istringstream iss(nsStr);
+            int64_t result;
+            iss >> result;
+            if (iss.fail() || !iss.eof()) {
+                return 0;
+            }
+            return result;
+        } catch (...) {
+            return 0;
+        }
+    }
+
     static inline double StringToDouble(const std::string& usStr)
     {
         if (usStr.empty()) {

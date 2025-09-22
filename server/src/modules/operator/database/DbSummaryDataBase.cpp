@@ -410,8 +410,7 @@ bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticRe
     return true;
 }
 
-bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
-                                             Protocol::OperatorStatisticReqParams &reqParams,
+bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                                              std::vector<Protocol::OperatorDetailInfoRes> &res)
 {
     if (sql.empty()) {
@@ -439,31 +438,38 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = 0;
-        OperatorDetailInfoRes one{};
-        one.rankId = sqlite3_column_string(stmt, col++);
-        one.stepId = sqlite3_column_string(stmt, col++);
-        one.name = sqlite3_column_string(stmt, col++);
-        one.type = sqlite3_column_string(stmt, col++);
-        one.accCore = sqlite3_column_string(stmt, col++);
-        one.startTime = sqlite3_column_string(stmt, col++);
-        one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
-        one.waitTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
-        one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
-        one.inputShape = sqlite3_column_string(stmt, col++);
-        one.inputType = sqlite3_column_string(stmt, col++);
-        one.inputFormat = sqlite3_column_string(stmt, col++);
-        one.outputShape = sqlite3_column_string(stmt, col++);
-        one.outputType = sqlite3_column_string(stmt, col++);
-        one.outputFormat = sqlite3_column_string(stmt, col++);
-        for (const auto &pmuCol : pmuColumns_) {
-            // 注意这里不要判空，有多少存储多少，防止和pmuheaders错行
-            one.pmuDatas[pmuCol] = sqlite3_column_string(stmt, col++);
-        }
+        OperatorDetailInfoRes one = GetOperatorDetailRow(stmt);
         res.emplace_back(one);
     }
     sqlite3_finalize(stmt);
     return true;
+}
+
+OperatorDetailInfoRes DbSummaryDataBase::GetOperatorDetailRow(sqlite3_stmt *stmt)
+{
+    int col = 0;
+    OperatorDetailInfoRes one{};
+    one.rankId = sqlite3_column_string(stmt, col++);
+    one.stepId = sqlite3_column_string(stmt, col++);
+    one.name = sqlite3_column_string(stmt, col++);
+    one.type = sqlite3_column_string(stmt, col++);
+    one.accCore = sqlite3_column_string(stmt, col++);
+    one.startTime = sqlite3_column_string(stmt, col++);
+    one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+    std::string waitTime = Sqlite3ColumnConvertStrReturnNull(SQLITE_FLOAT, stmt, col++);
+    one.waitTime = waitTime == "NULL" ? "Loading" : waitTime;
+    one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
+    one.inputShape = sqlite3_column_string(stmt, col++);
+    one.inputType = sqlite3_column_string(stmt, col++);
+    one.inputFormat = sqlite3_column_string(stmt, col++);
+    one.outputShape = sqlite3_column_string(stmt, col++);
+    one.outputType = sqlite3_column_string(stmt, col++);
+    one.outputFormat = sqlite3_column_string(stmt, col++);
+    for (const auto &pmuCol : pmuColumns_) {
+        // 注意这里不要判空，有多少存储多少，防止和pmuheaders错行
+        one.pmuDatas[pmuCol] = sqlite3_column_string(stmt, col++);
+    }
+    return one;
 }
 
 bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total)
@@ -574,7 +580,8 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
         one.accCore = sqlite3_column_string(stmt, col++);
         one.startTime = sqlite3_column_string(stmt, col++);
         one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
-        one.waitTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        std::string waitTime = Sqlite3ColumnConvertStrReturnNull(SQLITE_FLOAT, stmt, col++);
+        one.waitTime = waitTime == "NULL" ? "Loading" : waitTime;
         one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
         one.inputShape = sqlite3_column_string(stmt, col++);
         one.inputType = sqlite3_column_string(stmt, col++);

@@ -45,7 +45,7 @@ TEST_F(NumberSafeUtilTest, SafeCast)
     EXPECT_FALSE(suc);
     uint64_t srcUint64_t = 10;
     suc = IsSafeCast<uint64_t, int>(srcUint64_t);
-    EXPECT_FALSE(suc);
+    EXPECT_TRUE(suc);
     // double -> int
     double srcDouble = 10.11;
     suc = IsSafeCast<double, uint32_t>(srcDouble);

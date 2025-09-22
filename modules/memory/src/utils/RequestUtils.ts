@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-import { createCancelableApi } from 'ascend-utils';
 import type {
     MemoryCurve,
     OperatorMemory,
@@ -61,20 +60,23 @@ export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<Ope
     return window.request({ command: 'Memory/view/operator', params: { ...params } });
 };
 
-/**
- * 查询算子内存曲线数据
- * @param params 查询条件
- * @returns {OperatorDetail[]} 查询结果
- */
 interface MemoryCurveGetParams {
     rankId: string;
     dbPath: string;
     type: GroupBy;
     isCompare: boolean;
+    start: string;
+    end: string;
 }
-export const memoryCurveGetCancelable = createCancelableApi(async (params: MemoryCurveGetParams): Promise<MemoryCurve> => {
+
+/**
+ * 查询算子内存曲线数据
+ * @param params 查询条件
+ * @returns {OperatorDetail[]} 查询结果
+ */
+export const memoryCurveGet = async (params: MemoryCurveGetParams): Promise<MemoryCurve> => {
     return window.request({ command: 'Memory/view/memoryUsage', params: { ...params } });
-});
+};
 
 /**
  * 查询按组件分组时算子内存表格数据

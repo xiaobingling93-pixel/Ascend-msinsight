@@ -597,18 +597,15 @@ bool DbClusterDataBase::QuerySlowOpByCommDuration(const Protocol::DurationListPa
 
 std::vector<CommInfoUnderRank> DbClusterDataBase::GetCommTimeForRankDim(const std::string &stepId)
 {
-    std::string sql;
-    if (stepId.empty() || stepId == "All") {
-        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapsed_time) * 1000, 3) as commTime, g.rank_set as rankSet "
-            "FROM "+ TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN (SELECT rank_set, group_name FROM "
-            + TABLE_COMM_GROUP + " group by group_name) as g ON t.group_name = "
-            "g.group_name WHERE hccl_op_name = 'Total Op Info' group by t.rank_id, g.rank_set";
-    } else {
-        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapsed_time) * 1000, 3) as commTime, g.rank_set as rankSet"
-            " FROM " + TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN (SELECT rank_set, group_name FROM "
-            + TABLE_COMM_GROUP + " group by group_name) as g ON t.group_name = "
-            "g.group_name WHERE step = ? AND hccl_op_name = 'Total Op Info' group by t.rank_id, g.rank_set";
+    std::string sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapsed_time) * 1000, 3) as commTime, "
+                      "g.rank_set as rankSet, g.group_name as groupIdHash, g.pg_name as pgName "
+                      "FROM " + TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN (SELECT rank_set, group_name, pg_name FROM "
+                      + TABLE_COMM_GROUP + " group by group_name) as g ON t.group_name = g.group_name "
+                      "WHERE hccl_op_name = 'Total Op Info'";
+    if (!stepId.empty() && stepId != "All") {
+        sql += " AND step = ? ";
     }
+    sql += " group by t.rank_id, g.group_name";
     std::string stepAfterDeal = stepId.empty() || stepId == "All" ? stepId : "step" + stepId;
     return ExecuteGetCommTimeForRankDim(sql, stepAfterDeal);
 }

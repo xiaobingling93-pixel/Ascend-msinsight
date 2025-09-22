@@ -234,7 +234,7 @@ test.describe('Summary(Expert Advice Slow Rank)', () => {
         const { fullmask } = summaryPage;
 
         await page.goto('/');
-        await importData(page, FilePath.EXPERET_ADVICE);
+        await importData(page, FilePath.EXPERT_ADVICE);
         await summaryPage.goto();
         if (await loadingDialog.count()) {
             await loadingDialog.waitFor({ state: 'attached' });
@@ -251,14 +251,17 @@ test.describe('Summary(Expert Advice Slow Rank)', () => {
     // 切换不同维度生成专家建议
     test('test_expertAdvice_when_changeDimensionTab', async ({ page, summaryPage }) => {
         const { summaryFrame, parallelismExpertAdvice, parallelismGraphLoading } = summaryPage;
-        const dimensionTabs = ['DP + PP', 'DP + PP + CP', 'DP + PP + CP + TP'];
-        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 8, tpSize: 8, dpSize: 8, cpSize: 8, epSize: 8 });
+        const defaultTab = 'DP + PP + CP + TP';
+        const dimensionTabs = ['DP + PP'];
+        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 1, tpSize: 8, dpSize: 1, cpSize: 1, epSize: 1 });
+
+        await parallelismGraphLoading.waitFor({ state: 'hidden' });
+        await page.mouse.move(0, 0);
+        await expect(parallelismExpertAdvice).toHaveScreenshot(`expert-advice-${defaultTab}.png`, { maxDiffPixels: 300 });
 
         for (const tab of dimensionTabs) {
             await summaryFrame.getByRole('tab', { name: tab, exact: true }).click();
-            if (tab !== 'DP') {
-                await parallelismGraphLoading.waitFor({ state: 'hidden' });
-            }
+            await parallelismGraphLoading.waitFor({ state: 'hidden' });
 
             await page.mouse.move(0, 0);
             await expect(parallelismExpertAdvice).toHaveScreenshot(`expert-advice-${tab}.png`, { maxDiffPixels: 300 });

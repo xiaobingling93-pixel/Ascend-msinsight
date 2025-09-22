@@ -19,6 +19,7 @@ import { getTimeOffset } from '../insight/units/utils';
 import { CardMetaData, type HostMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
 import i18n from 'ascend-i18n';
 import { message, Spin } from 'antd';
+import connector from '../connection/index';
 
 const FilterContainer = styled.div`
     display: flex;
@@ -413,6 +414,10 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
     const updateLineData = (): void => {
         updateLinkLines();
     };
+    const [filterLinkLineDisabled, setFilterLinkLineDisabled] = useState(true);
+    connector.addListener('updateCategory', (e) => {
+        setFilterLinkLineDisabled(e.data.body.data);
+    });
     const dependencyParam = [session.domainRange.domainStart,
         session.domainRange.domainEnd,
         checkedCategories,
@@ -436,7 +441,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             onOpenChange={onTooltipVisibleChange}
             overlayInnerStyle={{ borderRadius: 2 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
-            <CustomButton data-testid={'tool-flow'} tooltip={t('tooltip:linker')} icon={LinkIcon as any} { ...customButtonProps } ref={ref}/>
+            <CustomButton data-testid={'tool-flow'} disabled={filterLinkLineDisabled} tooltip={t('tooltip:linker')} icon={LinkIcon as any} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

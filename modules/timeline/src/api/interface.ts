@@ -170,7 +170,7 @@ export interface QueryAllSameOperatorsDurationParams {
     endTime: number;
     name: string;
     wallDuration: number;
-    metaType: string;
+    metaTypeList: string[];
     count: number;
     field: string;
     order: string;

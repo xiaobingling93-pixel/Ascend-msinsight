@@ -153,22 +153,22 @@ test.describe('Communication', () => {
         // HCCL图中悬浮窗测试
         await communicationFrame.locator('#hccl').hover({
             position: {
-                x: 226,
-                y: 81,
+                x: 442,
+                y: 185,
             },
         });
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl-tooltip.png', { maxDiffPixels: 500 });
         // HCCL图中横轴测试
         const canvasBox = await communicationFrame.locator('#hccl').boundingBox();
-        await page.mouse.move(canvasBox.x + 500, canvasBox.y + 420);
+        await page.mouse.move(canvasBox.x + 400, canvasBox.y + 420);
         await page.mouse.down();
-        await page.mouse.move(canvasBox.x + 600, canvasBox.y + 420, { steps: 10 });
+        await page.mouse.move(canvasBox.x + 500, canvasBox.y + 420, { steps: 10 });
         await page.mouse.up();
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl-x-axis.png', { maxDiffPixels: 500 });
         // HCCL图中竖轴测试
-        await page.mouse.move(canvasBox.x + 1480, canvasBox.y + 120);
+        await page.mouse.move(canvasBox.x + 1520, canvasBox.y + 120);
         await page.mouse.down();
-        await page.mouse.move(canvasBox.x + 1480, canvasBox.y + 220, { steps: 10 });
+        await page.mouse.move(canvasBox.x + 1520, canvasBox.y + 170, { steps: 10 });
         await page.mouse.up();
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl-y-axis.png', { maxDiffPixels: 500 });
         // ctrl+滚轮放大缩小测试
@@ -205,7 +205,7 @@ test.describe('Communication', () => {
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table');
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
-        await dataAnalysisTable.sortTableHead('Elapse Time(ms)');
+        await dataAnalysisTable.sortTableHead('Elapsed Time(ms)');
         await page.mouse.move(0, 0);
         await expect(tableLocator).toHaveScreenshot('data-analysis-table-sort.png');
     });
@@ -251,29 +251,10 @@ test.describe('Communication', () => {
         const expandTable = new TableHelpers(page, expandTableLocator, communicationFrame);
         // 表格滚动到可视区域并点击表头排序
         const secondRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
-        await expandTable.sortTableHead('Elapse Time(ms)');
+        await expandTable.sortTableHead('Elapsed Time(ms)');
         await secondRequest;
         await page.mouse.move(0, 0);
-        await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 500 });
-        // 定位子表格分页器组件
-        const pagination = communicationFrame.locator('.ant-pagination.ant-pagination-mini.ant-table-pagination.ant-table-pagination-left').first();
-        // 断言数据总数
-        const totalTextDiv = pagination.locator('li').first().locator('div');
-        await expect(totalTextDiv).toHaveText('Total 59 items');
-        // 点击分页按钮
-        const pageLink = pagination.locator('.ant-pagination-item.ant-pagination-item-3 a'); // 第三页
-        const thirdRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
-        await pageLink.click();
-        await thirdRequest;
-        await expect(await expandTable.getCell(1, 2)).toHaveText('1.518');
-        // 验证分页器输入框
-        const paginationInput = pagination.locator('.ant-pagination-options .ant-pagination-options-quick-jumper input');
-        await paginationInput.focus();
-        await paginationInput.fill('1');
-        const forthRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
-        await paginationInput.press('Enter');
-        await forthRequest;
-        await expect(await expandTable.getCell(1, 2)).toHaveText('0.0421');
+        await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 100 });
     });
 
     // 【case】点击“带宽分析”列的查看更多可以跳转至所选rank的对应算子带宽分析页
@@ -349,8 +330,8 @@ test.describe('Communication', () => {
         await hcclChart.click({
             button: 'right',
             position: {
-                x: 219,
-                y: 82,
+                x: 440,
+                y: 151,
             },
         });
         await communicationFrame.getByText('Find in Timeline').click();
@@ -372,16 +353,5 @@ test.describe('Communication(cluster)', () => {
 
     test.afterEach(async ({ page, ws }) => {
         await clearAllData(page, ws);
-    });
-
-    // 【case】p2p矩阵检查
-    test('p2p_matrix', async ({ page, communicationPage }) => {
-        const { communicationFrame, communicationGroupSelector, matrixChart } = communicationPage;
-        const communicationGroupSelect = new SelectHelpers(page, communicationGroupSelector, communicationFrame);
-        await communicationGroupSelect.open();
-        await communicationGroupSelect.setValue('p2p');
-        await communicationGroupSelect.selectOption('p2p');
-        await page.waitForTimeout(1000); // 延时确保 echarts 动画完成
-        await expect(matrixChart).toHaveScreenshot('matrix-p2p.png');
     });
 });

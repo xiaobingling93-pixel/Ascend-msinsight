@@ -12,23 +12,6 @@ namespace Memory {
 using namespace Server;
 using namespace Dic::Module::Timeline;
 
-std::string VirtualMemoryDataBase::ExecuteQueryDeviceId(std::string &sql)
-{
-    std::string deviceId;
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        return "";
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
-        deviceId = res;
-    }
-    sqlite3_finalize(stmt);
-    return deviceId;
-}
-
 std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string deviceId, std::string deviceIdColumnName)
 {
     std::vector<std::string> streams = {};
@@ -266,10 +249,7 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryVie
     std::vector<Protocol::ComponentDto> &componentDtoVec, std::vector<std::string> &streams,
     std::string &sql, std::string deviceIdColumnName)
 {
-    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        sql += " AND stream <> ''";
-    }
-    sql += " ORDER BY timestamp ASC";
+    sql = GetCurveSql(requestParams, sql);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -284,28 +264,44 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryVie
         sqlite3_bind_int64(stmt, index++, deviceId);
     }
     std::string peakMemory;
-    std::set<std::string> componentSets;
+    bool onlyGe = true;
+    componentDtoVec.reserve(2000000);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::ComponentDto componentDto{};
-        componentDto.component = sqlite3_column_string(stmt, col++);
+        FastGetString(stmt, col++, componentDto.component);
         componentDto.timesTamp = sqlite3_column_double(stmt, col++);
         componentDto.totalAllocated = sqlite3_column_double(stmt, col++);
         componentDto.totalReserved = sqlite3_column_double(stmt, col++);
         componentDto.totalActivated = sqlite3_column_double(stmt, col++);
-        componentDto.streamId = sqlite3_column_string(stmt, col++);
-        componentSets.emplace(componentDto.component);
-        componentDtoVec.emplace_back(componentDto);
+        FastGetString(stmt, col++, componentDto.streamId);
+        if (std::find(streams.begin(), streams.end(), componentDto.streamId) == streams.end()) {
+            streams.emplace_back(componentDto.streamId);
+        }
+        if (onlyGe && componentDto.component != COMPONENT_GE) {
+            onlyGe = false;
+        }
+        componentDtoVec.push_back(std::move(componentDto));
     }
+    streams.erase(remove_if(streams.begin(), streams.end(), [](const std::string& s) { return s.empty(); }),
+                  streams.end());
     sqlite3_finalize(stmt);
-
-    if (componentSets.size() == 1 && *componentSets.begin() == COMPONENT_GE) {
+    if (onlyGe) {
         isInference = true;
     }
-
-    // 查询是否包含stream信息，如果不包含则不显示stream相关信息，同时也用来判断是否active相关信息
-    streams = GetStreamLists(requestParams.deviceId, deviceIdColumnName);
     return true;
+}
+
+std::string VirtualMemoryDataBase::GetCurveSql(const MemoryViewParams& requestParams, std::string& sql) const
+{
+    if (requestParams.type == MEMORY_OVERALL_GROUP) {
+        sql += " AND component != '" + COMPONENT_PTA + "' ";
+    }
+    if (requestParams.type == MEMORY_STREAM_GROUP) {
+        sql += " AND stream <> '' AND component = '" + COMPONENT_PTA_AND_GE + "'";
+    }
+    sql += " ORDER BY timestamp ASC";
+    return sql;
 }
 
 bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewParams &requestParams,
@@ -315,12 +311,12 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewP
 {
     Protocol::MemoryPeak peak;
     if (requestParams.type == Protocol::MEMORY_OVERALL_GROUP) {
-        GetOverallLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+        GetOverallLines(componentDtoVec, operatorBody.tempData, operatorBody.legends, peak, streams);
         operatorBody.title = GetPeakMemory(peak, streams);
     } else if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        GetStreamLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+        GetStreamLines(componentDtoVec, operatorBody.tempData, operatorBody.legends, peak, streams);
     } else {
-        GetComponentLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+        GetComponentLines(componentDtoVec, operatorBody.tempData, operatorBody.legends, peak, streams);
         operatorBody.title = GetPeakMemory(peak, streams);
     }
     return true;
@@ -805,85 +801,68 @@ void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListPar
     sql += " LIMIT ? offset ?";
 }
 
-static void PaddingNULL(std::vector<std::string> &points, const uint8_t count)
-{
-    if (count == 0) {
-        return;
-    }
-    const std::string stringNull = "NULL";
-    for (uint8_t i = 0; i < count; i++) {
-        points.emplace_back(stringNull);
-    }
-}
-
 void VirtualMemoryDataBase::BuildOverallLinesComponentPoints(const Protocol::ComponentDto &item,
                                                              const std::vector<std::string> &streams,
                                                              Protocol::MemoryPeak &peak,
-                                                             Points &points)
+                                                             std::vector<double> &lines)
 {
     peak.appReserved = std::max(peak.appReserved, item.totalReserved);
     if (peak.hasPtaGe) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
     if (!streams.empty()) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
     if (peak.hasPtaGe) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
-    std::string reserved = std::to_string(item.totalReserved);
-    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+    lines.emplace_back(item.totalReserved);
     if (peak.hasWorkspace) {
         // workspaceLegends为内部定义vector, 其size不可能超过uint8, 此处无溢出风险
-        PaddingNULL(points, workspaceLegends.size());
+        lines.insert(lines.end(), workspaceLegends.size(), std::numeric_limits<double>::quiet_NaN());
     }
 }
 
 void VirtualMemoryDataBase::BuildOverallLinesFrameworkPoints(const Protocol::ComponentDto &item,
                                                              const std::vector<std::string> &streams,
                                                              Protocol::MemoryPeak &peak,
-                                                             Points &points)
+                                                             std::vector<double> &lines)
 {
     peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
     peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
     peak.ptaGeActivated = std::max(peak.ptaGeActivated, item.totalActivated);
-    std::string allocated = std::to_string(item.totalAllocated);
-    points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+    lines.emplace_back(item.totalAllocated);
     if (!streams.empty()) {
-        std::string activated = std::to_string(item.totalActivated);
-        points.emplace_back(activated.substr(0, activated.length() - exLength));
+        lines.emplace_back(item.totalActivated);
     }
-    std::string reserved = std::to_string(item.totalReserved);
-    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+    lines.emplace_back(item.totalReserved);
     if (peak.hasApp) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
     if (peak.hasWorkspace) {
-        PaddingNULL(points, workspaceLegends.size());
+        lines.insert(lines.end(), workspaceLegends.size(), std::numeric_limits<double>::quiet_NaN());
     }
 }
 
 void VirtualMemoryDataBase::BuildOverallLinesWorkspacePoints(const Protocol::ComponentDto &item,
                                                              const std::vector<std::string> &streams,
                                                              Protocol::MemoryPeak &peak,
-                                                             Points &points)
+                                                             std::vector<double> &lines)
 {
     if (peak.hasPtaGe) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
     if (!streams.empty()) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
     if (peak.hasPtaGe) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
     if (peak.hasApp) {
-        PaddingNULL(points, 1);
+        lines.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
-    std::string allocated = std::to_string(item.totalAllocated);
-    std::string reserved = std::to_string(item.totalReserved);
-    points.emplace_back(allocated.substr(0, allocated.length() - exLength));
-    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+    lines.emplace_back(item.totalAllocated);
+    lines.emplace_back(item.totalReserved);
 }
 
 /*
@@ -893,28 +872,25 @@ void VirtualMemoryDataBase::BuildOverallLinesWorkspacePoints(const Protocol::Com
  * 如果只是部分时间上某些标签的数据不存在，则补NULL。
  */
 void VirtualMemoryDataBase::GetOverallLines(const componentDtoVector &componentDtoVec,
-    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+    std::vector<double> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
     const std::vector<std::string> &streams)
 {
     GetOverallLinesLegends(componentDtoVec, legends, peak, streams);
     for (auto &item: componentDtoVec) {
-        Points points = {};
-        std::string time = std::to_string(item.timesTamp);
-        points.emplace_back(time.substr(0, time.length() - exLength + 1));
         if (item.component == COMPONENT_APP) {
-            BuildOverallLinesComponentPoints(item, streams, peak, points);
-            lines.emplace_back(points);
+            lines.emplace_back(item.timesTamp);
+            BuildOverallLinesComponentPoints(item, streams, peak, lines);
             continue;
         }
         if (item.component == COMPONENT_PTA_AND_GE || item.component == MIND_SPORE_GE
             || (isInference && item.component == COMPONENT_GE)) {
-            BuildOverallLinesFrameworkPoints(item, streams, peak, points);
-            lines.emplace_back(points);
+            lines.emplace_back(item.timesTamp);
+            BuildOverallLinesFrameworkPoints(item, streams, peak, lines);
             continue;
         }
         if (item.component == COMPONENT_WORKSPACE) {
-            BuildOverallLinesWorkspacePoints(item, streams, peak, points);
-            lines.emplace_back(points);
+            lines.emplace_back(item.timesTamp);
+            BuildOverallLinesWorkspacePoints(item, streams, peak, lines);
         }
     }
 }
@@ -959,80 +935,62 @@ void VirtualMemoryDataBase::GetOverallLinesLegends(const componentDtoVector &com
 }
 
 void VirtualMemoryDataBase::GetComponentLines(const Dic::Module::Memory::componentDtoVector &componentDtoVec,
-                                              std::vector<std::vector<std::string>> &lines,
+                                              std::vector<double> &lines,
                                               std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                                               const std::vector<std::string> &streams)
 {
     GetComponentLinesLegends(componentDtoVec, legends, peak);
-
     // 3表示无PTA数据或无GE数据插入3个NULL
     const int sizeMembers = 3;
     for (auto &item: componentDtoVec) {
-        std::vector<std::string> points = {};
         if (item.component == COMPONENT_PTA) {
             peak.ptaAllocated = std::max(peak.ptaAllocated, item.totalAllocated);
             peak.ptaReserved = std::max(peak.ptaReserved, item.totalReserved);
             peak.ptaActivated = std::max(peak.ptaActivated, item.totalActivated);
-
-            std::string time = std::to_string(item.timesTamp);
-            points.emplace_back(time.substr(0, time.length() - exLength + 1));
-            InsertSize(points, item);
+            lines.emplace_back(item.timesTamp);
+            InsertSize(lines, item);
             if (peak.hasGe) {
-                InsertStringNull(points, sizeMembers);
+                InsertStringNull(lines, sizeMembers);
             }
             if (peak.hasApp) {
-                InsertStringNull(points, 1);
+                InsertStringNull(lines, 1);
             }
-            lines.emplace_back(points);
         } else if (item.component == COMPONENT_GE) {
             peak.geAllocated = std::max(peak.geAllocated, item.totalAllocated);
             peak.geReserved = std::max(peak.geReserved, item.totalReserved);
             peak.geActivated = std::max(peak.geActivated, item.totalActivated);
-
-            std::string time = std::to_string(item.timesTamp);
-            points.emplace_back(time.substr(0, time.length() - exLength + 1));
+            lines.emplace_back(item.timesTamp);
             if (peak.hasPta) {
-                InsertStringNull(points, sizeMembers);
+                InsertStringNull(lines, sizeMembers);
             }
-            InsertSize(points, item);
+            InsertSize(lines, item);
             if (peak.hasApp) {
-                InsertStringNull(points, 1);
+                InsertStringNull(lines, 1);
             }
-            lines.emplace_back(points);
         } else if (item.component == COMPONENT_APP) {
             peak.appReserved = std::max(peak.appReserved, item.totalReserved);
-
-            std::string time = std::to_string(item.timesTamp);
-            points.emplace_back(time.substr(0, time.length() - exLength + 1));
+            lines.emplace_back(item.timesTamp);
             if (peak.hasPta) {
-                InsertStringNull(points, sizeMembers);
+                InsertStringNull(lines, sizeMembers);
             }
             if (peak.hasGe) {
-                InsertStringNull(points, sizeMembers);
+                InsertStringNull(lines, sizeMembers);
             }
-            std::string reserved = std::to_string(item.totalReserved);
-            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
-            lines.emplace_back(points);
+            lines.emplace_back(item.totalReserved);
         }
     }
 }
 
-void VirtualMemoryDataBase::InsertSize(std::vector<std::string> &points, const Protocol::ComponentDto &item)
+void VirtualMemoryDataBase::InsertSize(std::vector<double> &points, const Protocol::ComponentDto &item)
 {
-    std::string allocated = std::to_string(item.totalAllocated);
-    points.emplace_back(allocated.substr(0, allocated.length() - exLength));
-    std::string activated = std::to_string(item.totalActivated);
-    points.emplace_back(activated.substr(0, activated.length() - exLength));
-    std::string reserved = std::to_string(item.totalReserved);
-    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+    points.emplace_back(item.totalAllocated);
+    points.emplace_back(item.totalActivated);
+    points.emplace_back(item.totalReserved);
 }
 
-void VirtualMemoryDataBase::InsertStringNull(std::vector<std::string> &points, const int times)
+void VirtualMemoryDataBase::InsertStringNull(std::vector<double> &points, const int times)
 {
-    const std::string stringNull = "NULL";
-    for (int i = 0; i < times; ++i) {
-        points.emplace_back(stringNull);
-    }
+    points.insert(points.end(), times, std::numeric_limits<double>::quiet_NaN());
 }
 
 void VirtualMemoryDataBase::GetComponentLinesLegends(const Dic::Module::Memory::componentDtoVector &componentDtoVec,
@@ -1062,7 +1020,7 @@ void VirtualMemoryDataBase::GetComponentLinesLegends(const Dic::Module::Memory::
 }
 
 void VirtualMemoryDataBase::GetStreamLines(const componentDtoVector &componentDtoVec,
-    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+    std::vector<double> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
     const std::vector<std::string> &streams)
 {
     // 组装图例
@@ -1076,29 +1034,22 @@ void VirtualMemoryDataBase::GetStreamLines(const componentDtoVector &componentDt
         legends.emplace_back("Activated of " + stream);
         legends.emplace_back("Reserved of " + stream);
     }
-
     // 组装数据点
     for (auto &item: componentDtoVec) {
-        std::vector<std::string> points = {};
         if (item.component != COMPONENT_PTA_AND_GE) {
             continue;
         }
-        std::string time = std::to_string(item.timesTamp);
-        points.emplace_back(time.substr(0, time.length() - exLength));
+        lines.emplace_back(item.timesTamp);
         std::string streamId = item.streamId;
         for (const auto& stream : streams) {
             if (stream == streamId) {
-                std::string allocated = std::to_string(item.totalAllocated);
-                points.emplace_back(allocated.substr(0, allocated.length() - exLength));
-                std::string activated = std::to_string(item.totalActivated);
-                points.emplace_back(activated.substr(0, activated.length() - exLength));
-                std::string reserved = std::to_string(item.totalReserved);
-                points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+                lines.emplace_back(item.totalAllocated);
+                lines.emplace_back(item.totalActivated);
+                lines.emplace_back(item.totalReserved);
             } else {
-                points.insert(points.end(), {"NULL", "NULL", "NULL"});
+                lines.insert(lines.end(), 3, std::numeric_limits<double>::quiet_NaN());
             }
         }
-        lines.emplace_back(points);
     }
 }
 

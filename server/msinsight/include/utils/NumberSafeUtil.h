@@ -32,9 +32,11 @@ bool bitUpper(S &&s)
     if constexpr (sizeof(S) <= sizeof(T)) return false;
     using SType = BaseType_t<S>;
     using DType = BaseType_t<T>;
-    DType mask = 0;
-    SType res = s ^ mask;
-    return res != 0;
+    if constexpr (std::is_unsigned_v<DType>) {
+        return s > static_cast<SType>(std::numeric_limits<DType>::max());
+    } else {
+        return s > static_cast<SType>(std::numeric_limits<DType>::max()) * 2;
+    }
 }
 
 /**
@@ -44,9 +46,11 @@ template<typename T>
 bool IsSignBitZero(T &&a)
 {
     using BaseType = BaseType_t<T>;
-    BaseType mask = static_cast<BaseType>(1) << (sizeof(BaseType) * 8 - 1);
-    mask = a & mask;
-    return mask == 0;
+    if constexpr (std::is_unsigned_v<BaseType>) {
+        return  a <= std::numeric_limits<BaseType>::max() / 2;
+    } else {
+        return a >= 0;
+    }
 }
 
 /**

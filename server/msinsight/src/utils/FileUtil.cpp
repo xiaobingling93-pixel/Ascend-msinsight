@@ -611,9 +611,9 @@ long long FileUtil::GetFileSize(const char *fileName)
 #endif
 }
 
-std::string FileUtil::GetBinFileIdWithDb(const std::string &filePath)
+std::string FileUtil::GetSingleFileIdWithDb(const std::string &filePath)
 {
-    // 避免一个目录下有多个bin文件，这里通过文件名做区分
+    // 导入单个json csv bin文件时db文件名添加上对应文件除拓展名外的部分，使得单目录导入两个json或者csv或者bin后db文件不会相互覆盖
     std::string fileNameWithoutEx = FileUtil::StemFile(filePath);
     std::string dbFileName = StringUtil::StrJoin(fileNameWithoutEx, "_mindstudio_insight_data.db");
     std::string dir = FileUtil::GetParentPath(filePath);
@@ -623,7 +623,7 @@ std::string FileUtil::GetBinFileIdWithDb(const std::string &filePath)
 std::string FileUtil::GetDbPath(const std::string &filePath)
 {
     if (StringUtil::EndWith(filePath, ".bin")) {
-        return FileUtil::GetBinFileIdWithDb(filePath);
+        return FileUtil::GetSingleFileIdWithDb(filePath);
     }
     std::string grandparentPath = FileUtil::GetParentPath(FileUtil::GetParentPath(filePath));
     if (grandparentPath.empty()) {

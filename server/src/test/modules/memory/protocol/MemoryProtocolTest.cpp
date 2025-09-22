@@ -510,7 +510,7 @@ TEST_F(MemoryProtocolTest, ToMemoryViewRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "command": "Memory/view/memoryUsage",
         "resultCallbackId": 0, "params": {"rankId": "1", "type": "Overall", "isCompare": false}})";
-    MemoryViewParams expect = {"1", "1", "Overall", false};
+    MemoryViewParams expect = {"1", "1", "Overall"};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;

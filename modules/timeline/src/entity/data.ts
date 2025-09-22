@@ -832,5 +832,5 @@ export interface AscendMultiSliceList extends Record<string, unknown> {
     processes?: SimpleProcessItem[];
     startTime?: number;
     endTime?: number;
-    metaType?: string;
+    metaTypeList?: string[];
 }

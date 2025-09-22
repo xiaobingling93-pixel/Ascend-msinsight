@@ -114,7 +114,7 @@ def start_profiler_server():
         os.makedirs(mindstudio_insight_dir, 0o750)
 
     global profiler_process
-    profiler_server_path = os.path.join(os.path.dirname(__file__), 'resources', 'server', 'profiler_server')
+    profiler_server_path = os.path.join(os.path.dirname(__file__), 'resources', 'profiler', 'server', 'profiler_server')
 
     global available_port
     available_port = find_available_port(get_local_ip())
@@ -139,7 +139,7 @@ def start_profiler_server():
     else:
         # 设置执行权限
         os.chmod(profiler_server_path, 0o550)
-        server_dir = os.path.join(os.path.dirname(__file__), 'resources', 'server')
+        server_dir = os.path.join(os.path.dirname(__file__), 'resources', 'profiler', 'server')
         env = os.environ.copy()
         env["LD_LIBRARY_PATH"] = f".:{env.get('LD_LIBRARY_PATH', '')}"
         command[0] = './profiler_server'
@@ -240,7 +240,7 @@ class IFrameStaticFileHandler(StaticFileHandler):
 
 def setup_handlers(web_app):
     web_app.settings["shutdown_hook"] = shutdown_hook
-    host_pattern = ".{1,255}$"
+    host_pattern = "^[A-Za-z0-9.-]{1,255}$"
     base_url = web_app.settings["base_url"]
 
     iframe_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_iframe_config")
@@ -249,8 +249,8 @@ def setup_handlers(web_app):
     terminate_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/terminate_profiler_server")
     terminate_handlers = [(terminate_route_pattern, TerminateProfilerHandler)]
 
-    static_frontend_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'frontend')
-    static_route_pattern = url_path_join(base_url, "/resources/frontend/(.*)")
+    static_frontend_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'profiler', 'frontend')
+    static_route_pattern = url_path_join(base_url, "/resources/profiler/frontend/(.*)")
     static_handlers = [
         (static_route_pattern, IFrameStaticFileHandler, {'path': static_frontend_path})
     ]

@@ -144,9 +144,9 @@ public:
     void InitStringsCache();
     void InitMetaDataInfo();
     static std::string GetStringCacheValue(const std::string& path, const std::string& key);
-    void InitConnectionCats();
+    bool InitConnectionCats();
     void UpdateWaitTime();
-    void GenerateOverlapAnalysis();
+    bool GenerateOverlapAnalysis();
     static void Reset();
     bool QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
         std::vector<Protocol::ThreadTraces> &fwdBwdData) override;

@@ -51,7 +51,7 @@
       "Operator Name": "operator Name",
       "Rank ID": "Rank ID",
       "Start Time": "Start Time",
-      "Elapse Time": "Elapse Time",
+      "Elapse Time": "Elapsed Time",
       "Transit Time": "Transit Time",
       "Synchronization Time": "Synchronization Time",
       "Wait Time": "Wait Time",
@@ -59,7 +59,7 @@
       "Wait Time Ratio": "Wait Time Ratio",
       "Operator Name in Comparison": "Operator Name in Comparison",
       "Start Time in Comparison": "Start Time in Comparison",
-      "Elapse Time in Comparison": "Elapse Time in Comparison",
+      "Elapse Time in Comparison": "Elapsed Time in Comparison",
       "Transit Time in Comparison": "Transit Time in Comparison",
       "Wait Time in Comparison": "Wait Time in Comparison",
       "Synchronization Time in Comparison": "Synchronization Time in Comparison",
@@ -67,7 +67,7 @@
       "Wait Time Ratio in Comparison": "Wait Time Ratio in Comparison",
       "Operator Name in Baseline": "Operator Name in Baseline",
       "Start Time in Baseline": "Start Time in Baseline",
-      "Elapse Time in Baseline": "Elapse Time in Baseline",
+      "Elapse Time in Baseline": "Elapsed Time in Baseline",
       "Transit Time in Baseline": "Transit Time in Baseline",
       "Synchronization Time in Baseline": "Synchronization Time in Baseline",
       "Wait Time in Baseline": "Wait Time in Baseline",
@@ -97,13 +97,13 @@
       "rankId": "rank id"
     },
     "tableHeadTooltip": {
-      "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapse time = Sum of communication event time",
+      "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapsed time = Sum of communication event time",
       "Transit Time": "Total time consumed by communication operators on SDMA links (for intra-server communication) and RDMA links (for inter-server communication). Formula: Communication time = ReduceInline + Memcpy + RDMA communication time",
       "Synchronization Time": "Synchronization time before the first communication between cards, which is used to determine whether the prolonged wait time is caused by slow nodes or slow links. Formula: Wait time before communication = Sum of NotifyWait time before the first SDMA or RDMA communication",
       "Wait Time": "Synchronization is performed before two cards communicate with each other. The wait time is calculated by subtracting the time consumed by NotifyWait operators in RDMA communication time from the total time consumption of all NotifyWait operators. Formula: Wait time = NotifyWait – NotifyWait in RDMA communication time",
       "Synchronization Time Ratio": "Synchronization time ratio = (Synchronization time)/(Transit time + Synchronization time)",
       "Wait Time Ratio": "Wait Time ratio = (Wait time)/(Transit time + Wait time)",
-      "Idle Time": "Idle time = Elapse time – Transmit time – Wait time"
+      "Idle Time": "Idle time = Elapsed time – Transmit time – Wait time"
     },
     "Advice": "Advice",
     "AdviceTip": "The bandwidth is the ratio of the communication data size to the communication time, not the physical bandwidth.",
@@ -147,7 +147,7 @@
       "Packet Analysis": "A small packet in communication refers to the transmission size of a communication operator being smaller than the standard for small packets. The proportion of small packets is the proportion of the number of communication operators that are small packets to the total number of communication operators. The duration of small packets is the sum of duration of communication operators which are small packets.",
       "Byte Alignment Analysis": "If a communication large operator contains a Memcpy or Reduce_Inline communication small operator with the transport type SDMA, and the transit size is greater than 512 bytes and cannot be evenly divided by 512 bytes, then this communication large operator is said to have a byte alignment issue.",
       "Bandwidth Contention Analysis": "If [Start Time, End Time] of a communication operator overlap with [Start Time, End Time] of a matmul operator, and the SDMA bandwidth of the communication operator is less than 14.4 GB/s, the communication operator is said to have a bandwidth contention issue.",
-      "Communication Retransmission Analysis": "The object of communication retransmission is the communication domain. Ignoring the Total Op operator, if there exists a communication operator in the communication domain, and considering all ranks, the minimum elapse time is greater than 4000 ms, and the maximum RDMA transit time is greater than 4000 ms, then it is determined that there is a communication retransmission issue."
+      "Communication Retransmission Analysis": "The object of communication retransmission is the communication domain. Ignoring the Total Op operator, if there exists a communication operator in the communication domain, and considering all ranks, the minimum elapsed time is greater than 4000 ms, and the maximum RDMA transit time is greater than 4000 ms, then it is determined that there is a communication retransmission issue."
     },
     "OperatorNameTooltip": [
       "For easier analysis, operators are grouped into categories, such as allreduce-total:",
@@ -168,10 +168,10 @@
       "Rank ID": "Rank ID",
       "Action": "Action",
       "Operator Name": "Operator Name",
-      "Elapse Time Difference(ms)": "Elapse Time Difference(ms)",
-      "Elapse Time(ms)": "Elapse Time(ms)",
-      "Elapse Time on Current Rank(ms)": "Elapse Time on Current Rank(ms)",
-      "Elapse Time on Fastest Rank(ms)": "Elapse Time on Fastest Rank(ms)",
+      "Elapse Time Difference(ms)": "Elapsed Time Difference(ms)",
+      "Elapse Time(ms)": "Elapsed Time(ms)",
+      "Elapse Time on Current Rank(ms)": "Elapsed Time on Current Rank(ms)",
+      "Elapse Time on Fastest Rank(ms)": "Elapsed Time on Fastest Rank(ms)",
       "Find in Communication": "Find in Communication",
       "RankTable": {
         "tooltip": {

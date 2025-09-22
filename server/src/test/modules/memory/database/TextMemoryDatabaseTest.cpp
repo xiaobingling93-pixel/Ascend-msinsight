@@ -678,9 +678,9 @@ TEST_F(TestSuit, QueryMemoryViewData)
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = 0;
     bool result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
-    int expectSize = 5;
+    const int expectSize = 5 * 4;
     EXPECT_TRUE(result);
-    EXPECT_EQ(responseBody.lines.size(), expectSize);
+    EXPECT_EQ(responseBody.tempData.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectZero)
@@ -708,9 +708,9 @@ TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectSeveral)
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = 0;
     bool result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
-    int expectSize = 1;
+    const int expectSize = 1 * 4;
     EXPECT_TRUE(result);
-    EXPECT_EQ(responseBody.lines.size(), expectSize);
+    EXPECT_EQ(responseBody.tempData.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryMemoryViewDataByComponentExpectSeveral)
@@ -723,9 +723,9 @@ TEST_F(TestSuit, QueryMemoryViewDataByComponentExpectSeveral)
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = 0;
     bool result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
-    int expectSize = 29;
+    const int expectSize = 145;
     EXPECT_TRUE(result);
-    EXPECT_EQ(responseBody.lines.size(), expectSize);
+    EXPECT_EQ(responseBody.tempData.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryOperatorSizeData)

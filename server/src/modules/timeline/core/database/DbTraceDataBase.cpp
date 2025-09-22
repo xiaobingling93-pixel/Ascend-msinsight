@@ -643,16 +643,8 @@ std::vector<OVERLAP_INFO> BuildOverlapInfoList(const std::vector<OVERLAP_INFO> &
     }
     return overlapInfoList;
 }
-void DbTraceDataBase::GenerateOverlapAnalysis()
+bool DbTraceDataBase::GenerateOverlapAnalysis()
 {
-    if (!CheckTableExist(TABLE_OVERLAP_ANALYSIS)) {
-        Server::ServerLog::Error("Generate overlap analysis:Table OVERLAP_ANALYSIS is not exist.");
-        return;
-    }
-    if (CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_STATUS, FINISH_STATUS)) {
-        Server::ServerLog::Info("Generate overlap analysis already finish. skip");
-        return;
-    }
     {
         std::unique_lock<std::recursive_mutex> lockGuard(mutex);
         ExecSql("delete from OVERLAP_ANALYSIS where 1 = 1");
@@ -671,12 +663,13 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
         const std::vector<OVERLAP_INFO> overlapInfoList = BuildOverlapInfoList(timeInfoList);
         if (InsertOverlapAnalysisInfo(timeInfoList, deviceId) && InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
             Server::ServerLog::Info("Generate overlap analysis success for device: ", deviceId);
+            return true;
         } else {
             Server::ServerLog::Error("Generate overlap analysis fail");
-            return;
+            return false;
         }
     }
-    UpdateValueIntoStatusInfoTable(OVERLAP_ANALYSIS_STATUS, FINISH_STATUS);
+    return true;
 }
 
 bool DbTraceDataBase::InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList,
@@ -762,14 +755,6 @@ void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_IN
 
 void DbTraceDataBase::UpdateWaitTime()
 {
-    if (!CheckTableExist(TABLE_COMPUTE_TASK_INFO) || !CheckTableExist(TABLE_COMMUNICATION_OP) ||
-        !CheckTableDataInvalid(TABLE_TASK)) {
-        Server::ServerLog::Error("Update wait time:Table is not exist.");
-        return;
-    }
-    if (CheckValueFromStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS)) { // 已更新数据，跳过更新
-        return;
-    }
     auto stmt = CreatPreparedStatement(FULL_DB_UPDATE_TIME); // 查询数据
     auto updateComputeStmt = CreatPreparedStatement("UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;");
     auto updateCommunicationStmt = CreatPreparedStatement("UPDATE COMMUNICATION_OP SET waitNs = ? WHERE ROWID = ?;");
@@ -809,7 +794,6 @@ void DbTraceDataBase::UpdateWaitTime()
         ServerLog::Error("Update wait time. Failed to update last data.");
         return;
     }
-    UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS);
 }
 
 bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
@@ -861,7 +845,11 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             std::string deviceId = sqlite3_column_string(stmt, resultStartIndex);
             std::string rankId = sqlite3_column_string(stmt, resultStartIndex + 1);
-            rankAndDeviceMap[rankId] = deviceId;
+            // rankId存在多个映射值时取较大值，为-1时丢弃
+            if (deviceId == "-1") {
+                continue;
+            }
+            rankAndDeviceMap[rankId] = StringUtil::StrNumMax(deviceId, rankAndDeviceMap[rankId]);
         }
         sqlite3_finalize(stmt);
         return rankAndDeviceMap;
@@ -1130,14 +1118,9 @@ std::string DbTraceDataBase::GetHostPath(const std::string &filePath)
     return "";
 }
 
-void DbTraceDataBase::InitConnectionCats()
+bool DbTraceDataBase::InitConnectionCats()
 {
-    if (CheckValueFromStatusInfoTable(CONNECTION_STATUS, FINISH_STATUS)) { // 已更新数据，跳过更新
-        return;
-    }
-    if (ExecSql(DbSqlDefs::GetConnectionCatSql())) {
-        UpdateValueIntoStatusInfoTable(CONNECTION_STATUS, FINISH_STATUS);
-    }
+    return ExecSql(DbSqlDefs::GetConnectionCatSql());
 }
 
 std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, const std::string& key)
@@ -1806,9 +1789,8 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
         pidList.emplace_back(trackInfo.processId);
         tidList.emplace_back(trackInfo.threadId);
     }
-    std::string orderBy = " ORDER BY " + requestParams.orderBy;
-    orderBy.append(requestParams.order == "descend" ? " DESC " : " ASC ");
-    std::string orderByAndPage = orderBy + " limit ? offset ?";
+    std::string orderByAndPage = " ORDER BY " + requestParams.orderBy +
+            (requestParams.order == "descend" ? " DESC " : " ASC ") + " limit ? offset ?";
     auto stmt = CreatPreparedStatement();
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
@@ -1816,6 +1798,9 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
             { GetDeviceId(requestParams.rankId), minTimestamp, orderByAndPage, pidList, tidList });
     } catch (DatabaseException &e) {
         ServerLog::Error("Query thread same operators details fail, ", e.What());
+        return false;
+    }
+    if (resultSet == nullptr) {
         return false;
     }
     while (resultSet->Next()) {

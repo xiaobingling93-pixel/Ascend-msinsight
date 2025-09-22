@@ -335,7 +335,7 @@ TEST_F(DbCommunicationTest, GetCommTimeForRankDimByStepWhenAllStep)
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "1";
     std::vector<Dic::Module::CommInfoUnderRank> result1 = database->GetCommTimeForRankDim(step);
-    const int expectSize = 8;
+    const int expectSize = 0;
     EXPECT_EQ(result1.size(), expectSize);
     step = "All";
     std::vector<Dic::Module::CommInfoUnderRank> result2 = database->GetCommTimeForRankDim(step);

@@ -33,9 +33,6 @@ private:
                                             PerformanceIndicatorData &indicatorData);
     static std::unordered_map<std::string, double> CalDiffIndicators(std::unordered_map<std::string, double> &compare,
                                                                      std::unordered_map<std::string, double> &baseline);
-    static std::unordered_map<std::string, std::vector<CommInfoUnderRank>> MatchCommDataForConnection(
-        const std::vector<CommInfoUnderRank> &commTimeForRankDim, const std::vector<Connection> &connections,
-        const std::vector<std::string> &importRankList);
     static void MergeCommDataPerformance(std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &compare,
                                          std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &baseline,
                                          PerformanceIndicatorData &indicatorData);

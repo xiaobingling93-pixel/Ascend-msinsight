@@ -14,7 +14,6 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
-using Points = std::vector<std::string>;
 class VirtualMemoryDataBase : public Database {
 public:
     explicit VirtualMemoryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};;
@@ -53,7 +52,6 @@ public:
 protected:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
-    const int exLength = 4;
     const int defaultPageSize = 10;
     const int64_t maxUnsignedInt = 4294967295;
     const int64_t maxPageSize = 1000;
@@ -180,38 +178,39 @@ protected:
         std::vector<Protocol::StaticOperatorItem> &opDetails, const std::string& sql);
     void AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql);
     void AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql);
-    std::string ExecuteQueryDeviceId(std::string &sql);
 
 private:
     void BuildOverallLinesComponentPoints(const Protocol::ComponentDto &item,
                                             const std::vector<std::string> &streams,
                                             Protocol::MemoryPeak &peak,
-                                            Points &points);
+                                            std::vector<double> &lines);
     void BuildOverallLinesFrameworkPoints(const Protocol::ComponentDto &item,
                                             const std::vector<std::string> &streams,
                                             Protocol::MemoryPeak &peak,
-                                            Points &points);
+                                            std::vector<double> &lines);
     void BuildOverallLinesWorkspacePoints(const Protocol::ComponentDto &item,
                                             const std::vector<std::string> &streams,
                                             Protocol::MemoryPeak &peak,
-                                            Points &points);
-    void GetOverallLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
+                                            std::vector<double> &lines);
+    void GetOverallLines(const componentDtoVector &componentDtoVec, std::vector<double> &lines,
                   std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                   const std::vector<std::string> &streams);
     void GetOverallLinesLegends(const componentDtoVector &componentDtoVec,
         std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
         const std::vector<std::string> &streams);
     std::string GetPeakMemory(const Protocol::MemoryPeak &peak, const std::vector<std::string> &streams);
-    void GetComponentLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
+    void GetComponentLines(const componentDtoVector &componentDtoVec, std::vector<double> &lines,
         std::vector<std::string> &legends, Protocol::MemoryPeak &peak, const std::vector<std::string> &streams);
     void GetComponentLinesLegends(const componentDtoVector &componentDtoVec,
         std::vector<std::string> &legends, Protocol::MemoryPeak &peak);
-    void InsertSize(std::vector<std::string> &points, const Protocol::ComponentDto &item);
-    void InsertStringNull(std::vector<std::string> &points, const int times);
-    void GetStreamLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
+    void InsertSize(std::vector<double> &points, const Protocol::ComponentDto &item);
+    void InsertStringNull(std::vector<double> &points, const int times);
+    void GetStreamLines(const componentDtoVector &componentDtoVec, std::vector<double> &lines,
                         std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                         const std::vector<std::string> &streams);
     std::vector<Protocol::MemoryOperator> QueryOperatorDetail(sqlite3_stmt *stmt);
+
+    std::string GetCurveSql(const Protocol::MemoryViewParams &requestParams, std::string &sql) const;
 };
 
 }; // end of namespace Memory

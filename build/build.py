@@ -85,7 +85,8 @@ def clean():
     framework_dist = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build')
     if os.path.exists(framework_dist):
         shutil.rmtree(framework_dist)
-    modules = ['cluster', 'memory', 'timeline', 'compute', 'jupyter', 'operator', 'lib', 'statistic', 'leaks', 'reinforcement-learning']
+    modules = ['cluster', 'memory', 'timeline', 'compute', 'jupyter', 'operator', 'lib', 'statistic', 'leaks',
+               'reinforcement-learning']
     for module in modules:
         build_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR, module, Const.BUILD_DIR)
         if os.path.exists(build_dir):
@@ -213,12 +214,12 @@ def build_jupyterlab(jupyterlab_version, os_name):
 
     plugin_path = os.path.join(PROJECT_PATH, Const.JUPYTERLAB_PLUGINS_DIR)
     requirements_path = os.path.join(plugin_path, 'requirements.txt')
- 
+
     # 下载构建依赖
     result = exec_command([Const.PIP, 'install', '--trusted-host', 'cmc.centralrepo.rnd.huawei.com', '-i',
-            'https://cmc.centralrepo.rnd.huawei.com/artifactory/pypi-central-repo/simple/',
-            '-r', requirements_path],
-            plugin_path, 'jupyterlab_plugin')
+                           'https://cmc.centralrepo.rnd.huawei.com/artifactory/pypi-central-repo/simple/',
+                           '-r', requirements_path],
+                          plugin_path, 'jupyterlab_plugin')
     if result != 0:
         return 1
 
@@ -226,15 +227,7 @@ def build_jupyterlab(jupyterlab_version, os_name):
     set_npm_config()
 
     # 拷贝前后端资源
-    jupyterlab_path = 'mindstudio_insight_jupyterlab'
-    resources_dir = 'resources'
-    resources_path = os.path.join(plugin_path, jupyterlab_path, resources_dir)
-    if not os.path.exists(resources_path):
-        os.makedirs(resources_path, 0o750)
-    shutil.copytree(os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build'),
-                    os.path.join(resources_path, 'frontend'))
-    shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
-                    os.path.join(resources_path, 'server'))
+    copy_resource_in_jupyterlab(plugin_path)
 
     # 修改jupyterlab中package.json版本
     result = update_jupyterlab_plugin_version(jupyterlab_version, plugin_path)
@@ -270,6 +263,24 @@ def build_jupyterlab(jupyterlab_version, os_name):
             shutil.copy(os.path.join(whl_source_path, file), dst_file)
 
     return 0
+
+
+def copy_resource_in_jupyterlab(plugin_path):
+    # 拷贝前后端资源
+    jupyterlab_path = 'mindstudio_insight_jupyterlab'
+    resources_dir = 'resources'
+    resources_path = os.path.join(plugin_path, jupyterlab_path, resources_dir)
+    if not os.path.exists(resources_path):
+        os.makedirs(resources_path, 0o750)
+    profiler_path = os.path.join(resources_path, "profiler")
+    if not os.path.exists(profiler_path):
+        os.makedirs(profiler_path, 0o750)
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build'),
+                    os.path.join(profiler_path, 'frontend'))
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
+                    os.path.join(profiler_path, 'server'))
+    shutil.copyfile(os.path.join(PROJECT_PATH, "build", "plugin_install.py"),
+                    os.path.join(profiler_path, "plugin_install.py"))
 
 
 def build_package(version, os_name):
@@ -371,7 +382,7 @@ def zip_package(profiler_path, package_name):
         preview_app = os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR, Const.MAC_OS_APPNAME)
         os.chmod(os.path.join(app_bin_file_dir, bin_file), 0o550)  # 4、app内二进制文件 ascend_insight 550
         shutil.copytree(os.path.join(Const.PLATFORM_PREVIEW_DIR, 'resources'),
-                            os.path.join(app_bin_file_dir, 'resources'))
+                        os.path.join(app_bin_file_dir, 'resources'))
         shutil.move(app_dir, preview_app)
         # 签名app
         if "aarch64" in package_name:

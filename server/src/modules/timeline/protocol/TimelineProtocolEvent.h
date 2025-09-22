@@ -160,6 +160,18 @@ struct ParseHeatmapCompletedEvent : public Event {
     ParseHeatmapCompletedEvent() : Event(EVENT_PARSE_HEATMAP_COMPLETED) {}
     ParseHeatmapCompletedBody body;
 };
+
+struct ParseUnitCompletedBody {
+    bool parseResult = false;
+    std::string errorMsg;
+    std::string unitName;
+    std::string dbId;
+};
+
+struct ParseUnitCompletedEvent : public Event {
+    ParseUnitCompletedEvent() : Event(EVENT_PARSE_UNIT_COMPLETED) {}
+    ParseUnitCompletedBody body;
+};
 } // end of namespace Protocol
 } // end if namespace Dic
 

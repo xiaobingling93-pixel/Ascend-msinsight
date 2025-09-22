@@ -152,6 +152,15 @@ std::string Database::CheckSqlString(const std::string &src)
     return res;
 }
 
+void Database::FastGetString(sqlite3_stmt *stmt, int iCol, std::string &output)
+{
+    const unsigned char* text = sqlite3_column_text(stmt, iCol);
+    int len = sqlite3_column_bytes(stmt, iCol);
+    if (text) {
+        output.assign(reinterpret_cast<const char*>(text), len);
+    }
+}
+
 std::string Database::sqlite3_column_string(sqlite3_stmt *stmt, int iCol)
 {
     if (stmt == nullptr) {
@@ -183,6 +192,15 @@ std::string Database::Sqlite3ColumnConvertStr(int colType, sqlite3_stmt *stmt, i
         oss << "Unknown type";
     }
     return oss.str();
+}
+
+std::string Database::Sqlite3ColumnConvertStrReturnNull(int colType, sqlite3_stmt *stmt, int iCol)
+{
+    int type = sqlite3_column_type(stmt, iCol);
+    if (type == SQLITE_NULL) {
+        return "NULL";
+    }
+    return Sqlite3ColumnConvertStr(colType, stmt, iCol);
 }
 
 bool Database::StartTransaction()

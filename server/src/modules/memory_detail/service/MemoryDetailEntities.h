@@ -147,7 +147,7 @@ struct EventGroup {
     std::optional<MemoryEvent> mallocEvent{std::nullopt};
     std::optional<MemoryEvent> freeEvent{std::nullopt};
     std::vector<MemoryEvent> accessEvents;
-    int64_t groupId;
+    int64_t groupId{-1};
 
     EventGroup() = default;
     /***

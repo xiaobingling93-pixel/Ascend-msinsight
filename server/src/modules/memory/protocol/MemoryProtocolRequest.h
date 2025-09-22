@@ -262,6 +262,8 @@ struct MemoryViewParams {
     std::string rankId;
     std::string deviceId;
     std::string type; // Overall, Stream, Component
+    std::string start;
+    std::string end;
     bool isCompare = false;
     bool CommonCheck(std::string &errorMsg)
     {
@@ -280,6 +282,17 @@ struct MemoryViewParams {
             return false;
         }
         return true;
+    }
+
+    std::string GetRequestKey()
+    {
+        std::string res = rankId + "@@@@" + type + "@@@@";
+        if (isCompare) {
+            res += "IsCompare";
+        } else {
+            res += "NotCompare";
+        }
+        return res;
     }
 };
 

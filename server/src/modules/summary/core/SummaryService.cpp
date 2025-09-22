@@ -244,14 +244,6 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
         ServerLog::Warn("Failed to get algorithm by project name for query parallelism communication info.");
         return {};
     }
-    std::string err;
-    // 获取根据并行策略配置计算出来的通信域信息
-    std::vector<Connection> connections = algPtr->GetAllCommunicationGroups(err);
-    if (!err.empty()) {
-        // 完整链接数据不存在，则直接返回
-        ServerLog::Warn("Fail to get all communication groups info.");
-        return {};
-    }
     // 获取导入的rank数据信息
     std::vector<std::string> importRankList = database->GetAllRankFromStepStatisticInfo();
     if (importRankList.empty()) {
@@ -265,47 +257,14 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
         ServerLog::Warn("Fail to get communication time data.");
         return {};
     }
-    // 匹配数据
-    commInTpDimension = MatchCommDataForConnection(commTimeForRankDim, connections, importRankList);
+    // 按rank划分数据
+    for (auto &item: commTimeForRankDim) {
+        // 兼容老数据，pgName不存在时使用groupIdHash进行替换
+        if (item.pgName.empty()) {
+            item.pgName = item.groupIdHash;
+        }
+        commInTpDimension[item.rankId].push_back(item);
+    }
     // 数据根据维度进行折叠
     return algPtr->GetCommInfoByDimension(commInTpDimension, params.dimension);
-}
-
-/**
- * 将communication通信数据与Connection（summary中计算出来的链接数据）进行匹配
- * @param commTimeForRankDim 从通信耗时表查询到的数据，每个通信域下每个卡的通信数据
- * @param connections 按照并行策略计算出的全展开视图
- * @param importRankList 实际导入的rank列表
- * @return 匹配结果
- */
-std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::MatchCommDataForConnection(
-    const std::vector<CommInfoUnderRank> &commTimeForRankDim, const std::vector<Connection> &connections,
-    const std::vector<std::string> &importRankList)
-{
-    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> commTimeMap;
-    for (const auto &item: commTimeForRankDim) {
-        std::vector<std::string> groupList = StringUtil::SplitStringWithParenthesesByComma(item.rankSet);
-        std::sort(groupList.begin(), groupList.end());
-        std::string rankSortStr = StringUtil::join(groupList, '-');
-        commTimeMap[rankSortStr].push_back(item);
-    }
-    // 数据分配，为每一个connection找对应的通信数据
-    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> res;
-    for (const auto &item: connections) {
-        std::vector<std::string> fullRankList;
-        std::transform(item.indexes.begin(), item.indexes.end(), std::back_inserter(fullRankList), [](uint32_t num) {
-            return std::to_string(num);
-        });
-        std::vector<std::string> aclRankList = CollectionUtil::CalIntersection(fullRankList, importRankList);
-        std::sort(aclRankList.begin(), aclRankList.end());
-        std::string rankSortStr = StringUtil::join(aclRankList, '-');
-        auto findRes = commTimeMap.find(rankSortStr);
-        if (findRes != commTimeMap.end()) {
-            for (auto commItem: findRes->second) {
-                commItem.pgName = item.type;
-                res[commItem.rankId].push_back(commItem);
-            }
-        }
-    }
-    return res;
 }

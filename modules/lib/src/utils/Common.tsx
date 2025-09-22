@@ -356,13 +356,17 @@ export function useWatchDomResize<T extends Element>(prop: SizeProp): [number, R
     return [rect?.[prop] ?? 0, ref];
 }
 
-const removePrototypePollution = (obj: any): void => {
+const removePrototypePollution = (obj: any, loopIndex = 0): void => {
+    const MaxLoop = 200;
+    if (loopIndex > MaxLoop) {
+        return;
+    }
     if (obj && typeof obj === 'object') {
         for (const key in obj) {
             if (key === '__proto__' || key === 'constructor') {
                 delete obj[key];
             } else if (typeof obj[key] === 'object') {
-                removePrototypePollution(obj[key]);
+                removePrototypePollution(obj[key], loopIndex++);
             }
         }
     }

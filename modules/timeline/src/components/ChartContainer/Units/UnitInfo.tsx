@@ -38,6 +38,7 @@ import type { ParseCardsParam } from '../../../api/interface';
 import { useComplexMouseEvent } from './mouseEvent';
 import { CardMetaData } from '../../../entity/data';
 import { getTimeOffset, bigSubtract } from '../../../insight/units/utils';
+import connector from '../../../connection/index';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -502,7 +503,19 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     const [isHovered, setIsHovered] = React.useState(false);
     const isClickDownRef = React.useRef<boolean>(false);
     const selectUnit = useSelectUnit(session);
-    const expandable: boolean = hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction)));
+    const [expandable, setExpandable] = React.useState(hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction))));
+    const [isLoading, setLoading] = React.useState(false);
+    const isOverlapAnalysisLoading = unit.isOverlapAnalysisLoading;
+    if (unit.metadata.processName === 'Overlap Analysis' && unit.metadata.threadName === '' && isOverlapAnalysisLoading) {
+        setExpandable(false);
+        setLoading(true);
+        connector.addListener('updateAnalysisLoading', () => {
+            setExpandable(true);
+            setLoading(false);
+            unit.isOverlapAnalysisLoading = false;
+        });
+    }
+
     const selectSelf = React.useCallback(() => {
         if (isSelected) { return; }
         selectUnit(unit);
@@ -583,6 +596,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         <UnitInfoBody offset={0}>
             {/* position: 'absolute' 将 ExpandIcon 从文档流移出，不影响 UnitInfoContent 宽度显示 */}
             {expandable && <div style={{ position: 'absolute' }}><ExpandIcon unit={unit} /></div>} {/* ExpandIcon(14px) */}
+            {isLoading && <div style={{ position: 'absolute' }} className={'in-time-line-load'}></div>} {/* ExpandIcon(14px) */}
             {/* paddingLeft: '14px' 为 ExpandIcon 的显示留出空间 */}
             <div style={{ paddingLeft: '14px', width: '100%' }}>
                 <UnitInfoContent

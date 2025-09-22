@@ -110,7 +110,7 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
             endTime: row.endTime,
             name: row.title,
             wallDuration: row.wallDuration,
-            metaType: row.metaType,
+            metaTypeList: row.metaTypeList,
             count: row.occurrences,
         };
         runInAction(() => {

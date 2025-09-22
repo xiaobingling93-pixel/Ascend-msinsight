@@ -476,7 +476,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
-    requestParams.metaType = "Ascend Hardware";
+    requestParams.metaTypeList = {"Ascend Hardware"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
@@ -523,6 +523,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     requestParams.pageSize = 10;
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
+    requestParams.metaTypeList = {"Ascend Hardware"};
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
     uint64_t trackId = TrackInfoManager::Instance().GetTrackId("", "17738580008830245", "2");
@@ -562,6 +563,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenHavingDeviceM
     requestParams.pageSize = 10; // 10
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
+    requestParams.metaTypeList = {"Ascend Hardware"};
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
     uint64_t trackId1 = TrackInfoManager::Instance().GetTrackId("0", "Ascend Hardware", "2");
@@ -594,7 +596,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.rankId = "";
     requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
-    requestParams.metaType = "CANN_API";
+    requestParams.metaTypeList = {"CANN_API"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
@@ -629,7 +631,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenMstx)
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.rankId = "";
     requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
-    requestParams.metaType = "MSTX_EVENTS";
+    requestParams.metaTypeList = {"MSTX_EVENTS"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
@@ -672,7 +674,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.rankId = "";
     requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
-    requestParams.metaType = "PYTORCH_API";
+    requestParams.metaTypeList = {"PYTORCH_API"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     const uint64_t min = 0;

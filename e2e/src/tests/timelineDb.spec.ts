@@ -59,7 +59,7 @@ test.describe('Timeline(DB)', () => {
         await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Overall-Metrics.png', { maxDiffPixels: 400 });
 
         for (const item of statsSystemViewOptions) {
-            const option = timelineFrame.getByText(item, { exact: true });
+            const option = bottomPanel.getByText(item, { exact: true });
             await option.click();
             await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
             await expect(bottomPanel).toHaveScreenshot(`StatsSystemView-${item}.png`, { maxDiffPixels: 400 });

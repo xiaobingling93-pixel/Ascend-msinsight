@@ -9,6 +9,7 @@
 #include "Database.h"
 #include "TraceDatabaseHelper.h"
 #include "OverlapAnsRepo.h"
+#include "FullDbEnumUtil.h"
 
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
@@ -265,23 +266,22 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
         (requestParams.current - 1) * requestParams.pageSize;
     std::string withHeadSql = "with params as (SELECT ? as rankId, ? as minTime, ? as startTime, ? as endTime), "
         "  nameIds as (select id from STRING_IDS where value = ?) ";
-    std::vector<PROCESS_TYPE> types = { PROCESS_TYPE::ASCEND_HARDWARE, PROCESS_TYPE::HCCL, PROCESS_TYPE::CANN_API,
-        PROCESS_TYPE::MS_TX, PROCESS_TYPE::API, PROCESS_TYPE::OVERLAP_ANALYSIS
-    };
     const bool uniqueDevice = IsDeviceIdUnique(requestParams.rankId);
     const int overlapType = OverlapAnsRepo::GetTypeByName(requestParams.name);
-    for (const auto type : types) {
-        withHeadSql += ", " +
-            GetQueryThreadSameOperatorsDetailsHeadSql(params, uniqueDevice, overlapType, type);
+    std::vector<std::string> mainSqlList;
+    for (const auto &item: requestParams.metaTypeList) {
+        std::optional<PROCESS_TYPE> type = STR_TO_ENUM<PROCESS_TYPE>(item);
+        if (!type.has_value()) {
+            continue;
+        }
+        mainSqlList.emplace_back(GetQueryThreadSameOperatorsDetailsHeadSql(params, uniqueDevice,
+                                                                           overlapType, type.value()));
+    }
+    if (mainSqlList.empty()) {
+        return nullptr;
     }
     const auto sameOperatorsDetailsSql = withHeadSql +
-        " , all_same_operator_detail as (SELECT * from ascend UNION " // PROCESS_TYPE::ASCEND_HARDWARE
-        "   SELECT * from hccl UNION " // PROCESS_TYPE::HCCL
-        "   SELECT * from cann UNION " // PROCESS_TYPE::CANN_API
-        "   SELECT * from mstx UNION " // PROCESS_TYPE::MS_TX
-        "   SELECT * from python UNION " // PROCESS_TYPE::API
-        "   SELECT * from overlap)\n" // PROCESS_TYPE::OVERLAP_ANALYSIS
-        " SELECT * from all_same_operator_detail ";
+        " SELECT * FROM (" + StringUtil::join(mainSqlList, " UNION ") + ")";
     Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(rankId, minTimestamp,
         requestParams.startTime, requestParams.endTime, requestParams.name);
     return Execute(stmt, requestParams.pageSize, offset);
@@ -1398,13 +1398,14 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
                 sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
             }
             sliceGroupItem.processMap[cur.pid] = { cur.tid };
-            sliceGroupItem.metaType = cur.metaType;
+            sliceGroupItem.metaTypeList.insert(cur.metaType);
             responseBody.data.emplace_back(sliceGroupItem);
         } else {
             responseBody.data[index].wallDuration += cur.duration;
             responseBody.data[index].occurrences += 1;
             responseBody.data[index].avgWallDuration = responseBody.data[index].occurrences == 0 ? 0 :
                 responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+            responseBody.data[index].metaTypeList.insert(cur.metaType);
             if (responseBody.data[index].processMap.count(cur.pid)) {
                 responseBody.data[index].processMap[cur.pid].insert(cur.tid);
             } else {
@@ -1434,7 +1435,7 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             sliceGroupItem.avgWallDuration = cur.duration;
             sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
             sliceGroupItem.processMap[cur.pid] = { cur.tid };
-            sliceGroupItem.metaType = cur.metaType;
+            sliceGroupItem.metaTypeList.insert(cur.metaType);
             responseBody.data.emplace_back(sliceGroupItem);
         } else {
             responseBody.data[index].wallDuration += cur.duration;

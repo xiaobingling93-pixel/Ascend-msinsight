@@ -20,10 +20,10 @@ static const std::string PARSE_RESULT_OK = "ok";
 static const std::string PARSE_RESULT_FAIL = "fail";
 
 // dbTrace database status key
-static const std::string OVERLAP_ANALYSIS_STATUS = "OVERLAP_ANALYSIS_STATUS";
-static const std::string WAIT_TIME_STATUS = "WAIT_TIME_STATUS";
-static const std::string CONNECTION_STATUS = "CONNECTION_STATUS";
-static std::list<std::string> DB_STATUS_LIST =  { OVERLAP_ANALYSIS_STATUS, WAIT_TIME_STATUS, CONNECTION_STATUS };
+static const std::string OVERLAP_ANALYSIS_UNIT = "OVERLAP_ANALYSIS";
+static const std::string WAIT_TIME_UNIT = "WAIT_TIME";
+static const std::string CONNECTION_UNIT = "CONNECTION_CATEGORY";
+static std::list<std::string> DB_STATUS_LIST =  { OVERLAP_ANALYSIS_UNIT, WAIT_TIME_UNIT, CONNECTION_UNIT };
 
 // att model
 static const std::string ATT_MODEL_DEFAULT = "all";

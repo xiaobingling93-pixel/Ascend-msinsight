@@ -20,7 +20,7 @@ public:
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
     void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
-        Global::BaselineInfo &baselineInfo) final;
+        Global::BaselineInfo &baselineInfo) override;
     ProjectTypeEnum GetProjectType(const std::string &dataPath) override;
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) override;
     static void BuildProjectExploreInfo(ProjectExplorerInfo& info, const std::vector<std::string>& parsedFiles);

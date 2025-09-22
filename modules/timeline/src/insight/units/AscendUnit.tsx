@@ -44,6 +44,7 @@ import { SorterResult } from 'antd/lib/table/interface';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import { queryAllSameOperatorsDuration } from '../../api/request';
 import type { OpData } from '../../api/interface';
+import connector from '../../connection';
 
 const MAX_UNIT_CANVAS_HEIGHT = 50_000; // 画布高度上限
 const MAX_UNIT_DEPTH = Math.floor(MAX_UNIT_CANVAS_HEIGHT / UnitHeight.STANDARD); // 泳道深度上限
@@ -520,7 +521,7 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
         dbPath: metaData.dbPath,
         processId: metaData.processId,
         metaType: metaData.metaType,
-        unitType: unitType,
+        unitType,
         startTime: Math.floor(Math.max(0, timestampOffset)),
         endTime: Math.ceil(Math.max(0, (session.endTimeAll ?? 0) + timestampOffset)),
         dataSource: metaData.dataSource,
@@ -529,22 +530,36 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
 
     const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
     try {
-        const request = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
-        if (request === undefined) {
-            return [];
-        }
-        const threadTraceList = request.data as ProcessData[];
-        const res: StatusData[] = [];
-        // 泳道chart返回数据减去时间偏移
-        threadTraceList.forEach((data) => {
-            res.push({
-                startTime: data.startTime - timestampOffset,
-                duration: data.duration,
-                name: '',
-                type: '',
+        const request: any = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
+
+        const resProcess = (result: any): StatusData[] => {
+            if (result === undefined) {
+                return [];
+            }
+            const threadTraceList = result.data as ProcessData[];
+            const res: StatusData[] = [];
+            // 泳道chart返回数据减去时间偏移
+            threadTraceList.forEach((data) => {
+                res.push({
+                    startTime: data.startTime - timestampOffset,
+                    duration: data.duration,
+                    name: '',
+                    type: '',
+                });
             });
-        });
-        return res;
+            return res;
+        };
+
+        if (requestParam.processId === 'OVERLAP_ANALYSIS' && request === undefined) {
+            return new Promise((resolve) => {
+                connector.addListener('updateAnalysisData', async () => {
+                    const result = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, { ...requestParam, aaa: 1 });
+                    return resolve(resProcess(result));
+                });
+            });
+        }
+
+        return resProcess(request);
     } catch (e) {
         return [];
     }

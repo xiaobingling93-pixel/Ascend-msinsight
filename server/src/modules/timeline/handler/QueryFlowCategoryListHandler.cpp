@@ -23,6 +23,11 @@ bool QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    // 状态校验
+    if (!database->CheckValueFromStatusInfoTable(CONNECTION_UNIT, FINISH_STATUS)) {
+        SendResponse(std::move(responsePtr), false, "The connection category parse unit is not finish.");
+        return false;
+    }
     bool result = database->QueryFlowCategoryList(response.body.category, request.params.rankId);
     SetResponseResult(response, result);
     session.OnResponse(std::move(responsePtr));

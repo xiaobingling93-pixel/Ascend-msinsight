@@ -22,6 +22,8 @@ public:
 
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
+    static bool CalOverallData(SystemViewOverallRequest &request, SystemViewOverallResponse &response,
+                               std::string &error, const std::shared_ptr<VirtualTraceDatabase> &database);
     static double GetOverlapAnalysisData(SystemViewOverallHelper &overallHelper,
         const std::shared_ptr<VirtualTraceDatabase> &database, const SystemViewOverallRequest &request,
         std::vector<SystemViewOverallRes> &responseBody);

@@ -14,6 +14,7 @@
 #include "MemoryDef.h"
 #include "FileParser.h"
 #include "ConstantDefs.h"
+#include "CurveContainer.h"
 #include "TimelineProtocolEvent.h"
 
 namespace Dic {
@@ -41,6 +42,9 @@ public:
 
     static Operator ParseOperatorDataLine(std::map<std::string, size_t>& dataMap, std::vector<std::string> &row);
     MemoryFilePairs GetMemoryFile(const std::string &path);
+    CurveView ComputeCurve(double xMin, double xMax, const std::string &input);
+    void PutCurve(const std::string &inputKey, CurveView &curve);
+    bool Exist(const std::string& inputKey);
 
 private:
     const uint32_t maxThreadNum = 4;
@@ -51,6 +55,7 @@ private:
     std::unique_ptr<TextMemoryDataBase> database;
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
+    CurveContainer curveContainer;
 
     Record mapperToRecordDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
     static Operator mapperToOperatorDetail(std::map<std::string, size_t> &dataMap, std::vector<std::string> &row);

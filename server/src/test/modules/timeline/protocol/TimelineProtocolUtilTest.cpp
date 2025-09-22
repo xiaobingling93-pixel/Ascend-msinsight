@@ -41,7 +41,8 @@ TEST_F(TimelineProtocolUtilTest, TestThreadTracesResponseToJsonNormal)
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":true,\"command\":\"unit/"
         "threadTraces\",\"moduleName\":\"unknown\",\"body\":{\"maxDepth\":2,\"currentMaxDepth\":1,"
-        "\"havePythonFunction\":true,\"data\":[[{\"name\":\"kkk\",\"duration\":777,\"startTime\":444,\"endTime\":4444,"
+        "\"havePythonFunction\":true,\"isLoading\":false,\"data\":[[{\"name\":\"kkk\",\"duration\":777,"
+        "\"startTime\":444,\"endTime\":4444,"
         "\"depth\":1,\"threadId\":\"lll\",\"cname\":\"qqq\",\"id\":\"hhh\"}]]}}";
     EXPECT_EQ(json, jsonStr);
 }
@@ -61,7 +62,7 @@ TEST_F(TimelineProtocolUtilTest, TestThreadTracesResponseToJsonError)
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"unit/"
         "threadTraces\",\"moduleName\":\"unknown\",\"message\":\"ll\",\"error\":{\"code\":3},\"body\":{\"maxDepth\":0,"
-        "\"currentMaxDepth\":0,\"havePythonFunction\":false,\"data\":[]}}";
+        "\"currentMaxDepth\":0,\"havePythonFunction\":false,\"isLoading\":false,\"data\":[]}}";
     EXPECT_EQ(json, jsonStr);
 }
 
@@ -75,7 +76,7 @@ TEST_F(TimelineProtocolUtilTest, TestUnitThreadsResponseToJsonError)
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"unit/"
         "threads\",\"moduleName\":\"unknown\",\"body\":{\"emptyFlag\":false,\"data\":[{\"title\":\"\",\"wallDuration\":"
-        "0,\"occurrences\":0,\"avgWallDuration\":0,\"selfTime\":0,\"processes\":[],\"metaType\":\"\"}]}}";
+        "0,\"occurrences\":0,\"avgWallDuration\":0,\"selfTime\":0,\"processes\":[],\"metaTypeList\":[]}]}}";
     EXPECT_EQ(json, jsonStr);
 }
 

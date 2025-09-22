@@ -32,7 +32,7 @@ bool QueryFwdBwdTimelineHandler::HandleRequest(std::unique_ptr<Protocol::Request
         return false;
     }
     dataMap.clear();
-    ThreadPool threadPool = ThreadPool(4); // thread pool count 4
+    static ThreadPool threadPool = ThreadPool(4); // thread pool count 4
     for (auto const &rankId : rankIds) {
         response.body.rankLists.push_back(rankId);
         PipelineFwdBwdTimelineByRank rank = {rankId, {}, {}};
@@ -42,7 +42,6 @@ bool QueryFwdBwdTimelineHandler::HandleRequest(std::unique_ptr<Protocol::Request
     }
 
     threadPool.WaitForAllTasks();
-    threadPool.ShutDown();
 
     CalFlowInfo(response.body.flowList, rankIds);
     // collect all data

@@ -206,6 +206,10 @@ void TraceFileParser::EndParseTask(const std::string &rankId, const std::vector<
     database->DeleteEmptyFlow();
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
     database->UpdateParseStatus(statusInfo);
+    std::vector<std::string> taskStatusList = {CONNECTION_UNIT, WAIT_TIME_UNIT, OVERLAP_ANALYSIS_UNIT};
+    for (const auto &item: taskStatusList) {
+        database->UpdateValueIntoStatusInfoTable(item, FINISH_STATUS);
+    }
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, database->GetDbPath(), true, "");
     ParserStatusManager::Instance().SetFinishStatus(rankId);

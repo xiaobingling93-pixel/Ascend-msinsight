@@ -77,6 +77,7 @@ struct UnitThreadTracesBody {
     uint64_t maxDepth = 0;
     uint64_t currentMaxDepth = 0;
     bool havePythonFunction = false;
+    bool isLoading = false;
     std::vector<std::vector<ThreadTraces>> data;
 };
 
@@ -117,7 +118,7 @@ struct SliceGroupItem {
     uint64_t avgWallDuration = 0;
     uint64_t selfTime = 0;
     std::map<std::string, std::set<std::string>> processMap;
-    std::string metaType;
+    std::set<std::string> metaTypeList;
 };
 
 struct UnitThreadsBody {
@@ -428,6 +429,7 @@ struct SystemViewOverallResponse : public Response {
     SystemViewOverallResponse() : Response(REQ_RES_SYSTEM_VIEW_OVERALL) {}
     std::vector<SystemViewOverallRes> details;
     PageParam pageParam;
+    bool isLoading = false;
 };
 
 class EventDetail {

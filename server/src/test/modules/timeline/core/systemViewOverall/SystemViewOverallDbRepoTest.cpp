@@ -13,6 +13,9 @@
 #include "WsSessionManager.h"
 #include "SystemViewOverallRepoFactory.h"
 #include "TraceDatabaseSqlConst.h"
+#include "DataEngine.h"
+#include "RepositoryFactory.h"
+#include "RenderEngine.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
@@ -21,9 +24,19 @@ using namespace Dic;
 namespace Dic::Module::Timeline {
 class SystemViewOverallDbRepoTest : public ::testing::Test {
 public:
+    static void InitDataEngine()
+    {
+        auto respotoryFactory = RepositoryFactory::Instance();
+        auto dataEngine = DataEngine::Instance();
+        dataEngine->SetRepositoryFactory(respotoryFactory);
+        auto renderEngine = RenderEngine::Instance();
+        renderEngine->SetDataEngineInterface(dataEngine);
+    }
+
     static void SetUpTestCase()
     {
         FullDb::FullDbParser::Instance().Reset();
+        InitDataEngine();
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
@@ -67,6 +80,8 @@ public:
         while (ParserStatusManager::Instance().GetParserStatus("ubuntu3538958389648580163_0 0") !=
                ParserStatus::FINISH_ALL) {
         }
+        auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
+        while (!database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {}
     }
 
     static void TearDownTestCase()

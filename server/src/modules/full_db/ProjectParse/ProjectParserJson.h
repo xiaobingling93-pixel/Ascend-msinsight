@@ -82,6 +82,9 @@ private:
     std::map<std::string, RankEntry>
     GetRankEntryMap(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isBaseline);
 
+    std::string AddSuffixToDuplicatedRankId(const std::map<std::string, RankEntry> &rankToTraceMap,
+                                            const std::string &rankId);
+
     std::vector<std::string> GetJsonFileUnderFolder(const std::string &path);
 
     void ParserTraceData(const std::map<std::string, RankEntry> &rankListMap,

@@ -15,6 +15,16 @@ import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumnConfig';
 import { HelpIcon } from 'ascend-icon';
+import connector from '../../connection/index';
+import UpdateTableAsync from '../../utils/UpdateTableAsync';
+
+let GdbPath = '';
+const updateTableAsyne = new UpdateTableAsync();
+connector.addListener('updateAllTable', (e: any) => {
+    if (GdbPath === e?.data?.body?.data?.dbId) {
+        updateTableAsyne.update();
+    }
+});
 
 interface FullConditionType {
     isCompare: boolean;
@@ -246,6 +256,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     opName?: string; inputShape?: string; compInfo?: CompInfo; session: Session;
 }): JSX.Element => {
     const isCompare = condition.isCompare as boolean;
+    GdbPath = condition.dbPath;
     const { t } = useTranslation();
     const [cols, setCols] = useState<any[]>(useColMap(isCompare)[OperatorGroup.OPERATOR].l0);
     const [page, setPage] = useState(defaultPage);
@@ -293,12 +304,13 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     };
     const colMap = useColMap(isCompare && compInfo === undefined);
     const compareSourceCol = useCompareSourceColumn();
-    const updateData = async (): Promise<void> => {
-        const { res, isExpend } = await fetchData(fullCondition, condition, { opType, opName, accCore, inputShape }, { isCompare, compInfo });
+
+    const tableDataProcess = (r: any): any => {
+        const { res, isExpend } = r;
         if (res === null || res === undefined) {
             return;
         }
-        const { pmuHeaders, data, total, level } = res;
+        const { pmuHeaders, data, level } = res;
         let realData = [];
         if (isCompare) {
             if (isExpend) {
@@ -312,6 +324,32 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         } else {
             realData = handleOrginData(fullCondition, data);
         }
+        return realData;
+    };
+    const updateData = async (): Promise<void> => {
+        const result = await fetchData(
+            fullCondition,
+            condition,
+            { opType, opName, accCore, inputShape },
+            { isCompare, compInfo },
+        );
+        const { res, isExpend } = result;
+        const { pmuHeaders, total, level } = res;
+        const realData = tableDataProcess(result);
+        const isLoading = updateTableAsyne.replaceEmptyValuesWithLoa(realData);
+        if (isLoading) {
+            updateTableAsyne.addUpdateList(
+                JSON.stringify({
+                    fullCondition,
+                    condition,
+                    opDetail: { opType, opName, accCore, inputShape },
+                    pageStatus: { isCompare, compInfo },
+                }),
+                fetchData,
+                (r: any) => tableDataProcess(r),
+                setTableData,
+            );
+        }
         setTableData(realData);
         setPage({ ...page, total });
         let group = opType !== undefined && !isCompare ? OperatorGroup.OPERATOR : condition.group;
@@ -320,10 +358,11 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
             group = OperatorGroup.HCCL_OPERATOR_TYPE;
             columnLevel = 'l1';
         }
-        const columns = getCols({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuHeaders });
+        let columns = getCols({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuHeaders });
         if (isCompare) {
             columns.splice(1, 0, compareSourceCol[0]);
         }
+        columns = updateTableAsyne.addRenderMethod(columns);
         setCols(columns);
         runInAction(() => {
             session.total = total;
@@ -355,6 +394,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     };
 
     useEffect(() => {
+        GdbPath = condition.dbPath;
         // 首次渲染不更新表格
         if (fullCondition.rankId === '') {
             // 开发环境防止antd4 table组件报ResizeObserver loop错误，但会在没有数据时也显示有1条，生产环境不会报错也会正常显示
@@ -370,6 +410,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
 
     // 触发条件是同一工程切换页签时
     useEffect(() => {
+        GdbPath = condition.dbPath;
         setSorter(defaultSorter);
         setPage(defaultPage);
         setFilters(defaultFilters);

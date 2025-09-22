@@ -169,7 +169,7 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(ParseContext &context)
         }
         auto eventAttrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>(event.attr);
         if (eventAttrs.has_value() && eventAttrs->groupId > 0) {
-            context.eventGroupMap[eventAttrs->groupId].groupId = eventAttrs->groupId;
+            context.eventGroupMap[eventAttrs->groupId].groupId = static_cast<int64_t>(eventAttrs->groupId);
             context.eventGroupMap[eventAttrs->groupId].AddEvent(event);
         }
         if (!SingleDeviceEventParse(event, context)) continue;
@@ -423,15 +423,15 @@ void LeaksMemoryService::SetMemoryBlockExtendByEventGroup(MemoryBlock& block, co
     uint64_t minTimestamp = context.db->GetGlobalMinTimestamp();
     EventGroup eventGroup = context.eventGroupMap[groupId];
     if (groupId == 0 || eventGroup.accessEvents.empty()) {
-        block.firstAccessTimestamp = minTimestamp - 1;
-        block.lastAccessTimestamp = minTimestamp - 1;
+        block.firstAccessTimestamp = static_cast<int64_t>(minTimestamp - 1);
+        block.lastAccessTimestamp = static_cast<int64_t>(minTimestamp - 1);
         block.maxAccessInterval = 0;
         return;
     }
     uint64_t maxInterval = 0;
-    block.firstAccessTimestamp = eventGroup.accessEvents.front().timestamp;
-    block.lastAccessTimestamp = eventGroup.accessEvents.back().timestamp;
-    uint64_t preAccessTs = block.firstAccessTimestamp;
+    block.firstAccessTimestamp = static_cast<int64_t>(eventGroup.accessEvents.front().timestamp);
+    block.lastAccessTimestamp = static_cast<int64_t>(eventGroup.accessEvents.back().timestamp);
+    uint64_t preAccessTs = static_cast<uint64_t>(block.firstAccessTimestamp);
     for (auto &accessEvent : eventGroup.accessEvents) {
         uint64_t interval = accessEvent.timestamp > preAccessTs ? accessEvent.timestamp - preAccessTs : 0;
         maxInterval = std::max(interval, maxInterval);

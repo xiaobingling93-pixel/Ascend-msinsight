@@ -81,6 +81,7 @@ private:
     bool ExecSqlGetStatisticInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                                  std::vector<Protocol::OperatorStatisticInfoRes> &res);
     bool AddCommunicationOpTableOpTypeIfNotExists();
+    OperatorDetailInfoRes GetOperatorDetailRow(sqlite3_stmt *stmt);
 
     std::string blockDimColumnName;
 };

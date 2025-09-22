@@ -33,7 +33,12 @@ bool QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Re
     }
     bool result = database->QueryThreadTracesSummary(request.params, response.body,
                                                      minTimestamp);
-    SetResponseResult(response, result);
+    if (result) {
+        SetResponseResult(response, result);
+    } else {
+        warnMsg = "Fail to search db to get thread traces summary data.";
+        SetResponseResult(response, result, warnMsg);
+    }
     session.OnResponse(std::move(responsePtr));
     return result;
 }

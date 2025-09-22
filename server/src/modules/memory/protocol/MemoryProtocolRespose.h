@@ -76,6 +76,7 @@ struct MemoryViewData {
     std::string title;
     std::vector<std::string> legends;
     std::vector<std::vector<std::string>> lines;
+    std::vector<double> tempData;
 };
 
 struct SliceInfo {

@@ -139,6 +139,8 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryViewRequest(const json_t &json,
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.start, json["params"], "start");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.end, json["params"], "end");
     return reqPtr;
 }
 

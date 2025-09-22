@@ -547,6 +547,21 @@ static std::string GetOriginHostName(const std::string &hostName)
     return hostName;
 }
 
+/**
+ * @brief 对两个str类型的数字做max操作
+ */
+
+static std::string StrNumMax(const std::string& a, const std::string& b)
+{
+    try {
+        auto numA = std::stoll(a);
+        auto numB = std::stoll(b);
+        return numA >= numB ? a : b;
+    } catch (...) {
+        return a;
+    }
+}
+
 private:
 #ifdef _WIN32
     static inline char injectList[] = {

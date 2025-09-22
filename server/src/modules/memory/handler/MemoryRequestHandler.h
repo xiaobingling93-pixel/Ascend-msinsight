@@ -17,7 +17,7 @@ public:
     MemoryRequestHandler()
     {
         moduleName = MODULE_MEMORY;
-        async = false;
+        async = true;
     }
     ~MemoryRequestHandler() override = default;
 

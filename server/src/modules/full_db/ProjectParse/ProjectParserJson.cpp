@@ -116,6 +116,8 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
                 continue;
             }
             std::string rankId = FileUtil::GetRankIdFromFile(jsonFiles[0]);
+            // 如果rankId重复了，添加_{数字}后缀，应用场景：算子调优支持以一个文件夹下多个子文件夹方式导入指令流水图
+            rankId = AddSuffixToDuplicatedRankId(rankToTraceMap, rankId);
             std::string deviceId = isDevice ? rankId : GetDeviceId(parseFileInfo->parseFilePath, rankId);
             std::string cluster = parseFileInfo->clusterId;
             if (isDevice) {
@@ -151,6 +153,25 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
         }
     }
     return rankToTraceMap;
+}
+
+// 当rankId重复时，增加_{数字}后缀，最多100000（和搜索文件时的最大允许文件数相同），如果超过100000会覆盖
+std::string ProjectParserJson::AddSuffixToDuplicatedRankId(const std::map<std::string, RankEntry> &rankToTraceMap,
+                                                           const std::string &rankId)
+{
+    if (rankToTraceMap.find(rankId) == rankToTraceMap.end()) {
+        return rankId;
+    }
+    const int indexMax = 100000;
+    int index = 2;
+    while (index <= indexMax) {
+        std::string rankIdWithSuffix = rankId + "_" + std::to_string(index);
+        if (rankToTraceMap.find(rankIdWithSuffix) == rankToTraceMap.end()) {
+            return rankIdWithSuffix;
+        }
+        ++index;
+    }
+    return rankId;
 }
 
 bool ProjectParserJson::CheckParseFileInfoSize(const std::shared_ptr<Global::ParseFileInfo> &parseFileInfo,
@@ -768,13 +789,13 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
 
 std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
 {
-    std::string rankId = FileUtil::GetProfilerFileId(FileUtil::SplicePath(filePath, "mindstudio_data.db"));
-    std::string dbPath;
-    if (FileUtil::IsFolder(filePath)) {
-        dbPath = FileUtil::SplicePath(filePath, "mindstudio_data.db");
-    } else {
-        dbPath = FileUtil::SplicePath(FileUtil::GetParentPath(filePath), "mindstudio_data.db");
+    // 仅当导入单json或者csv时会进入如下if，以保证单目录导入两个json或csv后db文件不会相互覆盖
+    if (!FileUtil::IsFolder(filePath)) {
+        return FileUtil::GetSingleFileIdWithDb(filePath);
     }
+
+    std::string rankId = FileUtil::GetProfilerFileId(FileUtil::SplicePath(filePath, "mindstudio_data.db"));
+    std::string dbPath = FileUtil::SplicePath(filePath, "mindstudio_data.db");
     return FileUtil::GetDbPath(dbPath, rankId);
 }
 

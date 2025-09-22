@@ -13,7 +13,7 @@ import { Graph, MemoryCurve } from '../entity/memory';
 import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
 import { MemorySession, GroupBy } from '../entity/memorySession';
-import { memoryCurveGetCancelable } from '../utils/RequestUtils';
+import { memoryCurveGet } from '../utils/RequestUtils';
 
 const DynamicLineChart = observer(({ session, memorySession, isDark }:
 { session: Session; memorySession: MemorySession; isDark: boolean }) => {
@@ -40,7 +40,12 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
                 return;
             }
             const allDatas = Array.from(allDataSet);
-            memorySession.selectedRange = { startTs: allDatas[start], endTs: allDatas[end] };
+
+            if (end >= allDatas.length) {
+                memorySession.selectedRange = { startTs: allDatas[start], endTs: allDatas[allDatas.length - 1] };
+            } else {
+                memorySession.selectedRange = { startTs: allDatas[start], endTs: allDatas[end] };
+            }
             memorySession.current = 1;
             memorySession.pageSize = 10;
         });
@@ -49,13 +54,9 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
     const onMemoryCurveGet = (): void => {
         setCurveSpin(true);
         const rankValue = memorySession.getSelectedRankValue();
-        const { invoke } = memoryCurveGetCancelable;
-
-        invoke({ rankId: rankValue.rankInfo.rankId, dbPath: rankValue.dbPath, type: memorySession.groupId, isCompare }).then((resp) => {
-            // Reset the select range to null when rankId changes
-            runInAction(() => {
-                memorySession.selectedRange = undefined;
-            });
+        const start = (memorySession.selectedRange?.startTs ?? '').toString();
+        const end = (memorySession.selectedRange?.endTs ?? '').toString();
+        memoryCurveGet({ rankId: rankValue.rankInfo.rankId, dbPath: rankValue.dbPath, type: memorySession.groupId, isCompare, start, end }).then((resp) => {
             setMemoryCurveData(resp);
             let columns: string[] = [];
             if (memorySession.groupId === GroupBy.STREAM) {
@@ -93,11 +94,10 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
         });
 
         return () => clearTimeout(timer);
-    }, [memorySession.selectedRankId, memorySession.groupId, t, session.isAllMemoryCompletedSwitch, isCompare]);
+    }, [memorySession.selectedRankId, memorySession.groupId, t, session.isAllMemoryCompletedSwitch, isCompare, memorySession.selectedRange]);
 
     useEffect(() => {
         runInAction(() => {
-            memorySession.selectedRange = undefined;
             memorySession.searchEventOperatorName = '';
             memorySession.current = 1;
             memorySession.pageSize = 10;

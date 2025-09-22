@@ -1275,7 +1275,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLinesCompa
     MemoryViewData resultData;
     QueryMemoryViewHandler handler;
     handler.GetCompareGraphLines(compareData, baselineData, resultData);
-    ASSERT_EQ(resultData.lines.size(), baselineData.lines.size());
+    ASSERT_EQ(resultData.tempData.size(), baselineData.tempData.size());
     for (size_t i = 0; i < resultData.lines.size(); ++i) {
         ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
         EXPECT_EQ(resultData.lines[i][0], baselineData.lines[i][0]);
@@ -1298,7 +1298,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLinesBasel
     MemoryViewData resultData;
     QueryMemoryViewHandler handler;
     handler.GetCompareGraphLines(compareData, baselineData, resultData);
-    ASSERT_EQ(resultData.lines.size(), compareData.lines.size());
+    ASSERT_EQ(resultData.tempData.size(), compareData.tempData.size());
     for (size_t i = 0; i < resultData.lines.size(); ++i) {
         ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
         EXPECT_EQ(resultData.lines[i][0], compareData.lines[i][0]);
@@ -1322,8 +1322,8 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLinesBothN
     MemoryViewData resultData;
     QueryMemoryViewHandler handler;
     handler.GetCompareGraphLines(compareData, baselineData, resultData);
-    ASSERT_EQ(resultData.lines.size(), compareData.lines.size());
-    ASSERT_EQ(resultData.lines.size(), baselineData.lines.size());
+    ASSERT_EQ(resultData.tempData.size(), compareData.tempData.size());
+    ASSERT_EQ(resultData.tempData.size(), baselineData.tempData.size());
     for (size_t i = 0; i < resultData.lines.size(); ++i) {
         ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
         EXPECT_EQ(resultData.lines[i][0], compareData.lines[i][0]);

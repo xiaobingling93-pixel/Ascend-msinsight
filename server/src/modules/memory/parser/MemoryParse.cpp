@@ -396,6 +396,7 @@ void MemoryParse::Reset()
 {
     ServerLog::Info("Memory reset. Wait task completed.");
     ParseEndCallBack("", "", true, "");
+    curveContainer.Clear();
     threadPool->Reset();
     ranks.clear();
     ServerLog::Info("Memory task completed.");
@@ -407,7 +408,6 @@ void MemoryParse::Reset()
             db->CloseDb();
         }
     }
-
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
 }
 
@@ -730,6 +730,21 @@ bool MemoryParse::ParseOperatorHeaderLine(std::map<std::string, size_t> &dataMap
 Operator MemoryParse::ParseOperatorDataLine(std::map<std::string, size_t> &dataMap, std::vector<std::string> &row)
 {
     return MemoryParse::mapperToOperatorDetail(dataMap, row);
+}
+
+CurveView MemoryParse::ComputeCurve(double xMin, double xMax, const std::string& input)
+{
+    return curveContainer.ComputeCurve(xMin, xMax, input);
+}
+
+void MemoryParse::PutCurve(const std::string& inputKey, CurveView& curve)
+{
+    curveContainer.PutCurve(inputKey, curve);
+}
+
+bool MemoryParse::Exist(const std::string& inputKey)
+{
+    return curveContainer.Exist(inputKey);
 }
 
 } // end of namespace Memory

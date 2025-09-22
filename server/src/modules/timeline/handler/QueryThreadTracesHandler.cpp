@@ -4,6 +4,7 @@
 #include "WsSessionManager.h"
 #include "TrackInfoManager.h"
 #include "TraceTime.h"
+#include "DataBaseManager.h"
 #include "QueryThreadTracesHandler.h"
 
 namespace Dic {
@@ -24,6 +25,17 @@ bool QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
         return false;
+    }
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.cardId);
+    if (database == nullptr) {
+        SendResponse(std::move(responsePtr), false, "The database is not exist when query thread traces.");
+        return false;
+    }
+    if (request.params.metaType == "OVERLAP_ANALYSIS" &&
+        !database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {
+        response.body.isLoading = true;
+        SendResponse(std::move(responsePtr), true, "The overlap analysis data is not parse finish.");
+        return true;
     }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query thread traces Failed to render.");

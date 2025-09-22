@@ -13,7 +13,6 @@
 namespace Dic {
 namespace Module {
 namespace Memory {
-using memoryLines = std::vector<std::vector<std::string>>;
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
 class TextMemoryDataBase : public VirtualMemoryDataBase {
 public:

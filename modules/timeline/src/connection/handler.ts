@@ -258,7 +258,8 @@ const createBaselineCard = (session: Session | undefined, result: TimelineCard[]
         if ((metadata.dataSource.dataPath as string[]) === undefined) {
             return false;
         }
-        return metadata.dataSource.remote !== dataSource.remote || (metadata.dataSource.dataPath as string[]).includes(singleDataPath);
+        // metadata.dbPath===singleDataPath的判断仅用于npumonitor场景
+        return metadata.dataSource.remote !== dataSource.remote || (metadata.dataSource.dataPath as string[]).includes(singleDataPath) || metadata.dbPath === singleDataPath;
     });
     if (isSamePath) { return; }
     session.phase = 'download';
@@ -312,6 +313,50 @@ export const savePageSettingRemoteHandler: NotificationHandler = async (): Promi
         savePageSetting();
     }
 };
+
+export const parseUnitCompletedHandler: NotificationHandler = async (data): Promise<void> => {
+    switch (data.unitName) {
+        case 'WAIT_TIME':
+            // 发送更新等待时间消息，更新所有表格
+            connector.send({
+                event: 'updateAllTable',
+                body: { data },
+                to: 'Operator',
+            });
+            break;
+        case 'OVERLAP_ANALYSIS':
+            // 发送更新泳道loading消息
+            connector.send({
+                event: 'updateAnalysisLoading',
+                body: { data },
+                to: 'Timeline',
+            });
+
+            // 发送更新泳道内容消息
+            connector.send({
+                event: 'updateAnalysisData',
+                body: { data },
+                to: 'Timeline',
+            });
+
+            // 发送更新综合指标消息
+            connector.send({
+                event: 'OverallMetrics',
+                body: { data },
+                to: 'Timeline',
+            });
+            break;
+        default:
+            // 发送更新连线消息
+            connector.send({
+                event: 'updateCategory',
+                body: { data: false },
+                to: 'Timeline',
+            });
+            break;
+    }
+};
+
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -327,6 +372,11 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             initUnitInfo(session, result, dataSource, isNeedResetRankId);
         });
         sendSessionUpdate(result, session);
+        connector.send({
+            event: 'updateCategory',
+            body: { data: true },
+            to: 'Timeline',
+        });
     } catch (error) {
         console.error(error);
     }

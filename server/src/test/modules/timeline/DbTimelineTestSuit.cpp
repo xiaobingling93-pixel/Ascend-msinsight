@@ -644,7 +644,7 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenHccl)
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.processes.push_back(SimpleProcess {"HCCL", {"0"}});
     requestParams.rankId = "2";
-    requestParams.metaType = "HCCL";
+    requestParams.metaTypeList = {"HCCL"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     requestParams.current = 1;
@@ -662,7 +662,7 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenOverlap)
 
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
-    requestParams.metaType = "OVERLAP_ANALYSIS";
+    requestParams.metaTypeList = {"OVERLAP_ANALYSIS"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;

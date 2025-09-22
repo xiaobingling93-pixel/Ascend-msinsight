@@ -91,6 +91,7 @@ include_directories(${SRC_HOME_DIR}/modules/operator/protocol)
 include_directories(${SRC_HOME_DIR}/modules/full_db)
 include_directories(${SRC_HOME_DIR}/modules/full_db/ProjectParse)
 include_directories(${SRC_HOME_DIR}/modules/full_db/ProjectParse/ProjectChecker)
+include_directories(${SRC_HOME_DIR}/modules/full_db/ParseUnit)
 include_directories(${SRC_HOME_DIR}/modules/full_db/database)
 # advisor
 include_directories(${SRC_HOME_DIR}/modules/advisor)
@@ -192,6 +193,7 @@ aux_source_directory(${SRC_HOME_DIR}/modules/full_db  DIC_MODULES_FULL_DB_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db/ProjectParse  DIC_MODULES_FULL_DB_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db/database  DIC_MODULES_FULL_DB_DATABASE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db/ProjectParse/ProjectChecker DIC_MODULES_FULL_DB_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/full_db/ParseUnit DIC_MODULES_FULL_DB_PARSER_UNIT_SRC)
 
 # jupyter
 aux_source_directory(${SRC_HOME_DIR}/modules/jupyter DIC_MODULES_JUPYTER_SRC)
@@ -277,6 +279,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_JUPYTER_PROTOCOL_SRC}
         ${DIC_MODULES_FULL_DB_SRC}
         ${DIC_MODULES_FULL_DB_PARSER_SRC}
+        ${DIC_MODULES_FULL_DB_PARSER_UNIT_SRC}
         ${DIC_MODULES_FULL_DB_DATABASE_SRC}
         ${DIC_MODULES_SOURCE_SRC}
         ${DIC_MODULES_SOURCE_PARSER_SRC}

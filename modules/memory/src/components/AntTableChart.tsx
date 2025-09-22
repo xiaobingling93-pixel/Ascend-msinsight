@@ -322,6 +322,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
         if (memorySession === undefined || memorySession.selectedRankId === '') {
             setTableSpin(false);
             setTableData([]);
+            setResponse({ totalNum: 0, columnAttr: [], componentDetail: [] });
             return;
         }
         const rankValue = memorySession.getSelectedRankValue();

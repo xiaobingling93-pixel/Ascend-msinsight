@@ -496,7 +496,7 @@ struct SimpleProcess {
 struct UnitThreadsOperatorsParams {
     std::string rankId;
     std::vector<SimpleProcess> processes;
-    std::string metaType;
+    std::vector<std::string> metaTypeList;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     std::string name;

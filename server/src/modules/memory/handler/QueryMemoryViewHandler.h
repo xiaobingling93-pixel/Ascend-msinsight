@@ -4,7 +4,6 @@
 
 #ifndef PROFILER_SERVER_QUERY_MEMORY_VIEW_HANDLER_H
 #define PROFILER_SERVER_QUERY_MEMORY_VIEW_HANDLER_H
-
 #include "MemoryRequestHandler.h"
 #include "MemoryProtocolRespose.h"
 
@@ -15,6 +14,7 @@ class QueryMemoryViewHandler : public MemoryRequestHandler {
 public:
     QueryMemoryViewHandler()
     {
+        async = true;
         command = Protocol::REQ_RES_MEMORY_VIEW;
     };
     ~QueryMemoryViewHandler() override = default;
@@ -30,6 +30,11 @@ public:
     void GetCompareGraphLegends(const Protocol::MemoryViewData &compareData,
                                 const Protocol::MemoryViewData &baselineData,
                                 Protocol::MemoryViewData &resultData);
+
+    bool QueryCurveData(MemoryViewResponse &response, std::string &errorMsg, MemoryViewRequest &request,
+                        std::unique_ptr<MemoryViewResponse> &responsePtr);
+
+    void AddBaseLineData(const MemoryViewData &baselineData, MemoryViewData &resultData, size_t indexBaseline) const;
 };
 } // end of namespace Memory
 } // end of namespace Module

@@ -56,7 +56,7 @@ inline std::string GetAscendSameNameDetailSql(const std::vector<std::string> &ti
     // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
     // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
     const std::string tidListStr = StringUtil::Join4SqlGroup(tidList);
-    sql = " ascend as (select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
+    sql = " select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
     "   main.depth, main.ROWID as id, streamId as tid, 'Ascend Hardware' as pid from TASK main "
     "   left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId left join " +
     TABLE_COMMUNICATION_SCHEDULE_TASK +
@@ -66,7 +66,7 @@ inline std::string GetAscendSameNameDetailSql(const std::vector<std::string> &ti
     ") and streamId in (" + tidListStr +
     " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime";
 
-    sql += " union all select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
+    sql += " union select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
         "main.depth, main.ROWID as id, streamId || '_' || m.domainId as tid, 'Ascend Hardware' as pid from TASK "
         "as main inner join " + TABLE_MSTX_EVENTS + " as m on main.connectionId = m.connectionId "
         "inner join nameIds n on m.message = id "
@@ -74,56 +74,54 @@ inline std::string GetAscendSameNameDetailSql(const std::vector<std::string> &ti
         " and streamId || '_' || m.domainId in (" + tidListStr + ")"
         " and timestamp + duration >= p.startTime and timestamp <=p.endTime";
 
-    sql += ")";
     return sql;
 }
 inline std::string GetHcclSameNameDetailSql(const std::string &tidListStr, const bool uniqueDevice)
 {
-    return " hccl as (select startNs - p.minTime as timestamp, endNs - startNs as duration, 0 as depth, "
+    return " select startNs - p.minTime as timestamp, endNs - startNs as duration, 0 as depth, "
     "   main.ROWID as id, groupName || '_' || planeId as tid, 'HCCL' as pid from TASK main "
     "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.taskType = id "
     "   join params p where deviceId = p.rankId and groupName || '_' || planeId in (" + tidListStr +
     "   ) and timestamp+duration >= p.startTime AND timestamp <= p.endTime "
     + (uniqueDevice
-        ? " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
+        ? " UNION select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
           "   op.opId as id , op.groupName || 'group' as tid, 'HCCL' as pid from COMMUNICATION_OP op "
           "   join nameIds on op.opName = id join params p where op.groupName || 'group' in (" + tidListStr +
           "   ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime group by op.opId "
-        : " UNION ALL select op.startNs - p.minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
+        : " UNION select op.startNs - p.minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
           "   op.opId as id , op.groupName || 'group' as tid, 'HCCL' as pid from COMMUNICATION_OP op "
           "   join COMMUNICATION_TASK_INFO c ON op.opId = c.opId "
           "   join TASK main on c.globalTaskId = main.globalTaskId "
           "   join nameIds on op.opName = id join params p "
           "   where deviceId = p.rankId and op.groupName||'group' in (" + tidListStr +
-          "   ) and timestamp+duration >= p.startTime AND timestamp <= p.endTime group by op.opId ")
-    + ") ";
+          "   ) and timestamp+duration >= p.startTime AND timestamp <= p.endTime group by op.opId ");
 }
 inline std::string GetCannSameNameDetailSql(const std::string &pidListStr, const std::string &tidListStr)
 {
-    return " cann as (select startNs - p.minTime as timestamp, endNs - startNs as duration, depth, "
+    return " select startNs - p.minTime as timestamp, endNs - startNs as duration, depth, "
     "   main.ROWID as id, type as tid, globalTid as pid"
     " from CANN_API main join nameIds n on name = n.id join params p where globalTid in (" + pidListStr +
-    " ) and type in (" + tidListStr + " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
+    " ) and type in (" + tidListStr + " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime ";
 }
 inline std::string GetMstxSameNameDetailSql(const std::string &pidListStr, const std::string &tidListStr)
 {
-    return " mstx as (select startNs - p.minTime as timestamp, endNs - startNs as duration, depth, main.ROWID as id, "
+    return " select startNs - p.minTime as timestamp, endNs - startNs as duration, depth, main.ROWID as id, "
     "   domainId as tid, globalTid as pid from MSTX_EVENTS main join nameIds n on message = n.id join params p"
     "   where globalTid in (" + pidListStr + ") and domainId in (" + tidListStr + " ) "
-    "   and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
+    "   and timestamp + duration >= p.startTime AND timestamp <= p.endTime ";
 }
 inline std::string GetPythonSameNameDetailSql(const std::string &pidListStr)
 {
-    return " python as (select startNs - p.minTime as timestamp, endNs - startNs as duration, depth, main.ROWID as id,"
+    return " select startNs - p.minTime as timestamp, endNs - startNs as duration, depth, main.ROWID as id,"
     "   'pytorch' as tid, globalTid as pid from PYTORCH_API main join nameIds n on name = n.id join params p\n"
-    "   where globalTid in (" + pidListStr + ") and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
+    "   where globalTid in (" + pidListStr + ") and timestamp + duration >= p.startTime AND timestamp <= p.endTime ";
 }
 inline std::string GetOverlapAnalysisSameNameDetailSql(const int type)
 {
-    return " overlap as (select startNs - p.minTime as timestamp, endNs - startNs as duration, 0 as depth, "
+    return " select startNs - p.minTime as timestamp, endNs - startNs as duration, 0 as depth, "
     " main.ROWID as id , type as tid, 'OVERLAP_ANALYSIS' as pid"
     " from OVERLAP_ANALYSIS main join params p where deviceId = p.rankId and type = " + std::to_string(type) +
-    " and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
+    " and timestamp + duration >= p.startTime AND timestamp <= p.endTime ";
 }
 // sql of singleUnitFlow
 const static std::string PYTORCH_UNIT_FLOW_SQL =

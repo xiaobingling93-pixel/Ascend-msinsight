@@ -87,6 +87,7 @@ void TimelineProtocol::RegisterEventToJsonFuncs()
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, ToModuleResetEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_PROGRESS, ToParseProgressEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_HEATMAP_COMPLETED, ToParseHeatmapCompletedEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_UNIT_COMPLETED, ToParseUnitCompletedEventJson);
 }
 
 #pragma region << Json To Request>>
@@ -584,6 +585,13 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
             reqPtr->params.processes.emplace_back(p);
         }
     }
+    if (json["params"].HasMember("metaTypeList") && json["params"]["metaTypeList"].IsArray()) {
+        for (const auto &metaType : json["params"]["metaTypeList"].GetArray()) {
+            if (metaType.IsString()) {
+                reqPtr->params.metaTypeList.emplace_back(metaType.GetString());
+            }
+        }
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
@@ -591,7 +599,6 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     return reqPtr;
 }
 
@@ -849,6 +856,11 @@ std::optional<document_t> TimelineProtocol::ToParseProgressEventJson(const Event
 std::optional<document_t> TimelineProtocol::ToParseHeatmapCompletedEventJson(const Event &event)
 {
     return ToEventJson<ParseHeatmapCompletedEvent>(dynamic_cast<const ParseHeatmapCompletedEvent &>(event));
+}
+
+std::optional<document_t> TimelineProtocol::ToParseUnitCompletedEventJson(const Event &event)
+{
+    return ToEventJson<ParseUnitCompletedEvent>(dynamic_cast<const ParseUnitCompletedEvent &>(event));
 }
 
 std::optional<document_t> TimelineProtocol::ToSystemViewOverallResponseJson(const Response &response)
