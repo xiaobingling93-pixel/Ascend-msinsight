@@ -22,7 +22,7 @@ const DeleteConfirm = observer(({ isProject, projectIndex, dataPath, session, pr
     const { t } = useTranslation('framework');
     let isSelectBaseline = false;
     const confirm = (): void => {
-        if (session) {
+        if (session?.compareSet) {
             const { compareSet: { baseline, comparison } } = session;
             if (isProject) {
                 isSelectBaseline = baseline.filePath.startsWith(projectName as string) || comparison.filePath.startsWith(projectName as string);

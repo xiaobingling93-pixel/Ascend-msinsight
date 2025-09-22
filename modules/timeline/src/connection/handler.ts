@@ -361,7 +361,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const result = getPropFromData(data, 'importResult') as ImportResult;
-        const isNeedResetRankId = getPropFromData(data, 'projectAddFile') as boolean;
+        const isNeedResetRankId = getPropFromData(data, 'switchProject') as boolean;
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
         if (!session) {

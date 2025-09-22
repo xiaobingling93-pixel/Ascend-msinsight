@@ -76,12 +76,14 @@ export const addDataPath = async function(project: Project, action: ProjectActio
         }
         // 时间线需要判断是整体添加还是在项目内添加
         const { activeDataSource } = session;
-        const projectAddFile = params?.projectAction !== ProjectAction.ADD_FILE || activeDataSource?.projectName !== params?.projectName;
+
+        // 是否切换项目
+        const switchProject = params?.projectAction !== ProjectAction.ADD_FILE || activeDataSource?.projectName !== params?.projectName;
 
         // 添加参数告诉是否为点击的添加
         connector.send({
             event: 'remote/import',
-            body: { dataSource: transformTimelineDataSource(project), importResult: result as ImportResultBody, projectAddFile: projectAddFile },
+            body: { dataSource: transformTimelineDataSource(project), importResult: result as ImportResultBody, switchProject },
             target: 'plugin',
         }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
         afterImportProject(params, result as ImportResultBody);
