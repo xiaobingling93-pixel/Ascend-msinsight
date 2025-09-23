@@ -17,6 +17,9 @@ std::string BaselineManager::GetBaselineId()
 {
     uint64_t count = 0;
     const uint64_t maxCount = 180;
+    if (baselineRankId.empty()) {
+        return baselineRankId;
+    }
     while (true) {
         if (count > maxCount) {
             return "";

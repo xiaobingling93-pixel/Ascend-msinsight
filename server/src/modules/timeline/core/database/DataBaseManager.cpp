@@ -461,7 +461,15 @@ bool DataBaseManager::ResetBaseline()
     }
     EraseClusterDb(BASELINE);
     summaryBaselineDatabaseMap.clear();
-    return false;
+    auto baselineRankId = BaselineManager::Instance().GetBaselineId();
+    if (!baselineRankId.empty()) {
+        auto baseFileId = GetFileIdByRankId(baselineRankId);
+        traceDatabaseMap.erase(baseFileId);
+        rankId2FileIdMap.erase(baselineRankId);
+        fileIdToRankIdMap.erase(baseFileId);
+        databasePathSet.erase(baseFileId);
+    }
+    return true;
 }
 
 bool DataBaseManager::IsContainDatabasePath(const std::string &databasePath)

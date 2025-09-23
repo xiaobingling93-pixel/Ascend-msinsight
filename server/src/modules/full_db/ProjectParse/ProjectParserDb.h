@@ -49,6 +49,8 @@ protected:
     static void FilterHostMap(std::map<std::string, HostInfo>& hostInfoMap, const std::string& filePath);
 
     std::shared_ptr<FullDb::DbTraceDataBase> GetTraceDbConnect(const std::string& fileId);
+
+    std::string GetBaselineDbFile(const std::string& path);
 };
 } // end of namespace Module
 } // end of namespace Dic

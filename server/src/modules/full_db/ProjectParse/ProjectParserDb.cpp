@@ -294,21 +294,9 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
         return;
     }
     std::string parseFilePath = baselineInfo.parsedFilePath;
-    std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
-    if (frameworkFiles.empty()) {
-        frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(mindsporeDBReg));
-    }
-    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(msprofDBReg));
-    if (frameworkFiles.empty() && msprofFiles.empty()) {
+    std::string file = GetBaselineDbFile(parseFilePath);
+    if (file.empty()) {
         return;
-    }
-    std::string file;
-    if (!frameworkFiles.empty()) {
-        DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
-        file = frameworkFiles[0];
-    } else {
-        DataBaseManager::Instance().SetBaselineFileType(FileType::MS_PROF);
-        file = msprofFiles[0];
     }
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
     auto hostInfoMap = GetReportFiles({ projectInfo });
@@ -332,6 +320,10 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
     if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(baselineInfo.rankId, file)) {
         ServerLog::Error("Failed to create baseline connection pool. ");
+    }
+    if (DataBaseManager::Instance().IsContainDatabasePath(file)) {
+        ServerLog::Info("Baseline has parsed.");
+        return;
     }
     FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ baselineInfo.rankId }, file);
 }
@@ -510,6 +502,26 @@ std::shared_ptr<FullDb::DbTraceDataBase> ProjectParserDb::GetTraceDbConnect(cons
         return nullptr;
     }
     return database;
+}
+std::string ProjectParserDb::GetBaselineDbFile(const std::string &path)
+{
+    std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(path, std::regex(pytorchDBReg));
+    if (frameworkFiles.empty()) {
+        frameworkFiles = FileUtil::FindFilesWithFilter(path, std::regex(mindsporeDBReg));
+    }
+    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(path, std::regex(msprofDBReg));
+    if (frameworkFiles.empty() && msprofFiles.empty()) {
+        return "";
+    }
+    std::string file;
+    if (!frameworkFiles.empty()) {
+        DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
+        file = frameworkFiles[0];
+    } else {
+        DataBaseManager::Instance().SetBaselineFileType(FileType::MS_PROF);
+        file = msprofFiles[0];
+    }
+    return "";
 }
 
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);

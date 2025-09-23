@@ -83,6 +83,10 @@ void ProjectParserDbNPUMonitor::ParserBaseline(const Global::ProjectExplorerInfo
     if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(baselineInfo.rankId, baselineInfo.parsedFilePath)) {
         ServerLog::Error("Failed to create baseline connection pool for NPU monitor. ");
     }
+    if (Timeline::DataBaseManager::Instance().IsContainDatabasePath(baselineInfo.parsedFilePath)) {
+        ServerLog::Warn("Baseline has been parsed.");
+        return;
+    }
     FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ baselineInfo.rankId },
         baselineInfo.parsedFilePath);
 }
