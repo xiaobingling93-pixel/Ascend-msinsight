@@ -87,7 +87,7 @@ export const modulesConfig: ModuleConfig[] = [
         isCompute: true,
     },
     {
-        name: 'Cache',
+        name: 'CacheFrame', // 注意：这里不能取名为 Cache，否则无法获取到该页面对象，导致通信有问题。因为 Cache 是 Window 上的关键字
         requestName: 'compute',
         attributes: {
             src: isDev ? 'http://localhost:3004/cache.html' : './plugins/Compute/cache.html',

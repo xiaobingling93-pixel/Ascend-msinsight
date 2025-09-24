@@ -56,7 +56,7 @@
       "Communication": "通信",
       "Source": "源码",
       "Details": "详情",
-      "Cache": "缓存",
+      "CacheFrame": "缓存",
       "Statistic": "折线图",
       "Leaks":"内存详情",
       "RL": "强化学习",
