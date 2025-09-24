@@ -10,7 +10,7 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-
+using namespace Dic::Server;
 CommunicationRapidSaxHandler::CommunicationRapidSaxHandler(std::shared_ptr<TextClusterDatabase> database,
     const std::string &uniqueKey) : uniqueKey(uniqueKey)
 {

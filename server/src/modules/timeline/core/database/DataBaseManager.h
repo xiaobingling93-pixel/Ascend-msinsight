@@ -9,7 +9,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_set>
-#include "ConnectionPool.h"
+#include "DBConnectionPool.h"
 #include "TextTraceDatabase.h"
 #include "DbTraceDataBase.h"
 #include "TextClusterDatabase.h"
@@ -44,11 +44,11 @@ public:
     DataBaseManager(DataBaseManager &&) = delete;
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
-    bool CreatConnectionPool(const std::string &rankId, const std::string &dbPath);
+    bool CreatTraceConnectionPool(const std::string &rankId, const std::string &dbPath);
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseByRankId(const std::string &rankId);
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseByFileId(const std::string& fileId);
 
-    std::vector<ConnectionPool *> GetAllTraceDatabase();
+    std::vector<DBConnectionPool<VirtualTraceDatabase> *> GetAllTraceDatabase();
     std::vector<std::string> GetAllRankId();
     void Clear();
     void Clear(DatabaseType type);
@@ -130,7 +130,7 @@ private:
     std::map<FileId, RankId> fileIdToRankIdMap;
     std::map<HostId, std::vector<DbPath>> host2DbPath;
     std::unordered_set<std::string> databasePathSet;
-    std::map<FileId, std::shared_ptr<ConnectionPool>> traceDatabaseMap;
+    std::map<FileId, std::shared_ptr<DBConnectionPool<VirtualTraceDatabase>>> traceDatabaseMap;
     std::map<ClusterPath, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
     std::map<FileId, std::shared_ptr<FullDb::LeaksMemoryDatabase>> leaksMemoryDatabaseMap;

@@ -49,7 +49,7 @@ public:
             R"(/test/data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
-        DataBaseManager::Instance().CreatConnectionPool("0", dbPath3);
+        DataBaseManager::Instance().CreatTraceConnectionPool("0", dbPath3);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
         ParserType allocType = parserType.second;
         std::shared_ptr<ProjectParserBase> factory = ParserFactory::GetProjectParser(allocType);

@@ -5,6 +5,7 @@
 #include "DataBaseManager.h"
 #include "QueryTableDataDetailHandler.h"
 namespace Dic::Module::Timeline {
+using namespace Dic::Server;
 bool QueryTableDataDetailHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
 {
     auto& request = dynamic_cast<TableDataDetailRequest&>(*requestPtr);

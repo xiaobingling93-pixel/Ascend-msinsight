@@ -33,7 +33,7 @@ class RLPipelineServiceTest : public ::testing::Test {
         std::shared_ptr<DataEngineMock> dataEngineMock = std::make_unique<DataEngineMock>();
         renderEngine->SetDataEngineInterface(dataEngineMock);
         DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().CreatConnectionPool("uboot14286042774212449010_0 0", "dbPath");
+        DataBaseManager::Instance().CreatTraceConnectionPool("uboot14286042774212449010_0 0", "dbPath");
     }
 };
 

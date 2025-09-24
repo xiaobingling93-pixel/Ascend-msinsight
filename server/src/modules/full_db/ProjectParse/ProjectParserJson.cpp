@@ -26,6 +26,7 @@
 namespace Dic::Module {
 using namespace Timeline;
 using namespace Global;
+using namespace Dic::Server;
 ProjectParserJson::ProjectParserJson()
 {
     fileReader = std::make_unique<FileReader>();
@@ -615,7 +616,7 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
         ServerLog::Warn("Init Baseline, Already parsed.");
         return;
     }
-    if (!DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
+    if (!DataBaseManager::Instance().CreatTraceConnectionPool(rankId, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", rankId, ". path:", dbPath);
     }
 
@@ -802,7 +803,7 @@ std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
 void ProjectParserJson::UpdateRankIdToDevice(std::map<std::string, RankEntry> &rankEntry)
 {
     for (auto &[rankId, entry]: rankEntry) {
-        DataBaseManager::Instance().CreatConnectionPool(rankId, entry.fileId);
+        DataBaseManager::Instance().CreatTraceConnectionPool(rankId, entry.fileId);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(entry.fileId, rankId, entry.deviceId);
     }
 }

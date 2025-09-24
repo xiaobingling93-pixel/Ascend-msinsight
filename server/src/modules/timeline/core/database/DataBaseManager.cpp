@@ -3,6 +3,7 @@
  */
 
 #include "pch.h"
+#include "ServerLog.h"
 #include "TextMemoryDataBase.h"
 #include "DbTraceDataBase.h"
 #include "DbMemoryDataBase.h"
@@ -15,6 +16,7 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
+using namespace Dic::Server;
 using namespace FullDb;
 DataBaseManager &DataBaseManager::Instance()
 {
@@ -22,7 +24,7 @@ DataBaseManager &DataBaseManager::Instance()
     return instance;
 }
 
-bool DataBaseManager::CreatConnectionPool(const std::string &rankId, const std::string &dbPath)
+bool DataBaseManager::CreatTraceConnectionPool(const std::string &rankId, const std::string &dbPath)
 {
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::recursive_mutex> lock(mutex);
@@ -33,28 +35,25 @@ bool DataBaseManager::CreatConnectionPool(const std::string &rankId, const std::
     std::string fileId = dbPath;
     if (traceDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        std::shared_ptr<ConnectionPool> conn;
+        std::shared_ptr<DBConnectionPool<VirtualTraceDatabase>> conn;
         switch (curDataType) {
             case DataType::DB:
-                conn = std::make_shared<ConnectionPool>(dbPath,
+                conn = std::make_shared<DBConnectionPool<VirtualTraceDatabase>>(dbPath,
                     [&dbMutex]() { return new FullDb::DbTraceDataBase(dbMutex); });
                 break;
             case DataType::TEXT:
             default:
-                conn =
-                    std::make_shared<ConnectionPool>(dbPath, [&dbMutex]() { return new TextTraceDatabase(dbMutex); });
+                conn = std::make_shared<DBConnectionPool<VirtualTraceDatabase>>(dbPath,
+                    [&dbMutex]() { return new TextTraceDatabase(dbMutex); }
+                );
                 break;
         }
         conn->SetMaxActiveCount(CPU_CORE_COUNT);
         traceDatabaseMap.emplace(fileId, std::move(conn));
         return true;
     }
-    ServerLog::Error("The file id has a connection. id:",
-                     fileId,
-                     ", old path:",
-                     traceDatabaseMap.at(fileId)->GetDbPath(),
-                     ", new path:",
-                     dbPath);
+    ServerLog::Error("The file id has a connection. id:", fileId, ", old path:",
+        traceDatabaseMap.at(fileId)->GetDbPath(), ", new path:", dbPath);
     return false;
 }
 
@@ -220,10 +219,10 @@ bool DataBaseManager::HasRankId(DatabaseType type, const std::string &rankId)
     return result;
 }
 
-std::vector<ConnectionPool *> DataBaseManager::GetAllTraceDatabase()
+std::vector<DBConnectionPool<VirtualTraceDatabase> *> DataBaseManager::GetAllTraceDatabase()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    std::vector<ConnectionPool *> traceDatabases;
+    std::vector<DBConnectionPool<VirtualTraceDatabase> *> traceDatabases;
     for (auto &traceDatabase : traceDatabaseMap) {
         traceDatabases.emplace_back(traceDatabase.second.get());
     }

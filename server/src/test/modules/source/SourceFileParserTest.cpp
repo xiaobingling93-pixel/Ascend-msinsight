@@ -24,7 +24,7 @@ public:
         dataPath = currPath + R"(/src/test/test_data/data.bin)";
         dbPath = currPath + R"(/src/test/test_data/compute_mindstudio_insight_data.db)";
         DataBaseManager::Instance().SetDataType(DataType::TEXT);
-        DataBaseManager::Instance().CreatConnectionPool(dataPath, dbPath);
+        DataBaseManager::Instance().CreatTraceConnectionPool(dataPath, dbPath);
     }
 
     static void TearDownTestCase()

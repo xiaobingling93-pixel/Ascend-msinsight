@@ -5,6 +5,7 @@
 #include "DataBaseManager.h"
 #include "OverlapAnsRepo.h"
 namespace Dic::Module::Timeline {
+using namespace Dic::Server;
 void OverlapAnsRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
     std::vector<SliceDomain> &sliceVec)
 {

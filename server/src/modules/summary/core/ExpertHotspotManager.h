@@ -7,7 +7,7 @@
 #include <string>
 #include "ClusterDef.h"
 #include "VirtualClusterDatabase.h"
-#include "ConnectionPool.h"
+#include "DBConnectionPool.h"
 #include "DataBaseManager.h"
 
 namespace Dic {

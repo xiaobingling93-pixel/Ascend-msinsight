@@ -38,8 +38,8 @@ public:
         std::string dbPath0 = currPath + refPath0 + "mindstudio_insight_data.db";
         std::string dbPath1 = currPath + refPath1 + "mindstudio_insight_data.db";
         DataBaseManager::Instance().SetDataType(DataType::TEXT);
-        DataBaseManager::Instance().CreatConnectionPool("0", dbPath0);
-        DataBaseManager::Instance().CreatConnectionPool("1", dbPath1);
+        DataBaseManager::Instance().CreatTraceConnectionPool("0", dbPath0);
+        DataBaseManager::Instance().CreatTraceConnectionPool("1", dbPath1);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath0, "0", "0");
         DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath1, "1", "1");
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",

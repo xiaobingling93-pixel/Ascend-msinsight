@@ -5,6 +5,7 @@
 #include "TrackInfoManager.h"
 #include "DataBaseManager.h"
 namespace Dic::Module::Timeline {
+using namespace Dic::Server;
 void OSRTApiRepo::QuerySimpleSliceWithOutNameByTrackId(const Dic::Module::Timeline::SliceQuery &sliceQuery,
                                                        std::vector<SliceDomain> &sliceVec)
 {
