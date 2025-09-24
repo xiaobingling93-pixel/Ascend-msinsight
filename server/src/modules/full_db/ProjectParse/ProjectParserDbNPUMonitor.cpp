@@ -80,7 +80,7 @@ void ProjectParserDbNPUMonitor::ParserBaseline(const Global::ProjectExplorerInfo
     baselineInfo.host = hostInfoMap.begin()->first;
     baselineInfo.fileId = baselineInfo.parsedFilePath;
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(baselineInfo.rankId, baselineInfo.parsedFilePath)) {
+    if (!Timeline::DataBaseManager::Instance().CreateTraceConnectionPool(baselineInfo.rankId, baselineInfo.parsedFilePath)) {
         ServerLog::Error("Failed to create baseline connection pool for NPU monitor. ");
     }
     if (Timeline::DataBaseManager::Instance().IsContainDatabasePath(baselineInfo.parsedFilePath)) {

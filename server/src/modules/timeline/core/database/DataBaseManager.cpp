@@ -24,7 +24,7 @@ DataBaseManager &DataBaseManager::Instance()
     return instance;
 }
 
-bool DataBaseManager::CreatTraceConnectionPool(const std::string &rankId, const std::string &dbPath)
+bool DataBaseManager::CreateTraceConnectionPool(const std::string &rankId, const std::string &dbPath)
 {
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::recursive_mutex> lock(mutex);

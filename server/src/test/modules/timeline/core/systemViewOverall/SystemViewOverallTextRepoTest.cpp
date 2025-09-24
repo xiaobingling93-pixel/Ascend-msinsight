@@ -34,8 +34,8 @@ public:
         std::string refPath0Db = currPath + refPath0 + "mindstudio_insight_data.db";
         std::string refPathWithoutPMUDb = currPath + refPathWithoutPMU + "mindstudio_insight_data.db";
         DataBaseManager::Instance().SetDataType(DataType::TEXT);
-        DataBaseManager::Instance().CreatTraceConnectionPool("0", refPath0Db);
-        DataBaseManager::Instance().CreatTraceConnectionPool("1", refPathWithoutPMUDb);
+        DataBaseManager::Instance().CreateTraceConnectionPool("0", refPath0Db);
+        DataBaseManager::Instance().CreateTraceConnectionPool("1", refPathWithoutPMUDb);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(refPath0Db, "0", "0");
         DataBaseManager::Instance().UpdateRankIdToDeviceId(refPathWithoutPMUDb, "1", "1");
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",

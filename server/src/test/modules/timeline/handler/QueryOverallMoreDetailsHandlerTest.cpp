@@ -13,7 +13,7 @@ TEST_F(HandlerTest, QueryOverallMoreDetailsHandlerTestNormal)
     auto requestPtr =
         std::make_unique<Dic::Protocol::SystemViewOverallMoreDetailsRequest>();
     requestPtr->params.rankId = "0";
-    DataBaseManager::Instance().CreatTraceConnectionPool("0", "test");
+    DataBaseManager::Instance().CreateTraceConnectionPool("0", "test");
     handler.HandleRequest(std::move(requestPtr));
     DataBaseManager::Instance().Clear();
 }

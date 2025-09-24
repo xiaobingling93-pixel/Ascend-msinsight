@@ -319,7 +319,7 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
     baselineInfo.host = hostInfoMap.begin()->first;
     baselineInfo.fileId = file;
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-    if (!Timeline::DataBaseManager::Instance().CreatTraceConnectionPool(baselineInfo.rankId, file)) {
+    if (!Timeline::DataBaseManager::Instance().CreateTraceConnectionPool(baselineInfo.rankId, file)) {
         ServerLog::Error("Failed to create baseline connection pool. ");
     }
     if (DataBaseManager::Instance().IsContainDatabasePath(file)) {
@@ -488,7 +488,7 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
 }
 std::shared_ptr<FullDb::DbTraceDataBase> ProjectParserDb::GetTraceDbConnect(const std::string &fileId)
 {
-    if (!Timeline::DataBaseManager::Instance().CreatTraceConnectionPool(fileId, fileId)) {
+    if (!Timeline::DataBaseManager::Instance().CreateTraceConnectionPool(fileId, fileId)) {
         ServerLog::Error("[ProjectParser] Failed to create connection pool. ", fileId);
     }
     auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);

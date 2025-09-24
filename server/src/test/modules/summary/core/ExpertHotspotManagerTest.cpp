@@ -71,7 +71,7 @@ protected:
     static void InitProfiling(const std::string &filePath)
     {
         DataBaseManager::Instance().SetDataType(DataType::TEXT);
-        DataBaseManager::Instance().CreatTraceConnectionPool("100", filePath + "mindstudio_insight_data.db");
+        DataBaseManager::Instance().CreateTraceConnectionPool("100", filePath + "mindstudio_insight_data.db");
         TraceFileParser::Instance().Parse({filePath + "trace_view.json"}, "100", "", "");
         WaitParseEnd({"100"});
     }

@@ -24,7 +24,7 @@ public:
         g_testDbPath = currPath + R"(/src/test/test_data/test_overlap_database.db)";
         g_testDataBase.OpenDb(g_testDbPath, false);
         DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().CreatTraceConnectionPool("0", g_testDbPath);
+        DataBaseManager::Instance().CreateTraceConnectionPool("0", g_testDbPath);
     }
 
     static void TearDownTestSuite()

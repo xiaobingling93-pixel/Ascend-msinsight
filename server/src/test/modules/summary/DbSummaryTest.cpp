@@ -25,7 +25,7 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
-        DataBaseManager::Instance().CreatTraceConnectionPool("0", currPath + dbPath3 + "msprof_0.db");
+        DataBaseManager::Instance().CreateTraceConnectionPool("0", currPath + dbPath3 + "msprof_0.db");
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, VirtualTraceDatabase>(
             DataBaseManager::Instance().GetTraceDatabaseByRankId("0"));
         database->UpdateStartTime("0");

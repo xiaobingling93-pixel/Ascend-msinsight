@@ -87,7 +87,7 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
         rankId = files.front().first;
         fileId = files.front().second;
         dataPathToDbMap[selectedFolder].push_back(fileId);
-        FullDb::DataBaseManager::Instance().CreatTraceConnectionPool(rankId, fileId);
+        FullDb::DataBaseManager::Instance().CreateTraceConnectionPool(rankId, fileId);
     } else {
         fileId = selectedFolder;
         ServerLog::Error("Simulation trace files is empty.");
@@ -169,7 +169,7 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
         return;
     }
     // 创建数据库连接池
-    if (!Timeline::DataBaseManager::Instance().CreatTraceConnectionPool(rankId, fileId)) {
+    if (!Timeline::DataBaseManager::Instance().CreateTraceConnectionPool(rankId, fileId)) {
         ServerLog::Warn("Fail to create connection pool, fileId:", fileId, ", path:", rankId, '.');
     }
     // 只需要对比timeline和details页面内容，因此不需要对source相关的内容做处理

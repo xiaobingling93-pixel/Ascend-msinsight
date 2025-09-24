@@ -44,7 +44,7 @@ public:
     DataBaseManager(DataBaseManager &&) = delete;
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
-    bool CreatTraceConnectionPool(const std::string &rankId, const std::string &dbPath);
+    bool CreateTraceConnectionPool(const std::string &rankId, const std::string &dbPath);
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseByRankId(const std::string &rankId);
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseByFileId(const std::string& fileId);
 

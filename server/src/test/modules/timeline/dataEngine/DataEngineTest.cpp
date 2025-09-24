@@ -30,7 +30,7 @@ public:
 #endif
         g_testDataBase.OpenDb(g_testDbPath, true);
         DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().CreatConnectionPool("0", g_testDbPath);
+        DataBaseManager::Instance().CreateTraceConnectionPool("0", g_testDbPath);
     }
 
     static void TearDownTestSuite()

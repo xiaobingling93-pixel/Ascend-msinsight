@@ -32,7 +32,7 @@ public:
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
-        DataBaseManager::Instance().CreatTraceConnectionPool("0", dbPath);
+        DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath);
     }
     static void TearDownTestSuite()
     {
