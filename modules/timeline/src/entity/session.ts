@@ -107,6 +107,8 @@ export class Session {
     isParserLoading: boolean = false;
     // 是否是算子仿真图
     isSimulation: boolean = false;
+    // 记录所有数据的loading状态的对象 key为卡的dbPath
+    asyncDataLoadingList: { [key: string]: any } = {};
     // 是否是服务化场景
     isIE: boolean = false;
     // 是否隐藏了算子调优flag事件

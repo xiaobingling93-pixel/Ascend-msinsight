@@ -315,8 +315,19 @@ export const savePageSettingRemoteHandler: NotificationHandler = async (): Promi
 };
 
 export const parseUnitCompletedHandler: NotificationHandler = async (data): Promise<void> => {
+    const session = store.sessionStore.activeSession as Session;
+    const dbId = data.dbId as string;
+    if (dbId && !session.asyncDataLoadingList[dbId]) {
+        session.asyncDataLoadingList[dbId] = {
+            WAIT_TIME: false,
+            OVERLAP_ANALYSIS: false,
+            CONNECTION_CATEGORY: false,
+        };
+    }
+
     switch (data.unitName) {
         case 'WAIT_TIME':
+            session.asyncDataLoadingList[dbId].WAIT_TIME = true;
             // 发送更新等待时间消息，更新所有表格
             connector.send({
                 event: 'updateAllTable',
@@ -325,6 +336,7 @@ export const parseUnitCompletedHandler: NotificationHandler = async (data): Prom
             });
             break;
         case 'OVERLAP_ANALYSIS':
+            session.asyncDataLoadingList[dbId].OVERLAP_ANALYSIS = true;
             // 发送更新泳道loading消息
             connector.send({
                 event: 'updateAnalysisLoading',
@@ -348,6 +360,7 @@ export const parseUnitCompletedHandler: NotificationHandler = async (data): Prom
             break;
         default:
             // 发送更新连线消息
+            session.asyncDataLoadingList[dbId].CONNECTION_CATEGORY = true;
             connector.send({
                 event: 'updateCategory',
                 body: { data: false },

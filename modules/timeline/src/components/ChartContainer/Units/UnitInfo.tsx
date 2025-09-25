@@ -505,8 +505,17 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     const selectUnit = useSelectUnit(session);
     const [expandable, setExpandable] = React.useState(hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction))));
     const [isLoading, setLoading] = React.useState(false);
-    const isOverlapAnalysisLoading = unit.isOverlapAnalysisLoading;
-    if (unit.metadata.processName === 'Overlap Analysis' && unit.metadata.threadName === '' && isOverlapAnalysisLoading) {
+    const dbPath: string = unit.metadata.dbPath as string;
+
+    if (
+        // 如果是 Overlap Analysis 泳道
+        unit.metadata.processName === 'Overlap Analysis' &&
+        // 如果有卡地址
+        dbPath &&
+        // 如果卡的地址状态有被赋值
+        session.asyncDataLoadingList[dbPath] &&
+        // 如果 Overlap Analysis 正在加载中
+        !session.asyncDataLoadingList[dbPath].OVERLAP_ANALYSIS) {
         setExpandable(false);
         setLoading(true);
         connector.addListener('updateAnalysisLoading', (e: any) => {
@@ -515,7 +524,6 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
             }
             setExpandable(true);
             setLoading(false);
-            unit.isOverlapAnalysisLoading = false;
         });
     }
 
