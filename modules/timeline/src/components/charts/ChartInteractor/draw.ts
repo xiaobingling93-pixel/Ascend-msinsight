@@ -559,6 +559,9 @@ function batchDrawLinkLines(ctx: CanvasRenderingContext2D, dataList: LinkLineDat
     const arrowOptions: Array<Omit<DrawArrowOption, 'color'>> = dataList.map(({ targetX, targetY, targetPos, offset }) => {
         const len = targetPos.length;
         let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
+        if (len === 0) {
+            return undefined;
+        }
         fromX = fromX / len;
         fromY = fromY / len;
         const yLen = Math.abs(fromY - targetY);
