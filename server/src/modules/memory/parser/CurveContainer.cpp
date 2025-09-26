@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
+#include "NumberUtil.h"
 #include "CurveContainer.h"
 namespace Dic::Module::Memory {
 CurveView CurveContainer::ComputeCurve(double xMin, double xMax, const std::string& input)
@@ -10,7 +11,8 @@ CurveView CurveContainer::ComputeCurve(double xMin, double xMax, const std::stri
     if (key != input || legends.empty()) {
         return res;
     }
-    if (!legends.empty() && flatData.size() >= legends.size() && xMin == xMax && xMin == 0) {
+    if (!legends.empty() && flatData.size() >= legends.size() && NumberUtil::IsDoubleEqual(xMin, xMax) &&
+        NumberUtil::IsDoubleEqual(xMin, 0)) {
         xMin = flatData[0];
         xMax = flatData[flatData.size() - legends.size()];
     }
@@ -85,8 +87,9 @@ std::vector<int> CurveContainer::ComputeDataIndex(const std::vector<size_t>& ind
         for (size_t k = start; k < end; k++) {
             size_t i = indices[k];
             double val = flatData[i * legends.size() + col];
-            if (std::isnan(val))
+            if (std::isnan(val)) {
                 continue;
+            }
             if (val < minVal) {
                 minVal = val;
                 minIdx = static_cast<int>(i);

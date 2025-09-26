@@ -496,6 +496,11 @@ public:
         }
     }
 
+    static inline bool IsDoubleEqual(double a, double b, double epsilon = 1e-9)
+    {
+        return std::fabs(a - b) < epsilon;
+    }
+
     static inline bool IsEqual(float a, float b, float epsilon = 1e-9)
     {
         return std::fabs(a - b) < epsilon; // 如何两个浮点数只差小于epsilon, 则认为两数相等
