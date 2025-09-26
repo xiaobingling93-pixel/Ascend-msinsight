@@ -112,7 +112,7 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
         const dataKeys = Object.keys(data);
         const sessionKeys = Object.keys(session);
         dataKeys.forEach((key: any) => {
-            if (sessionKeys.includes(key)) {
+            if (sessionKeys.includes(key) || key === 'clusterList') { // 这里需要单独判断 clusterList，因为该字段在session中是访问器属性，Object.keys拿不到
                 (session as any)[key] = data[key];
             }
         });

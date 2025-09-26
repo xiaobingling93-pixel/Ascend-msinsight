@@ -31,6 +31,8 @@ export function sendStatus(): void {
         body: {
             parseCompleted: session.parseCompleted,
             clusterPageInfo: session.clusterPageInfo,
+            clusterList: session.clusterPageInfo.clusterList,
+            selectedClusterPath: session.clusterPageInfo.selectedClusterPath,
             isFullDb: session.isFullDb,
             unitcount: session.unitcount,
             coreList: session.coreList,
