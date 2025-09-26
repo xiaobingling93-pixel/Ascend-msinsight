@@ -422,6 +422,16 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
                 startAbsPointY.current = { y: e.clientY };
             }
         }
+        // 使得点击可以选中第一个节点而不受session中值为空的影响
+        const firstSelected: Set<string> = new Set();
+        for (const [key, value] of unitsRefs.current) {
+            if (!value) continue;
+            const rect = value.getBoundingClientRect();
+            if (rect.top < e.clientY && e.clientY < rect.bottom) {
+                firstSelected.add(key);
+            }
+            setSelectedUnitKeys(firstSelected);
+        }
     };
 
     const handleMouseLeave = (): void => {
