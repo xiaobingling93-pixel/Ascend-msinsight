@@ -21,7 +21,7 @@ void TaskTable::DeviceIdHandle(TaskPO &taskPO, const std::unique_ptr<SqliteResul
 }
 void TaskTable::ConnectionIdHandle(TaskPO &taskPO, const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    taskPO.connectionId = resultSet->GetUint64(TaskColumn::CONNECTION_ID);
+    taskPO.connectionId = resultSet->GetInt64(TaskColumn::CONNECTION_ID);
 }
 void TaskTable::GlobalTaskIdHandle(TaskPO &taskPO, const std::unique_ptr<SqliteResultSet> &resultSet)
 {

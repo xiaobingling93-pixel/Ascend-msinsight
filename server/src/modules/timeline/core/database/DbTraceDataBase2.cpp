@@ -215,7 +215,9 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
 {
     auto stmt = CreatPreparedStatement();
     auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
-    if (!connectionId.has_value()) {
+    // connectionId为-1和UINT32_MAX都表示无效值，无连线，因此不能继续搜索，否则会将所有无连线的算子都连起来
+    if (!connectionId.has_value() ||
+        connectionId.value() == "-1" || connectionId.value() == std::to_string(UINT32_MAX)) {
         return false;
     }
     std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(requestParams.rankId);
@@ -230,6 +232,9 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
     if (flowLocations.size() < 2) { // 小于2表示没有连线
         return false;
     }
+    // 同connectionId的算子按时间排序后相邻的连线
+    std::sort(flowLocations.begin(), flowLocations.end(),
+        [] (const FlowLocation &a, const FlowLocation &b) { return a.timestamp < b.timestamp;});
     for (auto &item: flowLocations) {
         if (item.rankId == path) {
             item.rankId = requestParams.rankId;

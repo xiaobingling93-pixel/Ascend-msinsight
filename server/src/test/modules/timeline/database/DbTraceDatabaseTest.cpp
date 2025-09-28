@@ -52,6 +52,7 @@ protected:
         "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
     std::string overlap = "CREATE TABLE OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
         "startNs integer, endNs integer, type integer);";
+    std::string npuInfoSql = "CREATE TABLE NPU_INFO(id INTEGER, name TEXT);";
     std::string accPmuSql = "CREATE TABLE ACC_PMU (accId INTEGER,readBwLevel INTEGER,writeBwLevel INTEGER,readOstLevel "
         "INTEGER,writeOstLevel INTEGER,timestampNs NUMERIC,deviceId INTEGER);";
     std::string socSql = "CREATE TABLE SOC_BANDWIDTH_LEVEL (l2BufferBwLevel INTEGER,mataBwLevel INTEGER,timestampNs "
@@ -1037,6 +1038,59 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenRankIdAndDeviceIdNotSame)
     EXPECT_EQ(result, true);
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "999");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "999");
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToCANNToAscendHardware)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, npuInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string cannApiData =
+        "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
+        "name, depth) VALUES (50, 70, 10000, 87471303975183, 19, 7052, 0);";
+    std::string pytorchData =
+        "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
+        "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
+        "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);";
+    const std::string taskData =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
+        "(80, 100, 1, 19, 183022, 20366, 7166, 4294967295, 0, 39, 4294967295, 0);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "19";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 50); // 50
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 80); // 80
+    EXPECT_EQ(responseBody.unitAllFlows[1].flows[0].from.timestamp, 20); // 20
+    EXPECT_EQ(responseBody.unitAllFlows[1].flows[0].to.timestamp, 50); // 50
 }
 
 TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenPython)
