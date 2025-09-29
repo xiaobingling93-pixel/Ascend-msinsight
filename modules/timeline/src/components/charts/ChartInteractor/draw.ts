@@ -33,7 +33,7 @@ interface DrawArrowOption {
     length: number;
     angle: number;
     color: string;
-};
+}
 
 function drawArrowPath(ctx: CanvasRenderingContext2D, option: Omit<DrawArrowOption, 'color'>): void {
     const { toX, toY, fromX, fromY, length, angle } = option;
@@ -334,8 +334,6 @@ const heightMap = new Map();
 const threadIsCol: Map<string, boolean> = new Map();
 // 是否是进程缩略图
 export const processIsCol: Map<string, boolean> = new Map();
-// 是否是卡折叠
-export const cardIsCol: Map<string, boolean> = new Map();
 // 泳道是否已隐藏
 const unitIsHidden: Map<string, boolean> = new Map();
 
@@ -374,6 +372,12 @@ const recordUnitHeight = (unit: InsightUnit, height: number): void => {
     if (metadata.processId !== undefined) {
         heightMap.set(`${metadata.cardId}-${metadata.processId}`, height);
     }
+
+    // 此处记录 CANN 泳道所在高度，为了适配 MSTX 泳道导致 HostToDevice 连线不准的问题
+    if (metadata.processName === 'CANN') {
+        heightMap.set(`${metadata.cardId}-${metadata.processId}-CANN`, height);
+    }
+
     if (metadata.threadId !== undefined && metadata.processId !== undefined) {
         if (metadata.threadIdList) {
             for (const threadId of metadata.threadIdList) {
@@ -489,16 +493,20 @@ export const drawMEventMask = (props: DrawCanvasArgs): void => {
 };
 
 export const UNDRAW_HEIGHT = 45 + 2; // 45 指时间轴+旗帜轴的高度之和，2 指 useDraggableContainerEx css 中的 border-top: ${(p): string => p.theme.dividerColor} 2px solid;
-export const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
+export const getHeight = (session: Session, data: DataBlock, cardId: string, category: string): number | undefined => {
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
-    const processHeight = heightMap.get(`${cardId}-${data.pid}`);
+    let processHeight = heightMap.get(`${cardId}-${data.pid}`);
     // 卡折叠的情况
     if (unitHeight === undefined && processHeight === undefined) {
         return undefined;
     }
     // 进程折叠的情况
     if (unitHeight === undefined && processHeight !== undefined) {
+        // 此处单独适配 MSTX 泳道导致 HostToDevice 连线不准的问题
+        if (category === 'HostToDevice' && heightMap.has(`${cardId}-${data.pid}-CANN`)) {
+            processHeight = heightMap.get(`${cardId}-${data.pid}-CANN`);
+        }
         height = UNDRAW_HEIGHT + processHeight - session.scrollTop + (0.5 * UnitHeight.UPPER);
         if (!session.isFullDb) { // 非全量 db 情况，进程折叠时隐藏
             processIsCol.set(`${cardId}-${data.pid}`, true);
