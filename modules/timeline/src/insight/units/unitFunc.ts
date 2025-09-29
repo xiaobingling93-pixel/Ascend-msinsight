@@ -25,21 +25,13 @@ export function recursiveExpandUnit<T extends keyof MetaDataEnumType>(metaDataLi
     }
     for (const metaData of metaDataList) {
         metaData.metadata.dbPath = parentUnit.metadata.dbPath as string;
-        if (parentUnit.children !== undefined) {
-            const existingUnit = parentUnit.children.find(unit => checkMetaData(unit.metadata, metaData));
-            if (!existingUnit) {
-                const newUnit = newLane(metaData, parentUnit.metadata);
-                if (newUnit !== undefined) {
-                    parentUnit.children?.push(newUnit);
-                    recursiveExpandUnit(metaData.children ?? [], newUnit, depth + 1);
-                }
-            } else {
-                recursiveExpandUnit(metaData.children ?? [], existingUnit, depth + 1);
-            }
+        const existingUnit = parentUnit?.children?.find(unit => checkMetaData(unit.metadata, metaData));
+        if (existingUnit) {
+            recursiveExpandUnit(metaData.children ?? [], existingUnit, depth + 1);
         } else {
             const newUnit = newLane(metaData, parentUnit.metadata);
             if (newUnit !== undefined) {
-                parentUnit.children = [];
+                parentUnit.children = parentUnit.children ?? [];
                 parentUnit.children.push(newUnit);
                 recursiveExpandUnit(metaData.children ?? [], newUnit, depth + 1);
             }
@@ -47,8 +39,12 @@ export function recursiveExpandUnit<T extends keyof MetaDataEnumType>(metaDataLi
     }
 }
 
-export function updateDataSourceAndParentMetaDataMap<T extends keyof MetaDataEnumType>(insightMetaData: InsightMetaData<T>, dataSource: DataSource): void {
+export function clearParentMap(): void {
     parentMetaDataTree.clear();
+}
+
+export function updateDataSourceAndParentMetaDataMap<T extends keyof MetaDataEnumType>(insightMetaData: InsightMetaData<T>, dataSource: DataSource, isClear = true): void {
+    isClear && parentMetaDataTree.clear();
     insightMetaData.children?.forEach(processInfo => {
         const processMetadata = (processInfo.metadata as ProcessMetaData);
         processMetadata.dataSource = dataSource;

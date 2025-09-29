@@ -74,6 +74,7 @@ export const TimeMakerAxis = observer(({ session, laneInfoWidth, showRecommendat
                 param.dbPaths.push(unit.metadata.dbPath);
             }
         });
+        session.modeOfParse = 'global_parse';
         parseCards(param).then(() => {
             session.isParserLoading = true;
         }).catch(err => {

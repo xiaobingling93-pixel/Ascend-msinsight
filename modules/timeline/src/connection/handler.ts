@@ -4,7 +4,7 @@
 import { store } from '../store';
 import type { CardMetaData, ThreadMetaData, ThreadTrace, ThreadTraceRequest } from '../entity/data';
 import { runInAction } from 'mobx';
-import { updateDataSourceAndParentMetaDataMap, recursiveExpandUnit } from '../insight/units/unitFunc';
+import { updateDataSourceAndParentMetaDataMap, recursiveExpandUnit, clearParentMap } from '../insight/units/unitFunc';
 import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight';
 import type { InsightUnit } from '../entity/insight';
 import { CardUnit, ROOT_UNIT, ThreadUnit } from '../insight/units/AscendUnit';
@@ -23,6 +23,7 @@ import React from 'react';
 import { RankInfo } from '../api/interface';
 import { queryOneKernel } from '../components/detailViews/Common';
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
+const MAX_PARSE_SIZE = 32;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
         console.warn(`cannot get ${key.toString()} of `, data);
@@ -53,6 +54,29 @@ function updateDbPathAndLabelForCardUnit(unit: InsightUnit, unitData: any): void
     (unit.metadata as CardMetaData).dbPath = unitData.dbPath;
     unitData.unit.metadata.dbPath = unitData.dbPath;
 }
+
+const setObserveAction = (session: Session): void => {
+    let start = 0;
+    function next(): void {
+        const end = Math.min(start + MAX_PARSE_SIZE, session.parseQueue.length);
+        for (let i = start; i < end; i++) {
+            session.parseQueue[i]?.();
+        }
+        start = end;
+        if (start < session.parseQueue.length) {
+            setTimeout(next, 0);
+        } else {
+            completeAction(session);
+        }
+    }
+    next();
+};
+
+const completeAction = (session: Session): void => {
+    session.parseQueue = [];
+    clearParentMap();
+};
+
 export const parseSuccessHandler: NotificationHandler = (data): void => {
     try {
         const unitData = data as any;
@@ -75,7 +99,10 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         runInAction(() => {
             session.isFullDb = unitData.isFullDb;
             session.startTime = unitData.startTime;
-            // parse suceess之后关闭进度条
+
+            const isGlobal = session.modeOfParse === 'global_parse';
+
+            // parse success之后关闭进度条
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
@@ -90,8 +117,8 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                         }
                     }
                     session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: unit.alignStartTimestamp };
-                    updateDataSourceAndParentMetaDataMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
-                    recursiveExpandUnit(unitData.unit.children ?? [], unit);
+                    updateDataSourceAndParentMetaDataMap(unitData.unit, (unit.metadata as CardMetaData).dataSource, !isGlobal);
+                    isGlobal ? session.parseQueue.push(() => recursiveExpandUnit(unitData.unit.children ?? [], unit, 0)) : recursiveExpandUnit(unitData.unit.children ?? [], unit, 0);
                 }
             });
             session.startRecordTime = 0;
@@ -116,6 +143,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             // 所有卡解析完成
             const parseCompleted = !(session.units.find(item => item.phase === 'analyzing'));
             if (parseCompleted) {
+                isGlobal && setObserveAction(session);
                 connector.send({
                     event: 'updateSession',
                     body: {
@@ -215,14 +243,8 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             if (oldUnit !== undefined) { return; }
             const curDataSource = cloneDeep(dataSource);
             curDataSource.dataPath = item.dataPathList;
-            const cardUnit = new CardUnit({
-                dataSource: curDataSource,
-                cardId: item.rankId,
-                dbPath: item.dbPath,
-                cluster: item.cluster,
-                cardName: item.cardName,
-                cardPath: item.cardPath,
-            });
+            const { rankId, dbPath, cluster, cardName, cardPath } = item;
+            const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: rankId, dbPath, cluster, cardName, cardPath });
             if (item.result as boolean) {
                 cardUnit.isParseLoading = !(result.isPending as boolean);
                 cardUnit.shouldParse = item.cardName !== 'Host';
@@ -231,9 +253,6 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
                 cardUnit.showProgress = true;
             } else {
                 cardUnit.phase = 'error';
-            }
-            if (session.units.length < DEFAULT_EXPAND_UNIT_NUMBER) {
-                cardUnit.isExpanded = true;
             }
             cardUnits.push(cardUnit);
             session.units = session.units.concat([cardUnit]);
@@ -247,6 +266,11 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
         }
     });
     session.sortUnits();
+    if (session?.units?.[0]) {
+        session.units[0].isExpanded = true;
+        const rootUnit = getRootUnit(session, session.units[0].metadata.cardId as string, dataSource);
+        rootUnit && (rootUnit.isExpanded = true);
+    }
     session.updateUnitsForMultiDevice();
 };
 

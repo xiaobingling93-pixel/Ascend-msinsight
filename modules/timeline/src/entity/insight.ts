@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, observable, runInAction } from 'mobx';
 import type React from 'react';
 import type { CommonStateProto } from '../components/details/base/Tabs';
 import type { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartConfig, MapFunc, RenderTooltip } from './chart';
@@ -334,7 +334,8 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         showProgress: boolean = false; // 解析进度：是否显示进度条
         havePythonFunction: boolean = false; // 是否采集了调用栈信息
         constructor(metadata: T) {
-            makeAutoObservable(this, { searchConfig: false });
+            const excludeAttrs = ['searchConfig', 'parent', 'renderInfo', 'height', 'type', 'configBar'];
+            makeAutoObservable(this, { _children: observable.shallow, ...Object.fromEntries(excludeAttrs.map(k => [k, false])) });
             this.metadata = metadata;
             this.children = params.spreadUnits ? [] : undefined;
             const spreadUnits = params.spreadUnits;
