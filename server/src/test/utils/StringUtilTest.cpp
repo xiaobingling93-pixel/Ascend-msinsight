@@ -197,3 +197,21 @@ TEST(StringUtil, FormatStringUsingPlaceHolder)
     expectFormatResult = "Pattern format: \"hello\", \"world\"";
     EXPECT_EQ(res, expectFormatResult);
 }
+
+TEST(StringUtil, CheckSqlVaildWithDoubleUnderline)
+{
+    const std::string sql = "--thistaskid";
+    bool result = StringUtil::CheckSqlValid(sql);
+    EXPECT_FALSE(result);
+    const std::string sqlMid = "this--taskid";
+    EXPECT_FALSE(StringUtil::CheckSqlValid(sqlMid));
+    const std::string sqlTail = "thistaskid--";
+    EXPECT_FALSE(StringUtil::CheckSqlValid(sqlTail));
+}
+
+TEST(StringUtil, CheckSqlVaildNormal)
+{
+    const std::string sql = "19247823";
+    bool result = StringUtil::CheckSqlValid(sql);
+    EXPECT_TRUE(result);
+}
