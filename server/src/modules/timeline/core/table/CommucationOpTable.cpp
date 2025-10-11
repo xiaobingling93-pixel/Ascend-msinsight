@@ -21,7 +21,7 @@ void CommucationOpTable::EndTimeHandle(CommucationTaskOpPO &commucationTaskOpPO,
 void CommucationOpTable::ConnectionIdHandle(CommucationTaskOpPO &commucationTaskOpPO,
     const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    commucationTaskOpPO.connectionId = resultSet->GetUint64(CommucationTaskOpColumn::CONNECTION_ID);
+    commucationTaskOpPO.connectionId = resultSet->GetInt64(CommucationTaskOpColumn::CONNECTION_ID);
 }
 void CommucationOpTable::GroupNameIdHandle(CommucationTaskOpPO &commucationTaskOpPO,
     const std::unique_ptr<SqliteResultSet> &resultSet)

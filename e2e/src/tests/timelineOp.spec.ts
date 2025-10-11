@@ -53,6 +53,8 @@ test.describe('Timeline(Operator)', () => {
         await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
         await expect(timelineFrame.getByText('Self Time')).not.toBeVisible();
         await expect(timelineFrame.getByText('Average Wall Duration')).toBeVisible();
+        await expect(timelineFrame.getByText('Max Wall Duration')).toBeVisible();
+        await expect(timelineFrame.getByText('Min Wall Duration')).toBeVisible();
         const rows = await timelineFrame.locator('.ant-table-row').count();
         expect(rows).toBeGreaterThan(0);
     });
@@ -73,9 +75,11 @@ test.describe('Timeline(Operator)', () => {
         await page.mouse.move(startX + 200, startY + 50);
         await page.mouse.up();
         const tfoot = await timelineFrame.locator('tfoot');
-        expect(await tfoot.locator('tr > td').nth(3).innerText()).toBe('387');
+        expect(await tfoot.locator('tr > td').nth(5).innerText()).toBe('387');
         expect(await tfoot.locator('tr > td').nth(1).innerText()).toBe('0.008114 ms');
         expect(await tfoot.locator('tr > td').nth(2).innerText()).toBe('0.000021 ms');
+        expect(await tfoot.locator('tr > td').nth(3).innerText()).toBe('0.002986 ms');
+        expect(await tfoot.locator('tr > td').nth(4).innerText()).toBe('0.000000 ms');
     });
 
     // 算子调优-图形化窗格-点击算子

@@ -60,6 +60,7 @@ namespace Dic::Protocol {
         std::string orderBy;
         std::string order;
         std::vector<std::pair<std::string, std::string>> filters;
+        std::vector<std::pair<std::string, std::vector<std::string>>> rangeFilters;
         bool CommonCheck(std::string &errorMsg)
         {
             // 查询值 小于-1,是异常值不需要再走查询，减少耗时

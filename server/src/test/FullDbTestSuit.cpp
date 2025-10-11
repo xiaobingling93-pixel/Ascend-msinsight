@@ -10,6 +10,9 @@
 #include "ProjectParserFactory.h"
 #include "WsSessionManager.h"
 #include "WsSessionImpl.h"
+#include "RepositoryFactory.h"
+#include "DataEngine.h"
+#include "RenderEngine.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
@@ -26,6 +29,11 @@ public:
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
         std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(nullptr);
         WsSessionManager::Instance().AddSession(std::move(session));
+        auto respotoryFactory = RepositoryFactory::Instance();
+        auto dataEngine = DataEngine::Instance();
+        dataEngine->SetRepositoryFactory(respotoryFactory);
+        auto renderEngine = RenderEngine::Instance();
+        renderEngine->SetDataEngineInterface(dataEngine);
         const std::string server = "server";
         int index = currPath.find_last_of(server);
         currPath = currPath.substr(0, index - server.length()); // 取 server 前的文件路径

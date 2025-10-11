@@ -243,7 +243,7 @@ void SystemViewOverallTextRepo::QueryCommunicationOverlapOverallInfos(
         return;
     }
     // 查询HCCL层通信算子和通信Task，并与通信未掩盖数据取交集，对于通信Task进一步区分wait和Transmit
-    std::string sql4Summary = TraceDatabaseHelper::GeneratorCommunicationSummarySql4Text({}, {});
+    std::string sql4Summary = TextSqlConstant::GeneratorCommunicationSummarySql4Text({}, {});
     // 如果不存在上文就会添加，因此此处一定能找到
     it = std::find_if(responseBody.begin(), responseBody.end(), [](const Protocol::SystemViewOverallRes& item) {
         return item.name == COMMUNICATION_NOT_OVERLAP_TIME;

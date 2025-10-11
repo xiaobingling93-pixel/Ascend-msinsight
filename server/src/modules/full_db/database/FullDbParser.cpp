@@ -102,6 +102,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         for (const auto &item: rankIds) {
             database->UpdateStartTime(item);
         }
+        database->InitStringsCache();
         BuildProfilingInitTask(futures, dbId, threadPool);
     }
     // EndParseTask中会等待所有future执行完成，然后发送parse/success事件，最后在执行一些需要异步完成的解析任务
@@ -137,13 +138,6 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
 void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::future<void>>> &futures, std::string &dbId,
                                           std::unique_ptr<ThreadPool> &pool)
 {
-    futures->emplace_back(pool->AddTask([dbId]() {
-        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
-        if (!database) {
-            return;
-        }
-        database->InitStringsCache();
-    }, TraceIdManager::GetTraceId()));
     futures->emplace_back(pool->AddTask([dbId]() {
         std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
         if (!database) {

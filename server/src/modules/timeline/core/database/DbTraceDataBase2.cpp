@@ -9,6 +9,21 @@
 namespace Dic::Module::FullDb {
 using namespace Server;
 
+std::vector<std::string> DbTraceDataBase::GetIdListByFuzzNameFromCache(const std::string &path,
+                                                                       const std::string &fuzzName)
+{
+    if (stringsCache.count(path) == 0) {
+        return {};
+    }
+    std::vector<std::string> res;
+    for (const auto &item: stringsCache.at(path)) {
+        if (StringUtil::Contains(item.second, fuzzName)) {
+            res.push_back(item.first);
+        }
+    }
+    return res;
+}
+
 bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                                        std::vector<Protocol::UnitCounterData> &dataList)
 {
@@ -200,7 +215,9 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
 {
     auto stmt = CreatPreparedStatement();
     auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
-    if (!connectionId.has_value()) {
+    // connectionId为-1和UINT32_MAX都表示无效值，无连线，因此不能继续搜索，否则会将所有无连线的算子都连起来
+    if (!connectionId.has_value() ||
+        connectionId.value() == "-1" || connectionId.value() == std::to_string(UINT32_MAX)) {
         return false;
     }
     std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(requestParams.rankId);
@@ -215,6 +232,9 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
     if (flowLocations.size() < 2) { // 小于2表示没有连线
         return false;
     }
+    // 同connectionId的算子按时间排序后相邻的连线
+    std::sort(flowLocations.begin(), flowLocations.end(),
+        [] (const FlowLocation &a, const FlowLocation &b) { return a.timestamp < b.timestamp;});
     for (auto &item: flowLocations) {
         if (item.rankId == path) {
             item.rankId = requestParams.rankId;

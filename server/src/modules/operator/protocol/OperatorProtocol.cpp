@@ -214,10 +214,10 @@ namespace Dic::Protocol {
     std::string OperatorProtocol::GetStatisticColumName(const std::string& originName)
     {
         std::map<std::string, std::string> relation {
-                {"opType", "op_type"},
-                {"opName", "name"},
+                {"opType", "opType"},
+                {"opName", "opName"},
                 {"inputShape", "input_shapes"},
-                {"accCore", "accelerator_core"},
+                {"accCore", "accCore"},
                 {"totalTime", "total_time"},
                 {"count", "cnt"},
                 {"avgTime", "avg_time"},

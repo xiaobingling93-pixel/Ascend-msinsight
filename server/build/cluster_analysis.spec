@@ -22,10 +22,11 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['certifi', 'pygments', 'libcrypto-1_1.dll', 'libssl-1_1.dll', 'tkinter'],
+    excludes=['certifi', 'pygments', 'libcrypto-1_1.dll', 'libssl-1_1.dll', 'tkinter', 'cryptography', 'bcrypt'],
     noarchive=False,
     optimize=0,
 )
+
 a.binaries = [x for x in a.binaries if 'libcrypto-1_1.dll' not in x[0] and 'libssl-1_1.dll' not in x[0]]
 pyz = PYZ(a.pure)
 

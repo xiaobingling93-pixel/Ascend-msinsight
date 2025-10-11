@@ -133,7 +133,12 @@ std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vecto
             if (parseFilePathFilter.has_value() && file->parseFilePath != parseFilePathFilter.value()) {
                 continue;
             }
-            GetReportFilesOneFile(project, hostMap, file);
+            std::vector<std::string> dbFiles = GetDbFilesInDir(file->parseFilePath);
+            std::for_each(dbFiles.begin(),
+                          dbFiles.end(),
+                          [&project, &hostMap, &file, this](const std::string &dbFile) {
+                              GetReportFilesOneFile(project, hostMap, file, dbFile);
+                          });
         }
     }
     return hostMap;
@@ -141,49 +146,53 @@ std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vecto
 
 void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectExplorerInfo &project,
                                             std::map<std::string, HostInfo> &hostMap,
-                                            std::shared_ptr<ParseFileInfo> parsefileInfo)
+                                            std::shared_ptr<ParseFileInfo> parsefileInfo,
+                                            const std::string &file)
 {
-    std::vector<std::string> dbFiles = GetDbFilesInDir(parsefileInfo->parseFilePath);
     // 非RL数据不下发集群
     std::string clusterId = project.GetClusterInfos().empty() ? "" : parsefileInfo->clusterId;
-    for (const auto &file: dbFiles) {
-        auto database = GetTraceDbConnect(file);
-        if (!database) {
+    auto database = GetTraceDbConnect(file);
+    if (!database) {
+        return;
+    }
+    auto host = database->QueryHostInfo();
+    auto rankList = database->QueryRankId();
+    for (auto rank : rankList) {
+        // 过滤-1的rankId, cann层感知不到rankId时用-1填充，暂时过滤，后续合并
+        if (rank == "-1" && rankList.size() > 1) {
+            ServerLog::Warn("Find rankId equals -1");
             continue;
         }
-        auto host = database->QueryHostInfo();
-        for (const auto &rank: database->QueryRankId()) {
-            if (parsefileInfo->type == DEVICE_CHIP && parsefileInfo->deviceId != rank) {
+        if (parsefileInfo->type == DEVICE_CHIP) {
+            if (rank == "-1") {
+                rank = parsefileInfo->deviceId;
+            } else if (parsefileInfo->deviceId != rank) {
                 continue;
             }
-            parsefileInfo->host = host;
-            parsefileInfo->rankId = host + rank;
-            auto rankIdDeviceMap = database->QueryRankIdAndDeviceMap();
-            auto deviceIdInMem = database->GetDeviceIdFromMemoryTable();
-            if (rankIdDeviceMap.find(rank) != rankIdDeviceMap.end()) {
-                parsefileInfo->deviceId = StringUtil::StrNumMax(rankIdDeviceMap[rank], parsefileInfo->deviceId);
-            } else if (!deviceIdInMem.empty() && parsefileInfo->type != DEVICE_CHIP) {
-                parsefileInfo->deviceId = StringUtil::StrNumMax(deviceIdInMem, parsefileInfo->deviceId);
-            }
-            std::string rankName = rank;
-            hostMap[host][file].push_back(rank);
-            DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
-            DataBaseManager::Instance().SetRankIdFileIdMapping(host + rank, file);
-            TrackInfoManager::Instance().UpdateHost(host + rank, host);
-            TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankIdDeviceMap);
-            TrackInfoManager::Instance().UpdateDeviceToRankIdMap(host + parsefileInfo->deviceId, rank);
-            TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
-            TrackInfoManager::Instance().SetRankListByFileId(file,
-                                                             {clusterId,
-                                                              parsefileInfo->host,
-                                                              parsefileInfo->rankId,
-                                                              parsefileInfo->deviceId,
-                                                              rankName});
-            DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, parsefileInfo->deviceId);
         }
-        TrackInfoManager::Instance().AddRankToCluster(parsefileInfo->clusterId, parsefileInfo->rankId);
-        TrackInfoManager::Instance().SetClusterByFileId(file, parsefileInfo->clusterId);
+        parsefileInfo->host = host;
+        parsefileInfo->rankId = host + rank;
+        auto rankIdDeviceMap = database->QueryRankIdAndDeviceMap();
+        auto deviceIdInMem = database->GetDeviceIdFromMemoryTable();
+        SetRankDeviceMap(parsefileInfo, rankIdDeviceMap, deviceIdInMem, rank);
+        std::string rankName = rank;
+        hostMap[host][file].push_back(rank);
+        DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
+        DataBaseManager::Instance().SetRankIdFileIdMapping(host + rank, file);
+        TrackInfoManager::Instance().UpdateHost(host + rank, host);
+        TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankIdDeviceMap);
+        TrackInfoManager::Instance().UpdateDeviceToRankIdMap(host + parsefileInfo->deviceId, rank);
+        TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
+        TrackInfoManager::Instance().SetRankListByFileId(file,
+                                                         {clusterId,
+                                                          parsefileInfo->host,
+                                                          parsefileInfo->rankId,
+                                                          parsefileInfo->deviceId,
+                                                          rankName});
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, parsefileInfo->deviceId);
     }
+    TrackInfoManager::Instance().AddRankToCluster(parsefileInfo->clusterId, parsefileInfo->rankId);
+    TrackInfoManager::Instance().SetClusterByFileId(file, parsefileInfo->clusterId);
 }
 
 void ProjectParserDb::SetParseCallBack()
@@ -528,6 +537,22 @@ std::string ProjectParserDb::GetBaselineDbFile(const std::string &path)
         file = msprofFiles[0];
     }
     return file;
+}
+void ProjectParserDb::SetRankDeviceMap(std::shared_ptr<ParseFileInfo> parseFileInfo,
+                                       std::unordered_map<std::string, std::string> &rankDeviceMap,
+                                       const std::string &deviceIdInMem,
+                                       const std::string &rank)
+{
+    if (parseFileInfo->type == DEVICE_CHIP) {
+        rankDeviceMap.clear();
+        rankDeviceMap[parseFileInfo->rankId] = parseFileInfo->deviceId;
+        return;
+    }
+    if (rankDeviceMap.find(rank) != rankDeviceMap.end()) {
+        parseFileInfo->deviceId = StringUtil::StrNumMax(rankDeviceMap[rank], parseFileInfo->deviceId);
+    } else if (!deviceIdInMem.empty() && parseFileInfo->type != DEVICE_CHIP) {
+        parseFileInfo->deviceId = StringUtil::StrNumMax(deviceIdInMem, parseFileInfo->deviceId);
+    }
 }
 
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);

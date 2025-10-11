@@ -126,6 +126,24 @@ bool DbSummaryDataBase::QueryTotalNumByAcceleratorCore(std::string name, int64_t
     return true;
 }
 
+std::string DbSummaryDataBase::GetGroupNameByIdListStr(const std::string &idListStr)
+{
+    if (idListStr.empty()) {
+        return "";
+    }
+    std::string res;
+    std::vector<std::string> idList = StringUtil::Split(idListStr, "_");
+    if (idList.size() == 1) {
+        res = DbTraceDataBase::GetStringCacheValue(path, idList[0]);
+    } else if (idList.size() > 1) {
+        res = DbTraceDataBase::GetStringCacheValue(path, idList[0]);
+        for (size_t i = 1; i < idList.size(); ++i) {
+            res += "[" + DbTraceDataBase::GetStringCacheValue(path, idList[i]) + "]";
+        }
+    }
+    return res;
+}
+
 bool DbSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams,
                                                   Protocol::QueryType type,
                                                   std::vector<Protocol::OperatorDurationRes> &datas)
@@ -152,7 +170,7 @@ bool DbSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqP
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         Protocol::OperatorDurationRes one{};
         int col = 0;
-        one.name = sqlite3_column_string(stmt, col++);
+        one.name = GetGroupNameByIdListStr(sqlite3_column_string(stmt, col++));
         one.duration = sqlite3_column_double(stmt, col++);
         if (res.size() >= maxCategorySize) {
             res[maxCategorySize - 1].name = "Others";
@@ -183,7 +201,7 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
         sqlite3_bind_int64(stmt, index++, deviceId);
     }
     sqlite3_bind_int64(stmt, index++, reqParams.isCompare ? -1 : reqParams.topK);
-    BindQueryFilters(reqParams, stmt, index);
+    BindIdList(reqParams.rangeFilters, stmt, index);
     if (!reqParams.isCompare) {
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
@@ -191,10 +209,14 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         Protocol::OperatorStatisticInfoRes one{};
         int col = 0;
-        one.opType = sqlite3_column_string(stmt, col++);
-        one.opName = sqlite3_column_string(stmt, col++);
-        one.inputShape = sqlite3_column_string(stmt, col++);
-        one.accCore = sqlite3_column_string(stmt, col++);
+        one.opType =
+            DbTraceDataBase::GetStringCacheValue(GetDbPath(), sqlite3_column_string(stmt, col++));
+        one.opName =
+            DbTraceDataBase::GetStringCacheValue(GetDbPath(), sqlite3_column_string(stmt, col++));
+        one.inputShape =
+            DbTraceDataBase::GetStringCacheValue(GetDbPath(), sqlite3_column_string(stmt, col++));
+        one.accCore =
+            DbTraceDataBase::GetStringCacheValue(GetDbPath(), sqlite3_column_string(stmt, col++));
         one.totalTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
         one.count = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
         one.avgTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
@@ -209,6 +231,7 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
 bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                    Protocol::OperatorStatisticInfoResponse &response)
 {
+    reqParams.rangeFilters = ConvertFiltersToRangeFilters(reqParams.filters);
     if (!QueryStatisticTotalNum(reqParams, response.total)) {
         ServerLog::Error("[Operator]Failed to query total num of statistic info.");
         return false;
@@ -232,6 +255,7 @@ bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticRe
 bool DbSummaryDataBase::QueryAllOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                       std::vector<Protocol::OperatorStatisticInfoRes> &res)
 {
+    reqParams.rangeFilters = ConvertFiltersToRangeFilters(reqParams.filters);
     std::string sql = GenerateQueryStatisticSql(reqParams);
     if (!ExecSqlGetStatisticInfo(sql, reqParams, res)) {
         ServerLog::Error("Failed to exec query detail sql.");
@@ -249,15 +273,15 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
         sql = GenStatSqlWithCommunication();
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
-            "op_type || accelerator_core" :
-            R"(name || input_shapes || accelerator_core)";
+            "opType, accCore" :
+            "opName, input_shapes, accCore";
         if (!reqParams.deviceId.empty()) {
             sql = GenStatSqlWithDeviceId(group);
         } else {
             sql = GenStatSql(group);
         }
     }
-    GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
+    GenerateRangeQueryFiltersSql(reqParams.rangeFilters, sql);
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
@@ -273,35 +297,36 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
 
 std::string DbSummaryDataBase::GenStatSqlWithCommunication()
 {
-    return " SELECT * FROM (SELECT TYPE.value as op_type, NAME.value as name,"
-        " NULL AS input_shapes,NULL as accelerator_core,"
+    return " SELECT * FROM (SELECT "
+        " COMMUNICATION_OP.opType as opType, "
+        " COMMUNICATION_OP.opName as opName,"
+        " NULL AS input_shapes,"
+        " NULL as accCore,"
         " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
         " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0 / COUNT(0), 2) as avg_time,"
         " ROUND(max(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as max_time,"
         " ROUND(min(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as min_time "
-        " FROM COMMUNICATION_OP JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName "
-        " JOIN STRING_IDS AS TYPE ON TYPE.id = COMMUNICATION_OP.opType "
+        " FROM COMMUNICATION_OP "
         " JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
         " AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
         " WHERE NTASK.deviceId = ? "
-        " GROUP BY TYPE.value "
+        " GROUP BY opType "
         " ORDER by total_time DESC LIMIT ?) subquery ";
 }
 
 std::string DbSummaryDataBase::GenStatSqlWithDeviceId(const std::string group)
 {
     return " SELECT * FROM ("
-        "     SELECT OPTYPE.value AS op_type,NAME.value AS name,"
-        "     INPUTSHAPES.value AS input_shapes,TASKTYPE.value AS accelerator_core, "
+        "     SELECT "
+        "     COMPUTE_TASK_INFO.opType as opType,"
+        "     COMPUTE_TASK_INFO.name AS opName,"
+        "     COMPUTE_TASK_INFO.inputShapes AS input_shapes,"
+        "     COMPUTE_TASK_INFO.taskType as accCore, "
         "     ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
         "     ROUND(SUM(endNs - startNs) / 1000.0 / COUNT(0), 2) as avg_time,"
         "     ROUND(max(endNs - startNs) / 1000.0, 2) as max_time,"
         "     ROUND(min(endNs - startNs) / 1000.0, 2) as min_time"
         "     FROM  COMPUTE_TASK_INFO "
-        "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-        "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-        "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-        "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
         "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
         "     WHERE TASK.deviceId = ? "
         "     GROUP BY " + group + " ORDER by total_time DESC LIMIT ? "
@@ -311,17 +336,15 @@ std::string DbSummaryDataBase::GenStatSqlWithDeviceId(const std::string group)
 std::string DbSummaryDataBase::GenStatSql(const std::string group)
 {
     return " SELECT * FROM ("
-        "     SELECT OPTYPE.value AS op_type,NAME.value AS name,"
-        "     INPUTSHAPES.value AS input_shapes,TASKTYPE.value AS accelerator_core, "
+        "     COMPUTE_TASK_INFO.opType as opType,"
+        "     COMPUTE_TASK_INFO.name AS opName,"
+        "     COMPUTE_TASK_INFO.inputShapes AS input_shapes,"
+        "     COMPUTE_TASK_INFO.taskType as accCore, "
         "     ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
         "     ROUND(SUM(endNs - startNs) / 1000.0 / COUNT(0), 2) as avg_time,"
         "     ROUND(max(endNs - startNs) / 1000.0, 2) as max_time,"
         "     ROUND(min(endNs - startNs) / 1000.0, 2) as min_time"
         "     FROM  COMPUTE_TASK_INFO "
-        "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-        "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-        "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-        "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
         "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
         "     GROUP BY " + group + " ORDER by total_time DESC LIMIT ? "
         "     ) subquery ";
@@ -335,22 +358,19 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
         sql = GenStatSqlWithCommunication();
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
-            "op_type || accelerator_core" : R"(name || inputShapes || accelerator_core)";
+            "opType, accCore" : "opName, inputShapes, accCore";
         sql = " SELECT COUNT(*) as nums"
             " FROM ( "
             "     SELECT deviceId, startNs, endNs,"
-            "     TASKTYPE.value AS accelerator_core, "
-            "     OPTYPE.value AS op_type, NAME.value AS name FROM COMPUTE_TASK_INFO"
+            "     COMPUTE_TASK_INFO.taskType AS accCore, "
+            "     COMPUTE_TASK_INFO.opType AS opType, COMPUTE_TASK_INFO.name AS opName FROM COMPUTE_TASK_INFO"
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     WHERE TASK.deviceId = ? "
             "     GROUP by " + group +
             "     ORDER by ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) DESC LIMIT ?"
             " ) subquery";
     }
-    GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
+    GenerateRangeQueryFiltersSql(reqParams.rangeFilters, sql);
     if (Protocol::OperatorGroupConverter::IsCommunication(reqParams.group)) {
         sql = StringUtil::FormatString("SELECT COUNT(*) FROM ({})", sql);
     }
@@ -363,7 +383,7 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, StringUtil::StringToInt(reqParams.deviceId));
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
-    BindQueryFilters(reqParams, stmt, index);
+    BindIdList(reqParams.rangeFilters, stmt, index);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         total = sqlite3_column_int64(stmt, resultStartIndex);
     }
@@ -703,29 +723,25 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::Operat
         std::string name;
         std::string duration;
         if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP) {
-            name = "OPTYPE.value";
-            group = " GROUP by op_type || task_type";
+            name = "COMPUTE_TASK_INFO.opType";
+            group = " GROUP by op_type, task_type";
             duration = " ROUND(sum(endNs - startNs)/1000.0, 2) as duration";
         } else if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_NAME_GROUP) {
-            name = "NAME.value";
+            name = "COMPUTE_TASK_INFO.name";
             group = "";
             duration = " ROUND((endNs - startNs)/1000.0, 2) as duration";
         } else {
-            name = R"(NAME.value || '[' || INPUTSHAPES.value || ']')";
-            group = R"( GROUP by name || '[' || input_shapes || ']' || task_type)";
+            name = R"(COMPUTE_TASK_INFO.name || '_' || COMPUTE_TASK_INFO.inputShapes)";
+            group = " GROUP by name, input_shapes, task_type";
             duration = " ROUND(sum(endNs - startNs)/1000.0, 2) as duration";
         }
         std::string sql = " SELECT name, duration From ("
             " SELECT " +
             name + " as name," + duration +
-            " ,TASKTYPE.value as task_type, OPTYPE.value as op_type, INPUTSHAPES.value as input_shapes"
+            " ,COMPUTE_TASK_INFO.taskType as task_type, COMPUTE_TASK_INFO.opType as op_type, COMPUTE_TASK_INFO.inputShapes as input_shapes"
             " FROM " +
             TABLE_COMPUTE_TASK_INFO +
             " JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-            "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-            "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType "
             " WHERE TASK.deviceId = ? " +
             group +
             " ORDER BY duration DESC LIMIT ?"
@@ -738,24 +754,20 @@ std::string DbSummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::Ope
 {
     std::string group;
     if (reqParams.group == OP_TYPE_GROUP) {
-        group = "OPTYPE.value || TASKTYPE.value";
+        group = "COMPUTE_TASK_INFO.opType, COMPUTE_TASK_INFO.taskType";
     } else if (reqParams.group == OPERATOR_GROUP) {
-        group = "NAME.value || TASKTYPE.value";
+        group = "COMPUTE_TASK_INFO.name, COMPUTE_TASK_INFO.taskType";
     } else {
-        group = R"(NAME.value || '[' || INPUTSHAPES.value || ']' || TASKTYPE.value)";
+        group = "COMPUTE_TASK_INFO.name, COMPUTE_TASK_INFO.inputShapes, COMPUTE_TASK_INFO.taskType";
     }
 
     std::string sql =
             " SELECT taskTypes as name, ROUND(SUM(duration), 2) as duration"
             " FROM ("
-            "     SELECT " + group + ", TASKTYPE.value as taskTypes, " + (reqParams.group == Protocol::OPERATOR_GROUP ?
+            "     SELECT " + group + ", COMPUTE_TASK_INFO.taskType as taskTypes, " + (reqParams.group == Protocol::OPERATOR_GROUP ?
             " ROUND((endNs - startNs)/1000.0, 2) as duration" : " ROUND(sum(endNs - startNs)/1000.0, 2) as duration") +
             "     FROM " + TABLE_COMPUTE_TASK_INFO +
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-            "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-            "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     WHERE TASK.deviceId = ?"
             "     " + (reqParams.group == Protocol::OPERATOR_GROUP ? "" :
             "     GROUP BY " + group) +
@@ -952,11 +964,11 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSqlForHCCL(
     std::string name;
     std::string duration;
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP) {
-        name = " TYPE.value as name ";
-        group = " GROUP by TYPE.value ";
+        name = " COMMUNICATION_OP.opType as name ";
+        group = " GROUP by name ";
         duration = " ROUND(sum(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 2) as duration";
     } else if (operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_NAME_GROUP) {
-        name = "NAME.value as name";
+        name = "COMMUNICATION_OP.opName as name";
         group = "";
         duration = " ROUND((COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 2) as duration";
     }
@@ -965,8 +977,6 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSqlForHCCL(
         name + "," + duration + " FROM " + TABLE_COMMUNICATION_OP +
         " JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
         " AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
-        " JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
-        " JOIN STRING_IDS AS TYPE ON TYPE.id = COMMUNICATION_OP.opType "
         " WHERE NTASK.deviceId = ? " +
         group +
         " ORDER BY duration DESC LIMIT ?"
@@ -1065,6 +1075,35 @@ void DbSummaryDataBase::GenerateMoreInfoTotalNumForOther(std::string &sql,
           "     WHERE TASK.deviceId = ? AND accelerator_core = ? AND" + condition + " ) subquery";
 }
 
+std::vector<std::pair<std::string, std::vector<std::string>>> DbSummaryDataBase::ConvertFiltersToRangeFilters(
+    std::vector<std::pair<std::string, std::string>> &filters)
+{
+    std::vector<std::pair<std::string, std::vector<std::string>>> res;
+    if (filters.empty()) {
+        return {};
+    }
+    for (const auto& filter : filters) {
+        if (filter.second.empty()) {
+            continue;
+        }
+        res.emplace_back(filter.first, DbTraceDataBase::GetIdListByFuzzNameFromCache(path, filter.second));
+    }
+    return res;
+}
+
+void DbSummaryDataBase::GenerateRangeQueryFiltersSql(
+    std::vector<std::pair<std::string, std::vector<std::string>>> &rangeFilters, std::string &sql)
+{
+    if (rangeFilters.empty()) {
+        return;
+    }
+    std::vector<std::string> sqlList;
+    for (const auto &item: rangeFilters) {
+        sqlList.push_back(item.first + " IN (" + StringUtil::CreateQuestionMarkString(item.second.size()) + ")");
+    }
+    sql += " WHERE " + StringUtil::join(sqlList, " AND ");
+}
+
 template <typename T>
 void DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
 {
@@ -1078,6 +1117,19 @@ void DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
             sql += " AND ";
         }
         sql += filter.first + " LIKE ?";
+    }
+}
+
+void DbSummaryDataBase::BindIdList(const std::vector<std::pair<std::string, std::vector<std::string>>> &rangeFilters,
+                                   sqlite3_stmt *stmt, int &index)
+{
+    if (rangeFilters.empty()) {
+        return;
+    }
+    for (const auto &item: rangeFilters) {
+        for (const auto &id: item.second) {
+            sqlite3_bind_text(stmt, index++, id.c_str(), id.length(), SQLITE_TRANSIENT);
+        }
     }
 }
 

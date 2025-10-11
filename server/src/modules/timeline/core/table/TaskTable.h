@@ -11,7 +11,8 @@ struct TaskPO {
     uint64_t timestamp = 0;
     uint64_t endTime = 0;
     uint64_t deviceId = 0;
-    uint64_t connectionId = 0;
+    // db的数据类型是INTEGER，可能存在负值
+    int64_t connectionId = 0;
     uint64_t globalTaskId = 0;
     uint64_t globalPid = 0;
     uint64_t taskType = 0;

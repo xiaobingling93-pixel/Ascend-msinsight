@@ -22,6 +22,8 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
         ['Wall Duration', (data): string => getSliceTimeDisplay(data.wallDuration as number), 180],
         ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime as number), 180, undefined, isSelfTimeHidden],
         ['Average Wall Duration', (data): string => getSliceTimeDisplay(data.avgWallDuration as number), 180],
+        ['Max Wall Duration', (data): string => getSliceTimeDisplay(data.maxWallDuration as number), 180],
+        ['Min Wall Duration', (data): string => getSliceTimeDisplay(data.minWallDuration as number), 180],
         ['Occurrences', (data): string => `${data.occurrences ?? 0}`, 180],
     ],
     actions: [
@@ -29,6 +31,8 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.wallDuration ?? 0) - (b.wallDuration ?? 0) },
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.selfTime ?? 0) - (b.selfTime ?? 0) },
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.avgWallDuration ?? 0) - (b.avgWallDuration ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.maxWallDuration ?? 0) - (b.maxWallDuration ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.minWallDuration ?? 0) - (b.minWallDuration ?? 0) },
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.occurrences ?? 0) - (b.occurrences ?? 0) },
     ],
     summaries: new Map<string, SummaryFunction<AscendMultiSliceList>>([
@@ -38,6 +42,16 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
         ['Average Wall Duration', (dataSource) => {
             const [totalA, totalB] = dataSource.reduce(([a, b], { wallDuration, occurrences }) => [a + (wallDuration ?? 0), b + (occurrences ?? 0)], [0, 0]);
             return getSliceTimeDisplay(totalB === 0 ? totalA : totalA / totalB);
+        }],
+        ['Max Wall Duration', (dataSource) => {
+            const durations = dataSource.map(({ maxWallDuration }) => maxWallDuration).filter((d): d is number => Number.isFinite(d));
+            const maxDuration = durations.length > 0 ? Math.max(...durations) : 0;
+            return getSliceTimeDisplay(maxDuration);
+        }],
+        ['Min Wall Duration', (dataSource) => {
+            const durations = dataSource.map(({ minWallDuration }) => minWallDuration).filter((d): d is number => Number.isFinite(d));
+            const minDuration = durations.length > 0 ? Math.min(...durations) : 0;
+            return getSliceTimeDisplay(minDuration);
         }],
         ['Occurrences', (dataSource) => `${dataSource.reduce((acc, { occurrences }) => acc + (occurrences ?? 0), 0)}`],
     ]),

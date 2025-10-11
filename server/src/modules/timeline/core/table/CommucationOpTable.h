@@ -11,7 +11,7 @@ struct CommucationTaskOpPO {
     uint64_t opName = 0;
     uint64_t timestamp = 0;
     uint64_t endTime = 0;
-    uint64_t connectionId = 0;
+    int64_t connectionId = 0;
     uint64_t groupName = 0;
     uint64_t opId = 0;
     uint64_t relay = 0;

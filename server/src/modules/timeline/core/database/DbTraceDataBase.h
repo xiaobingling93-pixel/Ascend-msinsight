@@ -143,6 +143,7 @@ public:
     void InitStringsCache();
     void InitMetaDataInfo();
     static std::string GetStringCacheValue(const std::string& path, const std::string& key);
+    static std::vector<std::string> GetIdListByFuzzNameFromCache(const std::string &path, const std::string &fuzzName);
     bool InitConnectionCats();
     void UpdateWaitTime();
     bool GenerateOverlapAnalysis();

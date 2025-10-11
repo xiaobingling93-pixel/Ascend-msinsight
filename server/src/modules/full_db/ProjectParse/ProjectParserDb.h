@@ -32,7 +32,13 @@ protected:
                                                    std::optional<std::string> parseFilePathFilter = std::nullopt);
     void GetReportFilesOneFile(const Dic::Module::Global::ProjectExplorerInfo &project,
                                std::map<std::string, HostInfo> &hostMap,
-                               std::shared_ptr<ParseFileInfo> file);
+                               std::shared_ptr<ParseFileInfo> parsefileInfo,
+                               const std::string &file);
+
+    void SetRankDeviceMap(std::shared_ptr<ParseFileInfo> parseFileInfo,
+                          std::unordered_map<std::string, std::string> &rankDeviceMap,
+                          const std::string &deviceIdInMem,
+                          const std::string &rank);
     static std::vector<std::string> GetDbFilesInDir(const std::string& filePath);
     void SetParseCallBack();
     static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,

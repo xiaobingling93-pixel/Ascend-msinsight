@@ -826,6 +826,8 @@ export interface AscendMultiSliceList extends Record<string, unknown> {
     wallDuration?: number;
     selfTime?: number;
     avgWallDuration?: number;
+    maxWallDuration?: number;
+    minWallDuration?: number;
     occurrences?: number;
     rankId?: string;
     dbPath?: string;

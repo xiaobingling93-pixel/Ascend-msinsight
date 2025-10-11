@@ -38,12 +38,12 @@ function generateCalculateWHWithCache(): {
         return `${block.pid}-${block.tid}-${block.depth}`;
     }
 
-    function getHeightWithCache(block: DataBlock, cardId: string, session: Session): number | undefined {
+    function getHeightWithCache(block: DataBlock, cardId: string, category: string, session: Session): number | undefined {
         const key = `${generateDataBlockKey(block)}-${cardId}`;
         if (HEIGHT_CACHE.has(key)) {
             return HEIGHT_CACHE.get(key);
         }
-        const height = getHeight(session, block, cardId);
+        const height = getHeight(session, block, cardId, category);
         HEIGHT_CACHE.set(key, height);
         return height;
     }
@@ -66,6 +66,7 @@ function generateCalculateWHWithCache(): {
 const { calculateWHWithCacheFunc } = generateCalculateWHWithCache();
 
 export interface LinkLineData {
+    category: string;
     targetX: number;
     targetY: number;
     sourceX: number;
@@ -82,18 +83,19 @@ export function calculateLinkLines(rawList: Array<Record<string, unknown>>, sess
     const { getWidthWithCache, getHeightWithCache } = calculateWHWithCacheFunc(canvasWidth, domainStart, domainEnd);
 
     return rawList.map((data): LinkLineData => {
-        const { from, to, cardId } = data as unknown as FlowEvent;
+        const { category, from, to, cardId } = data as unknown as FlowEvent;
         const [targetCardId, sourceCardId] = [handlerEmptyString(to.rankId ?? '', cardId), handlerEmptyString(from.rankId ?? '', cardId)];
 
         const [targetX, targetY] = [getWidthWithCache({ timestamp: to.timestamp, cardId: targetCardId, pid: to.pid }, li, session),
-            getHeightWithCache(to, targetCardId, session)];
+            getHeightWithCache(to, targetCardId, category, session)];
         const [sourceX, sourceY] = [getWidthWithCache({ timestamp: from.timestamp, cardId: sourceCardId, pid: from.pid }, li, session),
-            getHeightWithCache(from, sourceCardId, session)];
+            getHeightWithCache(from, sourceCardId, category, session)];
         const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
         const offset = ((targetX - sourceX) / 2);
         const isAllCol = (processIsCol.get(`${targetCardId}-${to.pid}`) ?? false) &&
             (processIsCol.get(`${sourceCardId}-${from.pid}`) ?? false);
         return {
+            category,
             targetX,
             targetY: isAllCol ? undefined : targetY,
             sourceX,

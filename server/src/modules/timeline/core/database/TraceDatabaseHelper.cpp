@@ -1155,65 +1155,6 @@ void TraceDatabaseHelper::FilterTopLevelApi(std::vector<Protocol::FlowLocation> 
     }
 }
 
-std::string TraceDatabaseHelper::GeneratorCommunicationSummarySql4Text(
-    const OrderParam &orderParam, const PageParam &pageParam)
-{
-    std::string sql =
-        "WITH data as ("
-        "    SELECT s.name, s.timestamp as start_time, s.duration, s.end_time as end_time, t.pid, t.tid, s.track_id, "
-        "    t.thread_name, CASE WHEN t.thread_name like 'Group%' THEN 1 ELSE 0 END as type, "
-        "    row_number() OVER (ORDER by s.track_id ASC, s.timestamp ASC) as row_num FROM " + SLICE_TABLE + " s "
-        "    JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id WHERE s.track_id in ( "
-        "        SELECT track_id FROM " + THREAD_TABLE + " WHERE pid in ( "
-        "            SELECT pid FROM " + PROCESS_TABLE +
-        " WHERE (pid & 0x1f) = ? AND process_name in ('HCCL', 'COMMUNICATION', 'Communication') "
-        "        ) "
-        "    ) "
-        ") "
-        "SELECT d1.name as name, d1.start_time as startTime, d1.duration as duration, d1.end_time as endTime, "
-        "d1.pid as groupName, d1.tid as plane, d1.thread_name as threadName, d1.type as type, "
-        "CASE "
-        "    WHEN d1.name = 'Notify_Wait' THEN "
-        "        CASE "
-        "            WHEN d2.name = 'RDMASend' AND d3.name = 'RDMASend' OR "
-        "                (d3.name = 'Notify_Wait' AND d4.name = 'RDMASend' AND d5.name = 'RDMASend') THEN '0' "
-        "            ELSE '1' "
-        "        END "
-        "    ELSE '0' "
-        "END as flag "
-        "FROM data d1 "
-        "LEFT JOIN data d2 ON d2.row_num = d1.row_num - 1 AND d2.track_id = d1.track_id "
-        "LEFT JOIN data d3 ON d3.row_num = d1.row_num - 2 AND d3.track_id = d1.track_id "
-        "LEFT JOIN data d4 ON d4.row_num = d1.row_num - 3 AND d4.track_id = d1.track_id "
-        "LEFT JOIN data d5 ON d5.row_num = d1.row_num - 4 AND d5.track_id = d1.track_id "
-        "ORDER BY d1.pid, d1.tid, d1.start_time";
-    return sql;
-}
-
-std::string TraceDatabaseHelper::GeneratorCommunicationSummarySql4Db(const OrderParam &orderParam,
-    const PageParam &pageParam, const std::string &sqlForVersion)
-{
-    std::string sql = sqlForVersion +
-        "SELECT d1.name as name, d1.start_time as startTime, d1.duration as duration, d1.end_time as endTime, "
-        "d1.groupName as groupName, d1.planeId as plane, d1.thread_name as threadName, d1.type as type, "
-        "CASE "
-        "    WHEN d1.name = 'Notify_Wait' THEN "
-        "        CASE "
-        "           WHEN d2.name = 'RDMASend' AND d3.name = 'RDMASend' OR "
-        "               (d3.name = 'Notify_Wait' AND d4.name = 'RDMASend' AND d5.name = 'RDMASend') THEN '0' "
-        "           ELSE '1' "
-        "        END "
-        "    ELSE '0' "
-        "END as flag "
-        "FROM data d1 "
-        "LEFT JOIN data d2 ON d2.groupName = d1.groupName AND d2.planeId = d1.planeId AND d2.row_num = d1.row_num - 1 "
-        "LEFT JOIN data d3 ON d3.groupName = d1.groupName AND d3.planeId = d1.planeId AND d3.row_num = d1.row_num - 2 "
-        "LEFT JOIN data d4 ON d4.groupName = d1.groupName AND d4.planeId = d1.planeId AND d4.row_num = d1.row_num - 3 "
-        "LEFT JOIN data d5 ON d5.groupName = d1.groupName AND d5.planeId = d1.planeId AND d5.row_num = d1.row_num - 4 "
-        "ORDER BY d1.groupName, d1.planeId, d1.start_time";
-    return sql;
-}
-
 bool TraceDatabaseHelper::CalculateParallelParameter(const std::vector<Protocol::ThreadTraces> &fwdTraceList,
     const std::vector<Protocol::ThreadTraces> &bwdTraceList,
     uint64_t minBwdStartTime, std::pair<uint16_t, uint16_t> &parameter)
@@ -1412,7 +1353,9 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
             sliceGroupItem.wallDuration = cur.duration;
             sliceGroupItem.occurrences = 1;
             sliceGroupItem.avgWallDuration = cur.duration;
-            if (cur.name.empty()) {
+            sliceGroupItem.maxWallDuration = cur.duration;
+            sliceGroupItem.minWallDuration = cur.duration;
+            if (cur.name.empty() || selfTimeKeyValue.find(cur.name) == selfTimeKeyValue.end()) {
                 continue;
             } else {
                 sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
@@ -1425,6 +1368,12 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
             responseBody.data[index].occurrences += 1;
             responseBody.data[index].avgWallDuration = responseBody.data[index].occurrences == 0 ? 0 :
                 responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+            if (cur.duration > responseBody.data[index].maxWallDuration) {
+                responseBody.data[index].maxWallDuration = cur.duration;
+            }
+            if (cur.duration < responseBody.data[index].minWallDuration) {
+                responseBody.data[index].minWallDuration = cur.duration;
+            }
             responseBody.data[index].metaTypeList.insert(cur.metaType);
             if (responseBody.data[index].processMap.count(cur.pid)) {
                 responseBody.data[index].processMap[cur.pid].insert(cur.tid);
@@ -1453,6 +1402,11 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             sliceGroupItem.wallDuration = cur.duration;
             sliceGroupItem.occurrences = 1;
             sliceGroupItem.avgWallDuration = cur.duration;
+            sliceGroupItem.maxWallDuration = cur.duration;
+            sliceGroupItem.minWallDuration = cur.duration;
+            if (selfTimeKeyValue.find(cur.name) == selfTimeKeyValue.end()) {
+                continue;
+            }
             sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
             sliceGroupItem.processMap[cur.pid] = { cur.tid };
             sliceGroupItem.metaTypeList.insert(cur.metaType);
@@ -1462,6 +1416,12 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             responseBody.data[index].occurrences += 1;
             responseBody.data[index].avgWallDuration = responseBody.data[index].occurrences == 0 ? 0 :
                 responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+            if (cur.duration > responseBody.data[index].maxWallDuration) {
+                responseBody.data[index].maxWallDuration = cur.duration;
+            }
+            if (cur.duration < responseBody.data[index].minWallDuration) {
+                responseBody.data[index].minWallDuration = cur.duration;
+            }
             if (responseBody.data[index].processMap.count(cur.pid)) {
                 responseBody.data[index].processMap[cur.pid].insert(cur.tid);
             } else {
@@ -1554,7 +1514,7 @@ std::string TraceDatabaseHelper::GetLockRangeSql(const SearchAllSliceParams &par
 
 std::string TraceDatabaseHelper::GetSingleLockRangeSql(const TrackQuery &item)
 {
-    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value();
+    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value_or(PROCESS_TYPE::NONE);
     std::string tempSql;
     if (type == PROCESS_TYPE::API) {
         tempSql = " SELECT api.ROWID as id, 'pytorch' as tid, api.globalTid as pid, api.startNs as timestamp, "

@@ -18,7 +18,7 @@
     "MixBlockDim": "混合Block数量",
     "MixBlockDetail": "混合Block详情",
     "Memory Workload Analysis": "内存负载分析",
-    "Peak(%)": "峰值(最大带宽占比)(%)",
+    "Peak(%)": "峰值（最大带宽占比）(%)",
     "Peak": "峰值",
     "Hit": "命中次数",
     "Miss": "未命中次数",

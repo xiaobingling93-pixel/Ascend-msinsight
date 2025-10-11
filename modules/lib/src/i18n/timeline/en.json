@@ -84,6 +84,8 @@
       "Occurrences": "Occurrences",
       "Wall Duration": "Wall Duration",
       "Average Wall Duration": "Average Wall Duration",
+      "Max Wall Duration": "Max Wall Duration",
+      "Min Wall Duration": "Min Wall Duration",
       "Self Time": "Self Time",
       "Index": "Index",
       "Timestamp": "Timestamp",

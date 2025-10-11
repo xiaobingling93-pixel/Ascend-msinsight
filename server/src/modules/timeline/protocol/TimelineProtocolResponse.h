@@ -116,6 +116,8 @@ struct SliceGroupItem {
     uint64_t wallDuration = 0;
     uint64_t occurrences = 0;
     uint64_t avgWallDuration = 0;
+    uint64_t maxWallDuration = 0;
+    uint64_t minWallDuration = 0;
     uint64_t selfTime = 0;
     std::map<std::string, std::set<std::string>> processMap;
     std::set<std::string> metaTypeList;

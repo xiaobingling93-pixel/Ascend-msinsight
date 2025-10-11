@@ -33,11 +33,11 @@ private:
     std::unique_ptr<NpuInfoRepo> npuInfoRepo = std::make_unique<NpuInfoRepo>();
     std::unordered_map<uint64_t, uint64_t> QueryOpIdMap(const FlowQuery &flowQuery);
     std::unordered_map<uint64_t, uint64_t> QueryDeviceMap(const FlowQuery &flowQuery);
-    std::unordered_set<uint64_t> AddGroupHcclFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec,
+    std::unordered_set<int64_t> AddGroupHcclFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec,
         const std::unordered_map<uint64_t, uint64_t> &opIdMap, const std::unordered_map<uint64_t, uint64_t> &deviceMap,
         const std::string &host);
     void AddHardWareFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec, const std::string &host,
-        const std::unordered_set<uint64_t> &hcclConnectionIdSet);
+        const std::unordered_set<int64_t> &hcclConnectionIdSet);
 };
 }
 #endif // PROFILER_SERVER_DEVICEFLOWREPO_H

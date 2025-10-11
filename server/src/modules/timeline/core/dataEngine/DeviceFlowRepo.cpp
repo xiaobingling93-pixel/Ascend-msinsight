@@ -12,7 +12,7 @@ void DeviceFlowRepo::AddDeviceFlowPoint(const FlowQuery &flowQuery, std::vector<
     // task表中globalTaskId和deviceId的映射
     std::unordered_map<uint64_t, uint64_t> deviceMap = QueryDeviceMap(flowQuery);
     std::string host = hostInfoTable->GetHost(flowQuery.fileId);
-    std::unordered_set<uint64_t> hcclConnectionIdSet =
+    std::unordered_set<int64_t> hcclConnectionIdSet =
         AddGroupHcclFlowPoint(flowQuery, flowPointVec, opIdMap, deviceMap, host);
     AddHardWareFlowPoint(flowQuery, flowPointVec, host, hcclConnectionIdSet);
 }
@@ -53,7 +53,7 @@ void DeviceFlowRepo::AddHardWareMstxFlowPointExecuteSQL(const Dic::Module::Timel
     }
     while (resultSet->Next()) {
         TaskPO singleTask;
-        singleTask.connectionId = resultSet->GetUint64("connectionId");
+        singleTask.connectionId = resultSet->GetInt64("connectionId");
         singleTask.id = resultSet->GetUint64("id");
         singleTask.timestamp = resultSet->GetUint64("startNs");
         singleTask.deviceId = resultSet->GetUint64("deviceId");
@@ -65,7 +65,7 @@ void DeviceFlowRepo::AddHardWareMstxFlowPointExecuteSQL(const Dic::Module::Timel
     std::string host = hostInfoTable->GetHost(flowQuery.fileId);
     auto &instance = TrackInfoManager::Instance();
     for (const auto &item : taskPOS) {
-        uint64_t realConnectionId = item.connectionId;
+        int64_t realConnectionId = item.connectionId;
         std::string flowId = std::to_string(realConnectionId);
         FlowPoint endPoint;
         endPoint.type = "f";
@@ -79,7 +79,7 @@ void DeviceFlowRepo::AddHardWareMstxFlowPointExecuteSQL(const Dic::Module::Timel
     }
 }
 
-std::unordered_set<uint64_t> DeviceFlowRepo::AddGroupHcclFlowPoint(const FlowQuery &flowQuery,
+std::unordered_set<int64_t> DeviceFlowRepo::AddGroupHcclFlowPoint(const FlowQuery &flowQuery,
     std::vector<FlowPoint> &flowPointVec, const std::unordered_map<uint64_t, uint64_t> &opIdMap,
     const std::unordered_map<uint64_t, uint64_t> &deviceMap, const std::string &host)
 {
@@ -87,7 +87,7 @@ std::unordered_set<uint64_t> DeviceFlowRepo::AddGroupHcclFlowPoint(const FlowQue
     commucationOpTable->Select(CommucationTaskOpColumn::OP_ID, CommucationTaskOpColumn::TIMESTAMP)
         .Select(CommucationTaskOpColumn::CONNECTION_ID, CommucationTaskOpColumn::GROUPNAME)
         .ExcuteQuery(flowQuery.fileId, commucationTaskOpPOs);
-    std::unordered_set<uint64_t> hcclConnectionIdSet;
+    std::unordered_set<int64_t> hcclConnectionIdSet;
     auto &instance = TrackInfoManager::Instance();
     std::vector<uint64_t> deviceIdList = npuInfoRepo->QueryDeviceIdByFileId(flowQuery.fileId);
     bool isUniqueDeviceId = deviceIdList.size() == 1;
@@ -101,7 +101,7 @@ std::unordered_set<uint64_t> DeviceFlowRepo::AddGroupHcclFlowPoint(const FlowQue
         }
         uint64_t deviceId = isUniqueDeviceId ? deviceIdList[0] : deviceMap.at(opIdMap.at(item.opId));
         endPoint.rankId = host + instance.GetRankId(host, std::to_string(deviceId));
-        uint64_t realConnectionId = item.connectionId;
+        int64_t realConnectionId = item.connectionId;
         std::string flowId = std::to_string(realConnectionId);
         hcclConnectionIdSet.emplace(realConnectionId);
         endPoint.type = "f";
@@ -140,7 +140,7 @@ std::unordered_map<uint64_t, uint64_t> DeviceFlowRepo::QueryOpIdMap(const FlowQu
 }
 
 void DeviceFlowRepo::AddHardWareFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec,
-    const std::string &host, const std::unordered_set<uint64_t> &hcclConnectionIdSet)
+    const std::string &host, const std::unordered_set<int64_t> &hcclConnectionIdSet)
 {
     std::vector<TaskPO> taskPOS;
     taskTable->Select(TaskColumn::ROW_ID, TaskColumn::TIMESTAMP)
@@ -148,7 +148,7 @@ void DeviceFlowRepo::AddHardWareFlowPoint(const FlowQuery &flowQuery, std::vecto
         .ExcuteQuery(flowQuery.fileId, taskPOS);
     auto &instance = TrackInfoManager::Instance();
     for (const auto &item : taskPOS) {
-        uint64_t realConnectionId = item.connectionId;
+        int64_t realConnectionId = item.connectionId;
         std::string flowId = std::to_string(realConnectionId);
         if (hcclConnectionIdSet.count(realConnectionId) > 0) {
             continue;

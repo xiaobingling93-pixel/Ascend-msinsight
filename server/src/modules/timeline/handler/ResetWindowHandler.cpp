@@ -10,8 +10,8 @@
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
 #include "ServitizationOpenApi.h"
-#include "ResetWindowHandler.h"
 #include "BaselineManagerService.h"
+#include "ResetWindowHandler.h"
 
 namespace Dic {
 namespace Module {

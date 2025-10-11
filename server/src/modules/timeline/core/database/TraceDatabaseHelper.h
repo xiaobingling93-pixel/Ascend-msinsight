@@ -206,9 +206,6 @@ static inline bool IsValidHCCLGroupNameValue(const std::string &groupNameValue)
     const std::regex pattern(regexStr);
     return std::regex_search(groupNameValue, pattern);
 }
-static std::string GeneratorCommunicationSummarySql4Text(const OrderParam &orderParam, const PageParam &pageParam);
-static std::string GeneratorCommunicationSummarySql4Db(const OrderParam &orderParam, const PageParam &pageParam,
-                                                       const std::string &sqlForVersion);
 // 给定一个通信算子或Task，计算其未被通信掩盖部分的耗时
 static uint64_t CalculateUncoveredTime(const std::vector<Protocol::ThreadTraces> &uncovered, size_t &index,
                                 const Protocol::ThreadTraces &element);

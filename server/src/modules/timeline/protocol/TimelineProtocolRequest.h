@@ -251,6 +251,10 @@ struct SearchSliceParams {
                 return false;
             }
         }
+        if (index <= 0) {
+            warnMsg = "Search slice index is invalid";
+            return false;
+        }
         return true;
     }
 };

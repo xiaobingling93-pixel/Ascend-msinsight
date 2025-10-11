@@ -97,7 +97,7 @@
   "headerButtonTooltip": {
     "Title": "Select profiling type",
     "Allocation": "Allocation instrumentation on timeline",
-    "AllocationDescribe": "Record stack traces of allocations（extra performance overhead）",
+    "AllocationDescribe": "Record stack traces of allocations (extra performance overhead)",
     "FilterSizeDescribe": "Please enter a proper value between 1024 Bytes and 10 MB.",
     "StackDepthDescribe": "Please enter a proper value between 5 and 100.",
     "TimeStampOffset": "Please enter a proper value within 30 days.",

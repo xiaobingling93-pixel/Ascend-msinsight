@@ -257,11 +257,14 @@ CompeteSliceDomain RenderEngine::FindSliceByTimePoint(const std::string &fileId,
     uint64_t timePoint, const std::string &metaType)
 {
     SliceQuery sliceQuery;
+    CompeteSliceDomain slice;
     sliceQuery.rankId = fileId;
     sliceQuery.name = name;
+    if (Protocol::STR_TO_ENUM<PROCESS_TYPE>(metaType) == std::nullopt) {
+        return slice;
+    }
     sliceQuery.metaType = Protocol::STR_TO_ENUM<PROCESS_TYPE>(metaType).value();
     sliceQuery.timePoint = timePoint;
-    CompeteSliceDomain slice;
     bool res = dataEngine->QuerySliceByTimepointAndName(sliceQuery, slice);
     if (!res) {
         ServerLog::Warn("Failed to find slice, name is: %", name);

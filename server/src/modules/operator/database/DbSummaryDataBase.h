@@ -71,10 +71,16 @@ private:
     std::string &GenerateQueryDetailSqlForHCCL(std::string &sql) const;
     void GenerateMoreInfoTotalNumForOther(std::string &sql,
                                           OperatorGroupConverter::OperatorGroup opGroup) const;
+    static void GenerateRangeQueryFiltersSql(
+        std::vector<std::pair<std::string, std::vector<std::string>>> &rangeFilters, std::string &sql);
+    std::vector<std::pair<std::string, std::vector<std::string>>> ConvertFiltersToRangeFilters(
+        std::vector<std::pair<std::string, std::string>> &filters);
     template <typename T>
     void GenerateQueryFiltersSql(T &reqParams, std::string &sql);
     template <typename T>
     void BindQueryFilters(T &reqParams, sqlite3_stmt *stmt, int &index);
+    static void BindIdList(const std::vector<std::pair<std::string, std::vector<std::string>>> &rangeFilters,
+                           sqlite3_stmt *stmt, int &index);
     bool GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &reqParams, std::string &sql);
     bool ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                               std::vector<Protocol::OperatorDetailInfoRes> &res);
@@ -82,6 +88,7 @@ private:
                                  std::vector<Protocol::OperatorStatisticInfoRes> &res);
     bool AddCommunicationOpTableOpTypeIfNotExists();
     OperatorDetailInfoRes GetOperatorDetailRow(sqlite3_stmt *stmt);
+    std::string GetGroupNameByIdListStr(const std::string &idListStr);
 
     std::string blockDimColumnName;
 };

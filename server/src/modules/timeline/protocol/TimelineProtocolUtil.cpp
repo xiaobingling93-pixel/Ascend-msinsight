@@ -169,6 +169,8 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
         JsonUtil::AddMember(threadsJson, "wallDuration", sliceGroupItem.wallDuration, allocator);
         JsonUtil::AddMember(threadsJson, "occurrences", sliceGroupItem.occurrences, allocator);
         JsonUtil::AddMember(threadsJson, "avgWallDuration", sliceGroupItem.avgWallDuration, allocator);
+        JsonUtil::AddMember(threadsJson, "maxWallDuration", sliceGroupItem.maxWallDuration, allocator);
+        JsonUtil::AddMember(threadsJson, "minWallDuration", sliceGroupItem.minWallDuration, allocator);
         JsonUtil::AddMember(threadsJson, "selfTime", sliceGroupItem.selfTime, allocator);
         json_t processesJson(kArrayType);
         for (const auto &[key, value]: sliceGroupItem.processMap) {

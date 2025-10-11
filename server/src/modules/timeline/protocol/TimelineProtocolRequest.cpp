@@ -9,11 +9,11 @@ namespace Protocol {
 void KernelDetailsParams::Check(std::string &error) const
 {
     if (current == 0) {
-        error = "current is invaild";
+        error = "current is invalid";
         return;
     }
     if (pageSize == 0) {
-        error = "pageSize is invaild";
+        error = "pageSize is invalid";
         return;
     }
     for (const auto &filter : filters) {

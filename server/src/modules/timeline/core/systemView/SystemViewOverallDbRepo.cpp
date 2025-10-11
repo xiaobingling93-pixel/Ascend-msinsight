@@ -335,7 +335,7 @@ void SystemViewOverallDbRepo::QueryGroupMapAndCalculateSummary(const std::shared
     } else {
         commSummarySql4Db = QUERY_COMMUNICATION_SUMMARY_DB_SQL;
     }
-    std::string sql4Summary = TraceDatabaseHelper::GeneratorCommunicationSummarySql4Db({}, {}, commSummarySql4Db);
+    std::string sql4Summary = TraceDatabaseSqlConst::GeneratorCommunicationSummarySql4Db({}, {}, commSummarySql4Db);
     // 如果不存在上文就会添加，因此此处一定能找到
     it = std::find_if(responseBody.begin(), responseBody.end(), [](const Protocol::SystemViewOverallRes &item) {
         return item.name == COMMUNICATION_NOT_OVERLAP_TIME;

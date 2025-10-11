@@ -349,6 +349,30 @@ public:
         return sql;
     }
 
+    static std::string GeneratorCommunicationSummarySql4Db(const OrderParam &orderParam, const PageParam &pageParam,
+        const std::string &sqlForVersion)
+    {
+        std::string sql = sqlForVersion +
+            "SELECT d1.name as name, d1.start_time as startTime, d1.duration as duration, d1.end_time as endTime, "
+            "d1.groupName as groupName, d1.planeId as plane, d1.thread_name as threadName, d1.type as type, "
+            "CASE "
+            "    WHEN d1.name = 'Notify_Wait' THEN "
+            "        CASE "
+            "           WHEN d2.name = 'RDMASend' AND d3.name = 'RDMASend' OR "
+            "               (d3.name = 'Notify_Wait' AND d4.name = 'RDMASend' AND d5.name = 'RDMASend') THEN '0' "
+            "           ELSE '1' "
+            "        END "
+            "    ELSE '0' "
+            "END as flag "
+            "FROM data d1 "
+            "LEFT JOIN data d2 ON d2.groupName = d1.groupName AND d2.planeId = d1.planeId AND d2.row_num = d1.row_num - 1 "
+            "LEFT JOIN data d3 ON d3.groupName = d1.groupName AND d3.planeId = d1.planeId AND d3.row_num = d1.row_num - 2 "
+            "LEFT JOIN data d4 ON d4.groupName = d1.groupName AND d4.planeId = d1.planeId AND d4.row_num = d1.row_num - 3 "
+            "LEFT JOIN data d5 ON d5.groupName = d1.groupName AND d5.planeId = d1.planeId AND d5.row_num = d1.row_num - 4 "
+            "ORDER BY d1.groupName, d1.planeId, d1.start_time";
+        return sql;
+    }
+
 private:
     static std::string GenerateAICpuOpFilterSqlDB(const std::string &opType,
         const Timeline::AICpuCheckDataType &dataType)

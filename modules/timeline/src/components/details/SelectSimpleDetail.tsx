@@ -14,7 +14,7 @@ import { SorterResult } from 'antd/lib/table/interface';
 
 const TABLE_HEAD_HEIGHT = 35;
 const TABLE_SUMMARY_HEIGHT = 30;
-const TABLE_MIN_WIDTH = 900;
+const TABLE_MIN_WIDTH = 1260;
 
 const generateSummary = (state: TableState, dataSource: Array<AutoKey<object>>): ReactNode => (
     <Table.Summary fixed={'top'}>

@@ -243,6 +243,10 @@ export class Session {
         timelineMarkerXScale: null,
     };
 
+    modeOfParse: 'auto_parse' | 'global_parse' = 'auto_parse';
+
+    parseQueue: Array<() => void> = [];
+
     private _selectedRange?: [ TimeStamp, TimeStamp ];
     private readonly _domain: Domain;
     // Relative to the startTimeOffset, which means that it will start from 0.
