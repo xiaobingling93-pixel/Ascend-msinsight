@@ -16,7 +16,7 @@ export enum EventType {
 
 class EventBus<T> {
     private readonly _events: Map<string, Array<EventHandler<T>>>;
-    private readonly _maxListeners: number = 10; // 设立监听上限
+    private readonly _maxListeners: number = 100; // 设立监听上限
 
     constructor() {
         this._events = new Map(); // 储存事件/回调键值对
@@ -34,6 +34,11 @@ class EventBus<T> {
     // 监听事件
     public on(event: string, handler: EventHandler<T>): void {
         const handlers = this._getHandlers(event);
+        // 检查当前监听器数量是否已达到_maxListeners限制
+        if (handlers.length >= this._maxListeners) {
+            throw new Error(`Maximum number of listeners (${this._maxListeners}) reached for event '${event}'`);
+        }
+
         handlers.push(handler);
     }
 
@@ -65,7 +70,6 @@ class EventBus<T> {
         return handlers;
     }
 }
-
 // 事件总线
 const eventBus = new EventBus();
 
