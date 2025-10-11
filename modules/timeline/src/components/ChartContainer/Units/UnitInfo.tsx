@@ -51,7 +51,6 @@ const DefaultInfoContainer = styled.div`
         padding-left: 6px;
         min-width: 0;
         flex: 1;
-        height: 100%;
 
         .insight-lane-info-name {
             overflow: hidden;
