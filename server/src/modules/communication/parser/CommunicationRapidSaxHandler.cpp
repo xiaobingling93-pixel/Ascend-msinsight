@@ -60,7 +60,7 @@ bool CommunicationRapidSaxHandler::RawNumber(const char *str, SizeType len, bool
         ServerLog::Error("Parsing communication.json encounters nullptr.");
         return false;
     }
-    std::string s(str);
+    std::string s(str, len);
     if (currentDepth == sizeDistributionDepth) {
         bandwidth.sizeDistribution += s + ",";
         return true;

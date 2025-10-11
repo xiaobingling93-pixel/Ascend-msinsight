@@ -295,7 +295,11 @@ bool ExpertHotspotManager::FillDeploymentData(std::vector<ExpertHotspotStruct> &
 void ExpertHotspotManager::FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params)
 {
     for (int item = 0; item < params.modelInfo.modelLayer; ++item) {
-        int startIndex = item * params.colNumber;
+        int startIndex = NumberSafe::Muls(item, params.colNumber);
+        if (startIndex == 0 && item != 0 && params.colNumber != 0) {
+            ServerLog::Error("The product of layerNum and colNum exceeds the limit of int");
+            return;
+        }
         for (int i = 0; i < params.colNumber; ++i) {
             int index = startIndex + i;
             res[index].expertIndex = i;
@@ -402,7 +406,7 @@ bool ExpertHotspotManager::ExtractHeatMapFromTraceDb(const ExtractHeatMapParams 
         return false;
     }
     int rankId = StringUtil::ExtractDigitRankIdFromHost(params.rankId);
-    if (rankId < 0) {
+    if (rankId < 0 || rankId == INT_MAX) {
         errorMsg = "Fail to get extract heat map, invalid rank id.";
         return false;
     }

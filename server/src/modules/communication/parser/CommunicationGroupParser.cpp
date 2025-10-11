@@ -27,28 +27,34 @@ std::vector<CommGroupParallelInfo> CommunicationGroupParser::GetGroupFromParalle
     return res;
 }
 
-std::vector<CommGroupParallelInfo> CommunicationGroupParser::GetGroupFromP2pAndCollective(const json_t &json)
+bool SetCommGroupParallelInfoListByJsonKey(const json_t &json, std::string_view key,
+                                           std::vector<CommGroupParallelInfo> &res)
 {
-    // 分别从collective和p2p中读取数据
-    std::vector<CommGroupParallelInfo> res;
-    if (JsonUtil::IsJsonKeyValid(json, "p2p")) {
-        auto p2p = json["p2p"].GetArray();
-        for (const auto &item: p2p) {
+    if (JsonUtil::IsJsonKeyValid(json, key) && json[key.data()].IsArray()) {
+        for (const auto &item: json[key.data()].GetArray()) {
             CommGroupParallelInfo info;
-            info.type = "p2p";
+            info.type = key.data();
+            if (!item.IsArray()) {
+                Server::ServerLog::Warn("Skip item when parsing communication parallel info: not json array.");
+                continue;
+            }
             info.rankSet = JsonUtil::JsonToVector(item.GetArray());
             info.rankSetStr = StringUtil::JoinNumberStrWithParenthesesByOrder(info.rankSet);
             res.push_back(info);
         }
+        return true;
     }
-    if (JsonUtil::IsJsonKeyValid(json, "collective")) {
-        auto collectiveJson = json["collective"].GetArray();
-        for (const auto &item: collectiveJson) {
-            CommGroupParallelInfo info;
-            info.type = "collective";
-            info.rankSet = JsonUtil::JsonToVector(item.GetArray());
-            info.rankSetStr = StringUtil::JoinNumberStrWithParenthesesByOrder(info.rankSet);
-            res.push_back(info);
+    return false;
+}
+
+std::vector<CommGroupParallelInfo> CommunicationGroupParser::GetGroupFromP2pAndCollective(const json_t &json)
+{
+    // 分别从collective和p2p中读取数据
+    std::vector<CommGroupParallelInfo> res;
+    std::vector<std::string_view> keys = {"p2p", "collective"};
+    for (auto key : keys) {
+        if (!SetCommGroupParallelInfoListByJsonKey(json, key, res)) {
+            Server::ServerLog::Warn("Failed to set communication group info list from json by \"%\".", key);
         }
     }
     if (res.empty()) {

@@ -537,12 +537,16 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
 void VirtualClusterDatabase::GetStepsOrRanksObject(const std::string &jsonStr,
     std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    rapidjson::Document json;
-    json.Parse(jsonStr.c_str());
-    if (!json.IsArray()) {
+    std::string err;
+    auto json = JsonUtil::TryParse<kParseJsonVerifyFlag>(jsonStr, err);
+    if (!json || !err.empty()) {
+        ServerLog::Error("Failed to parse json on get steps or ranks: %.", err);
         return;
     }
-    for (auto &item : json.GetArray()) {
+    if (!json->IsArray()) {
+        return;
+    }
+    for (auto &item : json->GetArray()) {
         Protocol::IterationsOrRanksObject object;
         object.iterationOrRankId = item.IsString() ? item.GetString() : "";
         responseBody.emplace_back(object);

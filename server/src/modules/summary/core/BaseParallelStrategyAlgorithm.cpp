@@ -1057,7 +1057,9 @@ std::string BaseParallelStrategyAlgorithm::FormatRanksForSeveralIntervals(const 
         tmpResult << interval << ",";
     }
     formattedRankSet = tmpResult.str();
-    formattedRankSet.pop_back();
+    if (!formattedRankSet.empty()) {
+        formattedRankSet.pop_back();
+    }
     return formattedRankSet;
 }
 
