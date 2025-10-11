@@ -8,5 +8,3 @@ export {
     store,
     RootStore,
 };
-
-window.debugInspector = { ...window.debugInspector, store };

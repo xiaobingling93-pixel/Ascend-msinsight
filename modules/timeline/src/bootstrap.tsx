@@ -15,10 +15,6 @@ interface CefQueryType {request: string; onSuccess: (response: string) => void; 
 
 declare global {
     interface Window {
-        // for inspecting some internal state
-        debugInspector: {
-            store?: unknown;
-        };
         setTheme: (isDark: boolean) => void;
         request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
         cefQuery: (obj: CefQueryType) => void;
