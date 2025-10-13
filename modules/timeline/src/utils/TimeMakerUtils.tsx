@@ -218,7 +218,7 @@ const MarkerTable = styled.div`
     overflow-Y: auto;
     .tableIcon {
         cursor: pointer;
-        margin: 3px 0px 0 5px;
+        margin: 3px 0 0 5px;
     }
     .singleTimeMakerRow {
         padding: 4px 24px;
@@ -268,7 +268,7 @@ const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
                     <div style={{ display: 'flex' }}>
                         <div style={{ width: '40%', flexGrow: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', lineHeight: item.anotherTimeStamp === undefined ? undefined : '38px' }}> { item.description }</div>
                         { handleMakerTimeDisplay(timeLineMarkerProps.session, item) }
-                        <div style={{ width: '15%' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: item.anotherTimeStamp === undefined ? '0px' : '11px' }}>
+                        <div style={{ width: '15%' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: item.anotherTimeStamp === undefined ? '0' : '11px' }}>
                             <div id={`${item.uid}color`} style={{ width: '12px', height: '12px', backgroundColor: item.color, cursor: 'pointer' }} onClick={(): void => handleSelectColor(item, timeLineMarkerProps, setFlagColor)} />
                             <DeleteIcon id={'deleteButton'} style={{ fill: theme.svgPlayBackgroundColor, cursor: 'pointer' }} onClick={(event): void => handleDelete({ event, deleteSignal, uid: item.uid, props: timeLineMarkerProps, setDeleteSignal, setTimeDiff, t })} />
                             <SvgComponent theme={theme} onClick={(): void => { handleJump(item, timeLineMarkerProps.session); }} SvgElement={JumpingIcon}/>

@@ -129,8 +129,8 @@ export const LegendArea = styled.div`
     position: absolute;
     top: 4px;
     right: 16px;
-    left: 0px;
-    bottom: 0px;
+    left: 0;
+    bottom: 0;
     display: flex;
     flex-direction: row-reverse;
 `;

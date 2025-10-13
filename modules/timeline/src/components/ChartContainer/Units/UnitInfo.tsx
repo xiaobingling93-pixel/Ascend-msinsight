@@ -95,7 +95,7 @@ const DefaultInfoContainer = styled.div`
 const TagDiv = styled.div`
     overflow: hidden;
     white-space: nowrap;
-    padding: 0px 5px;
+    padding: 0 5px;
 
     .tag-content {
         margin-left: 6px;

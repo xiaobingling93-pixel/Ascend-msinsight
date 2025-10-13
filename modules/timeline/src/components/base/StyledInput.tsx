@@ -19,8 +19,8 @@ export const StyledInput = styled(Support)`
     height: ${(props): number => props.height as number}px;
     border: 1px solid  ${(props): string => props.theme.enclosureBorder};
     background-color: transparent;
-    padding: 0px 8px;
-    margin: 0px 5px;
+    padding: 0 8px;
+    margin: 0 5px;
     display: ${(props): string => props.isshow === 1 ? 'inline-flex' : 'none'};
     color: ${(props): string => props.theme.fontColor};
 
