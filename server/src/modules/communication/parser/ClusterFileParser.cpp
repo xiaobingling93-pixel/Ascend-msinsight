@@ -71,7 +71,8 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
     rapidjson::Reader reader;
     if (saxHandlerType == 0) {
         CommunicationRapidSaxHandler rapidSaxHandler(textDb, uniqueKey);
-        reader.Parse<kParseNumbersAsStringsFlag>(is, rapidSaxHandler);
+        reader.SetMaxLeafNum(JsonUtil::MAX_JSON_LEAF_NUMBER);
+        reader.Parse<kParseNumbersAsStringsFlag | kParseJsonVerifyFlag>(is, rapidSaxHandler);
     } else {
         CommunicationMatrixRapidHandler matrixRapidHandler(textDb, uniqueKey);
         reader.Parse(is, matrixRapidHandler);

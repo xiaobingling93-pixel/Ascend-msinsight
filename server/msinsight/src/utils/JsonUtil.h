@@ -24,6 +24,7 @@ using document_t = rapidjson::Document;
 using namespace rapidjson;
 class JsonUtil {
 public:
+    constexpr static size_t MAX_JSON_LEAF_NUMBER = 500ull * 1000ull * 1000ull;  // 限制最大叶节点数50000w，以int32为例，50000w节点占用内存2G
     static inline bool IsJsonKeyValid(const json_t &json, std::string_view key)
     {
         return json.HasMember(key.data()) && !json[key.data()].IsNull();
@@ -78,14 +79,15 @@ public:
 
     static inline std::optional<document_t> TryParse(const std::string &jsonStr, std::string &error)
     {
-        return TryParse<kParseDefaultFlags>(jsonStr, error);
+        return TryParse<kParseJsonVerifyFlag>(jsonStr, error);
     }
 
     template <unsigned parseFlags>
     static inline std::optional<document_t> TryParse(const std::string &jsonStr, std::string &error)
     {
         document_t doc;
-        doc.Parse<parseFlags>(jsonStr.c_str(), jsonStr.length());
+        doc.SetMaxLeafNum(MAX_JSON_LEAF_NUMBER);
+        doc.Parse<parseFlags | kParseJsonVerifyFlag>(jsonStr.c_str(), jsonStr.length());
         if (doc.HasParseError()) {
             static const size_t PRINT_ERROR_SIZE = 10;
             auto offset = doc.GetErrorOffset();
