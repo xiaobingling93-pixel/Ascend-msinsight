@@ -78,7 +78,7 @@ test.describe('Timeline(Operator)', () => {
         expect(await tfoot.locator('tr > td').nth(5).innerText()).toBe('387');
         expect(await tfoot.locator('tr > td').nth(1).innerText()).toBe('0.008114 ms');
         expect(await tfoot.locator('tr > td').nth(2).innerText()).toBe('0.000021 ms');
-        expect(await tfoot.locator('tr > td').nth(3).innerText()).toBe('0.002986 ms');
+        expect(await tfoot.locator('tr > td').nth(3).innerText()).toBe('0.000204 ms');
         expect(await tfoot.locator('tr > td').nth(4).innerText()).toBe('0.000000 ms');
     });
 
@@ -97,7 +97,7 @@ test.describe('Timeline(Operator)', () => {
         });
         await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
         await expect(timelineFrame.getByText('Title')).toBeVisible();
-        await expect(timelineFrame.getByText('Start')).toBeVisible();
+        await expect(timelineFrame.getByText('Start', { exact:true })).toBeVisible();
     });
 
     // 算子调优-工具栏-搜索

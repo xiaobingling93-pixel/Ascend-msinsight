@@ -335,23 +335,8 @@ test.describe('Communication', () => {
             },
         });
         await communicationFrame.getByText('Find in Timeline').click();
+        await page.waitForTimeout(500);
 
         await expect(fullPage).toHaveScreenshot('redirect-to-timeline.png', { maxDiffPixels: 500 });
-    });
-});
-
-test.describe('Communication(cluster)', () => {
-    test.beforeEach(async ({ page, communicationPage, ws }) => {
-        const { loadingDialog } = new FrameworkPage(page);
-        await page.goto('/');
-        await importData(page, FilePath.TEXT_CLUSTER);
-        await communicationPage.goto();
-        if (await loadingDialog.count()) {
-            await loadingDialog.waitFor({ state: 'detached' });
-        }
-    });
-
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
     });
 });
