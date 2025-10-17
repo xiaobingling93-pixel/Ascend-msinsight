@@ -114,7 +114,7 @@ const processOffsetEvent = (session: Session, isLeft: boolean): void => {
             newAlignSliceData.push(item);
         });
         session.alignSliceData = newAlignSliceData;
-        session.selectedData = undefined;
+
         session.alignRender = !session.alignRender;
     });
 };

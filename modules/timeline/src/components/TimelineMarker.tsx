@@ -452,7 +452,7 @@ const Describe = styled.div`
 
 const EditInput = styled.input`
     outline: none;
-    border: 0px;
+    border: 0;
     margin-left: 19px;
     margin-top: 9px;
     padding-right: 57px;
@@ -771,10 +771,10 @@ const useFlagTooltip = (theme: Theme): React.MutableRefObject<HTMLDivElement | n
         const tooltipEl = document.createElement('div');
         tooltipEl.id = 'flag-tooltip';
         tooltipEl.style.position = 'absolute';
-        tooltipEl.style.left = '0px';
-        tooltipEl.style.top = '0px';
+        tooltipEl.style.left = '0';
+        tooltipEl.style.top = '0';
         tooltipEl.style.maxHeight = '20px';
-        tooltipEl.style.padding = '0px 2px';
+        tooltipEl.style.padding = '0 2px';
         tooltipEl.style.border = '1px solid';
         tooltipEl.style.pointerEvents = 'none';
         tooltipEl.style.whiteSpace = 'nowrap';
