@@ -288,4 +288,22 @@ std::string DbTraceDataBase::GetDeviceIdFromMemoryTable()
     }
     return "";
 }
+
+void DbTraceDataBase::QueryDeviceIdInStepTraceTime(std::set<std::string> &deviceIds)
+{
+    std::string sql = "SELECT DISTINCT deviceId from StepTraceTime";
+    sqlite3_stmt* stmt = nullptr;
+    int ret = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (ret != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for query deviceId in StepTraceTime. Error: ",
+                         sqlite3_errmsg(db));
+        return;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string deviceId = sqlite3_column_string(stmt, col++);
+        deviceIds.insert(deviceId);
+    }
+    sqlite3_finalize(stmt);
+}
 }

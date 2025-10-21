@@ -109,7 +109,7 @@ const std::string QUERY_HOST_METADATA_PYTORCH_SQL =
     " max(depth) as maxDepth from PYTORCH_API"
     " a group by globalTid order by globalTid";
 const std::string QUERY_HOST_METADATA_OSRT_SQL =
-    "SELECT 'OS Runtime API' AS name, globalTid, 'OS Runtime API' AS type, 0 AS maxDepth FROM OSRT_API"
+    "SELECT 'OS Runtime API' AS name, globalTid, 'OSRT_API' AS type, 0 AS maxDepth FROM OSRT_API"
     " a GROUP BY globalTid ORDER BY globalTid";
 const std::string QUERY_HOST_METADATA_MSTX_SQL =
     "select coalesce(b.value, 'MSTX') as name, a.globalTid, a.domainId as type, max(a.depth) as maxDepth "

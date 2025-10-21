@@ -3,6 +3,7 @@
  */
 #include "pch.h"
 #include "TableDefs.h"
+#include "TextTraceDatabaseHelper.h"
 #include "TraceDatabaseHelper.h"
 #include "TraceDatabaseSqlConst.h"
 #include "TraceTime.h"
@@ -2032,7 +2033,7 @@ bool TextTraceDatabase::QueryByteAlignmentAnalyzerData(std::vector<Communication
     if (!QueryByteAlignmentAnalyzerRawData(rawData)) {
         return false;
     }
-    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(data, rawData);
+    TextTraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(data, rawData);
     return true;
 }
 

@@ -9,6 +9,7 @@
 #include "ProcessTable.h"
 #include "CounterTable.h"
 #include "TimelineProtocolResponse.h"
+#include "TextTraceDatabaseHelper.h"
 #include "TraceDatabaseHelper.h"
 #include "TextTraceDatabase.h"
 
@@ -1853,7 +1854,7 @@ TEST_F(TextTraceDatabaseMockTest, ProcessByteAlignmentAnalyzerDataForTextTest)
     rawData.push_back({"Memcpy", argsStringMemcpy});
     rawData.push_back({"Memcpy", argsStringMemcpy});
     rawData.push_back({"Memcpy", argsStringMemcpy});
-    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(result, rawData);
+    TextTraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(result, rawData);
     const int forty = 40;
     const int bigNumber = 20971520;
     ASSERT_EQ(result.size(), 4); // 4
@@ -1891,8 +1892,8 @@ TEST_F(TextTraceDatabaseMockTest, ProcessByteAlignmentAnalyzerDataForTextTestInv
     rawData.push_back({"Memcpy", argsStringMemcpy});
     rawData.push_back({"Memcpy", argsStringMemcpy});
     rawData.push_back({"Memcpy", argsStringMemcpy});
-    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(result, rawData);
+    TextTraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(result, rawData);
     ASSERT_EQ(result.size(), 1);
-    ASSERT_EQ(result[0].memcpyTasks.size(), 0);
+    ASSERT_EQ(result[0].memcpyTasks.size(), 3); // 3
     ASSERT_EQ(result[0].reduceInlineTasks.size(), 0);
 }

@@ -31,6 +31,7 @@ protected:
     const std::string mstxSql = "CREATE TABLE MSTX_EVENTS (startNs INTEGER,endNs INTEGER,eventType INTEGER,rangeId "
         "INTEGER,category INTEGER,message INTEGER,globalTid INTEGER,endGlobalTid "
         "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
+    std::string osrtSql = "CREATE TABLE OSRT_API(name INTEGER, globalTid NUMERIC, startNs INTEGER, endNs INTEGER);";
     const std::string enumApiType = "CREATE TABLE ENUM_API_TYPE (id INTEGER PRIMARY KEY,name TEXT);";
     std::string computeSql =
         "CREATE TABLE COMPUTE_TASK_INFO (name INTEGER,globalTaskId INTEGER PRIMARY KEY,blockDim INTEGER,mixBlockDim "
@@ -1652,6 +1653,70 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOther)
     const std::string deviceId;
     bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
     EXPECT_EQ(res, false);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryEventsView4MSTX)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string mstxTableInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 65535, 4000000001, 0)";
+    std::string stringIdsTableInsert = "INSERT INTO STRING_IDS(id, value) VALUES (447, 'start')";
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert);
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::EventsViewParams params;
+    params.metaType = "MSTX_EVENTS";
+    params.pid = "4754301164515056";
+    params.tid = "65535";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    Dic::Protocol::EventsViewBody body;
+    const uint64_t minTimestamp = 0;
+    const std::string deviceId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
+    ASSERT_EQ(res, true);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(body.eventDetailList[0]->name, "start");
+}
+
+TEST_F(DbDatabaseTest2, TestQueryEventsView4OSRT)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, osrtSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string osrtTableInsert =
+        "INSERT INTO OSRT_API (name, globalTid, startNs, endNs) VALUES "
+        "(12, 4785999999999, 1000, 20000)";
+    std::string stringIdsTableInsert = "INSERT INTO STRING_IDS(id, value) VALUES (12, 'futex')";
+    DatabaseTestCaseMockUtil::InsertData(db, osrtTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert);
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::EventsViewParams params;
+    params.metaType = "OSRT_API";
+    params.pid = "4785999999999";
+    params.tid = "OSRT_API";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    Dic::Protocol::EventsViewBody body;
+    const uint64_t minTimestamp = 0;
+    const std::string deviceId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, deviceId);
+    ASSERT_EQ(res, true);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(body.eventDetailList[0]->name, "futex");
 }
 
 TEST_F(DbDatabaseTest2, TestIsValidGroupNameValueSuccess)

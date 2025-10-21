@@ -133,6 +133,28 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
     EXPECT_EQ(body.data.size(), expectSize3); // size = 3
     EXPECT_EQ(body.data[0].startTime, 0); // startTime = 39360870
 
+    body.data.clear();
+    params.metaType = "OVERLAP_ANALYSIS";
+
+    database->QueryThreadTracesSummary(params, body, minTimestamp);
+    const uint64_t expectSize4 = 2;
+    EXPECT_EQ(body.data.size(), expectSize4);
+
+    body.data.clear();
+    params.metaType = "PROCESS";
+
+    database->QueryThreadTracesSummary(params, body, minTimestamp);
+    const uint64_t expectSize5 = 2;
+    EXPECT_EQ(body.data.size(), expectSize5);
+
+    body.data.clear();
+    params.unitType = "label";
+    params.metaType = "CANN_API";
+
+    database->QueryThreadTracesSummary(params, body, minTimestamp);
+    const uint64_t expectSize6 = 2;
+    EXPECT_EQ(body.data.size(), expectSize6);
+
     params.metaType = "HBM";
     EXPECT_EQ(database->QueryThreadTracesSummary(params, body, minTimestamp), false);
 }
@@ -293,12 +315,12 @@ TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcess)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
     Dic::Protocol::EventsViewParams params;
     params.currentPage = CUR_PAGE_1;
-    params.metaType = "CANN_API";
+    params.metaType = "PROCESS";
     params.order = "descend";
     params.orderBy = "duration";
     params.pageSize = PAGE_SIZE;
-    params.pid = "2750";
-    params.processName = "process 2750";
+    params.pid = "11814731181473";
+    params.processName = "Process 2750";
     params.rankId = "2";
 
     Dic::Protocol::EventsViewBody body;

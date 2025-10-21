@@ -261,8 +261,6 @@ static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePrepared
     return true;
 };
 
-static void ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
-    std::vector<std::pair<std::string, std::string>> rawData);
 static void ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
     std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
     std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);

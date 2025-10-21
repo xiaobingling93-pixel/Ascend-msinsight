@@ -42,9 +42,11 @@ std::map<std::string, std::string> analysisType = {
 };
 
 std::map<PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewColumnsMap = {
+    {PROCESS_TYPE::PROCESS, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {PROCESS_TYPE::MS_TX, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {PROCESS_TYPE::API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {PROCESS_TYPE::CANN_API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
+    {PROCESS_TYPE::OSRT_API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {PROCESS_TYPE::ASCEND_HARDWARE,
         {columnName, columnStart, columnDuration, columnStreamName, columnRankId}},
     {PROCESS_TYPE::HCCL, {columnName, columnStart, columnDuration, columnGroupName, columnRankId}},
@@ -303,6 +305,8 @@ std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(
             return GetMstxSameNameDetailSql(pidListStr, tidListStr);
         case PROCESS_TYPE::API:
             return GetPythonSameNameDetailSql(pidListStr);
+        case PROCESS_TYPE::OSRT_API:
+            return GetOsrtSameNameDetailSql(pidListStr);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
             return GetOverlapAnalysisSameNameDetailSql(overlapType);
         default:
@@ -409,12 +413,22 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryOverlapTracesSummary(
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryCannTracesSummary(const std::string& rankId, uint64_t minTimestamp,
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
 {
+    // 这个方法作用是查询Thread *泳道的缩略图，所以会查询CANN PyTorch MSTX OSRT数据
     std::string  sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
         " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND depth = 0 AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
         " UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
         "    endNs - ? as end_time from  " + TABLE_API + " WHERE globalTid = ? AND depth = 0 "
-        " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
+        " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
+        " UNION ALL SELECT startNs - ? AS start_time, endNs - startNs AS duration, endNs - ? AS end_time FROM "
+        + TABLE_MSTX_EVENTS + " WHERE globalTid = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? )"
+        " UNION ALL SELECT startNs - ? AS start_time, endNs - startNs AS duration, endNs - ? AS end_time FROM " +
+        TABLE_OSRT_API + " WHERE globalTid = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? )"
+        " ORDER BY start_time;";
     return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
+                        minTimestamp, minTimestamp, requestParams.processId,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
+                        minTimestamp, minTimestamp, requestParams.processId,
                         requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
                         minTimestamp, minTimestamp, requestParams.processId,
                         requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
@@ -437,8 +451,17 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryProcessUnitTracesSumm
         " FROM " + TABLE_CANN_API + " WHERE (globalTid >> 32) = ? AND depth = 0 "
         " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
         "    endNs - ? as end_time from  " + TABLE_API + " WHERE (globalTid >> 32) = ? AND depth = 0 "
-        " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
+        " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
+         " UNION ALL SELECT startNs - ? AS start_time, endNs - startNs AS duration, endNs - ? AS end_time FROM "
+         + TABLE_MSTX_EVENTS + " WHERE (globalTid >> 32) = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? )"
+         " UNION ALL SELECT startNs - ? AS start_time, endNs - startNs AS duration, endNs - ? AS end_time FROM " +
+         TABLE_OSRT_API + " WHERE (globalTid >> 32) = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? )"
+        " ORDER BY start_time;";
     return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, pid,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
+                        minTimestamp, minTimestamp, pid,
+                        requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
+                        minTimestamp, minTimestamp, pid,
                         requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp,
                         minTimestamp, minTimestamp, pid,
                         requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
@@ -483,6 +506,8 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
         case PROCESS_TYPE::MS_TX:
             return ExecuteQuery(stmt, MS_TX_THREAD_BY_PID, metaData.pid, metaData.tid, startTime,
                                 endTime);
+        case PROCESS_TYPE::OSRT_API:
+            return ExecuteQuery(stmt, OSRT_API_THREADS_BY_PID, metaData.pid, startTime, endTime);
         default:
             throw DatabaseException("unsupported type!");
     }
@@ -502,20 +527,26 @@ void AppendFilterToDBEventViewSql(std::string &sql, std::string filterName, cons
 std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
+    uint64_t actualPid = NumberUtil::StringToUnsignedLongLong(params.pid) >> 32;
     // pid匹配的入参为globalTid的高32位 // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT pa.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, "
-        "'pytorch' as threadId FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id WHERE pid||'' = ? ";
+        "'pytorch' as threadId FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id WHERE pid = ? ";
     AppendFilterToDBEventViewSql(sql, "value", params);
     sql.append(" UNION SELECT ca.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, type as threadId "
-        "FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id WHERE pid||'' = ? ");
+        "FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id WHERE pid = ? ");
     AppendFilterToDBEventViewSql(sql, "value", params);
     sql.append("UNION SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, domainId as threadId "
-        "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id WHERE pid||'' = ? ");
+        "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id WHERE pid = ? ");
     AppendFilterToDBEventViewSql(sql, "value", params);
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
+    sql.append(" UNION SELECT osrt.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, 0 AS depth, globalTid as processId, "
+        "'OSRT_API' as threadId FROM OSRT_API AS osrt LEFT JOIN STRING_IDS AS si ON osrt.name = si.id WHERE pid = ? ");
+    AppendFilterToDBEventViewSql(sql, "value", params);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
+        actualPid, actualPid, actualPid, actualPid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -533,7 +564,13 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <Sqlite
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, domainId as threadId "
         "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id WHERE globalTid = ? ");
     AppendFilterToDBEventViewSql(sql, "value", params);
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
+    sql.append(" UNION SELECT osrt.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, 0 AS depth, globalTid as processId, "
+        "'OSRT_API' as threadId FROM OSRT_API AS osrt LEFT JOIN STRING_IDS AS si "
+        "ON osrt.name = si.id WHERE globalTid = ? ");
+    AppendFilterToDBEventViewSql(sql, "value", params);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
+        params.pid, params.pid, params.pid, params.pid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4MSTX(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -590,6 +627,17 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <Sqlit
         "WHERE globalTid = ? AND ca.type = ? ";
     AppendFilterToDBEventViewSql(sql, "value", params);
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.tid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4OSRT(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
+    std::string sql = "SELECT osrt.ROWID AS id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, 0 AS depth, globalTid AS processId, 'OSRT_API' AS threadId, "
+        "(globalTid / 4294967296) AS pid FROM OSRT_API AS osrt LEFT JOIN STRING_IDS AS si ON osrt.name = si.id "
+        "WHERE globalTid = ?";
+    AppendFilterToDBEventViewSql(sql, "value", params);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -719,9 +767,7 @@ std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <S
 {
     // 根据泳道的类型，分别调用不同的query语句
     std::string processName = params.processName;
-    if (StringUtil::StartWith(processName, "process")) {
-        return QueryEventsView4Process(stmt, orderByCondition, params);
-    } else if (StringUtil::StartWith(processName, "Thread")) {
+    if (StringUtil::StartWith(processName, "Thread")) {
         if (params.threadName.empty()) {
             return QueryEventsView4Thread(stmt, orderByCondition, params);
         } else if (params.threadName == "hccl") { // 存疑，"Thread*" 下面是否有 "hccl" 的情况
@@ -752,7 +798,8 @@ void GetEventsViewResultSet4DbDetails(std::unique_ptr<SqliteResultSet>& resultSe
     while (resultSet->Next()) {
         auto ptr = std::make_unique<EventDetail>();
         // 根据泳道类型，创建对应子类对象的指针，填充特有数据
-        if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API || metaType == PROCESS_TYPE::MS_TX) {
+        if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API || metaType == PROCESS_TYPE::MS_TX ||
+            metaType == PROCESS_TYPE::OSRT_API || metaType == PROCESS_TYPE::PROCESS) {
             auto hostPtr = std::make_unique<HostEventDetail>();
             hostPtr->tid = resultSet->GetString("tid");
             hostPtr->pid = resultSet->GetString("pid");
@@ -804,6 +851,9 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
             }
         }
     }
+    if (eventsViewColumnsMap.find(metaType) == eventsViewColumnsMap.end()) {
+        return;
+    }
     for (const auto &item: eventsViewColumnsMap.at(metaType)) {
         body.columnList.emplace_back(item);
     }
@@ -825,12 +875,16 @@ std::unique_ptr<SqliteResultSet> QueryEventsViewResultSet(std::unique_ptr <Sqlit
     const PROCESS_TYPE &metaType)
 {
     switch (metaType) { // 根据不同的泳道类型，调用不同的query查询数据表
+        case Protocol::PROCESS_TYPE::PROCESS:
+            return QueryEventsView4Process(stmt, orderByCondition, params);
         case Protocol::PROCESS_TYPE::MS_TX:
             return QueryEventsView4MSTX(stmt, orderByCondition, params);
         case Protocol::PROCESS_TYPE::API:
             return QueryEventsView4Pytorch(stmt, orderByCondition, params);
         case Protocol::PROCESS_TYPE::CANN_API:
             return GetEventsViewResult4CANNAPI(stmt, orderByCondition, params);
+        case Protocol::PROCESS_TYPE::OSRT_API:
+            return QueryEventsView4OSRT(stmt, orderByCondition, params);
         case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
             if (params.threadIdList.empty() && params.threadName.empty()) {
                 return QueryEventsView4Hardware(stmt, orderByCondition, params, deviceId);
@@ -1524,13 +1578,16 @@ std::string TraceDatabaseHelper::GetSingleLockRangeSql(const TrackQuery &item)
         tempSql = " SELECT cann.connectionId as id, cann.globalTid as pid, cann.type as tid, cann.startNs as "
             "timestamp, cann.endNs as endTime, cann.depth, '' as deviceId, ids.value from " +
             TABLE_CANN_API +
-            "  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= "
-            "? ";
+            "  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= ? ";
     } else if (type == PROCESS_TYPE::MS_TX) {
         tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, "
             "mstx.endNs as endTime, mstx.depth, '' as deviceId, ids.value from " +
             TABLE_MSTX_EVENTS +
             "  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND startNs >= ? AND endNs <= ? ";
+    } else if (type == PROCESS_TYPE::OSRT_API) {
+        tempSql = " SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, osrt.globalTid AS pid, osrt.startNs AS timestamp, "
+            "osrt.endNs AS endTime, 0 AS depth, '' AS deviceId, ids.value AS value FROM " + TABLE_OSRT_API +
+            "  osrt JOIN ids ON ids.id = osrt.name WHERE osrt.globalTid = ? AND osrt.startNs >= ? AND osrt.endNs <= ? ";
     } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
         tempSql = "SELECT hadware.id as id, hadware.pid as pid, hadware.tid as tid, hadware.timestamp as "
             "timestamp, hadware.endTime as endTime, hadware.depth as depth, hadware.deviceId as deviceId, "
@@ -1580,6 +1637,8 @@ void TraceDatabaseHelper::BindSearchAllSliceSingleTrack(std::unique_ptr<SqlitePr
     } else if (type == PROCESS_TYPE::CANN_API) {
         stmt->BindParams(item.processId, item.threadId, item.startTime, item.endTime);
     } else if (type == PROCESS_TYPE::MS_TX) {
+        stmt->BindParams(item.processId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::OSRT_API) {
         stmt->BindParams(item.processId, item.startTime, item.endTime);
     } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
         stmt->BindParams(deviceId, item.threadId, item.startTime, item.endTime);
@@ -1635,20 +1694,21 @@ std::string TraceDatabaseHelper::GetSingleSearchNameWithLockRangeSql(const std::
     std::string tempSql;
     if (type == PROCESS_TYPE::API) {
         tempSql = " SELECT api.ROWID as id, 'pytorch' as tid, api.globalTid as pid, api.startNs as timestamp, "
-            "api.endNs as endTime, api.depth from " +
-            TABLE_API +
+            "api.endNs as endTime, api.depth from " + TABLE_API +
             "  api join ids on ids.id = api.name WHERE api.globalTid = ? AND api.startNs >= ? AND api.endNs <= ? ";
     } else if (type == PROCESS_TYPE::CANN_API) {
         tempSql = " SELECT cann.connectionId as id, cann.globalTid as pid, cann.type as tid, cann.startNs as "
-            "timestamp, cann.endNs as endTime, cann.depth from " +
-            TABLE_CANN_API +
+            "timestamp, cann.endNs as endTime, cann.depth from " + TABLE_CANN_API +
             "  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= "
             "? ";
     } else if (type == PROCESS_TYPE::MS_TX) {
         tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, "
-            "mstx.endNs as endTime, mstx.depth from " +
-            TABLE_MSTX_EVENTS +
+            "mstx.endNs as endTime, mstx.depth from " + TABLE_MSTX_EVENTS +
             "  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND startNs >= ? AND endNs <= ? ";
+    } else if (type == PROCESS_TYPE::OSRT_API) {
+        tempSql = " SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, osrt.globalTid AS pid, osrt.startNs AS timestamp, "
+            "osrt.endNs AS endTime, 0 AS depth FROM " + TABLE_OSRT_API +
+            "  osrt JOIN ids ON ids.id = osrt.name WHERE osrt.globalTid = ? AND osrt.startNs >= ? AND osrt.endNs <= ? ";
     } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
         tempSql = "SELECT hadware.id as id, hadware.pid as pid, hadware.tid as tid, hadware.timestamp as "
             "timestamp, hadware.endTime as endTime, hadware.depth as depth  FROM (SELECT coalesce(c.name, "
@@ -1698,6 +1758,8 @@ void TraceDatabaseHelper::BindSearchNameWithLockRangeStmt(std::unique_ptr<Sqlite
     } else if (type == PROCESS_TYPE::CANN_API) {
         stmt->BindParams(item.processId, item.threadId, item.startTime, item.endTime);
     } else if (type == PROCESS_TYPE::MS_TX) {
+        stmt->BindParams(item.processId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::OSRT_API) {
         stmt->BindParams(item.processId, item.startTime, item.endTime);
     } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
         stmt->BindParams(deviceId, item.threadId, item.startTime, item.endTime);
@@ -1758,6 +1820,9 @@ std::string TraceDatabaseHelper::GetSingleSearchCountLockRangeSql(const SearchCo
     } else if (type == PROCESS_TYPE::MS_TX) {
         tempSql = "SELECT count(1) FROM (SELECT message from " + TABLE_MSTX_EVENTS +
             " WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) mstx join ids on id = mstx.message ";
+    } else if (type == PROCESS_TYPE::OSRT_API) {
+        tempSql = "SELECT count(1) FROM (SELECT name from " + TABLE_OSRT_API +
+            " WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) osrt join ids on id = osrt.name ";
     } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
         tempSql = "SELECT count(1) FROM (SELECT coalesce(c.name, m.message, s.name, main.taskType) as "
             "name FROM " +
@@ -1807,6 +1872,8 @@ void TraceDatabaseHelper::BindSingleTrackStmt(const SearchCountParams &params,
         stmt->BindParams(item.processId, item.threadId, item.startTime, item.endTime);
     } else if (type == PROCESS_TYPE::MS_TX) {
         stmt->BindParams(item.processId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::OSRT_API) {
+        stmt->BindParams(item.processId, item.startTime, item.endTime);
     } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
         stmt->BindParams(deviceId, item.threadId, item.startTime, item.endTime);
     } else if (type == PROCESS_TYPE::HCCL) {
@@ -1840,7 +1907,8 @@ std::string TraceDatabaseHelper::GetSearchSliceNameCountSql(bool isMatchExact, b
         nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
     std::string hostSql = "select name from " + TABLE_CANN_API + " union all select message from  " +
-                          TABLE_MSTX_EVENTS + " union all select name from  " + TABLE_API;
+                          TABLE_MSTX_EVENTS + " union all select name from  " + TABLE_API +
+                          " UNION ALL SELECT name FROM " + TABLE_OSRT_API;
 
     std::string communicationOpSql;
     if (!TraceDatabaseHelper::IsDeviceIdUnique(rankId)) {
@@ -1941,7 +2009,10 @@ std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact,
         "CANN_API JOIN minTime UNION all " + mstxEventsSql + "UNION all select '' as deviceId, name, globalTid as pid,"
         "'HOST' as metaType, 'pytorch' as tid, "
         "startNs - minTime.value AS startTime, endNs - startNs AS duration, depth, PYTORCH_API.ROWID as id from "
-        "PYTORCH_API JOIN minTime ) allNames join ids on ids.id = allNames.name" +
+        "PYTORCH_API JOIN minTime "
+        "UNION ALL SELECT '' AS deviceId, name, globalTid AS pid, 'HOST' AS metaType, 'OSRT_API' AS tid, "
+        "startNs - minTime.value AS startTime, endNs - startNs AS duration, 0 AS depth, osrt.ROWID AS id FROM " +
+        TABLE_OSRT_API + " osrt JOIN minTime) allNames join ids on ids.id = allNames.name" +
         orderBy + " LIMIT ? OFFSET ?";
     return sql;
 }
@@ -1965,16 +2036,15 @@ std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool i
     const std::string hostSql =
         " SELECT name, globalTid as pid,  'HOST' as metaType,  type as tid, startNs - minTime.value as startTime,endNs "
         "- startNs as duration, depth, api.id "
-        " FROM (select globalTid, type, startNs, endNs, depth, cann.ROWID as id, name from " +
-        TABLE_CANN_API +
+        " FROM (select globalTid, type, startNs, endNs, depth, cann.ROWID as id, name from " + TABLE_CANN_API +
         " cann join ids on ids.id = cann.name "
         " Union all select globalTid, domainId as type, startNs, endNs, depth, mstx.ROWID as id, message as name "
-        " from " +
-        TABLE_MSTX_EVENTS +
+        " from " + TABLE_MSTX_EVENTS +
         " mstx join ids on ids.id = mstx.message "
         " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, python.ROWID as id, name "
-        " from " +
-        TABLE_API + " python join ids on ids.id = python.name) api join minTime ";
+        " from " + TABLE_API + " python join ids on ids.id = python.name" +
+        " UNION ALL SELECT globalTid, 'OSRT_API' AS type, startNs, endNs, 0 AS depth, osrt.ROWID AS id, name"
+        " FROM " + TABLE_OSRT_API + " osrt JOIN ids ON ids.id = osrt.name) api join minTime ";
     std::string comSql = "select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
                          " startNs - minTime.value as startTime, endNs - startNs as duration, 0 as depth, op.ROWID"
                          " as id from COMMUNICATION_OP op join minTime " +
@@ -1996,58 +2066,6 @@ std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool i
           " join ids on ids.id = com.name  union ALL " +
           comSql + " union ALL " + hostSql + ") allNames " + orderBy + " LIMIT 1 OFFSET ?";
     return sql;
-}
-
-void TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
-    std::vector<std::pair<std::string, std::string>> rawData)
-{
-    bool hasOneHcom = false;
-    CommunicationLargeOperatorInfo op;
-    for (const auto &item : rawData) {
-        if (item.first.find("hcom") == 0) {
-            if (hasOneHcom) {
-                result.push_back(op);
-            } else {
-                hasOneHcom = true;
-            }
-            op.name = item.first;
-            op.memcpyTasks.clear();
-            op.reduceInlineTasks.clear();
-        } else {
-            if (!hasOneHcom) {
-                continue;
-            }
-            Dic::document_t json;
-            json.Parse(item.second.c_str());
-            if (!json.IsObject()) {
-                ServerLog::Error("Args is not valid json format. raw: %", item.second);
-                continue;
-            }
-            if (!json.HasMember("size(Byte)") || !json["size(Byte)"].IsString()) {
-                ServerLog::Error("Args has no member size(Byte) or member is not int. raw: %", item.second);
-                continue;
-            }
-            if (!json.HasMember("transport type") || !json["transport type"].IsString()) {
-                ServerLog::Error("Args has no member transport type or member is not string. raw: %", item.second);
-                continue;
-            }
-            if (!json.HasMember("link type") || !json["link type"].IsString()) {
-                ServerLog::Error("Args has no member link type or member is not string. raw: %", item.second);
-                continue;
-            }
-            CommunicationSmallOperatorInfo info;
-            int64_t tempSize = NumberUtil::StringToLongLong(json["size(Byte)"].GetString());
-            info.size = (tempSize < 0 ? 0 : static_cast<uint64_t>(tempSize));
-            info.transportType = json["transport type"].GetString();
-            info.linkType = json["link type"].GetString();
-            if (item.first.find("Memcpy") == 0) {
-                op.memcpyTasks.emplace_back(info);
-            } else {
-                op.reduceInlineTasks.emplace_back(info);
-            }
-        }
-    }
-    result.push_back(op);
 }
 
 void TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,

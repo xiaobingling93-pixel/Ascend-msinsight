@@ -36,6 +36,8 @@ const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
     {TABLE_MSTX_EVENTS, "create TEMPORARY table if not exists MSTX_EVENTS(startNs INTEGER,endNs INTEGER, "
                         " eventType INTEGER,rangeId INTEGER, category INTEGER, message INTEGER, globalTid INTEGER, "
                         " endGlobalTid INTEGER, domainId INTEGER, connectionId INTEGER, depth integer); "},
+    {TABLE_OSRT_API, "create TEMPORARY table if not exists OSRT_API(name INTEGER, globalTid NUMERIC,"
+        " startNs INTEGER, endNs INTEGER);"},
     {TABLE_PYTORCH_CALLCHAINS,"create TEMPORARY table if not exists PYTORCH_CALLCHAINS(id INTEGER, stack INTEGER"
                               " , stackDepth INTEGER );"},
     {TABLE_COMMUNICATION_SCHEDULE_TASK, "create TEMPORARY table if not exists COMMUNICATION_SCHEDULE_TASK_INFO("
@@ -122,6 +124,13 @@ inline std::string GetOverlapAnalysisSameNameDetailSql(const int type)
     " main.ROWID as id , type as tid, 'OVERLAP_ANALYSIS' as pid"
     " from OVERLAP_ANALYSIS main join params p where deviceId = p.rankId and type = " + std::to_string(type) +
     " and timestamp + duration >= p.startTime AND timestamp <= p.endTime ";
+}
+inline std::string GetOsrtSameNameDetailSql(const std::string &pidListStr)
+{
+    return "SELECT startNs - p.minTime AS timestamp, endNs - startNs AS duration, 0 AS depth,"
+    " main.ROWID AS id, 'OSRT_API' AS tid, globalTid AS pid"
+    " FROM OSRT_API main JOIN nameIds n ON name = n.id JOIN params p WHERE globalTid IN (" + pidListStr +
+    " ) AND timestamp + duration >= p.startTime AND timestamp <= p.endTime ";
 }
 // sql of singleUnitFlow
 const static std::string PYTORCH_UNIT_FLOW_SQL =
@@ -212,6 +221,10 @@ const static std::string MS_TX_THREAD_BY_PID =
         "select startNs, endNs - startNs as duration,endNs,message as name,depth from " +
         TABLE_MSTX_EVENTS +
         " where globalTid = ? and domainId = ? and endNs >= ? AND startNs <= ? ORDER BY startNs";
+
+const static std::string OSRT_API_THREADS_BY_PID =
+    "SELECT startNs, endNs - startNs AS duration, endNs, name, 0 AS depth FROM " + TABLE_OSRT_API +
+    " WHERE globalTid = ? AND endNs >= ? AND startNs <= ? ORDER BY startNs ASC;";
 
 // QueryEventsViewData4Db
 const static std::string QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_NOT_UNIQUE =

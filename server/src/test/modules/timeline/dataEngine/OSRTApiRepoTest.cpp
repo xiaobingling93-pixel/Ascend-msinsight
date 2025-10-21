@@ -179,7 +179,8 @@ TEST_F(OSRTApiRepoTest, QuerySliceDetailInfoExecuteSQLFailedTest)
     std::string sliceId{"1"};
     CompeteSliceDomain competeSliceDomain;
     bool result = QuerySliceDetailInfoExecuteSQL(database, sliceId, competeSliceDomain);
-    ASSERT_FALSE(result);
+    // 打开数据库时会创建OSRT_API临时表，所以SQL查询不会报错
+    ASSERT_TRUE(result);
     database->CloseDb();
     std::remove(completePath.c_str());
 }

@@ -50,6 +50,7 @@ protected:
     std::string mstxSql = "CREATE TABLE MSTX_EVENTS (startNs INTEGER,endNs INTEGER,eventType INTEGER,rangeId "
         "INTEGER,category INTEGER,message INTEGER,globalTid INTEGER,endGlobalTid "
         "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
+    std::string osrtSql = "CREATE TABLE OSRT_API(name INTEGER, globalTid NUMERIC, startNs INTEGER, endNs INTEGER);";
     std::string overlap = "CREATE TABLE OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
         "startNs integer, endNs integer, type integer);";
     std::string npuInfoSql = "CREATE TABLE NPU_INFO(id INTEGER, name TEXT);";
@@ -695,6 +696,46 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     EXPECT_EQ(result, true);
 }
 
+TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenOsrt)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, osrtSql);
+    std::string osrtData =
+        "INSERT INTO OSRT_API (name, globalTid, startNs, endNs) VALUES (100, 324875, 199, 2540);";
+    std::string stringIdsData = "INSERT INTO STRING_IDS (id, value) VALUES (100, 'add');";
+    DatabaseTestCaseMockUtil::InsertData(db, osrtData);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsData);
+    database.SetDbPtr(db);
+    Dic::Protocol::UnitThreadsOperatorsParams requestParams;
+    requestParams.rankId = "";
+    requestParams.processes.push_back(SimpleProcess {"324875", {"0"}});
+    requestParams.metaTypeList = {"OSRT_API"};
+    requestParams.orderBy = "timestamp";
+    requestParams.order = "DESC";
+    const uint64_t min = 0;
+    const uint64_t max = 3000;
+    requestParams.startTime = min;
+    requestParams.endTime = max;
+    requestParams.name = "add";
+    requestParams.pageSize = 10; // 10
+    requestParams.current = 1;
+    Dic::Protocol::UnitThreadsOperatorsBody responseBody;
+    const uint64_t minTimestamp = 0;
+    std::vector<uint64_t> traceId;
+    for (const auto& process : requestParams.processes) {
+        for (const auto& tid : process.tidList) {
+            traceId.emplace_back(TrackInfoManager::Instance().GetTrackId(requestParams.rankId, process.pid, tid));
+        }
+    }
+    bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.sameOperatorsDetails.size(), 1);
+}
+
 TEST_F(DbTraceDatabaseTest, TestQueryAclnnOpCountExceedThresholdWhenDbNotOpen)
 {
     std::recursive_mutex testMutex;
@@ -1147,6 +1188,25 @@ TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenMstx)
         "startNs >= ? AND endNs <= ?  ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
 }
 
+TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenOsrt)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    Dic::Module::Timeline::SearchAllSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::OSRT_API);
+    trackQueryVec.emplace_back(item);
+    params.order = "asc";
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id, value from STRING_IDS where lower(value) like lower('%'||?||'%'))  "
+        "SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, osrt.globalTid AS pid, osrt.startNs AS timestamp, "
+        "osrt.endNs AS endTime, 0 AS depth, '' AS deviceId, ids.value AS value FROM OSRT_API  osrt "
+        "JOIN ids ON ids.id = osrt.name WHERE osrt.globalTid = ? AND osrt.startNs >= ? AND osrt.endNs <= ?  "
+        "ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
+}
+
 TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenHardWare)
 {
     std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
@@ -1267,6 +1327,26 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenMstx)
         "AND startNs >= ? AND endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
+TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenOsrt)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    item.rankId = path;
+    Dic::Module::Timeline::SearchSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::OSRT_API);
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql =
+        Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
+    EXPECT_EQ(sql,
+        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  "
+        "SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, osrt.globalTid AS pid, osrt.startNs AS timestamp, "
+        "osrt.endNs AS endTime, 0 AS depth FROM OSRT_API  osrt JOIN ids ON ids.id = osrt.name "
+        "WHERE osrt.globalTid = ? AND osrt.startNs >= ? AND osrt.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+}
+
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHardWare)
 {
     std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
@@ -1361,6 +1441,25 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenMstx)
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT count(1) "
         "FROM (SELECT message from MSTX_EVENTS WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) mstx "
         "join ids on id = mstx.message ");
+}
+
+TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenOsrt)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    item.rankId = path;
+    Dic::Module::Timeline::SearchCountParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::OSRT_API);
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    params.rankId = "ll Host";
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) "
+        "SELECT count(1) FROM (SELECT name from OSRT_API WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) osrt "
+        "join ids on id = osrt.name ");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHardWare)

@@ -509,7 +509,11 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " UNION all "
           " SELECT pa.ROWID AS id, 'pytorch' AS tid, name, globalTid AS pid, depth "
           " from PYTORCH_API pa "
-          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
+          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+          " UNION ALL "
+          " SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, name, globalTid AS pid, 0 AS depth "
+          " FROM OSRT_API osrt "
+          " WHERE name = (SELECT id FROM STRING_IDS WHERE value = ?) AND abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql to query kernel depth and thread.");
@@ -518,7 +522,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     std::unique_ptr<SqliteResultSet> resultSet;
     uint64_t timestamp = params.timestamp + minTimestamp;
     resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp, params.name, timestamp,
-                                   params.name, timestamp, params.name, timestamp, params.name, timestamp);
+        params.name, timestamp, params.name, timestamp, params.name, timestamp, params.name, timestamp);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
         return false;
@@ -2129,21 +2133,4 @@ bool DbTraceDataBase::QueryByteAlignmentAnalyzerRawData(
     return true;
 }
 
-void DbTraceDataBase::QueryDeviceIdInStepTraceTime(std::set<std::string> &deviceIds)
-{
-    std::string sql = "SELECT DISTINCT deviceId from StepTraceTime";
-    sqlite3_stmt* stmt = nullptr;
-    int ret = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (ret != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for query deviceId in StepTraceTime. Error: ",
-                         sqlite3_errmsg(db));
-        return;
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string deviceId = sqlite3_column_string(stmt, col++);
-        deviceIds.insert(deviceId);
-    }
-    sqlite3_finalize(stmt);
-}
 }
