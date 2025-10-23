@@ -85,7 +85,7 @@ function wrapData(data: any): any {
         }
     });
     const sdma = data.find((item: any) => item.transportType === 'SDMA');
-    sdma.largePacketRatio = '/';
+    if (sdma) { sdma.largePacketRatio = '/'; };
     const sio = data.find((item: any) => item.transportType === 'SIO');
     let hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE');
     if (sio !== undefined) {
