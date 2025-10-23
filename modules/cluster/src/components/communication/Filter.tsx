@@ -101,7 +101,13 @@ function getStageValueByObserveCondition(condition: ConditionDataType, stageOpti
             res = generateStageKeyValue(temp.groupIdHash.compare, temp.groupIdHash.baseline);
             continue;
         }
-        if (temp?.strategy === condition.pgName && temp?.stage === condition.stage) {
+        // pgName存在的时候，匹配pgName
+        if (condition.pgName !== '' && temp?.strategy === condition.pgName && temp?.stage === condition.stage) {
+            res = generateStageKeyValue(temp.groupIdHash.compare, temp.groupIdHash.baseline);
+            break;
+        }
+        // 兼容老数据处理，pgName不存在的时候 根据groupId的hash值进行匹配
+        if (condition.pgName === '' && condition.groupIdHash === temp.groupIdHash.compare) {
             res = generateStageKeyValue(temp.groupIdHash.compare, temp.groupIdHash.baseline);
             break;
         }
