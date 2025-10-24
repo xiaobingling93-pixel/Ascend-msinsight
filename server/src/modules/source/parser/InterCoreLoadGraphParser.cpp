@@ -154,7 +154,7 @@ void InterCoreLoadGraphParser::TransformAnalysisDetail(InterCoreLoadAnalysisDeta
 
     std::vector<InterCoreOpDetail> newOpDetails;
     uint8_t index = 0;
-    while (index < analysisDetail.opDetails.size()) {
+    while (index < std::numeric_limits<uint8_t>::max() - 2 && index < analysisDetail.opDetails.size()) {
         // 按照2个一组，将vector计算单元，分配到新的core op detail中
         uint8_t coreId = static_cast<uint8_t>(index / 2);
         InterCoreOpDetail detail;

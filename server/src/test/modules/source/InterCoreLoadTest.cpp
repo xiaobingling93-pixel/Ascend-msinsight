@@ -9,12 +9,33 @@
 #include "SourceProtocolUtil.h"
 #include "WsSessionManager.h"
 #include "InterCoreLoadTest.h"
+#include "JsonUtil.h"
 
 namespace Dic::Module::Source::Test {
 using namespace Dic::Module::Source;
 using namespace Dic::Protocol;
 
-class InterCoreLoadTest : public ::testing::Test {};
+class InterCoreLoadTest : public ::testing::Test {
+protected:
+    document_t GeneratorBigCoreDetail(size_t len)
+    {
+        document_t doc(kObjectType);
+        auto &allocator = doc.GetAllocator();
+        JsonUtil::AddMember(doc, "soc", "910B", allocator);
+        JsonUtil::AddMember(doc, "op_type", "vector", allocator);
+        JsonUtil::AddMember(doc, "advice", "test advice", allocator);
+        json_t op_detail(kArrayType);
+        for (size_t i = 0; i < len; i++) {
+            json_t detail(kObjectType);
+            JsonUtil::AddMember(detail, "core_id", std::to_string(i), allocator);
+            json_t core_detail(kArrayType);
+            JsonUtil::AddMember(detail, "core_detail", core_detail, allocator);
+            op_detail.PushBack(detail, allocator);
+        }
+        JsonUtil::AddMember(doc, "op_detail", op_detail, allocator);
+        return doc;
+    }
+};
 
 TEST_F(InterCoreLoadTest, test_GetInterCoreLoadAnalysisInfo_with_normal_json_of_vector_op_type)
 {
@@ -84,9 +105,9 @@ TEST_F(InterCoreLoadTest, test_response_to_json)
 {
     DetailsInterCoreLoadGraphResponse response;
     response.body = {
-            "soc",
-            "optype",
-            "advice"
+        "soc",
+        "optype",
+        "advice"
     };
     DetailsInterCoreLoadOpDetail opDetail0 = {
         0,
@@ -96,14 +117,14 @@ TEST_F(InterCoreLoadTest, test_response_to_json)
                 {100, 8},
                 {10, 9},
                 {98.8, 10}
-                },
+            },
             {
                 "vector0",
                 {99, 7},
                 {9, 8},
                 {97.8, 9}
-                }
             }
+        }
     };
 
     response.body.opDetails.emplace_back(opDetail0);
@@ -117,5 +138,14 @@ TEST_F(InterCoreLoadTest, test_response_to_json)
     doc.Accept(writer);
     std::string docString = buffer.GetString();
     EXPECT_TRUE(StringUtil::StartWith(docString, INTER_CORE_LOAD_ANALYSIS_RESPONSE_JSON));
+}
+
+TEST_F(InterCoreLoadTest, test_op_detail_array_size_bigger_than_uint8_max)
+{
+    InterCoreLoadGraphParser parser;
+    DetailsInterCoreLoadGraphBody body;
+    auto json = GeneratorBigCoreDetail(static_cast<size_t>(std::numeric_limits<uint8_t>::max()) * 2);
+    std::string jsonStr = JsonUtil::JsonDump(json);
+    EXPECT_NO_THROW(parser.GetInterCoreLoadAnalysisInfo(jsonStr, body));
 }
 }
