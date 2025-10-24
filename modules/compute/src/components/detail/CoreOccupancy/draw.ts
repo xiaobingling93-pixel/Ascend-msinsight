@@ -23,16 +23,29 @@ interface SubCoreDrawData {
 }
 
 const CORE_NUM_910 = {
+    // A2
     B1: 24,
     B2: 24,
     B3: 20,
     B4: 20,
+    // A3
     _9362: 20,
     _9372: 20,
     _9381: 24,
     _9382: 24,
     _9391: 24,
     _9392: 24,
+    // A5
+    _950z: 8,
+    _956d: 0,
+    _9579: 28,
+    _957b: 28,
+    _957d: 28,
+    _9581: 32,
+    _9589: 32,
+    _958a: 32,
+    _958b: 32,
+    _9599: 36,
 };
 
 // 画布、节点、图例等尺寸
@@ -116,6 +129,7 @@ export function getDrawData({ data, maxSize, showAs, isCompared }: DataConfig): 
             };
         }),
     }));
+    // 界面上补全算子未运行的核，补全到芯片实际的核数
     for (let i = drawData.length; i < maxCoreNum; i++) {
         drawData.push(
             {

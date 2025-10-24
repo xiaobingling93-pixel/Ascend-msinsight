@@ -65,6 +65,10 @@ Protocol::MemoryTable DetailsMemoryParser::ParseJsonToMemoryTable(const json_t &
     result.blockId = JsonUtil::GetString(json, "block_id");
     result.tableOpType = JsonUtil::GetString(json, "table_op_type");
     result.advice = JsonUtil::GetVector<std::string>(json, "advice");
+    if (!json.HasMember("table_detail")) {
+        ServerLog::Error("Memory table data invalid, table per block lacks table detail member.");
+        return result;
+    }
     auto &tableDetailJson = const_cast<Value &>(json["table_detail"]);
     if (!tableDetailJson.IsArray()) {
         return result;
@@ -74,6 +78,9 @@ Protocol::MemoryTable DetailsMemoryParser::ParseJsonToMemoryTable(const json_t &
         tableDetail.tableName = JsonUtil::GetString(item, "table_name");
         tableDetail.size = JsonUtil::GetVector<std::string>(item, "size");
         tableDetail.headerName = JsonUtil::GetVector<std::string>(item, "header_name");
+        if (!item.HasMember("row")) {
+            continue;
+        }
         Value &row = item["row"];
         if (!row.IsArray()) {
             continue;
