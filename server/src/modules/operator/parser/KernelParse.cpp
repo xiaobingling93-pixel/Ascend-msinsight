@@ -401,12 +401,16 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
             return false;
         }
         // 获取每一行数据存储在rowVector里面
-        const std::basic_string<char>& basicString(line);
-        std::vector<std::string> rowVector = StringUtil::StringSplit(basicString);
+        std::vector<std::string> rowVector = StringUtil::StringSplit(line);
         // 如果是表头且非空
         if (lineNumber == 1 and !rowVector.empty()) {
             // 获取每一列，更新db表
             ProcessHeaderGetParseFunc(db, rowVector, columns, dataMap, parseProcessList);
+            continue;
+        }
+        // 如果解析行数与列映射map大小不一致，则认为异常数据，直接丢弃，避免后续ParseFunc执行时出现越界
+        if (rowVector.size() != dataMap.size()) {
+            ServerLog::Warn("Invalid data is discarded in the line: ", lineNumber);
             continue;
         }
         // 解析非表头数据存储在db里
@@ -415,21 +419,19 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
             parseFunc(dataMap, rowVector, realDeviceId, kernel);
         }
         // 如果这列数据和列名个数对不上，说明可能有数据缺了，不存储这一行
-        if (rowVector.size() != dataMap.size() || kernel.utilizationInfo.size() != columns.size()) {
+        if (kernel.utilizationInfo.size() != columns.size()) {
             ServerLog::Warn("Invalid data is discarded in the line: ", lineNumber);
             continue;
         }
         // 记录有多少device
-        devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]]
-                                                                 : realDeviceId);
+        devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]] : realDeviceId);
         // 读取每一行数据写入kernel内
         db->InsertKernelDetail(kernel, columns);
     }
     // 读取剩下的数据写入kernel内
     db->SaveKernelDetail(columns);
-    auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Finish to parse kernel detail, ", filePath, " cost time:",
-                    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count());
     Timeline::TraceTime::Instance().UpdateTime(db->QueryMinStartTime(), 0);
     file.close();
     return true;
