@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { Tooltip } from 'ascend-components';
-import { HelpIcon } from 'ascend-icon';
+import { HelpIcon, BulbIcon } from 'ascend-icon';
 import { type TableColumnsType, Spin } from 'antd';
 import { ResizeTable } from 'ascend-resize';
 import { DataType } from '../CommunicationTimeTable';
@@ -69,7 +69,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                 if (Object.keys(obj.statistics).length === 0) {
                     dataList.push({
                         title: obj.name,
-                        tableColumns: tableColumns,
+                        tableColumns,
                         tableDataSource: [],
                     });
                     return;
@@ -84,8 +84,8 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                 });
                 dataList.push({
                     title: obj.name,
-                    tableColumns: tableColumns,
-                    tableDataSource: tableDataSource,
+                    tableColumns,
+                    tableDataSource,
                 });
             });
         });
@@ -104,6 +104,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
         <div style={{ marginBottom: '20px' }} data-testid={'communicationAdvice'}>
             <Spin spinning={loading}>
                 <CollapsiblePanel title={<div>
+                    <BulbIcon style={{ marginTop: '2px', marginRight: '8px' }}/>
                     {t('Advice')}
                     <Tooltip title={
                         (
@@ -146,9 +147,9 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
             case 'Bandwidth Contention Analysis':
                 return `${t('title.Bandwidth Contention')} ${t('index.Bandwidth Contention')}`;
             case 'Communication Retransmission Analysis':
-                return `${t('title.RDMA Transmission Time')} ${t('index.RDMA Transmission Time')}\n\n${t('title.Network Configuration')} ${t('index.Network Configuration')}`;
+                return `${t('title.RDMA Transmission Time')} ${t('index.RDMA Transmission Time')}\n${t('title.Network Configuration')} ${t('index.Network Configuration')}`;
             case 'Packet Analysis':
-                return `${t('title.Data Parallelism')} ${t('index.Data Parallelism')}\n\n${t('title.Memory Optimization')} ${t('index.Memory Optimization')}\n\n${t('title.Adopt')} ${t('index.Adopt')}`;
+                return `${t('title.Data Parallelism')} ${t('index.Data Parallelism')}\n${t('title.Memory Optimization')} ${t('index.Memory Optimization')}\n${t('title.Adopt')} ${t('index.Adopt')}`;
             default:
                 return '';
         }

@@ -43,15 +43,19 @@
 
 .communication-advice-header {
     margin-bottom: 8px;
-    font-weight: bold;
+    font-weight: 700;
 }
 
 .communication-advice-content {
-    padding: 0 12px 20px;
+    padding: 0 0px 24px;
+    display: inline-block;
+    line-height: 20px;
 }
 
 .communication-expert-index {
-    padding: 0 12px 20px;
+    display: inline-block;
+    padding: 0 0px 24px;
+    line-height: 20px;
     white-space: pre;
 }
 
@@ -63,8 +67,9 @@
     background-color: var(--grey80blue);
 }
 
-.theme_dark .communication-advice-content {
-    color: white;
+.theme_dark .communication-advice-content,
+.theme_dark .communication-expert-index {
+    color: rgb(211, 220, 233);
 }
 
 .theme_dark .CommunicatorContainer .st0 {

@@ -200,6 +200,22 @@ body {
 .mt-24{margin-top: 24px}
 .mb-24{margin-bottom: 24px}
 
+.ml-16 {
+    margin-left: 16px
+}
+
+.mr-16 {
+    margin-right: 16px
+}
+
+.mt-16 {
+    margin-top: 16px
+}
+
+.mb-16 {
+    margin-bottom: 16px
+}
+
 .ml-20{margin-left: 20px}
 .mr-20{margin-right: 20px}
 .mt-20{margin-top: 20px}

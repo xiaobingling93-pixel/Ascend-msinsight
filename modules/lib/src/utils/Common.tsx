@@ -52,9 +52,8 @@ export const StyledEmpty = ({ descriptor, style }:
 const StyledAdvice = styled.div`
     color: ${(p): string => p.theme.textColorPrimary};
     background-color: ${(p): string => p.theme.bgColorLight};
-    line-height: 36px;
     font-size: 14px;
-    padding: 0 15px;
+    padding: 8px 16px;
     margin-bottom: 5px;
     display: flex;
     flex-direction: row;
@@ -86,14 +85,28 @@ export function Hit(props: IHitProps): JSX.Element {
             return str;
         }
         const list = str.split(BREAK_LINE_REGEXP);
-        return list.map((item, index) => (<div key={index}>{item}</div>));
+        return list.map((item) =>
+            <>
+                { item } <br/>
+            </>);
     };
     return <StyledAdvice style={style} {...restProps}>
         <div>
-            {icon}
-            {(title !== undefined && title !== null) ? (<span>{title}</span>) : <></>}
+            <div style={ { display: 'flex', alignItems: 'flex-start' } }>
+                { icon }
+                { (title !== undefined && title !== null)
+                    ? (
+                        <span style={ { lineHeight: '16px' } }>{ title }</span>)
+                    : <></> }
+            </div>
         </div>
-        <div>{Array.isArray(text) ? text.map((item, index) => (<div key={index}>{splitText(item)}</div>)) : splitText(text)}</div>
+        <div>{ Array.isArray(text)
+            ? text.map((item, index) =>
+                <div style={ { lineHeight: '16px' } } key={ index }>{ splitText(item) }</div>)
+            : <div style={ { lineHeight: '16px' } }>
+                {splitText(text)}
+            </div> }
+        </div>
     </StyledAdvice>;
 }
 export function Advice(props: IHitProps): JSX.Element {

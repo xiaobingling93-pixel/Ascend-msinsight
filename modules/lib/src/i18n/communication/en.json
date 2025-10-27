@@ -158,6 +158,7 @@
       "When the category is not 'total', hover over the heatmap to see the specific operator names"
     ],
     "slowRankList": {
+      "Advice": "Advice",
       "TitleTooltip": [
         "“Fast and slow ranks” is a relative concept. A fast rank refers to a rank that completes computation tasks earlier within the cluster. When fast and slow ranks are not synchronized, it is usually observed that the fast rank spends longer on communication operators, with a high proportion of waiting time.",
         "To further investigate the causes, right-click the corresponding communication operator in the Communication chart above and select “Find in Timeline” to compare fast and slow ranks and identify the root cause."

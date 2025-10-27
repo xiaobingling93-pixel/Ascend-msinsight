@@ -4,8 +4,9 @@
 
 import React, { ReactNode } from 'react';
 import { type TableColumnsType } from 'antd';
+import { Hit } from 'ascend-utils';
 import styled from '@emotion/styled';
-import { Button, MITooltipHelp, Text } from 'ascend-components';
+import { Button, MITooltipHelp } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import { SlowRankListItem, SlowRankOpListItem } from '../../utils/interface';
 import { useTranslation } from 'react-i18next';
@@ -142,12 +143,14 @@ const DiffTimeTable: React.FC<DiffTimeTableProps> = ({ data, fastTotalElapseTime
             />
         );
     };
-
     return (
         data?.length > 0
             ? <>
-                <div className={'mb-6'}>
-                    <Text type={'warning'}>{t('SlowRankDesc', { fastTotalElapseTime: usToMs(fastTotalElapseTime), fastRankId })}</Text>
+
+                <div className={'mb-16'}>
+                    <Hit type={ 'advice' }
+                        title={ `${t('Advice')}:` }
+                        text={ t('SlowRankDesc', { fastTotalElapseTime: usToMs(fastTotalElapseTime), fastRankId }) }/>
                 </div>
 
                 <ResizeTable
