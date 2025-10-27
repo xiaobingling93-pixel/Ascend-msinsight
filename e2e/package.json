@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
+    "jointTest": "npx playwright test tests/jointTest",
     "lint": "eslint . --ext .js,.ts,.cjs,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write e2e/"
   },
