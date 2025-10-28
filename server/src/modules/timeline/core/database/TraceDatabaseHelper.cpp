@@ -1083,9 +1083,16 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
 void TraceDatabaseHelper::ComputeSummarySlice(std::unique_ptr<SqliteResultSet> &resultSet,
     uint64_t unitTime, Protocol::UnitThreadTracesSummaryBody &responseBody)
 {
+    bool resultNotEmpty = false;
     uint64_t tempStartTime = 0;
     uint64_t tempEndTime = 0;
     while (resultSet->Next()) {
+        if (!resultNotEmpty) {
+            tempStartTime = resultSet->GetUint64("start_time");
+            tempEndTime = resultSet->GetUint64("end_time");
+            resultNotEmpty = true;
+            continue;
+        }
         uint64_t curEndTime = resultSet->GetUint64("end_time");
         uint64_t curStartTime = resultSet->GetUint64("start_time");
         if (curEndTime < curStartTime) {
@@ -1102,18 +1109,27 @@ void TraceDatabaseHelper::ComputeSummarySlice(std::unique_ptr<SqliteResultSet> &
         tempEndTime = curEndTime;
         responseBody.data.emplace_back(summary);
     }
-    ThreadTracesSummary summary;
-    summary.startTime = tempStartTime;
-    summary.duration = tempEndTime > tempStartTime ? tempEndTime - tempStartTime : 0;
-    responseBody.data.emplace_back(summary);
+    if (resultNotEmpty) {
+        ThreadTracesSummary summary;
+        summary.startTime = tempStartTime;
+        summary.duration = tempEndTime > tempStartTime ? tempEndTime - tempStartTime : 0;
+        responseBody.data.emplace_back(summary);
+    }
 }
 
 void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
     uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody)
 {
+    bool resultNotEmpty = false;
     uint64_t tempStartTime = 0;
     uint64_t tempEndTime = 0;
     while (resultSet->Next()) {
+        if (!resultNotEmpty) {
+            tempStartTime = resultSet->GetUint64("timestamp");
+            tempEndTime = resultSet->GetUint64("end_time");
+            resultNotEmpty = true;
+            continue;
+        }
         uint64_t curStartTime = resultSet->GetUint64("timestamp");
         uint64_t curEndTime = resultSet->GetUint64("end_time");
         if (tempEndTime + unitTime >= curStartTime) {
@@ -1127,10 +1143,12 @@ void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<Sq
         tempEndTime = curEndTime;
         responseBody.data.emplace_back(summary);
     }
-    ThreadTracesSummary summary;
-    summary.startTime = tempStartTime - minTimestamp;
-    summary.duration = tempEndTime - tempStartTime;
-    responseBody.data.emplace_back(summary);
+    if (resultNotEmpty) {
+        ThreadTracesSummary summary;
+        summary.startTime = tempStartTime - minTimestamp;
+        summary.duration = tempEndTime - tempStartTime;
+        responseBody.data.emplace_back(summary);
+    }
     ServerLog::Info("Summary Size is: ", responseBody.data.size());
 }
 

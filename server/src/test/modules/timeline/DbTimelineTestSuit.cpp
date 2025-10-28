@@ -112,39 +112,39 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
     params.endTime = 400000000; // endTime = 400000000
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    const uint64_t expectSize1 = 25;
+    const uint64_t expectSize1 = 24;
     EXPECT_EQ(body.data.size(), expectSize1); // size = 24
-    EXPECT_EQ(body.data[0].startTime, 0); // startTime = 39828694
+    EXPECT_EQ(body.data[0].startTime, 39828694); // startTime = 39828694
 
     body.data.clear();
     params.metaType = "HCCL";
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    const uint64_t expectSize2 = 9;
+    const uint64_t expectSize2 = 8;
     EXPECT_EQ(body.data.size(), expectSize2); // size = 8
-    EXPECT_EQ(body.data[0].startTime, 0); // startTime = 175902293
+    EXPECT_EQ(body.data[0].startTime, 175902293); // startTime = 175902293
 
     body.data.clear();
     params.metaType = "CANN_API";
     params.processId = "11814731181473";
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    const uint64_t expectSize3 = 2;
+    const uint64_t expectSize3 = 1;
     EXPECT_EQ(body.data.size(), expectSize3); // size = 3
-    EXPECT_EQ(body.data[0].startTime, 0); // startTime = 39360870
+    EXPECT_EQ(body.data[0].startTime, 39360870); // startTime = 39360870
 
     body.data.clear();
     params.metaType = "OVERLAP_ANALYSIS";
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    const uint64_t expectSize4 = 2;
+    const uint64_t expectSize4 = 1;
     EXPECT_EQ(body.data.size(), expectSize4);
 
     body.data.clear();
     params.metaType = "PROCESS";
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    const uint64_t expectSize5 = 2;
+    const uint64_t expectSize5 = 1;
     EXPECT_EQ(body.data.size(), expectSize5);
 
     body.data.clear();
@@ -152,7 +152,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
     params.metaType = "CANN_API";
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    const uint64_t expectSize6 = 2;
+    const uint64_t expectSize6 = 1;
     EXPECT_EQ(body.data.size(), expectSize6);
 
     params.metaType = "HBM";
@@ -173,9 +173,8 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary_MSTX)
     params.endTime = 400000000; // endTime = 400000000
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    const uint64_t expectSize = 1;
+    const uint64_t expectSize = 0;
     EXPECT_EQ(body.data.size(), expectSize);
-    EXPECT_EQ(body.data[0].startTime, 0);
 
     body.data.clear();
 }

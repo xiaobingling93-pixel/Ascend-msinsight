@@ -31,17 +31,13 @@ export class SimpleCache {
         if (this.data.get(method).get(requestKey) === undefined) {
             try {
                 const result = await handlerMap.get(method)?.(params, metaData);
-                if (result !== undefined && result.length === 1) {
+                if (result !== undefined && result.length === 0) {
                     this.data.get(method).set(requestKey, undefined);
                 }
 
-                if (result !== undefined && result.length > 1) {
+                if (result !== undefined && result.length >= 1) {
                     this.timePerPx = params.timePerPx;
                     this.data.get(method).set(requestKey, result);
-                }
-
-                if (result !== undefined && result.length === 0) {
-                    this.data.get(method).set(requestKey, []);
                 }
             } catch (e) {
                 console.warn('Failed to try fetch from cache', method, requestKey, e);
