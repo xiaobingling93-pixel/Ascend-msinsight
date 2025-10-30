@@ -1447,8 +1447,8 @@ const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean,
         const diffValue = data.baseline[showAs] === '' ? '-' : String(getFormatNum(data.baseline[showAs]));
         label = `${label}(${diffValue})`;
     }
-    if(data.compare.memoryPath === '1'){
-        label = `${label} (${tDetails && tDetails('Theoretical')})`;
+    if (data.compare.memoryPath === '1') {
+        label = `${label}${tDetails ? ` (${tDetails('Theoretical')})` : ''}`;
     }
     return label;
 };
