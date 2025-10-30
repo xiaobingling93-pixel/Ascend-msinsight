@@ -533,24 +533,24 @@ const common: Inode[] = [
         y: 1,
         container: [
             {
-                width: 305,
+                width: 315,
                 height: 665,
             },
         ],
         rect: [
             // GM
             {
-                left: 15,
+                left: 10,
                 top: 15,
                 name: 'HBM',
-                width: 85,
+                width: 70,
                 height: 635,
                 label: 'GM',
             },
             // L2Catch
             {
                 name: 'L2Catch',
-                left: 120,
+                left: 140,
                 top: 0,
                 width: 70,
                 height: 635,
@@ -567,10 +567,10 @@ const common: Inode[] = [
             {
                 id: 'HBM_TO_L2',
                 label: 'HBM_TO_L2',
-                x: 100,
+                x: 80,
                 top: '46%-10',
                 orient: 'right',
-                length: 117,
+                length: 137,
             },
             {
                 id: 'L2_TO_HBM',
@@ -578,7 +578,7 @@ const common: Inode[] = [
                 x: 219,
                 top: '46%+10',
                 orient: 'left',
-                length: 117,
+                length: 137,
                 labelPosition: 'bottom',
             },
         ],
@@ -1196,6 +1196,7 @@ const drawRectLabel = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, 
 };
 
 const drawLine = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unknown>): void => {
+    // 添加换行
     const glines = nodes.selectAll('g.line')
         .data((d) => {
             return d.line ?? [];
@@ -1350,7 +1351,7 @@ export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElemen
     tDetails: TFunction): void => {
     const graph: Igraph = getGraph(data);
     drawGraph(svg, graph, data.theme ?? 'dark', tDetails);
-    updateData(svg, data);
+    updateData(svg, data, tDetails);
 };
 
 let isModuleV5 = false;
@@ -1384,9 +1385,9 @@ export const getGraph = (data: ImemoryData): Igraph => {
     }
 };
 
-export const updateData = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
+export const updateData = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition, tDetails?: TFunction): void => {
     updateHitRatio(svg, data);
-    updatePath(svg, data);
+    updatePath(svg, data, tDetails);
 };
 
 const getHitRatioData = (data: ImemoryData & Icondition): Record<string, CompareData<string | number>> => {
@@ -1437,7 +1438,7 @@ const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
         }).on('mouseout', (): void => { hideFormula(); });
 };
 
-const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean, showAs: string): string => {
+const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean, showAs: string, tDetails?: TFunction): string => {
     let label = String(getFormatNum(data.compare[showAs]));
     if (showAs === 'bandwidth') {
         label = `${label} GB/s`;
@@ -1446,16 +1447,19 @@ const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean,
         const diffValue = data.baseline[showAs] === '' ? '-' : String(getFormatNum(data.baseline[showAs]));
         label = `${label}(${diffValue})`;
     }
+    if(data.compare.memoryPath === '1'){
+        label = `${label} (${tDetails && tDetails('Theoretical')})`;
+    }
     return label;
 };
 
-const updatePath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
+const updatePath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition, tDetails?: TFunction): void => {
     const { showAs, memoryUnit } = data;
     const labelDic: Record<string, string> = {};
     const peakDic: Record<string, number> = {};
     const peakSet = new Set<number>();
     memoryUnit.forEach(unit => {
-        labelDic[unit.compare.memoryPath] = getMemoryUnitLabel(unit, data.isCompared, showAs);
+        labelDic[unit.compare.memoryPath] = getMemoryUnitLabel(unit, data.isCompared, showAs, tDetails);
         const peak = Number(unit.compare.peakRatio);
         if (!isNaN(peak)) {
             peakDic[unit.compare.memoryPath] = peak;
