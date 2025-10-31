@@ -16,19 +16,13 @@ void KernelDetailsParams::Check(std::string &error) const
         error = "pageSize is invalid";
         return;
     }
-    for (const auto &filter : filters) {
-        if (!StringUtil::CheckSqlValid(filter.second)) {
-            error = "filters exist invalid string value";
-            return;
-        }
-    }
 }
 
 bool EventsViewParams::CheckParams(std::string &warnMsg) const
 {
     CheckUnsignPageValid(pageSize, currentPage, warnMsg);
     for (const auto &filter : filters) {
-        if (!StringUtil::CheckSqlValid(filter.second)) {
+        if (!StringUtil::CheckSqlValid(filter.first)) {
             warnMsg = "filters exist invalid string value";
             return false;
         }

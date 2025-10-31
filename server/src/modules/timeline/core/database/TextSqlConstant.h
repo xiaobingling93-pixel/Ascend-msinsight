@@ -456,6 +456,33 @@ public:
         return sql;
     }
 
+    static std::string& AppendOverlapFilterSql(const EventsViewParams& params, std::string& sql)
+    {
+        std::vector<std::string> types;
+        for (const auto& filter : params.filters) {
+            if (StringUtil::ContainsIgnoreCase("Computing", filter.second)) {
+                types.emplace_back("0");
+            }
+            if (StringUtil::ContainsIgnoreCase("Communication", filter.second)) {
+                types.emplace_back("1");
+            }
+            if (StringUtil::ContainsIgnoreCase("Communication(Not Overlapped)", filter.second)) {
+                types.emplace_back("2");
+            }
+            if (StringUtil::ContainsIgnoreCase("Free", filter.second)) {
+                types.emplace_back("3");
+            }
+        }
+        if (!types.empty()) {
+            std::string filterSql = StringUtil::join(types, ",");
+            sql += " AND name IN (" + filterSql + ") ";
+        }
+        if (types.empty() && !params.filters.empty()) {
+            sql += " AND name IN () ";
+        }
+        return sql;
+    }
+
 private:
     static std::string GenerateAICpuOpFilterSql(const std::string &opType, const Timeline::AICpuCheckDataType &dataType)
     {
