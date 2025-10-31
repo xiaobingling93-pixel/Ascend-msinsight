@@ -39,7 +39,7 @@ const ThresholdModal = observer(({ session, open, setOpen }: { session: Session;
         setShowInefficient(onlyInefficient);
         setOpen(false);
     };
-    return (<Modal title={t('setThreshold')} open={open} destroyOnClose={true} onOk={onOk} onCancel={onCancel} style={{ top: '35%', minWidth: '520px' }}>
+    return (<Modal title={t('setThreshold')} open={open} destroyOnClose={true} data-testid={'thresholdModal'} onOk={onOk} onCancel={onCancel} style={{ top: '35%', minWidth: '520px' }}>
         <div>
             <Label name={t('lazyUsedThreshold')} style={{ marginRight: session.language === 'enUS' ? '28px' : '8px' }} />
             <InputNumber
@@ -60,6 +60,7 @@ const ThresholdModal = observer(({ session, open, setOpen }: { session: Session;
                 max={100}
                 precision={0}
                 size="small"
+                data-testid={'lazyThrePer'}
             />
             <span> %</span>
         </div>
@@ -111,7 +112,7 @@ const ThresholdModal = observer(({ session, open, setOpen }: { session: Session;
         </div>
         <div>
             <Label name={t('onlyInefficient')} />
-            <Switch checked={showInefficient} onChange={(value) => { setShowInefficient(value); }} />
+            <Switch checked={showInefficient} data-testid={'showInefficient'} onChange={(value) => { setShowInefficient(value); }} />
         </div>
     </Modal>);
 });

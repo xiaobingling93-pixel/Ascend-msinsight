@@ -99,6 +99,7 @@ const EventsTable = observer(({ session }: { session: Session }): React.ReactEle
     return (
         <>
             <ResizeTable
+                data-testid={'eventsTable'}
                 columns={columns}
                 dataSource={eventsTableData.length === 0 ? defaultDataSource : eventsTableData.map((item: any, index: number) => ({ ...item, key: `${item.id}_${index}` }))}
                 onChange={onTableChange}

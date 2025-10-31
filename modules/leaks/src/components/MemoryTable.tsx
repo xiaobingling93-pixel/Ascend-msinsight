@@ -52,9 +52,9 @@ const MemoryTable = observer(({ session }: { session: Session }): React.ReactEle
                 <Radio.Group value={tableType}
                     style={{ marginBottom: 10 }}
                     onChange={radioChange}>
-                    <Radio value={'blocks'}>{t('Block View')}</Radio>
+                    <Radio data-testid={'blockViewRadio'} value={'blocks'}>{t('Block View')}</Radio>
                     <Radio
-                        value={'events'}>{t('Event View')}</Radio>
+                        data-testid={'eventViewRadio'} value={'events'}>{t('Event View')}</Radio>
                 </Radio.Group>
                 {tableType === 'blocks' ? <Button type="primary" onClick={() => { setOpen(true); }}>{t('setThreshold')}</Button> : <></>}
             </div>

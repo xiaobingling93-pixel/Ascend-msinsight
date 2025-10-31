@@ -9,6 +9,7 @@ export class LeaksPage {
     readonly page: Page;
     readonly leaksFrame: FrameLocator;
     readonly threadIdSelector: Locator;
+    readonly funcsSelector: Locator;
     readonly deviceIdSelector: Locator;
     readonly typeSelector: Locator;
 
@@ -16,6 +17,7 @@ export class LeaksPage {
         this.page = page;
         this.leaksFrame = page.frameLocator('#Leaks');
         this.threadIdSelector = this.leaksFrame.locator('#select-threadId');
+        this.funcsSelector = this.leaksFrame.locator('#select-funcName');
         this.deviceIdSelector = this.leaksFrame.locator('#select-deviceId');
         this.typeSelector = this.leaksFrame.locator('#select-type');
     }
