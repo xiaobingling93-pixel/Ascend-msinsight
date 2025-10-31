@@ -166,13 +166,14 @@ TEST_F(TimelineProtocolUtilTest, TestUnitCounterResponseToJson)
 TEST_F(TimelineProtocolUtilTest, TestTableDataNameListResponseToJson)
 {
     Dic::Protocol::TableDataNameListResponse response;
-    response.body.layers.emplace_back("llllllllllll");
+    response.body.layers.emplace_back("llllllllllll", "kkkkkkkkkk");
     auto jsonOp = Dic::Protocol::ToResponseJson(response);
     EXPECT_EQ(jsonOp.has_value(), true);
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr =
         "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"tableData/"
-        "nameList\",\"moduleName\":\"unknown\",\"body\":{\"layers\":[\"llllllllllll\"]}}";
+        "nameList\",\"moduleName\":\"unknown\",\"body\":{\"layers\":[{\"name\":\"llllllllllll\",\"description\":"
+        "\"kkkkkkkkkk\"}]}}";
     EXPECT_EQ(json, jsonStr);
 }
 

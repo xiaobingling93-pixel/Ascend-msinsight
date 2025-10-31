@@ -101,6 +101,7 @@ TEST_F(IEProtocolTest, TestIEUsageViewResponseToJsonNormal)
     Dic::Protocol::IEUsageViewResponse response;
     response.data.legends.emplace_back("ll");
     response.data.title = "mmm";
+    response.data.desc = "mmmmmmmmm";
     std::vector<std::string> line;
     line.emplace_back("bbbbbb");
     response.data.lines.emplace_back(line);
@@ -109,7 +110,8 @@ TEST_F(IEProtocolTest, TestIEUsageViewResponseToJsonNormal)
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr =
         "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"IE/usage/"
-        "view\",\"moduleName\":\"unknown\",\"body\":{\"legends\":[\"ll\"],\"lines\":[[\"bbbbbb\"]],\"title\":\"mmm\"}}";
+        "view\",\"moduleName\":\"unknown\",\"body\":{\"legends\":[\"ll\"],\"lines\":[[\"bbbbbb\"]],\"title\":\"mmm\","
+        "\"description\":\"mmmmmmmmm\"}}";
     EXPECT_EQ(json, jsonStr);
 }
 

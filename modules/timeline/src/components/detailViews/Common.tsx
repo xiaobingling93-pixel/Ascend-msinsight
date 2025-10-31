@@ -178,6 +178,7 @@ export const operatorDispatchColumns: ColumData[] = [
 export interface SystemViewItem {
     name: string;
     tips?: string;
+    description?: string;
 }
 export const statsSystemViewItems: SystemViewItem[] = [
     { name: 'Overall Metrics', tips: 'OverallMetricsTips' },

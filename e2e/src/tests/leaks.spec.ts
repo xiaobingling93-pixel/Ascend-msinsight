@@ -45,7 +45,18 @@ test.describe('Leaks', () => {
         await expect(leaksFrame.locator('#funcContent')).toHaveScreenshot('funcContent.png', { maxDiffPixels: 100 });
     });
 
-    // 切换线程
+    // 搜索调用栈
+    test('test_search_func', async ({ leaksPage, page }) => {
+        const { leaksFrame, funcsSelector } = leaksPage;
+        const funcsSelect = new SelectHelpers(page, funcsSelector, leaksFrame);
+        await funcsSelect.open();
+        await funcsSelect.selectOption('/home/ghy/t00932610/leaks/test_multirank.py(65): train');
+        await page.mouse.move(0, 0);
+        await page.mouse.click(0, 0);
+        await expect(leaksFrame.locator('#funcContent')).toHaveScreenshot('funcSearchContent.png', { maxDiffPixels: 100 });
+    });
+
+    // 切换设备ID
     test('test_change_DeviceID', async ({ leaksPage, page }) => {
         const { leaksFrame, deviceIdSelector } = leaksPage;
         const deviceIdSelect = new SelectHelpers(page, deviceIdSelector, leaksFrame);
@@ -72,5 +83,25 @@ test.describe('Leaks', () => {
         await page.waitForTimeout(1000);
         await leaksFrame.locator('#barContent canvas').click({ position: { x: 526, y: 217 } });
         await expect(leaksFrame.locator('#detailsContent')).toHaveScreenshot('detailsContent.png', { maxDiffPixels: 100 });
+    });
+
+    //内存详情表内存块视图
+    test('test_blocksTable_show', async ({ leaksPage }) => {
+        const { leaksFrame } = leaksPage;
+        const blocksTable = leaksFrame.getByTestId('blocksTable');
+        await expect(blocksTable).toHaveScreenshot('blocksTable.png', { maxDiffPixels: 100 });
+        await blocksTable.locator('.ant-table-column-title').nth(3).click();
+        await expect(blocksTable).toHaveScreenshot('blocksTableSorter.png', { maxDiffPixels: 100 });
+    });
+
+    //内存详情表内存事件视图
+    test('test_eventsTable_show', async ({ leaksPage }) => {
+        const { leaksFrame } = leaksPage;
+        const eventViewRadio = leaksFrame.getByTestId('eventViewRadio');
+        eventViewRadio.click();
+        const eventsTable = leaksFrame.getByTestId('eventsTable');
+        await expect(eventsTable).toHaveScreenshot('eventsTable.png', { maxDiffPixels: 100 });
+        await eventsTable.locator('.ant-table-column-title').nth(3).click();
+        await expect(leaksFrame.getByTestId('eventsTable')).toHaveScreenshot('eventsTableSorter.png', { maxDiffPixels: 100 });
     });
 });

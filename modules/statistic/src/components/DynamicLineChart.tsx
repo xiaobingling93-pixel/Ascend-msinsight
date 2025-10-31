@@ -12,14 +12,23 @@ import { useTranslation } from 'react-i18next';
 import { Graph, Curve } from '../entity/curve';
 import { LineChart } from './LineChart';
 import { CurveSession } from '../entity/curveSession';
+import { Session } from '../entity/session';
 import { curveGet } from '../utils/RequestUtils';
 
-const DynamicLineChart = observer(({ curveSession, isDark }:
-{ curveSession: CurveSession; isDark: boolean }) => {
+/**
+ * 国际化-中文
+ */
+const LANGUAGE_ZH = 'zhCN';
+
+const DynamicLineChart = observer(({ session, curveSession, isDark }:
+{ session: Session; curveSession: CurveSession; isDark: boolean }) => {
     // 内存曲线数据源
     const [curveData, setCurveData] = useState<Curve | undefined>(undefined);
     // 内存曲线绘制数据
     const [lineChartData, setLineChartData] = useState<Graph | undefined>(undefined);
+    // 内存曲线绘制描述
+    const [description, setDescription] = useState<string>('');
+
     const [curveSpin, setCurveSpin] = useState<boolean>(false);
     const { t } = useTranslation('statistic');
 
@@ -46,7 +55,7 @@ const DynamicLineChart = observer(({ curveSession, isDark }:
 
     const onMemoryCurveGet = (): void => {
         setCurveSpin(true);
-        curveGet({ rankId: curveSession.rankIdCondition.value, type: curveSession.groupId }).then((resp) => {
+        curveGet({ rankId: curveSession.rankIdCondition.value, type: curveSession.groupId, isZh: session.language === LANGUAGE_ZH }).then((resp) => {
             // Reset the select range to null when rankId changes
             runInAction(() => {
                 curveSession.selectedRange = undefined;
@@ -58,6 +67,7 @@ const DynamicLineChart = observer(({ curveSession, isDark }:
                 columns,
                 rows: resp.lines,
             });
+            setDescription(resp.description as string);
         }).catch(err => {
             console.error(err);
         }).finally(() => {
@@ -72,10 +82,15 @@ const DynamicLineChart = observer(({ curveSession, isDark }:
             return;
         }
         onMemoryCurveGet();
-    }, [curveSession.rankIdCondition.value, curveSession.groupId]);
+    }, [curveSession.rankIdCondition.value, curveSession.groupId, session.language]);
 
     return (
         <div className="mb-30">
+            <div
+                style={{ marginLeft: 25, marginBottom: 5 }}>
+                <span> {t('Curve Description')}: </span>
+                <span> {description} </span>
+            </div>
             <CollapsiblePanel title={t('Curve Data')}>
                 <Spin spinning={curveSpin} tip="loading...">
                     { lineChartData

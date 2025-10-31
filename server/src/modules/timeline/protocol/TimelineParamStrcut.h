@@ -44,6 +44,7 @@ struct TableDataDetailParams {
 
 struct TableDataNameListParams {
     std::string rankId;
+    bool isZh = true;
 };
 
 struct Metadata {

@@ -28,8 +28,9 @@ bool QueryTableDataNameListHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         return false;
     }
     auto nameList = databasePtr->QueryTableDataNameList();
+    auto translate = databasePtr->QueryTranslate(request.params.isZh);
     for (const auto &item: nameList) {
-        response.body.layers.emplace_back(item.first);
+        response.body.layers.emplace_back(item.first, translate[item.first]);
     }
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

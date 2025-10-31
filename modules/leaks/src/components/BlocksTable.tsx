@@ -116,6 +116,7 @@ const BlocksTable = observer(({ session }: { session: Session }): React.ReactEle
     return (
         <>
             <ResizeTable
+                data-testid={'blocksTable'}
                 columns={columns}
                 dataSource={blocksTableData.length === 0 ? defaultDataSource : blocksTableData.map((item: any, index: number) => ({ ...item, key: `${item.id}_${index}` }))}
                 onChange={onTableChange}

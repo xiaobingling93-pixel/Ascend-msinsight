@@ -21,7 +21,7 @@ struct TableDataDatail {
 };
 
 struct TableDataListBody {
-    std::vector<std::string> layers;
+    std::vector<std::pair<std::string, std::string>> layers;
 };
 
 struct SearchAllSlices {

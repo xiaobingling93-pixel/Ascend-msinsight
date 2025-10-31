@@ -16,6 +16,8 @@ bool IECurveHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> reque
     IEUsageViewResponse& response = *responsePtr;
     SetBaseResponse(request, response);
     if (!request.params.type.empty()) {
+        auto translate = repo->QueryTableNameDesc(request.params.rankId, request.params.type, request.params.isZh);
+        response.data.desc = translate;
         auto atts = repo->QueryTableInfoByName(request.params.rankId, request.params.type);
         if (atts.size() <= 1) {
             SendResponse(std::move(responsePtr), true);

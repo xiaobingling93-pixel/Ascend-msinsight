@@ -5,6 +5,8 @@
 export interface Curve {
     legends: string[];
     lines: Array<Array<number | string>>;
+    description?: string;
+    isZh?: boolean;
 }
 
 interface Group {

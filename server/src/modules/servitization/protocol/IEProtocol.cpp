@@ -37,6 +37,7 @@ std::unique_ptr<Request> IEProtocol::ToIEUsageViewRequest(const json_t &json, st
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isZh, json["params"], "isZh");
     return reqPtr;
 }
 

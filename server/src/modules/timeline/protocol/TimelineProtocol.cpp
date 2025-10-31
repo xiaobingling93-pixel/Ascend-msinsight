@@ -548,6 +548,7 @@ std::unique_ptr<Request> TimelineProtocol::ToTableDataNameListRequest(const Dic:
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isZh, json["params"], "isZh");
     return reqPtr;
 }
 

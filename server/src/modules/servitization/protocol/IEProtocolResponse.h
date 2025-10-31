@@ -11,6 +11,7 @@
 namespace Dic::Protocol {
 struct IEUsageViewData {
     std::string title;
+    std::string desc;
     std::vector<std::string> legends;
     std::vector<std::vector<std::string>> lines;
 };

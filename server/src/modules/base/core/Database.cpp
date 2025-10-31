@@ -957,5 +957,30 @@ std::string Database::ComputeConditionSql(const PageQuery& query, std::vector<st
     return sql;
 }
 
+std::unordered_map<std::string, std::string> Database::QueryTranslate(bool isZh)
+{
+    const std::string sql = "SELECT key, value_en, value_zh FROM translate;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (!TryOpt(stmt, "Query translate failed to prepare sql!")) {
+        return {};
+    }
+    auto result = stmt->ExecuteQuery();
+    if (!TryOpt(result, "Query translate failed to get result!")) {
+        return {};
+    }
+    std::unordered_map<std::string, std::string> res;
+    while (result->Next()) {
+        std::string key = result->GetString("key");
+        if (isZh) {
+            std::string value = StringUtil::ToLocalStr(result->GetString("value_zh"));
+            res[key] = value;
+        } else {
+            std::string value = result->GetString("value_en");
+            res[key] = value;
+        }
+    }
+    return res;
+}
+
 }  // end of namespace Module
 }  // end of namespace Dic

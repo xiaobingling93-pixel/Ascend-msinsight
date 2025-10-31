@@ -106,6 +106,14 @@ export interface SelectedCardInfo {
     dbPath: string;
 }
 
+/**
+ * 添加服务化视图描述字段接口
+ */
+export interface ServiceLayers {
+    name: string;
+    description: string;
+}
+
 interface ConditionType<T, K> {
     options: T[];
     value: K;
@@ -155,7 +163,7 @@ export const SystemView = observer((props: any) => {
         <AsideSelectContainer>
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
-            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} card={conditions}></SelectList>
+            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} card={conditions} session={props.session}></SelectList>
         </AsideSelectContainer>
         <ChartErrorBoundary>
             <SelectContentContainer>
@@ -246,7 +254,12 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
         </FormItem>
     </div>);
 });
-const SelectList = observer((props: { viewOption: number; selectKey: number; setKey: (v: number) => void; card: SelectedCardInfo }) => {
+/**
+ * 国际化-中文
+ */
+const LANGUAGE_ZH = 'zhCN';
+
+const SelectList = observer((props: { session: Session; viewOption: number; selectKey: number; setKey: (v: number) => void; card: SelectedCardInfo}) => {
     const [selectedKey, setSelectedKey] = useState(0);
     const [systemViewItems, setSystemViewItems] = useState<SystemViewItem[]>([]);
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
@@ -255,8 +268,8 @@ const SelectList = observer((props: { viewOption: number; selectKey: number; set
         setSelectedKey(key);
     };
     const params = useMemo(() => {
-        return { rankId: props.card.cardId, dbPath: props.card.dbPath };
-    }, [props.card]);
+        return { rankId: props.card.cardId, dbPath: props.card.dbPath, isZh: props.session.language === LANGUAGE_ZH };
+    }, [props.card, props.session.language]);
     useEffect(() => {
         setSelectedKey(props.selectKey);
     }, [props.selectKey]);
@@ -273,9 +286,10 @@ const SelectList = observer((props: { viewOption: number; selectKey: number; set
                 break;
             case 3:
                 queryTableDataNameList(params).then((res) => {
-                    const names = res.layers as string[];
+                    // 获取服务视图名称和描述数据
+                    const names = res.layers as ServiceLayers[];
                     const layers = names.map((item) => {
-                        return { name: item };
+                        return { name: item.name, description: item.description };
                     });
                     setSystemViewItems(layers);
                 });
@@ -283,24 +297,31 @@ const SelectList = observer((props: { viewOption: number; selectKey: number; set
             default:
                 break;
         }
-    }, [props.viewOption, params]);
+    }, [props.viewOption, params, props.session.language]);
     return (<AsideSelectList>
         {
             systemViewItems.map((item, index) =>
-                (<div
-                    className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
-                    key={index}
-                    onClick={(): void => handleClick(index)}
-                >
-                    <div>{props.viewOption === 3 ? item.name : t(item.name)}</div>
-                    {
-                        item.tips !== undefined &&
-                            <Tooltip title={t(item.tips)}>
-                                <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
-                            </Tooltip>
-                    }
-                </div>
-                ))
+                (props.viewOption !== 3
+                    ? <div
+                        className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
+                        key={index}
+                        onClick={(): void => handleClick(index)}
+                    >
+                        <div>{props.viewOption === 3 ? item.name : t(item.name)}</div>
+                        {
+                            item.tips !== undefined &&
+                                <Tooltip title={t(item.tips)}>
+                                    <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
+                                </Tooltip>
+                        }
+                    </div>
+                    : <div key={index}>
+                        <Tooltip title={item.description}>
+                            <div>{item.name}</div>
+                        </Tooltip>
+                    </div>
+                ),
+            )
         }
     </AsideSelectList>
     );

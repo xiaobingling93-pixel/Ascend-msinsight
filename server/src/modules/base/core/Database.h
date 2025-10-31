@@ -79,6 +79,7 @@ public:
     std::vector<LinkInfo> QueryTableNameAndCol(const std::string &linkName);
     bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
     bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
+    std::unordered_map<std::string, std::string> QueryTranslate(bool isZh);
 
 protected:
     bool CheckTableContainData(const std::string& tableName);

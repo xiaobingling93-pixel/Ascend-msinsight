@@ -197,4 +197,14 @@ uint64_t CurveRepo::QueryCountByTableName(const PageQuery& query, const std::str
     }
     return 0;
 }
+
+std::string CurveRepo::QueryTableNameDesc(const std::string& fileId, const std::string& tableName, bool isZh)
+{
+    auto dataBase = context->GetDatabase(fileId);
+    if (!TryOpt(dataBase, "Query table name desc get connection failed!")) {
+        return {};
+    }
+    auto translate = dataBase->QueryTranslate(isZh);
+    return translate[tableName];
+}
 }  // namespace Dic::Module::IE

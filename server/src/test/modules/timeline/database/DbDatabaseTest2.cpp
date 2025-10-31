@@ -1258,6 +1258,9 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenApi)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::EventsViewParams params;
     params.metaType = "PYTORCH_API";
@@ -1272,6 +1275,9 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWare)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::EventsViewParams params;
     params.metaType = "Ascend Hardware";
@@ -1286,6 +1292,9 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWareAndTidIsNotEmpty)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::EventsViewParams params;
     params.metaType = "Ascend Hardware";
@@ -1629,6 +1638,9 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlapAndTidNotEmpty)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::EventsViewParams params;
     params.metaType = "OVERLAP_ANALYSIS";
@@ -1644,6 +1656,9 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOther)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::EventsViewParams params;
     params.metaType = "unknown";

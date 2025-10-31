@@ -10,7 +10,7 @@ export const tableDataGet = async (params: TableCondition): Promise<TableInfo> =
     return await window.request({ command: 'IE/table/view', params });
 };
 
-export const curveGet = async (params: { rankId: string; type: string }): Promise<Curve> => {
+export const curveGet = async (params: { rankId: string; type: string; isZh?: boolean}): Promise<Curve> => {
     return await window.request({ command: 'IE/usage/view', params });
 };
 

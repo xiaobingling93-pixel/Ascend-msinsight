@@ -653,7 +653,10 @@ std::optional<document_t> ToResponseJson<TableDataNameListResponse>(const TableD
     json_t body(kObjectType);
     json_t layers(kArrayType);
     for (const auto& item : response.body.layers) {
-        layers.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "name", item.first, allocator);
+        JsonUtil::AddMember(itemJson, "description", item.second, allocator);
+        layers.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "layers", layers, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);

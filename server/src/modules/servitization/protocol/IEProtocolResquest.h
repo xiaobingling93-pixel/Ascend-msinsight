@@ -12,6 +12,7 @@ namespace Dic::Protocol {
 struct IEUsageViewParams {
     std::string rankId;
     std::string type;
+    bool isZh = true;
 };
 
 struct IEUsageViewParamsRequest : public Request {

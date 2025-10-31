@@ -6,11 +6,12 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { CurveSession } from '../entity/curveSession';
 import DynamicLineChart from './DynamicLineChart';
+import { Session } from '../entity/session';
 
-const CurveLineChart = observer(({ curveSession, isDark }:
-{ curveSession: CurveSession; isDark: boolean }) => {
+const CurveLineChart = observer(({ session, curveSession, isDark }:
+{ session: Session; curveSession: CurveSession; isDark: boolean }) => {
     const renderLineChart = (): JSX.Element => {
-        return (<DynamicLineChart curveSession={curveSession} isDark={isDark}></DynamicLineChart>);
+        return (<DynamicLineChart session={session} curveSession={curveSession} isDark={isDark}></DynamicLineChart>);
     };
 
     return (

@@ -23,7 +23,7 @@ const CurvePage = observer(({ session, isDark }: { session: Session; isDark: boo
         curveSession
             ? <Layout>
                 <CurveHeader session={session} curveSession={curveSession}></CurveHeader>
-                <CurveLineChart curveSession={curveSession} isDark={isDark}></CurveLineChart>
+                <CurveLineChart session={session} curveSession={curveSession} isDark={isDark}></CurveLineChart>
                 <CurveDetailTable session={session} curveSession={curveSession}></CurveDetailTable>
             </Layout>
             : <></>

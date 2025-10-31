@@ -27,6 +27,7 @@ template <> std::optional<document_t> ToResponseJson<IEUsageViewResponse>(const 
     JsonUtil::AddMember(body, "legends", legends, allocator);
     JsonUtil::AddMember(body, "lines", linesList, allocator);
     JsonUtil::AddMember(body, "title", response.data.title, allocator);
+    JsonUtil::AddMember(body, "description", response.data.desc, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
