@@ -11,7 +11,7 @@ import type { InteractorMouseState, InteractorParams, XReverseScaleRef } from '.
 import { INTERACTOR_WIDTH } from './ChartInteractor';
 import { isOnSideline, SINGLE_DRAG_OFFSET } from './common';
 import type { Pos } from './common';
-import { draw, drawOnMove, MIN_BRUSH_SIZE } from './draw';
+import { draw, drawOnMove, calcLevelsOfSlice, MIN_BRUSH_SIZE, checkIsSliceSelection } from './draw';
 import type { DrawArgs, DrawCanvasArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
 import type { Theme } from '@emotion/react';
@@ -67,6 +67,10 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
 
     if (session.contextMenu.isVisible) {
         return;
+    }
+
+    if (checkIsSliceSelection(session)) {
+        calcLevelsOfSlice(lastPos.y, session);
     }
 
     const clickPosX = xReverseScaleRef.current(clickPos.timeAxisX);
@@ -127,6 +131,10 @@ const getDrawOnMoveArgs = ({
 export const mouseLeaveAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState): void => {
     const { hoverCanvas: canvas, session, xReverseScaleRef, xScale, theme } = interactorParams;
     if (canvas.current === null || session.endTimeAll === undefined) { return; }
+    // 算子模式下光标离开canvas区间不做任何处理
+    if (checkIsSliceSelection(session)) {
+        return;
+    }
     const clickPos = interactorMouseState.clickPos.current;
     const lastPos = interactorMouseState.lastPos.current;
     if (clickPos && lastPos) {
@@ -266,6 +274,7 @@ export const mouseDownAction = ({
         absoluteY: lastPos.absoluteY,
         timeAxisX,
     };
+    session.sliceSelection.startPos = [xReverseScaleRef.current(timeAxisX), lastPos.y];
     runInAction(() => { session.selectedRange = undefined; });
     return needDragOneSide ? MouseDownActionResult.NEED_DRAG_ONE_SIDE : MouseDownActionResult.NO_NEED_TO_DRAG_ONE_SIDE;
 };

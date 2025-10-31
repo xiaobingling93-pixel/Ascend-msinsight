@@ -44,6 +44,7 @@ import {
     actionParseCardsOfRelatedGroup,
     actionMergeUnits,
     actionUnmergeUnits,
+    actionSliceSelection,
 } from '../actions';
 import { Action } from '../actions/types';
 import { getShortcutFromShortcutName, ShortcutName } from '../actions/shortcuts';
@@ -215,6 +216,7 @@ const contextMenuItems: ContextMenuItem[] = [
     CONTEXT_MENU_SEPARATOR,
     // 在 Events View 中显示
     actionShowInEventsView,
+    actionSliceSelection,
 ];
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {

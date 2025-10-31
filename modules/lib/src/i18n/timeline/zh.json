@@ -51,7 +51,8 @@
       "Set alias": "设置别名",
       "Alias": "别名",
       "Merge Units": "合并泳道",
-      "Unmerge Units": "取消合并泳道"
+      "Unmerge Units": "取消合并泳道",
+      "SliceSelectionMode": "算子框选模式"
     },
     "sliceDetail": {
       "Slice Detail": "选中详情",

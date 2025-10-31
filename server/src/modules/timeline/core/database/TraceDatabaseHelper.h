@@ -122,13 +122,21 @@ static std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchC
 static std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
     const std::string &path);
 
-static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(
+static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(const Protocol::UnitThreadsParams &requestParams,
         const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
 {
     std::vector<Protocol::SimpleSlice> nRows;
+    uint32_t startDepth = NumberUtil::StringToUint32(requestParams.startDepth);
+    uint32_t endDepth = NumberUtil::StringToUint32(requestParams.endDepth);
     for (auto &row : simpleSliceVec) {
-        if (row.timestamp <= endTime && row.endTime >= startTime) {
-            nRows.emplace_back(row);
+        if (requestParams.startDepth.empty() && requestParams.endDepth.empty()) {
+            if (row.timestamp <= endTime && row.endTime >= startTime) {
+                nRows.emplace_back(row);
+            }
+        } else {
+            if (row.timestamp <= endTime && row.endTime >= startTime && row.depth >= startDepth && row.depth <= endDepth) {
+                nRows.emplace_back(row);
+            }
         }
     }
     return nRows;

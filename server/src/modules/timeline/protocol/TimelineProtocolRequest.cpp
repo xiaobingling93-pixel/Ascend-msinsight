@@ -29,5 +29,32 @@ bool EventsViewParams::CheckParams(std::string &warnMsg) const
     }
     return true;
 }
+
+bool UnitThreadsParams::CheckParams(uint64_t minTime, std::string &warnMsg) const
+{
+    if (startTime > endTime) {
+        warnMsg = "unit threads start time is bigger than end time";
+        return false;
+    }
+    if (endTime > UINT64_MAX - minTime) {
+        warnMsg = "unit threads end time is invalid";
+        return false;
+    }
+    if (!CheckStrParamValidEmptyAllowed(startDepth, warnMsg)) {
+        warnMsg = "unit threads start depth is invalid";
+        return false;
+    }
+    if (!CheckStrParamValidEmptyAllowed(endDepth, warnMsg)) {
+        warnMsg = "unit threads end depth is invalid";
+        return false;
+    }
+    if (!startDepth.empty() && !endDepth.empty()) {
+        if (NumberUtil::StringToUint32(startDepth) > NumberUtil::StringToUint32(endDepth)) {
+            warnMsg = "unit threads start depth is bigger than end depth";
+            return false;
+        }
+    }
+    return true;
+}
 } // namespace Protocol
 } // namespace Dic

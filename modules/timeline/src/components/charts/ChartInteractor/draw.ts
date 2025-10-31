@@ -5,7 +5,7 @@ import type { Theme } from '@emotion/react';
 import type { CustomCrossRenderer } from './custom';
 import type { Session } from '../../../entity/session';
 import { getTimeDifference } from './common';
-import type { Pos } from './common';
+import type { Pos, ExtendPos } from './common';
 import type { InteractorMouseState, XReverseScaleRef } from './ChartInteractor';
 import { THUMB_WIDTH_PX } from '../../base';
 import { getTextParser } from '../TimelineAxis';
@@ -19,6 +19,8 @@ import { colorPalette } from '../../../insight/units/utils';
 import { handlerEmptyString } from '../../../utils/string';
 import { forEach, groupBy, isNil, keys } from 'lodash';
 import { calculateLinkLines, LinkLineData } from './calculateLinkLines';
+import { ThemeName } from 'ascend-theme';
+import { getClassNameByMetadata } from '../../ChartContainer/Units/Units';
 
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
@@ -36,6 +38,14 @@ interface DrawArrowOption {
     color: string;
 }
 
+interface MaskRangeOption {
+    session: Session;
+    xReverseScaleRef: XReverseScaleRef;
+    selectedRange?: [number, number];
+    clickPos?: ExtendPos;
+    mousePosNow?: Pos;
+}
+
 function drawArrowPath(ctx: CanvasRenderingContext2D, option: Omit<DrawArrowOption, 'color'>): void {
     const { toX, toY, fromX, fromY, length, angle } = option;
     const a = Math.atan2((toY - fromY), (toX - fromX));
@@ -49,7 +59,7 @@ function drawArrowPath(ctx: CanvasRenderingContext2D, option: Omit<DrawArrowOpti
     ctx.lineTo(toX, toY);
 }
 
-export const drawArrow = (ctx: CanvasRenderingContext2D, option: DrawArrowOption): void => {
+export function drawArrow(ctx: CanvasRenderingContext2D, option: DrawArrowOption): void {
     ctx.save();
     ctx.fillStyle = option.color;
     ctx.beginPath();
@@ -57,7 +67,7 @@ export const drawArrow = (ctx: CanvasRenderingContext2D, option: DrawArrowOption
     ctx.fill();
     ctx.closePath();
     ctx.restore();
-};
+}
 
 interface DrawTimeDiffArgs {
     ctx: CanvasRenderingContext2D | null;
@@ -207,6 +217,9 @@ const drawSelectedRange = (ctx: CanvasRenderingContext2D | null, selectedRange: 
 };
 
 const getParentNodeByClassName = (el: Element, parentClassName: string): Element | null => {
+    if (!el) {
+        return null;
+    }
     const parent = el.parentElement;
     if (parent !== null) {
         if (parent.classList.contains(parentClassName)) {
@@ -218,12 +231,7 @@ const getParentNodeByClassName = (el: Element, parentClassName: string): Element
     return parent;
 };
 
-const drawMaskRange = ({
-    ctx, width, height, xReverseScaleRef, xScale, interactorMouseState: {
-        clickPos: { current: clickPos },
-        lastPos: { current: mousePosNow },
-    }, selectedRange, isNsMode, session, theme,
-}: DrawArgs & { ctx: CanvasRenderingContext2D }): void => {
+function getMaskRange({ session, xReverseScaleRef, clickPos, mousePosNow, selectedRange }: MaskRangeOption): number[] | undefined {
     let maskRange: number[] | undefined;
     if (session.selectedRangeIsLock && session.lockRange !== undefined) {
         maskRange = [xReverseScaleRef.current(session.lockRange[0]), xReverseScaleRef.current(session.lockRange[1])];
@@ -238,39 +246,129 @@ const drawMaskRange = ({
     } else {
         maskRange = undefined;
     }
+    return maskRange;
+}
+
+const drawMaskRange = ({
+    ctx, width, height, xReverseScaleRef, xScale, interactorMouseState: {
+        clickPos: { current: clickPos },
+        lastPos: { current: mousePosNow },
+    }, selectedRange, isNsMode, session, theme,
+}: DrawArgs & { ctx: CanvasRenderingContext2D }): void => {
+    const maskRange = getMaskRange({ session, selectedRange, xReverseScaleRef, clickPos, mousePosNow });
+    if (!maskRange) {
+        return;
+    }
+    maskRange.sort((a, b) => a - b);
     const elements = document.getElementsByClassName('chart-selected');
     const unitLength = session.selectedRangeIsLock ? session.lockUnitCount : session.selectedUnits.length;
-    if (maskRange !== undefined) {
-        maskRange.sort((a, b) => a - b);
-        if (theme.mode === 'dark') {
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        } else {
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        }
-        if (unitLength !== 0) {
-            ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
-            if (elements.length !== 0) {
-                Array.of(...elements).forEach(element => {
-                    const rect = element.getBoundingClientRect();
-                    const scrollContainer = getParentNodeByClassName(element, 'laneWrapper');
-                    const containerRect = scrollContainer?.getBoundingClientRect();
-                    let top = containerRect ? Math.max(rect.top, containerRect.top) : rect.top;
-                    let bottom = containerRect ? Math.min(rect.bottom, containerRect.bottom) : rect.bottom;
-                    top = top - PAGE_PADDING;
-                    bottom = bottom - PAGE_PADDING;
-                    if (bottom > top) {
-                        const maskRangeTemp = maskRange as number[];
-                        ctx.clearRect(maskRangeTemp[0], top, maskRangeTemp[1] - maskRangeTemp[0], bottom - top);
-                    }
-                });
-            }
-        } else {
-            ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, maskRange[0], height);
-            ctx.fillRect(maskRange[1], TIME_LINE_AXIS_HEIGHT_PX, width - maskRange[1], height);
-        }
+    ctx.fillStyle = theme.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.3)';
+    if (unitLength === 0) {
+        ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, maskRange[0], height);
+        ctx.fillRect(maskRange[1], TIME_LINE_AXIS_HEIGHT_PX, width - maskRange[1], height);
         drawTimeDiff({ ctx, maskRange, xScale, isNsMode, theme, selectedRange });
+        return;
     }
+    ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
+    if (elements.length === 0) {
+        drawTimeDiff({ ctx, maskRange, xScale, isNsMode, theme, selectedRange });
+        return;
+    }
+    const elementNodes = Array.of(...elements);
+    if (!checkIsSliceSelection(session)) {
+        elementNodes.forEach(element => {
+            const rect = element.getBoundingClientRect();
+            const scrollContainer = getParentNodeByClassName(element, 'laneWrapper');
+            const containerRect = scrollContainer?.getBoundingClientRect();
+            const top = (containerRect ? Math.max(rect.top, containerRect.top) : rect.top) - PAGE_PADDING;
+            const bottom = (containerRect ? Math.min(rect.bottom, containerRect.bottom) : rect.bottom) - PAGE_PADDING;
+            if (bottom > top) {
+                const maskRangeTemp = maskRange as number[];
+                ctx.clearRect(maskRangeTemp[0], top, maskRangeTemp[1] - maskRangeTemp[0], bottom - top);
+            }
+        });
+    } else {
+        const element = getTargetElement(session, elementNodes);
+        if (!element) { return; }
+        const elementRect = element.getBoundingClientRect();
+        const { startY, height: rectHeight } = getSelectionStartPos(elementRect, session);
+        if (startY > elementRect.bottom) { return; }
+        const maskRangeTemp = maskRange as number[];
+        ctx.clearRect(maskRangeTemp[0], startY, maskRangeTemp[1] - maskRangeTemp[0], rectHeight);
+    }
+    drawTimeDiff({ ctx, maskRange, xScale, isNsMode, theme, selectedRange });
 };
+
+/**
+ * 校验是否为算子框选模式
+ * @param session
+ */
+export function checkIsSliceSelection(session: Session): boolean {
+    const { active, targetUnit } = session.sliceSelection;
+    return active && targetUnit?.name === 'Thread';
+}
+
+function getTargetElement(session: Session, elements: Element[]): Element | undefined {
+    if (!elements || elements.length === 0 || !session.sliceSelection.targetUnit) {
+        return undefined;
+    }
+    return elements.find(ele => ele.classList.contains(getClassNameByMetadata(session.sliceSelection.targetUnit as InsightUnit)));
+}
+
+export function getElementRects(session: Session): Array<DOMRect | undefined> {
+    const rects: Array<DOMRect | undefined> = [];
+    const elements = document.getElementsByClassName('chart-selected');
+    const element = getTargetElement(session, Array.of(...elements));
+    if (!element) {
+        return [];
+    }
+    const elementRect = element.getBoundingClientRect();
+    const wrapper = getParentNodeByClassName(element, 'laneWrapper');
+    const wrapperRect = wrapper?.getBoundingClientRect();
+    rects.push(elementRect, wrapperRect);
+    return rects;
+}
+
+/**
+ * 计算算子框选选择的层级
+ * @param posY 结束点Y坐标
+ * @param session
+ */
+export function calcLevelsOfSlice(posY: number, session: Session): void {
+    const [elementRect] = getElementRects(session);
+    if (!elementRect) {
+        return;
+    }
+    const top = elementRect.top - PAGE_PADDING;
+    const bottom = elementRect.bottom - PAGE_PADDING;
+    const { startPos } = session.sliceSelection;
+    // 判断移动点是否位于起始点上方
+    const lastPosIsUp = startPos[1] > posY;
+    const startActualY = Math.max(!lastPosIsUp ? startPos[1] : posY, top);
+    const endActualY = Math.min(lastPosIsUp ? startPos[1] : posY, bottom);
+    if (startActualY > bottom || endActualY < top) {
+        session.sliceSelection.rangeOfLevels = [0, -1];
+        return;
+    }
+    // 最大深度
+    const maxLevel = (bottom - top) / UnitHeight.STANDARD - 1;
+    const startLevel = Math.floor((startActualY - top) / UnitHeight.STANDARD);
+    const endLevel = Math.min(Math.floor((Math.min(bottom, endActualY) - top) / UnitHeight.STANDARD), maxLevel);
+    // 记录框选覆盖的层级
+    session.sliceSelection.rangeOfLevels = [startLevel, endLevel];
+    session.sliceSelection.height = (endLevel - startLevel + 1) * UnitHeight.STANDARD;
+}
+
+/**
+ * 获取框选区域的top位置
+ * @param elementRect
+ * @param session
+ */
+function getSelectionStartPos(elementRect: DOMRect, session: Session): { startY: number; height: number } {
+    const { rangeOfLevels, height } = session.sliceSelection;
+    const startY = elementRect.top - PAGE_PADDING + UnitHeight.STANDARD * rangeOfLevels[0];
+    return { startY, height };
+}
 
 export interface DrawArgs {
     ctx: CanvasRenderingContext2D | null;
@@ -284,9 +382,8 @@ export interface DrawArgs {
     session: Session;
     theme: Theme;
 }
-export const drawOnMove = ({
-    ctx, width, height, xReverseScaleRef, xScale, interactorMouseState, selectedRange, isNsMode, session, theme,
-}: DrawArgs): void => {
+export const drawOnMove = ({ interactorMouseState, ...args }: DrawArgs): void => {
+    const { ctx, session } = args;
     if (ctx === null) { return; }
     const { clickPos: { current: clickPos }, lastPos: { current: mousePosNow } } = interactorMouseState;
     if (mousePosNow !== undefined && clickPos !== undefined && Math.abs(mousePosNow.x - clickPos.x) < MIN_BRUSH_SIZE) {
@@ -301,11 +398,16 @@ export const drawOnMove = ({
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.restore();
 
+    const { width, height, xReverseScaleRef, xScale, selectedRange } = args;
+    if (checkIsSliceSelection(session)) {
+        drawRectOfSlice({ interactorMouseState, ...args });
+        return;
+    }
     // draw mask
     // 因为拖动结束时normal canvas也会绘制mask，避免绘制双层mask，这里限制只有在拖动过程中才hover canvas才绘制mask
     // session.selectedRangeIsLock 时 normal canvas 的 mask 不会删除，避免绘制双层 mask
     if (clickPos !== undefined && !session.selectedRangeIsLock) {
-        drawMaskRange({ ctx, width, height, xReverseScaleRef, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
+        drawMaskRange({ interactorMouseState, ...args, ctx });
         // should filter on data type
         drawSelectedRange(ctx, selectedRange, xReverseScaleRef);
     }
@@ -455,6 +557,9 @@ export const draw = (props: DrawCanvasArgs): void => {
     }
     // clear all
     ctx.clearRect(0, 0, width, height);
+    if (checkIsSliceSelection(session) && session.sliceSelection.rangeOfLevels[1] === -1) {
+        return;
+    }
     if (selectedRange !== undefined) {
         drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScaleRef, xScale, selectedRange, session, isNsMode, theme });
         // should filter on data type
@@ -636,3 +741,67 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
     });
     ctx.restore();
 };
+
+/**
+ * 算子框选是时绘制框选区域
+ * @param clickPos
+ * @param mousePosNow
+ * @param args
+ */
+export const drawRectOfSlice = ({ interactorMouseState: { clickPos: { current: clickPos }, lastPos: { current: mousePosNow } }, ...args }: DrawArgs): void => {
+    const ctx = args.ctx;
+    if (!clickPos || !mousePosNow || !ctx) {
+        return;
+    }
+    const [elementRect, wrapperRect] = getElementRects(args.session);
+    if (!elementRect) {
+        return;
+    }
+    const { x: startX, y: startY } = clickPos;
+    const { x: endX, y: endY } = mousePosNow;
+    const { width, height, xReverseScaleRef, session, selectedRange, xScale, isNsMode, theme } = args;
+    ctx.clearRect(0, 0, width, height);
+    const top = (wrapperRect ? Math.max(elementRect.top, wrapperRect.top) : elementRect.top) - PAGE_PADDING;
+    const bottom = (wrapperRect ? Math.min(elementRect.bottom, wrapperRect.bottom) : elementRect.bottom) - PAGE_PADDING;
+    const lastPosIsUp = endY < startY;
+    const drawStartY = lastPosIsUp ? Math.min(bottom, startY) : Math.max(top, startY);
+    const drawEndY = lastPosIsUp ? Math.max(top, endY) : Math.min(bottom, endY);
+    // 滚动时光标坐标无变化，需单独校验是否超出界限
+    const isOverWhenScroll = (drawStartY >= bottom && drawEndY > bottom) || (drawEndY <= top && drawEndY < top);
+    if ((lastPosIsUp && startY < top) || (!lastPosIsUp && startY > bottom) || isOverWhenScroll) {
+        return;
+    }
+    const maskRange = getMaskRange({ session, xReverseScaleRef, selectedRange, clickPos, mousePosNow }) ?? [];
+    drawTimeDiff({ ctx, maskRange, xScale, isNsMode, theme, selectedRange });
+    drawSliceSelectedLine(ctx, maskRange);
+    const drawHeight = drawEndY - drawStartY;
+
+    ctx.strokeStyle = '#5291FF';
+    ctx.fillStyle = theme.mode === ThemeName.DARK ? 'rgba(255, 255, 255, 0.1)' : 'rgba(82, 145, 255, 0.1)';
+    ctx.strokeRect(startX, drawStartY, endX - startX, drawHeight);
+    ctx.fillRect(startX - 1, drawStartY - 1, endX - startX - 2, drawHeight - 2);
+};
+
+/**
+ * 绘制算子框选时箭头两侧端线
+ * @param ctx
+ * @param maskRange
+ */
+function drawSliceSelectedLine(ctx: CanvasRenderingContext2D, maskRange: number[]): void {
+    if (!ctx || !maskRange.length) {
+        return;
+    }
+    const lineStyle = { color: '#5291FF', width: 2 };
+
+    const drawLine = (x: number): void => {
+        ctx.beginPath();
+        ctx.moveTo(x, UP_LINE);
+        ctx.strokeStyle = lineStyle.color;
+        ctx.lineWidth = lineStyle.width;
+        ctx.lineTo(x, DOWN_LINE);
+        ctx.stroke();
+    };
+
+    drawLine(maskRange[0]);
+    drawLine(maskRange[1]);
+}

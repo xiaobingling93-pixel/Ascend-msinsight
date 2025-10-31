@@ -28,7 +28,7 @@ import type { OrderOptions } from './hooks';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
 import { MetaDataBase, ThreadMetaData } from '../../../entity/data';
-import { PAGE_PADDING } from '../../charts/ChartInteractor/draw';
+import { checkIsSliceSelection, PAGE_PADDING } from '../../charts/ChartInteractor/draw';
 import { MouseButton } from '../../charts/ChartInteractor/actions';
 
 const Lane = styled.div<{ laneHeight: number; className: string; top: number; zIndex: number; isDragging: boolean }>`
@@ -245,7 +245,7 @@ export const UnitObserver = observer((
             onMouseDown={onMouseDown}
             {...props}
         />
-        <div className={isSelected ? 'chart-selected' : 'chart'} ref={ref}
+        <div className={`${isSelected ? 'chart-selected' : 'chart'} ${getClassNameByMetadata(unit)}`} ref={ref}
             onMouseDown={(e): void => {
                 if (session.selectedRangeIsLock) {
                     return;
@@ -284,6 +284,16 @@ export const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: nu
     }
     return [start, end + 1];
 };
+
+export function getClassNameByMetadata(unit: InsightUnit): string {
+    if (unit.name !== 'Thread') {
+        return '';
+    }
+    const metadata = unit.metadata as ThreadMetaData;
+    const pid = metadata.processId;
+    const tid = Array.isArray(metadata.threadIdList) ? metadata.threadIdList.join('_') : metadata.threadId;
+    return pid && tid ? `${pid}_${tid}` : '';
+}
 
 interface FlattenUnitsProps {
     session: Session;
@@ -496,8 +506,10 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         // 处理自动滚动
         handleAutoScrollLogic(e);
 
-        // 更新选中元素
-        updateSelectedElements(e);
+        // 更新选中元素（算子模式下不更新）
+        if (!checkIsSliceSelection(session)) {
+            updateSelectedElements(e);
+        }
     };
 
     // 初始化方向
@@ -556,7 +568,9 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         if (scrollDirection === DOWN && isNearBottom(e, scrollElement)) {
             const interval = setInterval(() => {
                 scrollElement.scrollBy(0, 20);
-                updateSelectedUnits(e, DOWN);
+                if (!checkIsSliceSelection(session)) {
+                    updateSelectedUnits(e, DOWN);
+                }
                 if (currentScrollTop >= contentHeight - window.innerHeight) {
                     clearInterval(interval);
                 }
@@ -568,7 +582,9 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         if (scrollDirection === UP && isNearTop(e, scrollElement)) {
             const interval = setInterval(() => {
                 scrollElement.scrollBy(0, -20);
-                updateSelectedUnits(e, UP);
+                if (!checkIsSliceSelection(session)) {
+                    updateSelectedUnits(e, UP);
+                }
                 if (scrollElement.scrollTop <= 0) {
                     clearInterval(interval);
                 }
@@ -588,8 +604,8 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
             if (moveDirectionHasChange) {
                 // 滚动方向改变，删除后续选中
                 const condition = scrollDirection === UP
-                    ? e.clientY < rect.bottom
-                    : rect.top < e.clientY;
+                    ? e.clientY < rect.top
+                    : rect.bottom < e.clientY;
                 if (condition) {
                     newDeleted.add(key);
                 }

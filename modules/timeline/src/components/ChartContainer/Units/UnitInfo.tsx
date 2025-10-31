@@ -36,9 +36,10 @@ import { useDeselectUnits, useSelectUnits } from './hooks/useSelectUnit';
 import { parseCards } from '../../../api/request';
 import type { ParseCardsParam } from '../../../api/interface';
 import { useComplexMouseEvent } from './mouseEvent';
-import { CardMetaData } from '../../../entity/data';
+import { CardMetaData, ThreadMetaData } from '../../../entity/data';
 import { getTimeOffset, bigSubtract } from '../../../insight/units/utils';
 import connector from '../../../connection/index';
+import { checkIsSliceSelection } from '../../charts/ChartInteractor/draw';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -496,6 +497,15 @@ interface UnitInfoProps {
     onMouseDown: (e: React.MouseEvent) => void;
 }
 
+export function checkIsSameUnit(referenceMetadata?: ThreadMetaData, comparisonMetadata?: ThreadMetaData): boolean {
+    if (!referenceMetadata || !comparisonMetadata) {
+        return false;
+    }
+    return Array.isArray(referenceMetadata.threadIdList)
+        ? referenceMetadata?.threadIdList.toString() === comparisonMetadata.threadIdList?.toString() && referenceMetadata.processId === comparisonMetadata.processId
+        : referenceMetadata.threadId === comparisonMetadata.threadId && referenceMetadata.processId === comparisonMetadata.processId;
+}
+
 export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, className, ...props }: UnitInfoProps): JSX.Element => {
     const { isSelected } = props;
     const isDragging = session.isDragging;
@@ -561,13 +571,27 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         e.stopPropagation(); // 阻止冒泡防止事件冒泡到 ChartContainer 上
         isClickDownRef.current = true;
     };
-    const onMouseLeft = (): void => {
+
+    const selectedUnitChanged = (): void => {
+        if (!(checkIsSliceSelection(session) && session.sliceSelection.targetUnit)) {
+            return;
+        }
+        const comparisonMetadata = unit.metadata as ThreadMetaData;
+        const referenceMetadata = session.sliceSelection.targetUnit?.metadata as ThreadMetaData;
+        if (!checkIsSameUnit(referenceMetadata, comparisonMetadata)) {
+            session.selectedRange = undefined;
+            session.sliceSelection.targetUnit = null;
+        }
+    };
+
+    const onMouseLeft = (e: React.MouseEvent<HTMLElement, MouseEvent>): void => {
         // 拖拽时或不是在此泳道触发的mousedown，则不触发点击事件
         if (isDragging || !isClickDownRef.current) {
             return;
         }
         isClickDownRef.current = false;
         selectSelf();
+        selectedUnitChanged();
         onExpand(unit);
     };
     const onMouseRight = (): void => {
@@ -581,6 +605,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
             selectSelf();
             // 显示右键菜单需使用 contentmenu 事件，不在 mouseup 事件中处理
         }
+        selectedUnitChanged();
     };
     const onUnitInfoContainerMouseUp = useComplexMouseEvent({
         // 为拖拽情况考虑，允许事件冒泡，在上层阻止

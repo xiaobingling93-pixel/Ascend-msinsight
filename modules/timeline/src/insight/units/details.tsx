@@ -3,16 +3,26 @@
  */
 
 import { detail, SummaryFunction } from '../../entity/insight';
-import type { DetailDescriptor } from '../../entity/insight';
+import type { DetailDescriptor, InsightUnit } from '../../entity/insight';
 import { isEmpty } from 'lodash';
 import { runInAction } from 'mobx';
 import type { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
 import type { Session } from '../../entity/session';
 import { getSliceTimeDisplay } from './AscendUnit';
 import { getTimeOffset } from './utils';
+import { checkIsSliceSelection } from '../../components/charts/ChartInteractor/draw';
+import { checkIsSameUnit } from '../../components/ChartContainer/Units/UnitInfo';
 
 const isSelfTimeHidden = (session: Session): boolean => {
     return session.isSimulation;
+};
+
+const getSelectedUnitsOfSliceMode = (session: Session): InsightUnit[] => {
+    const targetMetaData = (session.sliceSelection.targetUnit?.metadata ?? {}) as ThreadMetaData;
+    return session.selectedUnits.filter(unit => {
+        const itemMetaData = (unit?.metadata || {}) as ThreadMetaData;
+        return checkIsSameUnit(targetMetaData, itemMetaData);
+    });
 };
 
 export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMetaData>({
@@ -61,22 +71,18 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
         let endTime = session.selectedRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
         const timestampOffset = getTimeOffset(session, metadata);
-        const metadataList = session.selectedUnits.flatMap(selectUnit => {
+
+        const { rangeOfLevels, targetUnit } = session.sliceSelection;
+        const isValidSliceMode = checkIsSliceSelection(session) && rangeOfLevels[1] > -1 && targetUnit;
+        const selectedUnits = isValidSliceMode ? getSelectedUnitsOfSliceMode(session) : [...session.selectedUnits];
+        const paramsOfDepth = isValidSliceMode ? { startDepth: rangeOfLevels[0].toString(), endDepth: rangeOfLevels[1].toString() } : {};
+
+        const metadataList = selectedUnits.flatMap(selectUnit => {
             const { threadId, threadIdList, processId, metaType } = selectUnit?.metadata as ThreadMetaData;
-
             if (Array.isArray(threadIdList)) {
-                return threadIdList.map(tid => ({
-                    tid,
-                    pid: processId,
-                    metaType,
-                }));
+                return threadIdList.map(tid => ({ tid, metaType, pid: processId }));
             }
-
-            return [{
-                tid: threadId,
-                pid: processId,
-                metaType,
-            }];
+            return [{ tid: threadId, pid: processId, metaType }];
         });
 
         const params = {
@@ -85,6 +91,7 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
             startTime: Math.floor(startTime + timestampOffset),
             endTime: Math.ceil(endTime + timestampOffset),
             metadataList,
+            ...paramsOfDepth,
         };
         const raw = await window.request(metadata.dataSource, { command: 'unit/threads', params });
         const res = raw.data;
@@ -95,7 +102,6 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
             element.startTime = Math.floor(startTime + timestampOffset);
             element.endTime = Math.ceil(endTime + timestampOffset);
         });
-
         return res;
     },
     mouseEnterCallback: ({ session, row }) => {

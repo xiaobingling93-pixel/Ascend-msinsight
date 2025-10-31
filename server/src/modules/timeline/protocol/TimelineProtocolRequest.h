@@ -141,18 +141,9 @@ struct UnitThreadsParams {
     std::vector<Metadata> metadataList;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
-    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
-    {
-        if (startTime > endTime) {
-            warnMsg = "unit threads start time is bigger than end time";
-            return false;
-        }
-        if (endTime > UINT64_MAX - minTime) {
-            warnMsg = "unit threads end time is invalid";
-            return false;
-        }
-        return true;
-    }
+    std::string startDepth;
+    std::string endDepth;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const;
 };
 
 struct UnitThreadsRequest : public Request {

@@ -17,6 +17,9 @@ import { getDetailViewItem } from './detailViews/DetailView';
 import { useFindDetail } from './detailViews/FindInWindow';
 import { StyledTabs } from './base/StyledTabs';
 import i18n from 'ascend-i18n';
+import { Checkbox } from 'ascend-components';
+import { runInAction } from 'mobx';
+import eventBus from '../utils/eventBus';
 
 interface CssProps {
     className?: string;
@@ -30,7 +33,7 @@ interface DataCardType {
     height: number;
     session: Session;
     type: string;
-};
+}
 
 const FILTER_HEIGHT = 31;
 export const DETAIL_HEADER_HEIGHT_PX = 36;
@@ -39,7 +42,7 @@ const MORE_HEADER_HEIGHT_PX = 22;
 const enum TriggerType {
     SELECTED_DATA = 'SELECTED_DATA',
     SELECTED_RANGE = 'SELECTED_RANGE',
-};
+}
 
 const BottomTabs = styled(StyledTabs)`
     .ant-tabs-content-holder{
@@ -274,6 +277,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         getDetailViewItem(session, bottomHeight),
         useFindDetail(session, bottomHeight),
     ];
+    const { t } = useTranslation('timeline');
 
     useEffect(() => {
         const bottomResize = (): void => setBottomHeight(ref.current?.clientHeight ?? BOTTOM_HEIGHT);
@@ -304,8 +308,17 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         setItem('SystemView');
     }, [session.showEvent]);
 
+    const extraSlot = (): ReactNode => {
+        return item === 'SliceList' && <Checkbox checked={session.sliceSelection.active} onChange={() => {
+            runInAction(() => {
+                eventBus.emit('sliceActiveChanged');
+                session.sliceSelection.active = !session.sliceSelection.active;
+            });
+        }}>{t('contextMenu.SliceSelectionMode')}</Checkbox>;
+    };
+
     return (<Container ref={ref} className="bottomPanelContainer">
-        <BottomTabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>
+        <BottomTabs style={{ width: '100%' }} items={items} activeKey={item} tabBarExtraContent={extraSlot()} onTabClick={(key): void => setItem(key)}/>
     </Container>);
 });
 
@@ -316,7 +329,7 @@ function getDataCardItem(bottomHeight: number, session: Session, triggerType: st
             key: 'SliceList',
             children: <DataCard height={bottomHeight} session={session} type={triggerType} />,
         };
-    };
+    }
     return {
         label: DataCardTitle('Slice Detail'),
         key: 'SliceDetail',

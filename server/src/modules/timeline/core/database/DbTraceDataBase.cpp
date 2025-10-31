@@ -47,7 +47,7 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
     }
 
     std::vector<Protocol::SimpleSlice> nRows =
-        TraceDatabaseHelper::ThreadsInfoFilter(simpleSliceVec, startTime, endTime);
+        TraceDatabaseHelper::ThreadsInfoFilter(requestParams, simpleSliceVec, startTime, endTime);
     TraceDatabaseHelper::ReduceThread(nRows, selfTimeKeyValue, responseBody);
     return true;
 }

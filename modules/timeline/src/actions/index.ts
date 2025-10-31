@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
+export { actionSliceSelection } from './actionSliceSelection';
+
 export { actionFitToScreen } from './actionFitToScreen';
 export { actionZoomIntoSelection } from './actionZoomIntoSelection';
 export { actionFindInCommunication } from './actionFindInCommunication';

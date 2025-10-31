@@ -4,19 +4,15 @@
 import { useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
-import React, {
-    type Ref,
-    useEffect,
-    useImperativeHandle,
-} from 'react';
+import React, { type Ref, useEffect, useImperativeHandle } from 'react';
 import * as d3 from 'd3';
 import type { Session } from '../../../entity/session';
 import { traceEnd } from '../../../utils/traceLogger';
 import { useWatchDomResize } from '../../../utils/useWatchDomResize';
 import { type CustomCrossRenderer, registerCrossUnitRenderer, useCustomRenderers } from './custom';
 import type { Pos, ExtendPos } from './common';
-import { draw, drawMEventMask } from './draw';
-import type { DrawCanvasArgs } from './draw';
+import { draw, drawMEventMask, drawRectOfSlice } from './draw';
+import type { DrawCanvasArgs, DrawArgs } from './draw';
 import {
     resetCanvasSize,
     mouseDownAction,
@@ -27,6 +23,8 @@ import {
     type MouseDownActionResult, handleMousePosChange,
 } from './actions';
 import type { TimeStamp } from '../../../entity/common';
+import { useEventBus } from '../../../utils/eventBus';
+
 registerCrossUnitRenderer({ // 绘制选中区间的虚线
     action: (ctx, session, xScale) => {
         const selectedRange = session.selectedRange; // should filter on data type
@@ -199,6 +197,18 @@ const Interactor = ({
             theme,
         };
     }
+
+    function selectionModeChange(): void {
+        session.resetOfSliceSelection();
+        session.sliceSelection.selecting = false;
+        session.selectedRange = undefined;
+        if (!hoverCanvas.current) {
+            return;
+        }
+        hoverCanvas.current.getContext('2d')?.clearRect(0, 0, hoverCanvas.current.clientWidth, hoverCanvas.current.clientHeight);
+        normalCanvas.current?.getContext('2d')?.clearRect(0, 0, normalCanvas.current?.clientWidth, normalCanvas.current?.clientHeight);
+    }
+
     useEffect(() => {
         const normalCanvasCtx = normalCanvas.current?.getContext('2d');
         const hoverCanvasCtx = hoverCanvas.current?.getContext('2d');
@@ -240,6 +250,26 @@ const Interactor = ({
         if (session.selectedRangeIsLock) { return; }
         handleMousePosChange(interactorParams, interactorMouseState);
     }, [domainStart, domainEnd]);
+
+    // 切换算子框选模式清空画板
+    useEffect(() => {
+        selectionModeChange();
+    }, [session.sliceSelection.active]);
+
+    useEffect(() => {
+        const { active, selecting } = session.sliceSelection;
+        if (active && selecting) {
+            const drawArg = getDrawArgs();
+            if (!drawArg || !hoverCanvas.current) {
+                return;
+            }
+            drawRectOfSlice({ ...drawArg, ctx: hoverCanvas.current.getContext('2d') } as DrawArgs);
+        }
+    }, [scrollTop]);
+
+    useEventBus('sliceActiveChanged', (): void => {
+        selectionModeChange();
+    });
 
     useImperativeHandle(ref, handleInteractorEvent({ interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef }));
     return <>

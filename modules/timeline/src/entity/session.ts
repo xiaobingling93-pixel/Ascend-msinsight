@@ -37,7 +37,7 @@ export type DataWithHeight<T> = T & { height?: number };
 export interface LinkedDataWithHeight<T> {
     data: DataWithHeight<T>;
     datas: Array<DataWithHeight<T>>;
-};
+}
 export type ValidSession = Session & { startRecordTime: TimeStamp; phase: Exclude<Phase, 'configuring'> };
 
 export function isValidSession(session?: Session): session is ValidSession {
@@ -51,11 +51,11 @@ export interface LinkData {
         matcher: DataMatcher;
     };
     sources: Array<{ data: LinkDataType; matcher: DataMatcher }>;
-};
+}
 export interface ContextMenu {
     isVisible: boolean;
     zoomHistory: DomainRange[];
-};
+}
 
 interface UnitsConfig {
     jsAllocationUsage: {
@@ -246,6 +246,15 @@ export class Session {
     modeOfParse: 'auto_parse' | 'global_parse' = 'auto_parse';
 
     parseQueue: Array<() => void> = [];
+
+    sliceSelection = {
+        active: false, // 切换算子框选模式
+        height: 0, // 框选的高度
+        selecting: false, // 正在框选中
+        startPos: [] as number[], // 框选起始点
+        rangeOfLevels: [] as number[], // 框选覆盖层级
+        targetUnit: null as (InsightUnit | null),
+    };
 
     private _selectedRange?: [ TimeStamp, TimeStamp ];
     private readonly _domain: Domain;
@@ -536,6 +545,14 @@ export class Session {
         if (this.contextMenu.zoomHistory.length > MAX_ZOOM_COUNT) {
             this.contextMenu.zoomHistory = this.contextMenu.zoomHistory.slice(-MAX_ZOOM_COUNT);
         }
+    }
+
+    resetOfSliceSelection(): void {
+        this.sliceSelection.height = 0;
+        this.sliceSelection.startPos = [];
+        this.sliceSelection.rangeOfLevels = [];
+        this.sliceSelection.selecting = true;
+        this.sliceSelection.targetUnit = null;
     }
 
     // 用于更新 unit 下的全部泳道是否可见

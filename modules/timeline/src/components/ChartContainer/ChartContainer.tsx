@@ -230,7 +230,8 @@ function isTargetElement(event: React.MouseEvent): boolean {
 
 const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartInteractorHandles>, scrollerRef: React.RefObject<HTMLDivElement>,
     session: Session, interactive?: boolean): InteractorMouseHandlers => {
-    const clickPos = useRef<undefined | ExtendPos>(undefined); const lastPos = useRef<Pos | undefined>(undefined);
+    const clickPos = useRef<undefined | ExtendPos>(undefined);
+    const lastPos = useRef<Pos | undefined>(undefined);
     const [interactorMouseState, setInteractorMouseState] = React.useState<InteractorMouseState>({ clickPos, lastPos });
     const onMouseMove = (e: React.MouseEvent): void => {
         if (!chartInteractorRef.current) { return; }
@@ -253,6 +254,11 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
             interactorMouseState.lastPos.current = undefined;
             return;
         }
+        // 左键重置信息
+        if (e.button === 0 && !(e.target as HTMLElement).closest('.menu-item')) {
+            session.resetOfSliceSelection();
+            session.sliceSelection.targetUnit = session.selectedUnits[0];
+        }
         const needDragOneSide = chartInteractorRef.current.mouseDownAction(interactorMouseState, e);
         if (needDragOneSide === MouseDownActionResult.NEED_DRAG_ONE_SIDE) {
             // 当点击到已经有 selectedRange 的边界，需要触发拖拽
@@ -267,6 +273,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
     const onMouseUp = (e: MouseEvent): void => {
         if (!chartInteractorRef.current || !interactive) { return; }
         chartInteractorRef.current.mouseUpAction(interactorMouseState, e);
+        if (session.sliceSelection.active) { session.sliceSelection.selecting = false; }
     };
     const onMouseLeave = (): void => {
         if (!chartInteractorRef.current) { return; }
@@ -284,4 +291,4 @@ interface InteractorMouseHandlers {
     onWheel: (e: React.WheelEvent<HTMLDivElement>) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
     interactorMouseState: InteractorMouseState;
-};
+}

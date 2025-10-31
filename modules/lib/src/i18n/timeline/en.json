@@ -51,7 +51,8 @@
       "Set alias": "Set Alias",
       "Alias": "Alias",
       "Merge Units": "Merge Units",
-      "Unmerge Units": "Unmerge Units"
+      "Unmerge Units": "Unmerge Units",
+      "SliceSelectionMode": "Slice Selection Mode"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",

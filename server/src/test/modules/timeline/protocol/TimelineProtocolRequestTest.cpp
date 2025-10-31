@@ -78,7 +78,11 @@ TEST_F(TimelineProtocolRequestTest, UnitThreadsParams)
     res = params.CheckParams(min, errorMsg);
     EXPECT_EQ(res, false);
     const uint64_t mi = 89;
+    std::string startDepth = "";
+    std::string endDepth = "";
     params.endTime = mi;
+    params.startDepth = startDepth;
+    params.endDepth = endDepth;
     res = params.CheckParams(min, errorMsg);
     EXPECT_EQ(res, true);
 }
