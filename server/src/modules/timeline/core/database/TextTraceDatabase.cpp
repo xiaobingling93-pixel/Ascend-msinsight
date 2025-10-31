@@ -465,6 +465,8 @@ bool TextTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
     sliceQuery.minTimestamp = minTimestamp;
     sliceQuery.startTime = requestParams.startTime;
     sliceQuery.endTime = requestParams.endTime;
+    sliceQuery.startDepth = requestParams.startDepth;
+    sliceQuery.endDepth = requestParams.endDepth;
     /*
      遍历metaDataList,这里不在一个sql里查询出来是为了以后预留pid.tid删选
     */

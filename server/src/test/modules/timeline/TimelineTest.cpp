@@ -360,7 +360,7 @@ TEST_F(TestSuit, QueryFlowCategoryList)
     EXPECT_EQ(categories[thirdNumber], "async_task_queue");
 }
 
-TEST_F(TestSuit, QueryThreads)
+TEST_F(TestSuit, QueryThreadsWithEmptyDepth)
 {
     // request parameters
     Dic::Protocol::UnitThreadsParams request;
@@ -368,6 +368,45 @@ TEST_F(TestSuit, QueryThreads)
     uint64_t ENDTIME = 1695115378743155968;
     request.startTime = STARTTIME;
     request.endTime = ENDTIME;
+    request.rankId = "0";
+    Dic::Protocol::UnitThreadsBody response;
+    uint64_t minTimestamp = 0;
+
+    // expected data
+    int size = 2;
+    std::string title = "AscendCL@aclDestroyTensorDesc";
+    uint64_t wallDuration = 42180;
+    uint64_t occurrences = 62;
+    uint64_t avgWallDuration = 680;
+    uint64_t selfTime = 42180;
+    Dic::Protocol::Metadata metadata;
+    metadata.tid = "1413063";
+    metadata.pid = "140836602";
+    metadata.metaType.clear();
+    request.metadataList.emplace_back(metadata);
+    request.rankId = "0";
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
+    database->QueryThreads(request, response, minTimestamp, { 30 });
+
+    EXPECT_EQ(response.emptyFlag, false);
+    EXPECT_EQ(response.data.size(), size);
+    EXPECT_EQ(response.data[0].title, title);
+    EXPECT_EQ(response.data[0].wallDuration, wallDuration);
+    EXPECT_EQ(response.data[0].occurrences, occurrences);
+    EXPECT_EQ(response.data[0].avgWallDuration, avgWallDuration);
+    EXPECT_EQ(response.data[0].selfTime, selfTime);
+}
+
+TEST_F(TestSuit, QueryThreadsWithDepth0)
+{
+    // request parameters
+    Dic::Protocol::UnitThreadsParams request;
+    uint64_t STARTTIME = 1695115378734066176;
+    uint64_t ENDTIME = 1695115378743155968;
+    request.startTime = STARTTIME;
+    request.endTime = ENDTIME;
+    request.startDepth = "0";
+    request.endDepth = "0";
     request.rankId = "0";
     Dic::Protocol::UnitThreadsBody response;
     uint64_t minTimestamp = 0;

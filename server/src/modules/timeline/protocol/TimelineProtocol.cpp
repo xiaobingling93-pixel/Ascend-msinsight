@@ -210,6 +210,8 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startDepth, json["params"], "startDepth");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endDepth, json["params"], "endDepth");
     if (json["params"].HasMember("metadataList") && json["params"]["metadataList"].IsArray()) {
         for (const auto &metaData: json["params"]["metadataList"].GetArray()) {
             Metadata data{

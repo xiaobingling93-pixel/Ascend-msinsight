@@ -281,9 +281,17 @@ void SliceAnalyzer::ComputeSliceDomainVecAndSelfTimeByTimeRange(const SliceQuery
     CalculateSelfTime(competeSliceVec, selfTimeKeyValue);
     uint64_t end = sliceQuery.endTime + sliceQuery.minTimestamp;
     uint64_t start = sliceQuery.startTime + sliceQuery.minTimestamp;
+    uint32_t startDepth = NumberUtil::StringToUint32(sliceQuery.startDepth);
+    uint32_t endDepth = NumberUtil::StringToUint32(sliceQuery.endDepth);
     for (auto &row : competeSliceVec) {
-        if (row.timestamp <= end && row.endTime >= start) {
-            sliceDomainVec.emplace_back(row);
+        if (sliceQuery.startDepth.empty() && sliceQuery.endDepth.empty()) {
+            if (row.timestamp <= end && row.endTime >= start) {
+                sliceDomainVec.emplace_back(row);
+            }
+        } else {
+            if (row.timestamp <= end && row.endTime >= start && row.depth >= startDepth && row.depth <= endDepth) {
+                sliceDomainVec.emplace_back(row);
+            }
         }
     }
 }
