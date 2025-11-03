@@ -377,3 +377,55 @@ TEST_F(DataBaseTest, TestQueryDataByPageWhenOrderAndLimit)
     EXPECT_EQ(res.back()[cols.front().key], "2025-03-28 22:57:43:736935");
     EXPECT_EQ(res.back()[cols.back().key], "6.0196");
 }
+
+/**
+ * 查询翻译正常
+ */
+TEST_F(DataBaseTest, TestQueryTranslateNormal)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3* dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    std::string sql = "CREATE TABLE \"translate\" (\n"
+                      "  \"key\" TEXT NOT NULL,\n"
+                      "  \"value_en\" TEXT,\n"
+                      "  \"value_zh\" TEXT,\n"
+                      "  PRIMARY KEY (\"key\")\n"
+                      ");";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sql);
+    std::string dataSql = "INSERT INTO \"main\".\"translate\" (\"key\", \"value_en\", \"value_zh\") VALUES ('request_data', 'bbbb', 'nnnn');\n"
+                          "INSERT INTO \"main\".\"translate\" (\"key\", \"value_en\", \"value_zh\") VALUES ('batch_info', 'ffff', 'mmm');\n"
+                          "INSERT INTO \"main\".\"translate\" (\"key\", \"value_en\", \"value_zh\") VALUES ('kvcache_usage', 'sssss', 'kkk');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, dataSql);
+    auto cols = database.QueryTranslate(false);
+    const uint64_t expectSize = 3;
+    EXPECT_EQ(cols.size(), expectSize);
+    EXPECT_EQ(cols["request_data"], "bbbb");
+    cols = database.QueryTranslate(true);
+    EXPECT_EQ(cols.size(), expectSize);
+    EXPECT_EQ(cols["request_data"], "nnnn");
+}
+
+/**
+ * 查询翻译不正常
+ */
+TEST_F(DataBaseTest, TestQueryTranslateAbnormal)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3* dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    std::string sql = "CREATE TABLE \"translates\" (\n"
+                      "  \"key\" TEXT NOT NULL,\n"
+                      "  \"value_en\" TEXT,\n"
+                      "  \"value_zh\" TEXT,\n"
+                      "  PRIMARY KEY (\"key\")\n"
+                      ");";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sql);
+    auto cols = database.QueryTranslate(false);
+    const uint64_t expectSize = 0;
+    EXPECT_EQ(cols.size(), expectSize);
+}
