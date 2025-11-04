@@ -26,7 +26,7 @@ public:
     }
     using json_t = rapidjson::Value;
     static std::string Type(const json_t &json) ;
-    std::unique_ptr<Event> FromJson(const json_t &json, const std::string &type);
+    Trace::Event* FromJson(const json_t &json, const std::string &type);
 
 private:
     EventUtil();
@@ -35,16 +35,16 @@ private:
     void Register();
     void UnRegister();
 
-    using JsonToEventFunc = std::function<std::unique_ptr<Event>(const json_t &)>;
+    using JsonToEventFunc = std::function<Trace::Event*(const json_t &)>;
     std::map<std::string, JsonToEventFunc> jsonToEventFactory;
     std::optional<JsonToEventFunc> GetJsonToEventFunc(const std::string &type);
-    static std::unique_ptr<Event> ToSliceEvent(const json_t &json);
-    static std::unique_ptr<Event> ToSimulationSliceEvent(const json_t &json);
-    static std::unique_ptr<Event> ToSimulationBeginSliceEvent(const json_t &json);
-    static std::unique_ptr<Event> ToSimulationEndSliceEvent(const json_t &json);
-    static std::unique_ptr<Event> ToMetaDataEvent(const json_t &json);
-    static std::unique_ptr<Event> ToFlowEvent(const json_t &json);
-    static std::unique_ptr<Event> ToCounterEvent(const json_t &json);
+    static Trace::Event* ToSliceEvent(const json_t &json);
+    static Trace::Event* ToSimulationSliceEvent(const json_t &json);
+    static Trace::Event* ToSimulationBeginSliceEvent(const json_t &json);
+    static Trace::Event* ToSimulationEndSliceEvent(const json_t &json);
+    static Trace::Event* ToMetaDataEvent(const json_t &json);
+    static Trace::Event* ToFlowEvent(const json_t &json);
+    static Trace::Event* ToCounterEvent(const json_t &json);
 };
 } // end of namespace Timeline
 } // end of namespace Module

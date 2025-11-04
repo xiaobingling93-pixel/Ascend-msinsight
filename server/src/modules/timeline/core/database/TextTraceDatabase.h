@@ -32,8 +32,8 @@ public:
     bool InitStmt();
     void ReleaseStmt();
     bool InsertSlice(const Trace::Slice &event);
-    bool AddSimulationThreadCache(const Trace::ThreadEvent &event);
-    bool AddSimulationProcessCache(const Trace::ProcessEvent &event);
+    bool AddSimulationThreadCache(Trace::ThreadEvent &&event);
+    bool AddSimulationProcessCache(Trace::ProcessEvent &&event);
     bool InsertSimulationThreadList();
     bool InsertSimulationProcessList();
     bool UpdateProcessName(const Trace::MetaData &event);

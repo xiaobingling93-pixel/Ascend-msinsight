@@ -33,10 +33,15 @@ public:
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid);
 
+    /**
+    * 清理线程池，释放json解析时占用的内存池
+    */
+    void Clear();
+
 private:
     TraceFileParser();
     ~TraceFileParser() override;
-    const int maxThreadNum = 4;
+    const uint32_t maxThreadNum = 64;
     std::unique_ptr<ThreadPool> threadPool;
     static bool CheckInitParser(const std::string &fileId);
     static bool InitParser(const std::vector<std::string> &filePathArr,
@@ -58,6 +63,8 @@ private:
     static void InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId);
 
     static std::string ComputeStatusInfoFromPathArr(const std::vector<std::string> &filePathArr);
+
+    void InitThreadPool();
 };
 } // end of namespace Timeline
 } // end of namespace Module

@@ -715,7 +715,7 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenNotInitThenInsertF
     threadEvent.pid = "lll";
     threadEvent.threadName = "mmmm";
     threadEvent.SetThreadSortIndex();
-    database.AddSimulationThreadCache(threadEvent);
+    database.AddSimulationThreadCache(std::move(threadEvent));
     database.CommitData();
     std::vector<ThreadPO> threadPOS;
     threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
@@ -747,7 +747,7 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenInitThenInsertSucc
     threadEvent.threadName = "mmmm";
     threadEvent.SetThreadSortIndex();
     database.InitStmt();
-    database.AddSimulationThreadCache(threadEvent);
+    database.AddSimulationThreadCache(std::move(threadEvent));
     database.CommitData();
     std::vector<ThreadPO> threadPOS;
     threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
@@ -790,7 +790,7 @@ TEST_F(TextTraceDatabaseMockTest, TestFirstOrderThreadThenUpdataThreadInfo)
     threadEvent.pid = "lll";
     threadEvent.threadName = "mmmm";
     threadEvent.SetThreadSortIndex();
-    database.AddSimulationThreadCache(threadEvent);
+    database.AddSimulationThreadCache(std::move(threadEvent));
     database.CommitData();
     std::vector<ThreadPO> threadPOS;
     threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
@@ -828,7 +828,7 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenInitAndTableNotExi
     threadEvent.threadName = "mmmm";
     threadEvent.SetThreadSortIndex();
     database.InitStmt();
-    database.AddSimulationThreadCache(threadEvent);
+    database.AddSimulationThreadCache(std::move(threadEvent));
     const std::string alterThreadTable = "DROP TABLE thread;";
     DatabaseTestCaseMockUtil::ExecuteSql(dbPtr, alterThreadTable);
     database.CommitData();
@@ -858,7 +858,7 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenProcessNotInitThen
     Trace::ProcessEvent processEvent;
     processEvent.pid = "yy";
     processEvent.processName = "mm";
-    database.AddSimulationProcessCache(processEvent);
+    database.AddSimulationProcessCache(std::move(processEvent));
     database.CommitData();
     std::vector<ProcessPO> processPOS;
     processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME)
@@ -885,7 +885,7 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenProcessInitThenIns
     processEvent.pid = "yy";
     processEvent.processName = "mm";
     database.InitStmt();
-    database.AddSimulationProcessCache(processEvent);
+    database.AddSimulationProcessCache(std::move(processEvent));
     database.CommitData();
     std::vector<ProcessPO> processPOS;
     processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME)
@@ -920,7 +920,7 @@ TEST_F(TextTraceDatabaseMockTest, TestFirstOrderProcessThenUpdataProcessInfo)
     Trace::ProcessEvent processEvent;
     processEvent.pid = "yy";
     processEvent.processName = "mm";
-    database.AddSimulationProcessCache(processEvent);
+    database.AddSimulationProcessCache(std::move(processEvent));
     database.CommitData();
     std::vector<ProcessPO> processPOS;
     processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME)
@@ -953,7 +953,7 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenProcessInitAndTabl
     database.InitStmt();
     const std::string alterThreadTable = "DROP TABLE process;";
     DatabaseTestCaseMockUtil::ExecuteSql(dbPtr, alterThreadTable);
-    database.AddSimulationProcessCache(processEvent);
+    database.AddSimulationProcessCache(std::move(processEvent));
     database.CommitData();
     std::vector<ProcessPO> processPOS;
     processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME)

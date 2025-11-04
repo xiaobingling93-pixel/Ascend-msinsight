@@ -242,15 +242,15 @@ bool TextTraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
     return true;
 }
 
-bool TextTraceDatabase::AddSimulationThreadCache(const Trace::ThreadEvent &event)
+bool TextTraceDatabase::AddSimulationThreadCache(Trace::ThreadEvent &&event)
 {
-    simulationThreadInfoCache.insert(event);
+    simulationThreadInfoCache.insert(std::move(event));
     return true;
 }
 
-bool TextTraceDatabase::AddSimulationProcessCache(const Trace::ProcessEvent &event)
+bool TextTraceDatabase::AddSimulationProcessCache(Trace::ProcessEvent &&event)
 {
-    simulationProcessInfoCache.insert(event);
+    simulationProcessInfoCache.insert(std::move(event));
     return true;
 }
 

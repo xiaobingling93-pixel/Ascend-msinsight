@@ -33,10 +33,10 @@ void ThreadPool::ThreadFunc(ThreadPool &threadPool, int index)
     ServerLog::Info("[Thread worker] worker ", index, " exit.");
 }
 
-ThreadPool::ThreadPool(int threadCount)
+ThreadPool::ThreadPool(uint32_t threadCount)
 {
     ServerLog::Info("[Thread pool] Init. thread count:", threadCount);
-    for (int i = 0; i < threadCount; i++) {
+    for (uint32_t i = 0; i < threadCount; i++) {
         threads.emplace_back(ThreadPool::ThreadFunc, std::ref(*this), i);
     }
 }

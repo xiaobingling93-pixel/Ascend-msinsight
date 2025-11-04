@@ -50,7 +50,7 @@ std::string EventUtil::Type(const json_t &json)
     return "";
 }
 
-std::unique_ptr<Event> EventUtil::FromJson(const json_t &json, const std::string &type)
+Trace::Event* EventUtil::FromJson(const json_t &json, const std::string &type)
 {
     if (type.empty()) {
         return nullptr;
@@ -70,9 +70,9 @@ std::optional<EventUtil::JsonToEventFunc> EventUtil::GetJsonToEventFunc(const st
     return jsonToEventFactory[type];
 }
 
-std::unique_ptr<Event> EventUtil::ToSliceEvent(const json_t &json)
+Trace::Event* EventUtil::ToSliceEvent(const json_t &json)
 {
-    std::unique_ptr<Slice> event = std::make_unique<Slice>();
+    thread_local static std::shared_ptr<Slice> event = std::make_shared<Slice>();
     event->type = Type(json);
     event->ts = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "ts"));
     event->dur = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "dur"));
@@ -81,12 +81,12 @@ std::unique_ptr<Event> EventUtil::ToSliceEvent(const json_t &json)
     event->pid = JsonUtil::GetDumpString(json, "pid");
     event->cat = JsonUtil::GetOptionalString(json, "cat");
     event->args = JsonUtil::GetOptionalString(json, "args");
-    return event;
+    return event.get();
 }
 
-std::unique_ptr<Event> EventUtil::ToSimulationSliceEvent(const json_t &json)
+Trace::Event* EventUtil::ToSimulationSliceEvent(const json_t &json)
 {
-    std::unique_ptr<Slice> event = std::make_unique<Slice>();
+    thread_local static std::shared_ptr<Slice> event = std::make_shared<Slice>();
     event->type = "SX";
     long double start = JsonUtil::GetLongDouble(json, "ts");
     double tempDur = JsonUtil::GetDouble(json, "dur");
@@ -99,12 +99,12 @@ std::unique_ptr<Event> EventUtil::ToSimulationSliceEvent(const json_t &json)
     event->processName = JsonUtil::GetString(json, "pid");
     event->cname = JsonUtil::GetString(json, "cname");
     event->args = JsonUtil::GetOptionalString(json, "args");
-    return event;
+    return event.get();
 }
 
-std::unique_ptr<Event> EventUtil::ToSimulationBeginSliceEvent(const json_t &json)
+Trace::Event* EventUtil::ToSimulationBeginSliceEvent(const json_t &json)
 {
-    std::unique_ptr<Slice> event = std::make_unique<Slice>();
+    thread_local static std::shared_ptr<Slice> event = std::make_shared<Slice>();
     event->type = "SB";
     event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
     event->name = JsonUtil::GetString(json, "name");
@@ -113,22 +113,22 @@ std::unique_ptr<Event> EventUtil::ToSimulationBeginSliceEvent(const json_t &json
     event->cname = JsonUtil::GetString(json, "cname");
     event->args = JsonUtil::GetOptionalString(json, "args");
     event->flagId = JsonUtil::GetDumpString(json, "id");
-    return event;
+    return event.get();
 }
 
-std::unique_ptr<Event> EventUtil::ToSimulationEndSliceEvent(const json_t &json)
+Trace::Event* EventUtil::ToSimulationEndSliceEvent(const json_t &json)
 {
-    std::unique_ptr<Slice> event = std::make_unique<Slice>();
+    thread_local static std::shared_ptr<Slice> event = std::make_shared<Slice>();
     event->type = "SE";
     event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
     event->name = JsonUtil::GetString(json, "name");
     event->flagId = JsonUtil::GetDumpString(json, "id");
-    return event;
+    return event.get();
 }
 
-std::unique_ptr<Event> EventUtil::ToMetaDataEvent(const json_t &json)
+Trace::Event* EventUtil::ToMetaDataEvent(const json_t &json)
 {
-    std::unique_ptr<MetaData> event = std::make_unique<MetaData>();
+    thread_local static std::shared_ptr<MetaData> event = std::make_shared<MetaData>();
     event->type = Type(json);
     event->name = JsonUtil::GetString(json, "name");
     event->tid = JsonUtil::GetDumpString(json, "tid");
@@ -138,12 +138,12 @@ std::unique_ptr<Event> EventUtil::ToMetaDataEvent(const json_t &json)
         event->args.labels = JsonUtil::GetString(json["args"], "labels");
         event->args.sortIndex = JsonUtil::GetInteger(json["args"], "sort_index");
     }
-    return event;
+    return event.get();
 }
 
-std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
+Trace::Event* EventUtil::ToFlowEvent(const json_t &json)
 {
-    std::unique_ptr<Flow> event = std::make_unique<Flow>();
+    thread_local static std::shared_ptr<Flow> event = std::make_shared<Flow>();
     event->type = Type(json);
     event->ts = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "ts"));
     event->tid = JsonUtil::GetDumpString(json, "tid");
@@ -151,12 +151,12 @@ std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
     event->flowId = JsonUtil::GetDumpString(json, "id");
     event->name = JsonUtil::GetString(json, "name");
     event->cat = JsonUtil::GetOptionalString(json, "cat");
-    return event;
+    return event.get();
 }
 
-std::unique_ptr<Event> EventUtil::ToCounterEvent(const json_t &json)
+Trace::Event* EventUtil::ToCounterEvent(const json_t &json)
 {
-    std::unique_ptr<Counter> event = std::make_unique<Counter>();
+    thread_local static std::shared_ptr<Counter> event = std::make_shared<Counter>();
     event->type = Type(json);
     if (json.HasMember("id")) {
         event->name = JsonUtil::GetString(json, "name") + "[" + std::to_string(JsonUtil::GetInteger(json, "id")) + "]";
@@ -168,7 +168,7 @@ std::unique_ptr<Event> EventUtil::ToCounterEvent(const json_t &json)
     event->ts = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "ts"));
     event->cat = JsonUtil::GetOptionalString(json, "cat");
     event->args = JsonUtil::GetDumpString(json, "args");
-    return event;
+    return event.get();
 }
 } // end of namespace Timeline
 } // end of namespace Module

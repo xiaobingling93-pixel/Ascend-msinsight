@@ -35,18 +35,18 @@ private:
     int ignoreCount = 0;
     bool m_isSimulation = false;
     std::shared_ptr<TextTraceDatabase> database;
-    std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
+    std::map<std::string, std::function<void(Trace::Event*)>> eventHandleMap;
 
     void EventHandle(const rapidjson::Value &json);
     void InitEventHandle();
-    void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);
-    void CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
-    void SimulationBeginEventHandle(std::unique_ptr<Trace::Event> eventPtr);
-    void SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPtr);
-    void SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr);
-    void FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
-    void SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
-    void CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void MetaDataHandle(Trace::Event* eventPtr);
+    void CompleteEventsHandle(Trace::Event* eventPtr);
+    void SimulationBeginEventHandle(Trace::Event* eventPtr);
+    void SimulationEndEventHandle(Trace::Event* eventPtr);
+    void SimulationEventHandle(Trace::Event* eventPtr);
+    void FlowEventsHandle(Trace::Event* eventPtr);
+    void SimulationFlowEventsHandle(Trace::Event* eventPtr);
+    void CounterEventsHandle(Trace::Event* eventPtr);
     std::map<std::string, uint64_t> trackIdMap;
     std::map<std::string, Trace::Slice> setFlagSliceMap;
     std::map<std::string, Trace::Slice> waitFlagSliceMap;

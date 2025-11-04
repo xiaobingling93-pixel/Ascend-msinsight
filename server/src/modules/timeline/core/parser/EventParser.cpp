@@ -51,18 +51,24 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         ServerLog::Error("Event parser failed to read buffer. fileId:", fileId);
         return false;
     }
-    auto data = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(buffer, error);
-    if (!data.has_value()) {
+    // 通过静态线程级的内存池,预分配5M的大小,获得线程相关的线程性能提升，更大的内存池略微提高性能，但是会带来较大的内存占用
+    // 这里包含一个隐藏逻辑，当前json切片为50M，当前线程在解析过较大切片后，不用再重新申请内存池，后续优化下这块内存
+    thread_local static MemoryPoolAllocator<CrtAllocator> allocator(5 * 1024 * 1024);
+    thread_local static document_t doc(&allocator);
+    doc.SetMaxLeafNum(JsonUtil::MAX_JSON_LEAF_NUMBER);
+    doc.Parse<kParseNumbersAsStringsFlag | kParseJsonVerifyFlag>(buffer.data());
+    if (doc.HasParseError()) {
         error = "File is not valid json. " + error;
         ServerLog::Error("Event Parser. fileId:", fileId, ". ", error);
         return false;
     }
-    if (!data.value().IsArray()) {
+    if (!doc.IsArray()) {
         error = "json is not an array.";
         ServerLog::Error("Event Parser. json is not an array. fileId:", fileId);
         return false;
     }
-    for (auto &event : data.value().GetArray()) {
+
+    for (auto &event : doc.GetArray()) {
         if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
             return false;
         }
@@ -109,7 +115,7 @@ void EventParser::EventHandle(const json_t &json)
     }
 }
 
-void EventParser::MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::MetaDataHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -132,7 +138,7 @@ void EventParser::MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr)
     }
 }
 
-void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::CompleteEventsHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -148,12 +154,12 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     threadEvent.tid = event.tid;
     threadEvent.pid = event.pid;
     threadEvent.threadName = event.tid;
-    database->AddSimulationProcessCache(processEvent);
-    database->AddSimulationThreadCache(threadEvent);
+    database->AddSimulationProcessCache(std::move(processEvent));
+    database->AddSimulationThreadCache(std::move(threadEvent));
     database->InsertSlice(event);
 }
 
-void EventParser::SimulationBeginEventHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::SimulationBeginEventHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -165,7 +171,7 @@ void EventParser::SimulationBeginEventHandle(std::unique_ptr<Trace::Event> event
             return;
         } else {
             event.dur = setFlagSliceMap[event.flagId].ts > event.ts ? setFlagSliceMap[event.flagId].ts - event.ts : 0;
-            SimulationEventHandle(std::move(eventPtr));
+            SimulationEventHandle(eventPtr);
             setFlagSliceMap.erase(event.flagId);
             return;
         }
@@ -178,14 +184,14 @@ void EventParser::SimulationBeginEventHandle(std::unique_ptr<Trace::Event> event
         } else {
             event.dur = waitFlagSliceMap[event.flagId].ts > event.ts ?
                 waitFlagSliceMap[event.flagId].ts - event.ts : 0;
-            SimulationEventHandle(std::move(eventPtr));
+            SimulationEventHandle(eventPtr);
             waitFlagSliceMap.erase(event.flagId);
             return;
         }
     }
 }
 
-void EventParser::SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::SimulationEndEventHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -199,7 +205,7 @@ void EventParser::SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPt
         } else {
             Trace::Slice beginSlice = setFlagSliceMap[event.flagId];
             beginSlice.dur = event.ts > beginSlice.ts ? event.ts - beginSlice.ts : 0;
-            SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
+            SimulationEventHandle(&beginSlice);
             setFlagSliceMap.erase(event.flagId);
             return;
         }
@@ -212,14 +218,14 @@ void EventParser::SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPt
         } else {
             Trace::Slice beginSlice = waitFlagSliceMap[event.flagId];
             beginSlice.dur = event.ts > beginSlice.ts ? event.ts - beginSlice.ts : 0;
-            SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
+            SimulationEventHandle(&beginSlice);
             waitFlagSliceMap.erase(event.flagId);
             return;
         }
     }
 }
 
-void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::SimulationEventHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -243,11 +249,11 @@ void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
     processEvent.pid = event.pid;
     processEvent.processName = event.processName;
     database->InsertSlice(event);
-    database->AddSimulationProcessCache(processEvent);
-    database->AddSimulationThreadCache(threadEvent);
+    database->AddSimulationProcessCache(std::move(processEvent));
+    database->AddSimulationThreadCache(std::move(threadEvent));
 }
 
-void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::FlowEventsHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -262,12 +268,12 @@ void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     ProcessEvent processEvent;
     processEvent.pid = event.pid;
     processEvent.processName = event.pid;
-    database->AddSimulationProcessCache(processEvent);
-    database->AddSimulationThreadCache(threadEvent);
+    database->AddSimulationProcessCache(std::move(processEvent));
+    database->AddSimulationThreadCache(std::move(threadEvent));
     database->InsertFlow(event);
 }
 
-void EventParser::SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::SimulationFlowEventsHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -285,12 +291,12 @@ void EventParser::SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> event
     ProcessEvent processEvent;
     processEvent.pid = event.pid;
     processEvent.processName = processName;
-    database->AddSimulationProcessCache(processEvent);
-    database->AddSimulationThreadCache(threadEvent);
+    database->AddSimulationProcessCache(std::move(processEvent));
+    database->AddSimulationThreadCache(std::move(threadEvent));
     database->InsertFlow(event);
 }
 
-void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
+void EventParser::CounterEventsHandle(Trace::Event* eventPtr)
 {
     if (eventPtr == nullptr) {
         return;
@@ -308,8 +314,8 @@ void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     ProcessEvent processEvent;
     processEvent.pid = event.pid;
     processEvent.processName = event.pid;
-    database->AddSimulationProcessCache(processEvent);
-    database->AddSimulationThreadCache(threadEvent);
+    database->AddSimulationProcessCache(std::move(processEvent));
+    database->AddSimulationThreadCache(std::move(threadEvent));
     database->InsertCounter(event);
 }
 

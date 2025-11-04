@@ -377,6 +377,7 @@ void ProjectParserBase::SendAllParseSuccess()
         event->body.cardOffsets.emplace_back(cardOffset);
     }
     event->body.minTime = TraceTime::Instance().GetStartTime();
+    TraceFileParser::Instance().Clear();
     SendEvent(std::move(event));
 }
 

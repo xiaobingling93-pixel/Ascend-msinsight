@@ -13,7 +13,7 @@
 #include "TrackInfoManager.h"
 #include "BaselineManager.h"
 #include "TraceFileParser.h"
-
+#include <algorithm>
 namespace Dic {
 namespace Module {
 namespace Timeline {
@@ -26,7 +26,7 @@ TraceFileParser &TraceFileParser::Instance()
 
 TraceFileParser::TraceFileParser()
 {
-    threadPool = std::make_unique<ThreadPool>(TraceFileParser::maxThreadNum);
+    InitThreadPool();
 }
 
 TraceFileParser::~TraceFileParser()
@@ -303,6 +303,20 @@ void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
         }
         CacheManager::Instance().ClearCacheByRankId(fileId);
     }
+}
+void TraceFileParser::Clear()
+{
+    threadPool->WaitForAllTasks();
+    threadPool->ShutDown();
+    InitThreadPool();
+}
+
+void TraceFileParser::InitThreadPool()
+{
+    // 设置解析内存池的大小，根据32卡数据测试，性能最好的线程数大约为64
+    const uint32_t hardwareLimit = std::thread::hardware_concurrency();
+    const uint32_t threadCount = std::min(hardwareLimit, TraceFileParser::maxThreadNum);
+    threadPool = std::make_unique<ThreadPool>(threadCount);
 }
 } // end of namespace Timeline
 } // end of namespace Module

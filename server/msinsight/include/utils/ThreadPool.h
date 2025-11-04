@@ -18,7 +18,7 @@
 namespace Dic {
 class ThreadPool {
 public:
-    explicit ThreadPool(int threadCount);
+    explicit ThreadPool(uint32_t threadCount);
     ~ThreadPool();
     ThreadPool(const ThreadPool &) = delete;
     ThreadPool &operator=(const ThreadPool &) = delete;
