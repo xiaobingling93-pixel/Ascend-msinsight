@@ -1,35 +1,25 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React from 'react';
+import React, { ComponentType, useRef, forwardRef } from 'react';
 import styled from '@emotion/styled';
-import { ReactComponent as HelpDarkSvg } from './img/help_dark.svg';
-import { ReactComponent as HelpLightSvg } from './img/help_light.svg';
+import { ReactComponent as HelpSvg } from './img/help.svg';
 import { ReactComponent as PinSvg } from './img/icons_dark_normal_ascendinsight_pin.svg';
 import { ReactComponent as UnPinSvg } from './img/icons_dark_normal_ascendinsight_pin_line.svg';
 import { ReactComponent as StartSvg } from './img/icons_dark_normal_mindstudioinsight_start.svg';
-import { ReactComponent as CaretDownSvg } from './img/caret-down.svg';
-import { ReactComponent as SearchDarkIcon } from './img/search_dark.svg';
-import { ReactComponent as SearchLightIcon } from './img/search_light.svg';
-import { ReactComponent as PlusDarkIcon } from './img/plus_dark.svg';
-import { ReactComponent as PlusLightIcon } from './img/plus_light.svg';
-import { ReactComponent as MinusDarkIcon } from './img/minus_dark.svg';
-import { ReactComponent as MinusLightIcon } from './img/minus_light.svg';
-import { ReactComponent as FilterDarkIcon } from './img/filter_dark.svg';
-import { ReactComponent as FilterLightIcon } from './img/filter_light.svg';
-import { ReactComponent as FlagDarkIcon } from './img/flag_dark.svg';
-import { ReactComponent as FlagLightIcon } from './img/flag_light.svg';
-import { ReactComponent as LinkDarkIcon } from './img/link_dark.svg';
-import { ReactComponent as LinkLightIcon } from './img/link_light.svg';
-import { ReactComponent as ResetDarkIcon } from './img/reset_dark.svg';
-import { ReactComponent as ResetLightIcon } from './img/reset_light.svg';
+import { ReactComponent as CaretSvg } from './img/caret.svg';
+import CareRight from './img/caret_right.svg';
+import { ReactComponent as SearchIconSvg } from './img/search.svg';
+import { ReactComponent as PlusIconSvg } from './img/plus.svg';
+import { ReactComponent as MinusIconSvg } from './img/minus.svg';
+import { ReactComponent as FilterIconSvg } from './img/filter.svg';
+import { ReactComponent as FlagIconSvg } from './img/flag.svg';
+import { ReactComponent as LinkIconSvg } from './img/link.svg';
+import { ReactComponent as ResetIconSvg } from './img/reset.svg';
 import { ReactComponent as BulbSvg } from './img/bulb.svg';
-import { ReactComponent as ArrowDownDarkSvg } from './img/arrow_down_dark.svg';
-import { ReactComponent as ArrowDownLightSvg } from './img/arrow_down_light.svg';
-import { ReactComponent as EyeCloseOtuLineDarkSvg } from './img/eye_close_outlined_dark.svg';
-import { ReactComponent as EyeCloseOtuLineLightSvg } from './img/eye_close_outlined_light.svg';
-import { ReactComponent as ArrowUpDarkSvg } from './img/arrow_up_dark.svg';
-import { ReactComponent as ArrowUpLightSvg } from './img/arrow_up_light.svg';
+import { ReactComponent as ArrowDownSvg } from './img/arrow_down.svg';
+import { ReactComponent as EyeCloseOtuLineSvg } from './img/eye_close_outlined.svg';
+import { ReactComponent as ArrowUpSvg } from './img/arrow_up.svg';
 import { ReactComponent as ColumnFilterSvg } from './img/column_filter.svg';
 import { ReactComponent as ExpandSvg } from './img/expand.svg';
 import { ReactComponent as ExpandRightSvg } from './img/expand_right.svg';
@@ -39,25 +29,17 @@ import { ReactComponent as FileSvg } from './img/file.svg';
 import { ReactComponent as FolderSvg } from './img/folder.svg';
 import { ReactComponent as AlarmSvg } from './img/alarm.svg';
 import { ReactComponent as DeleteSvg } from './img/delete.svg';
-import { ReactComponent as AddDarkSvg } from './img/add_dark.svg';
-import { ReactComponent as AddLightSvg } from './img/add_light.svg';
-import { ReactComponent as LocalImportDarkSvg } from './img/local_import_dark.svg';
-import { ReactComponent as LocalImportLightSvg } from './img/local_import_light.svg';
-import { ReactComponent as DataManagerDarkSvg } from './img/data_manager_dark.svg';
-import { ReactComponent as DataManagerLightSvg } from './img/data_manager_light.svg';
+import { ReactComponent as AddSvg } from './img/add.svg';
+import { ReactComponent as LocalImportSvg } from './img/local_import.svg';
+import { ReactComponent as DataManagerSvg } from './img/data_manager.svg';
 import { ReactComponent as LangZhSvg } from './img/lang_zh.svg';
 import { ReactComponent as LangEnSvg } from './img/lang_en.svg';
 import { ReactComponent as SetSvg } from './img/set.svg';
-import { ReactComponent as RegularSvg } from './img/regular.svg';
-import { ReactComponent as CaseLightSvg } from './img/case_light.svg';
-import { ReactComponent as CaseDarkSvg } from './img/case_dark.svg';
-import { ReactComponent as CaseActiveSvg } from './img/case_active.svg';
-import { ReactComponent as FullTextLightSvg } from './img/full_text_light.svg';
-import { ReactComponent as FullTextDarkSvg } from './img/full_text_dark.svg';
+import { ReactComponent as FullTextSvg } from './img/full_text.svg';
 import { ReactComponent as FullTextActiveSvg } from './img/full_text_active.svg';
-import { themeInstance } from '../theme';
-import CaretRightSvg from './img/caret-right.svg';
-import { CaretUpOutlined, CaretDownOutlined, CopyOutlined } from '@ant-design/icons';
+
+import { CopyOutlined } from '@ant-design/icons';
+import { compareColors, useThemeColor } from '../utils/Color';
 import { useTheme } from '@emotion/react';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
@@ -68,76 +50,17 @@ interface ISVGProps extends React.SVGProps< SVGSVGElement > {
 
 interface IIconProps extends ISVGProps {
     type?: string;
-
+    iconChangeList?: any[];
     svgElement?: React.FunctionComponent<React.SVGProps< SVGSVGElement > & { title?: string }>;
 }
 
 interface IIconDivProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-    type?: string;
+    svgElement?: string;
     url?: string;
     float?: string;
     height?: string;
     width?: string;
 }
-
-const iconMap: Record<string, any> = {
-    pin: PinSvg,
-    linePin: UnPinSvg,
-    start: StartSvg,
-    caretRight: CaretRightSvg,
-    bulb: BulbSvg,
-    columnFilter: ColumnFilterSvg,
-    expand: ExpandSvg,
-    expandRight: ExpandRightSvg,
-    alarm: AlarmSvg,
-    importData: ImportDataSvg,
-    refresh: RefreshSvg,
-    file: FileSvg,
-    folder: FolderSvg,
-    delete: DeleteSvg,
-    langZh: LangZhSvg,
-    langEn: LangEnSvg,
-    set: SetSvg,
-    regular: RegularSvg,
-    caseActive: CaseActiveSvg,
-    fullTextActive: FullTextActiveSvg,
-    dark: {
-        help: HelpDarkSvg,
-        flag: FlagDarkIcon,
-        filter: FilterDarkIcon,
-        search: SearchDarkIcon,
-        link: LinkDarkIcon,
-        plus: PlusDarkIcon,
-        minus: MinusDarkIcon,
-        reset: ResetDarkIcon,
-        arrowDown: ArrowDownDarkSvg,
-        arrowUp: ArrowUpDarkSvg,
-        add: AddDarkSvg,
-        localImport: LocalImportDarkSvg,
-        dataManager: DataManagerDarkSvg,
-        case: CaseDarkSvg,
-        fullText: FullTextDarkSvg,
-        eyeCloseOtuLine: EyeCloseOtuLineDarkSvg,
-    },
-    light: {
-        help: HelpLightSvg,
-        flag: FlagLightIcon,
-        filter: FilterLightIcon,
-        search: SearchLightIcon,
-        link: LinkLightIcon,
-        plus: PlusLightIcon,
-        minus: MinusLightIcon,
-        reset: ResetLightIcon,
-        arrowDown: ArrowDownLightSvg,
-        arrowUp: ArrowUpLightSvg,
-        add: AddLightSvg,
-        localImport: LocalImportLightSvg,
-        dataManager: DataManagerLightSvg,
-        case: CaseLightSvg,
-        fullText: FullTextLightSvg,
-        eyeCloseOtuLine: EyeCloseOtuLineLightSvg,
-    },
-};
 
 const StyledIcon = styled.div<{ color?: string;disabled?: boolean }>`
     display: inline-flex;
@@ -165,23 +88,71 @@ const StyledIcon = styled.div<{ color?: string;disabled?: boolean }>`
 `;
 
 export function Icon({ type = '', svgElement, className = '', theme, color, active, disabled, style, ...restProp }: IIconProps): JSX.Element {
-    const curTheme = useTheme().mode;
-    const Svg = iconMap[type] ?? iconMap[theme ?? curTheme][type] ?? svgElement;
-    if (Svg === null || Svg === undefined) {
-        return <StyledIcon/>;
-    }
+    const Svg: ComponentType | undefined = svgElement;
 
     return <StyledIcon disabled={disabled} color={color} style={{ ...(style ?? {}) }} className={className}>
-        <Svg
-            width={16}
-            height={16}
-            className={`svg-icon anticon ${active ? 'active' : ''}`}
-            {...restProp}
-        />
+        {Svg && (
+            <Svg
+                width={16}
+                height={16}
+                {...restProp}
+            />
+        )}
     </StyledIcon>;
 }
 
-const IconDiv = styled.div<{ type?: string;url?: string;height?: string;width?: string }>`
+export function DrawIcon({ iconChangeList, svgElement, className = '', theme, color, active, disabled, style, ...restProp }: IIconProps): JSX.Element {
+    const Svg: ComponentType | undefined = svgElement;
+    const curTheme = useTheme().mode;
+    const changeList: any[] = iconChangeList ?? [];
+    const svgRef = useRef<SVGSVGElement>(null);
+    setTimeout(() => {
+        if (svgRef.current) {
+            // 获取 SVG 元素中的所有路径（path）元素
+            const paths = svgRef.current.querySelectorAll('*') as NodeListOf<SVGPathElement>;
+            paths.forEach((path: SVGPathElement) => {
+                changeList.forEach((changeItem: { dark: any; light: any }) => {
+                    const { dark, light } = changeItem;
+                    if (compareColors(getComputedStyle(path).fill, dark) || compareColors(getComputedStyle(path).fill, light)) {
+                        if (curTheme === 'light') {
+                            path.style.fill = light;
+                        } else {
+                            path.style.fill = dark;
+                        }
+                    }
+
+                    if (compareColors(getComputedStyle(path).stroke, dark) || compareColors(getComputedStyle(path).stroke, light)) {
+                        if (curTheme === 'light') {
+                            path.style.stroke = light;
+                        } else {
+                            path.style.stroke = dark;
+                        }
+                    }
+                });
+            });
+        }
+    });
+
+    // 定义Svg组件，接受ref
+    const SvgREF = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>((props: React.SVGProps<SVGSVGElement> = {}, ref: React.Ref<SVGSVGElement> = null) => {
+        return Svg ? <Svg ref={ref} {...props} /> : null;
+    });
+
+    SvgREF.displayName = 'SvgREF';
+
+    return <StyledIcon disabled={disabled} color={color} style={{ ...(style ?? {}) }} className={className}>
+        {Svg && (
+            <SvgREF
+                width={16}
+                height={16}
+                {...restProp}
+                ref={svgRef}
+            />
+        )}
+    </StyledIcon>;
+}
+
+const IconDiv = styled.div<{ svgElement?: string;url?: string;height?: string;width?: string }>`
     display: inline-flex;
     align-items: center;
     color: inherit;
@@ -194,140 +165,143 @@ const IconDiv = styled.div<{ type?: string;url?: string;height?: string;width?: 
     -webkit-font-smoothing: antialiased;
     height:16px;
     width: 16px;
-    background:center no-repeat url('${(p): string =>
-        iconMap[p.type ?? ''] ?? iconMap[themeInstance.getCurrentTheme()][p.type ?? ''] ?? p.url ?? ''}') ;
-    background-size: ${(p): string => `${p.height ?? '16px'} ${p.width ?? '16px'}`};
+    background:center no-repeat url("${(p): string => {
+        return p?.svgElement?.toString() ?? '';
+    }}") ;
+            background-size: ${(p): string => `${p.height ?? '16px'} ${p.width ?? '16px'}`};
 `;
 
 export function HelpIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'help'} {...props }/>;
+    return <Icon svgElement={HelpSvg} color={useTheme().iconColor} {...props }/>;
 }
 
 export function PinIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'pin'} active={true} {...props }/>;
+    return <Icon svgElement={PinSvg} active={true} {...props }/>;
 }
 
 export function UnPinIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'linePin'} active={true} {...props }/>;
+    return <Icon svgElement={UnPinSvg} active={true} {...props }/>;
 }
 
 export function CaretDownIcon(props: ISVGProps): JSX.Element {
-    return <Icon svgElement={CaretDownSvg} {...props }/>;
+    return <Icon svgElement={CaretSvg} color={useTheme().iconColor} {...props }/>;
 }
 
 export function CaretRightIcon(props: IIconDivProps): JSX.Element {
-    return <IconDiv type={'caretRight'} {...props } />;
+    return <IconDiv svgElement={CareRight} {...props } />;
 }
 
 export function FlagIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'flag'} {...props } />;
+    const iconChangeList = [{
+        dark: '#D1D1D1',
+        light: '#4E5865',
+    }];
+    return <DrawIcon svgElement={FlagIconSvg} iconChangeList={iconChangeList} {...props } />;
 }
 export function FilterIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'filter'} {...props } />;
+    return <Icon svgElement={FilterIconSvg} color={useTheme().iconColor} {...props } />;
 }
 export function SearchIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'search'} {...props } />;
+    return <Icon svgElement={SearchIconSvg} color={useTheme().iconColor} {...props } />;
 }
 export function LinkIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'link'} {...props } />;
+    return <Icon svgElement={LinkIconSvg} color={useTheme().iconColor} {...props } />;
 }
 export function PlusIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'plus'} {...props } />;
+    return <Icon svgElement={PlusIconSvg} {...props } />;
 }
 export function MinusIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'minus'} {...props } />;
+    return <Icon svgElement={MinusIconSvg} {...props } />;
 }
 export function ResetIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'reset'} {...props } />;
+    return <Icon svgElement={ResetIconSvg} {...props } />;
 }
 export function StartIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'start'} {...props }/>;
+    return <Icon svgElement={StartSvg} {...props }/>;
 }
 export function BulbIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'bulb'} {...props }/>;
+    return <Icon svgElement={BulbSvg} {...props }/>;
 }
 export function ArrowUpIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'arrowUp'} width={92} {...props }/>;
+    const iconChangeList = [{
+        dark: '#2A2F37',
+        light: '#F4F6FA',
+    }];
+    return <DrawIcon svgElement={ArrowUpSvg} iconChangeList={iconChangeList} width={92} {...props }/>;
 }
 export function ArrowDownIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'arrowDown'} width={92} {...props }/>;
+    const iconChangeList = [{
+        dark: '#2A2F37',
+        light: '#F4F6FA',
+    }];
+    return <DrawIcon svgElement={ArrowDownSvg} iconChangeList={iconChangeList} width={92} {...props }/>;
 }
 
-export function ColumnSorterIcon(): JSX.Element {
-    return <span className={'ant-table-column-sorter-inner ant-table-column-sorter'} style={{ fontSize: '11px' }}>
-        <CaretUpOutlined className={'sorter-up'}/>
-        <CaretDownOutlined className={'sorter-down'} style={{ marginTop: '-.3em' }}/>
-    </span>;
-}
 export function CopyOutlinedIcon({ style }: { style?: React.CSSProperties }): JSX.Element {
     return <CopyOutlined style={style} />;
 }
 
 export function ColumnFilterIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'columnFilter'} {...props }/>;
+    return <Icon svgElement={ColumnFilterSvg } {...props }/>;
 }
 export function ExpandIcon(props: ISVGProps): JSX.Element {
     const { style = {}, ...restProps } = props;
-    return <Icon type={'expand'} style={{ verticalAlign: 'middle', margin: '0 10px 0 0', ...style }} {...restProps} />;
+    return <Icon svgElement={ExpandSvg} style={{ verticalAlign: 'middle', margin: '0 10px 0 0', ...style }} {...restProps} />;
 }
 export function CollapseIcon(props: ISVGProps): JSX.Element {
     const { style = {}, ...restProps } = props;
-    return <Icon type={'expandRight'} style={{ verticalAlign: 'middle', margin: '-5px 5px 0 -2px', ...style }} {...restProps} />;
+    return <Icon svgElement={ExpandRightSvg} style={{ verticalAlign: 'middle', margin: '-5px 5px 0 -2px', ...style }} {...restProps} />;
 }
 
 export function AlarmIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'alarm'} {...props } style={{ marginTop: '2px' }}/>;
+    return <Icon svgElement={AlarmSvg} {...props } style={{ marginTop: '2px' }}/>;
 }
 
 export function ImportDataIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'importData'} {...props }/>;
+    return <Icon svgElement={ImportDataSvg} {...props }/>;
 }
 export function RefreshIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'refresh'} {...props }/>;
+    return <Icon svgElement={RefreshSvg} {...props }/>;
 }
 export function FileIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'file'} {...props }/>;
+    return <Icon svgElement={FileSvg} {...props }/>;
 }
 export function FolderIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'folder'} {...props }/>;
+    return <Icon svgElement={FolderSvg} {...props }/>;
 }
 export function DeleteIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'delete'} {...props }/>;
+    return <Icon svgElement={DeleteSvg} {...props }/>;
 }
 export function AddIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'add'} {...props }/>;
+    return <Icon svgElement={AddSvg} {...props }/>;
 }
 export function LocalImportIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'localImport'} {...props }/>;
+    const iconChangeList = [{
+        dark: '#D1D1D1',
+        light: '#595959',
+    }, {
+        dark: 'rgba(0,0,0,0)',
+        light: '#EBEBEB',
+    }];
+    return <DrawIcon svgElement={LocalImportSvg} iconChangeList={iconChangeList} {...props }/>;
 }
 export function DataManagerIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'dataManager'} {...props }/>;
+    const iconChangeList = [{
+        dark: '#595959',
+        light: '#8D98AA',
+    }];
+    return <DrawIcon svgElement={DataManagerSvg} iconChangeList={iconChangeList} width={92} {...props }/>;
 }
 
 export function LangZhIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'langZh'} {...props }/>;
+    return <Icon svgElement={LangZhSvg } {...props }/>;
 }
 export function LangEnIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'langEn'} {...props }/>;
+    return <Icon svgElement={LangEnSvg} {...props }/>;
 }
 
 export function SetIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'set'} {...props }/>;
-}
-
-// 正则
-export function RegularIcon(props: ISVGProps): JSX.Element {
-    const { active, style, ...restProps } = props;
-    return <Icon style={{
-        height: '16px',
-        width: '16px',
-        borderRadius: '1px',
-        padding: '1px 2px',
-        background: active ? themeInstance.getThemeType().radioSelectedColor : 'none',
-        color: active ? themeInstance.getThemeType().textColorFourth : '',
-        ...(style ?? {}),
-    }}
-    type={'regular'} width={13} height={13} {...restProps} />;
+    return <Icon svgElement={SetSvg} {...props }/>;
 }
 
 // 大小写匹配
@@ -339,9 +313,13 @@ export function CaseIcon(props: ISVGProps): JSX.Element {
 // 全文匹配
 export function FullTextIcon(props: ISVGProps): JSX.Element {
     const { active, ...restProps } = props;
-    return <Icon type={`fullText${active ? 'Active' : ''}`} {...restProps}/>;
+    if (active) {
+        return <Icon svgElement={FullTextActiveSvg} {...restProps}/>;
+    } else {
+        return <Icon svgElement={FullTextSvg} {...restProps}/>;
+    }
 }
 
 export function EyeCloseOtuLine(props: ISVGProps): JSX.Element {
-    return <Icon type={'eyeCloseOtuLine'} {...props }/>;
+    return <Icon svgElement={EyeCloseOtuLineSvg} {...props }/>;
 }
