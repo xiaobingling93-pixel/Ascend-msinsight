@@ -253,6 +253,10 @@ export const UnitObserver = observer((
                 if (e.button !== MouseButton.LEFT && session.selectedRange !== undefined) {
                     return;
                 }
+                if (session.sliceSelection.active) {
+                    session.resetOfSliceSelection();
+                    session.sliceSelection.targetUnit = unit as InsightUnit;
+                }
                 selectUnit(unit);
                 traceSingle('selectLane', [unit.name]);
             }}
@@ -292,7 +296,7 @@ export function getClassNameByMetadata(unit: InsightUnit): string {
     const metadata = unit.metadata as ThreadMetaData;
     const pid = metadata.processId;
     const tid = Array.isArray(metadata.threadIdList) ? metadata.threadIdList.join('_') : metadata.threadId;
-    return pid && tid ? `${pid}_${tid}` : '';
+    return (pid && tid ? `${pid}_${tid}` : '').replace(/\s+/g, '_');
 }
 
 interface FlattenUnitsProps {

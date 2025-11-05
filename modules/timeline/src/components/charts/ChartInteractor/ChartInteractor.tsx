@@ -199,9 +199,13 @@ const Interactor = ({
     }
 
     function selectionModeChange(): void {
-        session.resetOfSliceSelection();
-        session.sliceSelection.selecting = false;
+        if (!session.sliceSelection.activeIsChanged) {
+            return;
+        }
+        session.resetOfSliceSelection(false);
+        session.sliceSelection.activeIsChanged = false;
         session.selectedRange = undefined;
+        session.selectedRangeIsLock = false;
         if (!hoverCanvas.current) {
             return;
         }

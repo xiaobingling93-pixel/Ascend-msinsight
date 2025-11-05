@@ -69,7 +69,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         return;
     }
 
-    if (checkIsSliceSelection(session)) {
+    if (checkIsSliceSelection(session) && !session.selectedRangeIsLock) {
         calcLevelsOfSlice(lastPos.y, session);
     }
 

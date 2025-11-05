@@ -7,6 +7,7 @@ const toggleSelectMode = (session: Session): void => {
         session.sliceSelection.active = !session.sliceSelection.active;
         session.renderTrigger = !session.renderTrigger;
         session.sliceSelection.startPos = [];
+        session.sliceSelection.activeIsChanged = true;
     });
 };
 

@@ -254,11 +254,6 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
             interactorMouseState.lastPos.current = undefined;
             return;
         }
-        // 左键重置信息
-        if (e.button === 0 && !(e.target as HTMLElement).closest('.menu-item')) {
-            session.resetOfSliceSelection();
-            session.sliceSelection.targetUnit = session.selectedUnits[0];
-        }
         const needDragOneSide = chartInteractorRef.current.mouseDownAction(interactorMouseState, e);
         if (needDragOneSide === MouseDownActionResult.NEED_DRAG_ONE_SIDE) {
             // 当点击到已经有 selectedRange 的边界，需要触发拖拽

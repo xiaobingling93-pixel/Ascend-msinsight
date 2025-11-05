@@ -308,6 +308,11 @@ export function checkIsSliceSelection(session: Session): boolean {
     return active && targetUnit?.name === 'Thread';
 }
 
+/**
+ * units多选时，获取目标unit
+ * @param session
+ * @param elements
+ */
 function getTargetElement(session: Session, elements: Element[]): Element | undefined {
     if (!elements || elements.length === 0 || !session.sliceSelection.targetUnit) {
         return undefined;
@@ -750,7 +755,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
  */
 export const drawRectOfSlice = ({ interactorMouseState: { clickPos: { current: clickPos }, lastPos: { current: mousePosNow } }, ...args }: DrawArgs): void => {
     const ctx = args.ctx;
-    if (!clickPos || !mousePosNow || !ctx) {
+    if (!clickPos || !mousePosNow || !ctx || args.session.selectedRangeIsLock) {
         return;
     }
     const [elementRect, wrapperRect] = getElementRects(args.session);

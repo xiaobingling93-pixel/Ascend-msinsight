@@ -309,10 +309,11 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     }, [session.showEvent]);
 
     const extraSlot = (): ReactNode => {
-        return item === 'SliceList' && <Checkbox checked={session.sliceSelection.active} onChange={() => {
+        return <Checkbox checked={session.sliceSelection.active} onChange={() => {
             runInAction(() => {
-                eventBus.emit('sliceActiveChanged');
                 session.sliceSelection.active = !session.sliceSelection.active;
+                session.sliceSelection.activeIsChanged = true;
+                eventBus.emit('sliceActiveChanged', session.sliceSelection.active);
             });
         }}>{t('contextMenu.SliceSelectionMode')}</Checkbox>;
     };
