@@ -315,7 +315,11 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
                                 </Tooltip>
                         }
                     </div>
-                    : <div key={index}>
+                    : <div
+                        className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
+                        key={index}
+                        onClick={(): void => handleClick(index)}
+                    >
                         <Tooltip title={item.description}>
                             <div>{item.name}</div>
                         </Tooltip>

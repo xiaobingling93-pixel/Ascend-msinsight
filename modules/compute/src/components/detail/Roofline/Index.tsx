@@ -12,6 +12,7 @@ import { RooflineChartGroup } from './RooflineChart';
 import { queryRoofline } from '../../../components/RequestUtils';
 import { Hit } from 'ascend-utils';
 import type { TFunction } from 'i18next';
+import styled from '@emotion/styled';
 
 export interface IOriginData {
     soc: string;
@@ -61,6 +62,7 @@ interface ITab {
     contents: string[];
     surportSocs?: string[];
 }
+
 const allTabItems: ITab[] = [
     {
         label: 'Memory Unit',
@@ -108,6 +110,12 @@ function getTabItems(data: IData, tDetails: TFunction): Tab[] {
     });
 }
 
+const CustomTabs = styled(Tabs)`
+  .ant-tabs-tab {
+    background-color: transparent !important;
+  }
+`;
+
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     const { t: tDetails } = useTranslation('details');
     const [data, setData] = useState<IData>(defaultData);
@@ -146,7 +154,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
     return data?.data?.length > 0
         ? (
             <CollapsiblePanel title={tDetails('Roofline')} collapsible>
-                <Tabs items={items} data-testId={'rooflineChart'}></Tabs>
+                <CustomTabs items={items} data-testId={'rooflineChart'} />
                 {data?.advice?.length > 0 && <Hit text={data.advice} type={'alarm'} data-testId={'rooflineAdvice'}/>}
             </CollapsiblePanel>
         )
