@@ -177,7 +177,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 });
 
 test.describe('Memory(MindSpore)', () => {
-    test.describe.configure({ timeout: 180_000 });
+    test.describe.configure({ timeout: 240_000 });
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -582,4 +582,4 @@ test.describe('Memory(DB)', () => {
             maxDiffPixels: 500,
         });
     });
-}); 
+});

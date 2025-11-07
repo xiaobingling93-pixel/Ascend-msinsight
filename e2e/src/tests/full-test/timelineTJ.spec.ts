@@ -4,7 +4,7 @@
 
 import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { TimelinePage } from '@/page-object';
-import { clearAllData, importData, setupWebSocketListener } from '@/utils';
+import {clearAllData, dragSelect, importData, setupWebSocketListener} from '@/utils';
 import { FilePath } from '@/utils/constants';
 import { InputHelpers } from '@/components';
 
@@ -68,10 +68,11 @@ test.describe('Timeline(Trace_Json)', () => {
             return;
         }
         const { x: startX, y: startY } = boundingBox;
-        await page.mouse.move(startX + 50, startY + 50);
-        await page.mouse.down();
-        await page.mouse.move(startX + 200, startX - 200);
-        await page.mouse.up();
+        await dragSelect(page, {
+            x:startX + 50, y:startY + 80,
+        },{
+            x:startX + 200, y:startY + 150,
+        });
         const tfoot = await timelineFrame.locator('tfoot');
         //由于数据过大，框选后可能会有像素差，使用数值比较是否大于0的方式判断功能是否正常，待修复
         expect(Number((await tfoot.locator('tr > td').nth(1).innerText()).split(' ')[0]) > 0);

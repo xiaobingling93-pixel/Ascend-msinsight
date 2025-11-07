@@ -221,12 +221,12 @@ test.describe('Timeline(DB)', () => {
         await filterContentSelector.selectOption('Communication');
         await filterBtn.click();
         await timelineFrame.locator('.insight-unit-fold').first().click();
+        await page.waitForTimeout(3000);
         await timelineFrame.getByText('mp:Group group_name_41').click({
             button: 'right',
         });
         await timelineFrame.getByText('Pin (Same Group group_name_41)').click();
         await page.mouse.move(0, 0);
-        await page.waitForTimeout(3000);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('communication_group_pin.png', { maxDiffPixels: 100 });
         await timelineFrame.locator('#pinnedUnitWrapperScroller').getByText('localhost.localdomain4978604445055226587_0 0_Communication (HCCL)_mp:Group').click({
             button: 'right',
