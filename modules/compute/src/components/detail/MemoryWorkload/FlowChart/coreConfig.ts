@@ -6,7 +6,7 @@ import type { Inode } from './flowType';
 
 export const cubeCoreBaseV5: Inode = {
     name: '',
-    left: -15,
+    left: -25,
     top: 20,
     container: [
         {

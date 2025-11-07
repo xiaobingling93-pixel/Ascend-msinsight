@@ -12,7 +12,7 @@ export const MITabs = styled((props: TabsProps) => <Tabs {...props}/>)`
 
     >.ant-tabs-nav .ant-tabs-tab,
     >div>.ant-tabs-nav .ant-tabs-tab {
-        background-color: ${(props): string => props.theme.bgColorLight};
+        background-color: ${(props) => props.type ==='card' ? props.theme.bgColorLight : 'transparent'};
         border-color: ${(props): string => props.theme.borderColor};
     }
 
