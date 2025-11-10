@@ -34,7 +34,7 @@ bool TextClusterDatabase::SetDbVersion()
         ServerLog::Error("Failed to set db version. Database is not open.");
         return false;
     }
-    std::string dbVersion = GetDataBaseVersion();
+    std::string dbVersion = GetCompileDataBaseVersion();
     return ExecSql(" PRAGMA user_version = " + dbVersion + ";");
 }
 

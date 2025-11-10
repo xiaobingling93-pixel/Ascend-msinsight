@@ -268,39 +268,29 @@ std::string Database::GetMetaVersion()
 
 bool Database::IsDatabaseVersionChange()
 {
-    std::string version;
     if (!isOpen) {
         ServerLog::Error("The db file is not opened.");
         return false;
     }
-    static const std::string SQL = "PRAGMA user_version";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, SQL.c_str(), -1, &stmt, nullptr);
-    if (result == SQLITE_OK) {
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            version = sqlite3_column_string(stmt, 0);
-        }
-    } else {
-        sqlite3_finalize(stmt);
-        ServerLog::Error("Fail to get version.", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_finalize(stmt);
-    return std::strcmp(version.c_str(), GetDataBaseVersion().c_str()) != 0;
+    std::string version = QueryDatabaseVersion();
+    return std::strcmp(version.c_str(), GetCompileDataBaseVersion().c_str()) != 0;
 }
 
-bool Database::SetDataBaseVersion()
+bool Database::SetDataBaseVersion(const std::string& targetVersion)
 {
+    std::string setToVersion = targetVersion;
     if (!isOpen) {
         ServerLog::Error("Failed to set db version. Database is not open.");
         return false;
     }
-    std::string dbVersion = GetDataBaseVersion();
+    if (setToVersion.empty()) {
+        setToVersion = GetCompileDataBaseVersion();
+    }
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    return ExecSql(" PRAGMA user_version = " + dbVersion + ";");
+    return ExecSql(" PRAGMA user_version = " + setToVersion + ";");
 }
 
-std::string Database::GetDataBaseVersion()
+std::string Database::GetCompileDataBaseVersion()
 {
     std::stringstream version;
 #ifdef DATABASE_VERSION
@@ -980,6 +970,24 @@ std::unordered_map<std::string, std::string> Database::QueryTranslate(bool isZh)
         }
     }
     return res;
+}
+
+std::string Database::QueryDatabaseVersion() const
+{
+    std::string version;
+    static const std::string SQL = "PRAGMA user_version";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, SQL.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            version = sqlite3_column_string(stmt, 0);
+        }
+    } else {
+        ServerLog::Error("Fail to get version.", sqlite3_errmsg(db));
+        version = "";
+    }
+    sqlite3_finalize(stmt);
+    return version;
 }
 
 }  // end of namespace Module

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include "pch.h"
 #include "ProtocolDefs.h"
 #include "OperatorProtocol.h"
 #include "OperatorGroupConverter.h"
@@ -17,6 +18,15 @@ namespace Dic::Protocol {
         CATEGORY,
         COMPUTE_UNIT
     };
+
+    inline bool CheckOrderOrFilterColumnValid(const std::string_view& colName,
+                                              const std::set<std::string_view> &validCols)
+    {
+        if (colName.empty() || validCols.empty()) {
+            return false;
+        }
+        return validCols.find(colName) != validCols.end();
+    }
 
     // 算子视图饼图的请求参数
     struct OperatorDurationReqParams {
@@ -79,18 +89,22 @@ namespace Dic::Protocol {
                 errorMsg = std::string("[Operator]Failed to check deviceId in Query Op Statistic Info.") + errorMsg;
                 return false;
             }
-            if (!this->orderBy.empty()) {
-                if (OperatorProtocol::GetStatisticColumName(this->orderBy).empty() &&
-                    OperatorProtocol::GetDetailColumName(this->orderBy).empty()) {
-                    errorMsg = "[Operator]Failed to check orderBy in Query Op Statistic Info.";
+            if (!this->orderBy.empty() &&
+                !CheckOrderOrFilterColumnValid(this->orderBy, OperatorStatisticView::VALID_ORDER_COLS) &&
+                !CheckOrderOrFilterColumnValid(this->orderBy, OperatorDetailsView::VALID_ORDER_COLS)) {
+                errorMsg = "[Operator]Failed to check orderBy in Query Op Statistic Info.";
+                return false;
+            }
+            for (auto &filter : this->filters) {
+                if (!CheckOrderOrFilterColumnValid(filter.first, OperatorStatisticView::VALID_FILTER_COLS) &&
+                    !CheckOrderOrFilterColumnValid(filter.first, OperatorDetailsView::VALID_FILTER_COLS)) {
+                    errorMsg = "[Operator]Failed to check filter column in Query Op Statistic Info.";
                     return false;
                 }
-                this->orderBy = OperatorProtocol::GetStatisticColumName(this->orderBy) != "" ?
-                                OperatorProtocol::GetStatisticColumName(this->orderBy) :
-                                OperatorProtocol::GetDetailColumName(this->orderBy);
             }
             return true;
         }
+
         bool StatisticGroupCheck(std::string &errorMsg)
         {
             OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(this->group);
@@ -119,6 +133,41 @@ namespace Dic::Protocol {
         std::string orderBy;
         std::string order;
         std::vector<std::pair<std::string, std::string>> filters;
+
+        bool CommonCheck(std::string &errMsg) const
+        {
+            if (!CheckStrParamValid(this->rankId, errMsg)) {
+                errMsg = "[Operator]Failed to check rankId in query op more info." + errMsg;
+                return false;
+            }
+            if (!CheckStrParamValidEmptyAllowed(this->deviceId, errMsg)) {
+                errMsg = "[Operator]Failed to check deviceId in query op more info." + errMsg;
+                return false;
+            }
+            if (!CheckStrParamValid(this->opName, errMsg) && !CheckStrParamValid(this->opType, errMsg)) {
+                errMsg = "[Operator]Failed to check name and type in query op more info." + errMsg;
+                return false;
+            }
+            OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(this->group);
+            if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
+                errMsg = "[Operator]Wrong group type in query op more info.";
+                return false;
+            }
+            if (!this->orderBy.empty() &&
+                !CheckOrderOrFilterColumnValid(this->orderBy, OperatorDetailsView::VALID_ORDER_COLS)) {
+                errMsg = "[Operator]Failed to check orderBy in query Op more info.";
+                return false;
+            }
+            for (auto &filter : this->filters) {
+                if (!CheckOrderOrFilterColumnValid(filter.first, OperatorDetailsView::VALID_FILTER_COLS)) {
+                    errMsg = "[Operator]Failed to check filter column in query Op more info.";
+                    return false;
+                }
+            }
+            return true;
+        }
     };
 
     // 导出算子的请求参数

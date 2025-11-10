@@ -20,8 +20,9 @@ namespace Dic::Module::Operator {
         std::unique_ptr<OperatorMoreInfoResponse> responsePtr = std::make_unique<OperatorMoreInfoResponse>();
         OperatorMoreInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
-        if (!CheckRequestParam(request.params)) {
-            ServerLog::Error("[Operator]Failed to check request parameter in query op more info.");
+        std::string errMsg;
+        if (!request.params.CommonCheck(errMsg)) {
+            ServerLog::Error("[Operator]Failed to check request parameter in query op more info.%", errMsg);
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
@@ -30,7 +31,7 @@ namespace Dic::Module::Operator {
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
-            ServerLog::Error("[Operator]Failed to query More Info by empty deviceId.");
+            ServerLog::Error("[Operator]Failed to query More Info by empty deviceId.%");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
@@ -46,38 +47,4 @@ namespace Dic::Module::Operator {
         session.OnResponse(std::move(responsePtr));
         return true;
     }
-
-    bool QueryOpMoreInfoHandler::CheckRequestParam(OperatorMoreInfoReqParams& params)
-    {
-        std::string errMsg;
-        if (!CheckStrParamValid(params.rankId, errMsg)) {
-            ServerLog::Error(std::string("[Operator]Failed to check rankId in query op more info.") + errMsg);
-            return false;
-        }
-        if (!CheckStrParamValidEmptyAllowed(params.deviceId, errMsg)) {
-            ServerLog::Error(std::string("[Operator]Failed to check deviceId in query op more info.") + errMsg);
-            return false;
-        }
-        if (!CheckStrParamValid(params.opName, errMsg) && !CheckStrParamValid(params.opType, errMsg)) {
-            ServerLog::Error(std::string("[Operator]Failed to check name and type in query op more info.") + errMsg);
-            return false;
-        }
-        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(params.group);
-        if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
-            operatorGroup != OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP &&
-            operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
-            ServerLog::Error("[Operator]Wrong group type in query op more info.");
-            return false;
-        }
-        if (!params.orderBy.empty()) {
-            if (OperatorProtocol::GetDetailColumName(params.orderBy).empty()) {
-                ServerLog::Error("[Operator]Failed to check orderBy in query op more info.");
-                return false;
-            }
-            params.orderBy = OperatorProtocol::GetDetailColumName(params.orderBy);
-        }
-
-        return true;
-    }
-
 }

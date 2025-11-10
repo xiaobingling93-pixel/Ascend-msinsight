@@ -59,7 +59,7 @@ public:
     bool IsDatabaseVersionChange();
     bool QueryMetaVersion();
     std::string GetMetaVersion();
-    bool SetDataBaseVersion();
+    bool SetDataBaseVersion(const std::string& targetVersion = ""); // targetVersion仅作为内部方法使用，请勿引入外部输入
     std::string QueryValueFromMetaDataByName(const std::string &name);
 
     bool CheckTableExist(const std::string& tableName);
@@ -80,7 +80,8 @@ public:
     bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
     bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
     std::unordered_map<std::string, std::string> QueryTranslate(bool isZh);
-
+    std::string QueryDatabaseVersion() const;
+    static std::string GetCompileDataBaseVersion();
 protected:
     bool CheckTableContainData(const std::string& tableName);
     virtual bool SetConfig();
@@ -90,7 +91,6 @@ protected:
     static std::string Sqlite3ColumnConvertStr(int colType, sqlite3_stmt *stmt, int iCol);
     std::string Sqlite3ColumnConvertStrReturnNull(int colType, sqlite3_stmt *stmt, int iCol);
     std::string GetLastError();
-    static std::string GetDataBaseVersion();
     sqlite3 *db = nullptr;
     std::recursive_mutex &mutex;
     bool isOpen = false;

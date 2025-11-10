@@ -22,30 +22,16 @@ namespace {
                     { return a.diff.stepId > b.diff.stepId; }},
         {"name", [](const DetailCmpRes& a, const DetailCmpRes& b)
                  { return a.diff.name > b.diff.name; }},
-        {"op_type", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"type", [](const DetailCmpRes& a, const DetailCmpRes& b)
                     { return a.diff.type > b.diff.type; }},
-        {"accelerator_core", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"accCore", [](const DetailCmpRes& a, const DetailCmpRes& b)
                              { return a.diff.accCore > b.diff.accCore; }},
-        {"start_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"startTime", [](const DetailCmpRes& a, const DetailCmpRes& b)
                        { return NumberUtil::IsStr2DoubleDesc(a.diff.startTime, b.diff.startTime); }},
         {"duration", [](const DetailCmpRes& a, const DetailCmpRes& b)
                      { return NumberUtil::IsStr2DoubleDesc(a.diff.duration, b.diff.duration); }},
-        {"wait_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"waitTime", [](const DetailCmpRes& a, const DetailCmpRes& b)
                       { return NumberUtil::IsStr2DoubleDesc(a.diff.waitTime, b.diff.waitTime); }},
-        {"block_dim", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                      { return NumberUtil::IsStr2DoubleDesc(a.diff.blockDim, b.diff.blockDim); }},
-        {"input_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                         { return a.diff.inputShape > b.diff.inputShape; }},
-        {"input_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                             { return a.diff.inputType > b.diff.inputType; }},
-        {"input_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                          { return a.diff.inputFormat > b.diff.inputFormat; }},
-        {"output_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                          { return a.diff.outputShape > b.diff.outputShape; }},
-        {"output_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                              { return a.diff.outputType > b.diff.outputType; }},
-        {"output_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                           { return a.diff.outputFormat > b.diff.outputFormat; }},
     };
     static std::unordered_map<std::string, DetailCmpFun> DetailAsceCompareFunctions = {
         {"deviceId", [](const DetailCmpRes& a, const DetailCmpRes& b)
@@ -54,30 +40,16 @@ namespace {
                     { return a.diff.stepId < b.diff.stepId; }},
         {"name", [](const DetailCmpRes& a, const DetailCmpRes& b)
                  { return a.diff.name < b.diff.name; }},
-        {"op_type", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"type", [](const DetailCmpRes& a, const DetailCmpRes& b)
                     { return a.diff.type < b.diff.type; }},
-        {"accelerator_core", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"accCore", [](const DetailCmpRes& a, const DetailCmpRes& b)
                              { return a.diff.accCore < b.diff.accCore; }},
-        {"start_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"startTime", [](const DetailCmpRes& a, const DetailCmpRes& b)
                        { return NumberUtil::IsStr2DoubleAsce(a.diff.startTime, b.diff.startTime); }},
         {"duration", [](const DetailCmpRes& a, const DetailCmpRes& b)
                      { return NumberUtil::IsStr2DoubleAsce(a.diff.duration, b.diff.duration); }},
-        {"wait_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"waitTime", [](const DetailCmpRes& a, const DetailCmpRes& b)
                       { return NumberUtil::IsStr2DoubleAsce(a.diff.waitTime, b.diff.waitTime); }},
-        {"block_dim", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                      { return NumberUtil::IsStr2DoubleAsce(a.diff.blockDim, b.diff.blockDim); }},
-        {"input_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                         { return a.diff.inputShape < b.diff.inputShape; }},
-        {"input_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                             { return a.diff.inputType < b.diff.inputType; }},
-        {"input_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                          { return a.diff.inputFormat < b.diff.inputFormat; }},
-        {"output_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                          { return a.diff.outputShape < b.diff.outputShape; }},
-        {"output_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                              { return a.diff.outputType < b.diff.outputType; }},
-        {"output_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
-                           { return a.diff.outputFormat < b.diff.outputFormat; }},
     };
     bool DetailDescCmp(const DetailCmpRes& a, const DetailCmpRes& b, const std::string orderBy)
     {

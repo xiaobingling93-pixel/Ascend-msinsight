@@ -499,7 +499,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT * FROM " + TABLE_KERNEL +
+                "     SELECT accelerator_core as accCore, op_type as opType, name as opName FROM " + TABLE_KERNEL +
                 "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 "     ORDER by ROUND(SUM(duration), 2) DESC LIMIT ?"
@@ -574,24 +574,26 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     {
         std::string limitSql =
                 " SELECT * FROM ("
-                "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
-                "     ROUND(SUM(duration), 2) as total_time, COUNT(0) as cnt,"
-                "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
-                "     ROUND(max(duration), 2) as max_time,"
-                "     ROUND(min(duration), 2) as min_time"
+                "     SELECT op_type as opType, " + name + " as opName, input_shapes as inputShape, "
+                "     accelerator_core as accCore,"
+                "     ROUND(SUM(duration), 2) as totalTime, COUNT(0) as count,"
+                "     ROUND(SUM(duration) / COUNT(0), 2) as avgTime,"
+                "     ROUND(max(duration), 2) as maxTime,"
+                "     ROUND(min(duration), 2) as minTime"
                 "     FROM " + TABLE_KERNEL +
                 "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
-                "     ORDER by total_time DESC LIMIT ?"
+                "     ORDER by totalTime DESC LIMIT ?"
                 " ) subquery ";
 
         std::string baseNolimitSql =
                 " SELECT * FROM ("
-                "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
-                "     ROUND(SUM(duration), 2) as total_time, COUNT(0) as cnt,"
-                "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
-                "     ROUND(max(duration), 2) as max_time,"
-                "     ROUND(min(duration), 2) as min_time"
+                "     SELECT op_type as opType, " + name + " as opName, input_shapes as inputShape, "
+                "     accelerator_core as accCore,"
+                "     ROUND(SUM(duration), 2) as totalTime, COUNT(0) as count,"
+                "     ROUND(SUM(duration) / COUNT(0), 2) as avgTime,"
+                "     ROUND(max(duration), 2) as maxTime,"
+                "     ROUND(min(duration), 2) as minTime"
                 "     FROM " + TABLE_KERNEL +
                 "     WHERE accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
@@ -599,11 +601,11 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
 
         std::string noLimitsql =
                 " SELECT * FROM ("
-                "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
-                "     ROUND(SUM(duration), 2) as total_time, COUNT(0) as cnt,"
-                "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
-                "     ROUND(max(duration), 2) as max_time,"
-                "     ROUND(min(duration), 2) as min_time"
+                "     SELECT op_type as opType, " + name + " as opName, input_shapes as inputShape, accelerator_core as accCore,"
+                "     ROUND(SUM(duration), 2) as totalTime, COUNT(0) as count,"
+                "     ROUND(SUM(duration) / COUNT(0), 2) as avgTime,"
+                "     ROUND(max(duration), 2) as maxTime,"
+                "     ROUND(min(duration), 2) as minTime"
                 "     FROM " + TABLE_KERNEL +
                 "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
@@ -707,7 +709,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT * FROM " + TABLE_KERNEL +
+                "     SELECT name, op_type as type, accelerator_core as accCore FROM " + TABLE_KERNEL +
                 "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
@@ -775,10 +777,11 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
         std::string sql;
         std::string sqlTab =
-                " SELECT deviceId, step_id, name, op_type, accelerator_core,"
+                " SELECT deviceId, step_id , name, op_type as type, accelerator_core as accCore,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
-                " END AS startTime, duration, wait_time, block_dim,"
-                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats " +
+                " END AS startTime, duration, wait_time as waitTime, block_dim as blockDim,"
+                " input_shapes as inputShape, input_data_types as inputType, input_formats as inputFormat, "
+                " output_shapes as outputShape, output_data_types as outputType, output_formats as outputFormat " +
                 pmuColumnNames;
         std::string conditionalQuerySql =
                 " FROM ("
@@ -938,7 +941,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT * FROM " + TABLE_KERNEL +
+                "     SELECT name, op_type as type, accelerator_core as accCore"
+                "     FROM " + TABLE_KERNEL +
                 "     WHERE deviceId = ? AND accelerator_core = ? AND" + condition +
                 " ) subquery";
 
@@ -974,10 +978,11 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::set<std::string> pmuClos = FetchPmuColumnNames();
         std::string pmuColumnNames = JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end()));
         std::string sql =
-                " SELECT deviceId, step_id, name, op_type, accelerator_core,"
+                " SELECT deviceId, step_id, name, op_type as type, accelerator_core as accCore,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
-                " END AS startTime, duration, wait_time, block_dim,"
-                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats " +
+                " END AS startTime, duration, wait_time as waitTime, block_dim as blockDim,"
+                " input_shapes as inputShape, input_data_types as inputType, input_formats as inputFormat, "
+                " output_shapes as outputShape, output_data_types as outputType, output_formats as outputFormat " +
                 pmuColumnNames +
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
@@ -987,19 +992,16 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
 
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         if (IsOperatorGroupInType(operatorGroup)) {
-            sql += " WHERE op_type = ?";
+            sql += " WHERE type = ?";
         } else {
-            sql += " WHERE name = ? AND input_shapes = ?";
+            sql += " WHERE name = ? AND inputShape = ?";
         }
 
         for (const auto &filter: reqParams.filters) {
             sql += " AND " + filter.first + " LIKE ? ";
         }
 
-        if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
-                             "to generate query more info sql.");
-        } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+        if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
 

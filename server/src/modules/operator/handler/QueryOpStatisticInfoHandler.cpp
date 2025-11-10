@@ -25,19 +25,19 @@ namespace {
                     { return func(a).opType > func(b).opType; }},
         {"opName", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                     { return func(a).opName > func(b).opName; }},
-        {"input_shapes", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"inputShape", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                  { return func(a).inputShape > func(b).inputShape; }},
         {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                     { return func(a).accCore > func(b).accCore; }},
-        {"total_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                              { return NumberUtil::IsStr2DoubleDesc(func(a).totalTime, func(b).totalTime); }},
-        {"cnt", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                        { return NumberUtil::IsStr2DoubleDesc(func(a).count, func(b).count); }},
-        {"avg_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                      { return NumberUtil::IsStr2DoubleDesc(func(a).avgTime, func(b).avgTime); }},
-        {"max_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                       { return NumberUtil::IsStr2DoubleDesc(func(a).maxTime, func(b).maxTime); }},
-        {"min_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                       { return NumberUtil::IsStr2DoubleDesc(func(a).minTime, func(b).minTime); }}
     };
     std::unordered_map<std::string, StatisticCmpFun> StatisticAsceCompareFunctions = {
@@ -45,19 +45,19 @@ namespace {
                     { return func(a).opType < func(b).opType; }},
         {"opName", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                     { return func(a).opName < func(b).opName; }},
-        {"input_shapes", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"inputShape", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                  { return func(a).inputShape < func(b).inputShape; }},
         {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                     { return func(a).accCore < func(b).accCore; }},
-        {"total_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                              { return NumberUtil::IsStr2DoubleAsce(func(a).totalTime, func(b).totalTime); }},
-        {"cnt", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                        { return NumberUtil::IsStr2DoubleAsce(func(a).count, func(b).count); }},
-        {"avg_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                      { return NumberUtil::IsStr2DoubleAsce(func(a).avgTime, func(b).avgTime); }},
-        {"max_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                       { return NumberUtil::IsStr2DoubleAsce(func(a).maxTime, func(b).maxTime); }},
-        {"min_time", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
+        {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b, GetObjFunc func)
                       { return NumberUtil::IsStr2DoubleAsce(func(a).minTime, func(b).minTime); }}
     };
     bool StatisticDescCmp(const StatisticCmpRes& a, const StatisticCmpRes& b, const std::string orderBy,

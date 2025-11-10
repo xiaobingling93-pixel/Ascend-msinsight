@@ -5,6 +5,8 @@
 #ifndef PROFILER_SERVER_OPERATORPROTOCOL_H
 #define PROFILER_SERVER_OPERATORPROTOCOL_H
 
+#include "pch.h"
+#include "OperatorProtocolDefs.h"
 #include "ProtocolMessage.h"
 
 namespace Dic::Protocol {
@@ -17,8 +19,6 @@ namespace Dic::Protocol {
     public:
         OperatorProtocol() = default;
         ~OperatorProtocol() override = default;
-        static std::string GetStatisticColumName(const std::string& originName);
-        static std::string GetDetailColumName(const std::string& originName);
 
     private:
         void RegisterJsonToRequestFuncs() override;
