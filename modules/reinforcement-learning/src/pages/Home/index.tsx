@@ -17,7 +17,7 @@ export const Home: React.FC = observer(() => {
         <HeaderStyled>
             <SearchForm></SearchForm>
         </HeaderStyled>
-        <CollapsiblePanel title={t('Task Trace Timeline')}>
+        <CollapsiblePanel id={'task-trace-timeline'} title={t('Task Trace Timeline')}>
             <TraceTimeline></TraceTimeline>
         </CollapsiblePanel>
     </>;
