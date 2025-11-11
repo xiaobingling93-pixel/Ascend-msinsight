@@ -26,6 +26,8 @@
     "Roofline": "Roofline",
     "Pipeline": "Pipeline",
     "Memory Unit": "Memory Unit",
+    "Bandwidth(GB/s)": "Bandwidth(GB/s)",
+    "(theoretical value)": "(theoretical value)",
     "Memory Transfer": "Memory Transfer",
     "Performance": "Performance",
     "Performance Ratio": "Performance Ratio",

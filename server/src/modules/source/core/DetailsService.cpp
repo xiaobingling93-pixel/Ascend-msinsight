@@ -156,9 +156,11 @@ std::vector<CompareData<MemoryUnit>> DetailsService::MergeMemoryUnit(
             MemoryUnit compareMemoryUnit = memoryUnitMap[baselineMemoryUnit.memoryPath].compare;
             MemoryUnit diff;
             diff.memoryPath = baselineMemoryUnit.memoryPath;
-            diff.request = compareMemoryUnit.request - baselineMemoryUnit.request;
+            diff.request = NumberUtil::StringUnsignedLongLongMinus(compareMemoryUnit.request, baselineMemoryUnit.request);
+            diff.requestSuffix = compareMemoryUnit.requestSuffix;
             diff.bandwidth = NumberUtil::StringDoubleMinusWithoutTrailingZero(compareMemoryUnit.bandwidth,
                                                                               baselineMemoryUnit.bandwidth);
+            diff.bandwidthSuffix = compareMemoryUnit.bandwidthSuffix;
             diff.peakRatio = NumberUtil::StringDoubleMinusWithoutTrailingZero(compareMemoryUnit.peakRatio,
                                                                               baselineMemoryUnit.peakRatio);
             // 线的数据是否展示以compare数据为准

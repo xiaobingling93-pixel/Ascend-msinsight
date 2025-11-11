@@ -377,9 +377,11 @@ std::optional<document_t> MemoryUnitToJson(const MemoryUnit &memoryUnit, Documen
 {
     document_t unitJson(kObjectType);
     JsonUtil::AddMember(unitJson, "request", memoryUnit.request, allocator);
+    JsonUtil::AddMember(unitJson, "requestSuffix", memoryUnit.requestSuffix, allocator);
     JsonUtil::AddMember(unitJson, "display", memoryUnit.display, allocator);
     JsonUtil::AddMember(unitJson, "peakRatio", memoryUnit.peakRatio, allocator);
     JsonUtil::AddMember(unitJson, "bandwidth", memoryUnit.bandwidth, allocator);
+    JsonUtil::AddMember(unitJson, "bandwidthSuffix", memoryUnit.bandwidthSuffix, allocator);
     JsonUtil::AddMember(unitJson, "memoryPath", memoryUnit.memoryPath, allocator);
     return std::optional<document_t>(std::move(unitJson));
 }

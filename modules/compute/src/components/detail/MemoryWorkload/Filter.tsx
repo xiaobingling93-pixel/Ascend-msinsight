@@ -29,7 +29,7 @@ export const defaultCondition = {
 const defaultOptionMap = {
     blockIdOptions: [],
     showAsOptions: [
-        { label: 'Bandwidth', value: 'bandwidth' },
+        { label: 'Bandwidth(GB/s)', value: 'bandwidth' },
         { label: 'Num of Request', value: 'request' },
     ],
 };

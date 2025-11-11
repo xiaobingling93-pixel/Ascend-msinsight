@@ -194,8 +194,10 @@ struct DetailsLoadInfoResponse : public Response {
 
 struct MemoryUnit {
     std::string memoryPath;
-    int64_t request = 0;
+    std::string request;
+    std::string requestSuffix;
     std::string bandwidth;
+    std::string bandwidthSuffix;
     std::string peakRatio;
     bool display;
 };

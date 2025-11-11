@@ -162,6 +162,27 @@ TEST(NumberUtil, StringToLongWithAbnormalStringReturnInalidNumber) {
     EXPECT_EQ(NumberUtil::TryParseInt("2147483648"), INVALID_NUMBER);
 }
 
+TEST(NumberUtil, StringUnsignedLongLongMinusTest)
+{
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("1", "0"), "1");
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("100", "1"), "99");
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("106", "104"), "2");
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("0", "1"), "-1");
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("10", "20"), "-10");
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("2", "107"), "-105");
+
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus(std::to_string(INT64_MAX), "0"), std::to_string(INT64_MAX));
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus(std::to_string(UINT64_MAX), "0"), std::to_string(INT64_MAX));
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus(std::to_string(UINT64_MAX), std::to_string(INT64_MAX)),
+        std::to_string(INT64_MAX));
+
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("0", std::to_string(INT64_MAX)), std::to_string(-INT64_MAX));
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("0", std::to_string(-INT64_MIN)), std::to_string(INT64_MIN));
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("0", std::to_string(UINT64_MAX)), std::to_string(INT64_MIN));
+    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus(std::to_string(INT64_MAX), std::to_string(UINT64_MAX)),
+        std::to_string(INT64_MIN));
+}
+
 TEST(NumberUtil, StringDoubleMinusWithNormalStringReturnValid) {
     EXPECT_EQ(NumberUtil::StringDoubleMinus("111111.555555", "0.555555"), "111111.000");
     EXPECT_EQ(NumberUtil::StringDoubleMinus("111111.555555", "0.555555", 2), "111111.00");

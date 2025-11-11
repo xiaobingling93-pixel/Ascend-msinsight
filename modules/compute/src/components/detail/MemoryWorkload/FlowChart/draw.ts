@@ -1440,15 +1440,14 @@ const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
 
 const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean, showAs: string, tDetails?: TFunction): string => {
     let label = String(getFormatNum(data.compare[showAs]));
-    if (showAs === 'bandwidth') {
-        label = `${label} GB/s`;
-    }
     if (isCompared) {
         const diffValue = data.baseline[showAs] === '' ? '-' : String(getFormatNum(data.baseline[showAs]));
         label = `${label}(${diffValue})`;
     }
-    if (data.compare.memoryPath === '1') {
-        label = `${label}${tDetails ? ` (${tDetails('Theoretical')})` : ''}`;
+    if (showAs === 'bandwidth') {
+        label = `${label}${tDetails ? tDetails(data.compare.bandwidthSuffix) : ''}`;
+    } else {
+        label = `${label}${tDetails ? tDetails(data.compare.requestSuffix) : ''}`;
     }
     return label;
 };

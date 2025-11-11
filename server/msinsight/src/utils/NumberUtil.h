@@ -310,6 +310,25 @@ public:
         }
     }
 
+    static std::string StringUnsignedLongLongMinus(const std::string &str1, const std::string &str2)
+    {
+        uint64_t num1 = StringToUnsignedLongLong(str1);
+        uint64_t num2 = StringToUnsignedLongLong(str2);
+        if (num1 >= num2 && num1 - num2 > static_cast<uint64_t>(INT64_MAX)) {
+            return std::to_string(INT64_MAX);
+        }
+        if (num1 < num2 && num2 - num1 > static_cast<uint64_t>(INT64_MAX)) {
+            return std::to_string(INT64_MIN);
+        }
+        int64_t res;
+        if (num1 >= num2) {
+            res = static_cast<int64_t>(num1 - num2);
+        } else {
+            res = -static_cast<int64_t>(num2 - num1);
+        }
+        return std::to_string(res);
+    }
+
     static inline uint32_t StringToUint32(const std::string& usStr)
     {
         if (usStr.empty()) {

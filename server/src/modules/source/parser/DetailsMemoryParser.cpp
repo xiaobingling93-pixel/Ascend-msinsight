@@ -166,8 +166,10 @@ Protocol::MemoryGraph DetailsMemoryParser::ParseJsonToMemoryGraph(const json_t &
         for (auto &unit: memoryUnit.GetArray()) {
             Protocol::MemoryUnit memoryUnitTemp;
             memoryUnitTemp.memoryPath = JsonUtil::GetString(unit, "memory_path");
-            memoryUnitTemp.request = JsonUtil::GetInteger(unit, "request");
+            memoryUnitTemp.request = JsonUtil::GetString(unit, "request");
+            memoryUnitTemp.requestSuffix = JsonUtil::GetString(unit, "request_suffix");
             memoryUnitTemp.bandwidth = JsonUtil::GetString(unit, "bandwidth");
+            memoryUnitTemp.bandwidthSuffix = JsonUtil::GetString(unit, "bandwidth_suffix");
             memoryUnitTemp.peakRatio = JsonUtil::GetString(unit, "peak_ratio");
             memoryUnitTemp.display = (JsonUtil::GetInteger(unit, "display") == 1);
             Protocol::CompareData<Protocol::MemoryUnit> compareData;
