@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Form, InputGroup, InputNumber, InputSplit, Select, Tabs, Tooltip } from 'ascend-components';
+import { Button, Form, InputGroup, InputNumber, InputSplit, Select, Tabs, Tooltip } from '@insight/lib/components';
 import { message, Popconfirm, Spin } from 'antd';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import styled from '@emotion/styled';
@@ -18,7 +18,7 @@ import type { TFunction } from 'i18next';
 import { COLOR } from '../Common';
 import cls from 'classnames';
 import { isEqual } from 'lodash';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { AimOutlined } from '@ant-design/icons';
 import parallelismStore, { DimensionOption, type GenerateConditions } from '../../store/parallelism';
 

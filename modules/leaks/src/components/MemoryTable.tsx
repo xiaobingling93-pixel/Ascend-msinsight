@@ -6,7 +6,7 @@ import { type RadioChangeEvent } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { Radio, Button } from 'ascend-components';
+import { Radio, Button } from '@insight/lib/components';
 import { Session } from '../entity/session';
 import BlocksTable from './BlocksTable';
 import EventsTable from './EventsTable';

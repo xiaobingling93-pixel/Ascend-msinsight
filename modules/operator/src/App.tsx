@@ -4,12 +4,12 @@
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import { useRootStore } from './context/context';
 import Operator from './components/operator/Operator';
 import { themeInstance } from './theme/theme';
 import connector from './connection';
-import { GlobalStyles } from 'ascend-theme';
+import { GlobalStyles } from '@insight/lib/theme';
 
 const App = observer(() => {
     const { sessionStore } = useRootStore();

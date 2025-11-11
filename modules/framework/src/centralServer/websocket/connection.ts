@@ -1,11 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { CONTENT_LENGTH_PREFIX, isResponse, PORT, LOCAL_HOST } from './defs';
-import type { DataRequest, ModuleName, ConnectHost, Notification, Response, Request, ResponseHandler } from './defs';
+import type { ConnectHost, DataRequest, ModuleName, Notification, Request, Response, ResponseHandler } from './defs';
+import { CONTENT_LENGTH_PREFIX, isResponse, LOCAL_HOST, PORT } from './defs';
 import connector from '@/connection';
 import { message as Message, Modal } from 'antd';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 import { connectRemote } from '../server';
 import { store } from '../../store';
 import { runInAction } from 'mobx';
@@ -62,8 +62,8 @@ export class Connection {
                 session.toIframeUrl = `${protocol}${host}${window.location.pathname.replace(/\/resources\/profiler\/frontend\/.*/, `/proxy/${initHost.port}`)}`;
             });
         } else if (!window.location.pathname.includes('/proxy/')) {
-            const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
-            let pathname = location.pathname && location.pathname !== '/' ? location.pathname.replace(/\/resources\/profiler\/frontend\/index.html/, '') : '';
+            const hostname = window.location.hostname || LOCAL_HOST;
+            let pathname = window.location.pathname && window.location.pathname !== '/' ? window.location.pathname.replace(/\/resources\/profiler\/frontend\/index.html/, '') : '';
             pathname = pathname.replace(/\/index.html/, '');
             this._ws = new WebSocket(`${protocol}${hostname}${pathname}:${initHost.port}${window.location.search}`);
             runInAction(() => {

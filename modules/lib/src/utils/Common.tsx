@@ -3,21 +3,28 @@
 */
 import * as React from 'react';
 import styled from '@emotion/styled';
-import BaseContainer from '../container/BaseContainer';
-import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
+import Index from '../components/BaseContainer';
+import { MIDescriptions, MIDescriptionsItem } from '../components/MIDescriptions';
 import COLOR from './Color';
-import { chartVisbilityListener, getAdaptiveEchart, disposeAdaptiveEchart, getDefaultChartOptions, getLegendStyle } from './EchartUtils';
+import {
+    chartVisbilityListener,
+    disposeAdaptiveEchart,
+    getAdaptiveEchart,
+    getDefaultChartOptions,
+    getLegendStyle
+} from './EchartUtils';
 import { Empty, message } from '../components/index';
 import { type Theme, useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import { t as i18nextT } from 'i18next';
 import { AlarmIcon, BulbIcon } from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
-import { KEYS, getShortcutKey, isMac } from './key';
+import { getShortcutKey, isMac, KEYS } from './key';
+
 export { customConsole } from './Console';
 export { Decimal } from './Decimal';
 export {
-    BaseContainer,
+    Index,
     MIDescriptions,
     MIDescriptionsItem,
     COLOR,
@@ -226,7 +233,7 @@ export const safeStr = (val: string | number, ignore?: string): string => {
     return escapeHTML(val);
 };
 
-export function FormItem({ name, style, content, nameStyle }:
+export function CustomFormItem({ name, style, content, nameStyle }:
 { name: React.ReactNode; nameStyle?: React.CSSProperties; style?: React.CSSProperties; content: React.ReactElement }): JSX.Element {
     return (<div style={{
         display: 'inline-block',

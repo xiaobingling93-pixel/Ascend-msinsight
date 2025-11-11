@@ -13,12 +13,12 @@ import { useWatchResize } from '../utils/useWatchDomResize';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as AntdPlaceFlagButtonSvg } from '../assets/images/timeline/ic_place_flag.svg';
-import { FlagIcon } from 'ascend-icon';
+import { FlagIcon } from '@insight/lib/icon';
 import { addRangeFlag, deleteRangeFlag, linearScaleFactory, transformTimeToLeft } from './TimelineMarker';
 import { runInAction } from 'mobx';
 import { getTimestamp } from '../utils/humanReadable';
 import type { SvgType } from './base/rc-table/types';
-import { adaptDpr } from 'ascend-utils';
+import { adaptDpr } from '@insight/lib/utils';
 
 const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
 

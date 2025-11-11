@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Label } from '../../Common';
-import { Button, Checkbox, InputNumber, Select } from 'ascend-components';
+import { Button, Checkbox, InputNumber, Select } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
 import { optionDataType, VoidFunction } from '../../../utils/interface';
 import { message } from 'antd';

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { ServerConnector } from 'ascend-connection';
+import { ServerConnector } from '@insight/lib/connection';
 import { INTERCEPTOR_HANDLERS, NOTIFICATION_INTERCEPTOR_HANDLERS, NOTIFICATION_STATISTIC_HANDLERS } from './interceptor';
 import { listenerMap } from './notification';
 import { store } from '@/store';

@@ -1,9 +1,21 @@
 {
-  "name": "common",
+  "name": "@insight/lib",
   "version": "0.1.0",
   "private": true,
   "main": "src/lib.js",
   "types": "src/lib.d.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./style": "./src/style/index.ts",
+    "./i18n": "./src/i18n/index.ts",
+    "./utils": "./src/utils/index.ts",
+    "./icon": "./src/icon/index.ts",
+    "./hooks": "./src/hooks/index.ts",
+    "./components": "./src/components/index.ts",
+    "./connection": "./src/connection/index.ts",
+    "./theme": "./src/theme/index.ts",
+    "./resize": "./src/resize/index.ts"
+  },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false tsc --declaration",

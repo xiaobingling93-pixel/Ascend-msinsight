@@ -5,7 +5,7 @@ import React from 'react';
 import { observer } from 'mobx-react';
 import { type Session } from '../../entity/session';
 import TraceKitChart from './CacheKitChart';
-import { Layout } from 'ascend-layout';
+import { Layout } from '@insight/lib';
 
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     return (

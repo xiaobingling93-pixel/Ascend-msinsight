@@ -3,8 +3,8 @@
  */
 import React from 'react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'ascend-components';
-import i18n from 'ascend-i18n';
+import { Tooltip } from '@insight/lib/components';
+import i18n from '@insight/lib/i18n';
 import { NOT_APPLICABLE } from './defs';
 
 const StallBarContainer = styled.div`

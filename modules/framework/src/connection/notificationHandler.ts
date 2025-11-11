@@ -15,7 +15,7 @@ import {
 } from './sendNotification';
 import { NotificationMessage } from './notification';
 import { SessionAction } from '@/utils/enum';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 
 export const updateSessionHandler = (e: NotificationMessage): void => {
     const session = store.sessionStore.activeSession;

@@ -11,12 +11,12 @@ import {
     getLegendStyle,
     useWatchDomResize,
     getDefaultChartOptions,
-} from 'ascend-utils';
-import i18n from 'ascend-i18n';
+} from '@insight/lib/utils';
+import i18n from '@insight/lib/i18n';
 import { cloneDeep } from 'lodash';
 import type { Point, IRooflineChart } from './Index';
 import * as echarts from 'echarts';
-import CollapsiblePanel from 'ascend-collapsible-panel';
+import { CollapsiblePanel } from '@insight/lib/components';
 import { useTheme, type Theme } from '@emotion/react';
 import { LimitHit } from '../../LimitSet';
 import { useTranslation } from 'react-i18next';

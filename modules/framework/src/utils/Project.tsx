@@ -3,32 +3,36 @@
 */
 import _ from 'lodash';
 import { runInAction } from 'mobx';
-import { customConsole as console } from 'ascend-utils';
-import { LocalStorageKey, localStorageService } from 'ascend-local-storage';
+import { customConsole as console } from '@insight/lib/utils';
+import { LocalStorageKey, localStorageService } from '@insight/lib';
 import connector from '@/connection';
 import { store } from '@/store';
 import { ProjectAction } from '@/utils/enum';
 import {
     DataSource,
-    Project,
-    ProjectDirectory,
-    GLOBAL_HOST,
     FileOrDirectory,
+    GLOBAL_HOST,
     ImportTreeInfo,
     LayerType,
+    Project,
+    ProjectDirectory,
 } from '@/centralServer/websocket/defs';
 import { addDataPath } from '@/centralServer/server';
 import {
-    deleteDataPath, deleteProject, resetTimeline, getHistoryProject, updateProjectName as requestUpdateProjectName,
     clearProjects,
+    deleteDataPath,
+    deleteProject,
+    getHistoryProject,
+    resetTimeline,
+    updateProjectName as requestUpdateProjectName,
 } from '@/utils/Request';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { message as Message } from 'antd';
 import { isProjectNameExisted, updateDataSourceName } from '@/utils/Resource';
 import { sendReset, sendUpdateProjectName } from '@/connection/sendNotification';
 import { cancelBaselineData, updateProjectNameHandler } from '@/utils/Compare';
 import { updateRankMapByProjectName } from '@/utils/Rank';
-import { openLoading, closeLoading } from '@/utils/useLoading';
+import { closeLoading, openLoading } from '@/utils/useLoading';
 import { DEFAULT_ACTIVE_DATASOURCE } from '@/entity/session';
 
 export interface UpdateProjectParam {

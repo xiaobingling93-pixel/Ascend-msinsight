@@ -5,13 +5,13 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { eventViewData, getDefaultColumData, getPageData, queryOneKernel } from './Common';
-import { ResizeTable, fetchColumnFilterProps } from 'ascend-resize';
+import { ResizeTable, fetchColumnFilterProps } from '@insight/lib/resize';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
-import { Button } from 'ascend-components';
+import { Button } from '@insight/lib/components';
 import { getTimeOffset } from '../../insight/units/utils';
 import { useTranslation } from 'react-i18next';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, SelectContentViewProps } from './SystemView';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 export interface EventTableData {

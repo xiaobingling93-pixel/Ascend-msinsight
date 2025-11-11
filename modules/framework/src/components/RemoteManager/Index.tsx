@@ -7,7 +7,7 @@ import { Session } from '@/entity/session';
 import ImportData from './ImportData/Index';
 import styled from '@emotion/styled';
 import ProjectContents from './ProjectContents/Index';
-import { DataManagerIcon } from 'ascend-icon';
+import { DataManagerIcon } from '@insight/lib/icon';
 import { useTranslation } from 'react-i18next';
 
 const Container = styled.div`

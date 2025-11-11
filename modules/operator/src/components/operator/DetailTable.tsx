@@ -1,20 +1,19 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { ResizeTable } from 'ascend-resize';
+import { ResizeTable } from '@insight/lib/resize';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Button, Tooltip, message } from 'ascend-components';
+import { Button, Tooltip, message, CollapsiblePanel } from '@insight/lib/components';
 import { DownOutlined } from '@ant-design/icons';
 import { getPageConfigWithPageData } from '../Common';
 import { type ConditionType, type FilterType } from './Filter';
 import { queryOperators, queryOperatorsInStatic, queryOperatorStatic, exportOperatorDetail } from '../RequestUtils';
 import { runInAction } from 'mobx';
 import type { Session } from '../../entity/session';
-import CollapsiblePanel from 'ascend-collapsible-panel';
 import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumnConfig';
-import { HelpIcon } from 'ascend-icon';
+import { HelpIcon } from '@insight/lib/icon';
 import connector from '../../connection/index';
 import UpdateTableAsync from '../../utils/UpdateTableAsync';
 

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Checkbox } from 'ascend-components';
+import { Checkbox } from '@insight/lib/components';
 import { Label } from './Common';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 

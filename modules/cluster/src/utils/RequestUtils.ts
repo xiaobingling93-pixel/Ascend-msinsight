@@ -17,7 +17,7 @@ import {
     GetSlowRankListResult,
     GetSlowRankListParams,
 } from './interface';
-import { createCancelableApi } from 'ascend-utils';
+import { createCancelableApi } from '@insight/lib/utils';
 import { store } from '../store';
 
 type ParamsWithClusterPath<T> = T & {

@@ -4,12 +4,12 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { ThemeProvider } from '@emotion/react';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import { useRootStore } from './context/context';
 import connector from './connection';
 import HotMethod from './components/hotMethod/HotMethod';
 import Detail from './components/detail/Index';
-import { GlobalStyles, themeInstance } from 'ascend-theme';
+import { GlobalStyles, themeInstance } from '@insight/lib/theme';
 import CacheKit from './components/cacheKit/Index';
 
 const app = observer(({ page }: {page?: string}) => {

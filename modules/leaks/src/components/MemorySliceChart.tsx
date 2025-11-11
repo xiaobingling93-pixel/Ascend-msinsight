@@ -1,16 +1,17 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import React, { useEffect, useState, useRef } from 'react';
-import { MIChart } from 'ascend-components';
-import type { ChartsHandle } from 'ascend-components/MIChart';
+import React, { useEffect, useRef, useState } from 'react';
+import { MIChart } from '@insight/lib/components';
+import type { ChartsHandle } from '@insight/lib';
 import { useTranslation } from 'react-i18next';
 import { type EChartsOption } from 'echarts';
 import { Session } from '../entity/session';
 import { observer } from 'mobx-react';
 import { type DetailData } from '../utils/RequestUtils';
 import { getNewDetailData } from './dataHandler';
-import { safeStr } from 'ascend-utils';
+import { safeStr } from '@insight/lib/utils';
+
 interface treemap {
     name: string;
     value: number;
@@ -135,7 +136,7 @@ const MemorySliceChart: any = observer(({ session }: { session: Session }): Reac
     return (
         <MIChart
             ref={chartRef}
-            height='350px'
+            height="350px"
             width="calc(100vw - 120px)"
             loading={loading}
             options={chartOptions}

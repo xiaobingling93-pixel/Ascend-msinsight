@@ -4,7 +4,7 @@
 
 import { NotificationHandler } from '@/connection/defs';
 import { LocaleType, rootStore } from '@/stores';
-import { themeInstance, ThemeName } from 'ascend-theme';
+import { themeInstance, ThemeName } from '@insight/lib/theme';
 
 interface SetThemeHandler {
     isDark: boolean;

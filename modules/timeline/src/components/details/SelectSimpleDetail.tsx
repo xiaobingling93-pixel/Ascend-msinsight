@@ -8,7 +8,7 @@ import { observer } from 'mobx-react';
 import { TableState, TableViewProps } from './types';
 import { useDetailUpdater } from './hooks';
 import type { CommonStateProto, TabProto } from './base/Tabs';
-import { ResizeTable } from 'ascend-resize';
+import { ResizeTable } from '@insight/lib/resize';
 import { AutoKey, getAutoKey } from '../../utils/dataAutoKey';
 import { SorterResult } from 'antd/lib/table/interface';
 

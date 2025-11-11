@@ -2,12 +2,12 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { MIChart } from 'ascend-components';
+import { MIChart } from '@insight/lib/components';
 import React, { useEffect, useRef, useState } from 'react';
-import type { ChartsHandle } from 'ascend-components/MIChart';
+import type { ChartsHandle } from '@insight/lib';
 import type { EChartsOption } from 'echarts';
 import { merge } from 'lodash';
-import { clamp, safeStr } from 'ascend-utils';
+import { clamp, safeStr } from '@insight/lib/utils';
 import { QueryExpertHotspotItem } from '../../../utils/interface';
 
 const RANK_HEIGHT = 14;

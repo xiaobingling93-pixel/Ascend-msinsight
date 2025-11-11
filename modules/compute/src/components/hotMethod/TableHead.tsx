@@ -4,8 +4,8 @@
 import React, { useState, type CSSProperties, useEffect } from 'react';
 import styled from '@emotion/styled';
 import type { Property } from 'csstype';
-import { Resizor } from 'ascend-resize';
-import { useWatchDomResize } from 'ascend-utils';
+import { Resizor } from '@insight/lib/resize';
+import { useWatchDomResize } from '@insight/lib/utils';
 import { changeIndexWidth } from './codeViewer/CodeViewer';
 
 export const ThContainer = styled.div`

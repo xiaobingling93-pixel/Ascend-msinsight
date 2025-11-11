@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { Button, message } from 'ascend-components';
+import { Button, message } from '@insight/lib/components';
 import type { SelectContentViewProps } from './SystemView';
 import jumpToCorrespondingLane from '../../utils/jumpToCorrespondingLane';
 

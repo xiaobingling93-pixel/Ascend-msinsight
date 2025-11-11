@@ -11,13 +11,13 @@ import { useTranslation } from 'react-i18next';
 import type { BottomPanelSingleRender } from '../entity/insight';
 import type { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
-import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
+import { DragDirection, useDraggableContainer } from '@insight/lib';
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { getDetailViewItem } from './detailViews/DetailView';
 import { useFindDetail } from './detailViews/FindInWindow';
 import { StyledTabs } from './base/StyledTabs';
-import i18n from 'ascend-i18n';
-import { Checkbox } from 'ascend-components';
+import i18n from '@insight/lib/i18n';
+import { Checkbox } from '@insight/lib/components';
 import { runInAction } from 'mobx';
 import eventBus from '../utils/eventBus';
 
@@ -196,7 +196,7 @@ const useBottomPanelReactNodes = (session: Session, height: number, type: string
     }, [bottomPanelComponents, height, t]);
 };
 
-/* decide what to put in Detail container */
+/* decide what to put in Detail Index */
 const getDetailContent = (session: Session, height: number, bottomPanelComponents?: ReturnType<BottomPanelSingleRender>): JSX.Element => {
     if (session.selectedUnitKeys.length === 0 || !bottomPanelComponents?.Detail) {
         return <div className="emptyContainer"><NoDetail/></div>;

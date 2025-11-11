@@ -5,10 +5,10 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { KEYS, getShortcutKey } from 'ascend-utils';
+import { KEYS, getShortcutKey } from '@insight/lib/utils';
 import styled from '@emotion/styled';
-import { Tooltip } from 'ascend-components';
-import { HelpIcon } from 'ascend-icon';
+import { Tooltip } from '@insight/lib/components';
+import { HelpIcon } from '@insight/lib/icon';
 
 const DELIMITER = '+';
 

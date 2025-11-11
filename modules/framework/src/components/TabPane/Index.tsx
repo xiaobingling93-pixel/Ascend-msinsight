@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
 import type { Scene, Session } from '@/entity/session';
 import { type MenuProps, message, Menu, Tooltip } from 'antd';
-import { safeJSONParse } from 'ascend-utils';
+import { safeJSONParse } from '@insight/lib/utils';
 
 import { type ModuleConfig, modulesConfig } from '../../moduleConfig';
 import styled from '@emotion/styled';

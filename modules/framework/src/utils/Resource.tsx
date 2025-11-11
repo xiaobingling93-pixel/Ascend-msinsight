@@ -2,13 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React from 'react';
-import { FileIcon, FolderIcon } from 'ascend-icon';
+import { FileIcon, FolderIcon } from '@insight/lib/icon';
 import type { TreeDataNode } from 'antd';
 import { message as Message } from 'antd';
 import { checkProjectValid, getFiles } from '@/utils/Request';
 import { DataSource, Project } from '@/centralServer/websocket/defs';
 import { ProjectError } from '@/utils/enum';
-import { LocalStorageKey, localStorageService } from 'ascend-local-storage';
+import { LocalStorageKey, localStorageService } from '@insight/lib';
 import { store } from '@/store';
 import { runInAction } from 'mobx';
 import { hasFileOverlap } from '@/utils/Project';

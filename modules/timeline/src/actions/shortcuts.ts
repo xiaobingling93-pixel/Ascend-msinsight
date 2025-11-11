@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { getShortcutKey } from 'ascend-utils';
+import { getShortcutKey } from '@insight/lib/utils';
 import type { ActionName } from './types';
 
 export type ShortcutName = Extract<

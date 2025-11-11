@@ -5,7 +5,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { ThemeProvider as EmotionThemeProvider } from '@emotion/react';
-import { themeInstance } from 'ascend-theme';
+import { themeInstance } from '@insight/lib/theme';
 
 interface ThemeProviderProps {
     children: React.ReactNode;

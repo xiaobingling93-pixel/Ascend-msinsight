@@ -8,13 +8,13 @@ import { runInAction } from 'mobx';
 import { Session } from '../entity/session';
 import { MemorySession, DataResourceType, GroupBy } from '../entity/memorySession';
 import { useRootStore } from '../context/context';
-import { Layout } from 'ascend-layout';
+import { Layout } from '@insight/lib/components';
 import MemoryHeader from '../components/MemoryHeader';
 import MemoryLineChart from '../components/MemoryLineChart';
 import MemoryDetailTable from '../components/MemoryDetailTable';
 import { NormalDisplayStrategy, displayStrategyKey, displayStrategyMap, MemoryHeaderStrategy } from '../utils/strategyUtils';
 import { memoryTypeGet, resourceTypeGet } from '../utils/RequestUtils';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 
 const fetchMemoryType = (memorySession: MemorySession): void => {
     const memoryCard = memorySession.getSelectedRankValue();

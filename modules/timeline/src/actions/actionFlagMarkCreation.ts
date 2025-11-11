@@ -3,7 +3,7 @@
  */
 import { register } from './register';
 
-import { KEYS } from 'ascend-utils';
+import { KEYS } from '@insight/lib/utils';
 import { addNewFlag, addRangeFlag } from '../components/TimelineMarker';
 import { getTimestamp } from '../utils/humanReadable';
 import { runInAction } from 'mobx';

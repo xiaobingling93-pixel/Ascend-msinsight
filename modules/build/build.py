@@ -66,9 +66,9 @@ def build_module(module):
     if os.path.exists(plugin_dir):
         shutil.rmtree(plugin_dir)
 
-    npm_cmd = 'npm.cmd' if platform.system() == 'Windows' else 'npm'
+    pnpm_cmd = 'pnpm.cmd' if platform.system() == 'Windows' else 'pnpm'
 
-    result = execute_cmd(MODULES_MAP.get(module), module_dir, [npm_cmd, 'run', 'build'])
+    result = execute_cmd(MODULES_MAP.get(module), module_dir, [pnpm_cmd, 'build'])
     if result != 0:
         logging.error('[%s]Failed to build %s, %s', MODULES_MAP.get(module), module, result)
         return 1
@@ -86,12 +86,12 @@ def parallel_build():
     """
     logging.info('Start to build modules')
 
-    npm_cmd = 'npm.cmd' if platform.system() == 'Windows' else 'npm'
-    result = execute_cmd('modules', MODULES_DIR, [npm_cmd, 'install', '--force'])
+    pnpm_cmd = 'pnpm.cmd' if platform.system() == 'Windows' else 'pnpm'
+    result = execute_cmd('modules', MODULES_DIR, [pnpm_cmd, 'install'])
     if result != 0:
         logging.error('Failed to install dependencies, %s', result)
         return 1
-    result = execute_cmd('lib', os.path.join(MODULES_DIR, 'lib'), [npm_cmd, 'run', 'build'])
+    result = execute_cmd('lib', os.path.join(MODULES_DIR, 'lib'), [pnpm_cmd, 'build'])
     if result != 0:
         logging.error('Failed to build lib, %s', result)
         return 1

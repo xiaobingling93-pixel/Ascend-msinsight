@@ -3,10 +3,10 @@
  */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import 'ascend-i18n';
-import 'ascend-style';
-import { GlobalStyles } from 'ascend-theme';
-import { disableShortcuts } from 'ascend-utils';
+import '@insight/lib/i18n';
+import '@insight/lib/style';
+import { GlobalStyles } from '@insight/lib/theme';
+import { disableShortcuts } from '@insight/lib/utils';
 import { NOTIFICATION_HANDLERS } from '@/connection/handler';
 import App from './App';
 import { StoreProvider } from '@/stores';

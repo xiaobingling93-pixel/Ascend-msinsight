@@ -19,8 +19,8 @@ import { ReactComponent as Arrow } from '../../../assets/images/insights/PullDow
 import { ReactComponent as StickyIcon } from '../../../assets/images/sticky_unit_button_icon.svg';
 // components
 import { message } from 'antd';
-import { Checkbox, Tooltip } from 'ascend-components';
-import { StartIcon, PinIcon, UnPinIcon } from 'ascend-icon';
+import { Checkbox, Tooltip } from '@insight/lib/components';
+import { StartIcon, PinIcon, UnPinIcon } from '@insight/lib/icon';
 import { StyledButton } from '../../base/StyledButton';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
 import { CardUnit, ROOT_UNIT, ThreadUnit } from '../../../insight/units/AscendUnit';

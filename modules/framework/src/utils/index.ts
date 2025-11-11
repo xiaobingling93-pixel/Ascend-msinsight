@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { ProjectAction, ProjectError } from '@/utils/enum';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { message } from 'antd';
 import { handleProjectAction } from '@/utils/Project';
 import { checkPathValid } from '@/utils/Resource';

@@ -3,14 +3,14 @@
  */
 import React, { useEffect, useState } from 'react';
 import { runInAction } from 'mobx';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@emotion/react';
 import { RootStoreContext, useRootStore } from './context/context';
 import { store } from './store';
 import connector from './connection';
 import { observer } from 'mobx-react';
-import { themeInstance, GlobalStyles } from 'ascend-theme';
+import { themeInstance, GlobalStyles } from '@insight/lib/theme';
 import AnalysisSummary from './pages/AnalysisSummary';
 import { Loading } from './index';
 

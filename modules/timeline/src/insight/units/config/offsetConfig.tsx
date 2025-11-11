@@ -9,7 +9,7 @@ import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import type { Session } from '../../../entity/session';
 import styled from '@emotion/styled';
-import { Tooltip } from 'ascend-components';
+import { Tooltip } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { ThreadTraceRequest } from '../../../entity/data';

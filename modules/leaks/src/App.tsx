@@ -8,8 +8,8 @@ import { useRootStore } from './context/context';
 import Leaks from './components/leaks/leaks';
 import { themeInstance } from './theme/theme';
 import { registerEventHandlers, getInitStatus } from './index';
-import { GlobalStyles } from 'ascend-theme';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { GlobalStyles } from '@insight/lib/theme';
+import { SharedConfigProvider } from '@insight/lib';
 import './index.css';
 const App = observer(() => {
     const { sessionStore } = useRootStore();

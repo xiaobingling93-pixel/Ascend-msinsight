@@ -4,12 +4,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
-import 'ascend-i18n';
-import 'ascend-style';
+import '@insight/lib/i18n';
+import '@insight/lib/style';
 import { store } from './store';
 import App from './App';
 import { sendShortcutKeys } from '@/connection/sendNotification';
-import { disableShortcuts } from 'ascend-utils';
+import { disableShortcuts } from '@insight/lib/utils';
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(

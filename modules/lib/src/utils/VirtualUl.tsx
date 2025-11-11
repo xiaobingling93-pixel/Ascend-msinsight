@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { useEffect, useState, useMemo, type CSSProperties } from 'react';
+import React, { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '../components/index';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import i18n from '../i18n';
@@ -59,7 +59,7 @@ IProps): JSX.Element {
         }
         let newCheckItems;
         if (curIndex === ALL_SELECTED_INDEX) {
-            newCheckItems = checkItems.map((item, index) => {
+            newCheckItems = checkItems.map((item) => {
                 if (searchText === '' || (searchText !== '' && String(item.text).includes(String(searchText)))) {
                     return { ...item, checked: checked ?? item.checked };
                 } else {

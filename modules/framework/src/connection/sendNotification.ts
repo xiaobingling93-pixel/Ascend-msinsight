@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import connector from '@/connection/index';
-import { themeInstance } from 'ascend-theme';
+import { themeInstance } from '@insight/lib/theme';
 import { store } from '@/store';
-import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
+import { localStorageService, LocalStorageKey } from '@insight/lib';
 import { ThemeName, Language } from '@/utils/enum';
 import type { LayerType } from '@/centralServer/websocket/defs';
 

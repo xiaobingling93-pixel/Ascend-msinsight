@@ -7,7 +7,7 @@ import { Select } from 'antd';
 import type { DefaultOptionType } from 'rc-select/lib/Select';
 import type { BaseSelectRef } from 'rc-select/lib/BaseSelect';
 import styled from '@emotion/styled';
-import caretDownIcon from 'ascend-icon/img/caret.svg';
+import caretDownIcon from '../icon/img/caret.svg';
 import removeIcon from '../icon/img/select_multiple_remove.svg';
 import type { SelectProps } from 'antd/lib/select';
 import { useTranslation } from 'react-i18next';

@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import styled from '@emotion/styled';
-import { Select } from 'ascend-components';
+import { Select } from '@insight/lib/components';
 import type { Session } from '../entity/session';
 import { useTheme } from '@emotion/react';
 import { VoidFunction } from '../utils/interface';

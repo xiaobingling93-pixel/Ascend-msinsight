@@ -10,13 +10,13 @@ import type { TFunction } from 'i18next';
 import type { CacheEventType, CacheRecordItem } from './defs';
 import styled from '@emotion/styled';
 import type { CacheUnit, Session } from '../../entity/session';
-import { isArray, safeStr } from 'ascend-utils';
+import { isArray, safeStr } from '@insight/lib/utils';
 import * as echarts from 'echarts';
 import { type Theme, useTheme } from '@emotion/react';
 import { queryCacheRecord } from '../RequestUtils';
 import { swtich2Source } from '../../connection/sendNotification';
 import { CACHELINE_RECORD, CACHELINE_ID, ADDRESS_RANGE, HIT, MISS } from './defs';
-import { Dropdown } from 'ascend-components';
+import { Dropdown } from '@insight/lib/components';
 import type { MenuProps } from 'antd';
 import { observable, runInAction } from 'mobx';
 

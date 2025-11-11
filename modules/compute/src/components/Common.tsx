@@ -2,17 +2,17 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
 import React, { useMemo, useState } from 'react';
-import { message, Tooltip, Button } from 'ascend-components';
+import { message, Tooltip, Button } from '@insight/lib/components';
 import { Modal } from 'antd';
 import { DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { type ArgsProps } from 'antd/lib/message';
 import { useTranslation } from 'react-i18next';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import type { Theme } from '@emotion/react';
 import type { TFunction } from 'i18next';
-import { Resizor } from 'ascend-resize';
+import { Resizor } from '@insight/lib/resize';
 import styled from '@emotion/styled';
-import { useWatchDomResize } from 'ascend-utils';
+import { useWatchDomResize } from '@insight/lib/utils';
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
 };

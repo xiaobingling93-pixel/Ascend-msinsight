@@ -5,8 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-import { Spin } from 'ascend-components';
+import { Spin, CollapsiblePanel } from '@insight/lib/components';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -16,7 +15,7 @@ import MemoryDetailTableFilter from './MemoryDetailTableFilter';
 import { AntTableChart, TableByComponent } from './AntTableChart';
 import { MemorySizeQueryCondition, OperatorMemoryCondition, StaticMemoryCondition } from '../entity/memory';
 import { fetchDynamicOperatorMaxMin, fetchStaticOperatorMaxMin, operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 import { SortOrder } from 'antd/lib/table/interface';
 
 const enum CompareSource {

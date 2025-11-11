@@ -3,10 +3,10 @@
  */
 import styled from '@emotion/styled';
 import _ from 'lodash';
-import { Button, Checkbox, Input, Tooltip } from 'ascend-components';
+import { Button, Checkbox, Input, Tooltip } from '@insight/lib/components';
 import { observer } from 'mobx-react';
 import React, { type ChangeEvent, useRef, useState } from 'react';
-import { LinkIcon } from 'ascend-icon';
+import { LinkIcon } from '@insight/lib/icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ import { CardUnit, ProcessUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
 import { CardMetaData, type HostMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { message, Spin } from 'antd';
 import connector from '../connection/index';
 

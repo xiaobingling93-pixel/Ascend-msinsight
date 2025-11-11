@@ -7,10 +7,10 @@ import type { SortOrder, SorterResult, TablePaginationConfig } from 'antd/lib/ta
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import type { ComponentMemory, GetTableDataResponse, MemoryTable, MemoryTableColumn, OperatorDetail, OrderPageInfo, RenderExpandRecord } from '../entity/memory';
-import { ResizeTable } from 'ascend-resize';
-import { Button, Spin } from 'ascend-components';
+import { ResizeTable } from '@insight/lib/resize';
+import { Button, Spin } from '@insight/lib/components';
 import { DownOutlined } from '@ant-design/icons';
 import type { TableColumnsType, MenuProps } from 'antd';
 import { Dropdown } from 'antd';

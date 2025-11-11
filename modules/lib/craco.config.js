@@ -28,7 +28,7 @@ module.exports = {
           './theme': './src/theme/index.ts',
           './Icon': './src/icon/Icon.tsx',
           './CollapsiblePanel': './src/CollapsiblePanel/index.tsx',
-          './Layout': './src/Layout/index.tsx',
+          './Layout': './src/components/Layout/index.tsx',
           './components': './src/components/index.ts',
         },
         shared: {

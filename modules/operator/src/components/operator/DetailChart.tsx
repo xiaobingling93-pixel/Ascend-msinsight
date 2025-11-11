@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
 import {
     getAdaptiveEchart, disposeAdaptiveEchart, chartVisbilityListener, chartColors, getDefaultChartOptions, customConsole as console,
-} from 'ascend-utils';
+} from '@insight/lib/utils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';

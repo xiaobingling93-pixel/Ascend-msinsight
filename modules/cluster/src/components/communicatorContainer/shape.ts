@@ -5,7 +5,7 @@
 import type { RefObject } from 'react';
 import { ConnectionType, ParallelismType } from '../../utils/interface';
 import { FrameGroupItem } from './ContainerUtils';
-import { FONT_FAMILY } from 'ascend-utils';
+import { FONT_FAMILY } from '@insight/lib/utils';
 
 interface Position {
     x: number;

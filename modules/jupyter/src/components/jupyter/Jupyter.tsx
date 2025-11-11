@@ -7,7 +7,7 @@ import type { Session } from '../../entity/session';
 import './Jupyter.css';
 import { loading } from '../Common';
 import { useTranslation } from 'react-i18next';
-import { Layout } from 'ascend-layout';
+import { Layout } from '@insight/lib/components';
 
 const index = observer((props: { session: Session }) => {
     const { session } = props;

@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 import { runInAction } from 'mobx';
-import i18n from 'ascend-i18n';
-import { customConsole as console } from 'ascend-utils';
+import i18n from '@insight/lib/i18n';
+import { customConsole as console } from '@insight/lib/utils';
 import { store } from '../store';
 import type { NotificationHandler } from './defs';
 export const parseStatisticCompletedHandler: NotificationHandler = async (data): Promise<void> => {

@@ -5,9 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-import { Spin } from 'ascend-components';
-import { StyledEmpty, customConsole as console } from 'ascend-utils';
+import { Spin, CollapsiblePanel } from '@insight/lib/components';
+import { StyledEmpty, customConsole as console } from '@insight/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { Graph, Curve } from '../entity/curve';
 import { LineChart } from './LineChart';

@@ -3,11 +3,10 @@
 */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-import { Tooltip } from 'ascend-components';
-import { HelpIcon, BulbIcon } from 'ascend-icon';
-import { type TableColumnsType, Spin } from 'antd';
-import { ResizeTable } from 'ascend-resize';
+import { CollapsiblePanel, Tooltip } from '@insight/lib/components';
+import { HelpIcon, BulbIcon } from '@insight/lib/icon';
+import { Spin, type TableColumnsType } from 'antd';
+import { ResizeTable } from '@insight/lib/resize';
 import { DataType } from '../CommunicationTimeTable';
 import { queryCommunicationExpertAdvisor } from '../../../utils/RequestUtils';
 import { getPageConfigWithAllData } from '../../Common';
@@ -67,11 +66,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                     key: t(getInTableHead(key)),
                 }));
                 if (Object.keys(obj.statistics).length === 0) {
-                    dataList.push({
-                        title: obj.name,
-                        tableColumns,
-                        tableDataSource: [],
-                    });
+                    dataList.push({ title: obj.name, tableColumns, tableDataSource: [] });
                     return;
                 }
                 const firstKey = Object.keys(obj.statistics)[0];
@@ -82,11 +77,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                     });
                     return rowData;
                 });
-                dataList.push({
-                    title: obj.name,
-                    tableColumns,
-                    tableDataSource,
-                });
+                dataList.push({ title: obj.name, tableColumns, tableDataSource });
             });
         });
         setDataList(dataList);

@@ -4,9 +4,9 @@
 import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { observable, runInAction } from 'mobx';
-import { Resizor } from 'ascend-resize';
+import { Resizor } from '@insight/lib/resize';
 // hooks
 import { useWatchResize } from '../../utils/useWatchDomResize';
 // support utils/types
@@ -22,7 +22,7 @@ import { RefUnits } from './Units';
 import ChartHeader from './ChartHeader';
 import HorizontalScroller from './HorizontalScrollbar';
 import type { ChartInteractorHandles, InteractorMouseState } from '../charts/ChartInteractor/ChartInteractor';
-import type { Pos, ExtendPos } from '../charts/ChartInteractor/common';
+import type { ExtendPos, Pos } from '../charts/ChartInteractor/common';
 import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
@@ -192,7 +192,7 @@ export const ChartContainer = observer((props: Props) => {
             setContainerDom(dom ?? undefined);
         }}
         tabIndex={-1}
-        id={'main-container'}
+        id={'main-Index'}
     >
         <RenderEngineContext.Provider value={renderEngine}>
             <ChartHeader

@@ -9,7 +9,7 @@ import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 import { convertTime, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
-import { chartColors, getDefaultChartOptions, getLegendStyle, safeStr } from 'ascend-utils';
+import { chartColors, getDefaultChartOptions, getLegendStyle, safeStr } from '@insight/lib/utils';
 import { type Theme, useTheme } from '@emotion/react';
 
 // 最大不分页的折线图图例数量，超过该数量图例分页展示

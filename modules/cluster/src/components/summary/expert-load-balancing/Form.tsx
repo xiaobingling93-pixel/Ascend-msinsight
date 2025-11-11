@@ -4,7 +4,7 @@
 
 import { Form } from 'antd';
 import React, { useEffect } from 'react';
-import { Button, InputNumber, Select, Tooltip } from 'ascend-components';
+import { Button, InputNumber, Select, Tooltip } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
 import type { SelectProps } from 'antd';
 import type { FormData } from './index';

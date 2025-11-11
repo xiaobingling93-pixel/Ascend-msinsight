@@ -4,9 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
-import { GlobalStyles, themeInstance } from 'ascend-theme';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
-import { DragDirection, SizeMethod, useDraggableContainer } from 'ascend-use-draggable-container';
+import { GlobalStyles, themeInstance } from '@insight/lib/theme';
+import { DragDirection, SizeMethod, useDraggableContainer, SharedConfigProvider } from '@insight/lib';
 import { useRootStore } from './context/context';
 import RemoteManager from './components/RemoteManager/Index';
 import Main from './components/Main';
@@ -18,7 +17,7 @@ import { registerEventListeners } from '@/connection';
 import { registerDragAndDropFile } from '@/utils';
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { runInAction } from 'mobx';
 
 const init = async(session: Session): Promise<void> => {

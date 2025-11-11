@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import { Tooltip, Button } from 'ascend-components';
+import { Tooltip, Button } from '@insight/lib/components';
 import { Modal } from 'antd';
 import React, { useState, type MouseEvent } from 'react';
 import type { TimelineAxisFlag } from '../entity/timeMaker';
@@ -16,7 +16,7 @@ import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import { ThemeProvider, useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
-import { themeInstance } from 'ascend-theme';
+import { themeInstance } from '@insight/lib/theme';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { StyledButton } from '../components/base/StyledButton';

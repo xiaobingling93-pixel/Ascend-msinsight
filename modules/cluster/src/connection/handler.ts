@@ -6,10 +6,10 @@ import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import { updateData, AnalysisType } from '../components/communication/Filter';
 import type { ConditionDataType } from '../components/communication/Filter';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import type { communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
 import { ClusterInfo } from '../entity/session';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 import parallelismStore from '../store/parallelism';
 
 type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB' | 'UNKNOWN';

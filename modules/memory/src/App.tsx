@@ -4,11 +4,11 @@
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import { useRootStore } from './context/context';
 import { themeInstance } from './theme/theme';
 import Memory from './pages/Memory';
-import { GlobalStyles } from 'ascend-theme';
+import { GlobalStyles } from '@insight/lib/theme';
 import { getInitStatus, registerEventHandlers } from './bootstrap';
 
 export const App = observer(() => {

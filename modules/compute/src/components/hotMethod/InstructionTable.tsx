@@ -7,9 +7,9 @@ import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { AlignType } from 'rc-table/lib/interface';
 import type { InstrsColumnType } from './defs';
 import { FieldType, NOT_APPLICABLE } from './defs';
-import { Tooltip } from 'ascend-components';
+import { Tooltip } from '@insight/lib/components';
 import Bar, { BarType, StallBar } from './Bar';
-import { limitInput } from 'ascend-utils';
+import { limitInput } from '@insight/lib/utils';
 
 const onFilterDropdownOpenChange = (open: boolean): void => {
     if (open) {

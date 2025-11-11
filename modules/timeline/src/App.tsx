@@ -3,7 +3,7 @@
  */
 
 import { ThemeProvider } from '@emotion/react';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
@@ -11,9 +11,9 @@ import { AppErrorBoundary } from './components/error/AppErrorBoundary';
 import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBoundary';
 import { ActionManagerContext, useRootStore } from './context/context';
 import { SessionPage } from './pages/SessionPage';
-import { themeInstance, GlobalStyles } from 'ascend-theme';
+import { GlobalStyles, themeInstance } from '@insight/lib/theme';
 import connector from './connection';
-import { disableShortcuts } from 'ascend-utils';
+import { disableShortcuts } from '@insight/lib/utils';
 import { ActionManager } from './actions/manager';
 
 const Window = styled.div`

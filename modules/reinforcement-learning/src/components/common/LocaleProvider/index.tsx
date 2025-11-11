@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import { useStores } from '@/stores';
 
 interface LocaleProviderProps {

@@ -12,7 +12,7 @@ import { platform } from '../../platforms';
 import { logger } from '../../utils/Logger';
 import { EMPTY_TABLE_STATE, type TableState } from './types';
 import { onExpandForChildren, parseColDef, treeAttachInfo } from './utils';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 
 interface HandleFetchDataParams {
     result: Array<Record<string, unknown>>;

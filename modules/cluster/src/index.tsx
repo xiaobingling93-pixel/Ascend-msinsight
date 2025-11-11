@@ -1,13 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import 'ascend-i18n';
-import 'ascend-style';
+import '@insight/lib/i18n';
+import '@insight/lib/style';
 import './index.css';
 import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';
 import React from 'react';
-import { customConsole as console, disableShortcuts } from 'ascend-utils';
+import { customConsole as console, disableShortcuts } from '@insight/lib/utils';
 import { store } from './store';
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {

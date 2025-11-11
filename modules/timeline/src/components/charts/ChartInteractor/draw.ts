@@ -19,7 +19,7 @@ import { colorPalette } from '../../../insight/units/utils';
 import { handlerEmptyString } from '../../../utils/string';
 import { forEach, groupBy, isNil, keys } from 'lodash';
 import { calculateLinkLines, LinkLineData } from './calculateLinkLines';
-import { ThemeName } from 'ascend-theme';
+import { ThemeName } from '@insight/lib/theme';
 import { getClassNameByMetadata } from '../../ChartContainer/Units/Units';
 
 const UP_LINE: number = 30;

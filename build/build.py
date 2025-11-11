@@ -57,7 +57,7 @@ class Const:
     PACKAGE_SUFFIX = PRODUCT_FORMAT.get(platform.system(), '.zip')
     MAC_OS_APPNAME = 'MindStudioInsight.app'
     PYTHON = 'python' if platform.system() == WINDOWS_OS else 'python3'
-    NPM = 'npm.cmd' if platform.system() == WINDOWS_OS else 'npm'
+    PNPM = 'pnpm.cmd' if platform.system() == WINDOWS_OS else 'pnpm'
     CARGO = 'cargo.exe' if platform.system() == WINDOWS_OS else 'cargo'
     GRADLE = 'gradle.bat' if platform.system() == WINDOWS_OS else 'gradle'
     GRADLEW = 'gradlew.bat' if platform.system() == WINDOWS_OS else 'gradlew'
@@ -96,7 +96,7 @@ def clean():
 # 后台下载npm和cargo依赖，与server并行执行，以缩短构建时间
 def download_dependency_background() -> bool:
     modules_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR)
-    build_modules = [Const.NPM, 'install', '--force']
+    build_modules = [Const.PNPM, 'install', '--force']
     platform_dir = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR)
     build_platform = [Const.CARGO, 'fetch']
     try:
@@ -160,11 +160,11 @@ def build_frontend():
         return 1
 
     framework_path = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR)
-    result = exec_command([Const.NPM, 'install', '--force'], framework_path, module_name)
+    result = exec_command([Const.PNPM, 'install'], framework_path, module_name)
     if result != 0:
         return 1
 
-    result = exec_command([Const.NPM, 'run', 'build'], framework_path, module_name)
+    result = exec_command([Const.PNPM, 'build'], framework_path, module_name)
     if result != 0:
         return 1
 

@@ -3,7 +3,7 @@
  */
 
 import { register } from './register';
-import { KEYS } from 'ascend-utils';
+import { KEYS } from '@insight/lib/utils';
 import type { Session } from '../entity/session';
 import { PINNED_UNIT_WRAPPER_SCROLLER_ID, UNIT_WRAPPER_SCROLLER_ID } from '../components/ChartContainer/Units/Units';
 

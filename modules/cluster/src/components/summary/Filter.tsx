@@ -4,7 +4,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select } from 'ascend-components';
+import { Select } from '@insight/lib/components';
 import { Label } from '../Common';
 import type { Session } from '../../entity/session';
 import { PerformanceChartConditions } from './Index';

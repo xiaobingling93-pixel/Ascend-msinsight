@@ -4,7 +4,7 @@
 import { Session } from './entity/session';
 import type { Device, Process } from './entity/device';
 import { cleanup } from '@testing-library/react';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 
 declare global {
     const session: Session;

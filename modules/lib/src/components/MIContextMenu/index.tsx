@@ -4,7 +4,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useContextMenu } from './hooks/useContextMenu';
+import { useContextMenu } from '../../hooks/useContextMenu';
 import { useViewport } from '../../hooks/useViewport';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import styled from '@emotion/styled';

@@ -3,7 +3,7 @@
  */
 
 import { register } from './register';
-import { KEYS } from 'ascend-utils';
+import { KEYS } from '@insight/lib/utils';
 import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
 import { getZoomPoint } from '../components/charts/ChartInteractor/ChartInteractor';

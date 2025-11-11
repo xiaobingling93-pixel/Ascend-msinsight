@@ -3,14 +3,14 @@
  */
 import { message as Message } from 'antd';
 import { runInAction } from 'mobx';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import connector from '@/connection';
 import { GLOBAL_HOST } from '@/centralServer/websocket/defs';
 import { ClusterFile, File } from '@/entity/session';
 import { store } from '@/store';
 import { cancelBaseline, setBaseline } from '@/utils/Request';
 import { sendClusterBaselineStatus } from '@/connection/sendNotification';
-import { notNull } from 'ascend-utils';
+import { notNull } from '@insight/lib/utils';
 import { getRankInfo } from '@/utils/Rank';
 
 export interface CompareData extends File {

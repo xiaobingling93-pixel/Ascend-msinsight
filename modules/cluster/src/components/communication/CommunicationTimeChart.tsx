@@ -4,13 +4,12 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Spin } from 'ascend-components';
+import { Spin, CollapsiblePanel } from '@insight/lib/components';
 import { chartVisbilityListener, COLOR, commonEchartsOptions } from '../Common';
 import type { Session } from '../../entity/session';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { cloneDeep } from 'lodash';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-import { chartColors, getAdaptiveEchart, getDefaultChartOptions, safeStr } from 'ascend-utils';
+import { chartColors, getAdaptiveEchart, getDefaultChartOptions, safeStr } from '@insight/lib/utils';
 import type { LegendComponentOption, TooltipComponentOption } from 'echarts/components';
 import { CompareData, FormatterParams } from '../../utils/interface';
 

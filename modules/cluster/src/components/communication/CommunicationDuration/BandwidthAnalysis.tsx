@@ -6,27 +6,27 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useTranslation } from 'react-i18next';
-import * as echarts from 'echarts';
 import type { PlainLegendComponentOption } from 'echarts';
-import { Empty } from 'ascend-components';
-import { ResizeTable } from 'ascend-resize';
+import * as echarts from 'echarts';
+import { CollapsiblePanel, Empty } from '@insight/lib/components';
+import { ResizeTable } from '@insight/lib/resize';
 import type { ColumnsType } from 'antd/es/table';
-import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
+import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes.js';
 import { COLOR, commonEchartsOptions } from '../../Common';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { cloneDeep, merge } from 'lodash';
 import {
-    customConsole as console,
     chartColors,
+    customConsole as console,
+    disposeAdaptiveEchart,
+    getAdaptiveEchart,
     getDefaultChartOptions,
     safeJSONParse,
-    getAdaptiveEchart, disposeAdaptiveEchart,
-} from 'ascend-utils';
-import CollapsiblePanel from 'ascend-collapsible-panel';
+} from '@insight/lib/utils';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
 import { queryCommunicationBandwidth, queryCommunicationDistribution } from '../../../utils/RequestUtils';
-import { WrapBandwidthDataParams, PacketAndBandwidthChartsParams } from '../../../utils/interface';
+import { PacketAndBandwidthChartsParams, WrapBandwidthDataParams } from '../../../utils/interface';
 
 const ChartsContainer = styled.div`
   display: flex;

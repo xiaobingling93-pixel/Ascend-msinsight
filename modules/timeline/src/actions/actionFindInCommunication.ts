@@ -8,7 +8,7 @@ import connector from '../connection';
 import { calculateSelectedUnitListStatus } from './actionPinUnits';
 import { queryCommunicationKernelDetail } from '../api/request';
 import { message } from 'antd';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 
 async function findInCommunication(session: Session): Promise<void> {
     if (!session.selectedData) {

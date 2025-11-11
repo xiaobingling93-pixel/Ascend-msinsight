@@ -4,15 +4,15 @@
 import type { CompareFn, FilterConfirmProps, Key } from 'antd/es/table/interface';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from 'ascend-components';
+import { Button, Input } from '@insight/lib/components';
 import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
-import { limitInput } from 'ascend-utils';
-import { fetchColumnFilterProps } from 'ascend-resize';
-import i18n from 'ascend-i18n';
+import { limitInput } from '@insight/lib/utils';
+import { fetchColumnFilterProps } from '@insight/lib/resize';
+import i18n from '@insight/lib/i18n';
 import type { TableColumnsType } from 'antd';
-import { ColumnFilterIcon } from 'ascend-icon';
+import { ColumnFilterIcon } from '@insight/lib/icon';
 import type { EventViewParams, BaseSummaryRowItemType } from '../../api/interface';
 
 interface ColumData {

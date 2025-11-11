@@ -5,7 +5,7 @@ import { makeAutoObservable, when } from 'mobx';
 import type { FC } from 'react';
 import type { Theme } from '@emotion/react';
 import { debounce, omit } from 'lodash';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { type Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { type TimeStamp } from './common';

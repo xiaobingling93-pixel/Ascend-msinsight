@@ -3,7 +3,7 @@
  */
 
 import { throttle } from 'lodash';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 
 type RenderID = number;
 interface Task {

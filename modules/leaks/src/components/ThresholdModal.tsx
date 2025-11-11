@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
 import { Modal, Switch } from 'antd';
-import { InputNumber } from 'ascend-components';
+import { InputNumber } from '@insight/lib/components';
 import { Label } from './Common';
 import { Session } from '../entity/session';
 

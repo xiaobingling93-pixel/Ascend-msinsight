@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import { useTheme } from '@emotion/react';
-import { Tooltip } from 'ascend-components';
+import { Tooltip } from '@insight/lib/components';
 import type { TooltipPlacement } from 'antd/lib/tooltip';
 import * as React from 'react';
 

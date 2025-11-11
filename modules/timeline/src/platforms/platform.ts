@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-import type { ThemeItem } from 'ascend-theme';
+import type { ThemeItem } from '@insight/lib/theme';
 
 export type NotifyLevel = 'info' | 'warn' | 'error';
 

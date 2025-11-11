@@ -5,7 +5,7 @@
 import { notZero, COLOR } from '../Common';
 import { Session } from '../../entity/session';
 import { ArrangementItem, ConnectionsItem, ParallelismType } from '../../utils/interface';
-import { hexToRgb } from 'ascend-utils';
+import { hexToRgb } from '@insight/lib/utils';
 
 export interface communicatorContainerData {
     clusterPath: string;

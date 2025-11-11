@@ -10,8 +10,8 @@ import { MemoryHeaderStrategy } from '../utils/strategyUtils';
 import type { CardRankInfo, Session } from '../entity/session';
 import { MemorySession, GroupBy } from '../entity/memorySession';
 import { Label, useHit } from './Common';
-import { Select } from 'ascend-components';
-import { getRankInfoLabel, GroupCardRankInfosByHost, notNull, transformCardIdInfo } from 'ascend-utils';
+import { Select } from '@insight/lib/components';
+import { getRankInfoLabel, GroupCardRankInfosByHost, notNull, transformCardIdInfo } from '@insight/lib/utils';
 import { useTranslation } from 'react-i18next';
 import _ from 'lodash';
 

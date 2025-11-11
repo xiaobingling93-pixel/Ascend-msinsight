@@ -4,7 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react';
 import { Popconfirm, Tooltip, message } from 'antd';
-import { DeleteIcon } from 'ascend-icon';
+import { DeleteIcon } from '@insight/lib/icon';
 import { removeDataPath, removeProject } from '@/utils/Project';
 import { useTranslation } from 'react-i18next';
 import { openLoading } from '@/utils/useLoading';

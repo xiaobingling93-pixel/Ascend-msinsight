@@ -3,9 +3,9 @@
  */
 import React from 'react';
 import { observer } from 'mobx-react';
-import { Checkbox } from 'ascend-components';
+import { Checkbox } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
-import { DeleteIcon } from 'ascend-icon';
+import { DeleteIcon } from '@insight/lib/icon';
 import { BtnItem } from '../ImportData/Index';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import styled from '@emotion/styled';

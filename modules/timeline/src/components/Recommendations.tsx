@@ -4,7 +4,7 @@
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'ascend-components';
+import { Tooltip } from '@insight/lib/components';
 import { action } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -103,7 +103,7 @@ const TemplatesIcons = ({ left, recommendedTemplates, createSession, templates, 
     // the templates which is filtered by recommendedTemplates
     const filterTemplates = templates.filter((template) => recommendedTemplates.includes(template.id));
 
-    // fold/unfold thumb entrance icons container state
+    // fold/unfold thumb entrance icons Index state
     const [entranceWidth, setEntranceWidth] = React.useState(ICON_SIZE);
     const onFocusThumbEntrance = (): void => { setEntranceWidth(entranceWidth === ICON_SIZE ? ICON_SIZE * (filterTemplates.length + 1) : ICON_SIZE); };
 

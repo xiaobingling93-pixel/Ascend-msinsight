@@ -3,7 +3,7 @@
  */
 
 import { register } from './register';
-import { KEYS } from 'ascend-utils';
+import { KEYS } from '@insight/lib/utils';
 import { runInAction } from 'mobx';
 
 export const actionToggleBottomPanel = register({

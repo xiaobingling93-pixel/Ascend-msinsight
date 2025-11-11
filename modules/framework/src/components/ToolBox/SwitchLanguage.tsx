@@ -2,11 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Tooltip } from 'ascend-components';
-import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
-import i18n from 'ascend-i18n';
+import { Tooltip } from '@insight/lib/components';
+import { localStorageService, LocalStorageKey } from '@insight/lib';
+import i18n from '@insight/lib/i18n';
 import { sendLanguage } from '@/connection/sendNotification';
-import { LangEnIcon, LangZhIcon } from 'ascend-icon';
+import { LangEnIcon, LangZhIcon } from '@insight/lib/icon';
 import { Language } from '@/utils/enum';
 
 const useLanguage = (): [Language, (val: Language) => void] => {

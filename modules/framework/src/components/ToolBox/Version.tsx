@@ -5,9 +5,9 @@ import React, { useState } from 'react';
 import { Modal } from 'antd';
 import VersionInfo from '@/version_info.json';
 import { useTranslation } from 'react-i18next';
-import { HelpIcon } from 'ascend-icon';
+import { HelpIcon } from '@insight/lib/icon';
 import styled from '@emotion/styled';
-import { Popover } from 'ascend-components';
+import { Popover } from '@insight/lib/components';
 import { ShortcutsModal } from '@/components/KbdShortcuts';
 
 // 软件首发年分

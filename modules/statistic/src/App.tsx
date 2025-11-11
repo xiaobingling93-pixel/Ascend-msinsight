@@ -4,11 +4,11 @@
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import { useRootStore } from './context/context';
 import { themeInstance } from './theme/theme';
 import CurvePage from './pages/CurvePage';
-import { GlobalStyles } from 'ascend-theme';
+import { GlobalStyles } from '@insight/lib/theme';
 import { getInitStatus, registerEventHandlers } from './index';
 
 export const App = observer(() => {

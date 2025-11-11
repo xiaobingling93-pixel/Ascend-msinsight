@@ -5,12 +5,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import { type Session } from '../../../entity/session';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-import { Tabs } from 'ascend-components';
+import { Tabs, CollapsiblePanel } from '@insight/lib/components';
 import type { Tab } from 'rc-tabs/lib/interface';
 import { RooflineChartGroup } from './RooflineChart';
 import { queryRoofline } from '../../../components/RequestUtils';
-import { Hit } from 'ascend-utils';
+import { Hit } from '@insight/lib/utils';
 import type { TFunction } from 'i18next';
 
 /**

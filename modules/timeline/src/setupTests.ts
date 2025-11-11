@@ -3,7 +3,7 @@
  */
 import { Session } from './entity/session';
 import { cleanup } from '@testing-library/react';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 import '@testing-library/jest-dom';
 
 declare global {

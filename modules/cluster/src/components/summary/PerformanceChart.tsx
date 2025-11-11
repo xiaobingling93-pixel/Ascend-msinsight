@@ -3,13 +3,13 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MIChart } from 'ascend-components';
-import type { ChartsHandle } from 'ascend-components/MIChart';
+import { MIChart } from '@insight/lib/components';
+import type { ChartsHandle } from '@insight/lib';
 import type { EChartsOption } from 'echarts';
 import { merge } from 'lodash';
 import { PerformanceDataMap, Session } from '../../entity/session';
 import { FormatterParams, PerformanceDataItem } from '../../utils/interface';
-import { Advice, safeStr } from 'ascend-utils';
+import { Advice, safeStr } from '@insight/lib/utils';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';

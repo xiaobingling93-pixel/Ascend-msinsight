@@ -9,7 +9,7 @@ import { BottomPanel } from '../components/BottomPanel';
 import { ChartContainer } from '../components/ChartContainer';
 import type { Session } from '../entity/session';
 import { stateTexts } from '../utils/constant';
-import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
+import { DragDirection, useDraggableContainer } from '@insight/lib';
 import { useActionManager } from '../context/context';
 import { actions } from '../actions/register';
 

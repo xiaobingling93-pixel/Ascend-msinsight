@@ -1,17 +1,17 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { cloneElement, useState, useEffect, useRef, useMemo } from 'react';
+import React, { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import styled from '@emotion/styled';
-import { Table, type PaginationProps } from 'antd';
+import { type PaginationProps, Table } from 'antd';
 import type { ColumnsType, TablePaginationConfig, TableProps } from 'antd/es/table';
 import { isArray } from 'lodash';
 import { Resizor } from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
-import { copyTableToClipboard, limitInput, StyledEmpty } from '../utils/Common';
+import { copyTableToClipboard, limitInput, StyledEmpty } from '../utils';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
 import { CaretRightIcon, CopyOutlinedIcon } from '../icon/Icon';
-import { EmotionJSX } from '@emotion/react/dist/declarations/src/jsx-namespace';
+import type { JSX } from '@emotion/react/jsx-runtime';
 
 const Support = React.forwardRef(
     (props: ResizeTableProps<any>) => {
@@ -371,7 +371,7 @@ const handleChangeSafe = (onChange?: (...p: any) => void, ...params: any): void 
 };
 
 const EMPTY_VIEW_HEIGHT = 60;
-export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): EmotionJSX.Element {
+export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): JSX.Element {
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, rowHoverable = true,
@@ -387,7 +387,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
     const mergeColumns: any = useMemo(() => columns.map((col, index) => ({
         ...col,
         onHeaderCell: () => ({
-            onResize: (diff: number, width: number, nextWidth?: number): void =>
+            onResize: (_diff: number, width: number, nextWidth?: number): void =>
                 resizeColumns({ columns, setColumns, index, width, nextWidth, minThWidth, variableTotalWidth }),
             resizable: variableTotalWidth || (propColumns !== undefined && index !== propColumns.length - 1),
         }),

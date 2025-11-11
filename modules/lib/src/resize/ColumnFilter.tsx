@@ -4,14 +4,15 @@
 import React from 'react';
 import { message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
-import { Input, Button, InputNumber } from '../components/index';
+import { Button, Input, InputNumber } from '../components/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { FilterDropdownProps, Key } from 'antd/es/table/interface';
-import { limitInput } from '../utils/Common';
+import { limitInput } from '../utils';
 import i18n from '../i18n';
 import { ButtonGroup } from './ColumnFilterWithSelection';
 import { ColumnFilterIcon } from '../icon/Icon';
-import { ValueType } from 'ascend-utils/VirtualUl';
+import { ValueType } from '../utils/VirtualUl';
+
 interface FilterProps {
     setSelectedKeys: (selectedKeys: React.Key[]) => void;
     selectedKeys: React.Key[];
@@ -163,7 +164,7 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
             const params = { setSelectedKeys, selectedKeys, confirm, clearFilters, dataIndex };
             return showRange ? filterRange(params) : filterSearch(params, columnTitle);
         },
-        filterIcon: (filtered: boolean) => (
+        filterIcon: () => (
             <ColumnFilterIcon />
         ),
         onFilter: (value, record) => {

@@ -4,10 +4,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
-import { Checkbox } from 'ascend-components';
-import { Layout } from 'ascend-layout';
-import { ResizeTable } from 'ascend-resize';
-import { formatDecimal } from 'ascend-utils';
+import { Checkbox, Layout } from '@insight/lib/components';
+import { ResizeTable } from '@insight/lib/resize';
+import { formatDecimal } from '@insight/lib/utils';
 import type { ColumnsType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import Filter from './Filter';

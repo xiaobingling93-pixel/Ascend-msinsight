@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react';
 import { Session } from '@/entity/session';
-import { SetIcon } from 'ascend-icon';
+import { SetIcon } from '@insight/lib/icon';
 import { BtnItem } from './Index';
 import { useTranslation } from 'react-i18next';
 import { runInAction } from 'mobx';

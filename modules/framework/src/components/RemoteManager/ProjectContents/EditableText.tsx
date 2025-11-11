@@ -2,11 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { Input } from 'ascend-components';
+import { Input } from '@insight/lib/components';
 import styled from '@emotion/styled';
 import type { InputRef } from 'antd';
 import { updateProjectName } from '@/utils/Project';
-import { HandleSingleDoubleClick } from 'ascend-utils';
+import { HandleSingleDoubleClick } from '@insight/lib/utils';
 
 const Container = styled.div`
   .show {

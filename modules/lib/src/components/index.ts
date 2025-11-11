@@ -11,6 +11,7 @@ export { MICheckbox as Checkbox } from './MICheckbox';
 export { MICheckboxGroup as CheckboxGroup } from './MICheckbox';
 export { MIFormItem as FormItem } from './MIFormItem';
 export { MIChart } from './MIChart';
+export type { ChartsHandle } from './MIChart';
 export { MITree as Tree } from './MITree';
 export { MISwitch as Switch } from './MISwitch';
 export { Responsive } from './Responsive';
@@ -21,6 +22,9 @@ export { MITabs as Tabs } from './MITabs';
 export { ContextMenu } from './MIContextMenu';
 export { Legend } from './Legend';
 export { Text } from './MIText';
+export { default as CollapsiblePanel } from './CollapsiblePanel/index';
+export { default as BaseContainer } from './BaseContainer';
+export { Layout } from './Layout';
 
 export {
     Col,

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { runInAction } from 'mobx';
-import { getIndexByRankNameAndDeviceId, getRankInfoKey } from 'ascend-utils';
+import { getIndexByRankNameAndDeviceId, getRankInfoKey } from '@insight/lib/utils';
 import type { NotificationInterceptor } from './defs';
 import { type DataSource } from '@/centralServer/websocket/defs';
 import { updateSession } from '@/connection/notificationHandler';

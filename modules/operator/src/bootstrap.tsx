@@ -4,14 +4,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
-import 'ascend-i18n';
-import 'ascend-style';
+import '@insight/lib/i18n';
+import '@insight/lib/style';
 import './index.css';
 import { store } from './store';
 import App from './App';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
-import { disableShortcuts } from 'ascend-utils';
+import { disableShortcuts } from '@insight/lib/utils';
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;

@@ -3,9 +3,9 @@
  */
 import React, { useEffect, useState, useRef } from 'react';
 import * as echarts from 'echarts';
-import { safeStr } from 'ascend-utils';
-import { MIChart } from 'ascend-components';
-import type { ChartsHandle } from 'ascend-components/MIChart';
+import { safeStr } from '@insight/lib/utils';
+import { MIChart } from '@insight/lib/components';
+import type { ChartsHandle } from '@insight/lib';
 import { type EChartsOption } from 'echarts';
 import { Session } from '../entity/session';
 import { observer } from 'mobx-react';

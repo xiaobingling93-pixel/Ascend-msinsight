@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Tooltip, Switch } from 'ascend-components';
-import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
+import { Tooltip, Switch } from '@insight/lib/components';
+import { localStorageService, LocalStorageKey } from '@insight/lib';
 import { ThemeName } from '@/utils/enum';
 import { sendTheme } from '@/connection/sendNotification';
 import { useTranslation } from 'react-i18next';

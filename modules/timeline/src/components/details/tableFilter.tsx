@@ -6,9 +6,9 @@ import React from 'react';
 import styled from '@emotion/styled';
 import type { FilterConfirmProps } from '../base/rc-table/interface';
 import { ReactComponent as CancelIcon } from '../../assets/images/insights/CancelIcon.svg';
-import { Input } from 'ascend-components';
-import { ColumnFilterIcon } from 'ascend-icon';
-import i18n from 'ascend-i18n';
+import { Input } from '@insight/lib/components';
+import { ColumnFilterIcon } from '@insight/lib/icon';
+import i18n from '@insight/lib/i18n';
 
 const FilterContainer = styled.div`
     width: 230px;

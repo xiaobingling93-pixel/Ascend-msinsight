@@ -17,14 +17,14 @@ import { getAutoKey } from '../../../utils/dataAutoKey';
 import { traceSingle } from '../../../utils/traceLogger';
 import { Chart } from '../../charts';
 import { isPinned, isSonPinned } from '../unitPin';
-import { useSelectUnit, useSelectUnits, useDeselectUnits } from './hooks/useSelectUnit';
+import { useDeselectUnits, useSelectUnit, useSelectUnits } from './hooks/useSelectUnit';
 import type { KeyedInsightUnit } from './types';
 import { UnitInfo } from './UnitInfo';
 import { ChartErrorBoundary } from '../../error/ChartErrorBoundary';
 import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
 import { Mask } from '../../charts/Mask';
-import { useJumpTarget } from './hooks';
 import type { OrderOptions } from './hooks';
+import { useJumpTarget } from './hooks';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
 import { MetaDataBase, ThreadMetaData } from '../../../entity/data';
@@ -395,7 +395,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     }, []);
 
     useEffect(() => {
-        const mainContainer = document.getElementById('main-container');
+        const mainContainer = document.getElementById('main-Index');
         mainContainer?.addEventListener('mouseup', handleMouseUp);
         mainContainer?.addEventListener('mouseleave', handleMouseLeave);
         return () => {

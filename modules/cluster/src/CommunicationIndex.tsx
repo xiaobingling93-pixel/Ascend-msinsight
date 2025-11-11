@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import { SharedConfigProvider } from '@insight/lib';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@emotion/react';
 import { RootStoreContext, useRootStore } from './context/context';
@@ -12,7 +12,7 @@ import { observer } from 'mobx-react';
 import { themeInstance } from './theme/theme';
 import CommunicationAnalysis from './components/communication/CommunicationAnalysis';
 import { Loading } from './index';
-import { GlobalStyles } from 'ascend-theme';
+import { GlobalStyles } from '@insight/lib/theme';
 
 export const App = observer(() => {
     const { sessionStore } = useRootStore();

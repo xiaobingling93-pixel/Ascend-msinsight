@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { observer } from 'mobx-react';
-import { Layout } from 'ascend-layout';
+import { Layout } from '@insight/lib/components';
 import { type Session } from '../../entity/session';
 import BaseInfo from './BaseInfo';
 import ComputeWorkload from './ComputeWorkload/Index';

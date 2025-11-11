@@ -5,7 +5,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import CollapsiblePanel from 'ascend-collapsible-panel';
+import { CollapsiblePanel } from '@insight/lib/components';
 import { SearchForm } from '@/pages/Home/components/SearchForm';
 import { TraceTimeline } from '@/pages/Home/components/TraceTimeline';
 import { HeaderStyled } from '@/styles/styles';

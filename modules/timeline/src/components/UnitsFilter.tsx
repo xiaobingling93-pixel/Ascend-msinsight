@@ -3,11 +3,11 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, Select } from 'ascend-components';
+import { Tooltip, Select } from '@insight/lib/components';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { FilterIcon, HelpIcon } from 'ascend-icon';
+import { FilterIcon, HelpIcon } from '@insight/lib/icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import type { InsightUnit } from '../entity/insight';

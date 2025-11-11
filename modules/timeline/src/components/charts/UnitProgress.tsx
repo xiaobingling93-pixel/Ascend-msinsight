@@ -3,7 +3,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import type { KeyedInsightUnit } from '../ChartContainer/Units/types';
-import { Progress } from 'ascend-components';
+import { Progress } from '@insight/lib/components';
 import { useTheme } from '@emotion/react';
 import { runInAction } from 'mobx';
 

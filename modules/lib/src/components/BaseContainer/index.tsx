@@ -1,8 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { type ReactNode, type CSSProperties } from 'react';
-import './BaseContainer.css';
+import React, { type CSSProperties, type ReactNode } from 'react';
+import './index.css';
+
 interface Iprops {
     header?: ReactNode;
     body?: ReactNode;

@@ -8,7 +8,7 @@ import type { Session } from '../entity/session';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { Modal } from 'antd';
 import { ThemeProvider } from '@emotion/react';
-import { themeInstance } from 'ascend-theme';
+import { themeInstance } from '@insight/lib/theme';
 import { SetAlias } from '../components/SetAlias';
 
 const isSetAliasVisible = (session: Session): boolean => {

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
@@ -11,12 +11,12 @@ import type { Session } from '../entity/session';
 import type { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
 import type { AscendSliceDetail } from '../entity/data';
-import { CaretDownIcon } from 'ascend-icon';
-import { Col, Row } from 'ascend-components';
-import { safeJSONParse } from 'ascend-utils';
-import { ResizeTable } from 'ascend-resize';
+import { CaretDownIcon } from '@insight/lib/icon';
+import { Col, Row } from '@insight/lib/components';
+import { safeJSONParse } from '@insight/lib/utils';
+import { ResizeTable } from '@insight/lib/resize';
 import { getDefaultColumData, getPageData, queryTableDataDetails } from './detailViews/Common';
-import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
+import { DragDirection, useDraggableContainer } from '@insight/lib';
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { MoreContainer, StyledMoreCard } from './BottomPanel';
 import { DETAIL_HEADER_HEIGHT_ETC_PX } from './detailViews/SystemView';

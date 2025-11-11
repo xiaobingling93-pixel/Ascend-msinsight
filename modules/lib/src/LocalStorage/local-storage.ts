@@ -1,7 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { customConsole as console, safeJSONParse } from 'ascend-utils';
+import { customConsole as console, safeJSONParse } from '../utils';
+
 export enum LocalStorageKey {
     LANGUAGE = 'language',
     THEME = 'theme',

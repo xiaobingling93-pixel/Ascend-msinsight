@@ -4,14 +4,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
-import 'ascend-i18n';
-import 'ascend-style';
+import '@insight/lib/i18n';
+import '@insight/lib/style';
 import './index.css';
 import App from './App';
 import connector from './connection';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
-import { disableShortcuts } from 'ascend-utils';
+import { disableShortcuts } from '@insight/lib/utils';
 import { shortcutSwitchFindWindow } from './connection/handler';
 import type { KeydownInfo } from '@/utils/interface';
 

@@ -4,11 +4,11 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import { type NotificationHandler } from './defs';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { type DirInfo, InstructionSelectSource } from '../entity/session';
 import { closeFind, openFind } from '../components/hotMethod/CodeTextSearch';
 import type { KeydownInfo } from '@/utils/interface';
-import { getUpdateObject, KEYS } from 'ascend-utils';
+import { getUpdateObject, KEYS } from '@insight/lib/utils';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));

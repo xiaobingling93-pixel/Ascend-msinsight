@@ -4,7 +4,7 @@
 
 import { makeAutoObservable } from 'mobx';
 import { RootStore } from './RootStore';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 
 export type LocaleType = 'zhCN' | 'enUS';
 

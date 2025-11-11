@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import { safeJSONParse } from 'ascend-utils';
+import { safeJSONParse } from '@insight/lib/utils';
 export const chartResize = (ins: echarts.ECharts | null | undefined): void => {
     // ehcarts的custom在渲染超大量数据时会出现残影残留，通过手动触发resize可以消除残影的影响
     if (!ins) {

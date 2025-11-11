@@ -3,11 +3,11 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Button, Input, Tooltip } from 'ascend-components';
+import { Button, Input, Tooltip } from '@insight/lib/components';
 import { message } from 'antd';
 import { observer } from 'mobx-react';
 import React, { type ChangeEvent, useEffect, useState } from 'react';
-import { SearchIcon } from 'ascend-icon';
+import { SearchIcon } from '@insight/lib/icon';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import type { Session } from '../entity/session';
 import { CustomButton, StyledButton } from './base/StyledButton';

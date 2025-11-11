@@ -5,7 +5,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@emotion/react",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {

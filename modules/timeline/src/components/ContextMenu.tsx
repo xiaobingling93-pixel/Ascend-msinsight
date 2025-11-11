@@ -10,7 +10,7 @@ import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
-import { EyeCloseOtuLine } from 'ascend-icon';
+import { EyeCloseOtuLine } from '@insight/lib/icon';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
 import { unit } from '../entity/insight';
 

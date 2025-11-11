@@ -8,7 +8,7 @@ import type { ImemoryData, ImemoryUnit } from '../MemoryChart';
 import type { Icondition } from '../Filter';
 import { getFormatNum, getFormatNumReturnEmpty } from '../../../Common';
 import { CompareData } from '../../../../utils/interface';
-import { showFormula, hideFormula } from '../FormulaTip';
+import { hideFormula, showFormula } from '../FormulaTip';
 import { cubeCoreBaseV5, vectorCoreModule1V5, vectorCoreModule2V5 } from './coreConfig';
 
 const bodyStyle = window.getComputedStyle(document.body);

@@ -5,15 +5,14 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-import { Spin } from 'ascend-components';
+import { Spin, CollapsiblePanel } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
 import { Session } from '../entity/session';
 import { CurveSession } from '../entity/curveSession';
 import { AntTableChart } from './AntTableChart';
 import { TableInfo, TableCondition } from '../entity/curve';
 import { tableDataGet } from '../utils/RequestUtils';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console } from '@insight/lib/utils';
 
 const buildDynamicSearchParam = (memorySession: CurveSession, tempCurrent: number): any => {
     const param: TableCondition = {

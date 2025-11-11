@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Session } from '../entity/session';
 import { useRootStore } from '../context/context';
-import { Layout } from 'ascend-layout';
+import { Layout } from '@insight/lib/components';
 import CurveHeader from '../components/CurveHeader';
 import CurveLineChart from '../components/CurveLineChart';
 import CurveDetailTable from '../components/CurveDetailTable';

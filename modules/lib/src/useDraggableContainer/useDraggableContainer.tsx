@@ -6,7 +6,7 @@ import { clamp } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDownIcon, ArrowUpIcon } from '../icon/Icon';
 import { themeInstance } from '../theme';
-import { disableIframePointerEvent, recoverIframePointerEvent } from '../utils/Common';
+import { disableIframePointerEvent, recoverIframePointerEvent } from '../utils';
 
 interface CssProps {
     column: boolean;

@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Select } from 'ascend-components';
-import { FormItem, getUsableVal } from 'ascend-utils';
+import { Select } from '@insight/lib/components';
+import { CustomFormItem as FormItem, getUsableVal } from '@insight/lib/utils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import { limitInput, useHit } from '../../Common';
 import { type Session } from '../../../entity/session';

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
-import styled from '@emotion/styled/dist/emotion-styled.cjs';
+import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import React from 'react';
 

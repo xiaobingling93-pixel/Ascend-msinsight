@@ -3,9 +3,9 @@
 */
 
 import { observer } from 'mobx-react';
-import { fetchColumnFilterProps, ResizeTable } from 'ascend-resize';
+import { fetchColumnFilterProps, ResizeTable } from '@insight/lib/resize';
 import type { ColumnsType } from 'antd/es/table';
-import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
+import { DragDirection, useDraggableContainer } from '@insight/lib';
 import React, { useEffect, useRef, useState } from 'react';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { MoreContainer, StyledMoreCard } from '../BottomPanel';
@@ -23,7 +23,7 @@ import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { StyledEmpty } from 'ascend-utils';
+import { StyledEmpty } from '@insight/lib/utils';
 import type { SelectContentViewProps } from './SystemView';
 
 export const overallMetricsColumns = (t: TFunction): ColumnsType<GetOverallMetricsResultItem> => [

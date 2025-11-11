@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { runInAction } from 'mobx';
-import { getIndexByRankNameAndDeviceId, getRankInfoKey } from 'ascend-utils';
-import i18n from 'ascend-i18n';
+import { getIndexByRankNameAndDeviceId, getRankInfoKey } from '@insight/lib/utils';
+import i18n from '@insight/lib/i18n';
 import { store } from '../store';
 import type { NotificationHandler } from './defs';
 import type { CardInfo, CardRankInfo, DirInfo, RankInfo } from '../entity/session';

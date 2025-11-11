@@ -3,8 +3,8 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MIChart } from 'ascend-components';
-import type { ChartsHandle } from 'ascend-components/MIChart';
+import { MIChart } from '@insight/lib/components';
+import type { ChartsHandle } from '@insight/lib';
 import {
     queryFwpBwdTimeline,
     type QueryFwpBwdTimelineRes,
@@ -12,7 +12,7 @@ import {
 import type { EChartsOption, CustomSeriesRenderItem } from 'echarts';
 import { merge } from 'lodash';
 import { type Theme, useTheme } from '@emotion/react';
-import { clamp, safeStr } from 'ascend-utils';
+import { clamp, safeStr } from '@insight/lib/utils';
 
 const TEXT_PADDING = 4;
 const TEXT_PADDING_X = TEXT_PADDING * 2;

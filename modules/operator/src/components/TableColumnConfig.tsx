@@ -4,7 +4,7 @@
 import React from 'react';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { fetchColumnFilterProps } from 'ascend-resize';
+import { fetchColumnFilterProps } from '@insight/lib/resize';
 import { useTheme } from '@emotion/react';
 
 export const enum OperatorGroup {

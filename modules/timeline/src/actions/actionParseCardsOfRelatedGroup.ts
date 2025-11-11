@@ -4,7 +4,7 @@
 
 import { runInAction } from 'mobx';
 import { message } from 'antd';
-import { transformCardIdInfo } from 'ascend-utils';
+import { transformCardIdInfo } from '@insight/lib/utils';
 import { register } from './register';
 import { parseCards } from '../api/request';
 import type { InsightUnit } from '../entity/insight';

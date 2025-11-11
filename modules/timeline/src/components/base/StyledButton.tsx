@@ -7,7 +7,7 @@ import { Button } from 'antd';
 import * as React from 'react';
 import { useTheme } from '@emotion/react';
 import type { ForwardedRef, FunctionComponent, SVGProps } from 'react';
-import { Tooltip } from 'ascend-components';
+import { Tooltip } from '@insight/lib/components';
 
 interface CustomButtonProps {
     isEmphasize?: boolean;

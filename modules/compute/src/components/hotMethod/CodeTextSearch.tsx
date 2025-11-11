@@ -4,14 +4,14 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import styled from '@emotion/styled';
-import { Input, Tooltip } from 'ascend-components';
+import { Input, Tooltip } from '@insight/lib/components';
 import { ArrowUpOutlined, ArrowDownOutlined, CloseOutlined, AlignLeftOutlined } from '@ant-design/icons';
-import { CaseIcon, FullTextIcon } from 'ascend-icon';
+import { CaseIcon, FullTextIcon } from '@insight/lib/icon';
 import Mark from '../../utils/DomSearch/mark';
 import { store } from '../../store';
 import { observable, runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
-import { themeInstance } from 'ascend-theme';
+import { themeInstance } from '@insight/lib/theme';
 
 const TextSearchContainer = styled.div`
     z-index: 1000;

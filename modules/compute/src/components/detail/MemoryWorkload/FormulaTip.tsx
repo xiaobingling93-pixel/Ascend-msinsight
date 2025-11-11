@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
-import { DynamicTooltip } from 'ascend-components';
+import { DynamicTooltip } from '@insight/lib/components';
 import { Session } from '../../../entity/session';
 import { store } from '../../../store';
 

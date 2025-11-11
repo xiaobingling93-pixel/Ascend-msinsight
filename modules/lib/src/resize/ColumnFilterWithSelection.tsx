@@ -3,11 +3,11 @@
 */
 import React, { useEffect, useState } from 'react';
 import { Button, Input } from '../components/index';
-import { limitInput } from '../utils/Common';
+import { limitInput } from '../utils';
 import type { ColumnType } from 'antd/es/table';
-import type { FilterDropdownProps, ColumnFilterItem } from 'antd/es/table/interface';
-import VirtalUl from '../utils/VirtualUl';
+import type { ColumnFilterItem, FilterDropdownProps } from 'antd/es/table/interface';
 import type { CheckItem, ValueType } from '../utils/VirtualUl';
+import VirtalUl from '../utils/VirtualUl';
 import i18n from '../i18n';
 import styled from '@emotion/styled';
 import { ColumnFilterIcon } from '../icon/Icon';
@@ -17,7 +17,7 @@ export const ButtonGroup = styled.div`
     justify-content: center;
 `;
 
-function FilterDropdown({ setSelectedKeys, selectedKeys, confirm, clearFilters, close, filters: originFilters }: FilterDropdownProps): JSX.Element {
+function FilterDropdown({ setSelectedKeys, confirm, filters: originFilters }: FilterDropdownProps): JSX.Element {
     const [filters, setFilters] = useState<ColumnFilterItem[]>(originFilters ?? []);
     const [searchText, setSearchText] = useState('');
     const [selection, setSelection] = useState<React.Key[]>([]);
@@ -56,7 +56,7 @@ export const getColumnSearchProps = <T extends Record<string, unknown>>(clearFil
     return ({
         filterDropdown: (props: FilterDropdownProps): React.ReactNode => (
             <FilterDropdown {...props} clearFilters={clearFilters}/>),
-        filterIcon: (filtered: boolean) => (
+        filterIcon: () => (
             <ColumnFilterIcon />
         ),
         onFilterDropdownOpenChange: (visible: boolean): void => {

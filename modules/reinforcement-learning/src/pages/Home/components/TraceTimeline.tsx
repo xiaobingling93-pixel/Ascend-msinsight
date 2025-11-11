@@ -4,12 +4,12 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Legend, MIChart } from 'ascend-components';
-import type { ChartsHandle } from 'ascend-components/MIChart';
+import { Legend, MIChart } from '@insight/lib/components';
+import type { ChartsHandle } from '@insight/lib';
 import type { EChartsOption, CustomSeriesRenderItem } from 'echarts';
 import { merge } from 'lodash';
 import { type Theme, useTheme } from '@emotion/react';
-import { clamp, colorPalette, safeStr, StyledEmpty } from 'ascend-utils';
+import { clamp, colorPalette, safeStr, StyledEmpty } from '@insight/lib/utils';
 import { useStores } from '@/stores';
 import { GetTraceDataResults, TraceDataItem } from '@/api/types';
 

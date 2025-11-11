@@ -6,11 +6,11 @@ import * as React from 'react';
 import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { ResetIcon, PlusIcon as Add, MinusIcon as Del } from 'ascend-icon';
+import { ResetIcon, PlusIcon as Add, MinusIcon as Del } from '@insight/lib/icon';
 import type { Session } from '../entity/session';
 import { traceStart } from '../utils/traceLogger';
 import { getDuration } from '../utils/humanReadable';
-import { Tooltip } from 'ascend-components';
+import { Tooltip } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
 
 const TEXT_WIDTH = 50;

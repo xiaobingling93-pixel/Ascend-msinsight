@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { formatDate } from '../Common';
 import type { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-import { MIDescriptions, MIDescriptionsItem, formateMicrosecond } from 'ascend-utils';
+import { CollapsiblePanel } from '@insight/lib/components';
+import { MIDescriptions, MIDescriptionsItem, formateMicrosecond } from '@insight/lib/utils';
 import { CompareData } from '../../utils/interface';
 
 type BaseInfoData = Record<string, React.ReactNode>;

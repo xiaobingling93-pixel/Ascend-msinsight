@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tooltip } from 'ascend-components';
+import { Tooltip, CollapsiblePanel, Layout } from '@insight/lib/components';
 import type { Session } from '../../entity/session';
 import Filter, { AnalysisType, defaultCondition } from './Filter';
 import type { ConditionDataType } from './Filter';
@@ -15,12 +15,10 @@ import { notNullObj } from '../Common';
 import { getSlowRankList, queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
-import { HelpIcon } from 'ascend-icon';
-import { Layout } from 'ascend-layout';
+import { HelpIcon } from '@insight/lib/icon';
 import AdviceLabel, { type CommunicationAdvice } from './CommunicationDuration/AdviceLabel';
 import Operators from './CommunicationDuration/Opertators';
 import DiffTimeTable from './DiffTimeTable';
-import CollapsiblePanel from 'ascend-collapsible-panel';
 import { GetSlowRankListResult } from '../../utils/interface';
 
 interface showDataType {

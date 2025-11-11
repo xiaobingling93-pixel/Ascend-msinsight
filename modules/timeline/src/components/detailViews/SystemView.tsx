@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { Button, Select, FormItem, Tooltip } from 'ascend-components';
+import { Button, Select, FormItem, Tooltip } from '@insight/lib/components';
 import {
     getColumnSearchProps,
     getDefaultColumData,
@@ -15,13 +15,13 @@ import {
     type IQueryCondition,
     SystemViewItem, queryTableDataNameList,
 } from './Common';
-import { ResizeTable } from 'ascend-resize';
-import { limitInput, StyledEmpty, GroupCardRankInfosByHost, getRankInfoLabel } from 'ascend-utils';
+import { ResizeTable } from '@insight/lib/resize';
+import { limitInput, StyledEmpty, GroupCardRankInfosByHost, getRankInfoLabel } from '@insight/lib/utils';
 import type { CardMetaData } from '../../entity/data';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { getTimeOffset } from '../../insight/units/utils';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
-import { HelpIcon } from 'ascend-icon';
+import { HelpIcon } from '@insight/lib/icon';
 import { StatsSystemView } from './StatsSystemView';
 import { ExpertSystemView, handleAdvisorSelected } from './ExpertSystemView';
 import { EventView } from './EventsView';

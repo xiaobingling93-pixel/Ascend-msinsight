@@ -4,7 +4,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
-import 'ascend-style';
+import '@insight/lib/style';
 import App from './App';
 import connector from './connection';
 import { store } from './store';

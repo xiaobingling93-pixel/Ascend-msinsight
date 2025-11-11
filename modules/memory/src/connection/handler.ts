@@ -7,12 +7,12 @@ import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import type { MemoryRankInfo } from '../entity/memory';
 import type { CardInfo, CardRankInfo } from '../entity/session';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import {
     customConsole as console,
     getIndexByRankNameAndDeviceId,
     getRankInfoKey,
-} from 'ascend-utils';
+} from '@insight/lib/utils';
 
 function addMemoryCardInfos(before: CardRankInfo[], addList: MemoryRankInfo[]): CardRankInfo[] {
     const current = [...before];

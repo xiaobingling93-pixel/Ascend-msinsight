@@ -9,8 +9,8 @@ import { SearchBox, FlexDiv } from '../utils/styleUtils';
 import { Session } from '../entity/session';
 import { CurveSession } from '../entity/curveSession';
 import { Label } from './Common';
-import { Select } from 'ascend-components';
-import { notNull } from 'ascend-utils';
+import { Select } from '@insight/lib/components';
+import { notNull } from '@insight/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { groupGet } from '../utils/RequestUtils';
 

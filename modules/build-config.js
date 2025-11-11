@@ -5,6 +5,24 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const path = require('path');
 
+const configureConfig = (webpackConfig, paths) => {
+    const oneOfRule = webpackConfig.module.rules.find((r) => r.oneOf);
+    if (oneOfRule) {
+        const loaderRule = oneOfRule.oneOf.find(
+            (r) =>
+                r.test &&
+                r.test.toString().includes('tsx') &&
+                r.loader &&
+                r.loader.includes('babel-loader')
+        );
+        if (loaderRule) {
+            if (!Array.isArray(loaderRule.include)) loaderRule.include = [loaderRule.include];
+            loaderRule.include.push(...paths, path.resolve(__dirname, '../lib/src'));
+        }
+    }
+    return webpackConfig;
+};
+
 const htmllist = [
   new HtmlWebpackPlugin({
     template: 'public/index.html',
@@ -19,7 +37,7 @@ const htmllist = [
 ];
 
 const webpackCfg = {
-  clusterConfigure: (webpackConfig) => {
+  clusterConfigure: (webpackConfig, paths) => {
     webpackConfig.entry = {
       main: webpackConfig.entry,
       summary: './src/SummaryIndex.tsx',
@@ -27,9 +45,9 @@ const webpackCfg = {
     };
     webpackConfig.output.filename = 'static/js/[name].bundle.js';
     webpackConfig.plugins.push(...htmllist);
-    return webpackConfig;
+    return configureConfig(webpackConfig, paths);
   },
-  computeConfigure: (webpackConfig) => {
+  computeConfigure: (webpackConfig, paths) => {
     webpackConfig.entry = {
       main: webpackConfig.entry,
       detail: './src/detailIndex.ts',
@@ -54,7 +72,7 @@ const webpackCfg = {
         chunks: ['cache'],
       }),
     );
-    return webpackConfig;
+      return configureConfig(webpackConfig, paths);
   },
   alias: {
     '@': path.resolve('src'),
@@ -65,6 +83,4 @@ const webpackCfg = {
   },
 };
 
-module.exports = {
-  webpackCfg,
-};
+module.exports = { webpackCfg, configureConfig };

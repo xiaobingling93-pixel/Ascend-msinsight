@@ -2,13 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { ResizeTable, fetchColumnFilterProps } from 'ascend-resize';
-import { Tooltip } from 'ascend-components';
+import { ResizeTable, fetchColumnFilterProps } from '@insight/lib/resize';
+import { Tooltip } from '@insight/lib/components';
 import { Session } from '../entity/session';
 import { getEventTableData } from './dataHandler';
 import { generateJsonShow } from '../utils/utils';

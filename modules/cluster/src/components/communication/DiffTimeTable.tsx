@@ -4,10 +4,10 @@
 
 import React, { ReactNode } from 'react';
 import { type TableColumnsType } from 'antd';
-import { Hit } from 'ascend-utils';
 import styled from '@emotion/styled';
-import { Button, MITooltipHelp } from 'ascend-components';
-import { ResizeTable } from 'ascend-resize';
+import { Button, MITooltipHelp } from '@insight/lib/components';
+import { ResizeTable } from '@insight/lib/resize';
+import { Hit } from '@insight/lib/utils';
 import { SlowRankListItem, SlowRankOpListItem } from '../../utils/interface';
 import { useTranslation } from 'react-i18next';
 import eventBus from '../../utils/eventBus';

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { KEYS } from 'ascend-utils';
+import { KEYS } from '@insight/lib/utils';
 import { register } from './register';
 import { runInAction } from 'mobx';
 import type { Session } from '../entity/session';

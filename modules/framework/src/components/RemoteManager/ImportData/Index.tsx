@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
-import { ImportDataIcon } from 'ascend-icon';
+import { ImportDataIcon } from '@insight/lib/icon';
 import { type Session } from '@/entity/session';
 import { SessionAction } from '@/utils/enum';
 import FileExplorer from './FileExplorer';

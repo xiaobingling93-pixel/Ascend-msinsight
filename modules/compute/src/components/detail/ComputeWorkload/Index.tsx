@@ -8,10 +8,10 @@ import { runInAction } from 'mobx';
 import ComputeWorkloadChart from './ComputeWorkloadChart';
 import ComputeWorkloadTable from './ComputeWorkloadTable';
 import { type Session } from '../../../entity/session';
-import { Hit, sortFunc } from 'ascend-utils';
+import { Hit, sortFunc } from '@insight/lib/utils';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import { queryComputeWorkload } from '../../RequestUtils';
-import CollapsiblePanel from 'ascend-collapsible-panel';
+import { CollapsiblePanel } from '@insight/lib/components';
 import { CompareData } from '../../../utils/interface';
 
 export interface IblockData {

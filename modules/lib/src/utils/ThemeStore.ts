@@ -3,8 +3,8 @@
 */
 import type { Theme } from '@emotion/react';
 import { makeAutoObservable } from 'mobx';
+import { ThemeItem } from '../theme';
 
-export type ThemeItem = 'light' | 'dark';
 interface ThemeType {
     light: Theme;
     dark: Theme;

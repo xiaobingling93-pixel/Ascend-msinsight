@@ -4,9 +4,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ResizeTable } from 'ascend-resize';
-import { Tooltip } from 'ascend-components';
-import { Advice } from 'ascend-utils/Common';
+import { ResizeTable } from '@insight/lib/resize';
+import { Tooltip } from '@insight/lib/components';
+import { Advice } from '@insight/lib/utils';
 import { AntdTableRow, GetSlowRankAdviseRes, TopElements } from '../../utils/interface';
 import type { GenerateConditions } from '../../store/parallelism';
 import eventBus from '../../utils/eventBus';

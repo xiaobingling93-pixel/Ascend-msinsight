@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Button } from 'ascend-components';
+import { Button, CollapsiblePanel } from '@insight/lib/components';
 import type { ColumnsType } from 'antd/es/table';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
@@ -10,9 +10,8 @@ import type { TFunction } from 'i18next';
 import type { StringMap } from '../../utils/interface';
 import { notNull, getPageConfigWithPageData } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
-import { ResizeTable } from 'ascend-resize';
+import { ResizeTable } from '@insight/lib/resize';
 import type { Session } from '../../entity/session';
-import CollapsiblePanel from 'ascend-collapsible-panel';
 import { observer } from 'mobx-react-lite';
 
 const useComputingStatisticsColumns = (): ColumnsType => {

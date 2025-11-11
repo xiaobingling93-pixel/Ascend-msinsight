@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, type SelectContentViewProps } from './SystemView';
-import { fetchColumnFilterProps, ResizeTable } from 'ascend-resize';
+import { fetchColumnFilterProps, ResizeTable } from '@insight/lib/resize';
 import { getDefaultColumData, getPageData, queryTableDataDetails } from './Common';
 interface TableData {
     columnAttr: any[];

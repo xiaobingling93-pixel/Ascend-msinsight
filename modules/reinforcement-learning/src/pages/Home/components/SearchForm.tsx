@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { Button, Form, FormItem } from 'ascend-components';
+import { Button, Form, FormItem } from '@insight/lib/components';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@/stores';
 import { useTranslation } from 'react-i18next';

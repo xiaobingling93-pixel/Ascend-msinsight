@@ -4,14 +4,13 @@
 import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Tooltip } from 'ascend-components';
+import { Tooltip, CollapsiblePanel } from '@insight/lib/components';
 import { observer } from 'mobx-react';
-import { MIDescriptions, MIDescriptionsItem } from 'ascend-utils';
-import { ResizeTable } from 'ascend-resize';
+import { MIDescriptions, MIDescriptionsItem } from '@insight/lib/utils';
+import { ResizeTable } from '@insight/lib/resize';
 import { type Session } from '../../entity/session';
 import { queryBaseInfo } from '../RequestUtils';
 import { LimitHit } from '../LimitSet';
-import CollapsiblePanel from 'ascend-collapsible-panel';
 
 interface Iprops {
     session: Session;

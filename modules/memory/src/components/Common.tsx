@@ -3,9 +3,9 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HelpIcon } from 'ascend-icon';
-import { Tooltip } from 'ascend-components';
-import { safeStr } from 'ascend-utils';
+import { HelpIcon } from '@insight/lib/icon';
+import { Tooltip } from '@insight/lib/components';
+import { safeStr } from '@insight/lib/utils';
 import { useRootStore } from '../context/context';
 import { GroupBy } from '../entity/memorySession';
 

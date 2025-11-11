@@ -4,8 +4,8 @@
 
 import React, { type ReactNode, type CSSProperties, useState, forwardRef, useRef, useImperativeHandle } from 'react';
 import styled from '@emotion/styled';
-import { ExpandIcon, CollapseIcon } from '../icon/Icon';
-import { MITooltipHelp } from '../components';
+import { ExpandIcon, CollapseIcon } from '../../icon/Icon';
+import { MITooltipHelp } from '../index';
 
 type RenderFunction = () => ReactNode;
 interface CollapsiblePanelProps {

@@ -9,7 +9,7 @@ import connector from '../../connection';
 import { Session } from '../../entity/session';
 import parallelismStore from '../../store/parallelism';
 import { useParallelSwitchConditions } from './Context';
-import { copyObjectToClipboard } from 'ascend-utils';
+import { copyObjectToClipboard } from '@insight/lib/utils';
 
 interface ContextMenuItem {
     name: string;

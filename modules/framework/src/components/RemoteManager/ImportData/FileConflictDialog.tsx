@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 import React from 'react';
-import { Button } from 'ascend-components';
+import { Button } from '@insight/lib/components';
 import styled from '@emotion/styled';
 import { Modal } from 'antd';
 import { useTranslation } from 'react-i18next';

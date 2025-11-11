@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import React from 'react';
-import i18n from 'ascend-i18n';
-import { Col, Row } from 'ascend-components';
+import i18n from '@insight/lib/i18n';
+import { Col, Row } from '@insight/lib/components';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
@@ -18,7 +18,7 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
         </div>;
     }
     return <div className={'container-box'} style={{ height: '100%', ...(props.style ?? {}) }}>
-        <div className={props.titleClassName ?? 'container-header'} style={props.headerStyle ?? {}}>{props.title}</div>
+        <div className={props.titleClassName ?? 'Index-header'} style={props.headerStyle ?? {}}>{props.title}</div>
         <div className={'container-body'}
             style={{ height: 'calc(100% - 36px)', overflow: 'auto', ...props.bodyStyle ?? {} }}>{props.content}</div>
     </div>;

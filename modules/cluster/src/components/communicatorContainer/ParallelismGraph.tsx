@@ -15,10 +15,10 @@ import styled from '@emotion/styled';
 import { useParallelSwitchConditions } from './Context';
 import { useTheme } from '@emotion/react';
 import { throttle } from 'lodash';
-import { ContextMenu, DynamicTooltip, Responsive } from 'ascend-components';
+import { ContextMenu, DynamicTooltip, Responsive } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
 import { message, Spin } from 'antd';
-import { transformCardIdInfo } from 'ascend-utils';
+import { transformCardIdInfo } from '@insight/lib/utils';
 import parallelismStore, { type GenerateConditions } from '../../store/parallelism';
 import { useContextMenuItems } from './useContextMenuItems';
 

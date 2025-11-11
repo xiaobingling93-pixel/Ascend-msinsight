@@ -10,7 +10,7 @@ import { ThreadUnit } from '../insight/units/AscendUnit';
 import { type ChartDesc, InsightUnit, UnitHeight } from '../entity/insight';
 import { message } from 'antd';
 import type { StackStatusConfig } from '../entity/chart';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import { checkIsSliceSelection } from '../components/charts/ChartInteractor/draw';
 
 const clearSelectedUnits = (session: Session): void => {

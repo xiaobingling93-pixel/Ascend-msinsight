@@ -6,7 +6,7 @@ import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlagIcon } from 'ascend-icon';
+import { FlagIcon } from '@insight/lib/icon';
 import { Session } from '../../entity/session';
 
 const KeyInfoContainer = styled.div`

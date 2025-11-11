@@ -1,7 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-const {webpackCfg} = require('../build-config');
+const {webpackCfg, configureConfig} = require('../build-config');
+
+const path = require('path');
+
+const libPath = path.resolve(__dirname, '../lib/src');
+const echartsPath = require.resolve('echarts');
 
 module.exports = {
     devServer: {
@@ -18,5 +23,6 @@ module.exports = {
     },
     webpack: {
         alias: webpackCfg.alias,
+        configure: (webpackConfig) => configureConfig(webpackConfig, [libPath, echartsPath]),
     },
 };

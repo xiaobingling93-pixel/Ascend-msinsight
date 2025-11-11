@@ -3,9 +3,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Checkbox, Divider, Select, Pagination } from 'ascend-components';
+import { Checkbox, Divider, Pagination, Select } from '@insight/lib/components';
 import type { optionDataType, VoidFunction } from '../utils/interface';
-import i18n from 'ascend-i18n';
+import i18n from '@insight/lib/i18n';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
@@ -27,7 +27,7 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
         </div>;
     }
     return <div className={'container-box'} style={{ height: '100%', ...(props.style ?? {}) }}>
-        <div className={props.titleClassName ?? 'container-header'} style={props.headerStyle ?? {}}>{props.title}</div>
+        <div className={props.titleClassName ?? 'Index-header'} style={props.headerStyle ?? {}}>{props.title}</div>
         <div className={'container-body'}
             style={{ height: 'calc(100% - 20px)', overflow: 'auto', ...props.bodyStyle ?? {} }}>{props.content}</div>
     </div>;

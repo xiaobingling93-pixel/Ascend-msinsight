@@ -2,12 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Select, Checkbox } from 'ascend-components';
+import { Select, Checkbox, CollapsiblePanel } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import CollapsiblePanel from 'ascend-collapsible-panel';
 import MemoryBarChart from './MemoryBarChart';
 import MemorySliceChart from './MemorySliceChart';
 import MemoryFunctionCall from './MemoryFunctionCall';

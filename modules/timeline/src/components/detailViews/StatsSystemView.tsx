@@ -17,9 +17,9 @@ import {
 import type { CardMetaData } from '../../entity/data';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import { getTimeOffset } from '../../insight/units/utils';
-import { Button } from 'ascend-components';
-import { ResizeTable } from 'ascend-resize';
-import { StyledEmpty } from 'ascend-utils';
+import { Button } from '@insight/lib/components';
+import { ResizeTable } from '@insight/lib/resize';
+import { StyledEmpty } from '@insight/lib/utils';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, BaseSummary, SelectContentViewProps } from './SystemView';
 import { OverallMetrics } from './OverallMetrics';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';

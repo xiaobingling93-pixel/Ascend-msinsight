@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, InputNumber } from 'ascend-components';
+import { Button, Input, InputNumber } from '@insight/lib/components';
 import { SearchBox } from '../utils/styleUtils';
 import { Label } from './Common';
 import { Session } from '../entity/session';
