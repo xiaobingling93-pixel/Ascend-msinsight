@@ -118,6 +118,14 @@ export const cubeCoreBaseV5: Inode = {
             orient: 'top',
             labelPosition: 'bottom',
         },
+        {
+            id: 'FIXP_TO_L2',
+            label: 'FIXP_TO_L2',
+            x: 138,
+            y: 275,
+            orient: 'left',
+            length: 138,
+        },
     ],
 };
 
