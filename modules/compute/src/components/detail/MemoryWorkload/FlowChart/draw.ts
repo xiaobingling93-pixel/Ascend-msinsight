@@ -73,17 +73,17 @@ const cubeCore: Inode = {
         {
             id: 'L2_TO_L1',
             label: 'L2_TO_L1',
-            x: 0,
+            x: -10,
             y: 155,
             orient: 'right',
-            length: 138,
+            length: 148,
         },
         {
             id: 'L1_TO_L2',
             label: 'L1_TO_L2',
             x: 140,
             y: 180,
-            length: 138,
+            length: 148,
             orient: 'left',
             labelPosition: 'bottom',
         },
@@ -143,7 +143,7 @@ const cubeCore: Inode = {
         {
             id: 'L0C_TO_L2',
             label: 'L0C_TO_L2',
-            points: '600,25 600,10 1,10',
+            points: '600,25 600,10 -9,10',
             labelXy: { x: 60, y: 25 },
         },
     ],
@@ -179,13 +179,13 @@ const cubeCoreV2: Inode = {
         {
             id: 'GM_TO_L0A_AIC',
             label: 'GM_TO_L0A_AIC',
-            points: '0,80 370,80 370,123',
+            points: '-10,80 370,80 370,123',
             labelXy: { x: 270, y: 95 },
         },
         {
             id: 'GM_TO_L0B_AIC',
             label: 'GM_TO_L0B_AIC',
-            points: '0,290 370,290 370,267',
+            points: '-10,290 370,290 370,267',
             labelXy: { x: 270, y: 280 },
         },
         {
