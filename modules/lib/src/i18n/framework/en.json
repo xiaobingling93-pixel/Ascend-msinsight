@@ -11,7 +11,7 @@
     "DeleteConfirmDescribe": "Are you sure to delete the selected projects?",
     "DeleteProjectConfirmDescribe": "Are you sure to delete this project?",
     "BaselineDataComparisonDataCannotDeleted": "Baseline data and comparison data cannot be deleted",
-    "BaselineDataComparisonDataCannotRename": "Baseline data and comparison data cannot be rename",
+    "BaselineDataComparisonDataCannotRenamed": "Baseline data and comparison data cannot be renamed",
     "DeleteItemConfirmDescribe": "Are you sure to delete this item?",
     "File Explorer": "File Explorer",
     "FileSearchDescribe": "Enter the file path and press enter to search",

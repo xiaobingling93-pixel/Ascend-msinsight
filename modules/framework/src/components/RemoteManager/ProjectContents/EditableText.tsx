@@ -49,7 +49,7 @@ function EditableText({ text = '', session, projectName }: IProps): JSX.Element 
             }, 'projectName');
         } else {
             HandleSingleDoubleClick.doubleClick(() => {
-                message.warning(t('BaselineDataComparisonDataCannotRename'));
+                message.warning(t('BaselineDataComparisonDataCannotRenamed'));
             }, 'projectName');
             // "基线数据和对比数据不允许重命名",
         }
