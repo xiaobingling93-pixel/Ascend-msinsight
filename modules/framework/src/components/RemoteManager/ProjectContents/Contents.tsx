@@ -208,7 +208,7 @@ const getTreeData = (session: Session): ProjectTreeDataNode[] => {
                             rankId: '',
                         })
                     }>
-                        <EditableText text={dataSource.projectName}/></span>
+                        <EditableText text={dataSource.projectName} session={session} projectName={dataSource.projectName} /></span>
                     <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
                         <ImportDataBtn projectName={dataSource.projectName} session={session}/>
                         <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} session={session} projectName={dataSource.projectName} />
