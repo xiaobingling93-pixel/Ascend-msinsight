@@ -11,7 +11,7 @@ import { type ChartDesc, InsightUnit, UnitHeight } from '../entity/insight';
 import { message } from 'antd';
 import type { StackStatusConfig } from '../entity/chart';
 import i18n from '@insight/lib/i18n';
-import { checkIsSliceSelection } from '../components/charts/ChartInteractor/draw';
+import { checkIsSliceMode } from '../components/charts/ChartInteractor/draw';
 
 const clearSelectedUnits = (session: Session): void => {
     session.selectedUnits = [];
@@ -229,7 +229,7 @@ const unmergeUnits = (session: Session): void => {
 
         unmarkMergedUnits(mergedThreadIds, children);
         clearSelectedUnits(session);
-        if (checkIsSliceSelection(session) && session.sliceSelection.targetUnit) {
+        if (checkIsSliceMode(session)) {
             session.selectedRange = undefined;
             session.sliceSelection.targetUnit = null;
         }

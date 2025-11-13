@@ -28,7 +28,7 @@ import { useJumpTarget } from './hooks';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
 import { MetaDataBase, ThreadMetaData } from '../../../entity/data';
-import { checkIsSliceSelection, PAGE_PADDING } from '../../charts/ChartInteractor/draw';
+import { checkIsSliceMode, PAGE_PADDING } from '../../charts/ChartInteractor/draw';
 import { MouseButton } from '../../charts/ChartInteractor/actions';
 
 const Lane = styled.div<{ laneHeight: number; className: string; top: number; zIndex: number; isDragging: boolean }>`
@@ -255,7 +255,9 @@ export const UnitObserver = observer((
                 }
                 if (session.sliceSelection.active) {
                     session.resetOfSliceSelection();
-                    session.sliceSelection.targetUnit = unit as InsightUnit;
+                    if (unit.name === 'Thread') {
+                        session.sliceSelection.targetUnit = unit as InsightUnit;
+                    }
                 }
                 selectUnit(unit);
                 traceSingle('selectLane', [unit.name]);
@@ -395,7 +397,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     }, []);
 
     useEffect(() => {
-        const mainContainer = document.getElementById('main-Index');
+        const mainContainer = document.getElementById('main-container');
         mainContainer?.addEventListener('mouseup', handleMouseUp);
         mainContainer?.addEventListener('mouseleave', handleMouseLeave);
         return () => {
@@ -511,7 +513,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         handleAutoScrollLogic(e);
 
         // 更新选中元素（算子模式下不更新）
-        if (!checkIsSliceSelection(session)) {
+        if (!checkIsSliceMode(session)) {
             updateSelectedElements(e);
         }
     };
@@ -572,7 +574,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         if (scrollDirection === DOWN && isNearBottom(e, scrollElement)) {
             const interval = setInterval(() => {
                 scrollElement.scrollBy(0, 20);
-                if (!checkIsSliceSelection(session)) {
+                if (!checkIsSliceMode(session)) {
                     updateSelectedUnits(e, DOWN);
                 }
                 if (currentScrollTop >= contentHeight - window.innerHeight) {
@@ -586,7 +588,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         if (scrollDirection === UP && isNearTop(e, scrollElement)) {
             const interval = setInterval(() => {
                 scrollElement.scrollBy(0, -20);
-                if (!checkIsSliceSelection(session)) {
+                if (!checkIsSliceMode(session)) {
                     updateSelectedUnits(e, UP);
                 }
                 if (scrollElement.scrollTop <= 0) {

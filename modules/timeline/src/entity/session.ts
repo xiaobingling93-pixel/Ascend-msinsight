@@ -249,12 +249,12 @@ export class Session {
 
     sliceSelection = {
         active: false, // 切换算子框选模式
-        height: 0, // 框选的高度
         selecting: false, // 正在框选中
         startPos: [] as number[], // 框选起始点
         rangeOfLevels: [] as number[], // 框选覆盖层级
         targetUnit: null as (InsightUnit | null),
         activeIsChanged: false,
+        searchOfSlice: false,
     };
 
     private _selectedRange?: [ TimeStamp, TimeStamp ];
@@ -549,7 +549,6 @@ export class Session {
     }
 
     resetOfSliceSelection(isSelecting = true): void {
-        this.sliceSelection.height = 0;
         this.sliceSelection.startPos = [];
         this.sliceSelection.rangeOfLevels = [];
         this.sliceSelection.selecting = isSelecting;

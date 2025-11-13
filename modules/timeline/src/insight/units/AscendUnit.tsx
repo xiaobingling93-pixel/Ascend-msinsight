@@ -756,11 +756,14 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
             setLoading(false);
             return;
         }
+        const { searchOfSlice, rangeOfLevels } = session.sliceSelection;
+        const paramsOfDepth = searchOfSlice ? { startDepth: rangeOfLevels[0].toString(), endDepth: rangeOfLevels[1].toString() } : {};
         const params = {
             ...slice,
             ...sorter,
             ...page,
             orderBy: sorter.field === 'startTime' ? 'timestamp' : sorter.field,
+            ...paramsOfDepth,
         };
         try {
             const res = await queryAllSameOperatorsDuration(params);

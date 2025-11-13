@@ -11,7 +11,7 @@ import type { InteractorMouseState, InteractorParams, XReverseScaleRef } from '.
 import { INTERACTOR_WIDTH } from './ChartInteractor';
 import { isOnSideline, SINGLE_DRAG_OFFSET } from './common';
 import type { Pos } from './common';
-import { draw, drawOnMove, calcLevelsOfSlice, MIN_BRUSH_SIZE, checkIsSliceSelection } from './draw';
+import { draw, drawOnMove, calcLevelsOfSlice, MIN_BRUSH_SIZE, checkIsSliceMode } from './draw';
 import type { DrawArgs, DrawCanvasArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
 import type { Theme } from '@emotion/react';
@@ -69,7 +69,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         return;
     }
 
-    if (checkIsSliceSelection(session) && !session.selectedRangeIsLock) {
+    if (checkIsSliceMode(session) && !session.selectedRangeIsLock) {
         calcLevelsOfSlice(lastPos.y, session);
     }
 
@@ -132,7 +132,7 @@ export const mouseLeaveAction = (interactorParams: InteractorParams, interactorM
     const { hoverCanvas: canvas, session, xReverseScaleRef, xScale, theme } = interactorParams;
     if (canvas.current === null || session.endTimeAll === undefined) { return; }
     // 算子模式下光标离开canvas区间不做任何处理
-    if (checkIsSliceSelection(session)) {
+    if (checkIsSliceMode(session)) {
         return;
     }
     const clickPos = interactorMouseState.clickPos.current;

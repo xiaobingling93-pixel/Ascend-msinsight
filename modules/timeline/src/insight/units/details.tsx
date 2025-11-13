@@ -10,7 +10,7 @@ import type { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../en
 import type { Session } from '../../entity/session';
 import { getSliceTimeDisplay } from './AscendUnit';
 import { getTimeOffset } from './utils';
-import { checkIsSliceSelection } from '../../components/charts/ChartInteractor/draw';
+import { checkIsValidSlice } from '../../components/charts/ChartInteractor/draw';
 import { checkIsSameUnit } from '../../components/ChartContainer/Units/UnitInfo';
 
 const isSelfTimeHidden = (session: Session): boolean => {
@@ -72,10 +72,11 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
         endTime = endTime < 0 ? 0 : endTime;
         const timestampOffset = getTimeOffset(session, metadata);
 
-        const { rangeOfLevels, targetUnit } = session.sliceSelection;
-        const isValidSliceMode = checkIsSliceSelection(session) && rangeOfLevels[1] > -1 && targetUnit;
+        const { rangeOfLevels } = session.sliceSelection;
+        const isValidSliceMode = checkIsValidSlice(session);
         const selectedUnits = isValidSliceMode ? getSelectedUnitsOfSliceMode(session) : [...session.selectedUnits];
         const paramsOfDepth = isValidSliceMode ? { startDepth: rangeOfLevels[0].toString(), endDepth: rangeOfLevels[1].toString() } : {};
+        session.sliceSelection.searchOfSlice = isValidSliceMode;
 
         const metadataList = selectedUnits.flatMap(selectUnit => {
             const { threadId, threadIdList, processId, metaType } = selectUnit?.metadata as ThreadMetaData;
