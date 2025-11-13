@@ -568,6 +568,7 @@ bool TextTraceDatabase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestP
         auto it = flowAnalyzerPtr->ComputeSliceByFlowPoint(item, sliceVec);
         if (it != sliceVec.end()) {
             item.depth = it->depth;
+            item.id = it->id;
         }
         item.pid = threadInfo[item.trackId].first;
         item.tid = threadInfo[item.trackId].second;

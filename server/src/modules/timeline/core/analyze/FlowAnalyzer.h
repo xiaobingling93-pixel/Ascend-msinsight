@@ -83,6 +83,9 @@ private:
     void OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVec,
         std::vector<FlowPoint> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
         const std::string &flowId, uint64_t unitTime) const;
+
+    static Protocol::FlowLocation& ComputeLocation(Protocol::FlowLocation& location, const FlowPoint& flow,
+                                                   const std::string& type);
 };
 }
 
