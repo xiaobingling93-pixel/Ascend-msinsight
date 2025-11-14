@@ -45,6 +45,7 @@ import {
     actionMergeUnits,
     actionUnmergeUnits,
     actionSliceSelection,
+    actionJumpToLinkSlice,
 } from '../actions';
 import { Action } from '../actions/types';
 import { getShortcutFromShortcutName, ShortcutName } from '../actions/shortcuts';
@@ -60,6 +61,7 @@ interface Props {
     interactorMouseState: InteractorMouseState;
     theme?: Theme;
     chartInteractorRef: React.RefObject<ChartInteractorHandles>;
+    subMenus?: ContextMenuItem[];
 }
 
 export type ContextMenuItem = typeof CONTEXT_MENU_SEPARATOR | Action;
@@ -83,6 +85,7 @@ const MenuItem = styled.div`
     align-items: center;
     padding: 4px 16px 4px 20px;
     color: ${(props): string => props.theme.textColorPrimary};
+    position: relative;
 
     &:not(.disabled):hover{
       background: ${(props): string => props.theme.primaryColorHover};
@@ -111,6 +114,20 @@ const MenuItem = styled.div`
         opacity: 0.6;
     }
 `;
+const SubMenuContainer = styled.div`
+    font-size: 12px;
+    padding: 3px 0;
+    min-width: 200px;
+    border-radius: ${(props): string => props.theme.borderRadiusBase};
+    background-color:  ${(props): string => props.theme.contextMenuBgColor};
+    position: absolute;
+    left: 100%;
+    top: 0;
+    z-index: 99999;
+    transition: all .1s ease;
+    box-shadow: ${(props): string => props.theme.boxShadowLight};
+    user-select: none;
+`;
 
 const Separator = styled.hr`
     border: none;
@@ -120,6 +137,7 @@ const Separator = styled.hr`
 function closeMenu(session: Session): void {
     runInAction(() => {
         session.contextMenu.isVisible = false;
+        session.contextMenu.activeMenuKey = '';
     });
 }
 
@@ -217,57 +235,60 @@ const contextMenuItems: ContextMenuItem[] = [
     // 在 Events View 中显示
     actionShowInEventsView,
     actionSliceSelection,
+    actionJumpToLinkSlice,
 ];
 
-const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
+const SubMenu = (props: { session: Session; subMenus: ContextMenuItem[] }): JSX.Element => {
+    const { subMenus } = props;
+    const { t } = useTranslation();
+    return (
+        <SubMenuContainer className="sub-menu-container">
+            {getMenuItems(props as Props, t, subMenus ?? [])}
+        </SubMenuContainer>
+    );
+};
+
+const getMenuItems = (props: Props, t: TFunction, menuItems: ContextMenuItem[]): JSX.Element => {
     const { session } = props;
-    if (!Array.isArray(session.selectedUnits) || session.selectedUnits.length === 0) {
+    if (!Array.isArray(session.selectedUnits) || session.selectedUnits.length === 0 || menuItems.length === 0) {
         return <></>;
     }
-
-    const filteredItems = contextMenuItems
-        .filter(menuItem => menuItem === CONTEXT_MENU_SEPARATOR || (menuItem.visible?.(session) ?? true));
-
+    const filteredItems = menuItems.filter(menu => menu === CONTEXT_MENU_SEPARATOR || (menu.visible?.(session) ?? true));
+    if (!filteredItems.find(menuItem => menuItem !== CONTEXT_MENU_SEPARATOR)) { return <></>; }
     if (filteredItems[filteredItems.length - 1] === CONTEXT_MENU_SEPARATOR) {
         filteredItems.pop();
     }
-
     return <>
         {
             filteredItems.map((item, index) => {
-                if (
-                    item === CONTEXT_MENU_SEPARATOR &&
-                    (!filteredItems[index - 1] || filteredItems[index - 1] === CONTEXT_MENU_SEPARATOR)
-                ) {
-                    return null;
-                }
-
+                const prevIsLine = !filteredItems[index - 1] || filteredItems[index - 1] === CONTEXT_MENU_SEPARATOR;
+                if (item === CONTEXT_MENU_SEPARATOR && prevIsLine) { return null; }
                 if (item === CONTEXT_MENU_SEPARATOR) {
                     return <Separator key={index} />;
                 }
-
                 const disabled = item.disabled?.(session) ?? false;
-                let label = '';
-                if (typeof item.label === 'function') {
-                    label = item.label(session, t);
-                } else {
-                    label = t(item.label);
-                }
-
+                const label = typeof item.label === 'function' ? item.label(session, t) : t(item.label);
+                const subMenus = item.subMenus?.(session) ?? [];
                 return <MenuItem
                     className={`menu-item ${disabled ? 'disabled' : ''} ${item.checked?.(session) ? 'checkmark' : ''}`}
                     key={item.name}
                     title={label}
                     onClick={(e): void => {
-                        if (disabled) { return; }
+                        if (disabled || item.subMode) { return; }
                         item.perform(session);
                         runInAction(() => {
                             session.contextMenu.isVisible = false;
                         });
                     }}
+                    onMouseEnter={(): void => {
+                        runInAction(() => {
+                            session.contextMenu.activeMenuKey = disabled && !item.parentMenuKey ? '' : item.parentMenuKey ?? item.name;
+                        });
+                    }}
                 >
                     <div className="menu-item__label">{label}</div>
                     <kbd className="menu-item__shortcut">{item.name ? getShortcutFromShortcutName(item.name as ShortcutName) : ''}</kbd>
+                    {item.subMode && session.contextMenu.activeMenuKey === item.name && session.contextMenu.isVisible ? <SubMenu session={session} subMenus={subMenus}></SubMenu> : <></>}
                 </MenuItem>;
             })
         }
@@ -316,7 +337,7 @@ const Menu = (props: Props): JSX.Element => {
             ? <MenuContainer ref={menuRef} style={{ ...position }} tabIndex={-1} onBlur={(): void => {
                 closeMenu(session);
             }} >
-                {getMenuItems(props, t)}
+                {getMenuItems(props, t, contextMenuItems)}
             </MenuContainer>
             : <></>
     );

@@ -1,10 +1,14 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-#include "TraceDatabaseHelper.h"
 
-std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
-                                                       const std::string& path)
+#include "DbTraceDataBase.h"
+#include "TraceDatabaseHelper.h"
+namespace Dic::Module::FullDb {
+using namespace Server;
+
+std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, const std::string& rankId,
+    const std::string &path)
 {
     const std::string order = "ascend";
     const std::string orderByField = "timestamp";
@@ -22,16 +26,14 @@ std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool i
     const std::string hostSql =
         " SELECT name, globalTid as pid,  'HOST' as metaType,  type as tid, startNs - minTime.value as startTime,endNs "
         "- startNs as duration, depth, api.id "
-        " FROM (select globalTid, type, startNs, endNs, depth, cann.ROWID as id, name from " +
-        TABLE_CANN_API +
+        " FROM (select globalTid, type, startNs, endNs, depth, cann.ROWID as id, name from " + TABLE_CANN_API +
         " cann join ids on ids.id = cann.name "
         " Union all select globalTid, domainId as type, startNs, endNs, depth, mstx.ROWID as id, message as name "
         " from " + TABLE_MSTX_EVENTS + " mstx join ids on ids.id = mstx.message "
         " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, python.ROWID as id, name "
         " from " + TABLE_API + " python join ids on ids.id = python.name" +
         " UNION ALL SELECT globalTid, 'OSRT_API' AS type, startNs, endNs, 0 AS depth, osrt.ROWID AS id, name"
-        " FROM " +
-        TABLE_OSRT_API + " osrt JOIN ids ON ids.id = osrt.name) api join minTime ";
+        " FROM " + TABLE_OSRT_API + " osrt JOIN ids ON ids.id = osrt.name) api join minTime ";
     std::string comSql = "select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
                          " startNs - minTime.value as startTime, endNs - startNs as duration, 0 as depth, op.ROWID"
                          " as id from COMMUNICATION_OP op join minTime " +
@@ -55,9 +57,8 @@ std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool i
     return sql;
 }
 
-std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
-                                                              const std::string& order, const std::string& orderByField,
-                                                              const std::string& rankId)
+std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
+    const std::string &order, const std::string &orderByField, const std::string &rankId)
 {
     std::string sql;
     std::string nameMatch;
@@ -77,8 +78,8 @@ std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact,
     } else {
         nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
-    std::string communicationOpSql = GetComOpSliceDetailsSql(rankId);
-    std::string mstxEventsSql = GetMsTxEventsSliceDetailSql();
+    std::string communicationOpSql = TraceDatabaseHelper::GetComOpSliceDetailsSql(rankId);
+    std::string mstxEventsSql = TraceDatabaseHelper::GetMsTxEventsSliceDetailSql();
     sql = "with ids as (" + nameMatch +
           "), minTime as (select ? as value),\n"
           " tasks as (select deviceId, TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
@@ -109,7 +110,7 @@ std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact,
     return sql;
 }
 
-std::string TraceDatabaseHelper::GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId)
+std::string DbTraceDataBase::GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, const std::string& rankId)
 {
     std::string sql;
     std::string nameMatch;
@@ -152,8 +153,8 @@ std::string TraceDatabaseHelper::GetSearchSliceNameCountSql(bool isMatchExact, b
     return sql;
 }
 
-std::string TraceDatabaseHelper::GetSearchCountWithLockSql(const SearchCountParams& params,
-                                                           const std::vector<TrackQuery>& trackQuery)
+std::string DbTraceDataBase::GetSearchCountWithLockSql(const SearchCountParams &params,
+                                                       const std::vector<TrackQuery> &trackQuery)
 {
     std::string sql;
     std::string nameMatch;
@@ -168,7 +169,7 @@ std::string TraceDatabaseHelper::GetSearchCountWithLockSql(const SearchCountPara
     }
     sql = "with ids as (" + nameMatch + ") ";
     std::vector<std::string> sqls;
-    for (const auto& item : trackQuery) {
+    for (const auto &item: trackQuery) {
         std::string tempSql = GetSingleSearchCountLockRangeSql(params, item);
         if (!tempSql.empty()) {
             sqls.emplace_back(tempSql);
@@ -178,8 +179,7 @@ std::string TraceDatabaseHelper::GetSearchCountWithLockSql(const SearchCountPara
     return sql;
 }
 
-std::string TraceDatabaseHelper::GetSingleSearchCountLockRangeSql(const SearchCountParams& params,
-                                                                  const TrackQuery& item)
+std::string DbTraceDataBase::GetSingleSearchCountLockRangeSql(const SearchCountParams &params, const TrackQuery &item)
 {
     PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value();
     std::string tempSql;
@@ -219,4 +219,5 @@ std::string TraceDatabaseHelper::GetSingleSearchCountLockRangeSql(const SearchCo
         }
     }
     return tempSql;
+}
 }

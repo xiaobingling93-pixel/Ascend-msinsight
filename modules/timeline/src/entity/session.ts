@@ -21,6 +21,7 @@ import { CardMetaData, SliceData, SliceMeta, ThreadMetaData, ThreadTrace, Thread
 import { CardRankInfo } from '../api/interface';
 import { getRootUnit } from '../utils';
 import { getAutoKey } from '../utils/dataAutoKey';
+import type { FlowPoint } from '../insight/units/AscendUnit';
 
 export const MAX_ZOOM_COUNT = 10000;
 
@@ -55,6 +56,7 @@ export interface LinkData {
 export interface ContextMenu {
     isVisible: boolean;
     zoomHistory: DomainRange[];
+    activeMenuKey: string;
 }
 
 interface UnitsConfig {
@@ -86,6 +88,7 @@ export interface SelectedDataType extends Pick<ThreadTrace, 'duration' | 'startT
     startRecordTime?: number;
     showSelectedData?: boolean;
     showDetail?: boolean;
+    timestamp?: number;
 }
 
 export type TimelineScale = (x: number) => number;
@@ -93,6 +96,13 @@ export type TimelineScale = (x: number) => number;
 interface ScaleBag {
     timelineMarkerTimeScale: TimelineScale | null;
     timelineMarkerXScale: TimelineScale | null;
+}
+
+export interface MapValueOfLinkLines {
+    cat: string;
+    from: FlowPoint[];
+    to: FlowPoint[];
+    current: FlowPoint;
 }
 
 export class Session {
@@ -129,6 +139,7 @@ export class Session {
     contextMenu: ContextMenu = {
         isVisible: false,
         zoomHistory: [],
+        activeMenuKey: '',
     };
 
     // 是否有值为超过了最大安全值
@@ -177,6 +188,7 @@ export class Session {
     doContextSearch?: boolean;
     showEvent?: boolean;
     linkLines: LinkLines = {};
+    mapOfLinkLines: Map<string, MapValueOfLinkLines> = new Map();
 
     totalHeight: number = 0;
     renderTrigger: boolean = true;
@@ -251,12 +263,12 @@ export class Session {
 
     sliceSelection = {
         active: false, // 切换算子框选模式
-        height: 0, // 框选的高度
         selecting: false, // 正在框选中
         startPos: [] as number[], // 框选起始点
         rangeOfLevels: [] as number[], // 框选覆盖层级
         targetUnit: null as (InsightUnit | null),
         activeIsChanged: false,
+        searchOfSlice: false,
     };
 
     private _selectedRange?: [ TimeStamp, TimeStamp ];
@@ -551,7 +563,6 @@ export class Session {
     }
 
     resetOfSliceSelection(isSelecting = true): void {
-        this.sliceSelection.height = 0;
         this.sliceSelection.startPos = [];
         this.sliceSelection.rangeOfLevels = [];
         this.sliceSelection.selecting = isSelecting;

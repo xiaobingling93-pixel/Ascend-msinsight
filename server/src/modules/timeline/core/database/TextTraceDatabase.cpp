@@ -1,9 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
+#include "JsonUtil.h"
+#include "ServerLog.h"
 #include "pch.h"
 #include "TableDefs.h"
-#include "TextTraceDatabaseHelper.h"
 #include "TraceDatabaseHelper.h"
 #include "TraceDatabaseSqlConst.h"
 #include "TraceTime.h"
@@ -568,12 +569,13 @@ bool TextTraceDatabase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestP
         auto it = flowAnalyzerPtr->ComputeSliceByFlowPoint(item, sliceVec);
         if (it != sliceVec.end()) {
             item.depth = it->depth;
+            item.id = it->id;
         }
         item.pid = threadInfo[item.trackId].first;
         item.tid = threadInfo[item.trackId].second;
         flowPointMap[item.flowId].emplace_back(item);
     }
-    TextTraceDatabaseHelper::AssembleUnitFlowsBody(responseBody, minTimestamp, flowPointMap);
+    AssembleUnitFlowsBody(responseBody, minTimestamp, flowPointMap);
     return true;
 }
 
@@ -2012,7 +2014,7 @@ bool TextTraceDatabase::QueryByteAlignmentAnalyzerData(std::vector<Communication
     if (!QueryByteAlignmentAnalyzerRawData(rawData)) {
         return false;
     }
-    TextTraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(data, rawData);
+    ProcessByteAlignmentAnalyzerDataForText(data, rawData);
     return true;
 }
 

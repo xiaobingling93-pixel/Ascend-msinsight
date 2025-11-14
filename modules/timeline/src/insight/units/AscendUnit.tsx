@@ -12,7 +12,7 @@ import {
 import type {
     ChartDesc, InsightUnit, LinkLine, LinkLines,
 } from '../../entity/insight';
-import type { SelectedDataType, Session } from '../../entity/session';
+import type { MapValueOfLinkLines, SelectedDataType, Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
 import type {
     AscendSliceDetail,
@@ -202,7 +202,7 @@ const EmptyJSXElement = (): JSX.Element | null => {
     return <></>;
 };
 
-interface FlowPoint {
+export interface FlowPoint {
     depth: number;
     duration: number;
     id: string;
@@ -210,6 +210,8 @@ interface FlowPoint {
     pid: string;
     tid: string;
     timestamp: number;
+    rankId: string;
+    metaType: string;
 }
 
 interface FlowEvent {
@@ -289,6 +291,24 @@ function isSameUnit(selectedMeta?: SelectedDataType, currentMeta?: ThreadMetaDat
     return Boolean(currentMeta.threadIdList ? currentMeta.threadIdList?.includes(selectedMeta.threadId) : selectedMeta?.threadId === currentMeta.threadId) &&
         selectedMeta.processId === currentMeta.processId &&
         selectedMeta.cardId === currentMeta.cardId;
+}
+
+function setLinkLinesMap(session: Session, flow: FlowEvent): void {
+    const getKey = (point: FlowPoint): string => {
+        const { pid, tid, depth, timestamp } = point;
+        return `${pid}_${tid}_${depth}_${timestamp}`;
+    };
+    const setLinkLinesMap = (lineType: 'from' | 'to'): void => {
+        const mKey = getKey(flow[lineType]);
+        const mVal = (session.mapOfLinkLines.get(mKey) ?? { cat: flow.cat, from: [], to: [], current: flow[lineType] }) as MapValueOfLinkLines;
+        const attr = lineType === 'from' ? 'to' : 'from';
+        if (!mVal[attr].find(item => getKey(item) === getKey(flow[attr]))) {
+            mVal[attr].push(flow[attr]);
+            session.mapOfLinkLines.set(mKey, mVal);
+        }
+    };
+    setLinkLinesMap('from');
+    setLinkLinesMap('to');
 }
 
 export const ThreadUnit = unit<ThreadMetaData>({
@@ -408,10 +428,12 @@ export const ThreadUnit = unit<ThreadMetaData>({
             const raw = await window.request((metadata as ThreadMetaData).dataSource as DataSource, { command: 'unit/flows', params: linkFlow as Record<string, unknown> }) as any;
             const categoryFlowEvents = raw.unitAllFlows as CategoryFlows[] ?? [];
             const newLines: LinkLines = {};
+            session.mapOfLinkLines.clear();
             for (const categoryFlowEvent of categoryFlowEvents) {
                 const cat = categoryFlowEvent.cat;
                 const singleCatLinkLine: LinkLine = [];
                 for (const flow of categoryFlowEvent.flows) {
+                    setLinkLinesMap(session, flow);
                     const singleLine: Record<string, unknown> = {
                         category: flow.cat,
                         cardId: linkFlow.rankId,
@@ -756,12 +778,10 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
             setLoading(false);
             return;
         }
-        const params = {
-            ...slice,
-            ...sorter,
-            ...page,
-            orderBy: sorter.field === 'startTime' ? 'timestamp' : sorter.field,
-        };
+        const orderBy = sorter.field === 'startTime' ? 'timestamp' : sorter.field;
+        const { searchOfSlice, rangeOfLevels } = session.sliceSelection;
+        const paramsOfDepth = searchOfSlice ? { startDepth: rangeOfLevels[0].toString(), endDepth: rangeOfLevels[1].toString() } : {};
+        const params = { ...slice, ...sorter, ...page, ...paramsOfDepth, orderBy };
         try {
             const res = await queryAllSameOperatorsDuration(params);
             const { currentPage, pageSize, sameOperatorsDetails } = res;

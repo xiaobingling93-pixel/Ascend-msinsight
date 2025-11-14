@@ -34,6 +34,7 @@ class Const:
     FRAMEWORK_DIR = 'framework'
     MODULES_DIR = 'modules'
     SERVER_DIR = 'server'
+    SCRIPT_DIR = 'scripts'
     BUILD_DIR = 'build'
     SRC_DIR = 'src'
     MANIFEST_DIR = 'manifest'
@@ -281,6 +282,7 @@ def copy_resource_in_jupyterlab(plugin_path):
                     os.path.join(profiler_path, 'server'))
     shutil.copyfile(os.path.join(PROJECT_PATH, "build", "plugin_install.py"),
                     os.path.join(profiler_path, "plugin_install.py"))
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.SCRIPT_DIR), os.path.join(profiler_path, Const.SCRIPT_DIR))
 
 
 def build_package(version, os_name):
@@ -329,6 +331,7 @@ def build_light_package(version, os_name, is_huaweicloud):
 
     shutil.copyfile(os.path.join(PROJECT_PATH, "build", "plugin_install.py"),
                     os.path.join(profiler_path, "plugin_install.py"))
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.SCRIPT_DIR), os.path.join(profiler_path, Const.SCRIPT_DIR))
 
     result = exec_command(cmd_list, Const.PLATFORM_DIR, 'bin_package')
     if result != 0:

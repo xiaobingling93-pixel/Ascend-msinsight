@@ -91,10 +91,6 @@ def parallel_build():
     if result != 0:
         logging.error('Failed to install dependencies, %s', result)
         return 1
-    result = execute_cmd('lib', os.path.join(MODULES_DIR, 'lib'), [pnpm_cmd, 'build'])
-    if result != 0:
-        logging.error('Failed to build lib, %s', result)
-        return 1
 
     modules = list(MODULES_MAP.keys())
     pool = multiprocessing.Pool(processes=BUILD_PROCESS_COUNT)

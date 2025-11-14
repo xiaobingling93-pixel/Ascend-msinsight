@@ -9,6 +9,7 @@
 #include "WsSessionImpl.h"
 #include "ProjectParserFactory.h"
 #include "DataBaseManager.h"
+#include "DbTraceDataBase.h"
 
 using namespace Dic::Module;
 using namespace Dic::Module::FullDb;

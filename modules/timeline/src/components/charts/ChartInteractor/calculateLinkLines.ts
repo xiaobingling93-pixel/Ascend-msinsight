@@ -73,6 +73,7 @@ export interface LinkLineData {
     sourceY: number;
     targetPos: Array<[x: number, y: number]>;
     offset: number;
+    arrowWidth?: number;
 }
 
 export function calculateLinkLines(rawList: Array<Record<string, unknown>>, session: Session, ctx: CanvasRenderingContext2D): LinkLineData[] {
@@ -88,7 +89,7 @@ export function calculateLinkLines(rawList: Array<Record<string, unknown>>, sess
 
         const [targetX, targetY] = [getWidthWithCache({ timestamp: to.timestamp, cardId: targetCardId, pid: to.pid }, li, session),
             getHeightWithCache(to, targetCardId, category, session)];
-        const [sourceX, sourceY] = [getWidthWithCache({ timestamp: from.timestamp, cardId: sourceCardId, pid: from.pid }, li, session),
+        const [sourceX, sourceY] = [getWidthWithCache({ timestamp: from.timestamp + (from?.duration ?? 0), cardId: sourceCardId, pid: from.pid }, li, session),
             getHeightWithCache(from, sourceCardId, category, session)];
         const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
         const offset = ((targetX - sourceX) / 2);

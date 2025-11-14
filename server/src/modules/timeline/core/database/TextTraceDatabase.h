@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_JSON_TRACE_DATABASE_H
 #define PROFILER_SERVER_JSON_TRACE_DATABASE_H
 
+#include "ClusterDef.h"
 #include "VirtualTraceDatabase.h"
 #include "SliceCacheManager.h"
 #include "SliceAnalyzer.h"
@@ -138,6 +139,9 @@ public:
     bool QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data) override;
     bool QueryByteAlignmentAnalyzerRawData(std::vector<std::pair<std::string, std::string>> &rawData);
 
+    static void ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
+                                                        std::vector<std::pair<std::string, std::string>> rawData);
+
 private:
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
@@ -207,6 +211,9 @@ private:
 
     void GetSearchAllSliceData(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
         uint64_t minTimestamp, std::unique_ptr<SqliteResultSet> &resultSet) const;
+
+    static void AssembleUnitFlowsBody(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
+                                      std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap);
 };
 } // end of namespace Timeline
 // end of namespace Module

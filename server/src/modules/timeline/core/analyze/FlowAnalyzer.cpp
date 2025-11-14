@@ -197,12 +197,7 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
         std::string type = flow.type;
         std::string flowId = flow.flowId;
         if (type == Protocol::LINE_START || flowId != curFlowId) {
-            location.pid = flow.pid;
-            location.tid = flow.tid;
-            location.depth = flow.depth;
-            location.timestamp = flow.timestamp;
-            location.type = type;
-            location.rankId = flow.rankId;
+            location = ComputeLocation(location, flow, type);
             // 连线中 起点对终点是一对多关系，因此每一个新的起点都会对上一个起点进行覆盖
             onePointer = location;
         } else if ((type == Protocol::LINE_END_OPTIONAL || type == Protocol::LINE_END) && flowId == curFlowId) {
@@ -223,20 +218,36 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
             onePointer.type = flow.type;
             onePointer.timestamp = flow.timestamp;
             onePointer.rankId = flow.rankId;
+            onePointer.id = std::to_string(flow.id);
             flowEvent->from.pid = fromPointer.pid;
             flowEvent->from.tid = fromPointer.tid;
             flowEvent->from.depth = fromPointer.depth;
             flowEvent->from.timestamp = fromPointer.timestamp;
             flowEvent->from.rankId = fromPointer.rankId;
+            flowEvent->from.id = fromPointer.id;
             flowEvent->to.pid = flow.pid;
             flowEvent->to.tid = flow.tid;
             flowEvent->to.depth = flow.depth;
             flowEvent->to.timestamp = flow.timestamp;
             flowEvent->to.rankId = flow.rankId;
+            flowEvent->to.id = std::to_string(flow.id);
             flowDetailList.emplace_back(std::move(flowEvent));
         }
         curFlowId = flowId;
     }
+}
+
+Protocol::FlowLocation& FlowAnalyzer::ComputeLocation(Protocol::FlowLocation& location, const FlowPoint& flow,
+                                                      const std::string& type)
+{
+    location.pid = flow.pid;
+    location.tid = flow.tid;
+    location.depth = flow.depth;
+    location.timestamp = flow.timestamp;
+    location.type = type;
+    location.rankId = flow.rankId;
+    location.id = std::to_string(flow.id);
+    return location;
 }
 
 void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVec,

@@ -7,7 +7,6 @@
 #include "CounterEventHelper.h"
 #include "NpuInfoRepo.h"
 #include "Database.h"
-#include "TraceDatabaseHelper.h"
 #include "OverlapAnsRepo.h"
 #include "FullDbEnumUtil.h"
 
@@ -168,65 +167,6 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
     std::string mainSql = GetSystemViewSqlByLayer(requestParams.layer, requestParams.rankId);
     return ExecuteQuery(stmt, mainSql + sql + orderBy + limitSql, searchName, rankId,
                         requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
-}
-
-bool TraceDatabaseHelper::QueryFusibleOpDataForDB(const KernelDetailsParams &params,
-                                                  std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                  const Dic::Module::Timeline::FuseableOpRule &rule,
-                                                  std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
-{
-    int deviceId = StringUtil::StringToInt(params.deviceId);
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query Fusible Operator.", stmt->GetErrorMessage());
-        return false;
-    }
-
-    while (resultSet->Next()) {
-        Protocol::FlowLocation one{};
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.timestamp = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
-        one.type = StringUtil::join(rule.opList, ", ");
-        one.metaType = rule.fusedOp;
-        one.note = rule.note;
-        data.emplace_back(one);
-    }
-
-    return true;
-}
-
-bool TraceDatabaseHelper::QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    uint64_t minTimestamp, uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data)
-{
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for Operator Dispatch data.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::KernelBaseInfo one{};
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.startTime = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
-        data.emplace_back(one);
-    }
-    if (data.size() < threshold) {
-        ServerLog::Error(
-            "Failed to get Operator Dispatch data because the total count should greater than or equal to "
-            + std::to_string(threshold) + " ."
-        );
-        return false;
-    }
-    return true;
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryHostUnitCounter(
@@ -2002,35 +1942,6 @@ std::string TraceDatabaseHelper::GetMsTxEventsSliceDetailSql()
         "domainId AS tid, startNs - minTime.value AS startTime, endNs - startNs AS duration,"
         "depth, MSTX_EVENTS.ROWID AS id "
         "FROM MSTX_EVENTS JOIN minTime ";
-}
-
-void TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
-    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
-    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo)
-{
-    std::map<std::string, CommunicationLargeOperatorInfo> resultMap;
-    for (const auto &singleLargeOp : largeOpInfo) {
-        CommunicationLargeOperatorInfo info;
-        info.name = singleLargeOp.name;
-        resultMap[singleLargeOp.name] = info;
-    }
-    for (const auto &singleSmallOp : smallOpInfo) {
-        if (resultMap.find(singleSmallOp.name) == resultMap.end()) {
-            continue;
-        }
-        CommunicationSmallOperatorInfo smallOpInfo;
-        smallOpInfo.size = singleSmallOp.size;
-        smallOpInfo.transportType = singleSmallOp.transportType;
-        smallOpInfo.linkType = singleSmallOp.linkType;
-        if (singleSmallOp.taskType.find("Memcpy") == 0) {
-            resultMap[singleSmallOp.name].memcpyTasks.emplace_back(smallOpInfo);
-        } else {
-            resultMap[singleSmallOp.name].reduceInlineTasks.emplace_back(smallOpInfo);
-        }
-    }
-    for (const auto &item : resultMap) {
-        result.emplace_back(item.second);
-    }
 }
 
 void TraceDatabaseHelper::ComputeTree(std::vector<std::unique_ptr<Protocol::UnitTrack>>& metaData,

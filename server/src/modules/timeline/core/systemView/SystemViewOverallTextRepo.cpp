@@ -176,9 +176,9 @@ std::vector<OverallTmpInfo> SystemViewOverallTextRepo::QueryKernelEventsForSyste
             kernelEvent.flowStartTime = it->second;
         }
         kernelEvent.duration = resultSet->GetDouble("duration");
-        kernelEvent.aicoreTime = stod(resultSet->GetString("aicore_time_us_"));
+        kernelEvent.aicoreTime = NumberUtil::StringToDouble(resultSet->GetString("aicore_time_us_"));
         if (database->hasMacTime) {
-            kernelEvent.macTime = stod(resultSet->GetString("mac_time_us_"));
+            kernelEvent.macTime = NumberUtil::StringToDouble(resultSet->GetString("mac_time_us_"));
         }
         kernelEvents.push_back(kernelEvent);
     }

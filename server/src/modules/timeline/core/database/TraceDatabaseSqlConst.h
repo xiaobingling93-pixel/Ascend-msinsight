@@ -6,6 +6,8 @@
 #define PROFILER_SERVER_TRACEDATABASESQLCONST_H
 
 #include <string>
+#include "TableDefs.h"
+#include "TraceDatabaseDef.h"
 namespace Dic::Module::Timeline {
 const std::string TEMP_FWDBWD_FLOW_TABLE = "tmpFwdbwdFlow";
 const std::string CREATE_TEMP_FWDBWD_FLOW_TABLE_TEXT_SQL =

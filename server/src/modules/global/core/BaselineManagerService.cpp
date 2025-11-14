@@ -4,13 +4,10 @@
 #include <algorithm>
 #include "ProjectExplorerManager.h"
 #include "ProjectParserFactory.h"
-#include "DataBaseManager.h"
 #include "BaselineManager.h"
+#include "DataBaseManager.h"
 #include "SourceFileParser.h"
-#include "ClusterFileParser.h"
 #include "ParallelStrategyAlgorithmManager.h"
-#include "MegatronParallelStrategyAlgorithm.h"
-#include "MindSpeedParallelStrategyAlgorithm.h"
 #include "BaselineManagerService.h"
 using namespace Dic::Module::Summary;
 namespace Dic {

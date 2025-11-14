@@ -12,7 +12,7 @@ import { getTextParser } from '../TimelineAxis';
 import { TIME_LINE_AXIS_HEIGHT_PX } from '../../ChartContainer/ChartContainer';
 import type { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { hashToNumber } from '../../../utils/colorUtils';
-import { LinkLine, UnitHeight } from '../../../entity/insight';
+import { ChartDesc, LinkLine, UnitHeight } from '../../../entity/insight';
 import type { InsightUnit } from '../../../entity/insight';
 import type { ThreadMetaData } from '../../../entity/data';
 import { colorPalette } from '../../../insight/units/utils';
@@ -21,6 +21,7 @@ import { forEach, groupBy, isNil, keys } from 'lodash';
 import { calculateLinkLines, LinkLineData } from './calculateLinkLines';
 import { ThemeName } from '@insight/lib/theme';
 import { getClassNameByMetadata } from '../../ChartContainer/Units/Units';
+import type { ChartType } from '../../../entity/chart';
 
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
@@ -275,7 +276,7 @@ const drawMaskRange = ({
         return;
     }
     const elementNodes = Array.of(...elements);
-    if (!checkIsSliceSelection(session)) {
+    if (!checkIsSliceMode(session)) {
         elementNodes.forEach(element => {
             const rect = element.getBoundingClientRect();
             const scrollContainer = getParentNodeByClassName(element, 'laneWrapper');
@@ -291,8 +292,9 @@ const drawMaskRange = ({
         const element = getTargetElement(session, elementNodes);
         if (!element) { return; }
         const elementRect = element.getBoundingClientRect();
-        const { startY, height: rectHeight } = getSelectionStartPos(elementRect, session);
-        if (startY > elementRect.bottom) { return; }
+        const startY = getSelectionStartPos(elementRect, session);
+        const rectHeight = calcHeightOfSlice(session);
+        if (startY > elementRect.bottom - PAGE_PADDING) { return; }
         const maskRangeTemp = maskRange as number[];
         ctx.clearRect(maskRangeTemp[0], startY, maskRangeTemp[1] - maskRangeTemp[0], rectHeight);
     }
@@ -302,10 +304,19 @@ const drawMaskRange = ({
 /**
  * 校验是否为算子框选模式
  * @param session
+ * @param checkIsAllowed
  */
-export function checkIsSliceSelection(session: Session): boolean {
+export function checkIsSliceMode(session: Session): boolean {
     const { active, targetUnit } = session.sliceSelection;
     return active && targetUnit?.name === 'Thread';
+}
+
+/**
+ * 检验算子框选是否有效框选
+ * @param session
+ */
+export function checkIsValidSlice(session: Session): boolean {
+    return checkIsSliceMode(session) && session.sliceSelection.rangeOfLevels[1] > -1;
 }
 
 /**
@@ -355,13 +366,42 @@ export function calcLevelsOfSlice(posY: number, session: Session): void {
         session.sliceSelection.rangeOfLevels = [0, -1];
         return;
     }
+    const rowHeight = getUnitRowHeight(session);
+    if (!rowHeight) {
+        return;
+    }
     // 最大深度
-    const maxLevel = (bottom - top) / UnitHeight.STANDARD - 1;
-    const startLevel = Math.floor((startActualY - top) / UnitHeight.STANDARD);
-    const endLevel = Math.min(Math.floor((Math.min(bottom, endActualY) - top) / UnitHeight.STANDARD), maxLevel);
+    const maxLevel = (bottom - top) / rowHeight - 1;
+    const startLevel = Math.floor((startActualY - top) / rowHeight);
+    const endLevel = Math.min(Math.floor((Math.min(bottom, endActualY) - top) / rowHeight), maxLevel);
     // 记录框选覆盖的层级
     session.sliceSelection.rangeOfLevels = [startLevel, endLevel];
-    session.sliceSelection.height = (endLevel - startLevel + 1) * UnitHeight.STANDARD;
+}
+
+/**
+ * 获取展开/收起算子的高度
+ * @param session
+ */
+function getUnitRowHeight(session: Session): number {
+    const targetUnit = session.sliceSelection.targetUnit;
+    const maxDepth = ((targetUnit?.chart as ChartDesc<ChartType>)?.config as any)?.maxDepth ?? 0;
+    if (!maxDepth) {
+        return 0;
+    }
+    return targetUnit?.isExpanded ? UnitHeight.STANDARD : UnitHeight.COLL / maxDepth;
+}
+
+/**
+ * 计算框选的算子在画板的高度
+ * @param session
+ */
+export function calcHeightOfSlice(session: Session): number {
+    const { rangeOfLevels: [startLevel, endLevel] } = session.sliceSelection;
+    const rowHeight = getUnitRowHeight(session);
+    if (endLevel === -1 || endLevel === undefined || rowHeight === 0) {
+        return 0;
+    }
+    return (endLevel - startLevel + 1) * rowHeight;
 }
 
 /**
@@ -369,10 +409,10 @@ export function calcLevelsOfSlice(posY: number, session: Session): void {
  * @param elementRect
  * @param session
  */
-function getSelectionStartPos(elementRect: DOMRect, session: Session): { startY: number; height: number } {
-    const { rangeOfLevels, height } = session.sliceSelection;
-    const startY = elementRect.top - PAGE_PADDING + UnitHeight.STANDARD * rangeOfLevels[0];
-    return { startY, height };
+function getSelectionStartPos(elementRect: DOMRect, session: Session): number {
+    const { rangeOfLevels } = session.sliceSelection;
+    const rowHeight = getUnitRowHeight(session);
+    return elementRect.top - PAGE_PADDING + rowHeight * rangeOfLevels[0];
 }
 
 export interface DrawArgs {
@@ -404,7 +444,7 @@ export const drawOnMove = ({ interactorMouseState, ...args }: DrawArgs): void =>
     ctx.restore();
 
     const { width, height, xReverseScaleRef, xScale, selectedRange } = args;
-    if (checkIsSliceSelection(session)) {
+    if (checkIsSliceMode(session)) {
         drawRectOfSlice({ interactorMouseState, ...args });
         return;
     }
@@ -562,7 +602,7 @@ export const draw = (props: DrawCanvasArgs): void => {
     }
     // clear all
     ctx.clearRect(0, 0, width, height);
-    if (checkIsSliceSelection(session) && session.sliceSelection.rangeOfLevels[1] === -1) {
+    if (checkIsSliceMode(session) && session.sliceSelection.rangeOfLevels[1] === -1) {
         return;
     }
     if (selectedRange !== undefined) {

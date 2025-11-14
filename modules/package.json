@@ -6,9 +6,6 @@
     "scripts": {
         "buildModuleWin": "pnpm install && pnpm buildTimelineWin && pnpm buildMemoryWin && pnpm buildClusterWin && pnpm buildOperatorWin && pnpm buildComputeWin && pnpm buildJupyterWin",
         "buildModuleLinux": "pnpm buildTimelineLinux && pnpm buildMemoryLinux && pnpm buildClusterLinux && pnpm buildOperatorLinux && pnpm buildComputeLinux && pnpm buildJupyterLinux",
-        "cleanLibWin": "cd .\\lib && pnpm cleanWin",
-        "buildLibWin": "cd .\\lib && pnpm build",
-        "buildLibLinux": "cd ./lib && pnpm build",
         "buildClusterWin": "cd .\\cluster && pnpm build && pnpm publishWin",
         "buildClusterLinux": "cd ./cluster && pnpm build && pnpm publishLinux",
         "buildMemoryWin": "cd .\\memory && pnpm build && pnpm publishWin",

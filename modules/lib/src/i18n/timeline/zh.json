@@ -52,7 +52,10 @@
       "Alias": "别名",
       "Merge Units": "合并泳道",
       "Unmerge Units": "取消合并泳道",
-      "SliceSelectionMode": "算子框选模式"
+      "SliceSelectionMode": "算子框选模式",
+      "JumpToLinkSlice": "跳转到连线算子",
+      "From": "来源",
+      "To": "目标"
     },
     "sliceDetail": {
       "Slice Detail": "选中详情",

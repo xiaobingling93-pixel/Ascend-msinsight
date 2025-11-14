@@ -6,7 +6,6 @@
 #ifndef PROFILER_SERVER_DBTRACEDATABASE_H
 #define PROFILER_SERVER_DBTRACEDATABASE_H
 
-#include <TimelineProtocolRequest.h>
 #include "VirtualTraceDatabase.h"
 #include "TraceDatabaseDef.h"
 #include "map"
@@ -169,6 +168,30 @@ public:
     bool QueryFwdBwdFromMstx(std::vector<Protocol::ThreadTraces> &traceList) override;
     bool QueryP2PCommunicationOpHaveConnectionId(std::vector<Protocol::ThreadTraces> &traceList) override;
 
+    static std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, const std::string &rankId,
+        const std::string &path);
+
+    static std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase, const std::string &order,
+                                                        const std::string &orderByField, const std::string &rankId);
+
+    static std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, const std::string& rankId);
+
+    static std::string GetSearchCountWithLockSql(const SearchCountParams &params,
+                                                     const std::vector<TrackQuery> &trackQuery);
+
+    static bool QueryFusibleOpDataForDB(const KernelDetailsParams &params,
+                                        std::unique_ptr<SqlitePreparedStatement> &stmt, const FuseableOpRule &rule,
+                                        std::vector<FlowLocation> &data, uint64_t minTimestamp);
+
+    static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t minTimestamp,
+                                             uint64_t threshold, std::vector<KernelBaseInfo> &data);
+
+    static void ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
+        std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
+        std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
+
+    static std::string GetKernelDetailSql(const KernelDetailsParams &requestParams);
+
 private:
     const uint32_t cacheSize = 5000;
     bool initStmt = false;
@@ -247,6 +270,14 @@ private:
     void AddColumns2Table(const bool isExist, const std::string &tableName, const std::string &columnName,
                           const std::string &columnType);
     static std::map<std::string, std::map<std::string, std::string>> stringsCache;
+    static std::string GetSingleSearchCountLockRangeSql(const SearchCountParams &params, const TrackQuery &item);
+    static std::string GetKernelDetailFilterSqlWithHCCL(const KernelDetailsParams &requestParams);
+
+    static std::string GetKernelDetailFilterSqlWithoutHCCL(const KernelDetailsParams &requestParams);
+
+    static std::string GetKernelDetailSqlWithHCCL(const KernelDetailsParams &requestParams);
+
+    static std::string GetKernelDetailSqlWithoutHCCL(const KernelDetailsParams &requestParams);
 };
 }
 

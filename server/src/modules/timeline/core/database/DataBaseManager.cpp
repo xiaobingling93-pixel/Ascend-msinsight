@@ -402,6 +402,7 @@ DataType DataBaseManager::GetDataType()
 }
 void DataBaseManager::SetDataType(DataType type)
 {
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     dataType = type;
 }
 
@@ -502,6 +503,7 @@ std::vector<FullDb::LeaksMemoryDatabase *> DataBaseManager::GetAllLeaksMemoryDat
 
 std::string DataBaseManager::GetAnyTraceDatabaseId()
 {
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (traceDatabaseMap.empty()) {
         return "";
     }

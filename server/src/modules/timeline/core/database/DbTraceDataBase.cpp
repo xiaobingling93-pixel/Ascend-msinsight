@@ -1,5 +1,6 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 #include "DbTraceDataBase.h"
+#include "TrackInfoManager.h"
 #include "pch.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
@@ -10,7 +11,6 @@
 #include "CollectionTimeService.h"
 #include "MetaDataParser.h"
 #include "MetaDataCacheManager.h"
-#include "DbKernelDetailHelper.h"
 #include "CounterEventHelper.h"
 
 namespace Dic::Module::FullDb {
@@ -123,7 +123,7 @@ uint32_t DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams
 {
     uint32_t result = 0;
     const std::string &sql =
-        TraceDatabaseHelper::GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase, params.rankId);
+        GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase, params.rankId);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query slice name count failed!.");
@@ -149,7 +149,7 @@ uint32_t DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams
     if (trackQuery.empty()) {
         return SearchSliceNameCount(params);
     }
-    std::string sql = TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQuery);
+    std::string sql = GetSearchCountWithLockSql(params, trackQuery);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query slice name count failed!.");
@@ -193,7 +193,7 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
     Protocol::SearchSliceBody &responseBody)
 {
     std::string sql =
-        TraceDatabaseHelper::GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase, responseBody.rankId, path);
+        GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase, responseBody.rankId, path);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query slice name failed!.");
@@ -353,7 +353,7 @@ bool DbTraceDataBase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICore
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
     Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = DbKernelDetailHelper::GetKernelDetailSql(requestParams);
+    std::string sql = GetKernelDetailSql(requestParams);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         Server::ServerLog::Error("Fail to prepare sql to query kernel detail data.");
@@ -1686,7 +1686,7 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
 {
     uint64_t count = 0;
     uint64_t offset = (params.current - 1) * params.pageSize;
-    const std::string &sql = TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(params.isMatchExact, params.isMatchCase,
+    const std::string &sql = GetSearchAllSlicesDetailsSql(params.isMatchExact, params.isMatchCase,
         params.order, params.orderBy, params.rankId);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -1777,169 +1777,6 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     return true;
 }
 
-// LCOV_EXCL_BR_START
-bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
-    std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
-{
-    if (!CheckTableExist(TABLE_API)) {
-        ServerLog::Warn("The PYTORCH_API table isn't exist.");
-        return false;
-    }
-    std::string sql = TraceDatabaseSqlConst::QueryAffinityOptimizerDbSql(optimizers, params.orderBy, params.order);
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for Query Affinity Optimizer by DB.", sqlite3_errmsg(db));
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for Query Affinity Optimizer by DB.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::ThreadTraces one{};
-        one.id = resultSet->GetString("id");
-        one.startTime = resultSet->GetUint64("startTime");
-        one.name = resultSet->GetString("originOptimizer");
-        one.duration = resultSet->GetUint64("duration");
-        one.threadId = resultSet->GetString("tid");
-        one.pid = resultSet->GetString("pid");
-        one.depth = resultSet->GetUint64("depth");
-        data.emplace_back(one);
-    }
-    return true;
-}
-// LCOV_EXCL_BR_STOP
-bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
-    const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
-    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
-{
-    std::string sql = TraceDatabaseSqlConst::GenerateAICpuQueryDbSql(replace, params, dataType);
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for AICpuOpCanBeOptimized.");
-        return false;
-    }
-    int deviceId = StringUtil::StringToInt(params.deviceId);
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for AICpuOpCanBeOptimized.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::KernelBaseInfo one{};
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.type = resultSet->GetString("type");
-        one.startTime = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
-        one.inputType = resultSet->GetString("input");
-        one.outputType = resultSet->GetString("output");
-        data.emplace_back(one);
-    }
-    return true;
-}
-
-// LCOV_EXCL_BR_START
-bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
-    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
-{
-    auto stmt = CreatPreparedStatement(TraceDatabaseSqlConst::GenerateAclnnQueryDbSql(params));
-    if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
-        return false;
-    }
-    int deviceId = StringUtil::StringToInt(params.deviceId);
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, threshold);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::KernelBaseInfo one{};
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.startTime = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
-        data.emplace_back(one);
-    }
-    return true;
-}
-// LCOV_EXCL_BR_STOP
-bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
-    const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
-    std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
-{
-    auto stmt = CreatPreparedStatement(QUERY_AFFINITY_API_DB_SQL);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for Affinity API.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for Affinity API data.", stmt->GetErrorMessage());
-        return false;
-    }
-    std::map<uint64_t, std::vector<Protocol::FlowLocation>> filterData;
-    while (resultSet->Next()) {
-        Protocol::FlowLocation one{};
-        uint64_t trackId = resultSet->GetUint64("pid");
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.timestamp = resultSet->GetUint64("startTime");
-        // Protocol::FlowLocation数据结构中只定义start time和duration，绝大多数场景下也是只用上述两个字段，
-        // 此处需要比较start time和end time，是个特例，在不修改数据结构的情况下，duration中实际存的是end time，
-        // 过滤顶层API后，在根据end time和start time求出duration
-        one.duration = resultSet->GetUint64("endTime");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
-
-        if (data.count(trackId) == 0) {
-            filterData.emplace(trackId, std::vector<Protocol::FlowLocation>{});
-            data.emplace(trackId, std::vector<Protocol::FlowLocation>{});
-            indexes.emplace(trackId, std::vector<uint32_t>{});
-        }
-
-        filterData[trackId].emplace_back(one);
-    }
-    for (const auto &item : filterData) {
-        std::vector<Protocol::FlowLocation> originData = item.second;
-        TraceDatabaseHelper::FilterTopLevelApi(originData, pattern, data[item.first], indexes[item.first]);
-    }
-
-    return true;
-}
-// LCOV_EXCL_BR_START
-bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
-    std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
-{
-    std::string sql = TraceDatabaseSqlConst::GenerateFuseableOpFilterDbSql(params, rule);
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query Fusible Operator.");
-        return false;
-    }
-    return TraceDatabaseHelper::QueryFusibleOpDataForDB(params, stmt, rule, data, minTimestamp);
-}
-
-bool DbTraceDataBase::QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
-    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold)
-{
-    auto stmt = CreatPreparedStatement(TraceDatabaseSqlConst::GenerateOperatorDispatchQueryDbSql(params));
-    if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for Operator Dispatch data.");
-        return false;
-    }
-    return TraceDatabaseHelper::QueryOpDispatchDataForDB(stmt, minTimestamp, threshold, data);
-}
-
 // LCOV_EXCL_BR_STOP
 bool DbTraceDataBase::QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
     uint64_t minTimestamp)
@@ -1988,94 +1825,6 @@ std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metad
 void DbTraceDataBase::Reset()
 {
     stringsCache.clear();
-}
-
-bool DbTraceDataBase::QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset,
-    const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &fwdBwdData)
-{
-    std::vector<std::string> tableList = {TABLE_API, TABLE_CONNECTION_CATS, TABLE_CONNECTION_IDS, TABLE_ENUM_API_TYPE};
-    if (!CheckTablesExist(tableList)) {
-        ServerLog::Error("Failed to check dependent table for query fwdbwd data in the DB scenario.");
-        return false;
-    }
-    std::unique_lock<std::recursive_mutex> lock(mutex);
-    if (!ExecSql(CREATE_TEMP_FWDBWD_FLOW_TABLE_DB_SQL)) {
-        ServerLog::Error("Failed to create temp fwdbwd table in the DB scenario.");
-        return false;
-    }
-    auto stmt = CreatPreparedStatement(QUERY_FWDBWD_FLOW_DATA_SQL);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query fwd/bwd data by flow in the DB scenario.");
-        return false;
-    }
-    return TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::move(stmt), rankId, offset, range, fwdBwdData);
-}
-
-bool DbTraceDataBase::QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
-    const ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData)
-{
-    auto stmt = CreatPreparedStatement(QUERY_P2P_COMMUNICATION_OP_DB_SQL);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query p2p communication op data in the DB scenario.");
-        return false;
-    }
-    return TraceDatabaseHelper::ExecuteQueryP2POpData(std::move(stmt), rankId, offset, range, p2pOpData);
-}
-
-bool DbTraceDataBase::QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data)
-{
-    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> largeOpInfo;
-    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> smallOpInfo;
-    QueryByteAlignmentAnalyzerRawData(largeOpInfo, smallOpInfo);
-    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(data, largeOpInfo, smallOpInfo);
-    return true;
-}
-
-bool DbTraceDataBase::QueryByteAlignmentAnalyzerRawData(
-    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
-    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo)
-{
-    std::string sqlForLargeOp = QUERY_BYTE_ALIGNMENT_ANALYZER_LARGE_OPERATOR_FOR_DB_SQL;
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sqlForLargeOp.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for query byte alignment analyzer large operator data. Error: ",
-                         sqlite3_errmsg(db));
-        return false;
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        ByteAlignmentAnalyzerLargeOperatorInfo item;
-        item.name = sqlite3_column_string(stmt, col++);
-        largeOpInfo.emplace_back(item);
-    }
-    sqlite3_finalize(stmt);
-
-    std::string sqlForSmallOp = QUERY_BYTE_ALIGNMENT_ANALYZER_SMALL_OPERATOR_FOR_DB_SQL;
-    sqlite3_stmt *stmt2 = nullptr;
-    int result2 = sqlite3_prepare_v2(db, sqlForSmallOp.c_str(), -1, &stmt2, nullptr);
-    if (result2 != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for query byte alignment analyzer small operator data. Error: ",
-                         sqlite3_errmsg(db));
-        return false;
-    }
-    while (sqlite3_step(stmt2) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        ByteAlignmentAnalyzerSmallOperatorInfo item;
-        item.name = sqlite3_column_string(stmt2, col++);
-        item.taskType = sqlite3_column_string(stmt2, col++);
-        int64_t tempSize = sqlite3_column_int64(stmt2, col++);
-        if (tempSize < 0) {
-            item.size = 0;
-        } else {
-            item.size = static_cast<uint64_t>(tempSize);
-        }
-        item.transportType = sqlite3_column_string(stmt2, col++);
-        item.linkType = sqlite3_column_string(stmt2, col++);
-        smallOpInfo.emplace_back(item);
-    }
-    sqlite3_finalize(stmt2);
-    return true;
 }
 
 }

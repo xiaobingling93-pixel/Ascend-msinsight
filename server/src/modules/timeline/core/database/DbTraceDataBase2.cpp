@@ -117,66 +117,6 @@ void DbTraceDataBase::ProcessHostCounterEventsMetadata(const std::string &fileId
     }
 }
 
-bool DbTraceDataBase::QueryFwdBwdFromMstx(std::vector<Protocol::ThreadTraces> &traceList)
-{
-    std::string sql = "Select name, startNs, endNs, type from " + TABLE_STEP_TASK_INFO  + " order by startNs";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query fwd/bwd data from mstx in the DB scenario.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query fwd/bwd data from mstx.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        std::string name = resultSet->GetString("name");
-        uint64_t startNs = resultSet->GetUint64("startNs");
-        uint64_t endNs = resultSet->GetUint64("endNs");
-        std::string type = std::to_string(resultSet->GetUint64("type"));
-        Protocol::ThreadTraces trace = {name, endNs - startNs, startNs, endNs, 0, LANE_FP_BP, "", "", type};
-        traceList.push_back(trace);
-    }
-    return true;
-}
-
-bool DbTraceDataBase::QueryP2PCommunicationOpHaveConnectionId(std::vector<Protocol::ThreadTraces> &traceList)
-{
-    std::string sql = "select str.value as name, op.startNs, op.endNs, op.opConnectionId from " +
-        TABLE_COMMUNICATION_OP + " as op LEFT JOIN " + TABLE_STRING_IDS +
-        " as str ON str.id = op.opName WHERE LOWER(name) LIKE '%send%' OR LOWER(name) LIKE '%receive%'";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query communication op data "
-                         "have connection id in the DB scenario.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query communication op data "
-                         "have connection id in the DB scenario.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::ThreadTraces trace;
-        trace.name = resultSet->GetString("name");
-        trace.startTime = resultSet->GetUint64("startNs");
-        trace.endTime = resultSet->GetUint64("endNs");
-        trace.duration = trace.endTime - trace.startTime;
-        if (StringUtil::StartWith(trace.name, "hcom_send")) {
-            trace.cname = MARKER_SEND;
-        } else if (StringUtil::StartWith(trace.name, "hcom_receive")) {
-            trace.cname = MARKER_RECV;
-        } else {
-            trace.cname = MARKER_BATCH_SEND_RECV;
-        }
-        trace.opConnectionId = resultSet->GetString("opConnectionId");
-        traceList.push_back(trace);
-    }
-    return true;
-}
-
 void DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const std::pair<std::string, std::string> &tableAndSql,
                                                     uint64_t minTimestamp, const std::string &connectionId, const std::vector<uint64_t> &deviceIdList,
                                                     std::vector<FlowLocation> &flowLocations)

@@ -113,20 +113,21 @@ export interface DataBlock {
     depth: number;
     height?: number;
     rankId?: string;
-};
+    duration?: number;
+}
 export interface FlowEvent {
     category: string;
     from: DataBlock;
     to: DataBlock;
     cardId: string;
-};
+}
 interface CategoryEvents {
     flowDetailList: Array<{
         category: string;
         from: DataBlock;
         to: DataBlock;
     }>;
-};
+}
 
 type FetchLinkLines = (session: Session) => Promise<CategoryEvents['flowDetailList']>;
 type UseFetchLinkLines = Map<string, FetchLinkLines>;

@@ -6,6 +6,7 @@ import type React from 'react';
 import { Session } from '../entity/session';
 import { InteractorMouseState } from '../components/charts/ChartInteractor/ChartInteractor';
 import type { TFunction } from 'i18next';
+import { ContextMenuItem } from '../components/ContextMenu';
 
 type ActionFn = (
     session: Session,
@@ -56,7 +57,8 @@ export type ActionName =
   | 'generateCurveByBlock'
   | 'generateBubbleCurveByBlock'
   | 'createFlagMark'
-  | 'sliceSelection';
+  | 'sliceSelection'
+  | 'jumpToLinkSlice';
 
 export interface Action {
     name: ActionName;
@@ -69,4 +71,7 @@ export interface Action {
     ) => boolean;
     once?: boolean;
     checked?: (session: Session) => boolean;
+    subMode?: boolean;
+    subMenus?: (session: Session) => ContextMenuItem[];
+    parentMenuKey?: string;
 }

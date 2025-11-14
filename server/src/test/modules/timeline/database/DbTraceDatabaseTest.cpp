@@ -1402,7 +1402,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenPython)
     params.isMatchCase = true;
     params.isMatchExact = true;
     params.rankId = "ll Host";
-    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    std::string sql = DbTraceDataBase::GetSearchCountWithLockSql(params, trackQueryVec);
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like ?) SELECT count(1) FROM (SELECT name from "
         "PYTORCH_API WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) api join ids on id = api.name ");
 }
@@ -1419,7 +1419,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenCann)
     params.isMatchCase = true;
     params.isMatchExact = false;
     params.rankId = "ll Host";
-    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    std::string sql = DbTraceDataBase::GetSearchCountWithLockSql(params, trackQueryVec);
     EXPECT_EQ(sql,
         "with ids as (select id from STRING_IDS where value like '%'||?||'%') SELECT count(1) FROM (SELECT name from "
         "CANN_API WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= ?) cann join ids on id = cann.name ");
@@ -1437,7 +1437,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenMstx)
     params.isMatchCase = false;
     params.isMatchExact = false;
     params.rankId = "ll Host";
-    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    std::string sql = DbTraceDataBase::GetSearchCountWithLockSql(params, trackQueryVec);
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT count(1) "
         "FROM (SELECT message from MSTX_EVENTS WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) mstx "
         "join ids on id = mstx.message ");
@@ -1455,7 +1455,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenOsrt)
     params.isMatchCase = false;
     params.isMatchExact = false;
     params.rankId = "ll Host";
-    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    std::string sql = DbTraceDataBase::GetSearchCountWithLockSql(params, trackQueryVec);
     EXPECT_EQ(sql,
         "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) "
         "SELECT count(1) FROM (SELECT name from OSRT_API WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) osrt "
@@ -1472,7 +1472,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHardWare)
     trackQueryVec.emplace_back(item);
     params.isMatchCase = false;
     params.isMatchExact = false;
-    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    std::string sql = DbTraceDataBase::GetSearchCountWithLockSql(params, trackQueryVec);
     EXPECT_EQ(sql,
         "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT count(1) FROM "
         "(SELECT coalesce(c.name, m.message, s.name, main.taskType) as name FROM TASK main  left join "
@@ -1493,7 +1493,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHccl)
     trackQueryVec.emplace_back(item);
     params.isMatchCase = false;
     params.isMatchExact = false;
-    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    std::string sql = DbTraceDataBase::GetSearchCountWithLockSql(params, trackQueryVec);
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT count(1) "
         "FROM (SELECT opName as name from COMMUNICATION_OP WHERE groupName = ? AND startNs >= ? AND endNs "
         "<= ?) op join ids on id = op.name ");
@@ -1527,7 +1527,7 @@ TEST_F(DbTraceDatabaseTest, ProcessByteAlignmentAnalyzerDataForDbTest)
         {"hcom3", "Memcpy", 2, "SDMA", "ON_CHIP"}, {"hcom1", "Memcpy", 2, "SDMA", "ON_CHIP"},
         {"hcom1", "Reduce_Inline", 2, "SDMA", "ON_CHIP"}, {"hcom2", "Memcpy", 2, "SDMA", "ON_CHIP"}};
     std::vector<Dic::Module::CommunicationLargeOperatorInfo> result;
-    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(result, largeOpInfo, smallOpInfo);
+    DbTraceDataBase::ProcessByteAlignmentAnalyzerDataForDb(result, largeOpInfo, smallOpInfo);
     ASSERT_EQ(result.size(), 2); // 2
     ASSERT_EQ(result[0].memcpyTasks.size(), 1);
     ASSERT_EQ(result[0].reduceInlineTasks.size(), 1);

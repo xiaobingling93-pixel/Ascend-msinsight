@@ -36,3 +36,4 @@ export { actionSetCardAlias } from './actionSetCardAlias';
 export { actionParseCardsOfRelatedGroup } from './actionParseCardsOfRelatedGroup';
 export { actionMergeUnits, actionUnmergeUnits } from './actionMergeUnits';
 export { actionFlagMarkCreation } from './actionFlagMarkCreation';
+export { actionJumpToLinkSlice } from './actionJumpToLinkSlice';

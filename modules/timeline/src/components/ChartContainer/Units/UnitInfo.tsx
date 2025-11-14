@@ -39,7 +39,6 @@ import { useComplexMouseEvent } from './mouseEvent';
 import { CardMetaData, ThreadMetaData } from '../../../entity/data';
 import { getTimeOffset, bigSubtract } from '../../../insight/units/utils';
 import connector from '../../../connection/index';
-import { checkIsSliceSelection } from '../../charts/ChartInteractor/draw';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -573,14 +572,17 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     };
 
     const selectedUnitChanged = (): void => {
-        if (!(checkIsSliceSelection(session) && session.sliceSelection.targetUnit)) {
+        if (!session.sliceSelection.active) {
             return;
         }
         const comparisonMetadata = unit.metadata as ThreadMetaData;
         const referenceMetadata = session.sliceSelection.targetUnit?.metadata as ThreadMetaData;
-        if (!checkIsSameUnit(referenceMetadata, comparisonMetadata)) {
+        if (unit.name !== 'Thread' || !checkIsSameUnit(referenceMetadata, comparisonMetadata)) {
             session.selectedRange = undefined;
             session.sliceSelection.targetUnit = null;
+        }
+        if (unit.name === 'Thread' && !session.sliceSelection.targetUnit) {
+            session.sliceSelection.targetUnit = unit as InsightUnit;
         }
     };
 
@@ -591,8 +593,8 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         }
         isClickDownRef.current = false;
         selectSelf();
-        selectedUnitChanged();
         onExpand(unit);
+        selectedUnitChanged();
     };
     const onMouseRight = (): void => {
         // 不是在此泳道触发的mousedown，则不触发点击事件

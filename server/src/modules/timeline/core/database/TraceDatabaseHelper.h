@@ -78,11 +78,6 @@ static std::unique_ptr<SqliteResultSet> QueryDeviceUnitCounter(std::unique_ptr<S
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                             const Protocol::SystemViewParams &requestParams,
                                                             const std::string& rankId);
-static bool QueryFusibleOpDataForDB(const KernelDetailsParams &params,
-                                    std::unique_ptr<SqlitePreparedStatement> &stmt, const FuseableOpRule &rule,
-                                    std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp);
-static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t minTimestamp,
-                                     uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data);
 
 static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(const std::string& rankId, uint64_t minTimestamp,
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
@@ -108,21 +103,14 @@ static std::string GetSearchSliceNameWithLockRangeSql(const SearchSliceParams &p
 static void SearchSliceNameWithLockRangeBindStmt(const SearchSliceParams &params,
     const std::vector<TrackQuery> &trackQuery, std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &path,
     const std::string &deviceId);
-static std::string GetSearchCountWithLockSql(const SearchCountParams &params,
-    const std::vector<TrackQuery> &trackQuery);
-static void SearchCountWithLockRangeBindStmt(const SearchCountParams &params, const std::vector<TrackQuery> &trackQuery,
+
+    static void SearchCountWithLockRangeBindStmt(const SearchCountParams &params, const std::vector<TrackQuery> &trackQuery,
     std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &deviceId);
-static std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
-static std::string GetComOpSliceDetailsSql(const std::string &rankId);
+
+    static std::string GetComOpSliceDetailsSql(const std::string &rankId);
 static std::string GetMsTxEventsSliceDetailSql();
 
-static std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase, const std::string &order,
-    const std::string &orderByField, const std::string &rankId);
-
-static std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
-    const std::string &path);
-
-static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(const Protocol::UnitThreadsParams &requestParams,
+    static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(const Protocol::UnitThreadsParams &requestParams,
         const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
 {
     std::vector<Protocol::SimpleSlice> nRows;
@@ -269,9 +257,6 @@ static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePrepared
     return true;
 };
 
-static void ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
-    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
-    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
 static void ComputeTree(std::vector<std::unique_ptr<Protocol::UnitTrack>>& metaData, std::vector<Process>& processes,
                         std::vector<std::unique_ptr<Protocol::UnitTrack>>& tempMetaData);
 
@@ -309,8 +294,6 @@ private:
     static std::string GetSingleSearchNameWithLockRangeSql(const std::string &path, const TrackQuery &singleQuery);
 
     static std::string GetSingleLockRangeSql(const TrackQuery &item);
-
-    static std::string GetSingleSearchCountLockRangeSql(const SearchCountParams &params, const TrackQuery &item);
 
     static void BindSingleTrackStmt(const SearchCountParams &params, std::unique_ptr<SqlitePreparedStatement> &stmt,
         const std::string &deviceId, const TrackQuery &item);

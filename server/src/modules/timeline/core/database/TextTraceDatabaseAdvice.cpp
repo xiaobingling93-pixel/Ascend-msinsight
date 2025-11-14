@@ -1,15 +1,18 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
-#include "TextTraceDatabaseHelper.h"
+
+#include "TrackInfoManager.h"
+#include "TraceTime.h"
+#include "TraceDatabaseSqlConst.h"
 #include "ServerLog.h"
-#include "NumberUtil.h"
-#include "JsonUtil.h"
+#include "TextTraceDatabase.h"
 
 namespace Dic::Module::Timeline {
-using namespace Server;
+using namespace Dic::Server;
+using namespace Dic::Protocol;
 
-void TextTraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(
+void TextTraceDatabase::ProcessByteAlignmentAnalyzerDataForText(
     std::vector<CommunicationLargeOperatorInfo> &result, std::vector<std::pair<std::string, std::string>> rawData)
 {
     bool hasOneHcom = false;
@@ -54,7 +57,7 @@ void TextTraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(
     result.push_back(op);
 }
 
-void TextTraceDatabaseHelper::AssembleUnitFlowsBody(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
+void TextTraceDatabase::AssembleUnitFlowsBody(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
     std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap)
 {
     std::map<std::string, std::vector<Protocol::UnitSingleFlow>> flowMap;

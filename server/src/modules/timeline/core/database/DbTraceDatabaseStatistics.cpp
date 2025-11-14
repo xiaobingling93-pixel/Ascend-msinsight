@@ -1,13 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-
-#include "DbKernelDetailHelper.h"
 #include <sstream>
-
+#include "DbTraceDataBase.h"
 namespace Dic::Module::FullDb {
 using namespace Server;
-std::string DbKernelDetailHelper::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailSql(const KernelDetailsParams &requestParams)
 {
     try {
         std::ostringstream sqlStream;
@@ -23,7 +21,7 @@ std::string DbKernelDetailHelper::GetKernelDetailSql(const Protocol::KernelDetai
 
         if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: %",
-                requestParams.orderBy);
+                             requestParams.orderBy);
         } else if (!requestParams.orderBy.empty() && !requestParams.order.empty()) {
             sqlStream << " ORDER by " << requestParams.orderBy << " "
                       << (requestParams.order == "ascend" ? "ASC" : "DESC");
@@ -38,7 +36,7 @@ std::string DbKernelDetailHelper::GetKernelDetailSql(const Protocol::KernelDetai
     }
 }
 
-std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithHCCL(const Protocol::KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailFilterSqlWithHCCL(const KernelDetailsParams &requestParams)
 {
     if (requestParams.filters.empty()) {
         return "";
@@ -56,8 +54,7 @@ std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithHCCL(const Protoco
     return sql;
 }
 
-std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithoutHCCL(
-    const Protocol::KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailFilterSqlWithoutHCCL(const KernelDetailsParams &requestParams)
 {
     if (requestParams.filters.empty()) {
         return "";
@@ -80,34 +77,40 @@ std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithoutHCCL(
 }
 
 // throw DatabaseException
-std::string DbKernelDetailHelper::GetKernelDetailSqlWithHCCL(const Protocol::KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailSqlWithHCCL(const KernelDetailsParams &requestParams)
 {
     const std::string filterSql = GetKernelDetailFilterSqlWithHCCL(requestParams); // 绑定 filter.second
     // 前置已有 with nameIds as (select id, value as realName from STRING_IDS)
     return " main_hccl_tmp as ("
-      "select info.ROWID, nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as type,"
-      " 'HCCL' as acceleratorCore, info.startNs as startTime, round((info.endNs - info.startNs)/1000.0, 3) as duration,"
-      " 0 as blockDim, round(waitNs/1000.0, 3) as waitTime, 'N/A' as inputShapes, 'N/A' as "
-      " inputDataTypes, 'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats,"
-      " TASK.connectionId as taskId"
-      "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
-      "       join nameIds on opName = nameIds.id group by info.opName ), "
-      " main_hccl as ( select * from main_hccl_tmp " + filterSql + ") ";
+        "  select info.ROWID, nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as type, "
+        "  'HCCL' as acceleratorCore, info.startNs as startTime, "
+        "  round((info.endNs - info.startNs)/1000.0, 3) as duration, "
+        "  0 as blockDim, round(waitNs/1000.0, 3) as waitTime, "
+        "  'N/A' as inputShapes, 'N/A' as inputDataTypes, 'N/A' as inputFormats, "
+        "  'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats, "
+        "  TASK.connectionId as taskId"
+        "  from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
+        "  join nameIds on opName = nameIds.id group by info.opName "
+        "), "
+        "main_hccl as ( select * from main_hccl_tmp " + filterSql + ") ";
 }
 
 // throw DatabaseException
-std::string DbKernelDetailHelper::GetKernelDetailSqlWithoutHCCL(const Protocol::KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailSqlWithoutHCCL(const KernelDetailsParams &requestParams)
 {
     const std::string blockDimColumnName = "blockDim";
     const std::string filterSql = GetKernelDetailFilterSqlWithoutHCCL(requestParams); // 绑定 filter.second
     // 前置已有 with nameIds as (select id, value as realName from STRING_IDS)
     return " main_other_tmp as ("
-      "select TASK.ROWID, nameIds.realName as name, opType as type, info.taskType as acceleratorCore,"
-      " startNs as startTime, round((endNs - startNs)/1000.0, 3) as duration, " + blockDimColumnName + " as blockDim,"
-      " round(waitNs/1000.0, 3) as waitTime, inputShapes, inputDataTypes, inputFormats, "
-      " outputShapes, outputDataTypes, outputFormats, TASK.connectionId as taskId "
-      "      from COMPUTE_TASK_INFO info JOIN TASK ON info.globalTaskId = TASK.globalTaskId "
-      "      join nameIds on name = nameIds.id where deviceId = ?), "
-      " main_other as (select * from main_other_tmp " + filterSql + ") ";
+        "  select TASK.ROWID, nameIds.realName as name, opType as type, info.taskType as acceleratorCore,"
+        "  startNs as startTime, round((endNs - startNs)/1000.0, 3) as duration, "
+        "  " + blockDimColumnName + " as blockDim, round(waitNs/1000.0, 3) as waitTime, "
+        "  inputShapes, inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, "
+        "  TASK.connectionId as taskId "
+        "  from COMPUTE_TASK_INFO info JOIN TASK ON info.globalTaskId = TASK.globalTaskId "
+        "  join nameIds on name = nameIds.id where deviceId = ?"
+        "), "
+        " main_other as (select * from main_other_tmp " + filterSql + ") ";
 }
-} // namespace Dic::Module::FullDb
+
+}

@@ -30,10 +30,7 @@ const jumpToUnitOperator = (opDetail: OpDetail): void => {
         metaType,
     } = opDetail;
     const session = store.sessionStore.activeSession;
-
-    if (session === undefined) {
-        return;
-    }
+    if (session === undefined) { return; }
 
     runInAction(() => {
         session.locateUnit = {
@@ -41,9 +38,11 @@ const jumpToUnitOperator = (opDetail: OpDetail): void => {
                 if (!(unit instanceof ThreadUnit)) { return false; }
 
                 const { cardId, threadId, threadIdList, processId } = unit.metadata;
-                return cid === cardId &&
-                    processId === pid &&
-                    (threadId === tid || threadIdList?.includes(tid));
+                const isSameUnit = Boolean(processId === pid && (threadId === tid || threadIdList?.includes(tid)));
+                if (cid && cardId) {
+                    return cid === cardId && isSameUnit;
+                }
+                return isSameUnit;
             },
             onSuccess: (unit): void => {
                 const startTime = timestamp - getTimeOffset(session, unit.metadata as ThreadMetaData);
