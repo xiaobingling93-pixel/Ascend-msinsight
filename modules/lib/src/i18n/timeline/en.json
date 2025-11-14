@@ -169,6 +169,7 @@
     "RenderError": "Rendering failed. Please check if the data is correct",
     "Merged unit": "Merged unit",
     "MergeStreamOnly": "Only Stream units can be merged",
+    "InterceptedMaximum": "The loading time exceeds the maximum JS security value. The loading time has been intercepted based on the maximum time.",
     "MergeInSameCardOnly": "Please select Stream units from the same card",
     "KeyInfo": {
       "Press": "Press",

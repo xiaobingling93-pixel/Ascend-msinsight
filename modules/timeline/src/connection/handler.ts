@@ -123,6 +123,10 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             });
             session.startRecordTime = 0;
             const defaultEndTimeAll = (typeof unitData.maxTimeStamp === 'number' ? Math.min(Number.MAX_SAFE_INTEGER, unitData.maxTimeStamp) : 1000000000) * 2;
+            // 如果超出最大值系统给出提示
+            if (defaultEndTimeAll === Number.MAX_SAFE_INTEGER) {
+                session.isOverflowMaxSafeNumber = true;
+            }
             if (session.endTimeAll === undefined) {
                 session.endTimeAll = defaultEndTimeAll;
             } else {
@@ -143,6 +147,11 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             // 所有卡解析完成
             const parseCompleted = !(session.units.find(item => item.phase === 'analyzing'));
             if (parseCompleted) {
+                // 如果存在超出最大值的情况添加message解释
+                if (session.isOverflowMaxSafeNumber) {
+                    message.warning(i18n.t('timeline:InterceptedMaximum'));
+                    session.isOverflowMaxSafeNumber = false;
+                }
                 isGlobal && setObserveAction(session);
                 connector.send({
                     event: 'updateSession',
@@ -429,6 +438,12 @@ export interface TimelineCard {
     result: boolean;
 }
 
+
+/**
+ * 处理基线添加通知的异步函数
+ * @param data - 包含数据源和基线信息的数据对象
+ * @returns void
+ */
 export const baselineAddHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -443,6 +458,12 @@ export const baselineAddHandler: NotificationHandler = async (data): Promise<voi
     }
 };
 
+/**
+ * 发送会话更新信息的函数
+ * @param result - 包含更新信息的对象
+ * @param session - 当前会话对象
+ * @returns void
+ */
 const sendSessionUpdate = (result: any, session: any): void => {
     connector.send({
         event: 'updateSession',
@@ -461,6 +482,11 @@ const sendSessionUpdate = (result: any, session: any): void => {
     });
 };
 
+/**
+ * 清除Ipynb Notebook相关信息的函数
+ * @param session - 当前会话对象
+ * @returns 无返回值。
+ */
 const clearIpynbInfo = (session: Session): void => {
     session.isIpynb = false;
     session.ipynbUrl = '';
@@ -480,6 +506,12 @@ export const resetRemoteHandler: NotificationHandler = async (): Promise<void> =
     updatePageSetting({ type: 'reset' });
 };
 
+/**
+ * 清除会话中的单位信息的函数
+ * @param session
+ * @param data
+ * @returns 无返回值
+ */
 const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
     let dataSource: DataSource | null = null;
     if (data) {
@@ -516,6 +548,11 @@ const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
     }
 };
 
+/**
+ * 重置页面的函数。
+ * @param data - 可选的数据对象，包含数据源信息
+ * @returns void
+ */
 const resetPage = (data?: Record<string, unknown>): void => {
     runInAction(() => {
         const session = store.sessionStore.activeSession;
@@ -546,6 +583,10 @@ const resetPage = (data?: Record<string, unknown>): void => {
     });
 };
 
+/**
+ * 重置会话的函数
+ * @returns void
+ */
 function resetSession(): void {
     runInAction(() => {
         const defaultSessionData = new Session();
@@ -575,6 +616,14 @@ const clearTimeMarkerFlags = (session: Session): void => {
     session.timelineMaker.timelineFlagList.splice(0);
 };
 
+/**
+ * 执行远程删除请求，处理卡片信息并更新会话属性, async异步函数
+ *
+ * @param session - 当前会话对象，用于管理远程属性和时间戳。
+ * @param dataSource - 数据源对象，用于发送请求。
+ * @param removeCardInfos - 要删除的卡片信息数组，每个元素包含卡片ID和数据库路径。
+ * @returns void
+ */
 const remoteDeleteRequest = async (session: Session, dataSource: DataSource, removeCardInfos: Array<{ cardId: string; dbPath: string }>): Promise<void> => {
     const [removeCardIds, removeCardDbPaths] = removeCardInfos.reduce((acc, { cardId, dbPath }) => {
         acc[0].push(cardId);
@@ -593,6 +642,11 @@ const remoteDeleteRequest = async (session: Session, dataSource: DataSource, rem
     }
 };
 
+/**
+ * 处理移除基线数据的函数
+ * @param data - 包含数据源和单个数据路径的对象
+ * @returns Promise<void>
+ */
 export const removeBaselineHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         runInAction(() => {
@@ -638,6 +692,11 @@ export const removeBaselineHandler: NotificationHandler = async (data): Promise<
     }
 };
 
+/**
+ * 处理移除单个远程数据的函数
+ * @param data - 包含数据源和单个数据路径的对象
+ * @returns Promise<void>
+ */
 export const removeSingleRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -703,34 +762,62 @@ const getRemoveCardInfos = (removeUnits: any[]): Array<{ cardId: string; dbPath:
     });
 };
 
+/**
+ * 设置主题的处理函数。
+ * @param data - 包含主题信息的对象，其中 `isDark` 表示是否为暗黑模式。
+ * @returns 无返回值。
+ */
 export const setTheme: NotificationHandler = (data): void => {
-    window.setTheme(Boolean(data.isDark));
+    window.setTheme(Boolean(data.isDark)); // 将 `isDark` 转换为布尔值并设置主题
 };
 
+/**
+ * 集群完成处理函数。
+ * @param data - 包含集群解析结果和路径的对象。
+ * @returns 无返回值。
+ */
 export const clusterCompletedHandler: NotificationHandler = (data): void => {
+    // 检查解析结果是否为 'ok' 或 'none'
     const clusterRes = (data?.parseResult === 'ok' || data?.parseResult === 'none');
+    // 获取集群路径，若不存在则设为空字符串
     const clusterPath = data?.clusterPath as string ?? '';
+    // 获取是否显示集群的标志
     const isShowCluster = data?.isShowCluster as boolean;
     const session = store.sessionStore.activeSession as Session;
+    // 更新会话中的集群显示状态
     session.isCluster = isShowCluster;
+    // 判断集群是否完成
     const clusterCompleted = isShowCluster && clusterRes;
-    connector.send({
+    connector.send({ // 发送集群完成事件
         event: 'frame:parseClusterCompleted',
         body: { isCluster: clusterCompleted, clusterPath },
     });
 };
 
+/**
+ * 集群持续时间完成处理函数。
+ * @param data - 包含集群解析结果和路径的对象。
+ * @returns void
+ */
 export const clusterDurationCompletedHandler: NotificationHandler = (data): void => {
     const clusterRes = data?.parseResult === 'ok';
+    // 获取集群路径，若不存在则设为空字符串
     const clusterPath = data?.clusterPath as string ?? '';
+    // 发送集群持续时间完成事件
     connector.send({
         event: 'frame:parseClusterDurationCompleted',
         body: { isCluster: clusterRes, clusterPath },
     });
 };
 
+/**
+ * 查找块的处理函数。
+ * @param data - 包含块信息的对象，包括 `rankId`, `dbPath`, `name`, `startTime` 等。
+ * @returns void
+ */
 export const findBlock: NotificationHandler = (data): void => {
     try {
+        // 查询内核
         queryOneKernel({
             rankId: data.rankId as string,
             dbPath: data.rankId as string,
@@ -738,30 +825,44 @@ export const findBlock: NotificationHandler = (data): void => {
             timestamp: data.startTime as number,
             duration: 0,
         }).then(res => {
-            const temp = res as Record<string, any>;
-            const input = { id: temp.id as string, processId: temp.pid as string, depth: temp.depth as number, rankId: temp.rankId as string, threadId: temp.threadId as string, name: data.name as string, startTime: parseInt(data.startTime as string), duration: temp.duration };
-            locateUnitHandler(input);
+            const temp = res as Record<string, any>; // 将结果转换为记录类型
+            const input = {
+                id: temp.id as string,
+                processId: temp.pid as string,
+                depth: temp.depth as number,
+                rankId: temp.rankId as string,
+                threadId: temp.threadId as string,
+                name: data.name as string,
+                startTime: parseInt(data.startTime as string),
+                duration: temp.duration,
+            };
+            locateUnitHandler(input); // 调用定位单元处理函数
         });
     } catch (err) {
         console.error(err);
     }
 };
 
+/**
+ * 定位单元处理函数。
+ * @param data - 包含定位信息的对象
+ * @returns void
+ */
 export const locateUnitHandler: NotificationHandler = (data): void => {
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession as Session;
-    const slice = data as ThreadTrace;
-    runInAction(() => {
-        session.locateUnit = {
-            target: (unit: InsightUnit): boolean => {
+    const { sessionStore } = store; // 获取会话存储
+    const session = sessionStore.activeSession as Session; // 获取当前会话
+    const slice = data as ThreadTrace; // 将数据转换为线程追踪类型
+    runInAction(() => { // 在动作中执行
+        session.locateUnit = { // 设置定位单元
+            target: (unit: InsightUnit): boolean => { // 定位目标
                 return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) &&
                     unit.metadata.processId === slice.processId && unit.metadata.threadId === slice.threadId;
             },
-            onSuccess: (unit): void => {
-                const startTime = slice.startTime - getTimeOffset(session, unit.metadata as ThreadMetaData);
-                const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, slice.duration);
-                session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                session.selectedData = {
+            onSuccess: (unit): void => { // 定位成功后的操作
+                const startTime = slice.startTime - getTimeOffset(session, unit.metadata as ThreadMetaData); // 计算开始时间
+                const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, slice.duration); // 计算域范围
+                session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd }; // 更新域范围
+                session.selectedData = { // 更新选中数据
                     id: slice.id,
                     name: slice.name,
                     startTime,
@@ -773,11 +874,16 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
                     metaType: (unit.metadata as ThreadMetaData).metaType,
                 };
             },
-            showDetail: true,
+            showDetail: true, // 显示详细信息
         };
     });
 };
 
+/**
+ * Jupyter 完成处理函数。
+ * @param data - 包含解析结果和 URL 的对象。
+ * @returns void
+ */
 export const jupyterCompletedHandler: NotificationHandler = (data): void => {
     const isIpynb = data?.parseResult === 'ok';
     const session = store.sessionStore.activeSession as Session;
@@ -792,6 +898,11 @@ export const jupyterCompletedHandler: NotificationHandler = (data): void => {
     }
 };
 
+/**
+ * 切换语言处理函数。
+ * @param data - 包含语言信息的对象，其中 `lang` 表示语言类型。
+ * @returns void。
+ */
 export const switchLanguageHandler: NotificationHandler = (data): void => {
     const session = store.sessionStore.activeSession;
     const lang = data.lang as 'zhCN' | 'enUS';
@@ -803,17 +914,30 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
     i18n.changeLanguage(lang);
 };
 
+/**
+ * 卡片偏移接口，包含卡片 ID 和偏移量。
+ */
 interface CardOffset {
     cardId: string;
     offset: number;
 }
+
+/**
+ * 所有成功处理函数。
+ * @param data - 包含卡片偏移信息和解析状态的对象。
+ * @returns 无返回值。
+ */
 export const allSuccessHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
+        // 获取卡片偏移信息
         const cardOffSets = data.cardOffsets as CardOffset[];
+        // 创建偏移量映射
         const offsetMap: Map<string, number> = new Map();
+        // 遍历卡片偏移信息
         cardOffSets.forEach((value) => {
+            // 将偏移量存入映射
             offsetMap.set(value.cardId, value.offset);
         });
         runInAction(() => {
@@ -846,6 +970,11 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
     }
 };
 
+/**
+ * 更新项目名称处理函数。
+ * @param data - 包含旧项目名称和新项目名称的对象。
+ * @returns 无返回值。
+ */
 export const updateProjectNameHandler: NotificationHandler = (data): void => {
     const session = store.sessionStore.activeSession;
     if (session === undefined) {

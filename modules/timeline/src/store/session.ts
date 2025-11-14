@@ -18,6 +18,7 @@ export class SessionStore {
             startRecordTime: 0,
             endTimeAll: undefined,
             isNsMode: true,
+            isOverflowMaxSafeNumber: false,
         });
     }
 
@@ -46,6 +47,7 @@ export class SessionStore {
             startRecordTime: conf?.startRecordTime,
             endTimeAll: conf?.endTimeAll,
             isNsMode: conf?.isNsMode,
+            isOverflowMaxSafeNumber: false,
         });
         return session;
     }

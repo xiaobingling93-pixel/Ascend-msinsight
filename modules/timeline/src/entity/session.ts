@@ -131,6 +131,8 @@ export class Session {
         zoomHistory: [],
     };
 
+    // 是否有值为超过了最大安全值
+    isOverflowMaxSafeNumber: boolean = false;
     // 是否更新覆盖RankId
     isNeedResetRankId: boolean = true;
 
