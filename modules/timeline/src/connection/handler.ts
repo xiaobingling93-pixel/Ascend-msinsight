@@ -438,7 +438,6 @@ export interface TimelineCard {
     result: boolean;
 }
 
-
 /**
  * 处理基线添加通知的异步函数
  * @param data - 包含数据源和基线信息的数据对象
