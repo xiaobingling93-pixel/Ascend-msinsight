@@ -68,9 +68,7 @@ export function updateDataScene(data: Record<string, any>): void {
 
 function getActive(session: Session, scene: Scene, activeModule: string, availableModules: ModuleConfig[]): string {
     const moduleNameList = availableModules.map(config => config.name);
-    if (session.isIpynb && activeModule !== 'Jupyter') {
-        return 'Jupyter';
-    } else if (!moduleNameList.includes(activeModule)) {
+    if (!moduleNameList.includes(activeModule)) {
         return moduleNameList[0];
     } else {
         return activeModule;
@@ -179,7 +177,7 @@ const Index = observer(({ session }: {session: Session}) => {
         }
         setScene(session.scene);
         setDataCompose({ hasCachelineRecords: session.hasCachelineRecords, isRL: session.isRL });
-    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isRL]);
+    }, [session.isBinary, session.isCluster, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isRL]);
 
     // 添加监听新的页签加载后发送当前工程
     useEffect(() => {

@@ -4,7 +4,6 @@
 
 #include "WsSessionManager.h"
 #include "ProjectExplorerManager.h"
-#include "JupyterServerManager.h"
 #include "TimeUtil.h"
 #include "ClusterFileParser.h"
 #include "ProjectParserFactory.h"

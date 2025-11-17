@@ -879,25 +879,6 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
 };
 
 /**
- * Jupyter 完成处理函数。
- * @param data - 包含解析结果和 URL 的对象。
- * @returns void
- */
-export const jupyterCompletedHandler: NotificationHandler = (data): void => {
-    const isIpynb = data?.parseResult === 'ok';
-    const session = store.sessionStore.activeSession as Session;
-    session.isIpynb = isIpynb;
-    session.ipynbUrl = data.url as string;
-    connector.send({
-        event: 'updateSession',
-        body: { isIpynb, ipynbUrl: data.url as string },
-    });
-    if (!isIpynb) {
-        message.error('Jupyter launch error!');
-    }
-};
-
-/**
  * 切换语言处理函数。
  * @param data - 包含语言信息的对象，其中 `lang` 表示语言类型。
  * @returns void。

@@ -37,8 +37,6 @@ export function sendStatus(): void {
             unitcount: session.unitcount,
             coreList: session.coreList,
             sourceList: session.sourceList,
-            isIpynb: session.isIpynb,
-            ipynbUrl: session.ipynbUrl,
             instrVersion: session.instrVersion,
         },
     });

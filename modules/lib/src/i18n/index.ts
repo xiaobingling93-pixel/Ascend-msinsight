@@ -22,8 +22,6 @@ import memoryEn from './memory/en.json';
 import memoryZh from './memory/zh.json';
 import timelineEn from './timeline/en.json';
 import timelineZh from './timeline/zh.json';
-import jupyterEn from './jupyter/en.json';
-import jupyterZh from './jupyter/zh.json';
 import libEn from './lib/en.json';
 import libZh from './lib/zh.json';
 import leaksEn from './leaks/en.json';
@@ -44,7 +42,6 @@ export const resources = {
         ...summaryEn,
         ...memoryEn,
         ...timelineEn,
-        ...jupyterEn,
         ...libEn,
         ...leaksEn,
         ...statisticEn,
@@ -59,7 +56,6 @@ export const resources = {
         ...summaryZh,
         ...memoryZh,
         ...timelineZh,
-        ...jupyterZh,
         ...libZh,
         ...leaksZh,
         ...statisticZh,

@@ -6,7 +6,6 @@
 #include "ProjectParserFactory.h"
 #include "ProjectParserBin.h"
 #include "ProjectParserJson.h"
-#include "ProjectParserIpynb.h"
 #include "ProjectParserDb.h"
 #include "ProjectParserDbNPUMonitor.h"
 #include "ParserIE.h"
@@ -49,9 +48,6 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::strin
     if (StringUtil::EndWith(path, computeBinSuffix)) {
         return std::make_pair(path, ParserType::BIN);
     }
-    if (StringUtil::EndWith(path, ipynbSuffix)) {
-        return std::make_pair(path, ParserType::IPYNB);
-    }
     std::unique_ptr<ParserIE> ie = std::make_unique<ParserIE>();
     if (ie->ExistIEFile(path)) {
         return std::make_pair(path, ParserType::IE);
@@ -80,9 +76,6 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
             break;
         case ParserType::JSON:
             alloc = std::make_shared<ProjectParserJson>();
-            break;
-        case ParserType::IPYNB:
-            alloc = std::make_shared<ProjectParserIpynb>();
             break;
         case ParserType::IE:
             alloc = std::make_shared<ParserIE>();

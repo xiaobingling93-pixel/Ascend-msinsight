@@ -103,11 +103,6 @@ aux_source_directory(${SRC_HOME_DIR}/modules/advisor/handler DIC_MODULES_ADVISOR
 aux_source_directory(${SRC_HOME_DIR}/modules/advisor/process DIC_MODULES_ADVISOR_PROCESS_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/advisor/protocol DIC_MODULES_ADVISOR_PROTOCOL_SRC)
 
-# jupyter
-include_directories(${SRC_HOME_DIR}/modules/jupyter)
-include_directories(${SRC_HOME_DIR}/modules/jupyter/parser)
-include_directories(${SRC_HOME_DIR}/modules/jupyter/protocol)
-
 # Reinforcement Learning 强化学习
 include_directories(${SRC_HOME_DIR}/modules/rl)
 include_directories(${SRC_HOME_DIR}/modules/rl/core)
@@ -195,11 +190,6 @@ aux_source_directory(${SRC_HOME_DIR}/modules/full_db/database  DIC_MODULES_FULL_
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db/ProjectParse/ProjectChecker DIC_MODULES_FULL_DB_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db/ParseUnit DIC_MODULES_FULL_DB_PARSER_UNIT_SRC)
 
-# jupyter
-aux_source_directory(${SRC_HOME_DIR}/modules/jupyter DIC_MODULES_JUPYTER_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/jupyter/parser DIC_MODULES_JUPYTER_PARSER_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/jupyter/protocol DIC_MODULES_JUPYTER_PROTOCOL_SRC)
-
 # IE
 aux_source_directory(${SRC_HOME_DIR}/modules/servitization DIC_MODULES_IE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/servitization/api DIC_MODULES_IE_API_SRC)
@@ -274,9 +264,6 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_OPERATOR_PARSER_SRC}
         ${DIC_MODULES_OPERATOR_HANDLER_SRC}
         ${DIC_MODULES_OPERATOR_PROTOCOL_SRC}
-        ${DIC_MODULES_JUPYTER_SRC}
-        ${DIC_MODULES_JUPYTER_PARSER_SRC}
-        ${DIC_MODULES_JUPYTER_PROTOCOL_SRC}
         ${DIC_MODULES_FULL_DB_SRC}
         ${DIC_MODULES_FULL_DB_PARSER_SRC}
         ${DIC_MODULES_FULL_DB_PARSER_UNIT_SRC}

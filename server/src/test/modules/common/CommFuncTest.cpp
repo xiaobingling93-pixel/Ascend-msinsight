@@ -13,7 +13,6 @@ class CommFuncTest : public testing::Test {
 
 TEST_F(CommFuncTest, CastParserTypeToStr)
 {
-    EXPECT_EQ(CastParserTypeToStr(ParserType::IPYNB), "IPYNB");
     EXPECT_EQ(CastParserTypeToStr(ParserType::JSON), "JSON");
     EXPECT_EQ(CastParserTypeToStr(ParserType::OTHER), "OTHER");
     EXPECT_EQ(CastParserTypeToStr(ParserType::BIN), "BIN");
@@ -22,7 +21,6 @@ TEST_F(CommFuncTest, CastParserTypeToStr)
 
 TEST_F(CommFuncTest, CastParseFileTypeToStr)
 {
-    EXPECT_EQ(CastParseFileTypeToStr(ParseFileType::IPYNB), "IPYNB");
     EXPECT_EQ(CastParseFileTypeToStr(ParseFileType::RANK), "RANK");
     EXPECT_EQ(CastParseFileTypeToStr(ParseFileType::PROJECT), "PROJECT");
     EXPECT_EQ(CastParseFileTypeToStr(ParseFileType::DATA_FILE), "DATA_FILE");

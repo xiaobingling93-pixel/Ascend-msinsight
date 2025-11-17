@@ -9,7 +9,6 @@ import { firstLetterUpper } from '@/utils';
 import {
     sendMap,
     sendLanguage,
-    sendModuleReset,
     sendStatus,
     sendTheme,
 } from './sendNotification';
@@ -81,9 +80,6 @@ export const updateSession = (receiver: Record<string, any>): Record<string, any
 
 export const getParseStatusHandler = (e: NotificationMessage): void => {
     const session = store.sessionStore.activeSession;
-    if (session.isIpynb) {
-        sendModuleReset();
-    }
     // 请求特定数据
     const receiver = e.data.body;
     const requestList = receiver?.requests as string[];

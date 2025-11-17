@@ -74,7 +74,6 @@
       "CacheTooltip": "可视化呈现用户程序Kernel函数内的L2Cache访问信息，来源为bin文件",
       "StatisticTooltip": "以图表形式展示服务化调优的具体数据变化，来源为profiler.db文件",
       "LeaksTooltip": "展示内存调优过程中内存变化情况，来源为leaks_dump_*.db",
-      "JupyterTooltip": "集成了Jupyter页面，具有在线编辑、执行ipynb文件的能力，来源为ipynb文件",
       "RLTooltip": "基于采集数据进行高层次抽象，可视化展示控制流的时序关系，帮助快速定位耗时任务与空泡，并支持进一步的性能分析"
     },
     "Keyboard shortcuts": "键盘快捷键",

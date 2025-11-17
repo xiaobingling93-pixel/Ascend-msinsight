@@ -5,7 +5,6 @@
 #include "ProjectAnalyze.h"
 #include "ProjectParserBin.h"
 #include "ProjectParserDb.h"
-#include "ProjectParserIpynb.h"
 #include "ProjectParserJson.h"
 
 using namespace Dic::Module;
@@ -19,8 +18,7 @@ TEST_F(ProjectAnalyzeTest, ProjectAnalyzeRegister)
     ProjectAnalyzeRegister<ProjectParserBin> reg(ParserType::BIN);
     ProjectAnalyzeRegister<ProjectParserDb> reg2(ParserType::DB);
     ProjectAnalyzeRegister<ProjectParserJson> reg3(ParserType::JSON);
-    ProjectAnalyzeRegister<ProjectParserIpynb> reg4(ParserType::IPYNB);
-    std::vector<ParserType> types = {ParserType::BIN, ParserType::DB, ParserType::JSON, ParserType::IPYNB};
+    std::vector<ParserType> types = {ParserType::BIN, ParserType::DB, ParserType::JSON};
     for (auto type: types) {
         ProjectExplorerInfo projectInfo;
         ProjectAnalyze::Instance().ProjectExportInfoBuild(type, {"test"}, projectInfo);

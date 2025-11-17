@@ -10,7 +10,6 @@ export interface ModuleConfig {
     isDefault?: boolean;
     isCluster?: boolean;
     isCompute?: boolean;
-    isJupyter?: boolean;
     isLeaks?: boolean;
     isIE?: boolean;
     isRL?: boolean;
@@ -29,7 +28,6 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true,
         isCluster: true,
         isCompute: true,
-        isJupyter: true,
         isOnlyTraceJson: true,
         isIE: true,
         isLeaks: true,
@@ -42,7 +40,6 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isDefault: true,
         isCluster: true,
-        isJupyter: true,
     },
     {
         name: 'Operator',
@@ -52,7 +49,6 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isDefault: true,
         isCluster: true,
-        isJupyter: true,
     },
     {
         name: 'Summary',
@@ -93,14 +89,6 @@ export const modulesConfig: ModuleConfig[] = [
             src: isDev ? 'http://localhost:3004/cache.html' : './plugins/Compute/cache.html',
         },
         hasCachelineRecords: true,
-    },
-    {
-        name: 'Jupyter',
-        requestName: 'jupyter',
-        attributes: {
-            src: isDev ? 'http://localhost:3005/' : './plugins/Jupyter/index.html',
-        },
-        isJupyter: true,
     },
     {
 

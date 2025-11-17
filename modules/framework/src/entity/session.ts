@@ -14,7 +14,7 @@ import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
 
 // Scene：数据场景：默认、集群、算子调优、Jupter、Leaks、只trace.json文件
-export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL';
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL';
 
 interface ContextMenu {
     visible: boolean;
@@ -87,9 +87,7 @@ export class Session {
     // 场景
     isCluster: boolean | null = false;
     isBinary: boolean | null = false;
-    isIpynb: boolean = false;
     isIE: boolean | null = false;
-    ipynbUrl: string = '';
     isReset: boolean = false;
     isFullDb: boolean = false;
     isOnlyTraceJson: boolean = false;
@@ -151,8 +149,6 @@ export class Session {
             scene = 'Compute';
         } else if (this.isCluster) {
             scene = 'Cluster';
-        } else if (this.isIpynb) {
-            scene = 'Jupyter';
         } else if (this.isIE) {
             scene = 'IE';
         } else {
@@ -217,7 +213,6 @@ export class Session {
 
     // remove：删除工程，不改变页签
     reset(remove?: boolean): void {
-        this.isIpynb = false;
         this.isCluster = remove ? false : null;
         this.isBinary = remove ? false : null;
         this.isIE = remove ? false : null;

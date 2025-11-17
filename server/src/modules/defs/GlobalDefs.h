@@ -25,7 +25,6 @@ enum class ParserType {
     DB = 0,
     BIN = 1,
     JSON = 2,
-    IPYNB = 3,
     IE = 4,
     DB_NPUMONITOR = 5,
     OTHER = 20
@@ -40,8 +39,6 @@ inline std::string CastParserTypeToStr(ParserType type)
             return "BIN";
         case ParserType::JSON:
             return "JSON";
-        case ParserType::IPYNB:
-            return "IPYNB";
         case ParserType::OTHER:
             return "OTHER";
         default:
@@ -102,8 +99,6 @@ static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTyp
             return ParserType::DB_NPUMONITOR;
         case ProjectTypeEnum::BIN:
             return ParserType::BIN;
-        case ProjectTypeEnum::IPYNB:
-            return ParserType::IPYNB;
         case ProjectTypeEnum::IE:
             return ParserType::IE;
         default:

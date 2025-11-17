@@ -15,7 +15,6 @@ import {
     removeSingleRemoteHandler,
     clusterDurationCompletedHandler,
     locateUnitHandler,
-    jupyterCompletedHandler,
     switchLanguageHandler,
     baselineAddHandler,
     removeBaselineHandler,
@@ -34,7 +33,6 @@ export interface InterfaceDefs {
     [CHART_CPU]: InsightInterface<{ chartId: number }, { data: Array<{ ts: number; value: number }>}>;
 };
 
-const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
 const REMOTE_SAVE_PAGE_SETTING = 'remote/savePageSetting';
 const REMOTE_IMPORT = 'remote/import';
 const REMOTE_REMOVE = 'remote/remove';
@@ -60,7 +58,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [PARSE_FAIL]: parseFailHandler,
     [PARSE_CLUSTER_COMPLETED]: clusterCompletedHandler,
     [PARSE_CLUSTER_STEP2_COMPLETED]: clusterDurationCompletedHandler,
-    [JUPYTER_COMPLETED]: jupyterCompletedHandler,
     [BASELINE_ADD]: baselineAddHandler,
     [BASELINE_REMOVE]: removeBaselineHandler,
     setTheme,

@@ -74,7 +74,6 @@
       "CacheTooltip": "Visualizes L2 Cache access patterns within user program kernel functions via heatmap, sourced from .bin files",
       "StatisticTooltip": "Visualizes dynamic metrics of service-oriented tuning in line charts and tables, sourced from profiler.db files",
       "LeaksTooltip": "Visualizes memory usage trends during memory tuning processes, sourced from leaks_dump_*.db",
-      "JupyterTooltip": "Integrated with the Jupyter interface, enabling online editing and execution of ipynb files, with data sourced from ipynb files",
       "RLTooltip": "Visualize control flow timelines from collected data to quickly spot long-running tasks and bubbles, enabling deeper performance analysis."
     },
     "Keyboard shortcuts": "Keyboard shortcuts",

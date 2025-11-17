@@ -19,14 +19,6 @@ TEST_F(ParserFactoryTest, GetImportTypeBinTest)
     EXPECT_EQ(result, expect);
 }
 
-TEST_F(ParserFactoryTest, GetImportTypeIpynbTest)
-{
-    std::string pathList{"/home/user/data/test.ipynb"};
-    std::pair<std::string, ParserType> result = ParserFactory::GetImportType(pathList);
-    std::pair<std::string, ParserType> expect{pathList, ParserType::IPYNB};
-    EXPECT_EQ(result, expect);
-}
-
 TEST_F(ParserFactoryTest, GetImportTypeDbTest)
 {
 #ifdef __linux__

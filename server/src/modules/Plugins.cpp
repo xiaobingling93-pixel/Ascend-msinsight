@@ -6,7 +6,6 @@
 #include "SourcePlugin.h"
 #include "SummaryPlugin.h"
 #include "TimelinePlugin.h"
-#include "JupyterPlugin.h"
 #include "CommunicationPlugin.h"
 #include "IEPlugin.h"
 #include "MemoryDetailPlugin.h"
@@ -19,7 +18,6 @@ namespace Dic::Module {
     Core::PluginRegister SOURCE_PLUGIN(std::make_unique<Source::SourcePlugin>());
     Core::PluginRegister SUMMARY_PLUGIN(std::make_unique<Summary::SummaryPlugin>());
     Core::PluginRegister TIMELINE_PLUGIN(std::make_unique<Timeline::TimelinePlugin>());
-    Core::PluginRegister JUPYTER_PLUGIN(std::make_unique<Jupyter::JupyterPlugin>());
     Core::PluginRegister COMM_PLUGIN(std::make_unique<Communication::CommunicationPlugin>());
     Core::PluginRegister IE_PLUGIN(std::make_unique<IE::IEPlugin>());
     Core::PluginRegister MEMORY_DETAIL_PLUGIN(std::make_unique<MemoryDetail::MemoryDetailPlugin>());
