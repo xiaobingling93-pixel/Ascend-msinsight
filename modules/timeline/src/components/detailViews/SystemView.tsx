@@ -140,7 +140,7 @@ export const SystemView = observer((props: any) => {
     // eslint-disable-next-line camelcase
     const SelectContent = useMemo(() => {
         // 第四个tab的特殊逻辑
-        if (viewOption === 3) {
+        if (viewOption === 0 && key >= statsSystemViewItems.length) {
             return null;
         }
         return contentList[viewOption][key];
@@ -167,8 +167,8 @@ export const SystemView = observer((props: any) => {
         </AsideSelectContainer>
         <ChartErrorBoundary>
             <SelectContentContainer>
-                {viewOption === 3
-                    ? <TableDataView key={key} selectKey={key} card={conditions} session={props.session}
+                {viewOption === 0 && key >= statsSystemViewItems.length
+                    ? <TableDataView key={key - statsSystemViewItems.length} selectKey={key - statsSystemViewItems.length} card={conditions} session={props.session}
                         bottomHeight={props.bottomHeight}></TableDataView>
                     : SelectContent && (<SelectContent key={key} card={conditions} session={props.session}
                         bottomHeight={props.bottomHeight}></SelectContent>)}
@@ -180,7 +180,7 @@ export const SystemView = observer((props: any) => {
 const ViewSelect = observer((props: any) => {
     const { viewOption, handleViewChange } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
-    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }, { label: t('Servitization View'), value: 3 }];
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
     return (
         <div className={'view-select'}>
             <Select id={'select-system-view'} width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>
@@ -212,7 +212,6 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
 
     useEffect(() => {
         if (rankCondition.value === undefined) {
-            props.handleChange({ cardId: '', dbPath: '' });
             return;
         }
         const cardRankInfo = rankCondition.options[rankCondition.value];
@@ -275,24 +274,22 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
     }, [props.selectKey]);
     useEffect(() => {
         switch (props.viewOption) {
-            case 0:
-                setSystemViewItems(statsSystemViewItems);
+            case 0: {
+                queryTableDataNameList(params).then((res) => {
+                    // 获取服务视图名称和描述数据
+                    const layers = res.layers as SystemViewItem[];
+                    const merged = Array.from(
+                        new Map([...statsSystemViewItems, ...layers].map(item => [item.name, item])).values(),
+                    );
+                    setSystemViewItems(merged);
+                });
                 break;
+            }
             case 1:
                 setSystemViewItems(expertSystemViewItems);
                 break;
             case 2:
                 setSystemViewItems([]);
-                break;
-            case 3:
-                queryTableDataNameList(params).then((res) => {
-                    // 获取服务视图名称和描述数据
-                    const names = res.layers as ServiceLayers[];
-                    const layers = names.map((item) => {
-                        return { name: item.name, description: item.description };
-                    });
-                    setSystemViewItems(layers);
-                });
                 break;
             default:
                 break;
@@ -301,13 +298,13 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
     return (<AsideSelectList>
         {
             systemViewItems.map((item, index) =>
-                (props.viewOption !== 3
+                (index <= statsSystemViewItems.length - 1
                     ? <div
                         className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
                         key={index}
                         onClick={(): void => handleClick(index)}
                     >
-                        <div>{props.viewOption === 3 ? item.name : t(item.name)}</div>
+                        <div>{t(item.name)}</div>
                         {
                             item.tips !== undefined &&
                                 <Tooltip title={t(item.tips)}>
