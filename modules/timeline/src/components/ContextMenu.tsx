@@ -62,6 +62,7 @@ interface Props {
     theme?: Theme;
     chartInteractorRef: React.RefObject<ChartInteractorHandles>;
     subMenus?: ContextMenuItem[];
+    style?: { [key: string]: any };
 }
 
 export type ContextMenuItem = typeof CONTEXT_MENU_SEPARATOR | Action;
@@ -121,12 +122,16 @@ const SubMenuContainer = styled.div`
     border-radius: ${(props): string => props.theme.borderRadiusBase};
     background-color:  ${(props): string => props.theme.contextMenuBgColor};
     position: absolute;
-    left: 100%;
-    top: 0;
     z-index: 99999;
     transition: all .1s ease;
     box-shadow: ${(props): string => props.theme.boxShadowLight};
     user-select: none;
+    max-height: 300px;
+    overflow-y: auto;
+    .menu-item__label {
+        grid-column: 1 / -1;
+        margin-right: 0 !important;
+    }
 `;
 
 const Separator = styled.hr`
@@ -182,7 +187,7 @@ function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     if (yPos.current > winHeight - menu.offsetHeight) {
         yPos.current -= menu.offsetHeight;
     }
-    setPosition({ left: `${xPos.current}px`, top: `${yPos.current}px` });
+    setPosition({ left: `${xPos.current + 1}px`, top: `${yPos.current}px` });
     menu.focus();
 }
 
@@ -238,15 +243,47 @@ const contextMenuItems: ContextMenuItem[] = [
     actionJumpToLinkSlice,
 ];
 
-const SubMenu = (props: { session: Session; subMenus: ContextMenuItem[] }): JSX.Element => {
-    const { subMenus } = props;
+const SubMenu = (props: { session: Session; subMenus: ContextMenuItem[]; style: {[key: string]: any} }): JSX.Element => {
+    const { subMenus, style } = props;
     const { t } = useTranslation();
     return (
-        <SubMenuContainer className="sub-menu-container">
+        <SubMenuContainer className="sub-menu-container" style={style}>
             {getMenuItems(props as Props, t, subMenus ?? [])}
         </SubMenuContainer>
     );
 };
+
+function mouseEnterEvent(event: React.MouseEvent<HTMLDivElement, MouseEvent>, session: Session, menu: Action, disabled: boolean): void {
+    runInAction(() => {
+        const SUB_MENU_MAX_WIDTH = 200;
+        const SUB_MENU_MAX_HEIGHT = 300;
+        const element = event.target as HTMLElement;
+        const style: { top?: string; bottom?: string; left?: string; right?: string } = {};
+        const clientWidth = window.innerWidth || document.documentElement.clientWidth;
+        const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+        if (element.classList.contains('has-sub-menu')) {
+            const { bottom, right } = element.getBoundingClientRect();
+            if (clientHeight - bottom <= SUB_MENU_MAX_HEIGHT) {
+                style.bottom = '0';
+            } else {
+                style.top = '0';
+            }
+            if (clientWidth - right <= SUB_MENU_MAX_WIDTH) {
+                style.right = '100%';
+            } else {
+                style.left = '100%';
+            }
+        }
+        menu.style = style;
+        session.contextMenu.activeMenuKey = disabled && !menu.parentMenuKey ? '' : menu.parentMenuKey ?? menu.name;
+    });
+}
+
+function mouseLeaveEvent(session: Session, menu: Action): void {
+    runInAction(() => {
+        session.contextMenu.activeMenuKey = menu.parentMenuKey ? session.contextMenu.activeMenuKey : '';
+    });
+}
 
 const getMenuItems = (props: Props, t: TFunction, menuItems: ContextMenuItem[]): JSX.Element => {
     const { session } = props;
@@ -263,14 +300,13 @@ const getMenuItems = (props: Props, t: TFunction, menuItems: ContextMenuItem[]):
             filteredItems.map((item, index) => {
                 const prevIsLine = !filteredItems[index - 1] || filteredItems[index - 1] === CONTEXT_MENU_SEPARATOR;
                 if (item === CONTEXT_MENU_SEPARATOR && prevIsLine) { return null; }
-                if (item === CONTEXT_MENU_SEPARATOR) {
-                    return <Separator key={index} />;
-                }
+                if (item === CONTEXT_MENU_SEPARATOR) { return <Separator key={index} />; }
                 const disabled = item.disabled?.(session) ?? false;
                 const label = typeof item.label === 'function' ? item.label(session, t) : t(item.label);
                 const subMenus = item.subMenus?.(session) ?? [];
+                const subMenuIsVisible = item.subMode && session.contextMenu.activeMenuKey === item.name && session.contextMenu.isVisible;
                 return <MenuItem
-                    className={`menu-item ${disabled ? 'disabled' : ''} ${item.checked?.(session) ? 'checkmark' : ''}`}
+                    className={`menu-item ${disabled ? 'disabled' : ''} ${item.checked?.(session) ? 'checkmark' : ''} ${item.subMode ? 'has-sub-menu' : ''}`}
                     key={item.name}
                     title={label}
                     onClick={(e): void => {
@@ -280,15 +316,12 @@ const getMenuItems = (props: Props, t: TFunction, menuItems: ContextMenuItem[]):
                             session.contextMenu.isVisible = false;
                         });
                     }}
-                    onMouseEnter={(): void => {
-                        runInAction(() => {
-                            session.contextMenu.activeMenuKey = disabled && !item.parentMenuKey ? '' : item.parentMenuKey ?? item.name;
-                        });
-                    }}
+                    onMouseEnter={(event): void => { mouseEnterEvent(event, session, item, disabled); }}
+                    onMouseLeave={(): void => { mouseLeaveEvent(session, item); }}
                 >
                     <div className="menu-item__label">{label}</div>
                     <kbd className="menu-item__shortcut">{item.name ? getShortcutFromShortcutName(item.name as ShortcutName) : ''}</kbd>
-                    {item.subMode && session.contextMenu.activeMenuKey === item.name && session.contextMenu.isVisible ? <SubMenu session={session} subMenus={subMenus}></SubMenu> : <></>}
+                    {subMenuIsVisible ? <SubMenu style={item.style ?? {}} session={session} subMenus={subMenus}></SubMenu> : <></>}
                 </MenuItem>;
             })
         }
@@ -323,7 +356,7 @@ const Menu = (props: Props): JSX.Element => {
         const targetElement = event.target as HTMLElement;
         if (targetElement?.closest('.laneWrapper') !== null) {
             xPos.current = event.clientX; yPos.current = event.clientY;
-            setPosition({ left: `${xPos.current}px`, top: `${yPos.current}px` });
+            setPosition({ left: `${xPos.current + 1}px`, top: `${yPos.current}px` });
             openMenu(session);
         }
     };
