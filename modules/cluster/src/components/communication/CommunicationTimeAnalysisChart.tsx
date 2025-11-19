@@ -21,6 +21,7 @@ import { queryTimelineUnitKernelDetail } from '../../utils/RequestUtils';
 import { useEventBus } from '../../utils/eventBus';
 import type { ECharts, InsideDataZoomComponentOption } from 'echarts';
 
+// 定义点击慢操作排名时的回调参数接口
 interface OnClickSlowRankOpCallbackParams {
     startValue: number;
     endValue: number;
@@ -40,7 +41,10 @@ const NS_TO_MS_FACTOR = 0.000001;
 const INITINAL_MAX_VISIBLE_RANK_NUMBER = 516;
 // Communication 缩略图初始化最大可见算子数
 const MAX_VISIBLE_OPERATOR_NUMBER = 10000;
+// 支持Y轴定位的最小数量
+const START_POSITION_AXIS_Y = 20;
 
+// 計算位置
 function initDataZoom(totalNum: number, dataLength: number, communicationChartZoomData?: ChartZoomData): void {
     if (dataLength <= 0 || totalNum <= 0 || option.dataZoom.length <= 1) {
         return;
@@ -269,23 +273,28 @@ const option: any = {
     series: [],
 };
 
+// 定义操作时间项的接口
 export interface OperatorTimeItem {
     operatorName: string;
     startTime: number;
     duration: number;
 }
+
+// 定义操作时间信息的接口
 export interface OperatorTimeInfo {
     rankId: string;
     dbPath: string;
     lists: CompareData<OperatorTimeItem[]>;
 }
 
+// 定义分析图表数据的接口
 export interface AnalysisChartData {
     minTime: number;
     maxTime: number;
     data: OperatorTimeInfo[];
 }
 
+// 定义操作详情的接口
 interface OpDetail {
     name: string;
     rankId: number;
@@ -295,12 +304,21 @@ interface OpDetail {
 }
 let selectedOpDetail: OpDetail | null;
 
+/**
+ * 初始化图表并设置相关事件监听
+ * @param dataSource 分析图表数据源
+ * @param session 会话信息
+ * @param setDropDownVisible 设置下拉菜单可见性的函数
+ * @returns 返回初始化的ECharts实例或null
+ */
 function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDownVisible: (_: boolean) => void): echarts.ECharts | null {
     const chartDom = document.getElementById('hccl');
     if (chartDom === null) {
         return null;
     }
+    // 释放已存在的自适应ECharts实例
     disposeAdaptiveEchart(chartDom);
+    // 获取新的自适应ECharts实例
     const myChart = getAdaptiveEchart(chartDom);
     const rankDbPathMap: Map<string, string> = new Map();
     dataSource?.data?.forEach((item) => rankDbPathMap.set(item.rankId, item.dbPath));
@@ -322,6 +340,11 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     return myChart;
 }
 
+/**
+ * 获取图表高度
+ * @param dataSource - 分析图表数据
+ * @returns 图表高度
+ */
 function calculateDataHeight(dataSource: AnalysisChartData): number {
     let calculateHeight: number;
     if (dataSource?.data?.length !== undefined) {
@@ -335,6 +358,11 @@ function getChartHeight(dataSource: AnalysisChartData): number {
     return calculateDataHeight(dataSource) + DEFAULT_CHART_HEIGHT - DEFAULT_INNER_CHART_HEIGHT;
 }
 
+/**
+ * 重定向到时间线
+ * @param setDropDownVisible - 设置下拉菜单可见性的函数
+ * @returns 无返回值
+ */
 async function redirectToTimeline(setDropDownVisible: (_: boolean) => void): Promise<void> {
     if (selectedOpDetail === null) {
         return;
@@ -373,6 +401,10 @@ async function redirectToTimeline(setDropDownVisible: (_: boolean) => void): Pro
     }
 }
 
+/**
+ * 更新时间线加载状态
+ * @param isLoading - 是否正在加载
+ */
 const findInTimelineLoad = (isLoading: boolean): void => {
     const element = document?.getElementById('findInTimeline');
     if (!element) {
@@ -386,6 +418,11 @@ const findInTimelineLoad = (isLoading: boolean): void => {
     }
 };
 
+/**
+ * 获取图表缩放数据
+ * @param chartInstance - 图表实例
+ * @returns 缩放数据
+ */
 const getZoomData = (chartInstance: ECharts | null): ChartZoomData => {
     const currentOption = chartInstance?.getOption();
     const { start = 0, end = 100 } = (currentOption?.dataZoom as InsideDataZoomComponentOption[])?.[0] || [];
@@ -395,6 +432,13 @@ const getZoomData = (chartInstance: ECharts | null): ChartZoomData => {
     };
 };
 
+/**
+ * 生成菜单项
+ * @param session - 会话对象
+ * @param setDropDownVisible - 设置下拉菜单可见性的函数
+ * @param chartInstance - 图表实例
+ * @returns 菜单项数组
+ */
 const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void, chartInstance: ECharts | null): MenuProps['items'] => {
     const { t } = useTranslation('communication');
     const findInTimeline = {
@@ -444,51 +488,112 @@ const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void
     ];
 };
 
+/**
+ * Y轴的接口定义。
+ *
+ * @interface YAxis
+ * @property {string[]} data - Y轴的数据，表示为字符串数组。
+ * @property {string} [name] - Y轴的名称，可选属性。
+ * @property {boolean} [show] - 是否显示Y轴，可选属性。
+ */
+export interface YAxis {
+    data: string[];
+    name?: string;
+    show?: boolean;
+}
+
+/**
+ * CommunicationTimeAnalysisChart组件，用于展示通信时间分析图表。
+ * @param dataSource - 分析图表的数据源。
+ * @param session - 当前会话对象。
+ * @param loading - 是否正在加载数据。
+ * @returns 返回一个React组件，用于展示通信时间分析图表。
+ */
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading }: { dataSource: AnalysisChartData; session: Session; loading: boolean}) => {
+    // 设置图表高度的state
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
+    // 控制下拉菜单可见性的state
     const [dropDownVisible, setDropDownVisible] = useState(false);
+    // 图表容器的引用
     const chartRef = useRef<HTMLDivElement>(null);
+    // 页面内容滚动容器
     const scrollContainer = document.querySelector('.mi-page-content');
+    // 图表实例的引用
     const chartInst = useRef<echarts.ECharts | null>(null);
+    // 获取菜单项
     const menuItems = useMenuItems(session, setDropDownVisible, chartInst.current);
 
-    // 修复echarts的dataZoom开启鼠标滚轮缩放时，页面不滚动的问题
+    /**
+     * 同步滚动事件处理函数，用于处理鼠标滚轮缩放时的页面滚动问题。
+     * @param e - 鼠标滚轮事件对象。
+     * @returns 无返回值。
+     */
     const syncScroll = (e: WheelEvent): void => {
+        // 如果目标元素不是CANVAS，则直接返回
         if ((e.target as HTMLElement).tagName !== 'CANVAS') {
             return;
         }
 
+        // 如果没有按下Ctrl或Shift键，则滚动页面
         if (!e.ctrlKey && !e.shiftKey) {
             scrollContainer?.scrollBy(0, e.deltaY);
         }
     };
 
+    /**
+     * 使用useEffect初始化图表
+     * @param
+     * @returns void
+     */
     useEffect(() => {
         setTimeout(() => {
+            // 设置图表高度
             setChartHeight(getChartHeight(dataSource));
+            // 初始化图表实例
             chartInst.current = InitCharts(dataSource, session, setDropDownVisible);
+            // 添加滚轮事件监听
             chartRef.current?.addEventListener('wheel', syncScroll, true);
+            // 重置通信图表缩放数据
             session.communicationChartZoomData = undefined;
         });
 
+        // 清理函数，移除滚轮事件监听
         return (): void => {
             chartRef.current?.removeEventListener('wheel', syncScroll, true);
         };
     }, [dataSource]);
 
+    /**
+     * 监听并处理慢算子点击事件的函数。
+     * @param res - 包含慢算子事件参数的对象，包括起始值、结束值、算子名称和算子ID。
+     * @returns 无返回值。
+     */
     useEventBus('onClickSlowRankOp', (res): void => {
+        // 解构慢算子事件参数
         const { startValue, endValue, name, rankId } = res as OnClickSlowRankOpCallbackParams;
+        const dataSourceAxisY = chartInst.current?.getOption().yAxis as YAxis[];
+        const dataSourceLength = dataSourceAxisY[0]?.data.length || 0;
+        let startAxisY = 0;
+        let endAxisY = 100;
+        if (dataSourceLength >= START_POSITION_AXIS_Y) {
+            const tempSourceIndex = Number.isNaN(rankId) ? 0 : Number(rankId);
+            const rankIdNumber = dataSourceAxisY[0].data.findIndex(item => Number(item) === tempSourceIndex);
+            // 计算 Y 轴范围，确保范围在 0 到 dataSourceLength 之间
+            startAxisY = Math.floor(Math.max(0, rankIdNumber - 10) / dataSourceLength * 100);
+            endAxisY = Math.floor(Math.min(dataSourceLength, rankIdNumber + 10) / dataSourceLength * 100);
+        }
+        // 根据接收到的起始值和结束值调整图表横轴范围
         chartInst.current?.dispatchAction({
             type: 'dataZoom',
             startValue,
             endValue,
         });
-
+        // 执行纵轴数据缩放
         chartInst.current?.dispatchAction({
             type: 'dataZoom',
             dataZoomIndex: 1, // 指定纵轴
-            start: 0,
-            end: 100,
+            start: startAxisY,
+            end: endAxisY,
         });
 
         // 先取消所有高亮
@@ -504,6 +609,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
             name: `${rankId}-${name}`,
         });
 
+        // 延迟取消高亮
         setTimeout(() => {
             chartInst.current?.dispatchAction({
                 type: 'downplay',
@@ -512,6 +618,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
             });
         }, 5000);
 
+        // 滚动到视图中心
         chartRef.current?.scrollIntoView({
             block: 'center',
             behavior: 'smooth',
