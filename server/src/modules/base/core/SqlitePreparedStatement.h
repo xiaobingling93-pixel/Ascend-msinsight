@@ -93,11 +93,12 @@ public:
         return ExecuteQuery();
     }
 
+    sqlite3_stmt *stmt = nullptr;
+    int bindIndex = 1; // bind index start with 1
+
 private:
     sqlite3 *db = nullptr;
-    sqlite3_stmt *stmt = nullptr;
     int lastErrorCode = SQLITE_OK;
-    int bindIndex = 1; // bind index start with 1
 
     void BindParam(int index, std::string_view value);
     void BindParam(int index, int32_t value);

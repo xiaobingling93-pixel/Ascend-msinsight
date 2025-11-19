@@ -165,7 +165,7 @@ bool TextTraceDatabase::InsertSlice(const Trace::Slice &event)
 
 bool TextTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
 {
-    std::unique_ptr<SqlitePreparedStatement> stmt;
+    std::unique_ptr<SqlitePreparedStatement> stmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> &refStmt = (eventList.size() == CACHE_SIZE) ? insertSliceStmt : stmt;
     if (refStmt == nullptr) {
         refStmt = GetSliceStmt(eventList.size()); // 数据长度不是预设的长度则新建一个对象
@@ -177,8 +177,24 @@ bool TextTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventLi
         return false;
     }
     for (const auto &event : eventList) {
-        refStmt->BindParams(event.ts, event.dur, event.name, event.trackId, event.cat, event.args, event.cname,
-            event.end, event.flagId);
+        // 这里需要极限性能，所以直接调用原生接口
+        sqlite3_bind_int64(refStmt->stmt, refStmt->bindIndex++, event.ts);  // 第1个参数
+        sqlite3_bind_int64(refStmt->stmt, refStmt->bindIndex++, event.dur); // 第2个参数
+        sqlite3_bind_text(refStmt->stmt, refStmt->bindIndex++, event.name.c_str(), event.name.size(), SQLITE_STATIC); // 第3个参数
+        sqlite3_bind_int64(refStmt->stmt, refStmt->bindIndex++, static_cast<int64_t>(event.trackId)); // 第4个参数
+        if (event.cat.has_value()) {
+            sqlite3_bind_text(refStmt->stmt, refStmt->bindIndex++, event.cat.value().c_str(), event.cat.value().size(), SQLITE_STATIC); // 第5个参数
+        } else {
+            sqlite3_bind_null(refStmt->stmt, refStmt->bindIndex++);  // 第5个参数
+        }
+        if (event.args.has_value()) {
+            sqlite3_bind_text(refStmt->stmt, refStmt->bindIndex++, event.args.value().c_str(), event.args.value().size(), SQLITE_STATIC); // 第6个参数
+        } else  {
+            sqlite3_bind_null(refStmt->stmt, refStmt->bindIndex++); // 第6个参数
+        }
+        sqlite3_bind_text(refStmt->stmt, refStmt->bindIndex++, event.cname.c_str(), event.cname.size(), SQLITE_STATIC); // 第7个参数
+        sqlite3_bind_int64(refStmt->stmt, refStmt->bindIndex++, event.end); // 第8个参数
+        sqlite3_bind_text(refStmt->stmt, refStmt->bindIndex++, event.flagId.c_str(), event.flagId.size(), SQLITE_STATIC); // 第9个参数
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!refStmt->Execute()) {

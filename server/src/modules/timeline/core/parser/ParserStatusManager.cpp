@@ -18,21 +18,21 @@ ParserStatusManager &ParserStatusManager::Instance()
 
 void ParserStatusManager::SetParserStatus(const std::string &fileId, ParserStatus status)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap.erase(fileId);
     statusMap[fileId] = status;
 }
 
 void ParserStatusManager::ClearParserStatus(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap.erase(fileId);
     statusMap.erase(fileId);
 }
 
 void ParserStatusManager::ClearAllParserStatus()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap.clear();
     statusMap.clear();
     clusterStatusMap.clear();
@@ -40,7 +40,7 @@ void ParserStatusManager::ClearAllParserStatus()
 
 ParserStatus ParserStatusManager::GetParserStatus(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::shared_lock lock(mutex);
     if (statusMap.count(fileId) == 0) {
         return ParserStatus::UN_KNOW;
     }
@@ -49,7 +49,7 @@ ParserStatus ParserStatusManager::GetParserStatus(const std::string &fileId)
 
 void ParserStatusManager::EraseClusterParserStatusByKeyWord(const std::string &keyWord)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     for (auto it = clusterStatusMap.begin(); it != clusterStatusMap.end();) {
         if (it->first.find(keyWord) != std::string::npos) {
             // erase返回下一个迭代器，因此直接赋值给it
@@ -62,7 +62,7 @@ void ParserStatusManager::EraseClusterParserStatusByKeyWord(const std::string &k
 
 bool ParserStatusManager::IsClusterParserFinalState(const std::string &uniqueKey)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::shared_lock lock(mutex);
     // 如果没有状态记录视为结束
     if (clusterStatusMap.count(uniqueKey) == 0) {
         return true;
@@ -75,7 +75,7 @@ bool ParserStatusManager::IsClusterParserFinalState(const std::string &uniqueKey
 
 bool ParserStatusManager::SetRunningStatus(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap.erase(fileId);
     if (statusMap.count(fileId) == 0) {
         return false;
@@ -89,7 +89,7 @@ bool ParserStatusManager::SetRunningStatus(const std::string &fileId)
 
 bool ParserStatusManager::SetFinishStatus(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap.erase(fileId);
     if (statusMap.count(fileId) == 0) {
         return false;
@@ -104,7 +104,7 @@ bool ParserStatusManager::SetFinishStatus(const std::string &fileId)
 
 ParserStatus ParserStatusManager::SetTerminateStatus(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap.erase(fileId);
     if (statusMap.count(fileId) == 0) {
         return ParserStatus::UN_KNOW;
@@ -118,7 +118,7 @@ ParserStatus ParserStatusManager::SetTerminateStatus(const std::string &fileId)
 
 void ParserStatusManager::SetAllTerminateStatus()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap.clear();
     for (auto &statu : statusMap) {
         if (statu.second != ParserStatus::FINISH && statu.second != ParserStatus::FINISH_ALL) {
@@ -164,7 +164,7 @@ bool ParserStatusManager::SetStatusToFinalState(const std::string &uniqueKey, Pa
 
 bool ParserStatusManager::SetClusterParseStatus(const std::string &uniqueKey, ParserStatus parserStatus)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     switch (parserStatus) {
         case ParserStatus::INIT:
             return SetStatusToInit(uniqueKey, clusterStatusMap);
@@ -181,7 +181,7 @@ bool ParserStatusManager::SetClusterParseStatus(const std::string &uniqueKey, Pa
 
 bool ParserStatusManager::IsAllFinished(std::string &notFinishTask)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::shared_lock lock(mutex);
     for (const auto &item: pendingRankAndFilePathMap) {
         if (!std::empty(item.second.second)) {
             notFinishTask = item.second.second[0];
@@ -216,7 +216,7 @@ bool ParserStatusManager::IsKernelAndMemoryFinished(const std::string &fileId)
 
 void ParserStatusManager::WaitAllFinished(const std::vector<std::string> &fileIds)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     auto func = [this](const std::string &fileId) {
         return !IsFinished(fileId) || !IsFinished(KERNEL_PREFIX + fileId) ||
                !IsFinished(MEMORY_PREFIX + fileId);
@@ -229,14 +229,14 @@ void ParserStatusManager::WaitAllFinished(const std::vector<std::string> &fileId
 void ParserStatusManager::SetPendingStatus(const std::string &fileId,
     const std::pair<ProjectTypeEnum, std::vector<std::string>> &filePathPair)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     pendingRankAndFilePathMap[fileId] = filePathPair;
 }
 
 std::pair<ProjectTypeEnum, std::vector<std::string>> ParserStatusManager::QueryPendingFilePath(
     const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     return pendingRankAndFilePathMap[fileId];
 }
 } // end of namespace Timeline
