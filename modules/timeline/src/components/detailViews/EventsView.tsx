@@ -50,13 +50,13 @@ interface UpdateDatas {
     setEventColum: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const getColumns = (tableColumns: EventTableColumn[]): any => {
+const getColumns = (tableColumns: EventTableColumn[], filters: { [key: string]: string[] }): any => {
     const result = [];
     for (const tableColumn of tableColumns) {
         if (tableColumn.key === 'rankId') {
             result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key });
         } else if (tableColumn.key === 'name') {
-            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key), ...fetchColumnFilterProps('name', 'Name') });
+            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key), ...fetchColumnFilterProps('name', 'Name'), filteredValue: filters.name });
         } else if (tableColumn.key === 'start') {
             result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: 'startTime', ...getDefaultColumData('startTime') });
         } else {
@@ -70,7 +70,7 @@ const filterColumn = ['name'];
 
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: 'duration', order: 'descend' };
-const defaultFilters = { name: [] };
+const defaultFilters: { [key: string]: string[] } = { name: [] };
 export const EventDetail = observer((props: SelectContentViewProps & { request: any }) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
@@ -88,6 +88,13 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
     useEffect(() => {
         setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
     }, [props.session.showEvent]);
+
+    useEffect(() => {
+        setSorter(defaultSorter);
+        setFilters(defaultFilters);
+        setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
+        updateData({ pages: allCondition.page, sorters: allCondition.sorter, filters: allCondition.filters, props, setLoading, setDataSource, setPage, setEventColum });
+    }, [props.session.eventUnits]);
 
     useEffect(() => {
         if (props.session.eventUnits === undefined || props.session.eventUnits.length === 0) {
@@ -159,7 +166,7 @@ const updateData = async ({
         item.startTime = getDetailTimeDisplay(item.start - timestampoffset);
         return item;
     });
-    setEventColum(getColumns(res.columnList));
+    setEventColum(getColumns(res.columnList, filters));
     setDataSource(data);
     setPage((prevPage: any) => ({ ...pages, total: res.count }));
 };
