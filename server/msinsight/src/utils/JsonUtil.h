@@ -115,13 +115,13 @@ public:
         vec.reserve(array.Size());
         for (auto &item : array.GetArray()) {
             if constexpr (std::is_same_v<T, double>) {
-                vec.push_back(item.GetDouble());
+                vec.push_back(GetDoubleWithoutKey(item));
             } else if constexpr (std::is_same_v<T, std::string>) {
-                vec.push_back(item.GetString());
+                vec.push_back(GetStringWithoutKey(item));
             } else if constexpr (std::is_same_v<T, float>) {
-                vec.push_back(item.GetFloat());
+                vec.push_back(GetFloatWithoutKey(item));
             } else if constexpr (std::is_same_v<T, int>) {
-                vec.push_back(item.GetInt());
+                vec.push_back(GetIntWithoutKey(item));
             } else {
                 Server::ServerLog::Error("Get vector from json error: unsupported type!");
             }
@@ -161,6 +161,15 @@ public:
             }
         }
         return 0;
+    }
+
+    static inline double GetDoubleWithoutKey(const json_t &json)
+    {
+        if (json.IsNumber()) {
+            return json.GetDouble();
+        }
+        Server::ServerLog::Error("JSON is not a number when getting double without key. Returning 0.0.");
+        return 0.0;
     }
 
     static inline long double GetLongDouble(const json_t &json, std::string_view key)
@@ -221,6 +230,15 @@ public:
         return 0;
     }
 
+    static inline int GetIntWithoutKey(const json_t &json)
+    {
+        if (json.IsInt()) {
+            return json.GetInt();
+        }
+        Server::ServerLog::Error("JSON is not a int when getting int without key. Returning 0.");
+        return 0;
+    }
+
     static inline std::string GetString(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {
@@ -238,6 +256,7 @@ public:
         if (json.IsString()) {
             return json.GetString();
         }
+        Server::ServerLog::Error("JSON is not a string when getting string without key. Returning empty string.");
         return "";
     }
 
@@ -264,6 +283,15 @@ public:
             }
         }
         return 0;
+    }
+
+    static inline float GetFloatWithoutKey(const json_t &json)
+    {
+        if (json.IsNumber()) {
+            return json.GetFloat();
+        }
+        Server::ServerLog::Error("JSON is not a number when getting float without key. Returning 0.0.");
+        return 0.0;
     }
 
     static inline std::optional<std::string> GetOptionalString(const json_t &json, std::string_view key)
