@@ -8,6 +8,7 @@
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
 #include "ParallelStrategyAlgorithmManager.h"
+#include "ParserStatusManager.h"
 #include "BaselineManagerService.h"
 using namespace Dic::Module::Summary;
 namespace Dic {
@@ -15,6 +16,9 @@ namespace Module {
 namespace Global {
 void BaselineManagerService::ResetBaseline()
 {
+    // 没有解析进程时才可以reset
+    auto baselineId = Dic::Module::Timeline::BaselineManager::Instance().GetBaselineId();
+    Dic::Module::Timeline::ParserStatusManager::Instance().WaitAllFinished({baselineId});
     Dic::Module::Timeline::DataBaseManager::Instance().ResetBaseline();
     BaselineManager::Instance().Reset();
     Source::SourceFileParser::Instance().ResetBaseline();
