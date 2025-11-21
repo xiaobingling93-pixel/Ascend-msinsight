@@ -298,6 +298,7 @@ export class Session {
             isNsMode: false,
             printSessionInfo: false,
             linkLines: false,
+            mapOfLinkLines: false,
         });
         this._name = conf?.name ?? this.id;
         this._interval = 100;

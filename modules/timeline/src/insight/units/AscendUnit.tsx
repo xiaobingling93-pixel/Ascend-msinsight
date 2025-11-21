@@ -299,7 +299,7 @@ function isSameUnit(selectedMeta?: SelectedDataType, currentMeta?: ThreadMetaDat
  * @param flow
  * @param referFlow
  */
-function setLinkLinesMap(session: Session, flow: FlowEvent, referFlow: { rankId: string; dbPath: string }): void {
+function handleLinkLinesMap(session: Session, flow: FlowEvent, referFlow: { rankId: string; dbPath: string }): void {
     const getKey = (point: FlowPoint): string => {
         const { pid, tid, depth, timestamp } = point;
         return `${pid}_${tid}_${depth}_${timestamp}`;
@@ -440,7 +440,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 const cat = categoryFlowEvent.cat;
                 const singleCatLinkLine: LinkLine = [];
                 for (const flow of categoryFlowEvent.flows) {
-                    setLinkLinesMap(session, flow, { rankId: linkFlow.rankId as string, dbPath: linkFlow.dbPath as string });
+                    handleLinkLinesMap(session, flow, { rankId: linkFlow.rankId as string, dbPath: linkFlow.dbPath as string });
                     const singleLine: Record<string, unknown> = {
                         category: flow.cat,
                         cardId: linkFlow.rankId,

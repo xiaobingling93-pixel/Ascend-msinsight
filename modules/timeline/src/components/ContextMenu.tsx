@@ -261,7 +261,7 @@ function mouseEnterEvent(event: React.MouseEvent<HTMLDivElement, MouseEvent>, se
         const style: { top?: string; bottom?: string; left?: string; right?: string } = {};
         const clientWidth = window.innerWidth || document.documentElement.clientWidth;
         const clientHeight = window.innerHeight || document.documentElement.clientHeight;
-        if (element.classList.contains('has-sub-menu')) {
+        if (element.closest('.has-sub-menu')) {
             const { bottom, right } = element.getBoundingClientRect();
             if (clientHeight - bottom <= SUB_MENU_MAX_HEIGHT) {
                 style.bottom = '0';
