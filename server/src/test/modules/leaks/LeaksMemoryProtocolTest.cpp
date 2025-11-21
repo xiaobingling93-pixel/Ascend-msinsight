@@ -35,7 +35,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildEventTableRequestFromJson)
                           "      \"event\": \"MALLOC\" "
                           "    }, "
                           "    \"rangeFilters\": { "
-                          "      \"timestamp\": [ "
+                          "      \"_timestamp\": [ "
                           "        14104097470, "
                           "        24104097470 "
                           "      ] "
@@ -53,7 +53,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildEventTableRequestFromJson)
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.currentPage, 1);
     EXPECT_EQ(request.params.pageSize, 10);
-    EXPECT_EQ(request.params.orderBy, "_ptr");
+    EXPECT_EQ(request.params.orderBy, "ptr");
     EXPECT_EQ(request.params.filters.size(), 1);
     EXPECT_EQ(request.params.rangeFilters.size(), 1);
 }
@@ -77,7 +77,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildBlockTableRequestFromJson)
                           "    \"currentPage\": 1, "
                           "    \"pageSize\": 10, "
                           "    \"desc\": false, "
-                          "    \"orderBy\": \"startTimestamp\", "
+                          "    \"orderBy\": \"_startTimestamp\", "
                           "    \"filters\": { "
                           "      \"owner\": \"ops\" "
                           "    } "

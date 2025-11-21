@@ -33,21 +33,21 @@ protected:
     const std::unordered_map<std::string_view, assign> &GetAssignMap() override
     {
         static std::unordered_map<std::string_view, assign> assignMap = {
-            { OperatorColumn::ID, SetId },
-            { OperatorColumn::NAME, SetName },
-            { OperatorColumn::SIZE, SetSize },
-            { OperatorColumn::ALLOCATION_TIME, SetAllocationTime },
-            { OperatorColumn::RELEASE_TIME, SetReleaseTime },
-            { OperatorColumn::DURATION, SetDuration },
-            { OperatorColumn::ACTIVE_RELEASE_TIME, SetActiveReleaseTime },
-            { OperatorColumn::ACTIVE_DURATION, SetActiveDuration },
-            { OperatorColumn::ALLOCATION_ALLOCATED, SetAllocationAllocated },
-            { OperatorColumn::ALLOCATION_RESERVE, SetAllocationReserve },
-            { OperatorColumn::ALLOCATION_ACTIVE, SetAllocationActive },
-            { OperatorColumn::RELEASE_ALLOCATED, SetReleaseAllocated },
-            { OperatorColumn::RELEASE_RESERVE, SetReleaseReserve },
-            { OperatorColumn::RELEASE_ACTIVE, SetReleaseActive },
-            { OperatorColumn::STREAM, SetStream },
+            { OpMemoryColumn::ID, SetId },
+            { OpMemoryColumn::NAME, SetName },
+            { OpMemoryColumn::SIZE, SetSize },
+            { OpMemoryColumn::ALLOCATION_TIME, SetAllocationTime },
+            { OpMemoryColumn::RELEASE_TIME, SetReleaseTime },
+            { OpMemoryColumn::DURATION, SetDuration },
+            { OpMemoryColumn::ACTIVE_RELEASE_TIME, SetActiveReleaseTime },
+            { OpMemoryColumn::ACTIVE_DURATION, SetActiveDuration },
+            { OpMemoryColumn::ALLOCATION_ALLOCATED, SetAllocationAllocated },
+            { OpMemoryColumn::ALLOCATION_RESERVE, SetAllocationReserve },
+            { OpMemoryColumn::ALLOCATION_ACTIVE, SetAllocationActive },
+            { OpMemoryColumn::RELEASE_ALLOCATED, SetReleaseAllocated },
+            { OpMemoryColumn::RELEASE_RESERVE, SetReleaseReserve },
+            { OpMemoryColumn::RELEASE_ACTIVE, SetReleaseActive },
+            { OpMemoryColumn::STREAM, SetStream },
         };
 
         return assignMap;

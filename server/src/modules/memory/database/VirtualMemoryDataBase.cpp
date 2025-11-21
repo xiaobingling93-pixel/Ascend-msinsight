@@ -136,61 +136,6 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorSize(Protocol::StaticOperatorSi
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum,
-    std::string sql)
-{
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Query operators total num. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
-        return false;
-    }
-    int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
-        sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
-    } else {
-        int deviceId = StringUtil::StringToInt(requestParams.deviceId);
-        sqlite3_bind_int64(stmt, index++, deviceId);
-    }
-    std::string orderName = "%" + requestParams.searchName + "%";
-    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
-    if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
-            // 只显示在时间区间内分配或释放内存的数据
-            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
-                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
-            sqlite3_bind_double(stmt, index++, requestParams.startTime);
-            sqlite3_bind_double(stmt, index++, requestParams.endTime);
-            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
-                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
-            sqlite3_bind_double(stmt, index++, requestParams.startTime);
-            sqlite3_bind_double(stmt, index++, requestParams.endTime);
-        } else {
-            // 显示全部
-            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
-                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
-            sqlite3_bind_double(stmt, index++, requestParams.startTime);
-            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
-                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
-            sqlite3_bind_double(stmt, index++, requestParams.endTime);
-        }
-    }
-
-    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        sqlite3_bind_int64(stmt, index++, requestParams.minSize);
-    }
-    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        sqlite3_bind_int64(stmt, index++, requestParams.maxSize);
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        totalNum = sqlite3_column_int(stmt, resultStartIndex);
-    }
-    sqlite3_finalize(stmt);
-    return true;
-}
-
 bool VirtualMemoryDataBase::ExecuteComponentTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum,
                                                      std::string &sql)
 {
@@ -322,25 +267,25 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewP
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-                                                  std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                                  std::vector<Protocol::MemoryOperator> &opDetails,
-                                                  std::string sql, std::string deviceIdColumnName)
+int64_t VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                                     std::vector<Protocol::MemoryOperator> &opDetails,
+                                                     std::string &sql)
 {
-    int64_t pageSize = requestParams.pageSize == 0 ? defaultPageSize : requestParams.pageSize;
+    int64_t pageSize = requestParams.pageSize <= 0 ? defaultPageSize : requestParams.pageSize;
     int64_t currentPage = requestParams.currentPage - 1;
     currentPage = currentPage < 0 ? 0 : currentPage;
     if (pageSize > maxPageSize || currentPage > maxCurrentPage) {
         ServerLog::Error("Error param: pageSize or currentPage");
-        return false;
+        return -1;
     }
     int64_t offset = currentPage * pageSize;
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query operator detail. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
-        return false;
+        return -1;
     }
+    // 此处index不会自增溢出回绕，因为无论是filters、rangeFilters已在前序从json获取时判断了均在枚举列中，不可能超出列总数14
     int index = bindStartIndex;
     if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
@@ -348,35 +293,31 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
         sqlite3_bind_int64(stmt, index++, deviceId);
     }
-    std::string orderName = "%" + requestParams.searchName + "%";
-    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
-    sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
+    // 绑定filters参数
+    SqlBindQueryFilters(stmt, index, requestParams);
+    // 绑定rangeFilters参数
+    SqlBindQueryRangeFilters(stmt, index, requestParams);
+    // 绑定分页参数
+    sqlite3_bind_int64(stmt, index++, pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
-    opDetails = QueryOperatorDetail(stmt);
-    std::vector<std::string> streams = GetStreamLists(requestParams.deviceId, deviceIdColumnName);
-    std::vector<std::string> columns = activeRelatedColumn;
-    for (const auto& column : tableColumnAttr) {
-        if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
-            continue;
-        }
-        columnAttr.emplace_back(column);
-    }
-    return true;
+    return QueryOperatorDetailByStepWithCount(stmt, opDetails);
 }
 
-std::vector<Protocol::MemoryOperator> VirtualMemoryDataBase::QueryOperatorDetail(sqlite3_stmt *stmt)
+int64_t VirtualMemoryDataBase::QueryOperatorDetailByStepWithCount(sqlite3_stmt *stmt,
+                                                                  std::vector<Protocol::MemoryOperator> &operators)
 {
-    std::vector<Protocol::MemoryOperator> operatorDtoVec;
+    int64_t count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
+        count = sqlite3_column_int64(stmt, col++);
         Protocol::MemoryOperator operatorDto{};
         operatorDto.id = std::to_string(sqlite3_column_int64(stmt, col++));
         operatorDto.name = sqlite3_column_string(stmt, col++);
         operatorDto.size = sqlite3_column_double(stmt, col++);
-        operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
-        operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
+        operatorDto.allocationTime = ConvertTimestampStr(sqlite3_column_string(stmt, col++));
+        operatorDto.releaseTime = ConvertTimestampStr(sqlite3_column_string(stmt, col++));
+        operatorDto.activeReleaseTime = ConvertTimestampStr(sqlite3_column_string(stmt, col++));
         operatorDto.duration = sqlite3_column_double(stmt, col++);
-        operatorDto.activeReleaseTime = sqlite3_column_string(stmt, col++);
         operatorDto.activeDuration = sqlite3_column_double(stmt, col++);
         operatorDto.allocationAllocated = sqlite3_column_double(stmt, col++);
         operatorDto.allocationReserved = sqlite3_column_double(stmt, col++);
@@ -385,10 +326,10 @@ std::vector<Protocol::MemoryOperator> VirtualMemoryDataBase::QueryOperatorDetail
         operatorDto.releaseReserved = sqlite3_column_double(stmt, col++);
         operatorDto.releaseActive = sqlite3_column_double(stmt, col++);
         operatorDto.streamId = sqlite3_column_string(stmt, col++);
-        operatorDtoVec.emplace_back(operatorDto);
+        operators.emplace_back(operatorDto);
     }
     sqlite3_finalize(stmt);
-    return operatorDtoVec;
+    return count;
 }
 
 bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
@@ -413,12 +354,14 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(Protocol::MemoryOper
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MemoryOperator operatorDto{};
+        int64_t totalNum = sqlite3_column_int64(stmt, col++);
+        operatorDto.id = std::to_string(sqlite3_column_int64(stmt, col++));
         operatorDto.name = sqlite3_column_string(stmt, col++);
         operatorDto.size = sqlite3_column_double(stmt, col++);
-        operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
-        operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
+        operatorDto.allocationTime = ConvertTimestampStr(sqlite3_column_string(stmt, col++));
+        operatorDto.releaseTime = ConvertTimestampStr(sqlite3_column_string(stmt, col++));
+        operatorDto.activeReleaseTime = ConvertTimestampStr(sqlite3_column_string(stmt, col++));
         operatorDto.duration = sqlite3_column_double(stmt, col++);
-        operatorDto.activeReleaseTime = sqlite3_column_string(stmt, col++);
         operatorDto.activeDuration = sqlite3_column_double(stmt, col++);
         operatorDto.allocationAllocated = sqlite3_column_double(stmt, col++);
         operatorDto.allocationReserved = sqlite3_column_double(stmt, col++);
@@ -724,46 +667,113 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireStaticOperatorTable(Protocol::Stat
     return true;
 }
 
-void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql)
+std::string VirtualMemoryDataBase::BuildQueryOperatorMemoryTimeCondition(const MemoryOperatorParams& requestParams)
 {
-    std::string ascend;
-    if (requestParams.order == "ascend") {
-        ascend = "ASC";
-    } else {
-        ascend = "DESC";
-    }
-    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        sql += " AND stream <> ''";
-    }
+    std::string timeCondition;
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
+        std::string startTimeStr = std::to_string(requestParams.startTime);
+        std::string endTimeStr = std::to_string(requestParams.endTime);
+        // 仅展示在区间内申请或释放的算子
         if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
-            sql += " AND (allocationTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
-               " AND " + std::to_string(requestParams.endTime) +
-               " OR releaseTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
-               " AND " + std::to_string(requestParams.endTime) + ")";
-        } else {
-            sql += " AND ((";
-            sql += (isLowCamel ? "releaseTime" : "release_time");
-            sql += " IS NULL OR ";
-            sql += (isLowCamel ? "releaseTime" : "release_time");
-            sql += " = 0 OR releaseTimestamp >= " + std::to_string(requestParams.startTime) +
-                   " ) AND allocationTimestamp <= " + std::to_string(requestParams.endTime) + ")";
+            timeCondition = StringUtil::FormatString(" AND (_{} BETWEEN {} AND {} OR _{} BETWEEN {} AND {}) ",
+                                                     OpMemoryColumn::ALLOCATION_TIME, startTimeStr, endTimeStr,
+                                                     OpMemoryColumn::RELEASE_TIME, startTimeStr, endTimeStr);
+        } else { // 所有与区间有交集的算子; 注意判空需要用原列而不是别名列
+            timeCondition = StringUtil::FormatString(" AND (({} IS NULL OR {} = 0 OR _{} >= {}) AND _{} <= {}) ",
+                                                     OpMemoryColumn::RELEASE_TIME, OpMemoryColumn::RELEASE_TIME,
+                                                     OpMemoryColumn::RELEASE_TIME, startTimeStr,
+                                                     OpMemoryColumn::ALLOCATION_TIME, endTimeStr);
         }
     }
+    return timeCondition;
+}
 
-    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        sql += " AND size >= " + std::to_string(requestParams.minSize);
+std::string VirtualMemoryDataBase::BuildQueryFiltersCondition(const FiltersParam& requestParams)
+{
+    std::string filtersCondition;
+    for (auto &filterPair : requestParams.filters) {
+        filtersCondition.append(StringUtil::FormatString(" AND _{} LIKE ? ", filterPair.first));
     }
-    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+    return filtersCondition;
+}
+
+std::string VirtualMemoryDataBase::BuildQueryRangeFiltersCondition(const RangeFiltersParam& requestParams)
+{
+    std::string rangeFiltersCondition;
+    for (const auto& [colName, rangePair] : requestParams.rangeFilters) {
+        (void)(rangePair);
+        rangeFiltersCondition.append(StringUtil::FormatString(" AND (_{} BETWEEN ? AND ?) ", colName));
     }
-    if (!requestParams.orderBy.empty() &&
-        std::find(Protocol::operatorTableColumn.begin(), Protocol::operatorTableColumn.end(), requestParams.orderBy) !=
-        Protocol::operatorTableColumn.end()) {
-        auto columnName = isLowCamel ? StringUtil::ToCamelCase(requestParams.orderBy) : requestParams.orderBy;
-        sql += " ORDER BY " + columnName + " " + ascend;
+    return rangeFiltersCondition;
+}
+
+std::string VirtualMemoryDataBase::BuildQueryOrderByCondition(const OrderByParam& orderParam)
+{
+    if (orderParam.orderBy.empty()) {
+        return "";
     }
-    sql += " LIMIT ? offset ?";
+    std::string order = orderParam.desc ? "DESC" : "ASC";
+    // 释放时间戳参数, 需要基于原始列而不是带_的别名列, 为NULL或0实际含义为无限大
+    if (orderParam.orderBy == OpMemoryColumn::RELEASE_TIME || orderParam.orderBy == OpMemoryColumn::ACTIVE_RELEASE_TIME) {
+        return StringUtil::FormatString(" ORDER BY CASE WHEN {} IS NULL OR {} = 0 THEN 1 ELSE 0 END {}, _{} {} ",
+                                        orderParam.orderBy, orderParam.orderBy, order,
+                                        orderParam.orderBy, order);
+    }
+    // 申请时间戳参数, 需要基于原始列而不是带_的别名列, 为NULL或0实际含义为无限小
+    if (orderParam.orderBy == OpMemoryColumn::ALLOCATION_TIME) {
+        return StringUtil::FormatString(" ORDER BY CASE WHEN {} IS NULL OR {} = 0 THEN 0 ELSE 1 END {}, _{} {} ",
+                                        orderParam.orderBy, orderParam.orderBy, order,
+                                        orderParam.orderBy, order);
+    }
+    // 其余字段正常排序
+    return StringUtil::FormatString(" ORDER BY _{} {} ", orderParam.orderBy, order);
+}
+
+void VirtualMemoryDataBase::SqlBindQueryFilters(sqlite3_stmt* stmt, int& bindIndex, const FiltersParam& params)
+{
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to bind query filters param, empty stmt");
+        return;
+    }
+    if (params.filters.size() > INT_MAX || bindIndex > static_cast<int>(INT_MAX - params.filters.size())) {
+        ServerLog::Error("Failed to bind query filters param, over limit.");
+        return;
+    }
+    for (auto &filterPair : params.filters) {
+        std::string filterPattern = StringUtil::FormatString("%{}%", filterPair.second);
+        sqlite3_bind_text(stmt, bindIndex++, filterPattern.c_str(),
+                          filterPattern.length(), SQLITE_TRANSIENT);
+    }
+}
+void VirtualMemoryDataBase::SqlBindQueryRangeFilters(sqlite3_stmt* stmt, int& bindIndex, const RangeFiltersParam& params)
+{
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to bind query range filters param, empty stmt");
+        return;
+    }
+    if (params.rangeFilters.size() > INT_MAX || bindIndex > static_cast<int>(INT_MAX - params.rangeFilters.size())) {
+        ServerLog::Error("Failed to bind query range filters param, over limit.");
+        return;
+    }
+    for (const auto& [colName, rangePair] : params.rangeFilters) {
+        (void)(colName);
+        sqlite3_bind_double(stmt, bindIndex++, rangePair.first);
+        sqlite3_bind_double(stmt, bindIndex++, rangePair.second);
+    }
+}
+
+void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql)
+{
+    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
+        // Stream不为空
+        sql = StringUtil::StrJoin(sql, StringUtil::FormatString(" AND _{} <> '' ", OpMemoryColumn::STREAM));
+    }
+    std::string timeCondition = BuildQueryOperatorMemoryTimeCondition(requestParams);
+    std::string filtersCondition = BuildQueryFiltersCondition(requestParams);
+    std::string rangeFiltersCondition = BuildQueryRangeFiltersCondition(requestParams);
+    std::string orderByCondition = BuildQueryOrderByCondition(requestParams);
+    sql = StringUtil::StrJoin(sql, timeCondition, filtersCondition,
+                              rangeFiltersCondition, orderByCondition, " LIMIT ? OFFSET ? ");
 }
 
 void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql)
@@ -1100,6 +1110,29 @@ std::string VirtualMemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak &pea
         peakMemory.append(" | APP Reserved: ").append(appAllo).append("MB");
     }
     return peakMemory;
+}
+
+std::string VirtualMemoryDataBase::GetSelectOperatorMemoryFullColumnsWithCount(uint64_t baseTimestamp)
+{
+    std::string columns = "COUNT(*) OVER() AS countOver";
+
+    for (const auto &columnObj : OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        std::string selectColumn;
+        std::string alias;
+        GetSelectOperatorMemoryColumnAndAlias(columnObj.key, baseTimestamp, selectColumn, alias);
+        std::string select = StringUtil::FormatString(", {} AS {}", selectColumn, alias);
+        columns.append(select);
+    }
+    return columns;
+}
+
+std::string VirtualMemoryDataBase::ConvertTimestampStr(const std::string& timestampStr)
+{
+    std::string result = timestampStr;
+    if (timestampStr.empty() || timestampStr[0] == '-') {
+        result = "N/A";
+    }
+    return result;
 }
 }
 }

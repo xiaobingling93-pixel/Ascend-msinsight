@@ -84,24 +84,17 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorData)
     requestParams.pageSize = 10; // page size = 10
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
-    EXPECT_EQ(result, true);
+    int64_t result = database->QueryOperatorDetail(requestParams, responseBody);
     int expectSize = 10;
-    int expectColumnSize = 14;
+    EXPECT_EQ(result, 359);
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
     // 新增db多机多卡场景 rankId不等于deviceId的情况(rankId一般为"{host} {rankId}")
     requestParams.rankId = "host_0 0";
-    columnAttr.clear();
     responseBody.clear();
-    result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
-    EXPECT_EQ(result, true);
+    result = database->QueryOperatorDetail(requestParams, responseBody);
+    EXPECT_EQ(result, 359);
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithTime)
@@ -115,16 +108,11 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithTime)
     requestParams.pageSize = 100; // page size = 100
     requestParams.startTime = 0;
     requestParams.endTime = 1695120000000; // end time = 1695120000000
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
-    EXPECT_EQ(result, true);
+    int64_t result = database->QueryOperatorDetail(requestParams, responseBody);
     int expectSize = 100;
-    int expectColumnSize = 14;
+    EXPECT_EQ(result, 359);
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTime)
@@ -145,16 +133,12 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTime)
         (timeStamp - startTime - offsetTime)/ (secondToMillisecond * secondToMillisecond), precision);
     requestParams.endTime = NumberUtil::DoubleReservedNDigits(
         (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
-    EXPECT_EQ(result, true);
+    int64_t result = database->QueryOperatorDetail(requestParams, responseBody);
     int expectSize = 6;
-    int expectColumnSize = 14;
+    EXPECT_EQ(result, expectSize);
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 // 测试框选了开始时间、结束时间，且只显示在选中时间区间内分配、释放内存的数据查询是否正确
@@ -177,16 +161,11 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTimeOnlyShowWit
     requestParams.endTime = NumberUtil::DoubleReservedNDigits(
         (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
     requestParams.isOnlyShowAllocatedOrReleasedWithinInterval = true;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    auto result = database->QueryOperatorDetail(requestParams, responseBody);
     EXPECT_EQ(result, true);
     int expectSize = 1;
-    int expectColumnSize = 14;
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithSize)
@@ -200,16 +179,12 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithSize)
     requestParams.pageSize = 10; // page size = 10
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    requestParams.minSize = 10; // min size = 10
-    requestParams.maxSize = 64; // min size = 64
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    requestParams.rangeFilters[std::string(OpMemoryColumn::SIZE)] = {10, 64};
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
-    EXPECT_EQ(result, true);
+    int64_t result = database->QueryOperatorDetail(requestParams, responseBody);
+    EXPECT_EQ(result, 118);
     int expectSize = 10;
-    int expectColumnSize = 14;
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptZero)
@@ -223,16 +198,11 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptZero)
     requestParams.pageSize = 100; // page size = 100
     requestParams.startTime = 0;
     requestParams.endTime = -1;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
-    EXPECT_EQ(result, true);
+    int64_t result = database->QueryOperatorDetail(requestParams, responseBody);
+    EXPECT_EQ(result, 277);
     int expectSize = 100;
-    int expectColumnSize = 14;
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptSeveral)
@@ -246,16 +216,11 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptSeveral)
     requestParams.pageSize = 100; // page size = 100
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
-    EXPECT_EQ(result, true);
+    auto result = database->QueryOperatorDetail(requestParams, responseBody);
+    EXPECT_EQ(result, 277);
     int expectSize = 100;
-    int expectColumnSize = 14;
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryComponentsTotalNum)
@@ -278,16 +243,13 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNum)
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
-    requestParams.searchName = "";
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    int64_t totalNum;
-    auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
-    EXPECT_EQ(result, true);
+    std::vector<Dic::Protocol::MemoryOperator> responseBody;
+    int64_t totalNum = database->QueryOperatorDetail(requestParams, responseBody);
     int expectSize = 359;
     EXPECT_EQ(totalNum, expectSize);
+    EXPECT_EQ(responseBody.size(), min(database->defaultPageSize, expectSize));
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithSize)
@@ -297,16 +259,15 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithSize)
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
-    requestParams.searchName = "aten::empty_strided";
-    requestParams.minSize = 0; // min size = 0
-    requestParams.maxSize = 600000000; // max size = 600000000
+    requestParams.filters[std::string(OpMemoryColumn::NAME)] = "aten::empty_strided";
+    requestParams.rangeFilters[std::string(OpMemoryColumn::SIZE)] = {0, 600000000};
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    int64_t totalNum;
-    auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
-    EXPECT_EQ(result, true);
+    std::vector<Dic::Protocol::MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(requestParams, operators);
     int expectSize = 18;
     EXPECT_EQ(totalNum, expectSize);
+    EXPECT_EQ(operators.size(), min(database->defaultPageSize, expectSize));
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithTime)
@@ -316,16 +277,14 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithTime)
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
-    requestParams.searchName = "aten::empty_strided";
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
+    requestParams.filters[std::string(OpMemoryColumn::NAME)] = "aten::empty_strided";
     requestParams.startTime = 0;
     requestParams.endTime = 1695120000000; // end time = 1695120000000
-    int64_t totalNum;
-    auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
-    EXPECT_EQ(result, true);
+    std::vector<Dic::Protocol::MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(requestParams, operators);
     int expectSize = 18;
     EXPECT_EQ(totalNum, expectSize);
+    EXPECT_EQ(operators.size(), min(database->defaultPageSize, expectSize));
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithLimitedTime)
@@ -340,17 +299,15 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumWithLimitedTime)
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = NumberUtil::DoubleReservedNDigits(
         (timeStamp - startTime - offsetTime)/ (secondToMillisecond * secondToMillisecond), precision);
     requestParams.endTime = NumberUtil::DoubleReservedNDigits(
         (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
-    int64_t totalNum;
-    auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
-    EXPECT_EQ(result, true);
+    std::vector<Dic::Protocol::MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(requestParams, operators);
     int expectSize = 6;
     EXPECT_EQ(totalNum, expectSize);
+    EXPECT_EQ(operators.size(), min(database->defaultPageSize, expectSize));
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectZero)
@@ -358,17 +315,15 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectZero)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.deviceId = "0";
-    requestParams.searchName = "aten::empty_stridedss";
+    requestParams.filters[std::string(OpMemoryColumn::NAME)] = "aten::empty_stridedss";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = -1;
-    requestParams.endTime = -1; // end time = 1695120000000
-    int64_t totalNum;
-    auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
-    EXPECT_EQ(result, true);
+    requestParams.endTime = -1;
+    std::vector<Dic::Protocol::MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(requestParams, operators);
     int expectSize = 0;
     EXPECT_EQ(totalNum, expectSize);
+    EXPECT_TRUE(operators.empty());
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectSeveral)
@@ -378,15 +333,13 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectSeveral)
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = -1;
     requestParams.endTime = -1; // end time = 1695120000000
-    int64_t totalNum;
-    auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
-    EXPECT_EQ(result, true);
+    std::vector<Dic::Protocol::MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(requestParams, operators);
     int expectSize = 277;
     EXPECT_EQ(totalNum, expectSize);
+    EXPECT_EQ(operators.size(), min(database->defaultPageSize, expectSize));
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireOperatorTable)

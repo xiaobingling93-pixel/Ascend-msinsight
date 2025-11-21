@@ -1414,11 +1414,11 @@ std::string LeaksMemoryDatabase::GetSelectEventsFullColumns(const bool relativeT
             continue;
         }
         if (EVENT::TIMESTAMP_COLUMN_SET.find(columnObj.name) !=  EVENT::TIMESTAMP_COLUMN_SET.end() && relativeTime) {
-            columns.append(StringUtil::FormatString(", {} - {} AS _{}", columnObj.name,
+            columns.append(StringUtil::FormatString(", {} - {} AS {}", columnObj.name,
                                                     std::to_string(GetGlobalMinTimestamp()), columnObj.key));
             continue;
         }
-        columns.append(StringUtil::FormatString(", {} AS _{}", columnObj.name, columnObj.key));
+        columns.append(StringUtil::FormatString(", {} AS {}", columnObj.name, columnObj.key));
     }
     return columns;
 }
@@ -1428,11 +1428,11 @@ std::string LeaksMemoryDatabase::GetSelectBlocksFullColumns(const bool relativeT
     std::string columns = "COUNT(*) OVER()";
     for (auto &columnObj : BLOCK::FIELD_FULL_COLUMNS) {
         if (BLOCK::TIMESTAMP_COLUMN_SET.find(columnObj.name) !=  BLOCK::TIMESTAMP_COLUMN_SET.end() && relativeTime) {
-            columns.append(StringUtil::FormatString(", {} - {} AS _{}", columnObj.name,
+            columns.append(StringUtil::FormatString(", {} - {} AS {}", columnObj.name,
                                                     std::to_string(GetGlobalMinTimestamp()), columnObj.key));
             continue;
         }
-        columns.append(StringUtil::FormatString(", {} AS _{}", columnObj.name, columnObj.key));
+        columns.append(StringUtil::FormatString(", {} AS {}", columnObj.name, columnObj.key));
     }
     return columns;
 }

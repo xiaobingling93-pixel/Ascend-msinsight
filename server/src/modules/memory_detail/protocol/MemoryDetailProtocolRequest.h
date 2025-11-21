@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "CommonRequests.h"
 #include "LeaksMemoryTableColumn.h"
 
 namespace Dic::Protocol {
@@ -19,57 +20,7 @@ namespace TRACE_TABLE = Dic::Module::MemoryDetail::MemoryPythonTraceTableColumn;
 const uint64_t MAX_LEAKS_MEMORY_BLOCK_SIZE = 1 * 1024 * 1024 * 1024;
 const int64_t COMMON_RANGE_VALUE_MAX = 1000000000000;
 const int64_t COMMON_RANGE_VALUE_MIN = 0;
-class PaginationParam {
-public:
-    int64_t currentPage{};
-    int64_t pageSize{};
 
-    bool Check(std::string& errorMsg) const
-    {
-        if (pageSize==0 && currentPage==0) {
-            return true;
-        }
-        if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
-            errorMsg = "Invalid pagination params, detail: " + errorMsg;
-            return false;
-        }
-        return true;
-    }
-
-    void SetPaginationParamFromJson(const json_t &json)
-    {
-        JsonUtil::SetByJsonKeyValue(currentPage, json, "currentPage");
-        JsonUtil::SetByJsonKeyValue(pageSize, json, "pageSize");
-    }
-};
-
-class FiltersParam {
-public:
-    std::unordered_map<std::string, std::string> filters;
-
-    bool SetFiltersFromJson(const json_t &json,
-                            const std::vector<SqliteDbTableColumn> &columns,
-                            std::string &errorMsg);
-};
-
-class OrderByParam {
-public:
-    std::string orderBy;
-    bool desc{};
-
-    bool SetOrderFromJson(const json_t &json,
-                          const std::vector<SqliteDbTableColumn> &columns,
-                          std::string &errorMsg);
-};
-
-class RangeFiltersParam {
-public:
-    std::unordered_map<std::string, std::pair<double, double>> rangeFilters;
-
-    bool SetRangeFiltersFromJson(const json_t &json,
-                                 const std::vector<SqliteDbTableColumn> &columns,
-                                 std::string &errorMsg);
-};
 
 struct Threshold {
 public:

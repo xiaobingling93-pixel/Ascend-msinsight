@@ -36,100 +36,48 @@ bool DbMemoryDataBase::QueryMemoryResourceType(std::string &type)
     return true;
 }
 
-std::string DbMemoryDataBase::BuildOperatorDetailSql(
-    const std::string& startTimeString, const std::string& offsetTimeString)
+std::string DbMemoryDataBase::BuildOperatorDetailSql(const uint64_t baseTimestamp)
 {
-    std::string sql;
-    const std::string tempSql = "SELECT OP_MEMORY.rowid AS id, ";
-    // 在 db 情况下 allocation_time release_time 不可能为 0，不用再判断
-    sql += "NAME.value AS realName, "
-        "ROUND(size / 1024.0, 2) as size, "
-        "CASE WHEN allocationTime IS NULL THEN 'NA' "
-        "ELSE ROUND((allocationTime - " + startTimeString +
-            " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
-        "CASE WHEN releaseTime IS NULL THEN 'NA' "
-        "ELSE ROUND((releaseTime - " + startTimeString +
-            " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, "
-        "ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
-        "CASE WHEN activeReleaseTime IS NULL THEN 'NA' "
-        "ELSE ROUND((activeReleaseTime - " + startTimeString +
-            " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS activeReleaseTime, "
-        "ROUND(activeDuration / (1000.0 * 1000.0), 3) as activeDuration, "
-        "ROUND(allocationTotalAllocated / (1024.0 * 1024.0), 2) as allocationAllocated, "
-        "ROUND(allocationTotalReserved / (1024.0 * 1024.0), 2) as allocationReserve, "
-        "ROUND(allocationTotalActive / (1024.0 * 1024.0), 2) as allocationActive, "
-        "ROUND(releaseTotalAllocated / (1024.0 * 1024.0), 2) as releaseAllocated, "
-        "ROUND(releaseTotalReserved / (1024.0 * 1024.0), 2) as releaseReserve, "
-        "ROUND(releaseTotalActive / (1024.0 * 1024.0), 2) as releaseActive, streamPtr as stream FROM ";
-    sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
-        " WHERE " + deviceIdColumnName + " = ? AND realName LIKE ? ";
-    return tempSql + sql;
+    std::string selectColumns = GetSelectOperatorMemoryFullColumnsWithCount(baseTimestamp);
+    std::string nameJoinStringIdsAlias = GetJoinStringIDSAlias(OpMemoryColumn::NAME);
+    std::string sql = StringUtil::FormatString("SELECT {} FROM {} JOIN STRING_IDS AS {} ON {}.id = {} WHERE {} = ? ",
+                                               selectColumns, TABLE_OPERATOR_MEMORY, nameJoinStringIdsAlias,
+                                               nameJoinStringIdsAlias, OpMemoryColumn::NAME, OpMemoryColumn::DEVICE_ID);
+    return sql;
 }
 
-bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-                                           std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                           std::vector<Protocol::MemoryOperator> &opDetails)
+int64_t DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                              std::vector<Protocol::MemoryOperator> &opDetails)
 {
     std::string sql;
     const FileType type = DataBaseManager::Instance().GetFileType();
     const uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    // 单位转换， KB -> B，并作溢出防护。
-    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        if (requestParams.minSize > 0 && requestParams.minSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
-            requestParams.minSize = std::numeric_limits<int64_t>::max();
-        } else if (requestParams.minSize < 0 && requestParams.minSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
-            requestParams.minSize = std::numeric_limits<int64_t>::min();
-        } else {
-            requestParams.minSize *= KB_SIZE;
-        }
-    }
-    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        if (requestParams.maxSize > 0 && requestParams.maxSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
-            requestParams.maxSize = std::numeric_limits<int64_t>::max();
-        } else if (requestParams.maxSize < 0 && requestParams.maxSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
-            requestParams.maxSize = std::numeric_limits<int64_t>::min();
-        } else {
-            requestParams.maxSize *= KB_SIZE;
-        }
-    }
     const uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
+    // 溢出防护
+    if (startTime > std::numeric_limits<uint64_t>::max() - offsetTime) {
+        ServerLog::Error("Failed to calculate relative to the reference time due to integer overflow.");
+        return -1;
+    }
     if (type == FileType::PYTORCH) {
-        sql = DbMemoryDataBase::BuildOperatorDetailSql(std::to_string(startTime),
-            std::to_string(offsetTime));
+        sql = DbMemoryDataBase::BuildOperatorDetailSql(startTime+offsetTime);
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
-        return false;
+        return -1;
     }
     AddOperatorSql(requestParams, sql);
-    return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql, deviceIdColumnName);
+    return ExecuteOperatorDetail(requestParams, opDetails, sql);
 }
 
 bool DbMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
     std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
-    std::string sql = "";
+    std::string sql;
     FileType type = DataBaseManager::Instance().GetFileType();
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string startTimeStr = std::to_string(startTime);
     std::string offsetTimeStr = std::to_string(offsetTime);
     if (type == FileType::PYTORCH) {
-        sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
-               " CASE WHEN allocationTime == 0 THEN 'NA' ELSE "
-            "ROUND((allocationTime - " + startTimeStr + " - " + offsetTimeStr +
-            ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
-            "CASE WHEN releaseTime == 0 THEN 'NA' ELSE ROUND((releaseTime - " + startTimeStr + " - " + offsetTimeStr +
-            ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
-            "CASE WHEN activeReleaseTime == 0 THEN 'NA' ELSE ROUND((activeReleaseTime - " +
-            startTimeStr + " - " + offsetTimeStr + ") / (1000.0 * 1000.0), 3) "
-            "END AS activeReleaseTime, ROUND(activeDuration / (1000.0 * 1000.0), 3) as activeDuration, "
-            "ROUND(allocationTotalAllocated / (1024.0 * 1024.0), 2) as allocationAllocated, "
-            " ROUND(allocationTotalReserved / (1024.0 * 1024.0), 2) as allocationReserve, "
-            "ROUND(allocationTotalActive / (1024.0 * 1024.0), 2) as allocationActive, "
-            " ROUND(releaseTotalAllocated / (1024.0 * 1024.0), 2) as releaseAllocated, "
-            "ROUND(releaseTotalReserved / (1024.0 * 1024.0), 2) as releaseReserve, "
-            "ROUND(releaseTotalActive / (1024.0 * 1024.0), 2) as releaseActive, streamPtr as stream FROM ";
-        sql += TABLE_OPERATOR_MEMORY +
-            " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name WHERE " + deviceIdColumnName + " = ? ";
+        sql = BuildOperatorDetailSql(NumberSafe::Add(startTime, offsetTime));
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;
@@ -231,74 +179,6 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
         return false;
     }
     return ExecuteQueryMemoryViewGetGraph(requestParams, componentDtoVec, streams, operatorBody);
-}
-
-bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
-{
-    std::string sql = "";
-    FileType type = DataBaseManager::Instance().GetFileType();
-    if (type == FileType::PYTORCH) {
-        sql = "SELECT count(*) as nums FROM "
-            " ("
-            "   SELECT NAME.value as name, ";
-        sql.append("streamPtr, allocationTime, releaseTime,");
-        sql.append(" ROUND(size / 1024.0, 2) as size, size as realSize, OP_MEMORY." + deviceIdColumnName +
-            " FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
-            "   NAME.id = OP_MEMORY.name"
-            ") "
-            " WHERE " + deviceIdColumnName + " = ? AND name LIKE ? ");
-    } else {
-        ServerLog::Error("Memory tab does not support msprof data.");
-        return false;
-    }
-
-    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        sql.append(" AND streamPtr <> ''");
-    }
-    if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        const std::string ALLOCATION_TIME_KEY = "allocationTime";
-        const std::string RELEASE_TIME_KEY = "releaseTime";
-        if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
-            /*
-             * 只显示在时间区间内分配或释放内存的数据
-             * 参数：
-             * 1. startTime + offsetTime
-             * 2. startTime
-             * 3. endTime
-             * 4. startTime + offsetTime
-             * 5. startTime
-             * 6. endTime
-             */
-            sql.append(" AND ((").append(ALLOCATION_TIME_KEY).append(" IS NOT NULL AND ")
-                .append("ROUND((").append(ALLOCATION_TIME_KEY)
-                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? ");
-            sql.append(") OR (").append(RELEASE_TIME_KEY).append(" IS NOT NULL AND ")
-                .append("ROUND((").append(RELEASE_TIME_KEY)
-                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?)) ");
-        } else {
-            /*
-             * 显示全部的数据
-             * 参数：
-             * 1. startTime + offsetTime
-             * 2. startTime
-             * 3. startTime + offsetTime
-             * 4. endTime
-             */
-            // 在 db 情况下 allocation_time release_time 不可能为 0，不用再判断
-            sql.append(" AND ((").append(RELEASE_TIME_KEY)
-                .append(" IS NULL OR ").append("ROUND((")
-                .append(RELEASE_TIME_KEY).append(" - ?) / (1000.0 * 1000.0), 3) >= ? )")
-                .append(" AND ROUND((").append(ALLOCATION_TIME_KEY)
-                .append(" - ?) / (1000.0 * 1000.0), 3) <= ?) ");
-        }
-    }
-    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        sql += " AND realSize >= ? ";
-    }
-    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        sql += " AND realSize <= ? ";
-    }
-    return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);
 }
 
 bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum)
@@ -436,6 +316,57 @@ void DbMemoryDataBase::Reset()
         }
     }
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
+}
+
+void DbMemoryDataBase::GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
+                                                             std::string& column, std::string& alias)
+{
+    // id列，从db中的rowid查出并别名为id
+    if (columnKey == "id") {
+        column = StringUtil::FormatString("{}.{}", TABLE_OPERATOR_MEMORY, OpMemoryColumn::ID);
+        alias = columnKey;
+        return;
+    }
+    // 注意此处会将所有列别名前缀_, 用于避免计算列where的判断条件时使用原值而不是计算值
+    alias = StringUtil::FormatString("_{}", columnKey);
+    // Bytes转为MBytes的列
+    if (OPERATOR_MEMORY_ARA_SIZE_COLUMNS.find(columnKey) != OPERATOR_MEMORY_ARA_SIZE_COLUMNS.end()) {
+        column = StringUtil::FormatString("ROUND({}/(1024.0*1024.0), 2)", columnKey);
+        return;
+    }
+    // ns转换为ms的列
+    std::string baseTimestampStr;
+    if (OPERATOR_MEMORY_TIMESTAMP_NS_COLUMNS_SET.find(columnKey) != OPERATOR_MEMORY_TIMESTAMP_NS_COLUMNS_SET.end()) {
+        if (columnKey == OpMemoryColumn::DURATION || columnKey == OpMemoryColumn::ACTIVE_DURATION) {
+            baseTimestampStr = "0";
+        } else {
+            baseTimestampStr = std::to_string(baseTimestamp);
+        }
+        column = StringUtil::FormatString("ROUND(({} - {})/(1000.0*1000.0), 3)", columnKey, baseTimestampStr);
+        return;
+    }
+    // KBytes转为MBytes的列
+    if (columnKey == OpMemoryColumn::SIZE) {
+        column = StringUtil::FormatString("ROUND({}/1024.0, 2)", columnKey);
+        return;
+    }
+    // 需要JOIN STRING_IDS的列，默认需要取列SI_{原列名}.value
+    if (columnKey == OpMemoryColumn::NAME) {
+        column = StringUtil::FormatString("{}.value", GetJoinStringIDSAlias(columnKey));
+        return;
+    }
+    // 需要指定rowid的
+    if (columnKey == OpMemoryColumn::ID) {
+        column = StringUtil::FormatString("{}.rowid", TABLE_OPERATOR_MEMORY);
+        return;
+    }
+    // 缺省不计算
+    column = std::string(columnKey);
+}
+
+std::string DbMemoryDataBase::GetJoinStringIDSAlias(std::string_view joinCol)
+{
+    return StringUtil::FormatString("SI_{}", joinCol);
 }
 
 }

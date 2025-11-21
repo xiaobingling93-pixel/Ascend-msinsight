@@ -6,6 +6,7 @@
 #include "MemoryProtocolUtil.h"
 #include "MemoryProtocolRequest.h"
 #include "JsonUtil.h"
+#include "MemoryTableView.h"
 #include "MemoryProtocol.h"
 
 using namespace Dic;
@@ -31,7 +32,7 @@ protected:
     void CheckComponentEqual(const json_t &data, const MemoryComponent &expectData)
     {
         if (expectData.component.empty()) {
-            EXPECT_EQ(data["component"].GetString(), "Unknown");
+            EXPECT_EQ(JsonUtil::GetString(data, "component"), "Unknown");
         } else {
             EXPECT_EQ(data["component"].GetString(), expectData.component);
         }
@@ -68,35 +69,29 @@ protected:
     void CheckOperatorEqual(const json_t &data, const MemoryOperator &expectData)
     {
         if (expectData.name.empty()) {
-            EXPECT_EQ(data["name"].GetString(), "Unknown");
+            EXPECT_EQ(JsonUtil::GetString(data, OpMemoryColumn::NAME), "Unknown");
         } else {
             EXPECT_EQ(data["name"].GetString(), expectData.name);
         }
-        EXPECT_EQ(data["size"].GetDouble(), expectData.size);
-        EXPECT_EQ(data["allocationTime"].GetString(), expectData.allocationTime);
-        EXPECT_EQ(data["releaseTime"].GetString(), expectData.releaseTime);
-        EXPECT_EQ(data["duration"].GetDouble(), expectData.duration);
-        EXPECT_EQ(data["activeReleaseTime"].GetString(), expectData.activeReleaseTime);
-        EXPECT_EQ(data["activeDuration"].GetDouble(), expectData.activeDuration);
-        EXPECT_EQ(data["allocationAllocated"].GetDouble(), expectData.allocationAllocated);
-        EXPECT_EQ(data["allocationReserved"].GetDouble(), expectData.allocationReserved);
-        EXPECT_EQ(data["allocationActive"].GetDouble(), expectData.allocationActive);
-        EXPECT_EQ(data["releaseAllocated"].GetDouble(), expectData.releaseAllocated);
-        EXPECT_EQ(data["releaseReserved"].GetDouble(), expectData.releaseReserved);
-        EXPECT_EQ(data["releaseActive"].GetDouble(), expectData.releaseActive);
-        EXPECT_EQ(data["streamId"].GetString(), expectData.streamId);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::SIZE), expectData.size);
+        EXPECT_EQ(JsonUtil::GetString(data, OpMemoryColumn::ALLOCATION_TIME), expectData.allocationTime);
+        EXPECT_EQ(JsonUtil::GetString(data, OpMemoryColumn::RELEASE_TIME), expectData.releaseTime);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::DURATION), expectData.duration);
+        EXPECT_EQ(JsonUtil::GetString(data, OpMemoryColumn::ACTIVE_RELEASE_TIME), expectData.activeReleaseTime);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::ACTIVE_DURATION), expectData.activeDuration);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::ALLOCATION_ALLOCATED), expectData.allocationAllocated);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::ALLOCATION_RESERVE), expectData.allocationReserved);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::ALLOCATION_ACTIVE), expectData.allocationActive);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::RELEASE_ALLOCATED), expectData.releaseAllocated);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::RELEASE_RESERVE), expectData.releaseReserved);
+        EXPECT_EQ(JsonUtil::GetDouble(data, OpMemoryColumn::RELEASE_ACTIVE), expectData.releaseActive);
+        EXPECT_EQ(JsonUtil::GetString(data, OpMemoryColumn::STREAM), expectData.streamId);
     }
     void CheckOperatorResponseStruct(const std::optional<document_t> &jsonOptional,
         const MemoryOperatorComparisonResponse &response)
     {
         ASSERT_TRUE(jsonOptional.value()["body"].HasMember("columnAttr"));
         ASSERT_TRUE(jsonOptional.value()["body"]["columnAttr"].IsArray());
-        ASSERT_EQ(jsonOptional.value()["body"]["columnAttr"].Size(), response.columnAttr.size());
-        for (size_t i = 0; i < response.columnAttr.size(); ++i) {
-            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["name"].GetString(), response.columnAttr[i].name);
-            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["type"].GetString(), response.columnAttr[i].type);
-            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["key"].GetString(), response.columnAttr[i].key);
-        }
         ASSERT_TRUE(jsonOptional.value()["body"].HasMember("operatorDetail"));
         ASSERT_TRUE(jsonOptional.value()["body"]["operatorDetail"].IsArray());
         ASSERT_EQ(jsonOptional.value()["body"]["operatorDetail"].Size(), response.operatorDiffDetails.size());
@@ -273,25 +268,23 @@ TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestNormalTest)
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream", "searchName": "aten::add",
         "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
-        "orderBy": "size", "order": "ascend"}})";
-    MemoryOperatorParams expect = {"3", "3", "Stream", "aten::add", -100, 1000, 100.314, 256.397, 100, 10,
-        "size", "ascend", false};
+        "orderBy": "size", "order": "descend"}})";
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
     auto result = dynamic_cast<MemoryOperatorRequest &>(*(memoryProtocol.FromJson(json, err))).params;
-    EXPECT_EQ(result.rankId, expect.rankId);
-    EXPECT_EQ(result.type, expect.type);
-    EXPECT_EQ(result.searchName, expect.searchName);
-    EXPECT_EQ(result.minSize, expect.minSize);
-    EXPECT_EQ(result.maxSize, expect.maxSize);
-    EXPECT_EQ(result.startTime, expect.startTime);
-    EXPECT_EQ(result.endTime, expect.endTime);
-    EXPECT_EQ(result.currentPage, expect.currentPage);
-    EXPECT_EQ(result.pageSize, expect.pageSize);
-    EXPECT_EQ(result.orderBy, expect.orderBy);
-    EXPECT_EQ(result.order, expect.order);
-    EXPECT_EQ(result.isCompare, expect.isCompare);
+    EXPECT_EQ(result.rankId, "3");
+    EXPECT_EQ(result.type, "Stream");
+    EXPECT_EQ(result.searchName, "aten::add");
+    EXPECT_EQ(result.minSize, -100);
+    EXPECT_EQ(result.maxSize, 1000);
+    EXPECT_EQ(result.startTime, 100.314);
+    EXPECT_EQ(result.endTime, 256.397);
+    EXPECT_EQ(result.currentPage, 100);
+    EXPECT_EQ(result.pageSize, 10);
+    EXPECT_EQ(result.orderBy, "size");
+    EXPECT_TRUE(result.desc);
+    EXPECT_FALSE(result.isCompare);
 }
 
 TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestLackMinSizeAndMaxSizeTest)
@@ -300,24 +293,12 @@ TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestLackMinSizeAndMaxSizeTest)
         "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream", "searchName": "aten::add",
         "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
         "orderBy": "size", "order": "ascend"}})";
-    MemoryOperatorParams expect = {"3", "3", "Stream", "aten::add", std::numeric_limits<int64_t>::min(),
-        std::numeric_limits<int64_t>::max(), 100.314, 256.397, 100, 10, "size", "ascend", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
     auto result = dynamic_cast<MemoryOperatorRequest &>(*(memoryProtocol.FromJson(json, err))).params;
-    EXPECT_EQ(result.rankId, expect.rankId);
-    EXPECT_EQ(result.type, expect.type);
-    EXPECT_EQ(result.searchName, expect.searchName);
-    EXPECT_EQ(result.minSize, expect.minSize);
-    EXPECT_EQ(result.maxSize, expect.maxSize);
-    EXPECT_EQ(result.startTime, expect.startTime);
-    EXPECT_EQ(result.endTime, expect.endTime);
-    EXPECT_EQ(result.currentPage, expect.currentPage);
-    EXPECT_EQ(result.pageSize, expect.pageSize);
-    EXPECT_EQ(result.orderBy, expect.orderBy);
-    EXPECT_EQ(result.order, expect.order);
-    EXPECT_EQ(result.isCompare, expect.isCompare);
+    EXPECT_EQ(result.minSize, std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(result.maxSize, std::numeric_limits<int64_t>::max());
 }
 
 TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestLackIdTestReturnNull)
@@ -588,7 +569,6 @@ TEST_F(MemoryProtocolTest, ToMemoryOperatorResponseEmptyDataTest)
 {
     MemoryOperatorComparisonResponse response;
     std::string err;
-    response.columnAttr.clear();
     response.operatorDiffDetails.clear();
     response.totalNum = 0;
     std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
@@ -599,7 +579,6 @@ TEST_F(MemoryProtocolTest, ToMemoryOperatorResponseNoComparisonDataTest)
 {
     MemoryOperatorComparisonResponse response;
     std::string err;
-    response.columnAttr = tableColumnAttr;
     response.operatorDiffDetails = {
         {{"aten::add", 211.627, "113.791", "299.928", 186.137, "297.805", 184.014,
             147.956, 157.988, 201.017, 47.231, 56.338, 94.215, "14789652333", "NPU:0"}, {}, {}},

@@ -37,10 +37,10 @@ protected:
         }
     };
     const std::string operatorSql =
-        "CREATE TABLE operator (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, size INTEGER, allocation_time "
-        "INTEGER, release_time INTEGER, duration INTEGER, active_release_time INTEGER, active_duration INTEGER, "
-        "allocation_allocated INTEGER, allocation_reserve INTEGER, allocation_active INTEGER, release_allocated "
-        "INTEGER, release_reserve INTEGER, release_active INTEGER, stream TEXT);";
+        "CREATE TABLE operator (name TEXT, size INTEGER, allocationTime INTEGER, releaseTime INTEGER, "
+        "activeReleaseTime INTEGER, duration INTEGER, activeDuration INTEGER, allocationTotalAllocated INTEGER, "
+        "allocationTotalReserved INTEGER, allocationTotalActive INTEGER, releaseTotalAllocated INTEGER, "
+        "releaseTotalReserved INTEGER, releaseTotalActive INTEGER, streamPtr TEXT, deviceId TEXT);";
 
     const std::string opMemorySql =
         "CREATE TABLE OP_MEMORY (name INTEGER, size INTEGER, allocationTime INTEGER, releaseTime INTEGER, "
@@ -59,15 +59,16 @@ TEST_F(OperatorMemoryServiceTest, TestComputeAllocationTimeByIdWhenTextSceneThen
     Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::OpenDB(db);
     Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::CreateTable(db, operatorSql);
     const std::string operatorData =
-        "INSERT INTO \"main\".\"operator\" (\"id\", \"name\", \"size\", \"allocation_time\", \"release_time\", "
-        "\"duration\", \"active_release_time\", \"active_duration\", \"allocation_allocated\", \"allocation_reserve\", "
-        "\"allocation_active\", \"release_allocated\", \"release_reserve\", \"release_active\", \"stream\") VALUES (4, "
-        "'aten::empty_strided', 32.5, 1724670453465053360, 1724670453467680330, 2626.97, 1724670453467680020, 2626.66, "
-        "18180.814453125, 25750, 18180.814453125, 18181.8559570313, 25750, 18181.8559570313, '187651271017536');";
+        "INSERT INTO \"main\".\"operator\" (\"name\", \"size\", \"allocationTime\", \"releaseTime\", "
+        "\"activeReleaseTime\", \"duration\", \"activeDuration\", \"allocationTotalAllocated\", \"allocationTotalReserved\", "
+        "\"allocationTotalActive\", \"releaseTotalAllocated\", \"releaseTotalReserved\", \"releaseTotalActive\", \"streamPtr\", "
+        "\"deviceId\") VALUES ('aten::empty_strided', 32.5, 1724670453465053360, 1724670453467680330, 2626.97, "
+        "1724670453467680020, 2626.66, 18180.814453125, 25750, 18180.814453125, 18181.8559570313, 25750, 18181.8559570313, "
+        "'187651271017536', '0');";
     Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::InsertData(db, operatorData);
     operatorTable->SetDb(db);
     OperatorMemoryService operatorMemoryService(std::move(operatorTable));
-    OperatorDomain target = operatorMemoryService.ComputeAllocationTimeById("lll", "4");
+    OperatorDomain target = operatorMemoryService.ComputeAllocationTimeById("lll", "1");
     const uint64_t expectAllocationTime = 1724670453465053360;
     EXPECT_EQ(target.allocationTime, expectAllocationTime);
     EXPECT_EQ(target.metaType, "TEXT");

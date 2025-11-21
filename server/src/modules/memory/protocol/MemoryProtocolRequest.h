@@ -7,6 +7,7 @@
 
 #include <string>
 #include <optional>
+#include "CommonRequests.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
@@ -28,7 +29,7 @@ const std::vector<std::string> staticOperatorTableColumn = {
     "device_id", "op_name", "node_index_start", "node_index_end", "size"
 };
 
-struct MemoryOperatorParams {
+struct MemoryOperatorParams : OrderByParam, PaginationParam, FiltersParam, RangeFiltersParam {
     std::string rankId;
     std::string deviceId;
     std::string type;
@@ -37,10 +38,6 @@ struct MemoryOperatorParams {
     int64_t maxSize = 0;
     double startTime = 0.0;
     double endTime = 0.0;
-    int64_t currentPage = 0;
-    int64_t pageSize = 0;
-    std::string orderBy;
-    std::string order;
     bool isCompare = false;
     bool isOnlyShowAllocatedOrReleasedWithinInterval = false;
     bool CommonCheck(std::string &errorMsg, uint64_t minTimeStamp)
@@ -59,13 +56,6 @@ struct MemoryOperatorParams {
             errorMsg = "Memory comparing does not support request type Stream.";
             return false;
         }
-        if (!CheckStrParamValidEmptyAllowed(searchName, errorMsg)) {
-            return false;
-        }
-        if (minSize > maxSize) {
-            errorMsg = "Min Size should be smaller or equal to Max Size.";
-            return false;
-        }
         if (startTime > endTime) {
             errorMsg = "Start Time should be smaller or equal to End Time.";
             return false;
@@ -74,19 +64,7 @@ struct MemoryOperatorParams {
             errorMsg = "End Time is invalid.";
             return false;
         }
-        if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
-            return false;
-        }
-        if (!order.empty() && order != "ascend" && order != "descend") {
-            errorMsg = "Order parameter is not legal";
-            return false;
-        }
-        if (!orderBy.empty() && std::find(operatorTableColumn.begin(), operatorTableColumn.end(), orderBy) ==
-            operatorTableColumn.end()) {
-            errorMsg = "Order By parameter is not legal.";
-            return false;
-        }
-        return true;
+        return PaginationParam::Check(errorMsg);
     }
 };
 

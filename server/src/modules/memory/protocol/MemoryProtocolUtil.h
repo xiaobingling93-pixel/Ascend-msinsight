@@ -30,8 +30,7 @@ namespace Protocol {
             (const MemoryStaticOperatorSizeResponse &response);
     template<>
     std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response);
-    std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool hasStream,
-        Document::AllocatorType &allocator);
+    std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, Document::AllocatorType &allocator);
     std::optional<document_t> ToMemoryComponentJson(const MemoryComponent &component,
         Document::AllocatorType &allocator);
     std::optional<document_t> ToMemoryStaticOperatorJson(const StaticOperatorItem &op,

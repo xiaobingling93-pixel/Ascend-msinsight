@@ -5,42 +5,10 @@
 #ifndef PROFILER_SERVER_LEAKSMEMORYCOLUMN_H
 #define PROFILER_SERVER_LEAKSMEMORYCOLUMN_H
 
-#include "pch.h"
+#include "CommonRequests.h"
 
 namespace Dic::Module::MemoryDetail {
-struct SqliteDbTableColumn {
-    std::string_view name;
-    std::string_view key;
-    bool visible{true}; // 是否可见
-    bool sortable{false}; // 是否可排序
-    bool searchable{false}; // 是否可搜索
-    bool rangeFilterable{false}; // 是否可范围过滤
-
-    SqliteDbTableColumn(std::string_view name, std::string_view key, bool visible, bool sortable,
-                        bool searchable, bool rangeFilterable)
-        : name(name),
-          key(key),
-          visible(visible),
-          sortable(sortable),
-          searchable(searchable),
-          rangeFilterable(rangeFilterable) {}
-
-    SqliteDbTableColumn(std::string_view name, std::string_view key)
-        : name(name),
-          key(key)
-    {
-        visible = false;
-    }
-};
-
-inline std::vector<SqliteDbTableColumn>::const_iterator FindColumnByKey(std::string_view key,
-                                                                        const std::vector<SqliteDbTableColumn> &columns)
-{
-    return std::find_if(columns.begin(), columns.end(), [key](const SqliteDbTableColumn& col) {
-            return key == col.key;
-    });
-}
-
+using namespace Dic::Protocol;
 namespace MemoryEventTableColumn {
     constexpr std::string_view ID = "ID";
     constexpr std::string_view EVENT = "Event";
@@ -55,12 +23,12 @@ namespace MemoryEventTableColumn {
     // 可能存在的列
     constexpr std::string_view CALL_STACK_PYTHON = "`Call Stack(Python)`";
     constexpr std::string_view CALL_STACK_C = "`Call Stack(C)`";
-    inline const std::vector<SqliteDbTableColumn> FIELD_FULL_COLUMNS = {
+    inline const std::vector<TableViewColumn> FIELD_FULL_COLUMNS = {
         {ID, "id", true, true, false, false}, // ID, 事件ID
         {EVENT, "event", true, false, true, false}, // Event, 事件类型
         {EVENT_TYPE, "eventType", true, true, true, false}, // Event Type, 事件子类型
         {NAME, "name", true, true, true, false}, // Name, 名称
-        {TIMESTAMP, "timestamp", true, true, false, true}, // Timestamp(ns), 发生时间
+        {TIMESTAMP, "_timestamp", true, true, false, true}, // Timestamp(ns), 发生时间, 可能涉及到计算, key与列名区分
         {PROCESS_ID, "processId", true, true, true, false}, // Process ID, 进程ID
         {THREAD_ID, "threadId", true, true, true, false}, // Thread ID, 线程ID
         {DEVICE_ID, "deviceId"},
@@ -106,20 +74,20 @@ namespace MemoryBlockTableColumn {
                                                             ATTR, PROCESS_ID, THREAD_ID,
                                                             FIRST_ACCESS_TIMESTAMP, LAST_ACCESS_TIMESTAMP,
                                                             MAX_ACCESS_INTERVAL};
-    inline const std::vector<SqliteDbTableColumn>  FIELD_FULL_COLUMNS = {
+    inline const std::vector<TableViewColumn>  FIELD_FULL_COLUMNS = {
         {ID, "id", true, true, false, false}, // ID, 内存块ID
         {DEVICE_ID, "deviceId"},
         {ADDR, "addr", true, true, true, false}, // Addr, 内存地址
         {SIZE, "size", true, true, false, true}, // Size, 内存块大小
-        {START_TIMESTAMP, "startTimestamp", true, true, false, true}, // Malloc Timestamp(ns), 申请时间
-        {END_TIMESTAMP, "endTimestamp", true, true, false, true}, // Free Timestamp(ns), 释放时间
+        {START_TIMESTAMP, "_startTimestamp", true, true, false, true}, // Malloc Timestamp(ns), 申请时间
+        {END_TIMESTAMP, "_endTimestamp", true, true, false, true}, // Free Timestamp(ns), 释放时间
         {EVENT_TYPE, "eventType", false, true, true, false}, // 事件子类型
         {OWNER, "owner", true, true, true, false}, // 内存块持有者(标签)
         {PROCESS_ID, "processId", true, true, true, false}, // Process Id, 进程ID
         {THREAD_ID, "threadId", true, true, true, false}, // Thread Id, 线程ID
         {ATTR, "attr", true, false, true, false}, // Attr, 特有属性
-        {FIRST_ACCESS_TIMESTAMP, "firstAccessTimestamp", true, false, false, true},
-        {LAST_ACCESS_TIMESTAMP, "lastAccessTimestamp", true, false, false, true},
+        {FIRST_ACCESS_TIMESTAMP, "_firstAccessTimestamp", true, false, false, true},
+        {LAST_ACCESS_TIMESTAMP, "_lastAccessTimestamp", true, false, false, true},
         {MAX_ACCESS_INTERVAL, "maxAccessInterval", true, false, false, true}
     };
     inline const std::set<std::string_view> TIMESTAMP_COLUMN_SET = {

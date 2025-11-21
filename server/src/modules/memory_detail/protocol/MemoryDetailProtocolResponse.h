@@ -7,12 +7,14 @@
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "CommonRequests.h"
 #include "MemoryDetailDefs.h"
 #include "MemoryDetailEntities.h"
 #include "LeaksMemoryTableColumn.h"
 #include "LeaksMemoryDetailTreeNode.h"
 
 namespace Dic::Protocol {
+using namespace Dic::Module;
 using namespace Dic::Module::MemoryDetail;
 
 struct MemoryBlockItem : MemoryBlock {
@@ -53,16 +55,16 @@ static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blo
     JsonUtil::AddMember(json, "id", blockPtr->id, allocator);
     JsonUtil::AddMember(json, "addr", blockPtr->ptr, allocator);
     JsonUtil::AddMember(json, "size", blockPtr->size, allocator);
-    JsonUtil::AddMember(json, "startTimestamp", blockPtr->startTimestamp, allocator);
-    JsonUtil::AddMember(json, "endTimestamp", blockPtr->endTimestamp, allocator);
+    JsonUtil::AddMember(json, "_startTimestamp", blockPtr->startTimestamp, allocator);
+    JsonUtil::AddMember(json, "_endTimestamp", blockPtr->endTimestamp, allocator);
     JsonUtil::AddMember(json, "owner", blockPtr->owner, allocator);
     JsonUtil::AddMember(json, "attr", blockPtr->attrJsonString, allocator);
     JsonUtil::AddMember(json, "processId", blockPtr->processId, allocator);
     JsonUtil::AddMember(json, "threadId", blockPtr->threadId, allocator);
     JsonUtil::AddMember(json, "deviceId", blockPtr->deviceId, allocator);
     JsonUtil::AddMember(json, "eventType", blockPtr->eventType, allocator);
-    JsonUtil::AddMember(json, "firstAccessTimestamp", blockPtr->firstAccessTimestamp, allocator);
-    JsonUtil::AddMember(json, "lastAccessTimestamp", blockPtr->lastAccessTimestamp, allocator);
+    JsonUtil::AddMember(json, "_firstAccessTimestamp", blockPtr->firstAccessTimestamp, allocator);
+    JsonUtil::AddMember(json, "_lastAccessTimestamp", blockPtr->lastAccessTimestamp, allocator);
     JsonUtil::AddMember(json, "maxAccessInterval", blockPtr->maxAccessInterval, allocator);
     JsonUtil::AddMember(json, "lazyUsed", blockPtr->lazyUsed, allocator);
     JsonUtil::AddMember(json, "delayedFree", blockPtr->delayedFree, allocator);
@@ -81,20 +83,6 @@ static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blo
         JsonUtil::AddMember(json, "path", pathJson, allocator);
     }
     return json;
-}
-
-static document_t ToTableHeaderJson(const SqliteDbTableColumn &tableHeader,
-                                    Document::AllocatorType& allocator)
-{
-    document_t headerJson(kObjectType);
-    std::string headerName = std::string(tableHeader.name);
-    StringUtil::StripDbColumnName(headerName);
-    JsonUtil::AddMember(headerJson, "name", headerName, allocator);
-    JsonUtil::AddMember(headerJson, "key", std::string(tableHeader.key), allocator);
-    JsonUtil::AddMember(headerJson, "sortable", tableHeader.sortable, allocator);
-    JsonUtil::AddMember(headerJson, "searchable", tableHeader.searchable, allocator);
-    JsonUtil::AddMember(headerJson, "rangeFilterable", tableHeader.rangeFilterable, allocator);
-    return headerJson;
 }
 
 struct LeaksMemoryBlocksResponse : public JsonResponse {
@@ -122,7 +110,7 @@ struct LeaksMemoryBlocksResponse : public JsonResponse {
         json_t jsonHeaders(kArrayType);
         for (const auto& header : BLOCK_TABLE::FIELD_FULL_COLUMNS) {
             if (header.visible) {
-                jsonHeaders.PushBack(ToTableHeaderJson(header, allocator), allocator);
+                jsonHeaders.PushBack(header.ToTableHeaderJson(allocator), allocator);
             }
         }
         for (const auto& block : blocks) {
@@ -273,7 +261,7 @@ struct LeaksMemoryEventResponse : public JsonResponse {
                 needed = withCallStackPython;
             }
             if (header.visible && needed) {
-                headers.PushBack(ToTableHeaderJson(header, allocator), allocator);
+                headers.PushBack(header.ToTableHeaderJson(allocator), allocator);
             }
         }
         JsonUtil::AddMember(body, "headers", headers, allocator);
@@ -292,7 +280,7 @@ struct LeaksMemoryEventResponse : public JsonResponse {
             JsonUtil::AddMember(eventJson, "event", event.event, allocator);
             JsonUtil::AddMember(eventJson, "eventType", event.eventType, allocator);
             JsonUtil::AddMember(eventJson, "name", event.name, allocator);
-            JsonUtil::AddMember(eventJson, "timestamp", event.timestamp, allocator);
+            JsonUtil::AddMember(eventJson, "_timestamp", event.timestamp, allocator);
             JsonUtil::AddMember(eventJson, "processId", event.processId, allocator);
             JsonUtil::AddMember(eventJson, "threadId", event.threadId, allocator);
             JsonUtil::AddMember(eventJson, "deviceId", event.deviceId, allocator);

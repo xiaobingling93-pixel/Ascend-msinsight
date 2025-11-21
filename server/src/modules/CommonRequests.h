@@ -1,0 +1,100 @@
+/*
+* Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+*/
+
+#ifndef PROFILER_SERVER_COMMONREQUESTS_H
+#define PROFILER_SERVER_COMMONREQUESTS_H
+
+#include "JsonUtil.h"
+#include "ProtocolMessage.h"
+
+namespace Dic::Protocol {
+
+struct TableViewColumn {
+    std::string_view name;
+    std::string_view key; // ！！！注意，需要计算/转换的列，建议key与数据库表列名不要一致，否则可能导致where条件时以计算/转换前的值来判断
+    bool visible{true}; // 是否可见
+    bool sortable{false}; // 是否可排序
+    bool searchable{false}; // 是否可搜索
+    bool rangeFilterable{false}; // 是否可范围过滤
+
+    TableViewColumn(std::string_view name, std::string_view key, bool visible, bool sortable,
+                    bool searchable, bool rangeFilterable)
+        : name(name),
+          key(key),
+          visible(visible),
+          sortable(sortable),
+          searchable(searchable),
+          rangeFilterable(rangeFilterable) {}
+
+    // 简单不可见列
+    TableViewColumn(std::string_view name, std::string_view key)
+        : name(name),
+          key(key),
+          visible(false) {}
+
+    document_t ToTableHeaderJson(Document::AllocatorType& allocator) const;
+};
+
+class PaginationParam {
+public:
+    int64_t currentPage{};
+    int64_t pageSize{};
+    
+    bool Check(std::string& errorMsg) const
+    {
+        if (pageSize==0 && currentPage==0) {
+            return true;
+        }
+        if (!Dic::Protocol::CheckPageValid(pageSize, currentPage, errorMsg)) {
+            errorMsg = "Invalid pagination params, detail: " + errorMsg;
+            return false;
+        }
+        return true;
+    }
+
+    void SetPaginationParamFromJson(const json_t &json)
+    {
+        JsonUtil::SetByJsonKeyValue(currentPage, json, "currentPage");
+        JsonUtil::SetByJsonKeyValue(pageSize, json, "pageSize");
+    }
+};
+
+class FiltersParam {
+public:
+    std::unordered_map<std::string, std::string> filters;
+
+    bool SetFiltersFromJson(const json_t &json,
+                            const std::vector<TableViewColumn> &columns,
+                            std::string &errorMsg);
+};
+
+class OrderByParam {
+public:
+    std::string orderBy;
+    bool desc{};
+
+    bool SetOrderFromJson(const json_t &json,
+                          const std::vector<TableViewColumn> &columns,
+                          std::string &errorMsg);
+};
+
+class RangeFiltersParam {
+public:
+    std::unordered_map<std::string, std::pair<double, double>> rangeFilters;
+
+    bool SetRangeFiltersFromJson(const json_t &json,
+                                 const std::vector<TableViewColumn> &columns,
+                                 std::string &errorMsg);
+};
+
+inline std::vector<TableViewColumn>::const_iterator FindColumnByKey(std::string_view key,
+                                                                    const std::vector<TableViewColumn> &columns)
+{
+    return std::find_if(columns.begin(), columns.end(), [key](const TableViewColumn& col) {
+        return key == col.key;
+    });
+}
+
+}
+#endif  // PROFILER_SERVER_COMMONREQUESTS_H

@@ -37,9 +37,8 @@ public:
 
     bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) override;
     bool QueryMemoryResourceType(std::string &type) override;
-    bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-                             std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                             std::vector<Protocol::MemoryOperator> &opDetails) override;
+    int64_t QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                std::vector<Protocol::MemoryOperator> &opDetails) override;
     bool QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
                               std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                               std::vector<Protocol::MemoryComponent> &componentDetails) override;
@@ -58,7 +57,6 @@ public:
     void SaveStaticOpDetail();
     void SaveComponentDetail();
 
-    bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max) override;
@@ -76,6 +74,8 @@ public:
 
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
+    void GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
+                                               std::string& column, std::string& alias) override;
 
 private:
     // 动态图表格数据在数据库中存储表名为operator，全量DB对应表名OP_MEMORY
@@ -109,6 +109,8 @@ private:
     std::string GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams);
     std::string GetStaticGraphStartSql(Protocol::StaticOperatorGraphParams &requestParams);
     std::string GetStaticGraphEndSql(Protocol::StaticOperatorGraphParams &requestParams);
+
+    std::string GetCreateOperatorMemoryTableSql();
 
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";
