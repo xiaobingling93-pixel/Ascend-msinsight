@@ -66,6 +66,8 @@ export class MemorySession {
     defaultMaxSize = 0;
     order: SortOrder = null;
     orderBy?: string;
+    filters: { [key: string]: string } = {};
+    rangeFilters: { [key: string]: [number, number] } = {};
     isBtnDisabled: boolean = true;
     // 是否仅查看在选中时间区间分配或释放内存的数据
     isOnlyShowAllocatedOrReleasedWithinInterval: boolean = DEFAULT_SHOW_WITHIN_INTERVAL;

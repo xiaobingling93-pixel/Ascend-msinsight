@@ -269,7 +269,7 @@ const resizableTitle: React.FC<IResizableTitleProps> = (props) => {
     }
     return cloneElement(th, {},
         [...th.props.children,
-            <Resizor key={th.props.children.length} onResize={onResize} />]);
+            <Resizor key={th.props.children.length} onResize={onResize} style={{ width: 8, left: -4 }} />]);
 };
 
 interface ResizeTableProps<T> extends TableProps<T> {

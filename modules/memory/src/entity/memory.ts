@@ -249,6 +249,9 @@ export interface MemoryTableColumn {
     name: string;
     type: string;
     key: string;
+    sortable?: boolean;
+    searchable?: boolean;
+    rangeFilterable?: boolean;
 }
 
 /**
@@ -291,11 +294,11 @@ export interface OperatorMemoryCondition {
     /**
      * 最小内存
      */
-    minSize: number;
+    minSize?: number;
     /**
      * 最大内存
      */
-    maxSize: number;
+    maxSize?: number;
     /**
      * 是否仅查看在选中时间区间分配或释放内存的数据
      * - 有 startTime, endTime 时生效
@@ -313,6 +316,8 @@ export interface OperatorMemoryCondition {
      * 是否为比对场景
      */
     isCompare: boolean;
+    filters?: { [key: string]: string }; // 匹配过滤
+    rangeFilters?: { [key: string]: [number, number] }; // 范围过滤
 }
 
 /**

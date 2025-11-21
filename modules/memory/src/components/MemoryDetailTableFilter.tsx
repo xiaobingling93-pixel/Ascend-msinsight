@@ -21,7 +21,7 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 const COMPARE_MIN_INPUT_NUMBER = -2147483648;
 const MAX_INPUT_NUMBER = 4294967295;
 
-const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailData }:
+const MemoryStaticAndCompareDetailTableFilter = observer(({ session, memorySession, queryDetailData }:
 { session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void }) => {
     // 是否为比对场景
     const isCompare: boolean = session.compareRank.isCompare;
@@ -134,6 +134,51 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
             </div>
         </SearchBox>
     );
+});
+
+const MemoryDynamicDetailTableFilter = observer(({ session, memorySession, queryDetailData }:
+{ session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void }) => {
+    // 是否为比对场景
+    const isCompare: boolean = session.compareRank.isCompare;
+    const isDisabled: boolean = memorySession.isBtnDisabled;
+    const { t } = useTranslation('memory');
+
+    const onShowPassThroughTimeIntervalDataCheckboxChanged = (value: CheckboxChangeEvent): void => {
+        runInAction(() => {
+            memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = value.target.checked;
+        });
+        queryDetailData(true);
+    };
+
+    useEffect(() => {
+        runInAction(() => {
+            memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = DEFAULT_SHOW_WITHIN_INTERVAL;
+        });
+    }, [isCompare]);
+
+    return (
+        <SearchBox>
+            <OptionalCheckbox
+                idKey="input-onlyShowAllocatedOrReleased"
+                visible={true}
+                name={t('searchCriteria.Show Allocated or Released Within Interval Data')}
+                value={memorySession.isOnlyShowAllocatedOrReleasedWithinInterval}
+                disabled={isDisabled}
+                onChange={onShowPassThroughTimeIntervalDataCheckboxChanged}
+            />
+        </SearchBox>
+    );
+});
+
+const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailData }:
+{ session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void }) => {
+    return <>
+        {
+            memorySession.memoryType === MemoryGraphType.STATIC || session.compareRank.isCompare
+                ? <MemoryStaticAndCompareDetailTableFilter session={session} memorySession={memorySession} queryDetailData={queryDetailData} />
+                : <MemoryDynamicDetailTableFilter session={session} memorySession={memorySession} queryDetailData={queryDetailData} />
+        }
+    </>;
 });
 
 export default MemoryDetailTableFilter;

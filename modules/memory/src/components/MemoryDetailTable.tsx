@@ -51,6 +51,8 @@ const buildDynamicSearchParam = (memorySession: MemorySession, tempCurrent: numb
         searchName: memorySession.searchEventOperatorName,
         minSize: memorySession.minSize,
         maxSize: memorySession.maxSize,
+        filters: memorySession.filters,
+        rangeFilters: memorySession.rangeFilters,
         isOnlyShowAllocatedOrReleasedWithinInterval: memorySession.isOnlyShowAllocatedOrReleasedWithinInterval,
         isCompare,
     };
@@ -176,6 +178,26 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         });
     };
 
+    const handleFiltersChange = (filters: any): void => {
+        const newFilters: MemorySession['filters'] = {};
+        const newRangeFilters: MemorySession['rangeFilters'] = {};
+        Object.keys(filters).forEach((key: string) => {
+            const filter = filters[key];
+            if (filter === null || filter === undefined || filter.length < 1) {
+                return;
+            }
+            if (filter.length === 2) {
+                newRangeFilters[key] = filter.map(Number);
+            } else {
+                newFilters[key] = filter[0];
+            }
+        });
+        runInAction(() => {
+            memorySession.filters = newFilters;
+            memorySession.rangeFilters = newRangeFilters;
+        });
+    };
+
     const preParamCheck = (): boolean => {
         const isRankIdConditionInvalid = memorySession.selectedRankId === '';
         const isStaticMemoryInvalid = memorySession.memoryType === MemoryGraphType.STATIC && memorySession.memoryGraphId === '';
@@ -259,13 +281,25 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         } as CardInfo;
     }, [memorySession.selectedRankId]);
 
-    // 动静图切换时重置排序
-    useEffect(() => {
+    const clearFilters = (): void => {
         runInAction(() => {
             memorySession.order = null;
             memorySession.orderBy = undefined;
+            memorySession.filters = {};
+            memorySession.rangeFilters = {};
         });
+    };
+
+    // 动静图切换时重置排序
+    useEffect(() => {
+        clearFilters();
     }, [memoryType]);
+
+    useEffect(() => {
+        if (memorySession.groupId === GroupBy.COMPONENT) {
+            clearFilters();
+        }
+    }, [memorySession.groupId]);
 
     useEffect(() => {
         if (memorySession.selectedRankId === '') {
@@ -290,7 +324,8 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     useEffect(() => {
         setDetailTableData();
     }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
-        session.isAllMemoryCompletedSwitch, memorySession.order, memorySession.orderBy, t]);
+        session.isAllMemoryCompletedSwitch, memorySession.order, memorySession.orderBy, memorySession.filters,
+        memorySession.rangeFilters, t]);
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
             {memorySession.groupId === GroupBy.COMPONENT
@@ -303,12 +338,14 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                                 columns: memoryTableHead,
                                 rows: memoryTableData,
                             }}
+                            needUseKeyMap={memorySession.memoryType !== MemoryGraphType.DYNAMIC}
                             onRowSelected={onRowSelected}
                             current={memorySession.current}
                             pageSize={memorySession.pageSize}
                             onPageChange={handlePageChanged}
                             onOrderChange={handleOrderChange}
                             onOrderByChange={handleOrderByChange}
+                            onFiltersChange={handleFiltersChange}
                             total={total}
                             isCompare={isCompare}
                             selectedCard={selectedCard}
