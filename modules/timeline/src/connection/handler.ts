@@ -77,13 +77,24 @@ const completeAction = (session: Session): void => {
     clearParentMap();
 };
 
+/**
+ * 处理解析成功的通知，更新会话状态和相关数据。
+ *
+ * @param data - 包含解析结果的数据对象
+ * @returns void
+ */
 export const parseSuccessHandler: NotificationHandler = (data): void => {
     try {
+        // 将数据转换为 any 类型
         const unitData = data as any;
+        // 从数据中获取数据源
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
+        // 从 store 中获取 sessionStore
         const { sessionStore } = store;
+        // 获取当前活跃的会话
         const session = sessionStore.activeSession;
 
+        // 如果没有活跃的会话，直接返回
         if (!session) { return; }
 
         // 第一次 parse/success 返回时，更新 isRL 字段
@@ -95,56 +106,75 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 },
             });
         }
+        // 更新排名数据库路径映射
         updateRankDbPathMap(unitData.rankList ?? [], unitData.dbPath);
         runInAction(() => {
+            // 更新会话的 isFullDb 和 startTime 属性
             session.isFullDb = unitData.isFullDb;
             session.startTime = unitData.startTime;
 
+            // 判断是否为全局解析模式
             const isGlobal = session.modeOfParse === 'global_parse';
 
             // parse success之后关闭进度条
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
+                // 如果 unit 的 cardId 与 unitData 的 cardId 匹配
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
+                    // 更新数据库路径和标签
                     updateDbPathAndLabelForCardUnit(unit, unitData);
+                    // 更新对齐开始时间戳
                     unit.alignStartTimestamp = unitData.offset as number;
                     const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
+                    // 如果 unitData 的 children 不为空
                     if (unitData.unit.children !== undefined && unitData.unit.children.length > 0) {
                         for (const item of unitData.unit.children) {
+                            // 获取时间偏移键
                             const key = getTimeOffsetKey(session, item.metadata);
+                            // 更新子项的对齐开始时间戳
                             item.alignStartTimestamp = unit.alignStartTimestamp;
                             session.unitsConfig.offsetConfig.timestampOffset[key] = unit.alignStartTimestamp;
                         }
                     }
+                    // 更新时间戳偏移配置
                     session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: unit.alignStartTimestamp };
+                    // 更新数据源和父元数据映射
                     updateDataSourceAndParentMetaDataMap(unitData.unit, (unit.metadata as CardMetaData).dataSource, !isGlobal);
+                    // 根据是否为全局解析模式，决定是否将解析任务推入队列
                     isGlobal ? session.parseQueue.push(() => recursiveExpandUnit(unitData.unit.children ?? [], unit, 0)) : recursiveExpandUnit(unitData.unit.children ?? [], unit, 0);
                 }
             });
+            // 重置记录时间
             session.startRecordTime = 0;
+            // 计算默认结束时间  如果时间超出 MAX_SAFE_INTEGER , 会取 MAX_SAFE_INTEGER *2 为最大值
             const defaultEndTimeAll = (typeof unitData.maxTimeStamp === 'number' ? Math.min(Number.MAX_SAFE_INTEGER, unitData.maxTimeStamp) : 1000000000) * 2;
-            // 如果超出最大值系统给出提示
-            if (defaultEndTimeAll === Number.MAX_SAFE_INTEGER) {
+            // 如果 defaultEndTimeAll 等于最大值（MAX_SAFE_INTEGER *2） 给出提示
+            if (defaultEndTimeAll === Number.MAX_SAFE_INTEGER * 2) {
                 session.isOverflowMaxSafeNumber = true;
             }
+            // 更新会话的 endTimeAll 属性
             if (session.endTimeAll === undefined) {
                 session.endTimeAll = defaultEndTimeAll;
             } else {
                 session.endTimeAll = Math.max(session.endTimeAll, defaultEndTimeAll);
             }
+            // 更新远程属性
             const remoteAttrs = session.remoteAttrs.get(dataSource.remote);
             if (remoteAttrs === undefined) {
                 session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: defaultEndTimeAll });
             } else {
                 remoteAttrs.maxTimeStamp = defaultEndTimeAll;
             }
+            // 设置单元阶段为下载
             setUnitPhaseByCardId(unitData.unit.metadata.cardId, session, 'download');
+            // 如果 startTimeUpdated 为 true，清除缓存
             if (unitData.startTimeUpdated === true) {
                 session.simpleCache.clear();
             }
+            // 设置会话的域范围
             session.setDomainWithoutHistory({ domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration });
 
-            // 所有卡解析完成
+            // 检查所有卡是否解析完成
             const parseCompleted = !(session.units.find(item => item.phase === 'analyzing'));
             if (parseCompleted) {
                 // 如果存在超出最大值的情况添加message解释
@@ -152,7 +182,9 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                     message.warning(i18n.t('timeline:InterceptedMaximum'));
                     session.isOverflowMaxSafeNumber = false;
                 }
+                // 如果是全局解析模式，设置观察动作
                 isGlobal && setObserveAction(session);
+                // 发送更新会话通知
                 connector.send({
                     event: 'updateSession',
                     body: {
@@ -160,7 +192,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                         isFullDb: session.isFullDb,
                     },
                 });
-                // 恢复上次页面
+                // 恢复上次页面设置
                 recoverPageSetting();
             }
         });
