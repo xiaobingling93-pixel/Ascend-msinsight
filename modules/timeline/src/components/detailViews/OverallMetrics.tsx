@@ -121,12 +121,10 @@ const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow
                 setSelectedRow(record);
             },
         })}
+        // 给表格添加类名
         rowClassName={(record): string => {
-            const cls = [`level-${record.level}`];
-            if (selectedRow?.id === record.id) {
-                cls.push('selected-row');
-            }
-            return cls.join(' ');
+            // 检查selectedRow的id是否与当前记录的id相同
+            return selectedRow?.id === record.id ? 'selected-row' : '';
         }}
     ></ResizeTable>;
 });
