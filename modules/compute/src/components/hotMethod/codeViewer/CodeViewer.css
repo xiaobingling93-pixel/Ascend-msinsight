@@ -49,8 +49,8 @@ pre code.hljs {
     border-right: 2px solid var(--grey60);
 }
 .theme_dark .hljs li.hover{
-    background: var(--middleblue);
+    background: var(--greyTransparent);
 }
 .theme_dark .hljs li.selected{
-    background: var(--middleblue);
+    background: var(--greyTransparent);
 }

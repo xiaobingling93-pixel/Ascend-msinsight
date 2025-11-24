@@ -63,6 +63,7 @@
     "exportSuccess": "导出成功。",
     "exportFilePath": "文件路径：{{filePath}}",
     "exceedingFileLimit": "文件超出最大限制。",
+    "Operation": "操作",
     "exportFail": "导出失败。"
   }
 }

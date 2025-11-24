@@ -6,11 +6,11 @@ tr.selected {
 }
 
 .theme_dark tr.selected {
-    background: var(--middleblue);
+    background: var(--greyTransparent);
 }
 
 .theme_dark tr.selected  td{
-    background: var(--middleblue);
+    background: var(--greyTransparent);
 }
 .theme_dark .ant-tooltip-arrow-content {
     --antd-arrow-background-color: linear-gradient(to right bottom, var(--grey50),var(--grey50));
