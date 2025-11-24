@@ -69,15 +69,16 @@ public:
                                           Protocol::SummaryStatisticsBody &responseBody) = 0;
     virtual bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) = 0;
     virtual bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
-        Protocol::SystemViewBody &responseBody) = 0;
+        Protocol::SystemViewBody &responseBody, const uint64_t &minTimestamp) = 0;
     virtual bool QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
         Protocol::ExpAnaAICoreFreqBody &responseBody,
         std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq) = 0;
-    virtual LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name) = 0;
+    virtual LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name,
+        const uint64_t &minTimestamp, const std::string &timeRangeConditionSql) = 0;
     virtual std::vector<std::string> QueryCoreType() = 0;
     virtual bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp) = 0;
-    virtual uint64_t QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams) = 0;
+    virtual uint64_t QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams, uint64_t minTimestamp) = 0;
     virtual bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) = 0;
     virtual bool QueryCommunicationKernelInfo(const std::string &name, const std::string &rankId,

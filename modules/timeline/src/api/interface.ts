@@ -123,6 +123,8 @@ export interface QueryOperatorDispatchParams extends PaginationParams {
     dbPath: string;
     orderBy: string;
     order: string;
+    startTime: number;
+    endTime: number;
 };
 
 export interface BaseSummaryRowItemType {
@@ -160,6 +162,8 @@ export interface EventViewParams {
     threadName: string;
     order: string;
     filterCondition: string[];
+    startTime: number;
+    endTime: number;
 }
 
 export interface QueryAllSameOperatorsDurationParams {

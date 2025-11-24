@@ -13,7 +13,7 @@ import { isPinned, switchPinned } from '../components/ChartContainer/unitPin';
 const MAX_RECURSIVE_COUNT = 10;
 
 function hideUnit(session: Session): void {
-    if (session.selectedRangeIsLock) {
+    if (session.selectedRangeIsLock || session.isTimeAnalysisMode) {
         return;
     }
     hideUnits(session, session.selectedUnits);
@@ -185,7 +185,7 @@ export const actionHideUnits = register({
     name: 'hideUnits',
     label: 'timeline:contextMenu.Hide',
     visible: (session: Session) => isHideUnitMenuVisible(session),
-    disabled: (session: Session) => session.selectedRangeIsLock,
+    disabled: (session: Session) => session.selectedRangeIsLock || session.isTimeAnalysisMode,
     perform: (session): void => {
         hideUnit(session);
     },
@@ -195,7 +195,7 @@ export const actionShowHiddenUnits = register({
     name: 'showHiddenUnits',
     label: 'timeline:contextMenu.Show all',
     visible: (session: Session) => isShowUnitsMenuVisible(session),
-    disabled: (session: Session) => session.selectedRangeIsLock,
+    disabled: (session: Session) => session.selectedRangeIsLock || session.isTimeAnalysisMode,
     perform: (session): void => {
         showHiddenUnit(session);
     },

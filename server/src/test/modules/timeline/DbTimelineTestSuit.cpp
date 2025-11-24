@@ -605,8 +605,8 @@ TEST_F(FullDbTestSuit, QueryTotalKernel)
 
     Protocol::KernelDetailsParams requestParams;
     requestParams.coreType = "";
-
-    auto result = database->QueryTotalKernel(requestParams);
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto result = database->QueryTotalKernel(requestParams, minTimestamp);
     const uint64_t EXPECT_COUNT = 11;
 
     EXPECT_EQ(result, EXPECT_COUNT);

@@ -1,6 +1,17 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+
 import { register } from './register';
 import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
+
+const sliceSelectionVisible = (session: Session): boolean => {
+    if (session.isTimeAnalysisMode) {
+        return false;
+    }
+    return true;
+};
 
 const toggleSelectMode = (session: Session): void => {
     runInAction(() => {
@@ -14,6 +25,7 @@ const toggleSelectMode = (session: Session): void => {
 export const actionSliceSelection = register({
     name: 'sliceSelection',
     label: 'timeline:contextMenu.SliceSelectionMode',
+    visible: (session: Session): boolean => sliceSelectionVisible(session),
     checked: (session) => session.sliceSelection.active,
     perform: (session): void => {
         toggleSelectMode(session);

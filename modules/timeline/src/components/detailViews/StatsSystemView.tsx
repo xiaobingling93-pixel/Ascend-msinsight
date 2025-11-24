@@ -79,7 +79,7 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.card.cardId)?.phase;
     useEffect(() => {
         updateData(page, sorter, filters);
-    }, [sorter, filters, props.card.cardId]);
+    }, [sorter, filters, props.card.cardId, props.session.timeAnalysisRange]);
     useEffect(() => {
         if (status === 'download') {
             updateData(page, sorter, filters);
@@ -101,6 +101,11 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
             }
         });
         setLoading(true);
+        let startTime = props.session.timeAnalysisRange?.[0] ?? 0;
+        startTime = startTime < 0 ? 0 : startTime;
+        let endTime = props.session.timeAnalysisRange?.[1] ?? 0;
+        endTime = endTime < 0 ? 0 : endTime;
+        const timestampoffset = getTimeOffset(props.session, props.card);
         const res = await queryKernelDetails({
             rankId: props.card.cardId,
             dbPath: props.card.dbPath,
@@ -108,12 +113,14 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
             current: pages.current,
             orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
+            startTime: Math.floor(startTime + timestampoffset),
+            endTime: Math.ceil(endTime + timestampoffset),
             coreType: '',
             filterCondition: filterTypes,
         }).finally(() => {
             setLoading(false);
         });
-        const timestampoffset = getTimeOffset(props.session, props.card);
+
         const data = res.kernelDetails.map((item: {
             startTimeLabel: string;
             startTime: number;}) => {

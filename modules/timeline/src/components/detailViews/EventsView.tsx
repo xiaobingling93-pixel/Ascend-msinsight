@@ -90,7 +90,7 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
         setSorter(defaultSorter);
         setFilters(defaultFilters);
         setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
-    }, [props.session.showEvent]);
+    }, [props.session.showEvent, props.session.timeAnalysisRange]);
 
     useEffect(() => {
         if (props.session.eventUnits === undefined || props.session.eventUnits.length === 0) {
@@ -103,7 +103,7 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
             return;
         }
         updateData({ pages: allCondition.page, sorters: allCondition.sorter, filters: allCondition.filters, props, setLoading, setDataSource, setPage, setEventColum });
-    }, [allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
+    }, [props.session.timeAnalysisRange, allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
         allCondition.sorter.field, allCondition.sorter.order, allCondition.filters, props.session.doReset, t]);
 
     useEffect(() => {
@@ -214,6 +214,11 @@ const handleSelected = async(rowData: any, props: SelectContentViewProps): Promi
 
 const searchData = async(pages: any, sorters: {field: string;order: string}, filters: string[], prop: any): Promise<EventTableData> => {
     const requestData = prop.session.eventUnits?.[0]?.metadata as ThreadMetaData;
+    let startTime = prop.session.timeAnalysisRange?.[0] ?? 0;
+    startTime = startTime < 0 ? 0 : startTime;
+    let endTime = prop.session.timeAnalysisRange?.[1] ?? 0;
+    endTime = endTime < 0 ? 0 : endTime;
+    const timestampoffset = getTimeOffset(prop.session, prop.card);
     return await eventViewData({
         rankId: requestData.cardId as string,
         dbPath: requestData.dbPath as string,
@@ -228,6 +233,8 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, fil
         processName: requestData.processName as string,
         metaType: requestData.metaType as string,
         filterCondition: filters,
+        startTime: Math.floor(startTime + timestampoffset),
+        endTime: Math.ceil(endTime + timestampoffset),
     });
 };
 

@@ -33,6 +33,12 @@ export { actionScrollDown, actionScrollUp } from './actionScroll';
 export { actionToggleBottomPanel } from './actionToggleBottomPanel';
 export { actionLockSelection, actionUnLockSelection } from './actionLockSelection';
 export { actionSetCardAlias } from './actionSetCardAlias';
+export {
+    actionTimeRangeAnalysis,
+    actionRemoveTimeRangeAnalysis,
+    actionTimeRangeAnalysisAndZoomIn,
+    actionApplyTimeRangeAnalysis,
+} from './actionTimeRangeAnalysis';
 export { actionParseCardsOfRelatedGroup } from './actionParseCardsOfRelatedGroup';
 export { actionMergeUnits, actionUnmergeUnits } from './actionMergeUnits';
 export { actionFlagMarkCreation } from './actionFlagMarkCreation';

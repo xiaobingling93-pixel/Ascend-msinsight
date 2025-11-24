@@ -26,6 +26,10 @@ import {
     actionHideFlagEvents,
     actionHidePythonCallStack,
     actionHideUnits,
+    actionTimeRangeAnalysis,
+    actionRemoveTimeRangeAnalysis,
+    actionTimeRangeAnalysisAndZoomIn,
+    actionApplyTimeRangeAnalysis,
     actionLockSelection,
     actionRecoverDefaultOffset,
     actionResetZoom,
@@ -199,6 +203,12 @@ const contextMenuItems: ContextMenuItem[] = [
     actionGenerateBubbleCurve,
     actionSetCardAlias,
     actionParseCardsOfRelatedGroup,
+    CONTEXT_MENU_SEPARATOR,
+    // 时间范围分析
+    actionTimeRangeAnalysis,
+    actionTimeRangeAnalysisAndZoomIn,
+    actionRemoveTimeRangeAnalysis,
+    actionApplyTimeRangeAnalysis,
     CONTEXT_MENU_SEPARATOR,
     // 泳道缩放
     actionFitToScreen,

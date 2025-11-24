@@ -192,6 +192,8 @@ export class Session {
 
     totalHeight: number = 0;
     renderTrigger: boolean = true;
+    isTimeAnalysisMode: boolean = false; // 时间范围分析模式
+    timeAnalysisRange?: [ TimeStamp, TimeStamp ]; // 时间分析范围
     /**
      * 页面是否有m快捷键的遮罩m
      */

@@ -1245,10 +1245,11 @@ bool TextTraceDatabase::QueryEventsViewData(const EventsViewParams &params, Even
 }
 
 bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
-    Protocol::SystemViewBody &responseBody)
+    Protocol::SystemViewBody &responseBody, const uint64_t &minTimestamp)
 {
     std::string searchName = "%" + requestParams.searchName + "%";
-    const LayerStatData &data = QueryLayerData(requestParams, searchName);
+    const std::string &timeCondSql = TextSqlConstant::AppendTextTimeRangeConditionSql(requestParams.startTime, requestParams.endTime);
+    const LayerStatData &data = QueryLayerData(requestParams, searchName, minTimestamp, timeCondSql);
     double layerOperatorTime = data.allOperatorTime;
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("Query system view data an SQL injection attack.");
@@ -1256,7 +1257,7 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
     }
     const std::vector<std::string> layers = (requestParams.layer == "HCCL" || requestParams.layer == "COMMUNICATION")
         ? std::vector<std::string>{"hccl", "communication"} : std::vector{StringUtil::ToLower(requestParams.layer)};
-    std::string sql = TextSqlConstant::GetQueryPythonViewDataSql(requestParams.order, requestParams.orderBy, layers);
+    std::string sql = TextSqlConstant::GetQueryPythonViewDataSql(requestParams.order, requestParams.orderBy, layers, timeCondSql);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -1267,9 +1268,19 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
     if (std::find(layers.begin(), layers.end(), "python") == layers.end()
         && std::find(layers.begin(), layers.end(), "cann") == layers.end()) {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
-        resultSet = stmt->ExecuteQuery(layerOperatorTime, searchName, deviceId, requestParams.pageSize, offset);
+        if (requestParams.startTime == requestParams.endTime) {
+            resultSet = stmt->ExecuteQuery(layerOperatorTime, searchName, deviceId, requestParams.pageSize, offset);
+        } else {
+            resultSet = stmt->ExecuteQuery(layerOperatorTime, searchName, deviceId, requestParams.startTime + minTimestamp,
+                                           requestParams.endTime + minTimestamp, requestParams.pageSize, offset);
+        }
     } else {
-        resultSet = stmt->ExecuteQuery(layerOperatorTime, searchName, requestParams.pageSize, offset);
+        if (requestParams.startTime == requestParams.endTime) {
+            resultSet = stmt->ExecuteQuery(layerOperatorTime, searchName, requestParams.pageSize, offset);
+        } else {
+            resultSet = stmt->ExecuteQuery(layerOperatorTime, searchName, requestParams.startTime + minTimestamp,
+                                           requestParams.endTime + minTimestamp, requestParams.pageSize, offset);
+        }
     }
     if (resultSet == nullptr) {
         ServerLog::Error("Query system view data. Failed to get result set.", stmt->GetErrorMessage());
@@ -1321,13 +1332,13 @@ bool TextTraceDatabase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICo
 }
 
 LayerStatData TextTraceDatabase::QueryLayerData(const Protocol::SystemViewParams &requestParams,
-    const std::string &name)
+    const std::string &name, const uint64_t &minTimestamp, const std::string &timeCondSql)
 {
     LayerStatData layerStatData;
     std::vector<std::string> layerList = (requestParams.layer == "HCCL" || requestParams.layer == "COMMUNICATION")
         ? std::vector<std::string>{"hccl", "communication"}
         : std::vector<std::string>{StringUtil::ToLower(requestParams.layer)};
-    std::string sql = TextSqlConstant::GetQueryLayerDataSql(layerList);
+    std::string sql = TextSqlConstant::GetQueryLayerDataSql(layerList, timeCondSql);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query layer operator time, fail to prepare sql.");
@@ -1337,9 +1348,17 @@ LayerStatData TextTraceDatabase::QueryLayerData(const Protocol::SystemViewParams
     if (std::find(layerList.begin(), layerList.end(), "python") == layerList.end()
         && std::find(layerList.begin(), layerList.end(), "cann") == layerList.end()) {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
-        resultSet = stmt->ExecuteQuery(name, deviceId);
+        if (requestParams.startTime == requestParams.endTime) {
+            resultSet = stmt->ExecuteQuery(name, deviceId);
+        } else {
+            resultSet = stmt->ExecuteQuery(name, deviceId, requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+        }
     } else {
-        resultSet = stmt->ExecuteQuery(name);
+        if (requestParams.startTime == requestParams.endTime) {
+            resultSet = stmt->ExecuteQuery(name);
+        } else {
+            resultSet = stmt->ExecuteQuery(name, requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+        }
     }
     if (resultSet == nullptr) {
         ServerLog::Error("Query layer operator time. Failed to get result set.", stmt->GetErrorMessage());
@@ -1373,15 +1392,18 @@ std::vector<std::string> TextTraceDatabase::QueryCoreType()
     return acceleratorCoreList;
 }
 
-uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams)
+uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams, uint64_t minTimestamp)
 {
     uint64_t total = 0;
     std::string sql = "SELECT count(*) FROM ("
         "    SELECT name, op_type AS type, accelerator_core AS acceleratorCore, "
         "    input_shapes AS inputShapes, input_data_types AS inputDataTypes, input_formats AS inputFormats, "
         "    output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
-        "    output_formats AS outputFormats FROM kernel_detail WHERE deviceId = ? "
-        ") subquery ";
+        "    output_formats AS outputFormats FROM kernel_detail WHERE deviceId = ? ";
+    if (requestParams.startTime != requestParams.endTime) {
+        sql += " AND (start_time + duration*1000) >= ? AND start_time <= ? ";
+    }
+    sql += ") subquery ";
     for (const auto &filter : requestParams.filters) {
         if (!StringUtil::CheckSqlValid(filter.first)) {
             Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
@@ -1398,6 +1420,9 @@ uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams
         return total;
     }
     stmt->BindParams(requestParams.deviceId);
+    if (requestParams.startTime != requestParams.endTime) {
+        stmt->BindParams(requestParams.startTime, requestParams.endTime);
+    }
     if (!requestParams.coreType.empty()) {
         stmt->BindParams(requestParams.coreType);
     }
@@ -1423,8 +1448,7 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
         ServerLog::Error("Query kernel detail data is an SQL injection attack");
         return false;
     }
-    std::string sql = TextSqlConstant::GetKernelDetailSql(requestParams.order, requestParams.orderBy,
-        requestParams.coreType, requestParams.filters);
+    std::string sql = TextSqlConstant::GetKernelDetailSql(requestParams);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -1432,6 +1456,9 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
         return false;
     }
     stmt->BindParams(requestParams.deviceId);
+    if (requestParams.startTime != requestParams.endTime) {
+        stmt->BindParams(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+    }
     if (!requestParams.coreType.empty()) {
         stmt->BindParams(requestParams.coreType);
     }
@@ -1449,7 +1476,7 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
     responseBody.currentPage = requestParams.current;
     const std::vector<std::string> cores = QueryCoreType();
     responseBody.acceleratorCoreList = cores;
-    responseBody.count = QueryTotalKernel(requestParams);
+    responseBody.count = QueryTotalKernel(requestParams, minTimestamp);
     return true;
 }
 
@@ -1647,33 +1674,6 @@ uint64_t TextTraceDatabase::SameOperatorsCount(const std::string &name, const st
     return total;
 }
 
-bool TextTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params,
-    const std::string &optimizers, std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
-{
-    std::string sql = TextSqlConstant::QueryAffinityOptimizerTextSql(optimizers, params.orderBy, params.order);
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for query affinity optimizer.", sqlite3_errmsg(db));
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query affinity optimizer.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::ThreadTraces one{};
-        one.id = resultSet->GetString("id");
-        one.startTime = resultSet->GetUint64("startTime");
-        one.name = resultSet->GetString("name");
-        one.duration = resultSet->GetUint64("duration");
-        one.threadId = resultSet->GetString("tid");
-        one.pid = resultSet->GetString("pid");
-        data.emplace_back(one);
-    }
-    return true;
-}
-
 bool TextTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
     const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
@@ -1687,7 +1687,13 @@ bool TextTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
         ServerLog::Error("Fail to prepare sql for AI cpu op exceed threshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, params.startTime + minTimestamp,
+            params.endTime + minTimestamp, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for AI cpu op exceed threshold.", stmt->GetErrorMessage());
         return false;
@@ -1864,7 +1870,12 @@ bool TextTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         return false;
     }
     int deviceId = StringUtil::StringToInt(params.deviceId);
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, threshold);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, threshold);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp, threshold);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;
@@ -1882,47 +1893,6 @@ bool TextTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
     return true;
 }
 
-bool TextTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
-    const std::set<std::string> &pattern, uint64_t minTimestamp,
-    std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
-{
-    auto stmt = CreatPreparedStatement(QUERY_AFFINITY_API_TEXT_SQL);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for Affinity API.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for Affinity API data.", stmt->GetErrorMessage());
-        return false;
-    }
-    std::map<uint64_t, std::vector<Protocol::FlowLocation>> filterData;
-    while (resultSet->Next()) {
-        Protocol::FlowLocation one{};
-        uint64_t trackId = resultSet->GetUint64("track");
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.timestamp = resultSet->GetUint64("startTime");
-        // Protocol::FlowLocation数据结构中只定义start time和duration，绝大多数场景下也是只用上述两个字段，
-        // 此处需要比较start time和end time，是个特例，在不修改数据结构的情况下，duration中实际存的是end time，
-        // 过滤顶层API后，在根据end time和start time求出duration
-        one.duration = resultSet->GetUint64("endTime");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        if (data.count(trackId) == 0) {
-            filterData.emplace(trackId, std::vector<Protocol::FlowLocation>{});
-            data.emplace(trackId, std::vector<Protocol::FlowLocation>{});
-            indexes.emplace(trackId, std::vector<uint32_t>{});
-        }
-        filterData[trackId].emplace_back(one);
-    }
-    for (const auto &item : filterData) {
-        std::vector<Protocol::FlowLocation> originData = item.second;
-        TraceDatabaseHelper::FilterTopLevelApi(originData, pattern, data[item.first], indexes[item.first]);
-    }
-    return true;
-}
-
 bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
 {
@@ -1932,7 +1902,12 @@ bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for query Fuseable Operator.", stmt->GetErrorMessage());
         return false;
@@ -1961,7 +1936,12 @@ bool TextTraceDatabase::QueryOperatorDispatchData(const Protocol::KernelDetailsP
         ServerLog::Error("Fail to prepare sql for Operator Dispatch data.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.startTime + minTimestamp, params.endTime + minTimestamp);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Operator Dispatch data.", stmt->GetErrorMessage());
         return false;

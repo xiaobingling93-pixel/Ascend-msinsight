@@ -8,7 +8,7 @@ import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
 
 const lockSelectionMenuVisible = (session: Session): boolean => {
-    if (session.selectedRangeIsLock) {
+    if (session.selectedRangeIsLock || session.isTimeAnalysisMode) {
         return false;
     }
     if (session.selectedRange === undefined || session.selectedUnits === undefined) {

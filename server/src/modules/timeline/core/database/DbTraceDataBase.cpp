@@ -289,12 +289,14 @@ bool DbTraceDataBase::QueryStepDuration(const std::string &stepId, uint64_t &min
 }
 
 bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
-    Protocol::SystemViewBody &responseBody)
+    Protocol::SystemViewBody &responseBody, const uint64_t &minTimestamp)
 {
     auto stmt = CreatPreparedStatement(); // 这里不需要判断空指针，TraceDatabaseHelper里面统一进行了判空操作
     std::unique_ptr<SqliteResultSet> resultSet;
     try {
-        resultSet = TraceDatabaseHelper::QuerySystemViewData(stmt, requestParams, GetDeviceId(requestParams.rankId));
+        const std::string &timeCondSql = TraceDatabaseSqlConst::AppendDbTimeRangeConditionSql(requestParams.startTime, requestParams.endTime);
+        resultSet = TraceDatabaseHelper::QuerySystemViewData(stmt, requestParams,
+            GetDeviceId(requestParams.rankId), minTimestamp, timeCondSql);
     } catch (DatabaseException &e) {
         ServerLog::Error("Query system view data failed, ", e.What());
         return false;
@@ -368,6 +370,9 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         std::string bindFilter = "%" + filter.second + "%";
         stmt->BindParams(bindFilter);
     }
+    if (requestParams.startTime != requestParams.endTime) {
+        stmt->BindParams(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+    }
     if (!ExcecuteQueryKernelDetailData(stmt, requestParams, responseBody, minTimestamp)) {
         return false;
     }
@@ -417,7 +422,7 @@ bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePrepar
     return true;
 }
 
-uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams)
+uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams, uint64_t minTimestamp)
 {
     std::string sql = "SELECT count(1) as num FROM " + TABLE_COMPUTE_TASK_INFO;
     if (!requestParams.coreType.empty()) {
@@ -536,7 +541,8 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     return true;
 }
 
-LayerStatData DbTraceDataBase::QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name)
+LayerStatData DbTraceDataBase::QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name,
+    const uint64_t &minTimestamp, const std::string &timeRangeConditionSql)
 {
     return LayerStatData();
 }

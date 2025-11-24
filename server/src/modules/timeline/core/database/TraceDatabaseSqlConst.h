@@ -195,12 +195,6 @@ const std::string QUERY_COMMUNICATION_SUMMARY_DB_SQL =
     "      )"
     " ) ";
 
-const std::string QUERY_AFFINITY_API_DB_SQL =
-    "SELECT py.ROWID as id, str.value as name, py.startNs - ? as startTime, "
-    "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
-    "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
-    "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' ORDER BY py.globalTid ASC, py.startNs ASC ";
-
 const std::string QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL =
     "SELECT deviceId as name, startNs - ? as startNs, endNs - ? as endNs, endNs - startNs as duration "
     "FROM " + TABLE_OVERLAP_ANALYSIS + " WHERE deviceId = ? AND type = ? ORDER BY deviceId ASC, startNs ASC";
@@ -237,29 +231,47 @@ const std::string QUERY_COMMUNICATION_GROUP_ID_DB_SQL =
 class TraceDatabaseSqlConst {
 // LCOV_EXCL_BR_START
 public:
+    static std::string GenerateAffinityApiDbSql(const Protocol::KernelDetailsParams &params)
+    {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND py.endNs >= ? AND py.startNs <= ? ";
+        }
+        return "SELECT py.ROWID as id, str.value as name, py.startNs - ? as startTime, "
+            "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
+            "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
+            "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' " + timeCondSql +
+            "ORDER BY py.globalTid ASC, py.startNs ASC ";
+    }
+
     static std::string GenerateAclnnQueryDbSql(const Protocol::KernelDetailsParams &params)
     {
-        std::string sql =
-            "SELECT task.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, "
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND task.endNs >= ? AND task.startNs <= ? ";
+        }
+        return "SELECT task.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, "
             "task.startNs - ? as startTime, (task.endNs - task.startNs) as duration, 'Ascend Hardware' as pid, "
             "task.streamId as tid, task.depth as depth "
             "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
             "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
             "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
             "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
-            "WHERE task.deviceId = ? AND s1.value IN ("
+            "WHERE task.deviceId = ? " + timeCondSql + " AND s1.value IN ("
             "    SELECT str.value FROM " + TABLE_COMPUTE_TASK_INFO + " info "
             "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
             "    WHERE str.value LIKE 'aclnn%' "
             "    GROUP BY str.value HAVING COUNT(str.value) >= ? "
             ") ORDER BY " + params.orderBy + " " + params.order;
-        return sql;
     }
 
     static std::string GenerateOperatorDispatchQueryDbSql(const Protocol::KernelDetailsParams &params)
     {
-        std::string sql =
-            "SELECT"
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND ca.endNs >= ? AND ca.startNs <= ? ";
+        }
+        return "SELECT"
             "  ca.ROWID as id, "
             "  s.value as name, "
             "  ca.startNs - ? as startTime, "
@@ -270,9 +282,8 @@ public:
             "FROM " + TABLE_CANN_API + " ca "
             "JOIN " + TABLE_ENUM_API_TYPE + " enum ON ca.type = enum.id "
             "JOIN " + TABLE_STRING_IDS + " s ON ca.name = s.id "
-            "WHERE s.value LIKE '%aclopCompileAndExecute' "
+            "WHERE s.value LIKE '%aclopCompileAndExecute' " + timeCondSql +
             "ORDER BY " + params.orderBy + " " + params.order;
-        return sql;
     }
 
     static std::string GenerateAICpuQueryDbSql(const std::vector<std::string> &replace,
@@ -294,7 +305,10 @@ public:
             dataTypeCheck.emplace_back(GenerateAICpuOpFilterSqlDB(opType, item.second));
         }
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
-
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND t.endNs >= ? AND t.startNs <= ? ";
+        }
         std::string sql = "SELECT info.ROWID as id, s2.value as name, s1.value as type, s0.value as unit, "
             "t.startNs - ? as startTime, (t.endNs - t.startNs) as duration, 'Ascend Hardware' as pid, "
             "t.streamId as tid, t.depth as depth, lower(s3.value) as input, lower(s4.value) as output "
@@ -305,7 +319,7 @@ public:
             "JOIN STRING_IDS s2 ON info.name = s2.id "
             "JOIN STRING_IDS s3 ON info.inputDataTypes = s3.id "
             "JOIN STRING_IDS s4 ON info.outputDataTypes = s4.id "
-            "WHERE t.deviceId = ? AND s0.value ='AI_CPU' AND ("
+            "WHERE t.deviceId = ? AND s0.value ='AI_CPU' " + timeCondSql + " AND ("
             "    lower(s1.value) IN (" +  StringUtil::Join4SqlGroup(replace) +
             ") " // 特定类型的算子可以修改代码
             "    OR ("
@@ -320,6 +334,10 @@ public:
     static std::string GenerateFuseableOpFilterDbSql(const Protocol::KernelDetailsParams &params,
         const Timeline::FuseableOpRule &rule)
     {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND task.endNs >= ? AND task.startNs <= ? ";
+        }
         std::string sql = "WITH data AS ( "
             "SELECT info.ROWID as id, task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
             "task.startNs - ? as startTime, (task.endNs - task.startNs) as duration, 'Ascend Hardware' as pid, "
@@ -329,7 +347,7 @@ public:
             "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
             "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
             "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
-            "WHERE task.deviceId = ? ) "
+            "WHERE task.deviceId = ? ) " + timeCondSql +
             "SELECT d0.* FROM data d0 ";
         for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
             std::string table = "d" + std::to_string(i);
@@ -340,15 +358,16 @@ public:
         return sql;
     }
 
-    static std::string QueryAffinityOptimizerDbSql(const std::string &optimizers, const std::string &orderBy,
-        const std::string &order)
+    static std::string QueryAffinityOptimizerDbSql(const std::string &optimizers, const Protocol::KernelDetailsParams &params)
     {
-        std::string sql =
-            "SELECT py.ROWID as id, py.startNs - ? as startTime, (py.endNs - py.startNs) as duration, "
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND py.endNs >= ? AND py.startNs <= ? ";
+        }
+        return "SELECT py.ROWID as id, py.startNs - ? as startTime, (py.endNs - py.startNs) as duration, "
             "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
             "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
-            "WHERE str.value IN (" + optimizers + ") ORDER BY " + orderBy + " " + order;
-        return sql;
+            "WHERE str.value IN (" + optimizers + ") " +timeCondSql + " ORDER BY " + params.orderBy + " " + params.order;
     }
 
     static std::string GeneratorCommunicationSummarySql4Db(const OrderParam &orderParam, const PageParam &pageParam,
@@ -373,6 +392,16 @@ public:
             "LEFT JOIN data d5 ON d5.groupName = d1.groupName AND d5.planeId = d1.planeId AND d5.row_num = d1.row_num - 4 "
             "ORDER BY d1.groupName, d1.planeId, d1.start_time";
         return sql;
+    }
+
+    static std::string AppendDbTimeRangeConditionSql(const uint64_t &startTime, const uint64_t &endTime)
+    {
+        std::string timeRangeConditionSql;
+        if (startTime == endTime) { // default request, not time range analysis
+            return timeRangeConditionSql;
+        }
+        timeRangeConditionSql += " AND endNs >= ? AND startNs <= ? ";
+        return timeRangeConditionSql;
     }
 
 private:

@@ -590,9 +590,10 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenDbNotOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
-    const Dic::Protocol::SystemViewParams requestParams;
+    const Dic::Protocol::SystemViewParams requestParams{};
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    const uint64_t minTimestamp = 0;
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, false);
 }
 
@@ -606,7 +607,8 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenSqlInject)
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "####@";
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    const uint64_t minTimestamp = 0;
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, false);
 }
 
@@ -624,8 +626,9 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHardware)
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
     requestParams.layer = "Ascend Hardware";
+    const uint64_t minTimestamp = 0;
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, true);
 }
 
@@ -643,8 +646,9 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHCCL)
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
     requestParams.layer = "HCCL";
+    const uint64_t minTimestamp = 0;
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, true);
 }
 
@@ -662,8 +666,9 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCommunication)
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
     requestParams.layer = "COMMUNICATION";
+    const uint64_t minTimestamp = 0;
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, true);
 }
 
@@ -680,8 +685,9 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCANN)
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
     requestParams.layer = "CANN";
+    const uint64_t minTimestamp = 0;
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, true);
 }
 
@@ -698,8 +704,9 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenPython)
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
     requestParams.layer = "Python";
+    const uint64_t minTimestamp = 0;
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, true);
 }
 
@@ -728,8 +735,9 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenOverlap)
     const uint64_t size = 100;
     requestParams.pageSize = size;
     requestParams.current = cur;
+    const uint64_t minTimestamp = 0;
     Dic::Protocol::SystemViewBody responseBody;
-    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    bool result = database.QuerySystemViewData(requestParams, responseBody, minTimestamp);
     EXPECT_EQ(result, true);
 }
 

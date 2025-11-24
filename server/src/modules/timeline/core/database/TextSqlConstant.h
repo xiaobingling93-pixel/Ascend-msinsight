@@ -89,13 +89,6 @@ const std::string QUERY_LAYER_DATA_SQL = "SELECT sum(case when name != 'Communic
 const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
-const std::string QUERY_AFFINITY_API_TEXT_SQL =
-    "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, "
-    "s.end_time - ? as endTime, t.pid as pid, t.tid as tid "
-    "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
-    "WHERE s.cat = 'cpu_op' AND s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' "
-    "ORDER BY s.track_id ASC, s.timestamp ASC";
-
 const std::string QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL =
     "SELECT name, timestamp - ? as startNs, end_time - ? as endNs, duration FROM " + SLICE_TABLE + " "
     "WHERE track_id in (SELECT track_id FROM " + THREAD_TABLE + " t "
@@ -165,16 +158,14 @@ public:
     static std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase)
     {
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
-        std::string sql = "SELECT count(*) FROM " + SLICE_TABLE + " WHERE " + nameMatch;
-        return sql;
+        return "SELECT count(*) FROM " + SLICE_TABLE + " WHERE " + nameMatch;
     }
     static std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase)
     {
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
-        std::string sql = "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
+        return "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
             " FROM " + SLICE_TABLE + " JOIN " + THREAD_TABLE + " USING (track_id) WHERE " + nameMatch +
             " ORDER BY timestamp ASC, track_id ASC, id ASC LIMIT 1 OFFSET ?";
-        return sql;
     }
     static std::string GetComputeStatisticsSQL(const std::string &stepId)
     {
@@ -182,10 +173,9 @@ public:
         if (!stepId.empty() && stepId != "ALL") {
             stepCondition.append(" and step_id =? ");
         }
-        std::string sql = "SELECT sum(duration) as duration,accelerator_core as acceleratorCore FROM kernel_detail"
+        return "SELECT sum(duration) as duration,accelerator_core as acceleratorCore FROM kernel_detail"
             " WHERE accelerator_core in ('AI_CPU','AI_CORE', 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') " +
             stepCondition + " GROUP BY accelerator_core";
-        return sql;
     }
     static std::string GetCommunicationStatisticsSql(const std::string &stepId)
     {
@@ -193,13 +183,12 @@ public:
         if (!stepId.empty()) {
             timestampCondition = " and timestamp >= ? and timestamp <= ? ";
         }
-        std::string sql = "select duration / 1000, t.thread_name as overlapType from (select sum(duration) as duration,"
+        return "select duration / 1000, t.thread_name as overlapType from (select sum(duration) as duration,"
             " track_id from " + SLICE_TABLE + " where track_id in (select track_id from thread where thread_name "
             " in ('Communication(Not Overlapped)', 'Communication')) " +
             timestampCondition + " group by track_id) s left join thread t on s.track_id=t.track_id";
-        return sql;
     }
-    static std::string GetQueryLayerDataSql(std::vector<std::string> layers)
+    static std::string GetQueryLayerDataSql(std::vector<std::string> layers,  const std::string &timeCondSql)
     {
         const auto layerStr = StringUtil::Join4SqlGroup(std::move(layers));
         if (layerStr.find("python") != std::string::npos || layerStr.find("cann") != std::string::npos) {
@@ -207,16 +196,16 @@ public:
                 "AS totalTime, count(distinct name) FROM slice "
                 "WHERE lower(name) LIKE lower(?) and slice.track_id IN "
                 "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
-                " WHERE lower(process_name) in ("+ layerStr +") ) ";
+                " WHERE lower(process_name) in ("+ layerStr +") ) " + timeCondSql;
         }
         return "SELECT sum(case when name != 'Communication' then duration else 0 end) "
                 "AS totalTime, count(distinct name) FROM slice "
                 "WHERE lower(name) LIKE lower(?) and slice.track_id IN "
                 "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
-                " WHERE (process.pid & 0x1f) = ? AND lower(process_name) in ("+ layerStr +") ) ";
+                " WHERE (process.pid & 0x1f) = ? AND lower(process_name) in ("+ layerStr +") ) " + timeCondSql;
     }
     static std::string GetQueryPythonViewDataSql(const std::string &order, const std::string &orderByField,
-        std::vector<std::string> layers)
+        std::vector<std::string> layers, const std::string &timeCondSql)
     {
         std::string orderBy;
         if (order == "descend") {
@@ -232,8 +221,8 @@ public:
                 "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
                 "FROM slice WHERE lower(name) LIKE lower(?) AND slice.track_id IN ( SELECT track_id "
                 "FROM process JOIN thread t ON process.pid = t.pid "
-                "WHERE lower(process_name) in (" + layerStr + ")) GROUP BY name " +
-                orderBy + " limit ? offset ?";
+                "WHERE lower(process_name) in (" + layerStr + ")) " + timeCondSql +
+                "GROUP BY name " + orderBy + " limit ? offset ?";
         }
         return "SELECT name, ROUND(cast(sum(duration) as double) * 100 / ?, 2) as "
             "time, sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, "
@@ -241,8 +230,8 @@ public:
             "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
             "FROM slice WHERE lower(name) LIKE lower(?) AND slice.track_id IN ( SELECT track_id "
             "FROM process JOIN thread t ON process.pid = t.pid "
-            "WHERE (process.pid & 0x1f) = ? AND lower(process_name) in (" + layerStr + ")) GROUP BY name " +
-            orderBy + " limit ? offset ?";
+            "WHERE (process.pid & 0x1f) = ? AND lower(process_name) in (" + layerStr + ")) " + timeCondSql +
+            "GROUP BY name " + orderBy + " limit ? offset ?";
     }
 
     static std::string GetAICoreViewDataSql()
@@ -255,12 +244,11 @@ public:
         return sql;
     }
 
-    static std::string GetKernelDetailSql(const std::string &order, const std::string &orderByField,
-        const std::string &coreType, const std::vector<std::pair<std::string, std::string>>& filters)
+    static std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
     {
-        std::string orderBy = " ORDER BY " + orderByField + (order == "descend" ? " DESC" : " ASC");
+        std::string orderBy = " ORDER BY " + requestParams.orderBy + (requestParams.order == "descend" ? " DESC" : " ASC");
         std::string coreTypes;
-        if (!coreType.empty()) {
+        if (!requestParams.coreType.empty()) {
             coreTypes = " AND accelerator_core = ? ";
         }
         std::string sql = "SELECT id, task_id as taskId, name, op_type AS type, accelerator_core AS acceleratorCore, "
@@ -268,7 +256,10 @@ public:
             "input_shapes AS inputShapes, input_data_types AS inputDataTypes, input_formats AS inputFormats, "
             "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
             "output_formats AS outputFormats FROM kernel_detail WHERE deviceId = ? ";
-        for (const auto &filter : filters) {
+        if (requestParams.startTime != requestParams.endTime) {
+            sql += " AND (start_time + duration*1000) >= ? AND start_time <= ? ";
+        }
+        for (const auto &filter : requestParams.filters) {
             if (!StringUtil::CheckSqlValid(filter.first)) {
                 Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
                 sql.clear();
@@ -316,32 +307,49 @@ public:
         return sql;
     }
 
+    static std::string GenerateAffinityApiTextSql(const Protocol::KernelDetailsParams &params)
+    {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND s.end_time >= ? AND s.timestamp <= ? ";
+        }
+        return "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, "
+            "s.end_time - ? as endTime, t.pid as pid, t.tid as tid "
+            "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+            "WHERE s.cat = 'cpu_op' AND s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' " + timeCondSql +
+            "ORDER BY s.track_id ASC, s.timestamp ASC";
+    }
+
     static std::string GenerateAclnnQueryTextSql(const Protocol::KernelDetailsParams &params)
     {
-        std::string sql =
-            "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND s.end_time >= ? AND s.timestamp <= ? ";
+        }
+        return "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
             "t.pid as pid, t.tid as tid, t.track_id as track_id "
             "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
             "JOIN " + PROCESS_TABLE + " p ON p.pid = t.pid "
-            "WHERE (p.pid & 0x1f) = ? AND t.thread_name LIKE 'Stream%' AND s.name IN ( "
+            "WHERE (p.pid & 0x1f) = ? AND t.thread_name LIKE 'Stream%' " + timeCondSql + " AND s.name IN ( "
             "    SELECT name FROM " + SLICE_TABLE + "    WHERE name LIKE 'aclnn%' "
             "    GROUP BY name HAVING COUNT(name) >= ? "
             ") ORDER BY " + params.orderBy + " " + params.order;
-        return sql;
     }
 
     static std::string GenerateOperatorDispatchQueryTextSql(const Protocol::KernelDetailsParams &params)
     {
-        std::string sql =
-            "SELECT s.id AS id, s.name AS name, s.timestamp - ? AS startTime, s.duration AS duration, "
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND s.end_time >= ? AND s.timestamp <= ? ";
+        }
+        return "SELECT s.id AS id, s.name AS name, s.timestamp - ? AS startTime, s.duration AS duration, "
             "  t.pid AS pid, t.tid AS tid, t.track_id AS track_id "
             "FROM " + SLICE_TABLE + " s "
             "  JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
             "WHERE "
             "  t.thread_name LIKE 'Thread%' "
-            "  AND s.name LIKE '%aclopCompileAndExecute' "
+            "  AND s.name LIKE '%aclopCompileAndExecute' " + timeCondSql +
             "ORDER BY " + params.orderBy + " " + params.order;
-        return sql;
     }
 
     static std::string GenerateAICpuQueryTextSql(const std::vector<std::string> &replace,
@@ -363,7 +371,10 @@ public:
             dataTypeCheck.emplace_back(GenerateAICpuOpFilterSql(opType, item.second));
         }
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
-
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND (kd.start_time + kd.duration * 1000) >= ? AND kd.start_time <= ? ";
+        }
         std::string sql =
             "SELECT kd.name as name, kd.op_type as type, kd.start_time - ? as startTime, (kd.duration * 1000) as duration, "
             "t.pid as pid, t.tid as tid, t.track_id as track_id, s.id as id, "
@@ -371,7 +382,7 @@ public:
             "FROM " + KERNEL_DETAIL + " kd "
             "JOIN " + SLICE_TABLE +" s ON kd.name = s.name AND kd.start_time = s.timestamp "
             "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
-            "WHERE kd.deviceId = ? AND kd.accelerator_core='AI_CPU' AND ("
+            "WHERE kd.deviceId = ? AND kd.accelerator_core='AI_CPU' " + timeCondSql + " AND ("
             "    lower(kd.op_type) IN (" +
             StringUtil::Join4SqlGroup(replace) +
             ") " // 特定类型的算子可以修改代码
@@ -388,6 +399,10 @@ public:
     static std::string GenerateFuseableOpFilterTextSql(const Protocol::KernelDetailsParams &params,
         const Timeline::FuseableOpRule &rule)
     {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND (kd.start_time + kd.duration * 1000) >= ? AND kd.start_time <= ? ";
+        }
         std::string sql = "WITH data AS ( "
             "SELECT kd.deviceId, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
             "s.duration as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
@@ -401,7 +416,7 @@ public:
             "JOIN " +
             THREAD_TABLE +
             " t ON s.track_id = t.track_id "
-            "WHERE kd.deviceId = ? AND kd.accelerator_core NOT IN ('HCCL', 'COMMUNICATION') ) "
+            "WHERE kd.deviceId = ? AND kd.accelerator_core NOT IN ('HCCL', 'COMMUNICATION') ) " + timeCondSql +
             "SELECT d0.* FROM data d0 ";
         for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
             std::string table = "d" + std::to_string(i);
@@ -412,14 +427,16 @@ public:
         return sql;
     }
 
-    static std::string QueryAffinityOptimizerTextSql(const std::string &optimizers, const std::string &orderBy,
-                                                     const std::string &order)
+    static std::string QueryAffinityOptimizerTextSql(const std::string &optimizers, const Protocol::KernelDetailsParams &params)
     {
-        std::string sql = "Select (s.timestamp - ?) as startTime, s.duration as duration, s.name as name, "
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) {
+            timeCondSql += " AND s.end_time >= ? AND s.timestamp <= ? ";
+        }
+        return "Select (s.timestamp - ?) as startTime, s.duration as duration, s.name as name, "
             "t.pid as pid, t.tid as tid, s.id as id, t.track_id as track_id "
             "From " + SLICE_TABLE + " s Join " + THREAD_TABLE + " t ON s.track_id = t.track_id "
-            "WHERE s.name IN ( " + optimizers + ") order by " + orderBy + " " + order;
-        return sql;
+            "WHERE s.name IN ( " + optimizers + ") " + timeCondSql + " order by " + params.orderBy + " " + params.order;
     }
 
     static std::string GeneratorCommunicationSummarySql4Text(const OrderParam &orderParam, const PageParam &pageParam)
@@ -481,6 +498,16 @@ public:
             sql += " AND name IN () ";
         }
         return sql;
+    }
+
+    static std::string AppendTextTimeRangeConditionSql(const uint64_t &startTime, const uint64_t &endTime)
+    {
+        std::string timeRangeConditionSql;
+        if (startTime == endTime) { // default request, not time range analysis
+            return timeRangeConditionSql;
+        }
+        timeRangeConditionSql += " AND end_time >= ? AND timestamp <= ? ";
+        return timeRangeConditionSql;
     }
 
 private:

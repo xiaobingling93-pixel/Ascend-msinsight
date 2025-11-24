@@ -18,8 +18,9 @@ bool QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     WsSession &session = *WsSessionManager::Instance().GetSession();
     SystemViewResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string warnMsg;
-    if (!request.params.CheckParams(warnMsg)) {
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
@@ -39,13 +40,13 @@ bool QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         return false;
     }
     request.params.deviceId = deviceId;
-    if (!database->QuerySystemViewData(request.params, response.body)) {
+    if (!database->QuerySystemViewData(request.params, response.body, minTimestamp)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get timeline table response data.");
     }
     if (request.params.layer == "Python" && std::empty(response.body.systemViewDetail)) {
         request.params.layer = "MindSpore";
-        if (!database->QuerySystemViewData(request.params, response.body)) {
+        if (!database->QuerySystemViewData(request.params, response.body, minTimestamp)) {
             SetResponseResult(response, false);
             ServerLog::Error("Failed to get timeline table response data.");
             session.OnResponse(std::move(responsePtr));

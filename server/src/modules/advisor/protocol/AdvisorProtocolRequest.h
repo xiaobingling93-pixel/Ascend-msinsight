@@ -15,7 +15,9 @@ struct APITypeParams {
     uint32_t pageSize{};
     std::string orderBy;
     std::string orderType;
-    bool Check(std::string &errorMsg) const
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+    bool Check(uint64_t minTimestamp, std::string &errorMsg) const
     {
         if (!CheckPageValid(this->pageSize, this->currentPage, errorMsg)) {
             return false;
@@ -35,6 +37,14 @@ struct APITypeParams {
         }
         if (!CheckStrParamValid(this->orderType, paramError)) {
             errorMsg = "[Advisor] Failed to check OrderType." + paramError;
+            return false;
+        }
+        if (startTime > endTime) {
+            errorMsg = "[Advisor] start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTimestamp) {
+            errorMsg = "[Advisor] end time is invalid";
             return false;
         }
         return true;

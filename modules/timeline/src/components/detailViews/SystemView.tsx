@@ -61,15 +61,19 @@ const AsideSelectContainer = styled.div`
     background-color: ${(p): string => p.theme.bgColor};
     max-width: 400px;
 
-  .view-select{
-    margin-bottom: 8px;
-    flex: none;
-  }
-  .rank-filter{
-    margin-bottom: 8px;
-    flex: none;
-    color: ${(p): string => p.theme.textColorSecondary};
-  }
+    .time-range-info{
+        margin-bottom: 8px;
+        flex: none;
+    }
+    .view-select{
+        margin-bottom: 8px;
+        flex: none;
+    }
+    .rank-filter{
+        margin-bottom: 8px;
+        flex: none;
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
 `;
 
 const SelectContentContainer = styled.div`
@@ -161,6 +165,7 @@ export const SystemView = observer((props: any) => {
     }, [props.session.showEvent]);
     return (<Container>
         <AsideSelectContainer>
+            {viewOption !== 3 && (<TimeRangeInfo session={props.session}></TimeRangeInfo>)}
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
             <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} card={conditions} session={props.session}></SelectList>
@@ -175,6 +180,19 @@ export const SystemView = observer((props: any) => {
             </SelectContentContainer>
         </ChartErrorBoundary>
     </Container>);
+});
+
+const TimeRangeInfo = observer((props: { session: Session }) => {
+    const { session } = props;
+    return (
+        session.isTimeAnalysisMode && session.timeAnalysisRange
+            ? <div className={'time-range-info'}>
+                {
+                    `Time filter: ${getDetailTimeDisplay(session.timeAnalysisRange[0])} to ${getDetailTimeDisplay(session.timeAnalysisRange[1])}`
+                }
+            </div>
+            : <></>
+    );
 });
 
 const ViewSelect = observer((props: any) => {
@@ -397,6 +415,11 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
             return;
         }
         setLoading(true);
+        let startTime = prop.session.timeAnalysisRange?.[0] ?? 0;
+        startTime = startTime < 0 ? 0 : startTime;
+        let endTime = prop.session.timeAnalysisRange?.[1] ?? 0;
+        endTime = endTime < 0 ? 0 : endTime;
+        const timestampOffset = getTimeOffset(prop.session, { cardId: prop.card.cardId });
         let params: IQueryCondition = {
             rankId: prop.card.cardId,
             dbPath: prop.card.dbPath,
@@ -404,6 +427,8 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
             current: pages.current,
             orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
+            startTime: Math.floor(startTime + timestampOffset),
+            endTime: Math.ceil(endTime + timestampOffset),
         };
         if (_isStats) {
             params = { isQueryTotal: true, layer: prop.layerType, searchName, ...params };
@@ -427,7 +452,7 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
         if (status === 'download') {
             updateData(searchText, page, sorter, props);
         }
-    }, [sorter, props.card.cardId, status]);
+    }, [sorter, props.card.cardId, status, props.session.timeAnalysisRange]);
     useEffect(() => {
         if (rowData.name === null || rowData.name === undefined) {
             return;

@@ -418,6 +418,7 @@ std::unique_ptr<Request> TimelineProtocol::ToSystemViewRequest(const Dic::json_t
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
@@ -461,6 +462,8 @@ std::unique_ptr<Request> TimelineProtocol::ToEventsViewRequest(const Dic::json_t
     JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.threadName, json["params"], "threadName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     if (json["params"].HasMember("filterCondition") && json["params"]["filterCondition"].IsArray()) {
         for (const auto &filter : json["params"]["filterCondition"].GetArray()) {
             if (!filter.IsString()) {
@@ -494,6 +497,8 @@ std::unique_ptr<Request> TimelineProtocol::ToKernelDetailRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.coreType, json["params"], "coreType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     if (json["params"].HasMember("filterCondition") && json["params"]["filterCondition"].IsArray()) {
         for (const auto &filter : json["params"]["filterCondition"].GetArray()) {
             if (!filter.IsString()) {
