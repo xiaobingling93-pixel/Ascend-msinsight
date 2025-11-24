@@ -34,14 +34,6 @@ declare global {
 document.oncontextmenu = (): boolean => false;
 disableShortcuts();
 
-const root = createRoot(document.getElementById('root') as HTMLElement);
-root.render(
-    (<React.StrictMode>
-        <RootStoreContext.Provider value={store}>
-            <App />
-        </RootStoreContext.Provider>
-    </React.StrictMode>));
-
 // 用于存储最近一次请求的时间戳
 const requestCache = new Map<string, number>();
 
@@ -87,4 +79,12 @@ export function getInitStatus(): void {
             requests: ['language', 'theme', 'deviceIds', 'threadIds'],
         },
     });
-};
+}
+
+const root = createRoot(document.getElementById('root') as HTMLElement);
+root.render(
+    (<React.StrictMode>
+        <RootStoreContext.Provider value={store}>
+            <App />
+        </RootStoreContext.Provider>
+    </React.StrictMode>));

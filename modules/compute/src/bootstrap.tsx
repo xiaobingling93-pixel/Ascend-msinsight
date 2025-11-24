@@ -21,16 +21,6 @@ disableShortcuts([], [], (keyInfo: KeydownInfo): void => {
     shortcutSwitchFindWindow(keyInfo);
 });
 
-export function init(page?: string): void {
-    const root = createRoot(document.getElementById('root') as HTMLElement);
-    root.render(
-        (
-            <RootStoreContext.Provider value={store}>
-                <App page={page}/>
-            </RootStoreContext.Provider>
-        ));
-}
-
 declare global {
     interface Window {
         setTheme: (isDark: boolean) => void;
@@ -73,4 +63,14 @@ function withTimeout(promise: any, timeout: number, message?: string): Promise<a
             setTimeout(() => reject(new Error(message ?? 'withTimeout')), timeout),
         ), // 超时逻辑
     ]);
+}
+
+export function init(page?: string): void {
+    const root = createRoot(document.getElementById('root') as HTMLElement);
+    root.render(
+        (
+            <RootStoreContext.Provider value={store}>
+                <App page={page}/>
+            </RootStoreContext.Provider>
+        ));
 }

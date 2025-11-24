@@ -12,6 +12,14 @@ module.exports = {
     devServer: {
         port: 3001,
         open: false,
+        client: {
+            overlay: {
+                runtimeErrors: (error) => {
+                    // 禁止界面展示错误：ResizeObserver loop completed with undelivered notifications
+                    return !(error?.message.includes('ResizeObserver'));
+                },
+            },
+        },
     },
     webpack: {
         alias: webpackCfg.alias,

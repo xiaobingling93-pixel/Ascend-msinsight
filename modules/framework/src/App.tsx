@@ -53,7 +53,7 @@ const App = observer(() => {
         init(session);
     }, []);
 
-    return session !== undefined
+    return session?.defaultConnected
         ? <ThemeProvider theme={themeInstance.getThemeType()}>
             <GlobalStyles />
             <SharedConfigProvider locale={locale}>
