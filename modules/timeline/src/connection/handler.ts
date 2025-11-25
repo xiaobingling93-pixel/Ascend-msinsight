@@ -306,7 +306,7 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             unit.children = cardUnits;
         }
     });
-    session.sortUnits();
+
     if (session?.units?.[0]) {
         session.units[0].isExpanded = true;
         const rootUnit = getRootUnit(session, session.units[0].metadata.cardId as string, dataSource);
@@ -363,7 +363,6 @@ const createBaselineCard = (session: Session | undefined, result: TimelineCard[]
             unit.children = cardUnits;
         }
     });
-    session.sortUnits();
 };
 export const savePageSettingRemoteHandler: NotificationHandler = async (): Promise<unknown> => {
     const { sessionStore } = store;

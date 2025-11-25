@@ -522,24 +522,6 @@ export class Session {
         return `${JSON.stringify({ ...omit(this, ['caches', 'sharedState', '_units']) })}`;
     }
 
-    sortUnits(): void {
-        const sorter = (a: InsightUnit, b: InsightUnit): number => {
-            const aName = (a.metadata as any).cardId as string;
-            const bName = (b.metadata as any).cardId as string;
-            if (aName.includes('Host') || bName.includes('Host')) {
-                return aName.includes('Host') ? -1 : 1;
-            }
-            if (aName.length === bName.length) {
-                return aName.localeCompare(bName);
-            }
-            return aName.length - bName.length;
-        };
-        this.units.sort(sorter);
-        this.units.forEach(unit => {
-            unit.children?.sort(sorter);
-        });
-    }
-
     // 对于 Text 的单 Host 多 Device 场景，只保留一个卡，对于 db 的单 Host 多 Device 场景，只保留一个 host
     updateUnitsForMultiDevice(): void {
         const rootUnits = getRootUnit(this._units); // db 情况 this._units 不是根泳道，因此需要先获取根泳道
