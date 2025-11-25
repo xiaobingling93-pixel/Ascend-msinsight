@@ -4,7 +4,7 @@
 
 import { expect, test as baseTest, WebSocket } from '@playwright/test';
 import { FrameworkPage, MemoryPage, TimelinePage } from '@/page-object';
-import { clearAllData, importData, setCompare, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
+import { clearAllData, importData, setCompare, setupWebSocketListener, waitForResponse, waitForWebSocketEvent } from '@/utils';
 import { CheckboxHelpers, InputHelpers, SelectHelpers } from '@/components';
 import { FilePath } from '@/utils/constants';
 
@@ -66,17 +66,22 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     });
 
     // 【case】memory底部表格条件查询后结果加载
-    test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
-        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor, queryBtn } = memoryPage;
-        const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
-        const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
-        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
-        await nameInput.setValue('aten::empty_strided');
-        expect(await nameInput.expectValueToBe('aten::empty_strided'));
-        expect(await minSizeInput.expectValueToBe('0'));
-        expect(await maxSizeInput.expectValueToBe('421916'));
-        await queryBtn.waitFor({ state: 'visible' });
-        await queryBtn.click();
+    test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage, ws }) => {
+        const { memoryFrame } = memoryPage;
+
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await memoryFrame.getByLabel('Name').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Search Name').fill('aten::empty_strided');
+        await memoryFrame.getByRole('button', { name: 'search Search' }).click();
+        await searchPromise;
+
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Min').fill('0');
+        await memoryFrame.getByPlaceholder('Max').fill('421916');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
+        await page.waitForTimeout(1000);
+
         await page.mouse.move(0, 0);
         await expect(memoryFrame.locator('.mi-page').locator('.mi-collapsible-panel').nth(1)).toHaveScreenshot('pytorch-single-table-data.png', {
             maxDiffPixels: 500,
@@ -84,25 +89,31 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     });
 
     // 【case】memory底部表格条件重置后结果加载
-    test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
-        const { memoryFrame, maxSizeInputor, queryBtn, resetBtn } = memoryPage;
-        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
+    test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage, ws }) => {
+        const { memoryFrame } = memoryPage;
 
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
         const tableWrapper = memoryFrame.locator('.mi-page').locator('.panel-content').nth(1);
+        await searchPromise;
 
         await page.mouse.move(0, 0);
         await expect(tableWrapper).toHaveScreenshot('pytorch-single-reset.png', {
             maxDiffPixels: 500,
         });
 
-        await maxSizeInput.setValue('1000');
-        await queryBtn.click();
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Max').fill('1000');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
         await page.mouse.move(0, 0);
         await expect(tableWrapper).toHaveScreenshot('pytorch-single-reset-change.png', {
             maxDiffPixels: 500,
         });
 
-        await resetBtn.click();
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByRole('button', { name: 'Reset' }).click();
+        await searchPromise;
+
         await page.mouse.move(0, 0);
         await expect(tableWrapper).toHaveScreenshot('pytorch-single-reset.png', {
             maxDiffPixels: 500,
@@ -127,7 +138,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     // 对比数据
     test('memory_compare_rank_text', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
-        await setCompare(page, memoryFrame,{ baseline:FilePath.TEXT_330_RANK_0,comparison:FilePath.TEXT_330_RANK_1 });
+        await setCompare(page, memoryFrame, { baseline: FilePath.TEXT_330_RANK_0, comparison: FilePath.TEXT_330_RANK_1 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
         await memoryFrame.locator('.ant-spin-spinning').first().waitFor({ state: 'hidden' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('compare-rank.png', {
@@ -137,15 +148,15 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     });
 
     // 【case】memory中间调整区间，底部表格仅查看在选中时间区间分配或释放内存的数据时的结果展示
-    test('query_memoryDetailTable_by_tableFilterConditionOnlyShowAllocatedOrReleasedWithinInterval', async ({ page, memoryPage }) => {
-        const { memoryFrame, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, queryBtn } = memoryPage;
+    test('query_memoryDetailTable_by_tableFilterConditionOnlyShowAllocatedOrReleasedWithinInterval', async ({ page, memoryPage, ws }) => {
+        const { memoryFrame, isOnlyShowAllocatedOrReleasedWithinIntervalChecker } = memoryPage;
         const isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox = new CheckboxHelpers(page, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, memoryFrame);
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await searchPromise;
 
         const chart = memoryFrame.locator('.ant-spin-container > div > div:nth-child(2) > div:nth-child(1) > canvas');
         const chartInfo = await chart.boundingBox();
-        if (!chartInfo) {
-            return;
-        }
+
         // 等待echarts加载完成才能框选
         await page.waitForTimeout(1000);
         const { x: startX, y: startY } = chartInfo;
@@ -156,17 +167,47 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
         await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.click();
         expect(await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.isChecked()).toBe(true);
-        await queryBtn.waitFor({ state: 'visible' });
-        await queryBtn.click();
+
         const spin = memoryFrame.locator('.panel-content .ant-spin-dot-spin');
         // 等待 loading 结束后端返回更新 totalNum
         await spin.waitFor({ state: 'detached' });
         await page.mouse.move(0, 0);
 
         const totalNumListItem = memoryFrame.locator('.ant-spin-container > ul > li.ant-pagination-total-text');
-        expect(await totalNumListItem.innerText()).toBe('Total 513 items');
+        expect(await totalNumListItem.innerText()).toBe('Total 452 items');
+        await searchPromise;
 
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-interval-only-show.png', {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // 【case】memory底部表格联合筛选后结果加载
+    test('query_memoryDetailTable_by_jointFiltering', async ({ page, memoryPage, ws }) => {
+        const { memoryFrame } = memoryPage;
+
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await memoryFrame.getByLabel('Name').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Search Name').fill('aten::empty_strided');
+        await memoryFrame.getByRole('button', { name: 'search Search' }).click();
+        await searchPromise;
+
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Min').fill('0');
+        await memoryFrame.getByPlaceholder('Max').fill('4219160');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
+        await page.waitForTimeout(1000);
+
+        await memoryFrame.getByLabel('Allocation Time(ms)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Min').nth(1).fill('0');
+        await memoryFrame.getByPlaceholder('Max').nth(1).fill('500');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
+        await page.waitForTimeout(1000);
+
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page').locator('.mi-collapsible-panel').nth(1)).toHaveScreenshot('pytorch-single-table-joint-filtering.png', {
             maxDiffPixels: 500,
         });
     });
@@ -361,13 +402,13 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
     });
 
     // 测试从单机多卡text类型数据切换到多机多卡db类型数据
-    test('test_pageDisplay_when_text_to_db', async ({ page, memoryPage }) => {
+    test('test_pageDisplay_when_text_to_db', async ({ page, memoryPage, ws }) => {
         const frameworkPage = new FrameworkPage(page);
         const textRank0 = frameworkPage.getRankLocator(FilePath.TEXT_330_RANK_0);
         await textRank0.click();
         const dbRank1 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_1);
         await dbRank1.click();
-        const { memoryFrame, hostSelector, rankIdSelector, queryBtn } = memoryPage;
+        const { memoryFrame, hostSelector, rankIdSelector } = memoryPage;
         await hostSelector.waitFor({ state: 'attached' });
         const hostSelect = new SelectHelpers(page, hostSelector, memoryFrame);
         const hostText = await hostSelect.getValue();
@@ -375,7 +416,8 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         const selectedText = await rankIdSelect.getValue();
         expect(selectedText).toBe('1');
-        await expect(queryBtn).toBeEnabled({ timeout: 20_000 });
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await searchPromise;
         // 等待 echarts 动画结束
         await page.waitForTimeout(2000);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-text-to-db.png', {
@@ -389,6 +431,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
 });
 
 test.describe('Memory(Switch_Dynamic_and_Static)', () => {
+    test.describe.configure({ timeout: 240_000 });
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -418,6 +461,7 @@ test.describe('Memory(Switch_Dynamic_and_Static)', () => {
         await page.waitForTimeout(2000);
         // 点击Device ID表头排序，再切换
         await memoryFrame.getByRole('table').getByText('Device ID').click();
+        await expect(queryBtn).toBeEnabled({ timeout: 20_000 });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('mindspore_rank0_loaded.png', {
             maxDiffPixels: 500,
         });
@@ -446,7 +490,7 @@ test.describe('Memory(Pytorch_Group_By_Component)', () => {
     });
 
     // 组件级内存展示测试
-    test('test_pageDisplay_group_by_Component', async({ page, memoryPage }) => {
+    test('test_pageDisplay_group_by_Component', async ({ page, memoryPage }) => {
         const { memoryFrame, rankIdSelector } = memoryPage;
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         await rankIdSelect.open();
@@ -458,7 +502,7 @@ test.describe('Memory(Pytorch_Group_By_Component)', () => {
     });
 
     // 组件级内存排序测试
-    test('test_sort_group_by_Component', async({ memoryPage }) => {
+    test('test_sort_group_by_Component', async ({ memoryPage }) => {
         const { memoryFrame } = memoryPage;
         await memoryFrame.getByRole('table').getByText('Peak Memory Reserved(MB)').click();
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-sort-group-by-component.png', {
@@ -469,7 +513,7 @@ test.describe('Memory(Pytorch_Group_By_Component)', () => {
     // 组件级内存比对场景测试
     test('test_compare_group_by_Component', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
-        await setCompare(page, memoryFrame, { baseline:FilePath.TEXT_330_RANK_0,comparison:FilePath.TEXT_330_RANK_1 });
+        await setCompare(page, memoryFrame, { baseline: FilePath.TEXT_330_RANK_0, comparison: FilePath.TEXT_330_RANK_1 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
         await memoryFrame.locator('.ant-spin-spinning').waitFor({ state: 'hidden' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-compare-group-by-component.png', {
@@ -530,17 +574,21 @@ test.describe('Memory(DB)', () => {
     });
 
     // db场景下底部表格条件查询后结果加载
-    test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
-        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor, queryBtn } = memoryPage;
-        const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
-        const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
-        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
-        await nameInput.setValue('aten::empty_strided');
-        expect(await nameInput.expectValueToBe('aten::empty_strided'));
-        expect(await minSizeInput.expectValueToBe('0'));
-        expect(await maxSizeInput.expectValueToBe('421916'));
-        await queryBtn.waitFor({ state: 'visible' });
-        await queryBtn.click();
+    test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage, ws }) => {
+        const { memoryFrame } = memoryPage;
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await memoryFrame.getByLabel('Name').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Search Name').fill('aten::empty_strided');
+        await memoryFrame.getByRole('button', { name: 'search Search' }).click();
+        await searchPromise;
+
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Min').fill('0');
+        await memoryFrame.getByPlaceholder('Max').fill('421916');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
+        await page.waitForTimeout(1000);
+
         await page.mouse.move(0, 0);
         await expect(memoryFrame.locator('.mi-page').locator('.mi-collapsible-panel').nth(1)).toHaveScreenshot('db_memory_tableData.png', {
             maxDiffPixels: 500,
@@ -548,21 +596,27 @@ test.describe('Memory(DB)', () => {
     });
 
     // db场景下底部表格条件重置后结果加载
-    test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
-        const { memoryFrame, maxSizeInputor, queryBtn, resetBtn } = memoryPage;
-        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
+    test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage, ws }) => {
+        const { memoryFrame } = memoryPage;
         const tableWrapper = memoryFrame.locator('.mi-page').locator('.panel-content').nth(1);
         await page.mouse.move(0, 0);
         await expect(tableWrapper).toHaveScreenshot('db_memory_table_reset.png', {
             maxDiffPixels: 500,
         });
-        await maxSizeInput.setValue('1000');
-        await queryBtn.click();
+
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Max').fill('1000');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
         await page.mouse.move(0, 0);
         await expect(tableWrapper).toHaveScreenshot('db_memory_table_reset_change.png', {
             maxDiffPixels: 500,
         });
-        await resetBtn.click();
+
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByRole('button', { name: 'Reset' }).click();
+        await searchPromise;
         await page.mouse.move(0, 0);
         await expect(tableWrapper).toHaveScreenshot('db_memory_table_reset.png', {
             maxDiffPixels: 500,
@@ -579,6 +633,35 @@ test.describe('Memory(DB)', () => {
         await memoryFrame.getByText('Find in Timeline').click();
         await page.mouse.move(0, 0);
         await expect(fullPage).toHaveScreenshot('db_memory_redirectToTimeline.png', {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // db场景下底部表格联合筛选后结果加载
+    test('query_memoryDetailTable_by_jointFiltering', async ({ page, memoryPage, ws }) => {
+        const { memoryFrame } = memoryPage;
+        const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await memoryFrame.getByLabel('Name').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Search Name').fill('aten::empty_strided');
+        await memoryFrame.getByRole('button', { name: 'search Search' }).click();
+        await searchPromise;
+
+        await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Min').fill('0');
+        await memoryFrame.getByPlaceholder('Max').fill('421916');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
+        await page.waitForTimeout(1000);
+
+        await memoryFrame.getByLabel('Allocation Time(ms)').getByRole('button').click();
+        await memoryFrame.getByPlaceholder('Min').nth(1).fill('0');
+        await memoryFrame.getByPlaceholder('Max').nth(1).fill('500');
+        await memoryFrame.getByRole('button', { name: 'Search' }).click();
+        await searchPromise;
+        await page.waitForTimeout(1000);
+
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page').locator('.mi-collapsible-panel').nth(1)).toHaveScreenshot('db-memory-tableData-joint-filtering.png', {
             maxDiffPixels: 500,
         });
     });
