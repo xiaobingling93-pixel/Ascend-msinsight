@@ -31,3 +31,8 @@ export type NotificationHandler = (notification: Record<string, unknown>) => voi
 export const isResopnse = (msg: Response | Notification): msg is Response => {
     return (msg as Response).id !== undefined;
 };
+
+export interface Error {
+    code: number;
+    message: string;
+}

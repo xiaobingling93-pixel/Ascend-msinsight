@@ -16,6 +16,7 @@ import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumn
 import { HelpIcon } from '@insight/lib/icon';
 import connector from '../../connection/index';
 import UpdateTableAsync from '../../utils/UpdateTableAsync';
+import type { Error } from '../../connection/defs';
 
 let GdbPath = '';
 const updateTableAsyne = new UpdateTableAsync();
@@ -377,6 +378,8 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         setLoading(true);
         try {
             await updateData();
+        } catch (e) {
+            message.error((e as Error).message || '请求失败');
         } finally {
             setExpandedKeys([]);
             setLoading(false);

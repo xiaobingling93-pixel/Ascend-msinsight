@@ -167,16 +167,6 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
         filterIcon: () => (
             <ColumnFilterIcon />
         ),
-        onFilter: (value, record) => {
-            const val = record?.[dataIndex];
-            const isTrue = val !== null && val !== false && val !== undefined;
-            return showRange
-                ? isTrue
-                : record?.[dataIndex] && record?.[dataIndex]
-                    .toString()
-                    .toLowerCase()
-                    .includes((value as string).toLowerCase());
-        },
         onFilterDropdownOpenChange: (visible): void => {
             if (visible) {
                 limitInput();
