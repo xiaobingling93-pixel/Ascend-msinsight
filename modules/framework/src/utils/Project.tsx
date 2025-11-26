@@ -7,7 +7,7 @@ import { customConsole as console } from '@insight/lib/utils';
 import { LocalStorageKey, localStorageService } from '@insight/lib';
 import connector from '@/connection';
 import { store } from '@/store';
-import { ProjectAction } from '@/utils/enum';
+import { ProjectAction, SessionAction } from '@/utils/enum';
 import {
     DataSource,
     FileOrDirectory,
@@ -118,9 +118,13 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         }
 
         // 这里添加 session.isCluster 判断，如果是集群数据，也要重置 session 使 clusterCompleted = false, 确保 Summary 和 Communication 模块正常加载
-        if (session.isReset || session.isCluster) {
+        // 这里添加 session.actionListener.type !== SessionAction.ADD_DATA_UNDER_PROJECT 条件，防止在项目中添加卡的场景下，集群页面被重置
+        if (session.actionListener.type !== SessionAction.ADD_DATA_UNDER_PROJECT && (session.isReset || session.isCluster)) {
             session.reset();
         }
+        // 这里立即将 actionListener 恢复为默认值，防止在正常导入或切换项目的场景下，不执行上方的 session.reset
+        session.actionListener = { type: SessionAction.NO_ACTION, value: '' };
+
         openLoading();
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {

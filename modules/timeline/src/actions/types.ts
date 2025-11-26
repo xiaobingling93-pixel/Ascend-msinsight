@@ -42,6 +42,10 @@ export type ActionName =
   | 'expandAllUnits'
   | 'hideFlagEvents'
   | 'showFlagEvents'
+  | 'timeRangeAnalysis'
+  | 'removeTimeRangeAnalysis'
+  | 'timeRangeAnalysisAndZoomIn'
+  | 'applyTimeRangeAnalysis'
   | 'enableAutoUnitHeight'
   | 'disableAutoUnitHeight'
   | 'recoverDefaultOffset'
@@ -74,4 +78,5 @@ export interface Action {
     subMode?: boolean;
     subMenus?: (session: Session) => ContextMenuItem[];
     parentMenuKey?: string;
+    style?: { [key: string]: any };
 }

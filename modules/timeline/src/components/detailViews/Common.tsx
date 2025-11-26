@@ -42,6 +42,8 @@ export interface IQueryCondition {
     isQueryTotal?: boolean;
     layer?: string;
     searchName?: string;
+    startTime?: number;
+    endTime?: number;
 }
 
 export const getDefaultColumData = (key: string, sorter = true): {
@@ -221,7 +223,7 @@ export const getPageData = (page: PageType, setPage: VoidFunction): object => {
 
 export const querySystemViewDetails = async (param: {
     isQueryTotal: boolean; rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
-    layer: string; searchName: string;
+    startTime: number; endTime: number; layer: string; searchName: string;
 }): Promise<{ systemViewDetails: BaseSummaryRowItemType[] }> => {
     return window.requestData('unit/systemView', param, 'timeline');
 };
@@ -239,7 +241,7 @@ export const queryTableDataDetails = async (param: {
 
 export const queryKernelDetails = async (param: {
     rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
-    coreType: string; filterCondition: string[];
+    startTime: number; endTime: number; coreType: string; filterCondition: string[];
 }): Promise<any> => {
     return window.requestData('unit/kernelDetails', param, 'timeline');
 };
@@ -259,30 +261,35 @@ export const searchAllSlices = async (param: {
 
 export const queryAffinityOptimizer = async (param: {
     rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+    startTime: number; endTime: number;
 }): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/affinity_optimizer', param);
 };
 
 export const queryAffinityAPI = async (param: {
     rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+    startTime: number; endTime: number;
 }): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/affinity_api', param);
 };
 
 export const queryOperatorFusion = async (param: {
     rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+    startTime: number; endTime: number;
 }): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/operator_fusion', param);
 };
 
 export const queryAICPUOperators = async (param: {
     rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+    startTime: number; endTime: number;
 }): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/aicpu_operator', param);
 };
 
 export const queryACLNNOperators = async (param: {
     rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+    startTime: number; endTime: number;
 }): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/aclnn_operator', param);
 };

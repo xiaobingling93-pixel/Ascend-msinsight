@@ -68,6 +68,7 @@ include_directories(${SRC_HOME_DIR}/modules/memory/parser)
 include_directories(${SRC_HOME_DIR}/modules/memory/protocol)
 include_directories(${SRC_HOME_DIR}/modules/memory/table)
 include_directories(${SRC_HOME_DIR}/modules/memory/service)
+include_directories(${SRC_HOME_DIR}/modules/memory/view)
 include_directories(${SRC_HOME_DIR}/modules/communication)
 include_directories(${SRC_HOME_DIR}/modules/communication/database)
 include_directories(${SRC_HOME_DIR}/modules/communication/protocol)
@@ -75,12 +76,12 @@ include_directories(${SRC_HOME_DIR}/modules/communication/handler)
 include_directories(${SRC_HOME_DIR}/modules/communication/parser)
 include_directories(${SRC_HOME_DIR}/modules/communication/core)
 include_directories(${SRC_HOME_DIR}/modules/communication/advisor)
-include_directories(${SRC_HOME_DIR}/modules/memory_detail)
-include_directories(${SRC_HOME_DIR}/modules/memory_detail/database)
-include_directories(${SRC_HOME_DIR}/modules/memory_detail/entity)
-include_directories(${SRC_HOME_DIR}/modules/memory_detail/handler)
-include_directories(${SRC_HOME_DIR}/modules/memory_detail/protocol)
-include_directories(${SRC_HOME_DIR}/modules/memory_detail/service)
+include_directories(${SRC_HOME_DIR}/modules/memscope)
+include_directories(${SRC_HOME_DIR}/modules/memscope/database)
+include_directories(${SRC_HOME_DIR}/modules/memscope/entity)
+include_directories(${SRC_HOME_DIR}/modules/memscope/handler)
+include_directories(${SRC_HOME_DIR}/modules/memscope/protocol)
+include_directories(${SRC_HOME_DIR}/modules/memscope/service)
 # Operator
 include_directories(${SRC_HOME_DIR}/modules/operator)
 include_directories(${SRC_HOME_DIR}/modules/operator/database)
@@ -155,6 +156,7 @@ aux_source_directory(${SRC_HOME_DIR}/modules/memory/parser DIC_MODULES_MEMORY_PA
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/protocol DIC_MODULES_MEMORY_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/table DIC_MODULES_MEMORY_TABLE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/service DIC_MODULES_MEMORY_SERVICE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory/view DIC_MODULES_MEMORY_VIEW_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/database DIC_MODULES_COMMUNICATION_DATABASE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/protocol DIC_MODULES_COMMUNICATION_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/handler DIC_MODULES_COMMUNICATION_HANDLER_SRC)
@@ -199,12 +201,12 @@ aux_source_directory(${SRC_HOME_DIR}/modules/servitization/protocol DIC_MODULES_
 aux_source_directory(${SRC_HOME_DIR}/modules/servitization/repo DIC_MODULES_IE_REPO_SRC)
 
 # Memory Detail
-aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail DIC_MODULES_MEM_DETAIL_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/database DIC_MODULES_MEM_DETAIL_DB_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/handler DIC_MODULES_MEM_DETAIL_HANDLER_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/service DIC_MODULES_MEM_DETAIL_SVC_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/protocol DIC_MODULES_MEM_DETAIL_PROTOCOL_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/memory_detail/entity DIC_MODULES_MEM_DETAIL_ENTITY_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memscope DIC_MODULES_MEM_SCOPE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memscope/database DIC_MODULES_MEM_SCOPE_DB_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memscope/handler DIC_MODULES_MEM_SCOPE_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memscope/service DIC_MODULES_MEM_SCOPE_SVC_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memscope/protocol DIC_MODULES_MEM_SCOPE_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memscope/entity DIC_MODULES_MEM_SCOPE_ENTITY_SRC)
 
 # Reinforcement Learning
 aux_source_directory(${SRC_HOME_DIR}/modules/rl DIC_MODULES_RL_SRC)
@@ -251,6 +253,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_MEMORY_PROTOCOL_SRC}
         ${DIC_MODULES_MEMORY_TABLE_SRC}
         ${DIC_MODULES_MEMORY_SERVICE_SRC}
+        ${DIC_MODULES_MEMORY_VIEW_SRC}
         ${DIC_MODULES_SUMMARY_PROTOCOL_SRC}
         ${DIC_MODULES_COMMUNICATION_SRC}
         ${DIC_MODULES_COMMUNICATION_DATABASE_SRC}
@@ -283,12 +286,12 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_IE_HANDLER_SRC}
         ${DIC_MODULES_IE_PROTOCOL_SRC}
         ${DIC_MODULES_IE_REPO_SRC}
-        ${DIC_MODULES_MEM_DETAIL_SRC}
-        ${DIC_MODULES_MEM_DETAIL_SVC_SRC}
-        ${DIC_MODULES_MEM_DETAIL_DB_SRC}
-        ${DIC_MODULES_MEM_DETAIL_HANDLER_SRC}
-        ${DIC_MODULES_MEM_DETAIL_PROTOCOL_SRC}
-        ${DIC_MODULES_MEM_DETAIL_ENTITY_SRC}
+        ${DIC_MODULES_MEM_SCOPE_SRC}
+        ${DIC_MODULES_MEM_SCOPE_SVC_SRC}
+        ${DIC_MODULES_MEM_SCOPE_DB_SRC}
+        ${DIC_MODULES_MEM_SCOPE_HANDLER_SRC}
+        ${DIC_MODULES_MEM_SCOPE_PROTOCOL_SRC}
+        ${DIC_MODULES_MEM_SCOPE_ENTITY_SRC}
         ${DIC_MODULES_IE_REPO_SRC}
         ${DIC_MODULES_RL_SRC}
         ${DIC_MODULES_RL_CORE_SRC}

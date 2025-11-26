@@ -122,7 +122,7 @@ TEST(JsonUtil, JsonDump) {
     EXPECT_EQ(string, "{\"ph\":\"X\",\"name\":\"contiguous_d_Reshape\",\"args\":{}}");
 }
 
-TEST(TestUtil, GetDoubleAndGetLongDouble) {
+TEST(JsonUtil, GetDoubleAndGetLongDouble) {
 
     rapidjson::Document d;
     d.Parse("{\n"
@@ -137,7 +137,7 @@ TEST(TestUtil, GetDoubleAndGetLongDouble) {
     EXPECT_EQ(dur, 169.33);
 }
 
-TEST(TestUtil, GetInteger) {
+TEST(JsonUtil, GetInteger) {
     rapidjson::Document d;
     d.Parse("{\n"
             "        \"ph\": \"X\",\n"
@@ -152,7 +152,7 @@ TEST(TestUtil, GetInteger) {
     EXPECT_EQ(tid, 768209);
 }
 
-TEST(TestUtil, GetString) {
+TEST(JsonUtil, GetString) {
     rapidjson::Document d;
     d.Parse("{\n"
             "        \"ph\": \"X\",\n"
@@ -166,7 +166,7 @@ TEST(TestUtil, GetString) {
     EXPECT_EQ(cat, "cpu_op");
 }
 
-TEST(TestUtil, GetOptionalString) {
+TEST(JsonUtil, GetOptionalString) {
     rapidjson::Document d;
     d.Parse("{\n"
             "        \"ph\": \"X\",\n"
@@ -182,7 +182,7 @@ TEST(TestUtil, GetOptionalString) {
     EXPECT_EQ(dog.has_value(), false);
 }
 
-TEST(TestUtil, GetDumpString) {
+TEST(JsonUtil, GetDumpString) {
     rapidjson::Document d;
     d.Parse("{\n"
             "        \"ph\": \"X\",\n"
@@ -196,7 +196,7 @@ TEST(TestUtil, GetDumpString) {
     EXPECT_EQ(cat, "cpu_op");
 }
 
-TEST(TestUtil, GetVectorFloat) {
+TEST(JsonUtil, GetVectorFloatNormalTest) {
     rapidjson::Document d;
     d.Parse(R"(
         {
@@ -204,7 +204,112 @@ TEST(TestUtil, GetVectorFloat) {
         }
     )");
     auto data = JsonUtil::GetVector<float>(d, "data");
+    ASSERT_EQ(data.size(), 3);
     EXPECT_FLOAT_EQ(data[0], 3.4);
     EXPECT_FLOAT_EQ(data[1], 6.153);
     EXPECT_FLOAT_EQ(data[2], 6);
+}
+
+TEST(JsonUtil, GetVectorFloatInconsistentDataTypeTest) {
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ "a", "b", "c"]
+        }
+    )");
+    auto data = JsonUtil::GetVector<float>(d, "data");
+    ASSERT_EQ(data.size(), 3);
+    EXPECT_FLOAT_EQ(data[0], 0.0);
+    EXPECT_FLOAT_EQ(data[1], 0.0);
+    EXPECT_FLOAT_EQ(data[2], 0.0);
+}
+
+TEST(JsonUtil, GetVectorDoubleNormalTest)
+{
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ 3.4, 6.153, 6]
+        }
+    )");
+    auto data = JsonUtil::GetVector<double>(d, "data");
+    ASSERT_EQ(data.size(), 3);
+    EXPECT_EQ(data[0], 3.4);
+    EXPECT_EQ(data[1], 6.153);
+    EXPECT_EQ(data[2], 6);
+}
+
+TEST(JsonUtil, GetVectorDoubleInconsistentDataTypeTest)
+{
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ "a", "b", "c"]
+        }
+    )");
+    auto data = JsonUtil::GetVector<double>(d, "data");
+    ASSERT_EQ(data.size(), 3);
+    EXPECT_EQ(data[0], 0.0);
+    EXPECT_EQ(data[1], 0.0);
+    EXPECT_EQ(data[2], 0.0);
+}
+
+TEST(JsonUtil, GetVectorIntNormalTest)
+{
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ 2, -5, 100]
+        }
+    )");
+    auto data = JsonUtil::GetVector<int>(d, "data");
+    ASSERT_EQ(data.size(), 3);
+    EXPECT_EQ(data[0], 2);
+    EXPECT_EQ(data[1], -5);
+    EXPECT_EQ(data[2], 100);
+}
+
+TEST(JsonUtil, GetVectorIntInconsistentDataTypeTest)
+{
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ "a", "b", "c"]
+        }
+    )");
+    auto data = JsonUtil::GetVector<int>(d, "data");
+    ASSERT_EQ(data.size(), 3);
+    EXPECT_EQ(data[0], 0);
+    EXPECT_EQ(data[1], 0);
+    EXPECT_EQ(data[2], 0);
+}
+
+TEST(JsonUtil, GetVectorStringNormalTest)
+{
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ "a", "b", "c"]
+        }
+    )");
+    auto data = JsonUtil::GetVector<std::string>(d, "data");
+    ASSERT_EQ(data.size(), 3);
+    EXPECT_EQ(data[0], "a");
+    EXPECT_EQ(data[1], "b");
+    EXPECT_EQ(data[2], "c");
+}
+
+TEST(JsonUtil, GetVectorStringInconsistentDataTypeTest)
+{
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ 3.4, 6.153, 6]
+        }
+    )");
+    auto data = JsonUtil::GetVector<std::string>(d, "data");
+    ASSERT_EQ(data.size(), 3);
+    EXPECT_EQ(data[0], "");
+    EXPECT_EQ(data[1], "");
+    EXPECT_EQ(data[2], "");
 }

@@ -3,7 +3,6 @@
  */
 #include <queue>
 #include "FileUtil.h"
-#include "thread"
 #include "IEProtocolEvent.h"
 #include "WsSender.h"
 #include "ServitizationOpenApi.h"
@@ -12,21 +11,8 @@ bool ServitizationOpenApi::Parse(const std::unordered_map<std::string, std::stri
 {
     bool res = false;
     for (const auto& item : inputs) {
-        Server::ServerLog::Info("input is: ", item.second);
-        if (FileUtil::CheckFilePathExist(item.second) && FileUtil::GetFileName(item.second) == IEFileName) {
-            ParseSingleFile(item.second, item.first);
-            res = true;
-            continue;
-        }
-        if (!FileUtil::IsFolder(item.second)) {
-            continue;
-        }
-        std::string targetFile = FileUtil::SplicePath(item.second, IEFileName);
-        if (FileUtil::CheckFilePathExist(targetFile)) {
-            ParseSingleFile(targetFile, item.first);
-            res = true;
-            continue;
-        }
+        std::string dir = FileUtil::GetParentPath(item.second);
+        res = ParseDir(dir, item.first);
     }
     return res;
 }
@@ -85,7 +71,7 @@ bool ServitizationOpenApi::ValidIEFile(const std::string& path)
         return false;
     }
     std::string fileName = FileUtil::GetFileName(path);
-    if (fileName == IEFileName) {
+    if (fileName == IEFileName || fileName == MS_SERVICE_PARSED_NAME) {
         return true;
     }
     return false;
@@ -93,7 +79,6 @@ bool ServitizationOpenApi::ValidIEFile(const std::string& path)
 
 void ServitizationOpenApi::ParseSingleFile(const std::string& filePath, const std::string& fileId)
 {
-    context->InitDataBase(fileId, filePath);
     auto event = std::make_unique<Protocol::ParseStatisticCompletedEvent>();
     event->moduleName = Protocol::MODULE_IE;
     event->result = true;
@@ -111,5 +96,88 @@ bool ServitizationOpenApi::CreateCurve(const std::string& fileId, const std::str
     }
     context->ExecuteScript(fileId, curve);
     return true;
+}
+
+bool ServitizationOpenApi::ParseDir(const std::string& dir, const std::string& fileId)
+{
+    std::string targetFile = FileUtil::SplicePath(dir, IEFileName);
+    if (FileUtil::CheckFilePathExist(targetFile)) {
+        context->InitDataBase(fileId, targetFile);
+        ParseSingleFile(targetFile, fileId);
+        return true;
+    }
+    targetFile = FileUtil::SplicePath(dir, MS_SERVICE_PARSED_NAME);
+    if (FileUtil::CheckFilePathExist(targetFile)) {
+        std::vector<std::string> files;
+        std::vector<std::string> folders;
+        FileUtil::FindFolders(dir, folders, files);
+        std::vector<std::string> distributeFiles;
+        for (const auto &item: files) {
+            if (item != MS_SERVICE_PARSED_NAME && StringUtil::StartWith(item, "ms_service_") && StringUtil::EndWith(item, ".db")) {
+                distributeFiles.emplace_back(item);
+            }
+        }
+        context->InitDataBase(fileId, targetFile);
+        auto database = context->GetDatabase(fileId);
+        std::string dropSql = "PRAGMA journal_mode = WAL;PRAGMA synchronous = OFF;PRAGMA busy_timeout = 5000; ";
+        dropSql += "DROP TABLE IF EXISTS slice;DROP TABLE IF EXISTS counter;DROP TABLE IF EXISTS thread;";
+        database->ExecSql(dropSql);
+        AttachDb(dir, distributeFiles, database);
+        std::string attachSql;
+        std::string detachSqls;
+        for (const auto &item: distributeFiles) {
+            std::string distributePath = FileUtil::SplicePath(dir, item);
+            if (!FileUtil::CheckDirValid(distributePath)) {
+                continue;
+            }
+            std::string alias = item.substr(0, item.size() - std::string(".db").size());
+            if (!StringUtil::CheckSqlValid(alias)) {
+                continue;
+            }
+            // LCOV_EXCL_BR_START
+            attachSql += " CREATE TABLE IF NOT EXISTS main.slice AS SELECT * FROM '" + alias + "'.slice WHERE 0; ";
+            attachSql += " CREATE TABLE IF NOT EXISTS main.counter AS SELECT * FROM '" + alias + "'.counter WHERE 0; ";
+            attachSql += " CREATE TABLE IF NOT EXISTS main.thread AS SELECT * FROM '" + alias + "'.thread WHERE 0; ";
+            attachSql += " INSERT INTO main.slice SELECT * FROM '" + alias + "'.slice; ";
+            attachSql += " INSERT INTO main.counter SELECT * FROM '" + alias + "'.counter; ";
+            attachSql += " INSERT INTO main.thread SELECT * FROM '" + alias + "'.thread; ";
+            detachSqls += " DETACH '" + alias + "'; ";
+            // LCOV_EXCL_BR_STOP
+        }
+        std::string script = "BEGIN IMMEDIATE;" + attachSql + "COMMIT;" + detachSqls;
+        database->ExecSql(script);
+        ParseSingleFile(targetFile, fileId);
+        return true;
+    }
+    return false;
+}
+
+void ServitizationOpenApi::AttachDb(const std::string& dir, std::vector<std::string>& distributeFiles,
+                                    std::shared_ptr<Database>& database)
+{
+    std::string attachSql;
+    for (const auto& item : distributeFiles) {
+        AttachSingleDb(dir, item, database);
+    }
+}
+
+void ServitizationOpenApi::AttachSingleDb(const std::string& dir, const std::string& distributeFile,
+                                          std::shared_ptr<Database>& database)
+{
+    std::string distributePath = FileUtil::SplicePath(dir, distributeFile);
+    if (!FileUtil::CheckDirValid(distributePath)) {
+        return;
+    }
+    std::string alias = distributeFile.substr(0, distributeFile.size() - 3);
+    if (!StringUtil::CheckSqlValid(alias)) {
+        return;
+    }
+    std::string attachSql = " ATTACH DATABASE ? AS '" + alias + "'; ";
+    auto stmt = database->CreatPreparedStatement(attachSql);
+    if (!TryOpt(stmt, "Attach single db failed to prepare sql, alias is: " + alias)) {
+        return;
+    }
+    stmt->BindParams(StringUtil::ToUtf8Str(distributePath));
+    stmt->Execute();
 }
 }  // namespace Dic::Module::IE

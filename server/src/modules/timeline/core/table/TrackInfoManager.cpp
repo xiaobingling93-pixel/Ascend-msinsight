@@ -19,7 +19,7 @@ uint64_t TrackInfoManager::GetTrackId(const std::string &cardId, const std::stri
     std::string rankId = GetRankId(cardId);
     std::string deviceId = GetDeviceId(cardId);
     std::string host = GetHost(cardId);
-    trackInfoMap[maxTrackId] = {host, cardId, rankId, deviceId, pid, tid, maxTrackId};
+    trackInfoMap.insert({maxTrackId, {host, cardId, rankId, deviceId, pid, tid, maxTrackId}});
     return maxTrackId;
 }
 
@@ -73,14 +73,20 @@ std::string TrackInfoManager::GetHost(const std::string &cardId)
     return hostMap.at(cardId);
 }
 
-bool TrackInfoManager::GetTrackInfo(uint64_t trackId, TrackInfo &trackInfo)
+bool TrackInfoManager::GetTrackInfo(uint64_t trackId, TrackInfo &trackInfo, const std::string &fileId = "")
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     if (trackInfoMap.count(trackId) == 0) {
         Server::ServerLog::Warn("Failed to query track info, track id is: ", trackId);
         return false;
     }
-    trackInfo = trackInfoMap.at(trackId);
+    auto trackInfos = trackInfoMap.equal_range(trackId);
+    for (auto it = trackInfos.first; it != trackInfos.second; ++it) {
+        if (it->second.cardId == fileId || fileId.empty()) {
+            trackInfo = it->second;
+            break;
+        }
+    }
     return true;
 }
 
@@ -94,7 +100,7 @@ void TrackInfoManager::UpdateTrackIdMap(const std::string &fileId,
         std::string rankId = GetRankId(fileId);
         std::string deviceId = GetDeviceId(fileId);
         std::string host = GetHost(fileId);
-        trackInfoMap[key] = {host, fileId, rankId, deviceId, item.second, item.first, key};
+        trackInfoMap.insert({key, {host, fileId, rankId, deviceId, item.second, item.first, key}});
         maxTrackId = std::max(maxTrackId, key);
     }
 }

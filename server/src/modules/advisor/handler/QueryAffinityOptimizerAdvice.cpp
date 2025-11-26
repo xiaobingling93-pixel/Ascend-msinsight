@@ -6,6 +6,7 @@
 #include "AdvisorProtocolResponse.h"
 #include "AffinityOptimizerAdvisor.h"
 #include "WsSessionManager.h"
+#include "TraceTime.h"
 #include "QueryAffinityOptimizerAdvice.h"
 
 namespace Dic::Module::Advisor {
@@ -17,8 +18,9 @@ bool QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Reque
     std::unique_ptr<AffinityOptimizerResponse> responsePtr = std::make_unique<AffinityOptimizerResponse>();
     AffinityOptimizerResponse &response = *responsePtr;
     SetBaseResponse(request, response);
+    uint64_t minTimestamp = Timeline::TraceTime::Instance().GetStartTime();
     std::string error;
-    request.params.Check(error);
+    request.params.Check(minTimestamp, error);
     if (!std::empty(error)) {
         ServerLog::Error(error);
         SetResponseResult(response, false, error);

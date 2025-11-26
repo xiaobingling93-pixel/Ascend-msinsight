@@ -122,7 +122,8 @@ export const deleteCardHandler = (e: NotificationMessage): void => {
         const session = store.sessionStore.activeSession;
         const memoryCardInfos = session.memoryCardInfos.filter((item) => !removeCardIds.has(item.rankInfo.rankId));
         const operatorCardInfos = session.operatorCardInfos.filter((item) => !removeCardIds.has(item.rankInfo.rankId));
-        updateSession({ memoryCardInfos, operatorCardInfos });
+        const iERankIds = session.iERankIds.filter((item) => !removeCardIds.has(item));
+        updateSession({ memoryCardInfos, operatorCardInfos, iERankIds });
     }
 };
 

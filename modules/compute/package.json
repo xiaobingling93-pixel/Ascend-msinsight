@@ -52,7 +52,8 @@
       }
     },
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "@insight/lib/i18n": "<rootDir>/../lib/src/i18n/index.ts"
     }
   },
   "browserslist": {

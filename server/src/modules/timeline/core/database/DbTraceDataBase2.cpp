@@ -263,7 +263,7 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
     std::vector<std::string> tidList;
     for (const auto& trackId : trackIdList) {
         TrackInfo trackInfo;
-        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
+        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo, requestParams.rankId);
         if (!StringUtil::CheckSqlValid(trackInfo.threadId)) {
             ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", trackInfo.threadId);
             return false;

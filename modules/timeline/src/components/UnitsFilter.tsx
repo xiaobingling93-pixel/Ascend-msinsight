@@ -106,28 +106,46 @@ interface CompleteOptionProps {
     value: string;
 }
 
+/**
+ * 开始过滤会话中的单位和卡片。
+ * @param session - 当前会话对象。
+ * @param cardSelection - 选中的卡片名称数组。
+ * @param unitSelection - 选中的单位名称数组。
+ */
 const startFilter = (session: Session, cardSelection: string[], unitSelection: string[]): void => {
+    // 设置所有单位为显示状态
     setAllUnitsDisplay(session);
+    // 如果没有选择任何卡片或单位，则直接返回
     if (cardSelection.length === 0 && unitSelection.length === 0) {
         return;
     }
 
+    // 如果有选中的卡片，则执行卡片过滤
     if (cardSelection.length !== 0) {
         doCardFilter(session.units, cardSelection);
     }
+    // 如果有选中的单位，则执行单位过滤
     if (unitSelection.length !== 0) {
         doUnitsFilter(session.units, unitSelection);
     }
 
+    // 重置单链接线
     session.singleLinkLine = {};
 };
 
+/**
+ * 执行卡片过滤，根据选中的卡片名称显示或隐藏单位。
+ * @param flattenUnits - 扁平化的单位数组。
+ * @param selectValues - 选中的卡片名称数组。
+ */
 const doCardFilter = (flattenUnits: InsightUnit[], selectValues: string[]): void => {
     runInAction(() => {
         flattenUnits.forEach(unit => {
+            // 检查当前单位是否为目标单位
             const isTargetUnit = selectValues.includes((unit.metadata as CardMetaData).cardName as string);
             unit.isDisplay = isTargetUnit;
             if (isTargetUnit) {
+                // 如果是目标单位，则显示其子单位和子进程
                 unit.children?.forEach(unitChild => {
                     unitChild.isDisplay = true;
                     unitChild.children?.forEach(processUnit => {
@@ -139,10 +157,16 @@ const doCardFilter = (flattenUnits: InsightUnit[], selectValues: string[]): void
     });
 };
 
+/**
+ * 执行单位过滤，根据选中的单位名称显示或隐藏单位。
+ * @param flattenUnits - 扁平化的单位数组。
+ * @param selectValues - 选中的单位名称数组。
+ */
 const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): void => {
     runInAction(() => {
         flattenUnits.forEach(unit => {
             if (!unit.children) {
+                // 如果没有子单位，则隐藏该单位
                 unit.isDisplay = false;
                 return;
             }
@@ -150,18 +174,26 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             unit.children.forEach(childUnit => {
                 let isUnitMatch = false;
                 if (childUnit.name === 'Thread') {
+                    // 如果是线程单位，则根据线程名称进行匹配
                     isUnitMatch = selectValues.includes((childUnit.metadata as ThreadMetaData).threadName.replace(/\(\d{0,12}\)/, '').trim());
                 } else {
+                    // 如果是进程单位，则根据进程名称进行匹配
                     isUnitMatch = selectValues.includes((childUnit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, '').trim());
                 }
                 childUnit.isDisplay = isUnitMatch || findMatchUnit(childUnit, selectValues);
                 hasMatchUnit = hasMatchUnit || childUnit.isDisplay;
             });
             if (!hasMatchUnit) {
+                // 如果没有匹配的子单位，则隐藏该单位
                 unit.isDisplay = false;
             }
         });
 
+        /**
+         * 递归设置单位及其子单位为显示状态。
+         * @param unit - 当前单位。
+         * @param loopIndex - 循环索引，用于防止无限递归。
+         */
         const setUnitDisplay = (unit: InsightUnit, loopIndex = 0): void => {
             const MaxLoop = 100;
             if (loopIndex > MaxLoop) {
@@ -179,10 +211,12 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
                 return;
             }
             if (unit.name === 'Thread') {
+                // 如果是线程单位，则根据线程名称设置显示状态
                 if (selectValues.includes(((unit.metadata as ThreadMetaData).threadName))) {
                     setUnitDisplay(unit);
                 }
             } else {
+                // 如果是进程单位，则根据进程名称设置显示状态
                 if (selectValues.includes(((unit.metadata as ProcessMetaData).processName))) {
                     setUnitDisplay(unit);
                 }
@@ -191,6 +225,12 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
     });
 };
 
+/**
+ * 检查单元是否与给定的选择值匹配。
+ * @param unit - 要检查的单元。
+ * @param selectValues - 选择值数组。
+ * @returns 如果单元匹配则返回true，否则返回false。
+ */
 const findMatchUnit = (unit: InsightUnit, selectValues: string[]): boolean => {
     let hasMatchUnit = false;
     unit.children?.forEach(childUnit => {
@@ -206,6 +246,10 @@ const findMatchUnit = (unit: InsightUnit, selectValues: string[]): boolean => {
     return hasMatchUnit;
 };
 
+/**
+ * 设置所有单元为显示状态。
+ * @param session - 包含单元的会话对象。
+ */
 const setAllUnitsDisplay = (session: Session): void => {
     const setUnitDisplay = (unit: InsightUnit, loopIndex = 0): void => {
         const MaxLoop = 100;
@@ -217,7 +261,7 @@ const setAllUnitsDisplay = (session: Session): void => {
         });
         if (unit.children) {
             for (const child of unit.children) {
-                setUnitDisplay(child, loopIndex++);
+                setUnitDisplay(child, loopIndex++); // 递归调用，增加循环索引
             }
         }
     };
@@ -226,6 +270,11 @@ const setAllUnitsDisplay = (session: Session): void => {
     }
 };
 
+/**
+ * 获取单元名称集合。
+ * @param session - 包含单元的会话对象。
+ * @returns 包含卡片名称和单元名称的集合对象。
+ */
 const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames: Set<string> } => {
     const cardNames = new Set<string>();
     const unitNames = new Set<string>();
@@ -240,7 +289,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
         }
         if (unit.name === 'Process' || unit.name === 'Label') {
             const metaDataName = (unit.metadata as ProcessMetaData).processName;
-            if (!metaDataName.toLowerCase().includes('process') && !metaDataName.toLowerCase().includes('thread')) {
+            if (metaDataName === 'Process Scheduling' || (!metaDataName.toLowerCase().includes('process') && !metaDataName.toLowerCase().includes('thread'))) {
                 unitNames.add(metaDataName.replace(/\(\d{0,12}\)/, '').trim());
             }
         }
@@ -252,7 +301,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
         }
         if (unit.children) {
             for (const child of unit.children) {
-                visitUnit(child, loopIndex++);
+                visitUnit(child, loopIndex++); // 递归调用，增加循环索引
             }
         }
     };
@@ -263,6 +312,11 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
     return { cardNames, unitNames };
 };
 
+/**
+ * 渲染分类搜索内容组件。
+ * @param session - 包含单元的会话对象。
+ * @returns JSX元素
+ */
 const CategorySearchContent = (session: Session): JSX.Element => {
     const theme = useTheme();
     const { cardNames, unitNames } = useUnitsNameSet(session);
@@ -272,6 +326,11 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     const [unitSelection, setUnitSelection] = useState<string[]>([]);
     const { t } = useTranslation();
 
+    /**
+     * 处理搜索操作。
+     * @param value - 搜索值。
+     * @param key - 搜索类型，可以是'Card'或'Unit'
+     */
     const handleSearch = (value: string, key = 'Card'): void => {
         const result: CompleteOptionProps[] = [];
         let targetSet = new Set<string>();
@@ -317,6 +376,20 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         handleSearch('', 'Unit');
     }
 
+    useEffect(() => {
+        // 检查 session.units 数组是否为空
+        if (session.units.length === 0) {
+            // 如果为空，则将 completeUnitOptions 设置为空数组
+            setCompleteUnitOptions([]);
+            // 将 completeCardOptions 设置为空数组
+            setCompleteCardOptions([]);
+            // 将 cardSelection 设置为空数组
+            setCardSelection([]);
+            // 将 unitSelection 设置为空数组
+            setUnitSelection([]);
+        }
+    }, [session.units]); // 依赖数组，当 session.units 发生变化时，执行该 effect
+
     return (
         <CustomDiv theme={theme}>
             <div style={ { margin: '8px' } }>
@@ -355,15 +428,28 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     );
 };
 
+/**
+ * UnitsFilter组件是一个用于过滤的按钮组件，它使用了observer来观察状态变化。
+ * @param {Object} props - 组件的属性
+ * @param {Session} props.session - 会话信息
+ * @returns {JSX.Element | null} 返回一个JSX元素或null
+ */
 export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Element | null => {
+    // 定义一个状态来控制按钮的强调和暂停效果
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isSuspend: false,
     });
-    // tooltip显隐控制悬浮效果
+
+    /**
+     * tooltip显隐控制悬浮效果的函数
+     * @param {boolean} visible - tooltip是否可见
+     */
     const onTooltipVisibleChange = (visible: boolean): void => {
+        // 更新按钮的暂停状态
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });
 
+        // 设置一个定时器，用于更新所有输入框的maxlength属性
         setTimeout(() => {
             const inputs = document.querySelectorAll('input');
             inputs.forEach(input => {
@@ -371,8 +457,14 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
             });
         });
     };
+
+    // 创建一个引用，用于指向HTMLButtonElement
     const ref = useRef<HTMLButtonElement>(null);
+
+    // 使用useTranslation钩子来获取翻译函数
     const { t } = useTranslation();
+
+    // 返回一个带有tooltip的自定义按钮组件
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
             overlayInnerStyle={{ borderRadius: 2 }}

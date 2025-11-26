@@ -10,7 +10,7 @@ void OverlapAnsRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slic
     std::vector<SliceDomain> &sliceVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Warn("overlap query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;

@@ -54,7 +54,7 @@ public:
     TrackInfoManager(TrackInfoManager &&) = delete;
     TrackInfoManager &operator = (TrackInfoManager &&) = delete;
     uint64_t GetTrackId(const std::string &cardId, const std::string &pid, const std::string &tid);
-    bool GetTrackInfo(uint64_t trackId, TrackInfo &trackInfo);
+    bool GetTrackInfo(uint64_t trackId, TrackInfo &trackInfo, const std::string &fileId);
     void UpdateHost(const std::string &cardId, const std::string &host);
     void UpdateHostCardId(const std::string &cardId, const std::string &hostCardId);
     void UpdateDeviceMap(const std::string &cardId, const std::unordered_map<std::string, std::string> deviceMap);
@@ -99,7 +99,7 @@ private:
     /* *
      * 键是trackId
      */
-    std::unordered_map<uint64_t, TrackInfo> trackInfoMap;
+    std::unordered_multimap<uint64_t, TrackInfo> trackInfoMap;
     /* *
      * 键是cardID,数据库db文件路径唯一标识，值是显卡对应的host的cardId,host的cardId和db文件路径相同
      */

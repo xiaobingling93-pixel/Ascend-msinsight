@@ -115,6 +115,16 @@ public:
             return std::nullopt;
         }
     }
+    // event to json
+    static std::optional<document_t> CommonEventToJson(const Event &event)
+    {
+        try {
+            const auto& jsonResponse = dynamic_cast<const JsonEvent&>(event);
+            return jsonResponse.ToJson();
+        } catch (const std::bad_cast& e) {
+            return std::nullopt;
+        }
+    }
 protected:
     std::mutex mutex;
     using JsonToRequestFunc = std::function<std::unique_ptr<Request>(const json_t &, std::string &error)>;

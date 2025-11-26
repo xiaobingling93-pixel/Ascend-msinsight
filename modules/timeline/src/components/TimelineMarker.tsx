@@ -491,24 +491,46 @@ const ButtonContainer = styled.div`
     padding: 36px 0 30px;
 `;
 
+/**
+ * SingleFlagEditElement 是一个用于编辑时间线标记的React组件。
+ *
+ * @param {TimeLineMakerProps} props - 组件的属性，包含时间线制作器的配置和状态。
+ * @returns {JSX.Element} 返回一个JSX元素，用于渲染时间线标记的编辑界面。
+ */
 const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element => {
-    const { t } = useTranslation();
-    const index = props.index;
-    const session = props.session;
-    if (index === undefined) { return <></>; }
-    const timelineAxisFlag = session.timelineMaker.timelineFlagList[index];
-    const [theme, setTheme] = useState(useTheme());
+    const { t } = useTranslation(); // 使用翻译钩子获取翻译函数
+    const index = props.index; // 获取时间线标记的索引
+    const session = props.session; // 获取时间线制作器的会话状态
+    if (index === undefined) { return <></>; } // 如果索引未定义，返回空元素
+    const timelineAxisFlag = session.timelineMaker.timelineFlagList[index]; // 获取对应索引的时间线标记
+    const [theme, setTheme] = useState(useTheme()); // 使用主题钩子获取并设置当前主题
+
+    // 使用useEffect钩子监听主题变化，更新组件主题
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());
         }
     }, [themeInstance.getThemeType()]);
+
+    // 定义颜色盒子点击事件处理函数
     const colorBoxClickListener = (event: React.MouseEvent<HTMLDivElement, MouseEvent>): void => handleColorBoxClick(theme, event, timelineAxisFlag);
+
+    // 定义自定义颜色选择事件处理函数
     const diyColorListener = (): void => handleColorSelect(theme, session, timelineAxisFlag);
+
+    // 定义确认按钮点击事件处理函数
     const confirmListener = (): void => handleConfirm(session, timelineAxisFlag);
+
+    // 定义删除按钮点击事件处理函数
     const deleteListener = (): void => handleDelete(session, index);
+
+    // 定义取消按钮点击事件处理函数
     const cancelListener = (): void => handleCancel(session, index);
+
+    // 定义输入框内容变化事件处理函数
     const inputChangeListener = (e: React.ChangeEvent<HTMLInputElement>): void => handleEditInputChange(e, timelineAxisFlag, theme);
+
+    // 如果时间线标记存在，渲染编辑界面，否则返回空元素
     return timelineAxisFlag !== undefined
         ? <SingleFlagEditDiv id={ 'singleFlagEdit' } style={{ background: theme.bgColorLight }}>
             <Describe style={{ color: theme.svgPlayBackgroundColor }}>{t('timelineMarker:description')}<CloseIcon style={{ float: 'right', marginRight: '15px', fill: '#71757F' }} onClick={cancelListener}></CloseIcon></Describe>
@@ -527,14 +549,14 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
                             needAddFlagColor = false;
                         }
                         if (idx === 23 && needAddFlagColor) {
-                            return <div key={idx} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
+                            return <div key={idx} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '14px', width: '14px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
                         } else {
-                            return <div key={idx} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
+                            return <div key={idx} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '14px', width: '14px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
                         }
                     }
                     return '';
                 }) }
-                <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
+                <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px', height: '16px', width: '16px' }}/>
             </div>
             <ButtonContainer>
                 <Button type={'primary'} onClick={ confirmListener }>{t('timelineMarker:confirmButton')}</Button>
@@ -945,52 +967,69 @@ const closeEditorWindow = (): void => {
     maskDiv[1].parentNode?.removeChild(maskDiv[1]);
 };
 
+/**
+ * ColorEditor组件，用于编辑时间轴标记的颜色。
+ *
+ * @param {TimeLineMakerProps} props - 组件的属性，包含时间轴标记、设置颜色的方法、会话信息等。
+ * @returns {JSX.Element} 返回一个React元素，用于渲染颜色编辑界面。
+ */
 export const ColorEditor = observer((props: TimeLineMakerProps): JSX.Element => {
+    // 获取时间轴标记
     const timelineAxisFlag = props.item;
+    // 获取设置颜色的方法
     const setFlagColor = props.setFlagColor;
     if (!timelineAxisFlag || !setFlagColor) {
         return <></>;
     }
     const session = props.session;
+    // 颜色盒子点击事件处理函数
     const colorBoxClickListener = (event: React.MouseEvent<HTMLDivElement, MouseEvent>): void => handleColorBoxClick(theme, event, timelineAxisFlag);
+    // 自定义颜色选择事件处理函数
     const diyColorListener = (): void => handleColorSelect(theme, session, timelineAxisFlag);
+    // 使用useState钩子获取并设置主题
     const [theme, setTheme] = useState(useTheme());
+    // 使用useTranslation钩子获取翻译函数
     const { t } = useTranslation();
+
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
+            // 如果主题发生变化，更新主题
             setTheme(themeInstance.getThemeType());
         }
-    }, [themeInstance.getThemeType()]);
-    return <SingleFlagEditDiv id={ 'colorEditor' } style={{ backgroundColor: theme.bgColorLight, height: '150px' }}>
-        <ColorText id={ 'colorText' } style={{ color: theme.svgPlayBackgroundColor, userSelect: 'none' }}>{t('timelineMarker:color')}</ColorText >
-        <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
-            { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
-                let needAddFlagColor = true;
-                if (index < 23) {
-                    if (item === timelineAxisFlag.color) {
-                        needAddFlagColor = false;
+    }, [themeInstance.getThemeType()]); // 监听主题实例的主题类型变化
+
+    return (
+        <SingleFlagEditDiv id={ 'colorEditor' } style={{ backgroundColor: theme.bgColorLight, height: '150px' }}>
+            <ColorText id={ 'colorText' } style={{ color: theme.svgPlayBackgroundColor, userSelect: 'none' }}>{t('timelineMarker:color')}</ColorText >
+            <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
+                { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
+                    let needAddFlagColor = true;
+                    if (index < 23) {
+                        if (item === timelineAxisFlag.color) {
+                            needAddFlagColor = false;
+                        }
+                        if (index === 23 && needAddFlagColor) {
+                            return <div key={index} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '14px', width: '14px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
+                        } else {
+                            return <div key={index} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '14px', width: '14px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
+                        }
                     }
-                    if (index === 23 && needAddFlagColor) {
-                        return <div key={index} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
-                    } else {
-                        return <div key={index} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
-                    }
-                }
-                return '';
-            }) }
-            <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
-        </div>
-        <ButtonContainer>
-            <Button type={'primary'} onClick={ (): void => {
-                confirmClickHandler(timelineAxisFlag, session, setFlagColor);
-            }}>
-                {t('timelineMarker:confirmButton')}
-            </Button>
-            <Button onClick={closeEditorWindow}>
-                {t('timelineMarker:cancelButton')}
-            </Button>
-        </ButtonContainer>
-    </SingleFlagEditDiv>;
+                    return '';
+                }) }
+                <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
+            </div>
+            <ButtonContainer>
+                <Button type={'primary'} onClick={ (): void => {
+                    confirmClickHandler(timelineAxisFlag, session, setFlagColor);
+                }}>
+                    {t('timelineMarker:confirmButton')}
+                </Button>
+                <Button onClick={closeEditorWindow}>
+                    {t('timelineMarker:cancelButton')}
+                </Button>
+            </ButtonContainer>
+        </SingleFlagEditDiv>
+    );
 });
 
 export const changeRangeMarkerTimestamp = (session: Session, newRange: [TimeStamp, TimeStamp]): void => {

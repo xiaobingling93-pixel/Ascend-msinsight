@@ -21,6 +21,6 @@
         "buildFrameWorkLinux": "cd framework && npm install --force && npm run build && npm run copyLinux",
         "buildExtensionWin": "cd .\\plugins\\vscode && npm install && npm run vsce:package",
         "buildExtensionLinux": "cd ./plugins/vscode && npm install && npm run vsce:package",
-        "test": "cd modules"
+        "test": "cd modules && pnpm test"
     }
 }

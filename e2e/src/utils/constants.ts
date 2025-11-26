@@ -18,7 +18,6 @@ export enum FilePath {
     SOURCE_MULTIFILE = 'D:\\GUI_TEST_DATA 路徑测试\\算子调优\\source\\visualize_data_multifile.bin',
     DETAILS = 'D:\\GUI_TEST_DATA 路徑测试\\算子调优\\details\\visualize_data_910_mix.bin',
     DETAILS_ROOFLINE = 'D:\\GUI_TEST_DATA 路徑测试\\算子调优\\details\\visualize_data_roofline_910_mix.bin',
-    JUPYTER = 'D:\\GUI_TEST_DATA 路徑测试\\jupyter\\test.ipynb',
     TEXT_RANK_0 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level1_ACLAICORE_text\\profiling_data\\ubuntu2204_2045554_20240612082838731_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     TEXT_RANK_1 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level1_ACLAICORE_text\\profiling_data\\ubuntu2204_2045555_20240612082838733_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     TEXT_CLUSTER = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\profile_dir_llm\\cluster_analysis_output',

@@ -8,6 +8,7 @@
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
 #include "ParallelStrategyAlgorithmManager.h"
+#include "ParserStatusManager.h"
 #include "BaselineManagerService.h"
 using namespace Dic::Module::Summary;
 namespace Dic {
@@ -15,6 +16,9 @@ namespace Module {
 namespace Global {
 void BaselineManagerService::ResetBaseline()
 {
+    // 没有解析进程时才可以reset
+    auto baselineId = Dic::Module::Timeline::BaselineManager::Instance().GetBaselineId();
+    Dic::Module::Timeline::ParserStatusManager::Instance().WaitAllFinished({baselineId});
     Dic::Module::Timeline::DataBaseManager::Instance().ResetBaseline();
     BaselineManager::Instance().Reset();
     Source::SourceFileParser::Instance().ResetBaseline();
@@ -34,17 +38,17 @@ bool BaselineManagerService::CheckIsSupportCompare(const std::vector<ProjectExpl
         errorMsg = "Multi device scenario does not support setting comparison.";
         return false;
     }
-    // leaks不支持对比
-    bool isBaselineLeaks = std::any_of(baseline[0].subParseFileInfo.begin(), baseline[0].subParseFileInfo.end(),
+    // MemScope不支持对比
+    bool isBaselineMemScope = std::any_of(baseline[0].subParseFileInfo.begin(), baseline[0].subParseFileInfo.end(),
         [](const auto &fileInfo) {
-            return std::regex_match(FileUtil::GetFileName(fileInfo->parseFilePath), std::regex(leaksMemDbReg));
+            return std::regex_match(FileUtil::GetFileName(fileInfo->parseFilePath), std::regex(memScopeDbReg));
         });
-    auto isCurLeaks = std::any_of(cur[0].subParseFileInfo.begin(), cur[0].subParseFileInfo.end(),
+    auto isCurMemScope = std::any_of(cur[0].subParseFileInfo.begin(), cur[0].subParseFileInfo.end(),
         [](const auto &fileInfo) {
-            return std::regex_match(FileUtil::GetFileName(fileInfo->parseFilePath), std::regex(leaksMemDbReg));
+            return std::regex_match(FileUtil::GetFileName(fileInfo->parseFilePath), std::regex(memScopeDbReg));
         });
-    if (isBaselineLeaks || isCurLeaks) {
-        errorMsg = "Leaks data does not support comparison function.";
+    if (isBaselineMemScope || isCurMemScope) {
+        errorMsg = "MemScope data does not support comparison function.";
         return false;
     }
 

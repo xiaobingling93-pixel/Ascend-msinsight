@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 import json
 import zipfile
 from typing import List
+from enum import Enum
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 WORKSPACE_PATH = os.getenv("OCTOPUS_WORKSPACE")
@@ -346,6 +347,94 @@ file_names = {
 }
 
 
+def package_win(dst_file: str) -> bool:
+    """
+        Windows版本打包，输出件为单一的MindStudio-Insight_{版本}_win.exe
+    :param dst_file: 目标文件
+    :return: 是否成功
+    """
+    shutil.copytree(os.path.join(Const.PLATFORM_DIR, 'config'),
+                    os.path.join(Const.PLATFORM_PREVIEW_DIR, 'config'))  # 仅Windows需要
+    bundle_path = os.path.join(Const.PLATFORM_DIR, 'bundle')
+    shutil.copyfile(os.path.join(bundle_path, 'installer.nsi'),
+                    os.path.join(Const.PLATFORM_PREVIEW_DIR, 'installer.nsi'))
+    NSIS_PATH = os.getenv('NSIS_PATH', 'C:\\Program Files (x86)\\NSIS')
+    nsis_cmd = os.path.join(NSIS_PATH, 'bin', 'makensis.exe')
+    result = exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], Const.PLATFORM_DIR, 'bin_package')
+    if result != 0:
+        return False
+
+    # 将产物拷贝到目标文件
+    for tmp in os.listdir(Const.PLATFORM_PREVIEW_DIR):
+        if not tmp.startswith(Const.ASCEND_INSIGHT_PREFIX + '_'):
+            continue
+        shutil.copyfile(os.path.join(Const.PLATFORM_PREVIEW_DIR, tmp), dst_file)
+        return True
+    # 如果没找到insight.exe产物则返回false
+    return False
+
+
+
+def package_linux(dst_file: str) -> bool:
+    """
+        Linux版本打包，输出件为MindStudio-Insight_{版本}_linux_{arch}.zip压缩包
+    :param dst_file: 目标文件
+    :return: 是否成功
+    """
+    system = platform.system()
+    target_file = file_names.get((system, 'target'), 'MindStudio-Insight')
+    insight_bin_file = os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file)
+    if not os.path.exists(insight_bin_file):
+        logging.error('[%s] %s', 'bin_package_linux',
+                      f'Linux packaging failed: executable file {insight_bin_file} not found.')
+        return False
+    os.chmod(insight_bin_file, 0o550)  # 将ascend_insight二进制赋权为550
+    shutil.make_archive(dst_file[:-4], 'zip', Const.PLATFORM_PREVIEW_DIR)
+    return True
+
+
+def package_mac(dst_file: str, package_name: str, is_cluster_source: bool) -> bool:
+    system = platform.system()
+    bin_file = file_names.get((system, 'bin'), 'MindStudioInsight')
+    app_dir = os.path.join(Const.PLATFORM_TARGET_DIR, 'release', 'bundle', 'osx', Const.MAC_OS_APPNAME)
+    app_bin_file_dir = os.path.join(app_dir, 'Contents', 'MacOS')
+    preview_app = os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR, Const.MAC_OS_APPNAME)
+    os.chmod(os.path.join(app_bin_file_dir, bin_file), 0o550)  # 4、app内二进制文件 ascend_insight 550
+    shutil.copytree(os.path.join(Const.PLATFORM_PREVIEW_DIR, 'resources'),
+                    os.path.join(app_bin_file_dir, 'resources'))
+    shutil.move(app_dir, preview_app)
+    # 签名app
+    if "aarch64" in package_name and not resign_mac_app(preview_app, is_cluster_source):
+        return False
+    if not chmod_mac_app(preview_app, 'aarch64' if 'aarch64' in package_name else 'x86_64'):
+        return False
+    # 通过dmgbuild打包
+    if not build_dmg_for_mac_app(dst_file):
+        logging.info('[%s] %s', 'bin_package', 'Build dmg for application failed.')
+        return False
+    # 将dmg文件设置为640
+    os.chmod(dst_file, 0o640)
+    return True
+
+
+class CLUSTER_ANALYZE_TYPE(Enum):
+    BINARY = 0
+    SOURCE = 1
+    UNKNOWN = 2
+
+
+def get_cluster_analyze_type(server_dir: str) -> CLUSTER_ANALYZE_TYPE:
+    system = platform.system()
+    binary_name = "cluster_analysis.exe" if system == Const.WINDOWS_OS else "cluster_analysis" # pyinstaller打包件
+    source_name = "msprof_analyze" # 源码引入
+    # 优先检查是否存在cluster_analysis二进制
+    if os.path.exists(os.path.join(server_dir, binary_name)):
+        return CLUSTER_ANALYZE_TYPE.BINARY
+    if os.path.exists(os.path.join(server_dir, source_name)):
+        return CLUSTER_ANALYZE_TYPE.SOURCE
+    return CLUSTER_ANALYZE_TYPE.UNKNOWN
+
+
 def zip_package(profiler_path, package_name):
     system = platform.system()
     bin_file = file_names.get((system, 'bin'), 'MindStudioInsight')
@@ -357,54 +446,60 @@ def zip_package(profiler_path, package_name):
     # 打包
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, package_name)
     if system == Const.WINDOWS_OS:
-        shutil.copytree(os.path.join(Const.PLATFORM_DIR, 'config'),
-                        os.path.join(Const.PLATFORM_PREVIEW_DIR, 'config'))  # 仅Windows需要
-        bundle_path = os.path.join(Const.PLATFORM_DIR, 'bundle')
-        shutil.copyfile(os.path.join(bundle_path, 'installer.nsi'),
-                        os.path.join(Const.PLATFORM_PREVIEW_DIR, 'installer.nsi'))
-        nsis_cmd = os.path.join('C:\\Program Files (x86)\\NSIS', 'bin', 'makensis.exe')
-        result = exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], Const.PLATFORM_DIR, 'bin_package')
-        if result != 0:
-            return 1
-        for tmp in os.listdir(Const.PLATFORM_PREVIEW_DIR):
-            if not tmp.startswith(Const.ASCEND_INSIGHT_PREFIX + '_'):
-                continue
-            shutil.copyfile(os.path.join(Const.PLATFORM_PREVIEW_DIR, tmp), dst_file)
-            break
-    else:
-        traverse_folder_and_chmod(Const.PLATFORM_PREVIEW_DIR, 0o750, 0o640)  # 1、统一修改为文件夹750，文件640
-        traverse_folder_and_chmod(os.path.join(profiler_path, Const.SERVER_DIR), 0o750, 0o550)  # 2、server下的文件550
-        # 非MacOS、windows场景，即linux场景，打包为zip即可
-        if system != Const.MAC_OS:
-            os.chmod(os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file), 0o550)  # 3、ascend_insight 550
-            shutil.make_archive(dst_file[:-4], 'zip', Const.PLATFORM_PREVIEW_DIR)
-            return 0
-        # [AR] 新增额外的macOS场景下打包为app->dmg的流程
-        app_dir = os.path.join(Const.PLATFORM_TARGET_DIR, 'release', 'bundle', 'osx', Const.MAC_OS_APPNAME)
-        app_bin_file_dir = os.path.join(app_dir, 'Contents', 'MacOS')
-        preview_app = os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR, Const.MAC_OS_APPNAME)
-        os.chmod(os.path.join(app_bin_file_dir, bin_file), 0o550)  # 4、app内二进制文件 ascend_insight 550
-        shutil.copytree(os.path.join(Const.PLATFORM_PREVIEW_DIR, 'resources'),
-                        os.path.join(app_bin_file_dir, 'resources'))
-        shutil.move(app_dir, preview_app)
-        # 签名app
-        if "aarch64" in package_name:
-            # 清除旧bundle临时签名
-            if not clear_mac_app_signature(preview_app):
-                return 1
-            # 重签
-            if not sign_mac_app(preview_app, Const.MAC_SIGNATURE_CERTIFICATE_ID):
-                return 1
-            logging.info('[%s] %s', 'bin_package', 'MacOS application resigned successfully, start to build dmg')
-        if not chmod_mac_app(preview_app, 'aarch64' if 'aarch64' in package_name else 'x86_64'):
-            return 1
-        # 通过dmgbuild打包
-        if not build_dmg_for_mac_app(dst_file):
-            logging.info('[%s] %s', 'bin_package', 'Build dmg for application failed.')
-            return 1
-        # 将dmg文件设置为640
-        os.chmod(dst_file, 0o640)
-    return 0
+        return 0 if package_win(dst_file) else 1
+    """
+    此时目录preview/下的目录结构
+    # MindStudio-Insight        rust底座打包二进制
+    # resources                 资源目录
+    # -- images                 icns等图片资源
+    # -- license                许可证信息
+    # -- profiler               前后端文件目录
+    # ---- frontend             前端文件夹
+    # ---- plugin_install.py    插件安装脚本
+    # ---- server               后端文件夹
+    # ------ libmsinsight       profiler_server库文件
+    # ------ libsqlite          profiler_server库文件
+    # ------ profiler_server    后端二进制
+    # ------ {cluster_analyze}  可能为源码引入或二进制
+    """
+    # 判断cluster_analyze类型
+    server_dir = os.path.join(profiler_path, Const.SERVER_DIR)
+    cluster_analyze_type = get_cluster_analyze_type(server_dir)
+    if cluster_analyze_type == CLUSTER_ANALYZE_TYPE.UNKNOWN:
+        logging.error('[%s] %s', 'bin_package', f"Unsupported type for cluster analyze.")
+        return 1
+    # 最小权限
+    traverse_folder_and_chmod(Const.PLATFORM_PREVIEW_DIR, 0o750, 0o440)  # 1、统一修改为文件夹750，文件440
+    traverse_folder_and_chmod(server_dir, 0o750, 0o550)  # 2、server下的文件550
+    is_cluster_source = cluster_analyze_type == CLUSTER_ANALYZE_TYPE.SOURCE
+    if is_cluster_source:
+        # 源码引入时的mstt源码文件统一修改为440
+        traverse_folder_and_chmod(os.path.join(server_dir, "msprof_analyze"), 0o750, 0o440)
+    # linux打包
+    if system != Const.MAC_OS:
+        return 0 if package_linux(dst_file) else 1
+    # macos打包
+    return 0 if package_mac(dst_file, package_name, is_cluster_source) else 1
+
+
+def resign_mac_app(preview_app: str, is_cluster_resource: bool):
+    # 清除旧bundle临时签名
+    if not clear_mac_app_signature(preview_app):
+        return False
+    resources_dir = os.path.join(preview_app, "Contents/MacOS/resources")
+    server_dir = os.path.join(resources_dir, "profiler/server")
+    # 签名前设置resources权限, 否则无法签名通过
+    traverse_folder_and_chmod(resources_dir, 0o750, 0o640)
+    # 重签
+    if not sign_mac_app(preview_app, Const.MAC_SIGNATURE_CERTIFICATE_ID):
+        return False
+    logging.info('[%s] %s', 'bin_package', 'MacOS application resigned successfully, start to build dmg')
+    # 签名后重新设置resources最小权限
+    traverse_folder_and_chmod(resources_dir, 0o750, 0o440)
+    traverse_folder_and_chmod(server_dir, 0o750, 0o550)
+    if is_cluster_resource:
+        traverse_folder_and_chmod(os.path.join(server_dir, "msprof_analyze"), 0o750, 0o440)
+    return True
 
 
 def chmod_mac_app(app_path: str, arch: str) -> bool:
@@ -413,10 +508,10 @@ def chmod_mac_app(app_path: str, arch: str) -> bool:
         logging.warning(f'Failed to get structure of {app_path}, '
                         f'no further permission modification actions will be performed.')
         return False
-    # 将目录设置为750, 文件设置为640
+    # 非递归地将目录设置为750, 文件设置为440
     for path in path_list:
         try:
-            os.chmod(path, 0o750 if os.path.isdir(path) else 0o640)
+            os.chmod(path, 0o750 if os.path.isdir(path) else 0o440)
         except Exception as e:
             logging.error(f'An exception occurred while performing chmod.Path:{path}, Error: {e}')
             return False

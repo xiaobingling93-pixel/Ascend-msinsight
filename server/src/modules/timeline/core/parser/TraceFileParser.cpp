@@ -88,12 +88,13 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
     if ((database->HasFinishedParseLastTime(statusInfo) &&
         !Global::BaselineManager::Instance().IsBaselineRankId(rankId)) ||
-        StringUtil::EndWith(filePathArr[0], "profiler.db")) {
+        StringUtil::EndWith(filePathArr[0], "profiler.db") || StringUtil::EndWith(filePathArr[0], "ms_service_parsed.db")) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
         if (!database->QueryExtremumTimestamp(min, max)) {
             return false;
         }
+        database->CreateIndex();
         auto threadMap = database->QueryAllThreadMap();
         database->ExecSql("ALTER TABLE process ADD COLUMN parentPid TEXT DEFAULT '0';");
         TrackInfoManager::Instance().UpdateTrackIdMap(rankId, threadMap);

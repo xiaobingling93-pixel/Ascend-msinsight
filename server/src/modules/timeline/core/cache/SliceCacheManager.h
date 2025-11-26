@@ -29,10 +29,11 @@ public:
      * @param key
      * @return 返回的vector是先按timestamp升序，再按照id升序
      */
-    std::vector<SliceDomain> GetSliceDomainVec(const std::string &trackId)
+    std::vector<SliceDomain> GetSliceDomainVec(const std::string &trackId, const std::string &fileId)
     {
         SpinLockGuard lock(mutex);
-        auto it = cache.find(trackId);
+        std::string key = fileId + "@" + trackId;
+        auto it = cache.find(key);
         if (it == cache.end()) {
             std::vector<SliceDomain> emptyValue;
             return emptyValue;
@@ -47,10 +48,11 @@ public:
      * @param depthInfo
      * @return
      */
-    bool QueryDepthInfo(const std::string &trackId, std::unordered_map<uint64_t, uint32_t> &depthInfo)
+    bool QueryDepthInfo(const std::string &trackId, const std::string &fileId, std::unordered_map<uint64_t, uint32_t> &depthInfo)
     {
         SpinLockGuard lock(mutex);
-        auto it = cache.find(trackId);
+        std::string key = fileId + "@" + trackId;
+        auto it = cache.find(key);
         if (it == cache.end()) {
             return false;
         }
@@ -66,13 +68,14 @@ public:
      * @param trackId 对应泳道的trackId
      * @param value 对应泳道所有的简单算子信息，该vector先按照timestamp排序，再按照id排序
      */
-    void UpdateSliceCache(const std::string &trackId, const std::vector<SliceDomain> &value)
+    void UpdateSliceCache(const std::string &trackId, const std::string &fileId, const std::vector<SliceDomain> &value)
     {
         SpinLockGuard lock(mutex);
         if (std::empty(value)) {
             return;
         }
-        auto it = cache.find(trackId);
+        std::string key = fileId + "@" + trackId;
+        auto it = cache.find(key);
         if (it == cache.end()) {
             while (curCapacity >= allCapacity) {
                 // 此处上下文逻辑可以保证curCapacity大于cache[used.back()].first.size()
@@ -80,13 +83,13 @@ public:
                 cache.erase(used.back());
                 used.pop_back();
             }
-            used.push_front(trackId);
-            cache[trackId] = {value, used.begin()};
+            used.push_front(key);
+            cache[key] = {value, used.begin()};
             curCapacity += value.size();
             return;
         }
         Touch(it);
-        cache[trackId] = { value, used.begin() };
+        cache[key] = { value, used.begin() };
     }
 
     std::vector<uint64_t> GetPythonFunctionIdVec(const std::string &key)

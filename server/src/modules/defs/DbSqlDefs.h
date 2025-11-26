@@ -230,7 +230,7 @@ const static std::string OSRT_API_THREADS_BY_PID =
 const static std::string QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_NOT_UNIQUE =
     "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
     "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-    "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
+    "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs, endNs-startNs as duration, si.value as name,"
     "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
     "where opId in (select opId from tmp group by opId)) "
     "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
@@ -238,7 +238,7 @@ const static std::string QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_NOT_UNIQUE 
     "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName "
     "from sub ";
 const static std::string QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_UNIQUE =
-    "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
+    "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs, endNs-startNs as duration, "
     "si.value as name, groupName from COMMUNICATION_OP "
     "LEFT JOIN STRING_IDS AS si ON si.id = opName) "
     "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
@@ -248,14 +248,14 @@ const static std::string QUERY_EVENTS_VIEW_FOR_DEVICE_HCCL_DEVICE_ID_UNIQUE =
 const static std::string QUERY_EVENTS_VIEW_FOR_GROUP_DEVICE_ID_NOT_UNIQUE =
     "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
     "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-    "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, si.value as name,"
+    "sub as (select COMMUNICATION_OP.ROWID, startNs, endNs, endNs-startNs as duration, si.value as name,"
     "groupName from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
     "where opId in (select opId from tmp group by opId)) "
     "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
     "groupName||'group' as threadId, ? AS threadName from sub "
     "WHERE groupName||'group' = ? ";
 const static std::string QUERY_EVENTS_VIEW_FOR_GROUP_DEVICE_ID_UNIQUE =
-    "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs-startNs as duration, "
+    "with sub as (select COMMUNICATION_OP.ROWID, startNs, endNs, endNs-startNs as duration, "
     "si.value as name, groupName "
     "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName) "
     "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "

@@ -27,7 +27,7 @@ const state = {
     searchMinInput: null,
     searchMaxInput: null,
     searchMin: '',
-    searchMax: ''
+    searchMax: '',
 };
 const handleSearch = (
     selectedKeys: string[],
@@ -109,7 +109,7 @@ const filterSearch = (params: FilterProps, columnTitle: string) => {
                 >{i18n.t('buttonText:Reset')}</Button>
             </ButtonGroup>
         </div >
-    )
+    );
 };
 const rangeChange = (value: ValueType | null, selectedKeys: FilterProps['selectedKeys'], setSelectedKeys: FilterProps['setSelectedKeys'], key: number) => {
     const newSelectKeys = [...selectedKeys];
@@ -120,7 +120,7 @@ const rangeChange = (value: ValueType | null, selectedKeys: FilterProps['selecte
         newSelectKeys[key] = undefined as unknown as Key;
         setSelectedKeys(newSelectKeys);
     }
-}
+};
 const filterRange = (params: FilterProps) => {
     const { setSelectedKeys, selectedKeys, confirm, clearFilters, dataIndex } = params;
     return (<div style={{ padding: 8 }} onKeyDown={(e): void => e.stopPropagation()}>
@@ -130,7 +130,7 @@ const filterRange = (params: FilterProps) => {
             value={selectedKeys[0]}
             onChange={(value): void => { rangeChange(value, selectedKeys, setSelectedKeys, 0); }}
             onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
-            size='small' style={{ marginBottom: 8, marginRight: 8 }}
+            size="small" style={{ marginBottom: 8, marginRight: 8 }}
             min={0} max={1000000000000}
             precision={0}
         />
@@ -140,7 +140,7 @@ const filterRange = (params: FilterProps) => {
             value={selectedKeys[1]}
             onChange={(value): void => { rangeChange(value, selectedKeys, setSelectedKeys, 1); }}
             onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
-            size='small' style={{ marginBottom: 8 }}
+            size="small" style={{ marginBottom: 8 }}
             min={0} max={1000000000000}
             precision={0}
         />
@@ -155,7 +155,7 @@ const filterRange = (params: FilterProps) => {
                 size="small"
             >{i18n.t('buttonText:Reset')}</Button>
         </ButtonGroup>
-    </div>)
+    </div>);
 };
 
 export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: string, showRange: boolean = false): ColumnType<any> {
@@ -167,14 +167,6 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
         filterIcon: () => (
             <ColumnFilterIcon />
         ),
-        onFilter: (value, record) => {
-            const val = record?.[dataIndex];
-            const isTrue = val !== null && val !== false && val !== undefined;
-            return showRange ? isTrue : record?.[dataIndex] && record?.[dataIndex]
-                .toString()
-                .toLowerCase()
-                .includes((value as string).toLowerCase())
-        },
         onFilterDropdownOpenChange: (visible): void => {
             if (visible) {
                 limitInput();

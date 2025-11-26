@@ -67,7 +67,7 @@ std::unordered_set<std::string> FlowAnalyzer::ComputeOnSliceFlowPointBySliceId(c
     repository->QueryFlowPointByTimeRange(flowQuery, flowPointVec);
     ServerLog::Info("flowPointVec is: ", flowPointVec.size());
     auto &instance = SliceCacheManager::Instance();
-    std::vector<SliceDomain> sliceVec = instance.GetSliceDomainVec(std::to_string(flowQuery.trackId));
+    std::vector<SliceDomain> sliceVec = instance.GetSliceDomainVec(std::to_string(flowQuery.trackId), flowQuery.fileId);
     // 此时是前端打开泳道点击算子，缓存中必定存在泳道下所有的算子数据,若不存在说明是异常情况
     if (std::empty(sliceVec)) {
         return res;

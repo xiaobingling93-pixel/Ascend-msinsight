@@ -28,5 +28,7 @@
     --middleblue: #0c518d;
     --labelblue: #40a9ff;
     --lightblue: #318cd7;
-    --blue30:rgb(126 193 255 / 50%);
+    --blue30: rgb(126 193 255 / 50%);
+    /* 新增的底色变量，颜色为#3291fe，透明度为10% */
+    --greyTransparent: rgba(50, 145, 254, 0.1);
 }

@@ -42,7 +42,8 @@ namespace Dic {
     const static std::string TABLE_OPERATOR_MEMORY = "OP_MEMORY";
     const static std::string TABLE_NPU_MODULE_MEM = "NPU_MODULE_MEM";
     const static std::string TABLE_GE_MEMORY = "NPU_OP_MEM";
-    const static std::string TABLE_LEAKS_DUMP = "leaks_dump"; // 上游未确认，暂定
+    const static std::string TABLE_LEAKS_DUMP = "leaks_dump"; // 仍需兼容旧表名
+    const static std::string TABLE_MEM_SCOPE_DUMP = "memscope_dump"; // 适配msleaks更名memscope
     const static std::string TABLE_PYTORCH_INFO = "RANK_DEVICE_MAP";
     const static std::string TABLE_OVERLAP_ANALYSIS = "OVERLAP_ANALYSIS";
     const static std::string TABLE_META_DATA = "META_DATA";

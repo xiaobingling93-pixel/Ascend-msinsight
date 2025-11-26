@@ -209,15 +209,6 @@ const StyledTable = styled(Support)`
       background: ${(p): string => p.theme.bgColorDark};
     }
 
-    .level-1 {
-        background: ${(p): string => p.theme.primaryColorLight2};
-        color: ${(p): string => p.theme.textColorPrimary};
-    }
-    .level-2 {
-        background: ${(p): string => p.theme.primaryColorLight4};
-        color: ${(p): string => p.theme.textColorPrimary};
-    }
-
     // summary 汇总行
     .ant-table-summary {
         background: ${(p): string => p.theme.bgColorLight};
@@ -269,7 +260,7 @@ const resizableTitle: React.FC<IResizableTitleProps> = (props) => {
     }
     return cloneElement(th, {},
         [...th.props.children,
-            <Resizor key={th.props.children.length} onResize={onResize} />]);
+            <Resizor key={th.props.children.length} onResize={onResize} style={{ width: 8, left: -4 }} />]);
 };
 
 interface ResizeTableProps<T> extends TableProps<T> {

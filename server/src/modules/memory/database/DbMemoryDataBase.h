@@ -20,15 +20,13 @@ public:
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) override;
     bool QueryMemoryResourceType(std::string &type) override;
-    bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-                             std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                             std::vector<Protocol::MemoryOperator> &opDetails) override;
+    int64_t QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                std::vector<Protocol::MemoryOperator> &opDetails) override;
     bool QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
                               std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                               std::vector<Protocol::MemoryComponent> &componentDetails) override;
     bool QueryMemoryView(Protocol::MemoryViewParams &requestParams, Protocol::MemoryViewData &operatorBody,
         uint64_t offsetTime) override;
-    bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max) override;
     bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams, double &min, double &max) override;
@@ -55,12 +53,19 @@ public:
                               const std::string &msg);
     std::map<std::string, Protocol::MemorySuccess> GetRanks();
     static void Reset();
+    void GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
+                                               std::string& column, std::string& alias) override;
+
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;
-    std::string BuildOperatorDetailSql(const std::string& startTimeString, const std::string& offsetTimeString);
+    std::string BuildOperatorDetailSql(const uint64_t baseTimestamp);
+    static std::string GetJoinStringIDSAlias(std::string_view joinCol);
     std::string deviceIdColumnName;
+    const std::set<std::string_view> OPERATOR_MEMORY_TIMESTAMP_NS_COLUMNS_SET = {
+        OpMemoryColumn::ALLOCATION_TIME, OpMemoryColumn::RELEASE_TIME, OpMemoryColumn::ACTIVE_RELEASE_TIME,
+        OpMemoryColumn::DURATION, OpMemoryColumn::ACTIVE_DURATION
+    };
 };
-
 }
 }
 }

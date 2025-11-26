@@ -7,6 +7,7 @@
 #include "MemoryProtocolRespose.h"
 #include "MemoryProtocolUtil.h"
 #include "TimelineProtocol.h"
+#include "MemoryTableView.h"
 #include "MemoryProtocol.h"
 
 namespace Dic {
@@ -88,21 +89,33 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
     } else {
         reqPtr->params.endTime = -1;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.isOnlyShowAllocatedOrReleasedWithinInterval,
-        json["params"], "isOnlyShowAllocatedOrReleasedWithinInterval");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+
     if (json["params"].HasMember("minSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, json["params"], "minSize");
     } else {
         reqPtr->params.minSize = std::numeric_limits<int64_t>::min();
     }
+
     if (json["params"].HasMember("maxSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.maxSize, json["params"], "maxSize");
     } else {
         reqPtr->params.maxSize = std::numeric_limits<int64_t>::max();
+    }
+
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isOnlyShowAllocatedOrReleasedWithinInterval,
+        json["params"], "isOnlyShowAllocatedOrReleasedWithinInterval");
+    reqPtr->params.SetPaginationParamFromJson(json["params"]);
+    if (!reqPtr->params.SetFiltersFromJson(json["params"], OperatorMemoryTableView::FIELD_FULL_COLUMNS, error)) {
+        Server::ServerLog::Error("Failed set filters from json param: %", error);
+        return nullptr;
+    }
+    if (!reqPtr->params.SetOrderFromJson(json["params"], OperatorMemoryTableView::FIELD_FULL_COLUMNS, error)) {
+        Server::ServerLog::Error("Failed set order from json param: %", error);
+        return nullptr;
+    }
+    if (!reqPtr->params.SetRangeFiltersFromJson(json["params"], OperatorMemoryTableView::FIELD_FULL_COLUMNS, error)) {
+        Server::ServerLog::Error("Failed set range filters from json param: %", error);
+        return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");

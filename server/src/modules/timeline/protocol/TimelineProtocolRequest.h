@@ -379,21 +379,12 @@ struct SystemViewParams {
     std::string type;
     std::string rankId;
     std::string deviceId;
+    uint64_t startTime = 0;
     uint64_t endTime = 0;
     bool isQueryTotal = false;
     std::string layer;
     std::string searchName;
-    bool CheckParams(std::string &warnMsg) const
-    {
-        static const std::set<std::string> validLayerTypeSet = {
-            "Python", "CANN",          "Ascend Hardware",
-            "HCCL",   "COMMUNICATION", "Overlap Analysis" };
-        if (validLayerTypeSet.find(layer) == validLayerTypeSet.end()) {
-            warnMsg = "Layer is invalid";
-            return false;
-        }
-        return CheckUnsignPageValid(pageSize, current, warnMsg);
-    }
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const;
 };
 
 struct SystemViewRequest : public Request {
@@ -422,9 +413,11 @@ struct EventsViewParams {
     std::string tid;
     std::string threadName;
     std::string metaType;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
     std::vector<std::string> threadIdList;
     std::vector<std::pair<std::string, std::string>> filters;
-    bool CheckParams(std::string &warnMsg) const;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const;
 };
 
 struct EventsViewRequest : public Request {
@@ -441,8 +434,10 @@ struct KernelDetailsParams {
     std::string deviceId;
     std::string coreType;
     std::string searchName;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
     std::vector<std::pair<std::string, std::string>> filters;
-    void Check(std::string &error) const;
+    void Check(uint64_t minTime, std::string &error) const;
 };
 
 struct KernelDetailsRequest : public Request {

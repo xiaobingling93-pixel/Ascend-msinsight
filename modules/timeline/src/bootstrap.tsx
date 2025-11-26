@@ -55,14 +55,6 @@ declare global {
 document.oncontextmenu = (): boolean => false;
 document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
 
-const root = createRoot(document.getElementById('root') as HTMLElement);
-root.render(
-    (<React.StrictMode>
-        <RootStoreContext.Provider value={store}>
-            <App />
-        </RootStoreContext.Provider>
-    </React.StrictMode>));
-
 window.request = async (dataSource, params): Promise<any> => {
     const data = await connector.fetch({ remote: dataSource, args: params });
     return (data as any).body;
@@ -105,3 +97,11 @@ async function requestWithOptions({ command, params, module, voidResponse = fals
     });
     return (data as any).body;
 }
+
+const root = createRoot(document.getElementById('root') as HTMLElement);
+root.render(
+    (<React.StrictMode>
+        <RootStoreContext.Provider value={store}>
+            <App />
+        </RootStoreContext.Provider>
+    </React.StrictMode>));

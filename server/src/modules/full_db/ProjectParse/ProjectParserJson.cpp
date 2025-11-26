@@ -508,7 +508,7 @@ ProjectTypeEnum ProjectParserJson::GetProjectType(const std::string &dataPath)
 {
     std::string error;
     std::vector<std::string> traceFiles = FindAllTraceFile(dataPath, error);
-    bool isCluster = (!traceFiles.empty() && (curScene == "train" || curScene == "infer")) ||
+    bool isCluster = (traceFiles.size() > 1 && (curScene == "train" || curScene == "infer")) ||
                      ClusterFileParser::CheckIsCluster(dataPath);
     if (isCluster) {
         return ProjectTypeEnum::TEXT_CLUSTER;

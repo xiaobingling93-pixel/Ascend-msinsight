@@ -29,7 +29,8 @@ TEST_F(TestSuit, QuerySystemViewData)
     requestParams.order = "descend";
     requestParams.orderBy = "name";
     requestParams.pageSize = PAGE;
-    database->QuerySystemViewData(requestParams, responseBody);
+    const uint64_t minTimestamp = 0;
+    database->QuerySystemViewData(requestParams, responseBody, minTimestamp);
     int expectSize = 10;
     EXPECT_EQ(responseBody.systemViewDetail.size(), expectSize);
 }
@@ -61,7 +62,8 @@ TEST_F(TestSuit, QueryPythonViewWithTotalNum)
     requestParams.orderBy = "name";
     requestParams.pageSize = PAGE;
     requestParams.isQueryTotal = true;
-    database->QuerySystemViewData(requestParams, responseBody);
+    const uint64_t minTimestamp = 0;
+    database->QuerySystemViewData(requestParams, responseBody, minTimestamp);
     int expectSize = 162;
     EXPECT_EQ(responseBody.total, expectSize);
 }
@@ -73,7 +75,8 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithCann)
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
     requestParams.layer = "CANN";
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
+    const uint64_t minTimestamp = 0;
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%", minTimestamp, "");
     int expectSize = 158266100;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -85,7 +88,8 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithPython)
     requestParams.rankId = "0";
     requestParams.deviceId = "0";
     requestParams.layer = "Python";
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
+    const uint64_t minTimestamp = 0;
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%", minTimestamp, "");
     int expectSize = 851869940;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -97,7 +101,8 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithAscend)
     requestParams.rankId = "0";
     requestParams.deviceId = "12";
     requestParams.layer = "Ascend Hardware";
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
+    const uint64_t minTimestamp = 0;
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%", minTimestamp, "");
     int expectSize = 842011262;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
     EXPECT_EQ(data.total, 57); // total operator = 57
@@ -110,7 +115,8 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithHCCL)
     requestParams.rankId = "0";
     requestParams.deviceId = "24";
     requestParams.layer = "HCCL";
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
+    const uint64_t minTimestamp = 0;
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%", minTimestamp, "");
     int expectSize = 449202040;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -122,7 +128,8 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithCommunication)
     requestParams.rankId = "0";
     requestParams.deviceId = "24";
     requestParams.layer = "COMMUNICATION";
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
+    const uint64_t minTimestamp = 0;
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%", minTimestamp, "");
     int expectSize = 449202040;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -134,7 +141,8 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithOverlap)
     requestParams.rankId = "0";
     requestParams.deviceId = "4";
     requestParams.layer = "Overlap Analysis";
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
+    const uint64_t minTimestamp = 0;
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%", minTimestamp, "");
     int expectSize = 292195068;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -177,8 +185,8 @@ TEST_F(TestSuit, QueryTotalKernel)
     requestParams.pageSize = PAGE;
     requestParams.rankId = "0";
     requestParams.filters.emplace_back("type", "hcom");
-
-    auto result = database->QueryTotalKernel(requestParams);
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto result = database->QueryTotalKernel(requestParams, minTimestamp);
     const uint64_t EXPECT_COUNT = 4;
 
     EXPECT_EQ(result, EXPECT_COUNT);

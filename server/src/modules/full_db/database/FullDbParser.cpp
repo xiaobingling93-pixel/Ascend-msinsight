@@ -12,8 +12,8 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "BaselineManager.h"
 #include "CollectionTimeService.h"
-#include "LeaksMemoryDatabase.h"
-#include "LeaksMemoryService.h"
+#include "MemScopeDatabase.h"
+#include "MemScopeService.h"
 #include "TrackInfoManager.h"
 #include "CacheManager.h"
 #include "ParseUnitManager.h"
@@ -71,7 +71,7 @@ void FullDbParser::Reset()
     FullDb::DbMemoryDataBase::Reset();
     FullDb::DbSummaryDataBase::Reset();
     FullDb::DbTraceDataBase::Reset();
-    FullDb::LeaksMemoryDatabase::Reset();
+    FullDb::MemScopeDatabase::Reset();
     ServerLog::Info("End Reset trace Parser");
     CollectionTimeService::Instance().Reset();
 }
@@ -98,7 +98,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     auto &threadPool = FullDbParser::Instance().threadPool;
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
-    if (type != FileType::LEAKS) {
+    if (type != FileType::MEM_SCOPE) {
         for (const auto &item: rankIds) {
             database->UpdateStartTime(item);
         }
@@ -115,12 +115,13 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
             FullDb::DbMemoryDataBase::ParseCallBack(rankId, filePath, false, "");
         }
         ServerLog::Error("There is no Memory Data in this db file");
-    } else if (type == FileType::LEAKS && !database->CheckTableDataInvalid(TABLE_LEAKS_DUMP)) {
+    } else if (type == FileType::MEM_SCOPE && !database->CheckTableDataInvalid(TABLE_LEAKS_DUMP) &&
+               !database->CheckTableDataInvalid(TABLE_MEM_SCOPE_DUMP)) {
         for (const auto& rankId: rankIds) {
-            MemoryDetail::LeaksMemoryService::ParserEnd(rankId, false);
-            MemoryDetail::LeaksMemoryService::ParseCallBack(rankId, false, "There is no Leaks Memory Data in this db file");
+            MemScope::MemScopeService::ParserEnd(rankId, false);
+            MemScope::MemScopeService::ParseCallBack(rankId, false, "There is no MemScope data in this db file");
         }
-        ServerLog::Error("There is no Leaks Memory Data in this db file");
+        ServerLog::Error("There is no MemScope data in this db file");
     } else {
         InitMemory(rankIds, filePath);
     }
@@ -216,8 +217,8 @@ void FullDbParser::InitSummary(const std::vector<std::string> &rankIds, const st
 void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std::string &path)
 {
     FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
-    if (type == FileType::LEAKS) {
-        InitLeaksMemory(rankIds, path);
+    if (type == FileType::MEM_SCOPE) {
+        InitMemScope(rankIds, path);
         return;
     }
     for (const std::string& id : rankIds) {
@@ -246,27 +247,27 @@ bool FullDbParser::Parse(const std::vector<std::string> &fileIds,
     return false;
 }
 
-void FullDbParser::InitLeaksMemory(const std::vector<std::string> &rankIds, const std::string &path)
+void FullDbParser::InitMemScope(const std::vector<std::string> &rankIds, const std::string &path)
 {
     for (const std::string& id : rankIds) {
-        auto leaksMemoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
-        if (leaksMemoryDatabase != nullptr && leaksMemoryDatabase->OpenDb(path, false)) {
-            if (MemoryDetail::LeaksMemoryService::ParseMemoryLeaksDumpEventsAndPythonTraces(id)) {
-                MemoryDetail::LeaksMemoryService::ParserEnd(id, true);
-                MemoryDetail::LeaksMemoryService::ParseCallBack(id, true, "");
+        auto memScopeDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
+        if (memScopeDatabase != nullptr && memScopeDatabase->OpenDb(path, false)) {
+            if (MemScope::MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces(id)) {
+                MemScope::MemScopeService::ParserEnd(id, true);
+                MemScope::MemScopeService::ParseCallBack(id, true, "");
             } else {
-                MemoryDetail::LeaksMemoryService::ParserEnd(id, false);
-                MemoryDetail::LeaksMemoryService::ParseCallBack(id, false,
-                                                                "An exception occurred while parsing the DB data: "
-                                                                "Please check the logs for details.");
-                ServerLog::Error("Failed to connect or open leaks memory database.");
+                MemScope::MemScopeService::ParserEnd(id, false);
+                MemScope::MemScopeService::ParseCallBack(id, false,
+                                                         "An exception occurred while parsing the DB data: "
+                                                         "Please check the logs for details.");
+                ServerLog::Error("Failed to connect or open memscope memory database.");
             }
         } else {
-            MemoryDetail::LeaksMemoryService::ParserEnd(id, false);
-            MemoryDetail::LeaksMemoryService::ParseCallBack(id, false,
-                                                            "An exception occurred while parsing the DB data: "
-                                                            "The database failed to open properly.");
-            ServerLog::Error("Failed to connect or open leaks memory database.");
+            MemScope::MemScopeService::ParserEnd(id, false);
+            MemScope::MemScopeService::ParseCallBack(id, false,
+                                                     "An exception occurred while parsing the DB data: "
+                                                     "The database failed to open properly.");
+            ServerLog::Error("Failed to connect or open memscope memory database.");
         }
         Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::FINISH_ALL);
     }

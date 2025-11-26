@@ -7,7 +7,7 @@
 
 #include <map>
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
 #include "vector"
 #include "condition_variable"
 #include "GlobalDefs.h"
@@ -61,11 +61,11 @@ private:
     static bool SetStatusToFinalState(const std::string &uniqueKey, ParserStatus parserStatus,
                                       std::map<std::string, ParserStatus> &statusMap);
 
-    std::mutex mutex;
+    std::shared_mutex mutex;
     std::map<std::string, ParserStatus> statusMap;
     std::map<std::string, std::pair<ProjectTypeEnum, std::vector<std::string>>> pendingRankAndFilePathMap;
     std::map<std::string, ParserStatus> clusterStatusMap;
-    std::condition_variable parseCv;
+    std::condition_variable_any parseCv;
     const std::vector<ParserStatus> finalStateList = {
         ParserStatus::FINISH, ParserStatus::FINISH_ALL, ParserStatus::TERMINATE
     };

@@ -293,7 +293,13 @@ function isSameUnit(selectedMeta?: SelectedDataType, currentMeta?: ThreadMetaDat
         selectedMeta.cardId === currentMeta.cardId;
 }
 
-function setLinkLinesMap(session: Session, flow: FlowEvent): void {
+/**
+ * 获取连线算子的关联算子
+ * @param session
+ * @param flow
+ * @param referFlow
+ */
+function handleLinkLinesMap(session: Session, flow: FlowEvent, referFlow: { rankId: string; dbPath: string }): void {
     const getKey = (point: FlowPoint): string => {
         const { pid, tid, depth, timestamp } = point;
         return `${pid}_${tid}_${depth}_${timestamp}`;
@@ -303,6 +309,7 @@ function setLinkLinesMap(session: Session, flow: FlowEvent): void {
         const mVal = (session.mapOfLinkLines.get(mKey) ?? { cat: flow.cat, from: [], to: [], current: flow[lineType] }) as MapValueOfLinkLines;
         const attr = lineType === 'from' ? 'to' : 'from';
         if (!mVal[attr].find(item => getKey(item) === getKey(flow[attr]))) {
+            flow[attr] = { ...flow[attr], ...referFlow };
             mVal[attr].push(flow[attr]);
             session.mapOfLinkLines.set(mKey, mVal);
         }
@@ -433,7 +440,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 const cat = categoryFlowEvent.cat;
                 const singleCatLinkLine: LinkLine = [];
                 for (const flow of categoryFlowEvent.flows) {
-                    setLinkLinesMap(session, flow);
+                    handleLinkLinesMap(session, flow, { rankId: linkFlow.rankId as string, dbPath: linkFlow.dbPath as string });
                     const singleLine: Record<string, unknown> = {
                         category: flow.cat,
                         cardId: linkFlow.rankId,

@@ -110,18 +110,6 @@ struct AllSuccessEvent : public Event {
     AllSuccessEventEventBody body;
 };
 
-struct LeaksParseSuccessEventBody {
-    std::string fileId;
-    std::unordered_map<std::string, std::vector<std::string>> deviceIds;
-    std::vector<uint64_t> threadIds;
-};
-
-struct LeaksParseSuccessEvent : public Event {
-    LeaksParseSuccessEvent() : Event(EVENT_PARSE_LEAKS_MEMORY_COMPLETED) {}
-    LeaksParseSuccessEventBody body;
-    std::string errMsg;
-};
-
 struct ParseClusterStep2CompletedEvent : public Event {
     ParseClusterStep2CompletedEvent() : Event(EVENT_PARSE_CLUSTER_STEP2_COMPLETED) {}
     ParseClusterCompletedEventBody body;

@@ -7,7 +7,7 @@ import type { Scene, Session } from '@/entity/session';
 import { type MenuProps, message, Menu, Tooltip } from 'antd';
 import { safeJSONParse } from '@insight/lib/utils';
 
-import { type ModuleConfig, modulesConfig } from '../../moduleConfig';
+import { type ModuleConfig, modulesConfig, MEM_SCOPE_MODULE_NAME } from '../../moduleConfig';
 import styled from '@emotion/styled';
 import { SessionAction } from '@/utils/enum';
 import { useTranslation } from 'react-i18next';
@@ -115,9 +115,9 @@ const Index = observer(({ session }: {session: Session}) => {
 
     const availableModules = useMemo(() => mergedModulesConfig.filter(config => isAvailable(config, scene, dataCompose))
         , [scene, dataCompose, mergedModulesConfig]);
-    const isLeaks = availableModules.some(module => module.isLeaks && module.name === 'Leaks');
+    const isLeaks = availableModules.some(module => module.isLeaks && module.name === MEM_SCOPE_MODULE_NAME);
     if (isLeaks) {
-        setActiveModule('Leaks');
+        setActiveModule(MEM_SCOPE_MODULE_NAME);
     };
     const getIcon = (tabTitle: string): React.ReactElement => {
         return <Tooltip mouseEnterDelay={1} title={
@@ -137,7 +137,7 @@ const Index = observer(({ session }: {session: Session}) => {
             label: getIcon(config.name),
             key: config.name,
         }));
-        return isLeaks ? modules.filter(module => module.key === 'Leaks') : modules;
+        return isLeaks ? modules.filter(module => module.key === MEM_SCOPE_MODULE_NAME) : modules;
     }, [availableModules, t]);
     const onClick: MenuProps['onClick'] = e => {
         setActiveModule(e.key);

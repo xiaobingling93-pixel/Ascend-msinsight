@@ -19,8 +19,9 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     EventsViewResponse &response = *responsePtr.get();
     WsSession &session = *WsSessionManager::Instance().GetSession();
     SetBaseResponse(request, response);
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string warnMsg;
-    if (!request.params.CheckParams(warnMsg)) {
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
@@ -36,8 +37,7 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     if (!request.params.tid.empty()) {
         request.params.threadIdList.emplace_back(request.params.tid);
     }
-    if (!database->QueryEventsViewData(request.params, responsePtr->body,
-        TraceTime::Instance().GetStartTime())) {
+    if (!database->QueryEventsViewData(request.params, responsePtr->body, minTimestamp)) {
         ServerLog::Warn("Failed to get events view table response data.");
         session.OnResponse(std::move(responsePtr));
         return false;

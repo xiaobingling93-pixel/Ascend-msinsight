@@ -205,7 +205,7 @@ void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set
     std::string sliceCacheKey = std::to_string(sliceQuery.trackId);
     auto &instance = SliceCacheManager::Instance();
     instance.UpdatePythonFilterSet(sliceCacheKey, sliceQuery.isFilterPythonFunction);
-    std::vector<SliceDomain> sliceDomainVec = instance.GetSliceDomainVec(sliceCacheKey);
+    std::vector<SliceDomain> sliceDomainVec = instance.GetSliceDomainVec(sliceCacheKey, sliceQuery.rankId);
     if (std::empty(sliceDomainVec)) {
         repository->QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceDomainVec);
     }
@@ -220,7 +220,7 @@ void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set
     }
     maxDepth = endList.size();
     havePythonFunction = instance.HavePythonFunction(sliceQuery.trackId);
-    instance.UpdateSliceCache(sliceCacheKey, sliceDomainVec);
+    instance.UpdateSliceCache(sliceCacheKey, sliceQuery.rankId, sliceDomainVec);
 }
 
 
@@ -300,7 +300,7 @@ void SliceAnalyzer::ComputeDepthInfoByTrackId(const SliceQuery &sliceQuery,
     std::unordered_map<uint64_t, uint32_t> &depthInfo)
 {
     SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
-    bool cacheIsExist = sliceCacheManager.QueryDepthInfo(std::to_string(sliceQuery.trackId), depthInfo);
+    bool cacheIsExist = sliceCacheManager.QueryDepthInfo(std::to_string(sliceQuery.trackId), sliceQuery.rankId, depthInfo);
     if (!cacheIsExist) {
         ComputeDepthInfoFromDB(sliceQuery, depthInfo);
     }
@@ -309,11 +309,11 @@ void SliceAnalyzer::ComputeDepthInfoByTrackId(const SliceQuery &sliceQuery,
 void SliceAnalyzer::ComputeSliceDomainVecByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
 {
     SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
-    sliceVec = sliceCacheManager.GetSliceDomainVec(std::to_string(sliceQuery.trackId));
+    sliceVec = sliceCacheManager.GetSliceDomainVec(std::to_string(sliceQuery.trackId), sliceQuery.rankId);
     if (std::empty(sliceVec)) {
         std::unordered_map<uint64_t, uint32_t> depthInfo;
         ComputeDepthInfoFromDB(sliceQuery, depthInfo);
-        sliceVec = sliceCacheManager.GetSliceDomainVec(std::to_string(sliceQuery.trackId));
+        sliceVec = sliceCacheManager.GetSliceDomainVec(std::to_string(sliceQuery.trackId), sliceQuery.rankId);
     }
 }
 
@@ -340,7 +340,7 @@ void SliceAnalyzer::ComputeDepthInfoFromDB(const SliceQuery &sliceQuery,
         }
         depthInfo[item.id] = item.depth;
     }
-    simpleSliceCache.UpdateSliceCache(std::to_string(sliceQuery.trackId), sliceVec);
+    simpleSliceCache.UpdateSliceCache(std::to_string(sliceQuery.trackId), sliceQuery.rankId, sliceVec);
 }
 
 void SliceAnalyzer::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,

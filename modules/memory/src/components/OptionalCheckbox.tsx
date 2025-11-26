@@ -14,6 +14,7 @@ interface IProps {
     value: boolean;
     onChange: (v: CheckboxChangeEvent) => void;
     visible: boolean;
+    disabled?: boolean;
 }
 
 const OptionalCheckbox = observer((props: IProps) => {
@@ -23,6 +24,7 @@ const OptionalCheckbox = observer((props: IProps) => {
         value = false,
         onChange = (): void => {},
         visible = false,
+        disabled = false,
     } = props;
     if (!visible) {
         return <></>;
@@ -33,6 +35,7 @@ const OptionalCheckbox = observer((props: IProps) => {
                 id={idKey}
                 checked={value}
                 onChange={onChange}
+                disabled={disabled}
             />
         </div>;
     }

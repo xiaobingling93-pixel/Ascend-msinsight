@@ -67,7 +67,7 @@ export function handleTimestampOffsetReassignment(
     cardMetaData: ThreadTraceRequest,
     inputValue: number,
 ): boolean {
-    if (cardMetaData.processId === null || !hasStringValue(cardMetaData.processId)) {
+    if (cardMetaData.processId === null || !hasStringValue(cardMetaData.processId) || session.isTimeAnalysisMode) {
         const cardId = cardMetaData.cardId;
         const timestampOffsetConfig = { ...session.unitsConfig.offsetConfig.timestampOffset };
         const offsetKeys = Object.keys(timestampOffsetConfig);
@@ -170,6 +170,11 @@ export const InputOption = observer(({ session, metaData, onClick }: { session: 
     useEffect(() => {
         setOffset(String(timestampOffset));
     }, [timestampOffset]);
+    useEffect(() => {
+        if (session.isTimeAnalysisMode) {
+            handleTimestampOffsetReassignment(session, metaData, timestampOffset);
+        }
+    }, [session.isTimeAnalysisMode]);
     return <Tooltip
         trigger={'click'}
         placement={'bottom'}

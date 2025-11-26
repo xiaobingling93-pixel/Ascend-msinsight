@@ -9,20 +9,21 @@
 #include "MemoryProtocolUtil.h"
 #include "MemoryProtocolRequest.h"
 #include "MemoryProtocolRespose.h"
+#include "MemoryTableView.h"
 
 namespace Dic {
 namespace Module {
 namespace Memory {
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
+using namespace Dic::Protocol;
 class VirtualMemoryDataBase : public Database {
 public:
     explicit VirtualMemoryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};;
     ~VirtualMemoryDataBase() override = default;
     virtual bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) = 0;
     virtual bool QueryMemoryResourceType(std::string &type) = 0;
-    virtual bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-                                     std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                     std::vector<Protocol::MemoryOperator> &opDetails) = 0;
+    virtual int64_t QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                       std::vector<Protocol::MemoryOperator> &opDetails) = 0;
     virtual bool QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
                                       std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                       std::vector<Protocol::MemoryComponent> &componentDetails) = 0;
@@ -35,8 +36,6 @@ public:
 
     virtual bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                          Protocol::StaticOperatorGraphItem &graphItem) = 0;
-
-    virtual bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) = 0;
     virtual bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) = 0;
     virtual bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) = 0;
 
@@ -49,12 +48,14 @@ public:
         std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime) = 0;
     virtual bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) = 0;
+    virtual void GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
+                                                       std::string &column, std::string &alias) = 0;
+    const int defaultPageSize = 10;
+    const int64_t maxPageSize = 1000;
 protected:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
-    const int defaultPageSize = 10;
     const int64_t maxUnsignedInt = 4294967295;
-    const int64_t maxPageSize = 1000;
     const int64_t maxCurrentPage = 10000000000;
     const double kbSizeDouble = 1024.0;
     const double staticDefaultTotalSize = -1.0; // 静态表TOTAL字段默认赋值异常值
@@ -122,6 +123,12 @@ protected:
         {"Peak Memory Reserved(MB)", "number", "totalReserved"},
         {"Timestamp(ms)", "number", "timestamp"}
     };
+
+    const std::set<std::string_view> timestampColumn = {
+        OpMemoryColumn::ALLOCATION_TIME, OpMemoryColumn::RELEASE_TIME,
+        OpMemoryColumn::ACTIVE_RELEASE_TIME
+    };
+
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";
     const std::string MIND_SPORE = "MindSpore";
@@ -130,6 +137,11 @@ protected:
     const std::string COMPONENT_WORKSPACE = "WORKSPACE";
     const std::string MIND_SPORE_GE = "MindSpore+GE";
 
+    const std::set<std::string_view> OPERATOR_MEMORY_ARA_SIZE_COLUMNS = {
+        OpMemoryColumn::ALLOCATION_ALLOCATED, OpMemoryColumn::ALLOCATION_RESERVE, OpMemoryColumn::ALLOCATION_ACTIVE,
+        OpMemoryColumn::RELEASE_ALLOCATED, OpMemoryColumn::RELEASE_RESERVE, OpMemoryColumn::RELEASE_ACTIVE
+    };
+
     std::vector<std::string> GetStreamLists(std::string deviceId, std::string deviceIdColumnName);
     bool ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type);
     bool ExecuteMemoryResourceType(std::string &type, std::string sql);
@@ -137,7 +149,6 @@ protected:
         double &max, std::string sql);
     bool ExecuteStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
                                    double &min, double &max, const std::string &sql);
-    bool ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum, std::string sql);
     bool ExecuteComponentTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum, std::string &sql);
     bool ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                            int64_t &totalNum, std::string sql);
@@ -149,9 +160,9 @@ protected:
                                          std::vector<Protocol::ComponentDto> &componentDtoVec,
                                          std::vector<std::string> &streams,
                                          Protocol::MemoryViewData &operatorBody);
-    bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
-        std::string sql, std::string deviceIdColumnName);
+    int64_t ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                  std::vector<Protocol::MemoryOperator> &opDetails,
+                                  std::string &sql);
     bool ExecuteQueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryOperator> &opDetails, const std::string &sql);
     bool ExecuteComponentDetail(Protocol::MemoryComponentParams &requestParams,
@@ -178,6 +189,14 @@ protected:
         std::vector<Protocol::StaticOperatorItem> &opDetails, const std::string& sql);
     void AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql);
     void AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql);
+    std::string GetSelectOperatorMemoryFullColumnsWithCount(uint64_t baseTimestamp);
+    static std::string BuildQueryOperatorMemoryTimeCondition(const Protocol::MemoryOperatorParams &requestParams);
+    static std::string BuildQueryFiltersCondition(const FiltersParam &requestParams);
+    static std::string BuildQueryRangeFiltersCondition(const RangeFiltersParam &requestParams);
+    static std::string BuildQueryOrderByCondition(const OrderByParam &orderParam);
+
+    static void SqlBindQueryFilters(sqlite3_stmt* stmt, int &bindIndex, const FiltersParam &params);
+    static void SqlBindQueryRangeFilters(sqlite3_stmt* stmt, int &bindIndex, const RangeFiltersParam &params);
 
 private:
     void BuildOverallLinesComponentPoints(const Protocol::ComponentDto &item,
@@ -208,9 +227,9 @@ private:
     void GetStreamLines(const componentDtoVector &componentDtoVec, std::vector<double> &lines,
                         std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                         const std::vector<std::string> &streams);
-    std::vector<Protocol::MemoryOperator> QueryOperatorDetail(sqlite3_stmt *stmt);
-
+    int64_t QueryOperatorDetailByStepWithCount(sqlite3_stmt *stmt, std::vector<Protocol::MemoryOperator> &operators);
     std::string GetCurveSql(const Protocol::MemoryViewParams &requestParams, std::string &sql) const;
+    static std::string ConvertTimestampStr(const std::string &timestampStr);
 };
 
 }; // end of namespace Memory

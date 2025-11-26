@@ -87,15 +87,16 @@ public:
                                           Protocol::SummaryStatisticsBody &responseBody) override;
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) override;
     bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
-                             Protocol::SystemViewBody &responseBody) override;
+        Protocol::SystemViewBody &responseBody, const uint64_t &minTimestamp) override;
     bool QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
         Protocol::ExpAnaAICoreFreqBody &responseBody,
         std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq) override;
-    LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name) override;
+    LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name,
+        const uint64_t &minTimestamp, const std::string &timeRangeConditionSql) override;
     std::vector<std::string> QueryCoreType() override;
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp) override;
-    uint64_t QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams) override;
+    uint64_t QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams, uint64_t minTimestamp) override;
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) override;
     bool QueryCommunicationKernelInfo(const std::string &name, const std::string &rankId,
@@ -184,7 +185,7 @@ public:
                                         std::vector<FlowLocation> &data, uint64_t minTimestamp);
 
     static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t minTimestamp,
-                                             uint64_t threshold, std::vector<KernelBaseInfo> &data);
+        const KernelDetailsParams &params, uint64_t threshold, std::vector<KernelBaseInfo> &data);
 
     static void ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
         std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,

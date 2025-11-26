@@ -9,7 +9,7 @@ void PythonApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slice
 {
     TrackInfo trackInfo;
     auto &instance = TrackInfoManager::Instance();
-    const bool isSuccess = instance.GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = instance.GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Warn("python api query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;
@@ -43,7 +43,7 @@ void PythonApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slice
 void PythonApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Warn("python api query slice by cat track info is not exist, track is: ", sliceQuery.trackId);
         return;
@@ -74,7 +74,7 @@ void PythonApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector
 uint64_t PythonApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     uint64_t count = 0;
     if (!isSuccess) {
         ServerLog::Warn("python api query python function slice track info is not exist, track is: ",

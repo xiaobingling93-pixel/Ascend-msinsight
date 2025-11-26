@@ -6,7 +6,7 @@
 
 namespace Dic {
 namespace Protocol {
-void KernelDetailsParams::Check(std::string &error) const
+void KernelDetailsParams::Check(uint64_t minTime, std::string &error) const
 {
     if (current == 0) {
         error = "current is invalid";
@@ -16,16 +16,62 @@ void KernelDetailsParams::Check(std::string &error) const
         error = "pageSize is invalid";
         return;
     }
+    if (startTime > endTime) {
+        error = "kernel detail start time is bigger than end time";
+        return;
+    }
+    if (endTime > UINT64_MAX - minTime) {
+        error = "kernel detail end time is invalid";
+        return;
+    }
 }
 
-bool EventsViewParams::CheckParams(std::string &warnMsg) const
+bool SystemViewParams::CheckParams(uint64_t minTime, std::string &warnMsg) const
 {
-    CheckUnsignPageValid(pageSize, currentPage, warnMsg);
+    static const std::set<std::string> validLayerTypeSet = {
+        "Python", "CANN", "Ascend Hardware",
+        "HCCL", "COMMUNICATION", "Overlap Analysis" };
+    if (validLayerTypeSet.find(layer) == validLayerTypeSet.end()) {
+        warnMsg = "Layer is invalid";
+        return false;
+    }
+    if (!CheckUnsignPageValid(pageSize, current, warnMsg)) {
+        return false;
+    }
+    if (startTime > endTime) {
+        warnMsg = "system view start time is bigger than end time";
+        return false;
+    }
+    if (endTime > UINT64_MAX - minTime) {
+        warnMsg = "system view end time is invalid";
+        return false;
+    }
+    return true;
+}
+
+bool EventsViewParams::CheckParams(uint64_t minTime, std::string &warnMsg) const
+{
+    // 检查入参合法性
+    if (pid.empty()) {
+        warnMsg = "Can not to query events view data while process id is empty.";
+        return false;
+    }
+    if (!CheckUnsignPageValid(pageSize, currentPage, warnMsg)) {
+        return false;
+    }
     for (const auto &filter : filters) {
         if (!StringUtil::CheckSqlValid(filter.first)) {
             warnMsg = "filters exist invalid string value";
             return false;
         }
+    }
+    if (startTime > endTime) {
+        warnMsg = "event view start time is bigger than end time";
+        return false;
+    }
+    if (endTime > UINT64_MAX - minTime) {
+        warnMsg = "event view end time is invalid";
+        return false;
     }
     return true;
 }

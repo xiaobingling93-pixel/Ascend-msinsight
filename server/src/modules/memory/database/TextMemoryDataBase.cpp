@@ -41,12 +41,7 @@ bool TextMemoryDataBase::CreateTable()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
-    std::string sql =
-        "CREATE TABLE " + operatorTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, " +
-        "size INTEGER, allocation_time INTEGER, release_time INTEGER, duration INTEGER, "
-        "active_release_time INTEGER, active_duration INTEGER, "
-        "allocation_allocated INTEGER, allocation_reserve INTEGER, allocation_active INTEGER, "
-        "release_allocated INTEGER, release_reserve INTEGER, release_active INTEGER, stream TEXT, deviceId TEXT);" +
+    std::string sql = GetCreateOperatorMemoryTableSql() +
         "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
         "total_allocated INTEGER, total_reserve INTEGER, total_active INTEGER, "
         "deviceId TEXT, stream TEXT, timestamp INTEGER);" +
@@ -71,11 +66,8 @@ bool TextMemoryDataBase::InitStmt()
     if (hasInitStmt) {
         return true;
     }
-
-    std::string sql = "INSERT INTO " + operatorTable + " (name, size, allocation_time, release_time, duration, "
-          "active_release_time, active_duration, allocation_allocated, allocation_reserve, allocation_active, "
-          "release_allocated, release_reserve, release_active, stream, deviceId)" +
-          " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    std::string sql = StringUtil::FormatString("INSERT INTO {} ({}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                               operatorTable, StringUtil::GenerateColumnString(OpMemoryColumn::FULL_COLUMNS_WITHOUT_ID));
     for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     }
@@ -155,8 +147,8 @@ void TextMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
         sqlite3_bind_double(stmt, idx++, event.size);
         sqlite3_bind_int64(stmt, idx++, event.allocationTime);
         sqlite3_bind_int64(stmt, idx++, event.releaseTime);
-        sqlite3_bind_double(stmt, idx++, event.duration);
         sqlite3_bind_int64(stmt, idx++, event.activeReleaseTime);
+        sqlite3_bind_double(stmt, idx++, event.duration);
         sqlite3_bind_double(stmt, idx++, event.activeDuration);
         sqlite3_bind_double(stmt, idx++, event.allocationAllocated);
         sqlite3_bind_double(stmt, idx++, event.allocationReserved);
@@ -306,7 +298,8 @@ bool TextMemoryDataBase::HasFinishedParseLastTime()
 
 uint64_t TextMemoryDataBase::QueryMinOperatorAllocationTime()
 {
-    std::string sql = "Select MIN(allocation_time) FROM " + operatorTable + " WHERE allocation_time != 0";
+    std::string sql = StringUtil::FormatString("SELECT MIN({}) FROM {} WHERE {} != 0",
+                                               OpMemoryColumn::ALLOCATION_TIME, operatorTable, OpMemoryColumn::ALLOCATION_TIME);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -377,24 +370,15 @@ std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
+    // 溢出防护
+    if (startTime > std::numeric_limits<uint64_t>::max() - offsetTime) {
+        ServerLog::Error("Failed to calculate relative to the reference time due to integer overflow.");
+        return "";
+    }
+    std::string selectColumns = GetSelectOperatorMemoryFullColumnsWithCount(startTime+offsetTime);
     // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
-    std::string sql =
-        "SELECT id, name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-        "ROUND((allocation_time - " +
-        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
-        ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
-        "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
-        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
-        ") / (1000.0 * 1000.0), 3) "
-        "END AS releaseTimestamp, ROUND(duration / 1000.0, 3) as duration, "
-        "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
-        ") / (1000.0 * 1000.0), 3) "
-        "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 3) as active_duration, "
-        "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
-        "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
-        "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
-        "stream FROM " + operatorTable + " WHERE deviceId = ? AND name LIKE ?";
+    std::string sql = StringUtil::FormatString(" SELECT {} FROM {} WHERE {} = ? ",
+                                               selectColumns, operatorTable, OpMemoryColumn::DEVICE_ID);
     AddOperatorSql(requestParams, sql);
     return sql;
 }
@@ -444,34 +428,26 @@ bool TextMemoryDataBase::QueryMemoryResourceType(std::string &type)
     return ExecuteMemoryResourceType(type, sql);
 }
 
-bool TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-    std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails)
+int64_t TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                                std::vector<Protocol::MemoryOperator> &opDetails)
 {
     std::string sql = GetOperatorSql(requestParams);
-    return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql, "deviceId");
+    return ExecuteOperatorDetail(requestParams, opDetails, sql);
 }
 
 bool TextMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
     std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    // 溢出防护
+    if (startTime > std::numeric_limits<uint64_t>::max() - offsetTime) {
+        ServerLog::Error("Failed to calculate relative to the reference time due to integer overflow.");
+        return false;
+    }
     // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
-    std::string sql =
-        "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-        "ROUND((allocation_time - " +
-        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
-        ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
-        "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
-        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
-        ") / (1000.0 * 1000.0), 3) "
-        "END AS releaseTimestamp, ROUND(duration / 1000.0, 3) as duration, "
-        "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-        std::to_string(startTime) + " - " + std::to_string(offsetTime) + ") / (1000.0 * 1000.0), 3) "
-        "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 3) as active_duration, "
-        "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
-        "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
-        "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
-        "stream FROM " + operatorTable + " WHERE deviceId = ? ";
+    std::string sql = StringUtil::FormatString("SELECT {} FROM {} WHERE {} = ? ",
+                                               GetSelectOperatorMemoryFullColumnsWithCount(startTime + offsetTime),
+                                               operatorTable, OpMemoryColumn::DEVICE_ID);
     return ExecuteQueryEntireOperatorTable(requestParams, opDetails, sql);
 }
 
@@ -616,10 +592,8 @@ sqlite3_stmt *TextMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
         stmt = insertOperatorStmt;
         sqlite3_reset(stmt);
     } else {
-        std::string sql = "INSERT INTO " + operatorTable + " (name, size, allocation_time, release_time, duration, "
-                "active_release_time, active_duration, allocation_allocated, allocation_reserve, allocation_active, "
-                "release_allocated, release_reserve, release_active, stream, deviceId)"
-                          " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        std::string sql = StringUtil::FormatString("INSERT INTO {} ({}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                                   operatorTable, StringUtil::GenerateColumnString(OpMemoryColumn::FULL_COLUMNS_WITHOUT_ID));
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         }
@@ -701,54 +675,6 @@ sqlite3_stmt *TextMemoryDataBase::GetComponentStmt(uint64_t paramLen)
     return stmt;
 }
 
-bool TextMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
-{
-    std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE deviceId = ? AND name LIKE ?";
-
-    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        sql += " AND stream <> ''";
-    }
-    if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
-            /*
-             * 只显示在时间区间内分配或释放内存的数据
-             * 参数：
-             * 1. startTime + offsetTime
-             * 2. startTime
-             * 3. endTime
-             * 4. startTime + offsetTime
-             * 5. startTime
-             * 6. endTime
-             */
-            // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
-            sql += " AND (( "
-                   "ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? )"
-                   " OR ( "
-                   "ROUND((release_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?)) ";
-        } else {
-            /*
-             * 显示全部的数据
-             * 参数：
-             * 1. startTime + offsetTime
-             * 2. startTime
-             * 3. startTime + offsetTime
-             * 4. endTime
-             */
-            // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
-            sql += " AND ((release_time = 0 OR "
-                   " ROUND((release_time - ?) / (1000.0 * 1000.0), 3) >= ?) AND "
-                   " ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) <= ?) ";
-        }
-    }
-    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        sql += " AND size >= ? ";
-    }
-    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        sql += " AND size <= ? ";
-    }
-    return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);
-}
-
 bool TextMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum)
 {
     std::string sql = "SELECT count(*) FROM (SELECT component FROM " + componentTable +
@@ -782,8 +708,8 @@ bool TextMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorLi
 
 bool TextMemoryDataBase::QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max)
 {
-    std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM "
-        + operatorTable + " WHERE deviceId = ? ";
+    std::string sql = StringUtil::FormatString("SELECT min({}), max({}) FROM {} WHERE {} = ?",
+                                               OpMemoryColumn::SIZE, OpMemoryColumn::SIZE, operatorTable, OpMemoryColumn::DEVICE_ID);
     return ExecuteOperatorSize(requestParams, min, max, sql);
 }
 
@@ -797,6 +723,64 @@ bool TextMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizePar
         sql += " AND graph_id = ?" ;
     }
     return ExecuteStaticOperatorSize(requestParams, min, max, sql);
+}
+
+void TextMemoryDataBase::GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
+                                                               std::string& column, std::string& alias)
+{
+    // id列，从db中的rowid查出并别名为id
+    if (columnKey == "id") {
+        column = StringUtil::FormatString("{}.{}", operatorTable, OpMemoryColumn::ID);
+        alias = columnKey;
+        return;
+    }
+    // 注意此处会将所有列别名前缀_, 用于避免计算列where的判断条件时使用原值而不是计算值
+    alias = StringUtil::FormatString("_{}", columnKey);
+    // 保留两位小数的列
+    if (OPERATOR_MEMORY_ARA_SIZE_COLUMNS.find(columnKey) != OPERATOR_MEMORY_ARA_SIZE_COLUMNS.end()) {
+        column = StringUtil::FormatString("ROUND({}/1.0, 2)", columnKey);
+        return;
+    }
+    std::string baseTimestampStr = std::to_string(baseTimestamp);
+    // ns转换为ms的列
+    if (columnKey == OpMemoryColumn::RELEASE_TIME || columnKey == OpMemoryColumn::ALLOCATION_TIME ||
+        columnKey == OpMemoryColumn::ACTIVE_RELEASE_TIME) {
+        column = StringUtil::FormatString("ROUND(({} - {})/(1000.0*1000.0), 3)", columnKey, baseTimestampStr);
+        return;
+    }
+    // us转换为ms的列
+    if (columnKey == OpMemoryColumn::DURATION || columnKey == OpMemoryColumn::ACTIVE_DURATION) {
+        column = StringUtil::FormatString("ROUND({}/(1000.0), 3)", columnKey);
+        return;
+    }
+    // 缺省不计算
+    column = std::string(columnKey);
+}
+
+std::string TextMemoryDataBase::GetCreateOperatorMemoryTableSql()
+{
+    return StringUtil::FormatString("CREATE TABLE {} ("
+                                    "{} TEXT,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} TEXT,"
+                                    "{} TEXT"
+                                    ");", operatorTable, OpMemoryColumn::NAME, OpMemoryColumn::SIZE,
+                                    OpMemoryColumn::ALLOCATION_TIME, OpMemoryColumn::RELEASE_TIME, OpMemoryColumn::ACTIVE_RELEASE_TIME,
+                                    OpMemoryColumn::DURATION, OpMemoryColumn::ACTIVE_DURATION,
+                                    OpMemoryColumn::ALLOCATION_ALLOCATED, OpMemoryColumn::ALLOCATION_RESERVE, OpMemoryColumn::ALLOCATION_ACTIVE,
+                                    OpMemoryColumn::RELEASE_ALLOCATED, OpMemoryColumn::RELEASE_RESERVE, OpMemoryColumn::RELEASE_ACTIVE,
+                                    OpMemoryColumn::STREAM, OpMemoryColumn::DEVICE_ID);
 }
 
 } // end of namespace Memory

@@ -8,7 +8,7 @@ namespace Dic::Module::Timeline {
 void MstxRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Warn("mstx query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;

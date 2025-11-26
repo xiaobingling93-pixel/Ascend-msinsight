@@ -61,6 +61,13 @@ struct ParamsForCOTData {
     uint64_t offset;
 };
 
+struct DbEventViewSqlParams {
+    std::string &orderByCondition;
+    const std::string &deviceId;
+    uint64_t minTimestamp;
+    const std::string timeCondSql;
+};
+
 class TraceDatabaseHelper {
 public:
 /* Functions for BbTraceDataBase */
@@ -76,8 +83,8 @@ static std::unique_ptr<SqliteResultSet> QueryHostUnitCounter(std::unique_ptr<Sql
 static std::unique_ptr<SqliteResultSet> QueryDeviceUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string &rankId);
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                            const Protocol::SystemViewParams &requestParams,
-                                                            const std::string& rankId);
+    const Protocol::SystemViewParams &requestParams, const std::string& rankId, const uint64_t &minTimestamp,
+    const std::string &timeCondSql);
 
 static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(const std::string& rankId, uint64_t minTimestamp,
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
@@ -287,7 +294,7 @@ private:
     static std::string GetOrderByCondition(const EventsViewParams &params);
     static std::string GetTextEventViewSql(const Protocol::EventsViewParams &params, const std::string &orderBy);
     static std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams &params);
-    static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId);
+    static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId, const std::string &timeCondSql);
     static std::string GetQueryThreadSameOperatorsDetailsHeadSql(const QUERY_THREAD_SAME_OPERATORS_PARAMS &params,
         bool uniqueDevice, int overlapType, PROCESS_TYPE type);
 

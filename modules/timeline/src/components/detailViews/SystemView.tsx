@@ -61,15 +61,19 @@ const AsideSelectContainer = styled.div`
     background-color: ${(p): string => p.theme.bgColor};
     max-width: 400px;
 
-  .view-select{
-    margin-bottom: 8px;
-    flex: none;
-  }
-  .rank-filter{
-    margin-bottom: 8px;
-    flex: none;
-    color: ${(p): string => p.theme.textColorSecondary};
-  }
+    .time-range-info{
+        margin-bottom: 8px;
+        flex: none;
+    }
+    .view-select{
+        margin-bottom: 8px;
+        flex: none;
+    }
+    .rank-filter{
+        margin-bottom: 8px;
+        flex: none;
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
 `;
 
 const SelectContentContainer = styled.div`
@@ -140,7 +144,7 @@ export const SystemView = observer((props: any) => {
     // eslint-disable-next-line camelcase
     const SelectContent = useMemo(() => {
         // 第四个tab的特殊逻辑
-        if (viewOption === 3) {
+        if (viewOption === 0 && key >= statsSystemViewItems.length) {
             return null;
         }
         return contentList[viewOption][key];
@@ -161,14 +165,15 @@ export const SystemView = observer((props: any) => {
     }, [props.session.showEvent]);
     return (<Container>
         <AsideSelectContainer>
+            {viewOption !== 3 && (<TimeRangeInfo session={props.session}></TimeRangeInfo>)}
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
             <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} card={conditions} session={props.session}></SelectList>
         </AsideSelectContainer>
         <ChartErrorBoundary>
             <SelectContentContainer>
-                {viewOption === 3
-                    ? <TableDataView key={key} selectKey={key} card={conditions} session={props.session}
+                {viewOption === 0 && key >= statsSystemViewItems.length
+                    ? <TableDataView key={key - statsSystemViewItems.length} selectKey={key - statsSystemViewItems.length} card={conditions} session={props.session}
                         bottomHeight={props.bottomHeight}></TableDataView>
                     : SelectContent && (<SelectContent key={key} card={conditions} session={props.session}
                         bottomHeight={props.bottomHeight}></SelectContent>)}
@@ -177,10 +182,23 @@ export const SystemView = observer((props: any) => {
     </Container>);
 });
 
+const TimeRangeInfo = observer((props: { session: Session }) => {
+    const { session } = props;
+    return (
+        session.isTimeAnalysisMode && session.timeAnalysisRange
+            ? <div className={'time-range-info'}>
+                {
+                    `Time filter: ${getDetailTimeDisplay(session.timeAnalysisRange[0])} to ${getDetailTimeDisplay(session.timeAnalysisRange[1])}`
+                }
+            </div>
+            : <></>
+    );
+});
+
 const ViewSelect = observer((props: any) => {
     const { viewOption, handleViewChange } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
-    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }, { label: t('Servitization View'), value: 3 }];
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
     return (
         <div className={'view-select'}>
             <Select id={'select-system-view'} width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>
@@ -275,55 +293,69 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
     }, [props.selectKey]);
     useEffect(() => {
         switch (props.viewOption) {
-            case 0:
-                setSystemViewItems(statsSystemViewItems);
+            case 0: {
+                if (params.rankId !== undefined && params.rankId !== '') {
+                    queryTableDataNameList(params).then((res) => {
+                        // 获取服务视图名称和描述数据
+                        const layers = res.layers as SystemViewItem[];
+                        if (layers !== undefined && layers.length > 0) {
+                            const merged = Array.from(
+                                new Map([...statsSystemViewItems, ...layers].map(item => [item.name, item])).values(),
+                            );
+                            setSystemViewItems(merged);
+                        } else {
+                            setSystemViewItems(statsSystemViewItems);
+                        }
+                    });
+                } else {
+                    setSystemViewItems(statsSystemViewItems);
+                }
                 break;
+            }
             case 1:
                 setSystemViewItems(expertSystemViewItems);
                 break;
             case 2:
                 setSystemViewItems([]);
                 break;
-            case 3:
-                queryTableDataNameList(params).then((res) => {
-                    // 获取服务视图名称和描述数据
-                    const names = res.layers as ServiceLayers[];
-                    const layers = names.map((item) => {
-                        return { name: item.name, description: item.description };
-                    });
-                    setSystemViewItems(layers);
-                });
-                break;
             default:
                 break;
         }
     }, [props.viewOption, params, props.session.language]);
-    return (<AsideSelectList>
-        {
-            systemViewItems.map((item, index) =>
-                (props.viewOption !== 3
-                    ? <div
-                        className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
-                        key={index}
-                        onClick={(): void => handleClick(index)}
-                    >
-                        <div>{props.viewOption === 3 ? item.name : t(item.name)}</div>
-                        {
-                            item.tips !== undefined &&
-                                <Tooltip title={t(item.tips)}>
-                                    <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
-                                </Tooltip>
-                        }
-                    </div>
-                    : <div
-                        className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
-                        key={index}
-                        onClick={(): void => handleClick(index)}
+    if (systemViewItems.length > statsSystemViewItems.length) {
+        return (<AsideSelectList>
+            {
+                systemViewItems.slice(statsSystemViewItems.length).map((item, index) =>
+                    (<div
+                        className={`aside-select-item ${selectedKey === index + statsSystemViewItems.length ? 'selected' : ''}`}
+                        key={index + statsSystemViewItems.length}
+                        onClick={(): void => handleClick(index + statsSystemViewItems.length)}
                     >
                         <Tooltip title={item.description}>
                             <div>{item.name}</div>
                         </Tooltip>
                     </div>
+                    ),
+                )
+            }
+        </AsideSelectList>);
+    }
+    return (<AsideSelectList>
+        {
+            systemViewItems.map((item, index) =>
+                (<div
+                    className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
+                    key={index}
+                    onClick={(): void => handleClick(index)}
+                >
+                    <div>{t(item.name)}</div>
+                    {
+                        item.tips !== undefined &&
+                                <Tooltip title={t(item.tips)}>
+                                    <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
+                                </Tooltip>
+                    }
+                </div>
                 ),
             )
         }
@@ -384,6 +416,11 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
             return;
         }
         setLoading(true);
+        let startTime = prop.session.timeAnalysisRange?.[0] ?? 0;
+        startTime = startTime < 0 ? 0 : startTime;
+        let endTime = prop.session.timeAnalysisRange?.[1] ?? 0;
+        endTime = endTime < 0 ? 0 : endTime;
+        const timestampOffset = getTimeOffset(prop.session, { cardId: prop.card.cardId });
         let params: IQueryCondition = {
             rankId: prop.card.cardId,
             dbPath: prop.card.dbPath,
@@ -391,6 +428,8 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
             current: pages.current,
             orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
+            startTime: Math.floor(startTime + timestampOffset),
+            endTime: Math.ceil(endTime + timestampOffset),
         };
         if (_isStats) {
             params = { isQueryTotal: true, layer: prop.layerType, searchName, ...params };
@@ -414,7 +453,7 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
         if (status === 'download') {
             updateData(searchText, page, sorter, props);
         }
-    }, [sorter, props.card.cardId, status]);
+    }, [sorter, props.card.cardId, status, props.session.timeAnalysisRange]);
     useEffect(() => {
         if (rowData.name === null || rowData.name === undefined) {
             return;
@@ -423,7 +462,7 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
     }, [rowData]);
 
     return (
-        (status === 'download' || props.card === undefined || props.card.cardId === '')
+        (status === 'download' && props.card !== undefined && props.card.cardId !== '')
             ? <ResizeTable
                 onChange={(pagination: any, filters: any, nwSorter: any): void => {
                     setSorter(nwSorter);

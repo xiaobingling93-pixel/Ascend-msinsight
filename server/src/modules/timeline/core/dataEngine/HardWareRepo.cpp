@@ -11,7 +11,7 @@ void HardWareRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
     std::vector<SliceDomain> &sliceVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Warn("hardWare query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;

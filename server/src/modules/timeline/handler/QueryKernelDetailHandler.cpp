@@ -24,8 +24,9 @@ bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string error;
-    request.params.Check(error);
+    request.params.Check(minTimestamp, error);
     if (!std::empty(error)) {
         ServerLog::Warn(error);
         SetResponseResult(response, false, error);
@@ -40,7 +41,7 @@ bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         return false;
     }
     request.params.deviceId = deviceId;
-    if (!database->QueryKernelDetailData(request.params, response.body, TraceTime::Instance().GetStartTime())) {
+    if (!database->QueryKernelDetailData(request.params, response.body, minTimestamp)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get kernel detail response data.");
         session.OnResponse(std::move(responsePtr));

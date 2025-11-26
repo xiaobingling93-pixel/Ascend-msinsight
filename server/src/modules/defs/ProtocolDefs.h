@@ -29,7 +29,7 @@ const std::string MODULE_RL = "rl";
 const std::string MODULE_ADVISOR = "advisor";
 const std::string MODULE_JUPYTER = "jupyter";
 const std::string MODULE_IE = "IE";
-const std::string MODULE_LEAKS = "leaks";
+const std::string MODULE_MEM_SCOPE = "leaks";
 #pragma endregion
 
 #pragma region << Event Name>>
@@ -42,7 +42,7 @@ const std::string EVENT_ALL_SUCCESS = "allPagesSuccess";
 const std::string EVENT_PARSE_CLUSTER_STEP2_COMPLETED = "parse/clusterStep2Completed";
 const std::string EVENT_PARSE_MEMORY_COMPLETED = "parse/memoryCompleted";
 const std::string EVENT_PARSE_IE_COMPLETED = "parse/statisticCompleted";
-const std::string EVENT_PARSE_LEAKS_MEMORY_COMPLETED = "parse/leaksMemoryCompleted";
+const std::string EVENT_PARSE_MEM_SCOPE_COMPLETED = "parse/leaksMemoryCompleted";
 const std::string EVENT_MODULE_RESET = "module.reset";
 const std::string EVENT_PARSE_PROGRESS = "parse/progress";
 const std::string EVENT_PARSE_HEATMAP_COMPLETED = "parse/heatmapCompleted";
@@ -138,12 +138,12 @@ const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST = "Memory/view/staticOpMe
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX = "Memory/view/staticOpMemorySize";
 const std::string REQ_RES_MEMORY_FIND_SLICE = "Memory/find/slice";
 
-// memory leaks
-const std::string REQ_RES_LEAKS_MEMORY_BLOCKS = "Memory/leaks/blocks";
-const std::string REQ_RES_LEAKS_MEMORY_ALLOCATIONS = "Memory/leaks/allocations";
-const std::string REQ_RES_LEAKS_MEMORY_DETAILS = "Memory/leaks/details";
-const std::string REQ_RES_LEAKS_MEMORY_TRACES = "Memory/leaks/traces";
-const std::string REQ_RES_LEAKS_MEMORY_EVENTS = "Memory/leaks/events";
+// memscope Request/Response
+const std::string REQ_RES_MEM_SCOPE_MEMORY_BLOCKS = "Memory/leaks/blocks";
+const std::string REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS = "Memory/leaks/allocations";
+const std::string REQ_RES_MEM_SCOPE_MEMORY_DETAILS = "Memory/leaks/details";
+const std::string REQ_RES_MEM_SCOPE_PYTHON_TRACES = "Memory/leaks/traces";
+const std::string REQ_RES_MEM_SCOPE_EVENTS = "Memory/leaks/events";
 
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";

@@ -8,7 +8,7 @@
 #include "TimelinePlugin.h"
 #include "CommunicationPlugin.h"
 #include "IEPlugin.h"
-#include "MemoryDetailPlugin.h"
+#include "MemScopePlugin.h"
 #include "RLPlugin.h"
 namespace Dic::Module {
     Core::PluginRegister ADVISOR_PLUGIN(std::make_unique<Advisor::AdvisorPlugin>());
@@ -20,6 +20,6 @@ namespace Dic::Module {
     Core::PluginRegister TIMELINE_PLUGIN(std::make_unique<Timeline::TimelinePlugin>());
     Core::PluginRegister COMM_PLUGIN(std::make_unique<Communication::CommunicationPlugin>());
     Core::PluginRegister IE_PLUGIN(std::make_unique<IE::IEPlugin>());
-    Core::PluginRegister MEMORY_DETAIL_PLUGIN(std::make_unique<MemoryDetail::MemoryDetailPlugin>());
+    Core::PluginRegister MEM_SCOPE_PLUGIN(std::make_unique<MemScope::MemScopePlugin>());
     Core::PluginRegister RL_PLUGIN(std::make_unique<RL::RLPlugin>());
 }

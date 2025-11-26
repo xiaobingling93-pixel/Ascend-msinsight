@@ -14,7 +14,7 @@ void TextRepository::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slic
 {
     TrackInfo trackInfo;
     auto &instance = TrackInfoManager::Instance();
-    const bool isSuccess = instance.GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = instance.GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         return;
     }
@@ -37,7 +37,7 @@ void TextRepository::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slic
 void TextRepository::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         return;
     }
@@ -56,7 +56,7 @@ void TextRepository::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vecto
 uint64_t TextRepository::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         return 0;
     }
@@ -71,7 +71,7 @@ void TextRepository::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery 
     std::vector<CompeteSliceDomain> &sliceVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         return;
     }
@@ -97,7 +97,7 @@ void TextRepository::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery 
 void TextRepository::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(flowQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(flowQuery.trackId, trackInfo, flowQuery.fileId);
     if (!isSuccess) {
         return;
     }
@@ -121,7 +121,7 @@ void TextRepository::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::
 void TextRepository::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(flowQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(flowQuery.trackId, trackInfo, flowQuery.fileId);
     if (!isSuccess) {
         return;
     }
@@ -165,7 +165,7 @@ void TextRepository::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const 
         return;
     }
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         return;
     }
@@ -359,7 +359,7 @@ bool TextRepository::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, 
     competeSliceDomain.timestamp = slicePo.timestamp;
     TrackInfo trackInfo;
     auto &instance = TrackInfoManager::Instance();
-    instance.GetTrackInfo(slicePo.trackId, trackInfo);
+    instance.GetTrackInfo(slicePo.trackId, trackInfo, sliceQuery.rankId);
     competeSliceDomain.pid = trackInfo.processId;
     competeSliceDomain.tid = trackInfo.threadId;
     competeSliceDomain.trackId = slicePo.trackId;

@@ -121,12 +121,10 @@ const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow
                 setSelectedRow(record);
             },
         })}
+        // 给表格添加类名
         rowClassName={(record): string => {
-            const cls = [`level-${record.level}`];
-            if (selectedRow?.id === record.id) {
-                cls.push('selected-row');
-            }
-            return cls.join(' ');
+            // 检查selectedRow的id是否与当前记录的id相同
+            return selectedRow?.id === record.id ? 'selected-row' : '';
         }}
     ></ResizeTable>;
 });
@@ -248,10 +246,19 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ card, selectedRow }) =>
     return { page, setPage, sorter, setSorter, setFilters, loading, tableData };
 };
 
+/**
+ * OverallMetrics组件，用于展示总体指标信息。
+ *
+ * @param {SelectContentViewProps} props - 组件的属性，包含卡片信息等
+ * @returns {JSX.Element} 返回一个React元素，根据条件渲染总体指标表格或空状态
+ */
 export const OverallMetrics = observer((props: SelectContentViewProps) => {
     const { sessionStore } = store;
+    // 获取当前活跃的session
     const session = sessionStore.activeSession;
+    // 使用拖拽容器，设置拖拽方向为向右，宽度为400
     const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: 400 });
+    // 定义并初始化selectedRow状态，用于存储选中的行数据
     const [selectedRow, setSelectedRow] = useState<GetOverallMetricsResultItem | null>();
     const { t } = useTranslation();
 
@@ -263,7 +270,7 @@ export const OverallMetrics = observer((props: SelectContentViewProps) => {
                 : <></>,
             draggableContainer: <StyledMoreCard
                 className="moreContainer"
-                title={t('More')}
+                title={t('Details')}
                 bordered={false}>
                 <ChartErrorBoundary className={'more-error'}>
                     <MoreContainer>

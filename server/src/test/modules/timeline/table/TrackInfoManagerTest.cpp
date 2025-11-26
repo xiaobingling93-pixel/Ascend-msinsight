@@ -17,7 +17,7 @@ TEST_F(TrackInfoManagerTest, TestGetTrackIdFirst)
     uint64_t first = TrackInfoManager::Instance().GetTrackId("gggg", "ppp", "ttt");
     uint64_t second = TrackInfoManager::Instance().GetTrackId("gggg", "ppp", "ttt");
     TrackInfo trackInfo;
-    TrackInfoManager::Instance().GetTrackInfo(second, trackInfo);
+    TrackInfoManager::Instance().GetTrackInfo(second, trackInfo, "gggg");
     EXPECT_EQ(first, second);
     EXPECT_EQ(trackInfo.processId, "ppp");
     EXPECT_EQ(trackInfo.threadId, "ttt");
@@ -36,7 +36,7 @@ TEST_F(TrackInfoManagerTest, TestTrackIdNotExist)
     TrackInfoManager::Instance().Reset();
     TrackInfo trackInfo2;
     uint64_t notExistTrackId = 999999;
-    bool result = TrackInfoManager::Instance().GetTrackInfo(notExistTrackId, trackInfo2);
+    bool result = TrackInfoManager::Instance().GetTrackInfo(notExistTrackId, trackInfo2, "");
     EXPECT_EQ(result, false);
     TrackInfoManager::Instance().Reset();
 }
@@ -53,7 +53,7 @@ TEST_F(TrackInfoManagerTest, TestSecondImportScene)
     threadMap.emplace(expectTrackId, p);
     TrackInfoManager::Instance().UpdateTrackIdMap("7788", threadMap);
     TrackInfo trackInfo;
-    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo);
+    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo, "7788");
     EXPECT_EQ(result, true);
     EXPECT_EQ(trackInfo.processId, "Hello");
     EXPECT_EQ(trackInfo.threadId, "kkkk");
@@ -74,7 +74,7 @@ TEST_F(TrackInfoManagerTest, TestHostIsExistAndDeviceMapNotExist)
     TrackInfoManager::Instance().UpdateHost(cardId, "hhhhhhhhhhh ");
     uint64_t expectTrackId = TrackInfoManager::Instance().GetTrackId(cardId, "ppp", "ttt");
     TrackInfo trackInfo;
-    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo);
+    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo, cardId);
     EXPECT_EQ(result, true);
     EXPECT_EQ(trackInfo.processId, "ppp");
     EXPECT_EQ(trackInfo.threadId, "ttt");
@@ -98,7 +98,7 @@ TEST_F(TrackInfoManagerTest, TestHostAndDeviceMapExist)
     TrackInfoManager::Instance().UpdateDeviceMap(cardId, deviceMap);
     uint64_t expectTrackId = TrackInfoManager::Instance().GetTrackId(cardId, "ppp", "ttt");
     TrackInfo trackInfo;
-    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo);
+    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo, cardId);
     EXPECT_EQ(result, true);
     EXPECT_EQ(trackInfo.processId, "ppp");
     EXPECT_EQ(trackInfo.threadId, "ttt");
@@ -122,7 +122,7 @@ TEST_F(TrackInfoManagerTest, TestHostAndDeviceMapExistAndRankIdNotExist)
     TrackInfoManager::Instance().UpdateDeviceMap(cardId, deviceMap);
     uint64_t expectTrackId = TrackInfoManager::Instance().GetTrackId(cardId, "ppp", "ttt");
     TrackInfo trackInfo;
-    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo);
+    bool result = TrackInfoManager::Instance().GetTrackInfo(expectTrackId, trackInfo, cardId);
     EXPECT_EQ(result, true);
     EXPECT_EQ(trackInfo.processId, "ppp");
     EXPECT_EQ(trackInfo.threadId, "ttt");

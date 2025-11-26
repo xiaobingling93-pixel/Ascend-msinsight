@@ -192,6 +192,8 @@ export class Session {
 
     totalHeight: number = 0;
     renderTrigger: boolean = true;
+    isTimeAnalysisMode: boolean = false; // 时间范围分析模式
+    timeAnalysisRange?: [ TimeStamp, TimeStamp ]; // 时间分析范围
     /**
      * 页面是否有m快捷键的遮罩m
      */
@@ -298,6 +300,7 @@ export class Session {
             isNsMode: false,
             printSessionInfo: false,
             linkLines: false,
+            mapOfLinkLines: false,
         });
         this._name = conf?.name ?? this.id;
         this._interval = 100;
@@ -517,24 +520,6 @@ export class Session {
 
     printSessionInfo(): string {
         return `${JSON.stringify({ ...omit(this, ['caches', 'sharedState', '_units']) })}`;
-    }
-
-    sortUnits(): void {
-        const sorter = (a: InsightUnit, b: InsightUnit): number => {
-            const aName = (a.metadata as any).cardId as string;
-            const bName = (b.metadata as any).cardId as string;
-            if (aName.includes('Host') || bName.includes('Host')) {
-                return aName.includes('Host') ? -1 : 1;
-            }
-            if (aName.length === bName.length) {
-                return aName.localeCompare(bName);
-            }
-            return aName.length - bName.length;
-        };
-        this.units.sort(sorter);
-        this.units.forEach(unit => {
-            unit.children?.sort(sorter);
-        });
     }
 
     // 对于 Text 的单 Host 多 Device 场景，只保留一个卡，对于 db 的单 Host 多 Device 场景，只保留一个 host

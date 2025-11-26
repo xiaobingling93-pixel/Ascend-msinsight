@@ -4,6 +4,8 @@
 
 #include "ProtocolMessage.h"
 #include "JsonUtil.h"
+#include "CommonRequests.h"
+#include "MemoryTableView.h"
 #include "MemoryDef.h"
 #include "MemoryProtocolUtil.h"
 
@@ -19,24 +21,30 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonRes
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     json_t body(kObjectType);
-    json_t columnAttr(kArrayType);
-    bool hasStream;
-    for (const auto &attr : response.columnAttr) {
-        json_t attrJson = json_t(kObjectType);
-        JsonUtil::AddMember(attrJson, "name", attr.name, allocator);
-        JsonUtil::AddMember(attrJson, "type", attr.type, allocator);
-        JsonUtil::AddMember(attrJson, "key", attr.key, allocator);
-        columnAttr.PushBack(attrJson, allocator);
-        if (attr.name == "Stream") {
-            hasStream = true;
+    json_t headers(kArrayType);
+    // 对比场景下追加一个首列Source列用于标识baseline和compare
+    if (response.isCompare) {
+        for (const auto &cmpHeader: OperatorMemoryTableView::COMPARE_COLUMNS) {
+            headers.PushBack(cmpHeader.ToTableHeaderJson(allocator), allocator);
         }
+    }
+    for (const auto &header : OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        if (!header.visible) {
+            continue;
+        }
+        auto copyHeader = TableViewColumn(header);
+        if (response.isCompare) {
+            copyHeader.rangeFilterable = false;
+            copyHeader.searchable = false;
+        }
+        headers.PushBack(copyHeader.ToTableHeaderJson(allocator), allocator);
     }
     json_t operatorDiffDetail(kArrayType);
     for (const MemoryOperatorComparison& anOperator : response.operatorDiffDetails) {
         json_t basicJson = json_t(kObjectType);
-        std::optional<document_t> jsonCompare = ToMemoryOperatorJson(anOperator.compare, hasStream, allocator);
-        std::optional<document_t> jsonBaseline = ToMemoryOperatorJson(anOperator.baseline, hasStream, allocator);
-        std::optional<document_t> jsonDiff = ToMemoryOperatorJson(anOperator.diff, hasStream, allocator);
+        std::optional<document_t> jsonCompare = ToMemoryOperatorJson(anOperator.compare, allocator);
+        std::optional<document_t> jsonBaseline = ToMemoryOperatorJson(anOperator.baseline, allocator);
+        std::optional<document_t> jsonDiff = ToMemoryOperatorJson(anOperator.diff, allocator);
         if (jsonCompare.has_value()) {
             JsonUtil::AddMember(basicJson, "compare", jsonCompare.value(), allocator);
         }
@@ -50,36 +58,29 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonRes
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
     JsonUtil::AddMember(body, "operatorDetail", operatorDiffDetail, allocator);
-    JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
+    JsonUtil::AddMember(body, "columnAttr", headers, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
 
-std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool hasStream,
-    Document::AllocatorType &allocator)
+std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, Document::AllocatorType &allocator)
 {
     document_t json(kObjectType);
     JsonUtil::AddMember(json, "id", op.id, allocator);
-    if (op.name.empty()) {
-        JsonUtil::AddMember(json, "name", "Unknown", allocator);
-    } else {
-        JsonUtil::AddMember(json, "name", op.name, allocator);
-    }
-    JsonUtil::AddMember(json, "size", op.size, allocator);
-    JsonUtil::AddMember(json, "allocationTime", op.allocationTime, allocator);
-    JsonUtil::AddMember(json, "releaseTime", op.releaseTime, allocator);
-    JsonUtil::AddMember(json, "duration", op.duration, allocator);
-    JsonUtil::AddMember(json, "allocationAllocated", op.allocationAllocated, allocator);
-    JsonUtil::AddMember(json, "allocationReserved", op.allocationReserved, allocator);
-    JsonUtil::AddMember(json, "releaseAllocated", op.releaseAllocated, allocator);
-    JsonUtil::AddMember(json, "releaseReserved", op.releaseReserved, allocator);
-    if (hasStream) {
-        JsonUtil::AddMember(json, "activeReleaseTime", op.activeReleaseTime, allocator);
-        JsonUtil::AddMember(json, "activeDuration", op.activeDuration, allocator);
-        JsonUtil::AddMember(json, "allocationActive", op.allocationActive, allocator);
-        JsonUtil::AddMember(json, "releaseActive", op.releaseActive, allocator);
-        JsonUtil::AddMember(json, "streamId", op.streamId, allocator);
-    }
+    JsonUtil::AddMember(json, OpMemoryColumn::NAME, op.name.empty() ? "Unknown" : op.name, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::SIZE, op.size, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::ALLOCATION_TIME, op.allocationTime, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::RELEASE_TIME, op.releaseTime, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::DURATION, op.duration, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::ALLOCATION_ALLOCATED, op.allocationAllocated, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::ALLOCATION_RESERVE, op.allocationReserved, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::RELEASE_ALLOCATED, op.releaseAllocated, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::RELEASE_RESERVE, op.releaseReserved, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::ACTIVE_RELEASE_TIME, op.activeReleaseTime, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::ACTIVE_DURATION, op.activeDuration, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::ALLOCATION_ACTIVE, op.allocationActive, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::RELEASE_ACTIVE, op.releaseActive, allocator);
+    JsonUtil::AddMember(json, OpMemoryColumn::STREAM, op.streamId, allocator);
     return std::optional<document_t>{std::move(json)};
 }
 

@@ -306,7 +306,7 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             unit.children = cardUnits;
         }
     });
-    session.sortUnits();
+
     if (session?.units?.[0]) {
         session.units[0].isExpanded = true;
         const rootUnit = getRootUnit(session, session.units[0].metadata.cardId as string, dataSource);
@@ -363,7 +363,6 @@ const createBaselineCard = (session: Session | undefined, result: TimelineCard[]
             unit.children = cardUnits;
         }
     });
-    session.sortUnits();
 };
 export const savePageSettingRemoteHandler: NotificationHandler = async (): Promise<unknown> => {
     const { sessionStore } = store;
@@ -638,6 +637,11 @@ function resetSession(): void {
         session.lockRange = undefined;
         session.selectedUnits = [];
         session.singleLinkLine = {};
+        session.isTimeAnalysisMode = false;
+        session.timeAnalysisRange = undefined;
+        // 因为时间范围分析利用了M键的竖向遮罩，所以移除时需要清空
+        session.mKeyRender = false;
+        session.mMaskRange = [];
     });
 }
 

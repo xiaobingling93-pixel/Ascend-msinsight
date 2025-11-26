@@ -16,13 +16,6 @@ import { disableShortcuts } from '@insight/lib/utils';
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;
 disableShortcuts();
-const root = createRoot(document.getElementById('root') as HTMLElement);
-root.render(
-    (
-        <RootStoreContext.Provider value={store}>
-            <App/>
-        </RootStoreContext.Provider>
-    ));
 
 interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
@@ -56,3 +49,11 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
         callback(res.body);
     });
 });
+
+const root = createRoot(document.getElementById('root') as HTMLElement);
+root.render(
+    (
+        <RootStoreContext.Provider value={store}>
+            <App/>
+        </RootStoreContext.Provider>
+    ));

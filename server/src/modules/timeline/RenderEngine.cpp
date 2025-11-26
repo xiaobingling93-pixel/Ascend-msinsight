@@ -97,9 +97,9 @@ bool RenderEngine::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &p
         if (item.trackId != curTrackId) {
             cacheSlices.clear();
             std::string sliceCacheKey = std::to_string(item.trackId);
-            cacheSlices = SliceCacheManager::Instance().GetSliceDomainVec(sliceCacheKey);
+            cacheSlices = SliceCacheManager::Instance().GetSliceDomainVec(sliceCacheKey, params.rankId);
             curTrackId = item.trackId;
-            TrackInfoManager::Instance().GetTrackInfo(curTrackId, trackInfo);
+            TrackInfoManager::Instance().GetTrackInfo(curTrackId, trackInfo, flowQuery.fileId);
             sliceAnalyzerPtr->SortByTimestampASC(cacheSlices);
         }
         // item.timestamp = timestamp - flowQuery.minTimestamp，timestamp 是从数据库中查出，一定有 timestamp <= INT64_MAX
@@ -160,7 +160,7 @@ void RenderEngine::ComputeSimulationFlows(const FlowCategoryEventsParams &params
         if (curTrackId != item.trackId) {
             curTrackId = item.trackId;
             sliceQuery.trackId = curTrackId;
-            TrackInfoManager::Instance().GetTrackInfo(curTrackId, trackInfo);
+            TrackInfoManager::Instance().GetTrackInfo(curTrackId, trackInfo, sliceQuery.rankId);
             simpleSliceMap.clear();
             std::vector<CompeteSliceDomain> sliceVec;
             dataEngine->QueryAllFlagSlice(sliceQuery, sliceVec);

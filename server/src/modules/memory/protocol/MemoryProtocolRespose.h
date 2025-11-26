@@ -9,6 +9,7 @@
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "CommonRequests.h"
 #include "MemoryDef.h"
 
 namespace Dic {
@@ -109,9 +110,9 @@ struct MemoryResourceTypeResponse : public Response {
 
 struct MemoryOperatorComparisonResponse : public Response {
     MemoryOperatorComparisonResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
-    std::vector<MemoryTableColumnAttr> columnAttr;
     std::vector<MemoryOperatorComparison> operatorDiffDetails;
     int64_t totalNum = 0;
+    bool isCompare = false;
 };
 
 struct MemoryComponentComparisonResponse : public Response {

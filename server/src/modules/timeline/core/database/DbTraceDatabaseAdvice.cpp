@@ -20,13 +20,18 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const KernelDetailsParams &params, 
         ServerLog::Warn("The PYTORCH_API table isn't exist.");
         return false;
     }
-    std::string sql = TraceDatabaseSqlConst::QueryAffinityOptimizerDbSql(optimizers, params.orderBy, params.order);
+    std::string sql = TraceDatabaseSqlConst::QueryAffinityOptimizerDbSql(optimizers, params);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Query Affinity Optimizer by DB.", sqlite3_errmsg(db));
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.startTime + minTimestamp, params.endTime + minTimestamp);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Query Affinity Optimizer by DB.", stmt->GetErrorMessage());
         return false;
@@ -56,7 +61,13 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const KernelDetailsParams &para
         return false;
     }
     int deviceId = StringUtil::StringToInt(params.deviceId);
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, params.startTime + minTimestamp,
+            params.endTime + minTimestamp, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for AICpuOpCanBeOptimized.", stmt->GetErrorMessage());
         return false;
@@ -87,7 +98,12 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
         return false;
     }
     int deviceId = StringUtil::StringToInt(params.deviceId);
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, threshold);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, threshold);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp, threshold);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;
@@ -110,12 +126,17 @@ bool DbTraceDataBase::QueryAffinityAPIData(const KernelDetailsParams &params,
     const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
     std::vector<FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
 {
-    auto stmt = CreatPreparedStatement(QUERY_AFFINITY_API_DB_SQL);
+    auto stmt = CreatPreparedStatement(TraceDatabaseSqlConst::GenerateAffinityApiDbSql(params));
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for Affinity API.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp, params.startTime + minTimestamp, params.endTime + minTimestamp);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Affinity API data.", stmt->GetErrorMessage());
         return false;
@@ -171,7 +192,7 @@ bool DbTraceDataBase::QueryOperatorDispatchData(const KernelDetailsParams &param
         ServerLog::Error("Fail to prepare sql for Operator Dispatch data.");
         return false;
     }
-    return QueryOpDispatchDataForDB(stmt, minTimestamp, threshold, data);
+    return QueryOpDispatchDataForDB(stmt, minTimestamp, params, threshold, data);
 }
 
 bool DbTraceDataBase::QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset,
@@ -328,7 +349,12 @@ bool DbTraceDataBase::QueryFusibleOpDataForDB(const KernelDetailsParams &params,
                                               std::vector<FlowLocation> &data, uint64_t minTimestamp)
 {
     int deviceId = StringUtil::StringToInt(params.deviceId);
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) { // default request, not time range analysis
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for query Fusible Operator.", stmt->GetErrorMessage());
         return false;
@@ -353,9 +379,14 @@ bool DbTraceDataBase::QueryFusibleOpDataForDB(const KernelDetailsParams &params,
 }
 
 bool DbTraceDataBase::QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    uint64_t minTimestamp, uint64_t threshold, std::vector<KernelBaseInfo> &data)
+    uint64_t minTimestamp, const KernelDetailsParams &params, uint64_t threshold, std::vector<KernelBaseInfo> &data)
 {
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.startTime + minTimestamp, params.endTime + minTimestamp);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Operator Dispatch data.", stmt->GetErrorMessage());
         return false;

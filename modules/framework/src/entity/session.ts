@@ -229,6 +229,7 @@ export class Session {
         this.sourceList = [];
         this.memoryCardInfos = [];
         this.operatorCardInfos = [];
+        this.iERankIds = [];
         this.compareSet = {
             baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
             comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
@@ -299,7 +300,12 @@ export class Session {
             } as ClusterInfo;
         });
         let selectedClusterPath: string = this.getClusterPath(selectedProject);
+        // 单集群场景
         if (clusterList.length === 0) {
+            // 当在项目中添加卡时，不会触发 session.reset(),所以clusterList是有值的，所以不需要更新
+            if (this.clusterPageInfo.clusterList.length !== 0) {
+                return;
+            }
             const prev = this.getClusterInfoByPath(selectedProject.projectPath[0]);
             clusterList = [{
                 name: selectedProject.projectName,

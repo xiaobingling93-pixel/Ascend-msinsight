@@ -12,13 +12,16 @@ std::string DbTraceDataBase::GetKernelDetailSql(const KernelDetailsParams &reque
         sqlStream << "with nameIds as (select id, value as realName from STRING_IDS),\n"
                   << GetKernelDetailSqlWithHCCL(requestParams) << ",\n" // 第一次绑定 filter.second
                   << GetKernelDetailSqlWithoutHCCL(requestParams) << ",\n" // 第二次绑定 filter.second
-                  << "main as (select * from main_hccl UNION ALL select * from main_other), "
-                  << "  total as (select count(*) as num from main )\n"
-                  << "SELECT ROWID as id, total.num, name, type, acceleratorCore, startTime,\n"
-                  << "       duration, waitTime, blockDim, inputShapes,\n"
-                  << "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, taskId\n"
-                  << "FROM main join total ";
-
+                  << "main_tmp as (select * from main_hccl UNION ALL select * from main_other), "
+                  << "main as (SELECT ROWID as id, name, type, acceleratorCore, startTime,\n"
+                  << "duration, waitTime, blockDim, inputShapes, inputDataTypes, inputFormats,\n"
+                  << "outputShapes, outputDataTypes, outputFormats, taskId FROM main_tmp \n";
+        if (requestParams.startTime != requestParams.endTime) {
+            sqlStream << " WHERE (startTime + duration*1000) >= ? AND startTime <= ? ";
+        }
+        sqlStream << ") SELECT id, (SELECT COUNT(*) FROM main) as num, name, type, acceleratorCore, startTime, "
+                  << "duration, waitTime, blockDim, inputShapes, inputDataTypes, inputFormats, "
+                  << "outputShapes, outputDataTypes, outputFormats, taskId FROM main ";
         if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: %",
                              requestParams.orderBy);

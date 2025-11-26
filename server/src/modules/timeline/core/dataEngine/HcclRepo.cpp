@@ -8,7 +8,7 @@ namespace Dic::Module::Timeline {
 void HcclRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Warn("hccl query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;
@@ -111,7 +111,7 @@ void HcclRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::v
         return;
     }
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         return;
     }
@@ -205,7 +205,7 @@ void HcclRepo::SetCommucationTaskInfoTable(std::unique_ptr<CommucationTaskInfoTa
 bool HcclRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Warn("Failed to query hccl slice detail info track info, track is: ", sliceQuery.trackId);
         return false;

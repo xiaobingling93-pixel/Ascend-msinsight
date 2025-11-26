@@ -50,13 +50,13 @@ interface UpdateDatas {
     setEventColum: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const getColumns = (tableColumns: EventTableColumn[]): any => {
+const getColumns = (tableColumns: EventTableColumn[], filters: { [key: string]: string[] }): any => {
     const result = [];
     for (const tableColumn of tableColumns) {
         if (tableColumn.key === 'rankId') {
             result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key });
         } else if (tableColumn.key === 'name') {
-            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key), ...fetchColumnFilterProps('name', 'Name') });
+            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key), ...fetchColumnFilterProps('name', 'Name'), filteredValue: filters.name });
         } else if (tableColumn.key === 'start') {
             result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: 'startTime', ...getDefaultColumData('startTime') });
         } else {
@@ -70,7 +70,7 @@ const filterColumn = ['name'];
 
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: 'duration', order: 'descend' };
-const defaultFilters = { name: [] };
+const defaultFilters: { [key: string]: string[] } = { name: [] };
 export const EventDetail = observer((props: SelectContentViewProps & { request: any }) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
@@ -86,8 +86,11 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
         setAllCondition({ ...allCondition, page, sorter, filters });
     }, [sorter, filters, page.current, page.pageSize]);
     useEffect(() => {
+        setPage(defaultPage);
+        setSorter(defaultSorter);
+        setFilters(defaultFilters);
         setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
-    }, [props.session.showEvent]);
+    }, [props.session.showEvent, props.session.timeAnalysisRange]);
 
     useEffect(() => {
         if (props.session.eventUnits === undefined || props.session.eventUnits.length === 0) {
@@ -100,7 +103,7 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
             return;
         }
         updateData({ pages: allCondition.page, sorters: allCondition.sorter, filters: allCondition.filters, props, setLoading, setDataSource, setPage, setEventColum });
-    }, [allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
+    }, [props.session.timeAnalysisRange, allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
         allCondition.sorter.field, allCondition.sorter.order, allCondition.filters, props.session.doReset, t]);
 
     useEffect(() => {
@@ -159,7 +162,7 @@ const updateData = async ({
         item.startTime = getDetailTimeDisplay(item.start - timestampoffset);
         return item;
     });
-    setEventColum(getColumns(res.columnList));
+    setEventColum(getColumns(res.columnList, filters));
     setDataSource(data);
     setPage((prevPage: any) => ({ ...pages, total: res.count }));
 };
@@ -211,6 +214,11 @@ const handleSelected = async(rowData: any, props: SelectContentViewProps): Promi
 
 const searchData = async(pages: any, sorters: {field: string;order: string}, filters: string[], prop: any): Promise<EventTableData> => {
     const requestData = prop.session.eventUnits?.[0]?.metadata as ThreadMetaData;
+    let startTime = prop.session.timeAnalysisRange?.[0] ?? 0;
+    startTime = startTime < 0 ? 0 : startTime;
+    let endTime = prop.session.timeAnalysisRange?.[1] ?? 0;
+    endTime = endTime < 0 ? 0 : endTime;
+    const timestampoffset = getTimeOffset(prop.session, prop.card);
     return await eventViewData({
         rankId: requestData.cardId as string,
         dbPath: requestData.dbPath as string,
@@ -225,6 +233,8 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, fil
         processName: requestData.processName as string,
         metaType: requestData.metaType as string,
         filterCondition: filters,
+        startTime: Math.floor(startTime + timestampoffset),
+        endTime: Math.ceil(endTime + timestampoffset),
     });
 };
 

@@ -16,6 +16,7 @@ import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumn
 import { HelpIcon } from '@insight/lib/icon';
 import connector from '../../connection/index';
 import UpdateTableAsync from '../../utils/UpdateTableAsync';
+import type { Error } from '../../connection/defs';
 
 let GdbPath = '';
 const updateTableAsyne = new UpdateTableAsync();
@@ -254,7 +255,9 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     condition: ConditionType; filterType: FilterType; opType?: string; accCore?: string;
     opName?: string; inputShape?: string; compInfo?: CompInfo; session: Session;
 }): JSX.Element => {
+    // 从condition对象中获取isCompare属性
     const isCompare = condition.isCompare as boolean;
+    // 从condition对象中获取数据库路径
     GdbPath = condition.dbPath;
     const { t } = useTranslation();
     const [cols, setCols] = useState<any[]>(useColMap(isCompare)[OperatorGroup.OPERATOR].l0);
@@ -281,10 +284,13 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         opName: [],
         accCore: [],
     });
+    // 使用useState钩子初始化compareColumnLevel状态，初始值为undefined
     const [compareColumnLevel, setCompareColumnLevel] = useState<string>();
+    // 使用useState钩子初始化comparePmuColumns状态，初始值为空数组
     const [comparePmuColumns, setComparePmuColumns] = useState<string[]>([]);
+    // 表格单独添加列按钮
     const btnCol = {
-        title: t('Details'),
+        title: t('operator:Operation'),
         width: 115,
         key: 'action',
         render: (_: any, record: any) => (<Button type="link"
@@ -299,7 +305,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
                     }
                     return list;
                 });
-            }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined /></Button>),
+            }}>{t('operator:tableHead.Details', { ns: 'buttonText' })}<DownOutlined /></Button>),
     };
     const colMap = useColMap(isCompare && compInfo === undefined);
     const compareSourceCol = useCompareSourceColumn();
@@ -372,6 +378,8 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         setLoading(true);
         try {
             await updateData();
+        } catch (e) {
+            message.error((e as Error).message || '请求失败');
         } finally {
             setExpandedKeys([]);
             setLoading(false);

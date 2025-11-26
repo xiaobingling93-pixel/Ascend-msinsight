@@ -528,7 +528,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     requestParams.metaTypeList = {"Ascend Hardware"};
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    uint64_t trackId = TrackInfoManager::Instance().GetTrackId("", "17738580008830245", "2");
+    uint64_t trackId = TrackInfoManager::Instance().GetTrackId("0", "17738580008830245", "2");
     const std::vector<uint64_t> traceIds = {trackId};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceIds);
     EXPECT_EQ(result, true);

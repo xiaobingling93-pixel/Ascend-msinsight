@@ -28,8 +28,15 @@ protected:
 
 private:
     const std::string IEFileName = "profiler.db";
+    const std::string MS_SERVICE_PARSED_NAME = "ms_service_parsed.db";
     bool ValidIEFile(const std::string& path);
     void ParseSingleFile(const std::string& filePath, const std::string& fileId);
+    bool ParseDir(const std::string& filePath, const std::string& fileId);
+
+    void AttachDb(const std::string &dir, std::vector<std::string> &distributeFiles,
+                  std::shared_ptr<Database> &database);
+    void AttachSingleDb(const std::string &dir, const std::string &distributeFile,
+                                              std::shared_ptr<Database> &database);
 };
 }  // namespace Dic::Module::IE
 #endif  // PROFILER_SERVER_STATISTICSMODULEAPI_H

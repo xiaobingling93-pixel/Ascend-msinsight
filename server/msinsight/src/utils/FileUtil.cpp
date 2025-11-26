@@ -158,6 +158,10 @@ bool FileUtil::CheckFileValid(const std::string &filePath)
         Server::ServerLog::Error("The file is not a regular file.");
         return false;
     }
+    if (!FileUtil::CheckFileSize(filePath, true)) {
+        Server::ServerLog::Error("File size exceed limit");
+        return false;
+    }
     return true;
 }
 
@@ -219,15 +223,19 @@ bool FileUtil::CheckFilePath(const std::string& filePath)
                                  " or special characters");
         return false;
     }
+    if (!FileUtil::IsRegularFile(tempPath)) {
+        Server::ServerLog::Error("Invalid file path, cause by not regular file");
+        return false;
+    }
     std::ifstream file(tempPath);
     if (!file.good()) {
         Server::ServerLog::Error("Fail to open file path");
         return false;
     }
     file.close();
-    long long size = GetFileSize(tempPath.c_str());
-    if (size >= MAX_FILE_SIZE_10G) {
+    if (!CheckFileSize(tempPath, true)) {
         Server::ServerLog::Warn("The size of file is too large");
+        return false;
     }
     return true;
 }

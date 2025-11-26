@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import i18n from '@insight/lib/i18n';
 import type { ComponentMemory, GetTableDataResponse, MemoryTable, MemoryTableColumn, OperatorDetail, OrderPageInfo, RenderExpandRecord } from '../entity/memory';
-import { ResizeTable } from '@insight/lib/resize';
+import { ResizeTable, fetchColumnFilterProps } from '@insight/lib/resize';
 import { Button, Spin } from '@insight/lib/components';
 import { DownOutlined } from '@ant-design/icons';
 import type { TableColumnsType, MenuProps } from 'antd';
@@ -33,6 +33,8 @@ interface IProps {
     total: number;
     isCompare: boolean;
     selectedCard: CardInfo;
+    onFiltersChange: (filter: any) => void;
+    needUseKeyMap: boolean;
 }
 
 interface IColName {
@@ -126,17 +128,24 @@ const getTableColumns = function (
         return (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data;
     };
     const dataColumns: TableColumnsType<RenderExpandRecord> = columns.map((col: MemoryTableColumn) => {
-        return {
+        const column = {
             dataIndex: col.key,
             key: col.key,
             title: t(col.name, { defaultValue: col.name, keyPrefix: 'tableHead' }),
-            sorter: true,
+            sorter: col.sortable ?? true,
             ellipsis: true,
             showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === ''
                 ? true
                 : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
             render: useTextColor,
         };
+        if (col.searchable) {
+            return { ...column, ...fetchColumnFilterProps(col.key, col.name.replace(' ', '')) };
+        } else if (col.rangeFilterable) {
+            return { ...column, ...fetchColumnFilterProps(col.key, col.name.replace(' ', ''), true) };
+        } else {
+            return column;
+        }
     });
     if (isCompare) {
         dataColumns.push({
@@ -179,6 +188,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     const {
         tableData, onRowSelected, current, pageSize,
         onPageChange, total, onOrderChange, onOrderByChange, isCompare, selectedCard,
+        onFiltersChange, needUseKeyMap = true,
     } = props;
     const [open, setOpen] = useState<boolean>(false);
     const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
@@ -220,10 +230,11 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         if ((sorter as SorterResult<OperatorDetail>).order) {
             const orderByCol = `${(sorter as SorterResult<OperatorDetail>).field}`;
             onOrderChange((sorter as SorterResult<OperatorDetail>).order as SortOrder);
-            onOrderByChange(orderByColName[orderByCol as keyof IColName]);
+            needUseKeyMap ? onOrderByChange(orderByColName[orderByCol as keyof IColName]) : onOrderByChange(orderByCol);
         } else {
             onOrderChange(null);
         }
+        onFiltersChange(filter);
     };
 
     const onRow = (record: OperatorDetail, rowIndex?: number): React.HTMLAttributes<any> => {

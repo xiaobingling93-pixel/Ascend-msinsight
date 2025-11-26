@@ -13,9 +13,9 @@ OperatorDomain OperatorMemoryService::ComputeAllocationTimeById(const std::strin
 {
     OperatorDomain target;
     std::vector<OperatorPO> textPOs;
-    operatorTable->Select(OperatorColumn::ALLOCATION_TIME)
-        .Eq(OperatorColumn::ID, id)
-        .OrderBy(OperatorColumn::ALLOCATION_TIME, Timeline::TableOrder::ASC)
+    operatorTable->Select(OpMemoryColumn::ALLOCATION_TIME)
+        .Eq(OpMemoryColumn::ID, id)
+        .OrderBy(OpMemoryColumn::ALLOCATION_TIME, Timeline::TableOrder::ASC)
         .ExcuteQuery(rankId, textPOs);
     if (!std::empty(textPOs)) {
         target.allocationTime = textPOs.front().allocationTime;

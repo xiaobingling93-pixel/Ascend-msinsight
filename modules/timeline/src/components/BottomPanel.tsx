@@ -306,7 +306,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
 
     useEffect(() => {
         setItem('SystemView');
-    }, [session.showEvent]);
+    }, [session.showEvent, session.isTimeAnalysisMode]);
 
     const extraSlot = (): ReactNode => {
         return <Checkbox checked={session.sliceSelection.active} onChange={() => {

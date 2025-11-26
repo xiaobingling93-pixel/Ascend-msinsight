@@ -36,10 +36,10 @@ using namespace Dic::Module::Global;
 std::mutex ParserFactory::mutex;
 std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::string &path)
 {
-    // 判别顺序是优先判别只支持单个文件导入的leaks bin ipynb npumonitor文件，然后判别服务化调优数据，再判别系统调优数据
+    // 判别顺序是优先判别只支持单个文件导入的memscope(leaks) bin ipynb npumonitor文件，然后判别服务化调优数据，再判别系统调优数据
     // 判别系统调优数据时，优先db，然后text，都没有再寻找npumonitor数据
     if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path),
-                                                      std::regex(leaksMemDbReg))) {
+                                                      std::regex(memScopeDbReg))) {
         return std::make_pair(path, ParserType::DB);
     }
     if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path), std::regex(npumonitorDBReg))) {

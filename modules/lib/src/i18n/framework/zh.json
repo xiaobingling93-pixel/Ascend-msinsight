@@ -60,7 +60,7 @@
       "Details": "详情",
       "CacheFrame": "缓存",
       "Statistic": "折线图",
-      "Leaks":"内存详情",
+      "MemScope": "内存详情",
       "RL": "强化学习",
       "TimelineSystemTooltip": "系统调优：以时间线的呈现方式将训练/推理过程中的host、device上的运行详细情况平铺在时间轴上，直观呈现host侧的API耗时情况以及device侧的task耗时，并将host与device进行关联呈现，帮助用户快速识别host瓶颈或device瓶颈，同时提供各种筛选分类、专家建议等功能，支撑用户进行深度调优，来源为trace_view.json、msprof_*.json和operator_details.csv等文件",
       "TimelineOperatorTooltip": "算子调优：将算子运行过程中，底层指令的详细执行情况平铺在时间轴上，直观呈现AI处理器每个Core上的每个Pipe中指令的调用顺序和耗时情况，来源为*trace.json和bin文件",
@@ -73,7 +73,7 @@
       "DetailsTooltip": "可视化呈现算子基础信息、计算单元负载和Roofline瓶颈分析等信息，来源为bin文件",
       "CacheTooltip": "可视化呈现用户程序Kernel函数内的L2Cache访问信息，来源为bin文件",
       "StatisticTooltip": "以图表形式展示服务化调优的具体数据变化，来源为profiler.db文件",
-      "LeaksTooltip": "展示内存调优过程中内存变化情况，来源为leaks_dump_*.db",
+      "MemScopeTooltip": "展示内存调优过程中内存变化详情，来源为memscope_dump_*.db(或旧版本leaks_dump_*.db)",
       "RLTooltip": "基于采集数据进行高层次抽象，可视化展示控制流的时序关系，帮助快速定位耗时任务与空泡，并支持进一步的性能分析"
     },
     "Keyboard shortcuts": "键盘快捷键",

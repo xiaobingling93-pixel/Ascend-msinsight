@@ -49,7 +49,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     ProjectTypeEnum curProjectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     response.body.isCluster = CheckIsOpenClusterTag(request.params.projectAction, curProjectTypeEnum,
                                                     projectInfos[0].projectName);
-    response.body.isLeaks = DataBaseManager::Instance().GetFileType() == FileType::LEAKS;
+    response.body.isLeaks = DataBaseManager::Instance().GetFileType() == FileType::MEM_SCOPE;
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
     // add response to response queue in session
@@ -226,8 +226,8 @@ ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
     if (dataPath.empty()) {
         return ProjectTypeEnum::DB;
     }
-    std::vector<std::string> leaksFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(leaksMemDbReg));
-    if (!leaksFiles.empty()) {
+    std::vector<std::string> memScopeFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(memScopeDbReg));
+    if (!memScopeFiles.empty()) {
         return ProjectTypeEnum::DB;
     }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(pytorchDBReg));
@@ -237,26 +237,26 @@ ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(msprofDBReg));
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(dataPath, std::regex(clusterDBReg));
     uint64_t rankCount = frameworkFiles.size() + msprofFiles.size();
-    // 如果rank的数据大于0个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
-    bool isCluster = (rankCount > 0) || (rankCount == 0 && !clusterPath.empty());
+    // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
+    bool isCluster = (rankCount > 1) || (rankCount == 0 && (clusterPath.size() > 0));
     return isCluster ? ProjectTypeEnum::DB_CLUSTER : ProjectTypeEnum::DB;
 }
 
-static bool IsSingleLeaksDbFile(const std::string &importFile)
+static bool IsSingleMemScopeDbFile(const std::string &importFile)
 {
     if (FileUtil::IsFolder(importFile)) {
         return false;
     }
-    return std::regex_match(FileUtil::GetFileName(importFile), std::regex(leaksMemDbReg));
+    return std::regex_match(FileUtil::GetFileName(importFile), std::regex(memScopeDbReg));
 }
 
-bool TryGetLeaksByImportFolderOrFile(const std::string &importFile, std::vector<std::string> &leaksFiles)
+bool TryGetMemScopeFilesByImportFolderOrFile(const std::string &importFile, std::vector<std::string> &memScopeFiles)
 {
-    leaksFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(leaksMemDbReg));
-    if (IsSingleLeaksDbFile(importFile) || !leaksFiles.empty()) {
-        DataBaseManager::Instance().SetFileType(FileType::LEAKS);
-        if (leaksFiles.empty()) {
-            leaksFiles.push_back(importFile);
+    memScopeFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(memScopeDbReg));
+    if (IsSingleMemScopeDbFile(importFile) || !memScopeFiles.empty()) {
+        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE);
+        if (memScopeFiles.empty()) {
+            memScopeFiles.push_back(importFile);
         }
         return true;
     }
@@ -265,9 +265,9 @@ bool TryGetLeaksByImportFolderOrFile(const std::string &importFile, std::vector<
 
 std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::string &importFile, std::string &error)
 {
-    std::vector<std::string> leaksFiles;
-    if (TryGetLeaksByImportFolderOrFile(importFile, leaksFiles) && !leaksFiles.empty()) {
-        return leaksFiles;
+    std::vector<std::string> memScopeFiles;
+    if (TryGetMemScopeFilesByImportFolderOrFile(importFile, memScopeFiles) && !memScopeFiles.empty()) {
+        return memScopeFiles;
     }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
@@ -483,14 +483,14 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
     std::vector<std::string> dbFiles;
     if (!FileUtil::IsFolder(filePath)) {
         dbFiles.emplace_back(filePath);
-        if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(leaksMemDbReg))) {
-            DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+        if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(memScopeDbReg))) {
+            DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE);
         }
         return dbFiles;
     }
     // 静态初始化，避免重复调用时正则编译开销
     static std::vector<std::regex> dbRegex = {
-        std::regex{leaksMemDbReg}, std::regex{pytorchDBReg},
+        std::regex{memScopeDbReg}, std::regex{pytorchDBReg},
         std::regex{mindsporeDBReg}, std::regex{msprofDBReg}};
     for (const auto &dbRegx: dbRegex) {
         std::vector<std::string> res = FileUtil::FindFilesWithFilter(filePath, dbRegx);

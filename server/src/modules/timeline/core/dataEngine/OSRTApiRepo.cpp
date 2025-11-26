@@ -10,7 +10,7 @@ void OSRTApiRepo::QuerySimpleSliceWithOutNameByTrackId(const Dic::Module::Timeli
                                                        std::vector<SliceDomain> &sliceVec)
 {
     TrackInfo trackInfo;
-    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo, sliceQuery.rankId);
     if (!isSuccess) {
         ServerLog::Error("OSRT_API query all slice track info does not exist, track is: ", sliceQuery.trackId);
         return;
