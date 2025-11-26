@@ -274,7 +274,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOpsTimeDataByGroupNameTe
     UnitThreadsOperatorsResponse response;
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string sql = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
-                      QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL : QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL;
+        TextSqlConstant::GetOverlapAnalysisTextSqlByType(requestParams) : TraceDatabaseSqlConst::GetOverlapAnalysisDbSqlByType(requestParams);
     std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
                        "Communication(Not Overlapped)" : "2";
     uint64_t totalTime = 0;

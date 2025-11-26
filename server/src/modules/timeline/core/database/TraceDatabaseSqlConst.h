@@ -149,7 +149,8 @@ const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_SQL =
 // 兼容老版本（1.0.0）
 const std::string QUERY_COMMUNICATION_SUMMARY_DB_1_0_SQL =
     "WITH data AS ("
-    "    SELECT *, row_number() OVER (ORDER BY groupName ASC, planeId ASC, start_time ASC) as row_num "
+    "    SELECT name, start_time - ? as start_time, duration, end_time - ? as end_time, groupName, planeId, "
+    "    thread_name, type, row_number() OVER (ORDER BY groupName ASC, planeId ASC, start_time ASC) as row_num "
     "    FROM ("
     "        SELECT str1.value as name, task.startNs as start_time, task.endNs - task.startNs as duration, "
     "        task.endNs as end_time, groupName, planeId, 'Plane ' || planeId as thread_name, 0 as type "
@@ -171,7 +172,8 @@ const std::string QUERY_COMMUNICATION_SUMMARY_DB_1_0_SQL =
     ") ";
 const std::string QUERY_COMMUNICATION_SUMMARY_DB_SQL =
     "  WITH data AS ("
-    "      SELECT *, row_number() OVER (ORDER BY groupName ASC, planeId ASC, start_time ASC) as row_num "
+    "      SELECT name, start_time - ? as start_time, duration, end_time - ? as end_time, groupName, planeId, "
+    "      thread_name, type, row_number() OVER (ORDER BY groupName ASC, planeId ASC, start_time ASC) as row_num "
     "  FROM ("
     "      SELECT str1.value as name, task.startNs as start_time, task.endNs - task.startNs as duration, "
     "      task.endNs as end_time, groupName, planeId, 'Plane ' || planeId as thread_name, 0 as type "
@@ -194,18 +196,6 @@ const std::string QUERY_COMMUNICATION_SUMMARY_DB_SQL =
     "      grp ON op.groupName = grp.groupName "
     "      )"
     " ) ";
-
-const std::string QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL =
-    "SELECT deviceId as name, startNs - ? as startNs, endNs - ? as endNs, endNs - startNs as duration "
-    "FROM " + TABLE_OVERLAP_ANALYSIS + " WHERE deviceId = ? AND type = ? ORDER BY deviceId ASC, startNs ASC";
-
-const std::string QUERY_COMMUNICATION_OP_BY_GROUP_ID_DB_SQL =
-    "SELECT DISTINCT op.opId as id, str.value as name, op.startNs - ? as startNs, "
-    "op.endNs - op.startNs as duration, op.endNs - ? as endNs "
-    "FROM " + TABLE_COMMUNICATION_OP + " op JOIN " + TABLE_STRING_IDS + " str ON op.opName = str.id "
-    "JOIN " + TABLE_COMMUNICATION_TASK_INFO + " cti ON op.opId = cti.opId "
-    "JOIN " + TABLE_TASK + " t ON cti.globalTaskId = t.globalTaskId "
-    "WHERE t.deviceId = ? AND op.groupName = ? ORDER BY op.startNs ASC";
 
 // 兼容老版本（1.0.0）
 const std::string QUERY_COMMUNICATION_GROUP_ID_DB_1_0_SQL =
@@ -231,6 +221,27 @@ const std::string QUERY_COMMUNICATION_GROUP_ID_DB_SQL =
 class TraceDatabaseSqlConst {
 // LCOV_EXCL_BR_START
 public:
+    static std::string GetOverlapAnalysisDbSqlByType(const SystemViewOverallReqParam &params)
+    {
+        std::string timeCondSql = AppendDbTimeRangeConditionSql(params.startTime, params.endTime);
+        return "SELECT deviceId as name, startNs - ? as startNs, endNs - ? as endNs, endNs - startNs as duration "
+            "FROM " + TABLE_OVERLAP_ANALYSIS + " WHERE deviceId = ? AND type = ? " + timeCondSql + " ORDER BY deviceId ASC, startNs ASC";
+    }
+
+    static std::string GetCommunicationOpDbSqlByGroupId(const SystemViewOverallReqParam &params)
+    {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) { // time range analysis
+            timeCondSql += " AND op.endNs >= ? AND op.startNs <= ? ";
+        }
+        return "SELECT DISTINCT op.opId as id, str.value as name, op.startNs - ? as startNs, "
+            "op.endNs - op.startNs as duration, op.endNs - ? as endNs "
+            "FROM " + TABLE_COMMUNICATION_OP + " op JOIN " + TABLE_STRING_IDS + " str ON op.opName = str.id "
+            "JOIN " + TABLE_COMMUNICATION_TASK_INFO + " cti ON op.opId = cti.opId "
+            "JOIN " + TABLE_TASK + " t ON cti.globalTaskId = t.globalTaskId "
+            "WHERE t.deviceId = ? AND op.groupName = ? " + timeCondSql + " ORDER BY op.startNs ASC";
+    }
+
     static std::string GenerateAffinityApiDbSql(const Protocol::KernelDetailsParams &params)
     {
         std::string timeCondSql;
@@ -370,9 +381,13 @@ public:
             "WHERE str.value IN (" + optimizers + ") " +timeCondSql + " ORDER BY " + params.orderBy + " " + params.order;
     }
 
-    static std::string GeneratorCommunicationSummarySql4Db(const OrderParam &orderParam, const PageParam &pageParam,
+    static std::string GeneratorCommunicationSummarySql4Db(const Protocol::SystemViewOverallReqParam &requestParams,
         const std::string &sqlForVersion)
     {
+        std::string timeCondSql;
+        if (requestParams.startTime != requestParams.endTime) {
+            timeCondSql += " WHERE d1.end_time >= ? AND d1.start_time <= ? ";
+        }
         std::string sql = sqlForVersion +
             "SELECT d1.name as name, d1.start_time as startTime, d1.duration as duration, d1.end_time as endTime, "
             "d1.groupName as groupName, d1.planeId as plane, d1.thread_name as threadName, d1.type as type, "
@@ -390,18 +405,16 @@ public:
             "LEFT JOIN data d3 ON d3.groupName = d1.groupName AND d3.planeId = d1.planeId AND d3.row_num = d1.row_num - 2 "
             "LEFT JOIN data d4 ON d4.groupName = d1.groupName AND d4.planeId = d1.planeId AND d4.row_num = d1.row_num - 3 "
             "LEFT JOIN data d5 ON d5.groupName = d1.groupName AND d5.planeId = d1.planeId AND d5.row_num = d1.row_num - 4 "
-            "ORDER BY d1.groupName, d1.planeId, d1.start_time";
+            + timeCondSql + "ORDER BY d1.groupName, d1.planeId, d1.start_time";
         return sql;
     }
 
     static std::string AppendDbTimeRangeConditionSql(const uint64_t &startTime, const uint64_t &endTime)
     {
-        std::string timeRangeConditionSql;
         if (startTime == endTime) { // default request, not time range analysis
-            return timeRangeConditionSql;
+            return "";
         }
-        timeRangeConditionSql += " AND endNs >= ? AND startNs <= ? ";
-        return timeRangeConditionSql;
+        return " AND endNs >= ? AND startNs <= ? ";
     }
 
 private:

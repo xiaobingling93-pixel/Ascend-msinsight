@@ -673,6 +673,8 @@ std::unique_ptr<Request> TimelineProtocol::ToSystemViewOverallRequest(const Dic:
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.page.current, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.page.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;
 }
 
@@ -696,6 +698,8 @@ std::unique_ptr<Request>TimelineProtocol::ToSystemViewOverallMoreDetailsRequest(
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order.orderType, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.page.current, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.page.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;
 }
 

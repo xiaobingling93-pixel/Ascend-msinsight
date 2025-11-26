@@ -59,6 +59,8 @@ const std::string QUERY_BYTE_ALIGNMENT_ANALYZER_SMALL_OPERATOR_FOR_DB_SQL = "SEL
 struct ParamsForCOTData {
     uint64_t groupId;
     uint64_t offset;
+    uint64_t startTime;
+    uint64_t endTime;
 };
 
 struct DbEventViewSqlParams {
@@ -236,8 +238,13 @@ static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePrepared
     ParamsForCOTData paramsForCotData, T &deviceId, const std::vector<Protocol::ThreadTraces> &notOverlapData,
     std::vector<SameOperatorsDetails> &details)
 {
-    auto resultSet = stmt->ExecuteQuery(paramsForCotData.offset, paramsForCotData.offset,
-                                        deviceId, paramsForCotData.groupId);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (paramsForCotData.startTime != paramsForCotData.endTime) { // time range analysis
+        resultSet = stmt->ExecuteQuery(paramsForCotData.offset, paramsForCotData.offset, deviceId, paramsForCotData.groupId,
+            paramsForCotData.startTime + paramsForCotData.offset, paramsForCotData.endTime + paramsForCotData.offset);
+    } else {
+        resultSet = stmt->ExecuteQuery(paramsForCotData.offset, paramsForCotData.offset, deviceId, paramsForCotData.groupId);
+    }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for query communication ops time data.",
                          stmt->GetErrorMessage());

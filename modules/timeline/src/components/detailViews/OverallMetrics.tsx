@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { StyledEmpty } from '@insight/lib/utils';
 import type { SelectContentViewProps } from './SystemView';
+import { getTimeOffset } from '../../insight/units/utils';
 
 export const overallMetricsColumns = (t: TFunction): ColumnsType<GetOverallMetricsResultItem> => [
     { title: t('Category'), dataIndex: 'name', ellipsis: true },
@@ -82,7 +83,19 @@ const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow
         try {
             const rankId = card.cardId;
             const dbPath = card.dbPath;
-            const { data, count: total } = await getOverallMetrics({ rankId, dbPath, pageSize: page.pageSize, current: page.current });
+            let startTime = session.timeAnalysisRange?.[0] ?? 0;
+            startTime = startTime < 0 ? 0 : startTime;
+            let endTime = session.timeAnalysisRange?.[1] ?? 0;
+            endTime = endTime < 0 ? 0 : endTime;
+            const timestampoffset = getTimeOffset(session, card);
+            const { data, count: total } = await getOverallMetrics({
+                rankId,
+                dbPath,
+                pageSize: page.pageSize,
+                current: page.current,
+                startTime: Math.floor(startTime + timestampoffset),
+                endTime: Math.ceil(endTime + timestampoffset),
+            });
             setPage({ ...page, total });
             setTableData(data ?? []);
             setLoading(false);
@@ -96,13 +109,13 @@ const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow
     useEffect(() => {
         getOverallMetricsData();
         setSelectedRow(null);
-    }, [card.cardId]);
+    }, [card.cardId, session.timeAnalysisRange]);
 
     useEffect(() => {
         if (cardPhase === 'download') {
             getOverallMetricsData();
         }
-    }, [cardPhase]);
+    }, [cardPhase, session.timeAnalysisRange]);
 
     return <ResizeTable
         rowKey={'id'}
@@ -137,6 +150,7 @@ const OverallMetricsMoreTable = observer(({ card, session, selectedRow, bottomHe
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
     const { page, setPage, setSorter, setFilters, loading, tableData } = useMetricsMoreUpdater({
+        session,
         card,
         selectedRow,
     });
@@ -182,7 +196,7 @@ const OverallMetricsMoreTable = observer(({ card, session, selectedRow, bottomHe
     ></ResizeTable>;
 });
 
-export type MetricsMoreUpdaterType = ({ card, selectedRow }: Pick<OverallMetricsMoreProps, 'card' | 'selectedRow'>) => ({
+export type MetricsMoreUpdaterType = ({ session, card, selectedRow }: Pick<OverallMetricsMoreProps, 'session' | 'card' | 'selectedRow'>) => ({
     page: PageType;
     setPage: (args: PageType) => void;
     sorter: SorterResult<GetOverallMetricsMoreListResultItem>;
@@ -192,7 +206,7 @@ export type MetricsMoreUpdaterType = ({ card, selectedRow }: Pick<OverallMetrics
     tableData: GetOverallMetricsMoreListResultItem[];
 });
 
-const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ card, selectedRow }) => {
+const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selectedRow }) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter: SorterResult<GetOverallMetricsMoreListResultItem> = { field: 'duration', order: 'descend' };
     const [page, setPage] = useState<PageType>(defaultPage);
@@ -207,6 +221,11 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ card, selectedRow }) =>
             return;
         }
         setLoading(true);
+        let startTime = session.timeAnalysisRange?.[0] ?? 0;
+        startTime = startTime < 0 ? 0 : startTime;
+        let endTime = session.timeAnalysisRange?.[1] ?? 0;
+        endTime = endTime < 0 ? 0 : endTime;
+        const timestampoffset = getTimeOffset(session, card);
         const { sameOperatorsDetails, count: total, pageSize, currentPage: current } = await getOverallMetricsMoreList({
             rankId: card.cardId,
             dbPath: card.dbPath,
@@ -216,6 +235,8 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ card, selectedRow }) =>
             orderBy: sorter.field as keyof GetOverallMetricsMoreListResultItem,
             pageSize: page.pageSize,
             current: page.current,
+            startTime: Math.floor(startTime + timestampoffset),
+            endTime: Math.ceil(endTime + timestampoffset),
         }).finally(() => {
             setLoading(false);
             setTableData([]);
@@ -236,7 +257,7 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ card, selectedRow }) =>
         } else {
             setTableData([]);
         }
-    }, [sorter.field, sorter.order, page.current, page.pageSize, filters.name, requestTrigger.current]);
+    }, [sorter.field, sorter.order, page.current, page.pageSize, filters.name, requestTrigger.current, session.timeAnalysisRange]);
 
     useEffect(() => {
         setPage(defaultPage);

@@ -76,6 +76,27 @@ bool EventsViewParams::CheckParams(uint64_t minTime, std::string &warnMsg) const
     return true;
 }
 
+bool SystemViewOverallReqParam::CheckParams(uint64_t minTime, std::string &errMsg) const
+{
+    if (page.pageSize == 0) {
+        errMsg = "Failed to check page parameter. Page size cannot be zero.";
+        return false;
+    }
+    if (page.current == 0) {
+        errMsg = "Failed to check page parameter. Current cannot be zero.";
+        return false;
+    }
+    if (startTime > endTime) {
+        errMsg = "system view overall start time is bigger than end time";
+        return false;
+    }
+    if (endTime > UINT64_MAX - minTime) {
+        errMsg = "system view overall end time is invalid";
+        return false;
+    }
+    return true;
+}
+
 bool UnitThreadsParams::CheckParams(uint64_t minTime, std::string &warnMsg) const
 {
     if (startTime > endTime) {

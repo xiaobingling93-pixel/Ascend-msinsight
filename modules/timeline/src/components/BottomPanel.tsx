@@ -309,7 +309,8 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     }, [session.showEvent, session.isTimeAnalysisMode]);
 
     const extraSlot = (): ReactNode => {
-        return <Checkbox checked={session.sliceSelection.active} onChange={() => {
+        // 算子框选模式与时间范围分析模式互斥，当进行时间范围分析时，算子框选模式不可用
+        return <Checkbox disabled={session.isTimeAnalysisMode} checked={session.sliceSelection.active} onChange={() => {
             runInAction(() => {
                 session.sliceSelection.active = !session.sliceSelection.active;
                 session.sliceSelection.activeIsChanged = true;

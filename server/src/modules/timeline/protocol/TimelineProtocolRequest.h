@@ -359,6 +359,9 @@ struct SystemViewOverallReqParam {
     std::string name;
     OrderParam order;
     PageParam page{};
+    uint64_t startTime = 0; // time range analysis mode while startTime not equal to endTime
+    uint64_t endTime = 0; // time range analysis mode while startTime not equal to endTime
+    bool CheckParams(uint64_t minTime, std::string &errMsg) const;
 };
 
 struct SystemViewOverallRequest : public Request {

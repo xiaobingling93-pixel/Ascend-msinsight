@@ -187,9 +187,10 @@ const TimeRangeInfo = observer((props: { session: Session }) => {
     return (
         session.isTimeAnalysisMode && session.timeAnalysisRange
             ? <div className={'time-range-info'}>
-                {
-                    `Time filter: ${getDetailTimeDisplay(session.timeAnalysisRange[0])} to ${getDetailTimeDisplay(session.timeAnalysisRange[1])}`
-                }
+                Time filter:{' '}
+                <strong>{getDetailTimeDisplay(session.timeAnalysisRange[0])}</strong>
+                {' '}to{' '}
+                <strong>{getDetailTimeDisplay(session.timeAnalysisRange[1])}</strong>
             </div>
             : <></>
     );

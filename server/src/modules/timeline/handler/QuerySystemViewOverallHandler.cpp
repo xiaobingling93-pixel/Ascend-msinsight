@@ -27,19 +27,22 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         SendResponse(std::move(responsePtr), true, "The overlap analysis data is not parse finish.");
         return true;
     }
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string error;
-    request.params.page.Check(error);
+    request.params.CheckParams(minTimestamp, error);
     if (!std::empty(error)) {
         SendResponse(std::move(responsePtr), false, error);
         return false;
     }
-    // query cache
+    // query cache, while not time range analysis
     std::vector<SystemViewOverallRes> overallDetails =
         SystemViewOverallCacheManager::Instance().GetOverallData(request.fileId);
-    if (!overallDetails.empty()) {
+    if (!overallDetails.empty() && request.params.startTime == request.params.endTime) {
         response.details = overallDetails;
     } else if (CalOverallData(request, response, error, database)) {
-        SystemViewOverallCacheManager::Instance().SetOverallData(request.fileId, response.details);
+        if (request.params.startTime == request.params.endTime) { // set cache while not time range analysis
+            SystemViewOverallCacheManager::Instance().SetOverallData(request.fileId, response.details);
+        }
     } else {
         SendResponse(std::move(responsePtr), false, error);
         return false;

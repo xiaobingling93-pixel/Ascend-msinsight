@@ -12,6 +12,7 @@ namespace Dic::Module::Timeline {
 struct BindParamsForGMAndCS {
     int deviceId;
     SystemViewOverallHelper &overallHelper;
+    const Protocol::SystemViewOverallReqParam &requestParams;
 };
 
 class SystemViewOverallDbRepo : public SystemViewOverallRepoInterface {
@@ -34,12 +35,13 @@ private:
         const std::vector<Protocol::ThreadTraces>& uncovered, BindParamsForGMAndCS bindParamsForGmAndCs);
     static bool CheckDataForSystemViewOverall(const std::shared_ptr<VirtualTraceDatabase> &database);
     static bool GetTmpTableForOverall(const std::shared_ptr<VirtualTraceDatabase> &database);
-    static std::map<uint64_t, uint64_t> QueryFlowDict(const std::shared_ptr<VirtualTraceDatabase> &database,
-                                                      int deviceId);
-    std::vector<CpuCubeOpInfo> QueryCpuCubeOp(const std::shared_ptr<VirtualTraceDatabase> &database);
+    static std::map<uint64_t, uint64_t> QueryFlowDict(const Protocol::SystemViewOverallReqParam &requestParams,
+        const std::shared_ptr<VirtualTraceDatabase> &database, int deviceId);
+    std::vector<CpuCubeOpInfo> QueryCpuCubeOp(const Protocol::SystemViewOverallReqParam &requestParams,
+        const std::shared_ptr<VirtualTraceDatabase> &database);
     std::vector<OverallTmpInfo> QueryKernelEventsForSystemViewOverall(
-        const std::shared_ptr<VirtualTraceDatabase> &database, const std::map<uint64_t, uint64_t> &flowDict,
-        int deviceId);
+        const Protocol::SystemViewOverallReqParam &requestParams, const std::shared_ptr<VirtualTraceDatabase> &database,
+        const std::map<uint64_t, uint64_t> &flowDict, int deviceId);
     static void QueryBwdTrackIdForComputingOverall(const std::shared_ptr<VirtualTraceDatabase> &database,
         uint64_t& bwdTrackId);
     std::string GetOrUpdateStringCacheValue(const std::shared_ptr<VirtualTraceDatabase> &database,

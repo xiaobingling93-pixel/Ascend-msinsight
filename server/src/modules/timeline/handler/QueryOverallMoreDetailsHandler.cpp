@@ -23,7 +23,7 @@ bool QueryOverallMoreDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Req
         return false;
     }
     std::string error;
-    request.params.page.Check(error);
+    request.params.CheckParams(minTimestamp, error);
     if (!std::empty(error)) {
         SendResponse(std::move(responsePtr), false, error);
         return false;
@@ -134,10 +134,10 @@ void QueryOverallMoreDetailsHandler::GetCommunicationOverallMetricDetails(
     if (params.categoryList[0] == COMMUNICATION_NOT_OVERLAP_TIME) {
         uint64_t totalTime = 0;
         std::string sql = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
-            QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL : QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL;
+            TextSqlConstant::GetOverlapAnalysisTextSqlByType(params) : TraceDatabaseSqlConst::GetOverlapAnalysisDbSqlByType(params);
         std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
             "Communication(Not Overlapped)" : "2";
-        ParamsForOAData paramsForOaData = { sql, type, minTimestamp };
+        ParamsForOAData paramsForOaData = { sql, type, minTimestamp, params.startTime, params.endTime };
         int deviceId = StringUtil::StringToInt(params.deviceId);
         if (!database->QueryOverlapAnalysisData(paramsForOaData, deviceId, notOverlapData, totalTime)) {
             ServerLog::Error("Failed to query Communication Overall Metrics due to incorrect not overlapped data.");

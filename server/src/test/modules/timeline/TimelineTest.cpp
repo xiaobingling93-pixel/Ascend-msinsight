@@ -1158,13 +1158,15 @@ TEST_F(TestSuit, QueryOverlapAnalysisDataTest)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     std::vector<Protocol::ThreadTraces> notOverlapData{};
+    Dic::Protocol::SystemViewOverallReqParam requestParams;
+    requestParams.rankId = "0";
     int intDeviceId = 4;
     uint64_t totalTime = 0;
     ParamsForOAData paramsForOaData = { "", "", 0 };
     bool result = database->QueryOverlapAnalysisData(paramsForOaData, intDeviceId, notOverlapData, totalTime);
     EXPECT_EQ(result, false);
     EXPECT_EQ(notOverlapData.empty(), true);
-    ParamsForOAData newParamsForOaData = { QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL,
+    ParamsForOAData newParamsForOaData = { TextSqlConstant::GetOverlapAnalysisTextSqlByType(requestParams),
         OVERLAP_TYPES.at(2), 0 };
     result = database->QueryOverlapAnalysisData(newParamsForOaData, intDeviceId,
         notOverlapData, totalTime); // 2 for not overlap

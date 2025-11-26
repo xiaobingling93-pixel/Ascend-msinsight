@@ -28,11 +28,16 @@ const uint64_t AICPU_OP_DURATION_THRESHOLD = 20000; // 20us
 struct ParamsForCalCSData {
     const std::string &sql;
     SystemViewOverallHelper &overallHelper;
+    uint64_t offset;
+    uint64_t startTime;
+    uint64_t endTime;
 };
 struct ParamsForOAData {
     const std::string &sql;
     const std::string &type;
     uint64_t offset;
+    uint64_t startTime;
+    uint64_t endTime;
 };
 /*
  * timeline数据库抽象类，定义所有查询接口调用的数据库查询纯虚函数，
@@ -132,8 +137,13 @@ public:
             Server::ServerLog::Error("Failed to prepare sql for query communication detail info.");
             return false;
         }
-        stmt->BindParams(deviceId);
-        auto resultSet = stmt->ExecuteQuery();
+        std::unique_ptr<SqliteResultSet> resultSet;
+        if (paramsForCalCsData.startTime != paramsForCalCsData.endTime) {
+            resultSet = stmt->ExecuteQuery(paramsForCalCsData.offset, paramsForCalCsData.offset, deviceId,
+                paramsForCalCsData.startTime, paramsForCalCsData.endTime);
+        } else {
+            resultSet = stmt->ExecuteQuery(paramsForCalCsData.offset, paramsForCalCsData.offset, deviceId);
+        }
         if (resultSet == nullptr) {
             Server::ServerLog::Error("Failed to get result set for query communication detail info.",
                                      stmt->GetErrorMessage());
@@ -162,8 +172,13 @@ public:
             Server::ServerLog::Error("Failed to prepare sql for query overlap analysis data.");
             return false;
         }
-        auto resultSet = stmt->ExecuteQuery(paramsForOaData.offset, paramsForOaData.offset,
-                                            deviceId, paramsForOaData.type);
+        std::unique_ptr<SqliteResultSet> resultSet;
+        if (paramsForOaData.startTime != paramsForOaData.endTime) { // time range analysis
+            resultSet = stmt->ExecuteQuery(paramsForOaData.offset, paramsForOaData.offset, deviceId, paramsForOaData.type,
+                paramsForOaData.startTime + paramsForOaData.offset, paramsForOaData.endTime + paramsForOaData.offset);
+        } else {
+            resultSet = stmt->ExecuteQuery(paramsForOaData.offset, paramsForOaData.offset, deviceId, paramsForOaData.type);
+        }
         if (resultSet == nullptr) {
             Server::ServerLog::Error("Failed to get result set for query overlap analysis data.",
                                      stmt->GetErrorMessage());

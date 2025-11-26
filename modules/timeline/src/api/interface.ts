@@ -56,6 +56,8 @@ export interface ParseCardsParam {
 export interface GetOverallMetricsParams extends PaginationParams {
     rankId: string;
     dbPath: string;
+    startTime: number;
+    endTime: number;
 }
 
 export interface GetOverallMetricsResultItem {
@@ -84,6 +86,8 @@ export interface GetOverallMetricsMoreListParams extends PaginationParams {
     orderBy?: keyof GetOverallMetricsMoreListResultItem;
     order?: 'ascend' | 'descend' | null;
     name?: string;
+    startTime: number;
+    endTime: number;
 }
 
 export interface GetOverallMetricsMoreListResultItem {

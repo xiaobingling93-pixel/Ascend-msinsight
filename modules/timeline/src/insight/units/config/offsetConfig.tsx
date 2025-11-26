@@ -172,6 +172,7 @@ export const InputOption = observer(({ session, metaData, onClick }: { session: 
     }, [timestampOffset]);
     useEffect(() => {
         if (session.isTimeAnalysisMode) {
+            // 时间范围分析模式，需要将卡级别的偏移量同步到进程级别上做统一分析
             handleTimestampOffsetReassignment(session, metaData, timestampOffset);
         }
     }, [session.isTimeAnalysisMode]);

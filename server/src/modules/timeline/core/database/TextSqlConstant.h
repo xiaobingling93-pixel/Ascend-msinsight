@@ -66,16 +66,6 @@ const std::string QUERY_ALL_THREAD_SQL = "SELECT track_id as trackId, tid, pid F
 const std::string QUERY_SLICE_BY_ID_SQL = "SELECT track_id, flag_id FROM " + SLICE_TABLE + " WHERE id = ?";
 const std::string QUERY_SLICE_BY_FLAG_ID_SQL = "SELECT id"
     " FROM " + SLICE_TABLE + " WHERE flag_id = ? AND track_id = ?;";
-const std::string QUERY_UNITS_META_SQL =
-    "SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName, "
-    "pt.name, pt.args, pt.track_id as trackId "
-    "FROM ( "
-    "    SELECT p.pid, CASE WHEN p.process_name IS NULL THEN 'Process ' || p.pid ELSE p.process_name END AS "
-    "    process_name,p.label,p.process_sort_index,t.tid,t.thread_name,t.track_id,t.thread_sort_index,c.name,c.args "
-    "    FROM " + PROCESS_TABLE + " p LEFT JOIN  " + THREAD_TABLE + " t ON p.pid = t.pid "
-    "    LEFT JOIN ( SELECT pid, name, args FROM " + COUNTER_TABLE + " GROUP BY name, pid ) c ON c.pid = p.pid "
-    ") AS pt WHERE pt.process_name IS NOT NULL "
-    " ORDER BY pt.process_sort_index ASC,pt.process_name ASC,pt.pid ASC, pt.thread_sort_index ASC, pt.name ASC;";
 const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalMinTimestamp, max(maxTimestamp) AS "
     "totalMaxTimestamp FROM ("
     "    SELECT min(timestamp) as minTimestamp, max(end_time) as maxTimestamp FROM " + SLICE_TABLE +
@@ -83,17 +73,8 @@ const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalM
     ")";
 const std::string QUERY_UNIT_COUNTER_SQL = "SELECT timestamp - ? as startTime, args FROM " + COUNTER_TABLE + " "
     "WHERE pid = ? AND name = ? AND startTime >= ? AND startTime <= ? ORDER BY timestamp ASC";
-const std::string QUERY_LAYER_DATA_SQL = "SELECT sum(case when name != 'Communication' then duration else 0 end) "
-    "AS totalTime, count(distinct name) FROM slice WHERE lower(name) LIKE lower(?) and slice.track_id IN "
-    "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid WHERE process_name = ? ) ";
 const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
-
-const std::string QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL =
-    "SELECT name, timestamp - ? as startNs, end_time - ? as endNs, duration FROM " + SLICE_TABLE + " "
-    "WHERE track_id in (SELECT track_id FROM " + THREAD_TABLE + " t "
-    "JOIN " + PROCESS_TABLE + " p ON t.pid = p.pid "
-    "WHERE (p.pid & 0x1f) = ? AND t.thread_name = ?) ORDER BY timestamp ASC";
 
 const std::string QUERY_COMMUNICATION_GROUP_MAP_TEXT_SQL =
     "SELECT pid as groupName, tid as planeId, thread_name as threadName FROM " + THREAD_TABLE + " "
@@ -104,11 +85,6 @@ const std::string QUERY_COMMUNICATION_GROUP_MAP_TEXT_SQL =
     "    ) "
     ") ORDER BY thread_sort_index ASC";
 
-const std::string QUERY_COMMUNICATION_OP_BY_GROUP_ID_TEXT_SQL =
-    "SELECT id, name, timestamp - ? as startNs, duration, end_time - ? as endNs FROM " + SLICE_TABLE + " s"
-    " JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id"
-    " JOIN " + PROCESS_TABLE + " p ON p.pid = t.pid"
-    " WHERE (p.pid & 0x1f) = ? AND s.track_id = ? ORDER by s.timestamp ASC";
 const std::string QUERY_COMMUNICATION_GROUP_ID_TEXT_SQL =
     "SELECT track_id as groupId, thread_name as groupName "
     "FROM " + THREAD_TABLE + " WHERE pid in (SELECT pid FROM " + PROCESS_TABLE +
@@ -236,12 +212,33 @@ public:
 
     static std::string GetAICoreViewDataSql()
     {
-        std::string orderBy = " ORDER BY timestamp ASC";
- 
-        std::string sql = "SELECT timestamp, args, process.pid as pid, thread.tid as tid "
+        return "SELECT timestamp, args, process.pid as pid, thread.tid as tid "
             "FROM counter JOIN process ON counter.pid = process.pid JOIN thread ON process.pid = thread.pid "
-            "WHERE (process.pid & 0x1f) = ? AND counter.name = 'AI Core Freq' " + orderBy;
-        return sql;
+            "WHERE (process.pid & 0x1f) = ? AND counter.name = 'AI Core Freq' ORDER BY timestamp ASC ";
+    }
+
+    static std::string GetOverlapAnalysisTextSqlByType(const SystemViewOverallReqParam &params)
+    {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) { // time range analysis
+            timeCondSql += " AND end_time >= ? AND timestamp <= ? ";
+        }
+        return "SELECT name, timestamp - ? as startNs, end_time - ? as endNs, duration FROM " + SLICE_TABLE + " "
+            "WHERE track_id in (SELECT track_id FROM " + THREAD_TABLE + " t "
+            "JOIN " + PROCESS_TABLE + " p ON t.pid = p.pid "
+            "WHERE (p.pid & 0x1f) = ? AND t.thread_name = ?) " + timeCondSql + " ORDER BY timestamp ASC";
+    }
+
+    static std::string GetCommunicationOpTextSqlByGroupId(const SystemViewOverallReqParam &params)
+    {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) { // time range analysis
+            timeCondSql += " AND s.end_time >= ? AND s.timestamp <= ? ";
+        }
+        return "SELECT id, name, timestamp - ? as startNs, duration, end_time - ? as endNs FROM " + SLICE_TABLE + " s"
+            " JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id"
+            " JOIN " + PROCESS_TABLE + " p ON p.pid = t.pid"
+            " WHERE (p.pid & 0x1f) = ? AND s.track_id = ? " + timeCondSql + " ORDER by s.timestamp ASC";
     }
 
     static std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
@@ -430,7 +427,7 @@ public:
     static std::string QueryAffinityOptimizerTextSql(const std::string &optimizers, const Protocol::KernelDetailsParams &params)
     {
         std::string timeCondSql;
-        if (params.startTime != params.endTime) {
+        if (params.startTime != params.endTime) { // time range analysis
             timeCondSql += " AND s.end_time >= ? AND s.timestamp <= ? ";
         }
         return "Select (s.timestamp - ?) as startTime, s.duration as duration, s.name as name, "
@@ -439,18 +436,22 @@ public:
             "WHERE s.name IN ( " + optimizers + ") " + timeCondSql + " order by " + params.orderBy + " " + params.order;
     }
 
-    static std::string GeneratorCommunicationSummarySql4Text(const OrderParam &orderParam, const PageParam &pageParam)
+    static std::string GeneratorCommunicationSummarySql4Text(const SystemViewOverallReqParam &params)
     {
+        std::string timeCondSql;
+        if (params.startTime != params.endTime) { // time range analysis
+            timeCondSql += " WHERE d1.end_time >= ? AND d1.start_time <= ? ";
+        }
         std::string sql =
             "WITH data as ("
-            "    SELECT s.name, s.timestamp as start_time, s.duration, s.end_time as end_time, t.pid, t.tid, s.track_id, "
+            "    SELECT s.name, s.timestamp - ? as start_time, s.duration, s.end_time - ? as end_time, t.pid, t.tid, s.track_id, "
             "    t.thread_name, CASE WHEN t.thread_name like 'Group%' THEN 1 ELSE 0 END as type, "
             "    row_number() OVER (ORDER by s.track_id ASC, s.timestamp ASC) as row_num FROM " + SLICE_TABLE + " s "
             "    JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id WHERE s.track_id in ( "
             "        SELECT track_id FROM " + THREAD_TABLE + " WHERE pid in ( "
             "            SELECT pid FROM " + PROCESS_TABLE +
             " WHERE (pid & 0x1f) = ? AND process_name in ('HCCL', 'COMMUNICATION', 'Communication') "
-            "        ) "
+                    "        ) "
             "    ) "
             ") "
             "SELECT d1.name as name, d1.start_time as startTime, d1.duration as duration, d1.end_time as endTime, "
@@ -469,7 +470,7 @@ public:
             "LEFT JOIN data d3 ON d3.row_num = d1.row_num - 2 AND d3.track_id = d1.track_id "
             "LEFT JOIN data d4 ON d4.row_num = d1.row_num - 3 AND d4.track_id = d1.track_id "
             "LEFT JOIN data d5 ON d5.row_num = d1.row_num - 4 AND d5.track_id = d1.track_id "
-            "ORDER BY d1.pid, d1.tid, d1.start_time";
+            + timeCondSql + "ORDER BY d1.pid, d1.tid, d1.start_time";
         return sql;
     }
 
@@ -502,12 +503,10 @@ public:
 
     static std::string AppendTextTimeRangeConditionSql(const uint64_t &startTime, const uint64_t &endTime)
     {
-        std::string timeRangeConditionSql;
         if (startTime == endTime) { // default request, not time range analysis
-            return timeRangeConditionSql;
+            return "";
         }
-        timeRangeConditionSql += " AND end_time >= ? AND timestamp <= ? ";
-        return timeRangeConditionSql;
+        return " AND end_time >= ? AND timestamp <= ? ";
     }
 
 private:

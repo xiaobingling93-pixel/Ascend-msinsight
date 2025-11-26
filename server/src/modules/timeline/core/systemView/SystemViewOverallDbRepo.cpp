@@ -6,6 +6,8 @@
 #include "TraceDatabaseHelper.h"
 #include "TraceDatabaseSqlConst.h"
 #include "SystemViewOverallDbRepo.h"
+#include "TraceTime.h"
+
 using namespace Dic::Protocol;
 using namespace Dic::Module;
 namespace Dic::Module::Timeline {
@@ -45,6 +47,8 @@ std::string SystemViewOverallDbRepo::GetOrUpdateStringCacheValue(const std::shar
 std::vector<OverallTmpInfo> SystemViewOverallDbRepo::QueryOverlapAnalysisDataForOverallMetric(
     const Protocol::SystemViewOverallReqParam &requestParams, const std::shared_ptr<VirtualTraceDatabase> &database)
 {
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    const std::string timeCondSql = TraceDatabaseSqlConst::AppendDbTimeRangeConditionSql(requestParams.startTime, requestParams.endTime);
     /**
      * Db场景中Overlap Analysis, type = 0 代表 Computing Time, type = 1 代表 Communication Time（此处未选择）,
      * type = 2 代表 Communication(Not Overlapped), type = 3 代表 Free Time。
@@ -54,13 +58,16 @@ std::vector<OverallTmpInfo> SystemViewOverallDbRepo::QueryOverlapAnalysisDataFor
         "    when 2 then 'Communication(Not Overlapped)' "
         "    when 3 then 'Free' end as category, "
         "    round(sum(endNs - startNs)/1000.0, 2) as duration "
-        "from OVERLAP_ANALYSIS where type != 1 and deviceId = ? group by type order by category;";
+        "from OVERLAP_ANALYSIS where type != 1 and deviceId = ? " + timeCondSql + " group by type order by category;";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql while querying overlap analysis data for overall metrics.");
         return {};
     }
     stmt->BindParams(StringUtil::StringToInt(requestParams.deviceId));
+    if (requestParams.startTime != requestParams.endTime) { // time range analysis
+        stmt->BindParams(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+    }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to execute query while querying overlap analysis data for overall metrics.");
@@ -89,11 +96,11 @@ bool SystemViewOverallDbRepo::QueryDataForComputingOverallMetric(
     }
     int deviceId = StringUtil::StringToInt(requestParams.deviceId);
     // <key: flow end time, value: flow start time>
-    std::map<uint64_t, uint64_t> flowDict = QueryFlowDict(database, deviceId);
-    computeHelper.cpuCubeOps = QueryCpuCubeOp(database);
-    computeHelper.kernelEvents = QueryKernelEventsForSystemViewOverall(database, flowDict, deviceId);
+    std::map<uint64_t, uint64_t> flowDict = QueryFlowDict(requestParams, database, deviceId);
+    computeHelper.cpuCubeOps = QueryCpuCubeOp(requestParams, database);
+    computeHelper.kernelEvents = QueryKernelEventsForSystemViewOverall(requestParams, database, flowDict, deviceId);
 
-    // 查询backward track id并分类kernelEvents
+    // 查询backward track id并分类kernelEvents，无需时间范围过滤
     QueryBwdTrackIdForComputingOverall(database, computeHelper.bwdTrackId);
     return true;
 }
@@ -144,18 +151,27 @@ bool SystemViewOverallDbRepo::GetTmpTableForOverall(const std::shared_ptr<Virtua
 }
 
 std::map<uint64_t, uint64_t> SystemViewOverallDbRepo::QueryFlowDict(
+    const Protocol::SystemViewOverallReqParam &requestParams,
     const std::shared_ptr<VirtualTraceDatabase> &database, int deviceId)
 {
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string timeCondSql;
+    if (requestParams.startTime != requestParams.endTime) {
+        timeCondSql += " AND t.startNs >= ? AND pa.startNs <= ? ";
+    }
     std::string sql =
         "select t.startNs as flowEnd, pa.startNs as flowStart from TASK t join "
         " asyncNpuConnect anc on anc.connectionId = t.connectionId join PYTORCH_API pa on pa.connectionId = anc.id "
-        " where t.deviceId = ?;";
+        " where t.deviceId = ? " + timeCondSql + " ;";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql while querying flow dictionary for system view overall.");
         return {};
     }
     stmt->BindParams(deviceId);
+    if (requestParams.startTime != requestParams.endTime) { // time range analysis
+        stmt->BindParams(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+    }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to execute query while querying flow dictionary for system view overall.");
@@ -169,19 +185,27 @@ std::map<uint64_t, uint64_t> SystemViewOverallDbRepo::QueryFlowDict(
 }
 
 std::vector<CpuCubeOpInfo> SystemViewOverallDbRepo::QueryCpuCubeOp(
-    const std::shared_ptr<VirtualTraceDatabase> &database)
+    const Protocol::SystemViewOverallReqParam &requestParams, const std::shared_ptr<VirtualTraceDatabase> &database)
 {
     if (!database->CheckTableExist(TABLE_API)) {
         ServerLog::Warn("Skip query cpu cube operators for system view overall. Can't find ", TABLE_API);
         return {};
     }
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string timeCondSql;
+    if (requestParams.startTime != requestParams.endTime) {
+        timeCondSql += " AND pa.endNs >= ? AND pa.startNs <= ? ";
+    }
     std::string sql =
         "select pa.startNs as start, pa.endNs as end, pa.name, pa.globalTid as "
-        " track_id from PYTORCH_API pa join ENUM_API_TYPE apiT on pa.type = apiT.id where apiT.name = 'op';";
+        " track_id from PYTORCH_API pa join ENUM_API_TYPE apiT on pa.type = apiT.id where apiT.name = 'op' " + timeCondSql + " ;";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql while querying cpu cube operators for system view overall.");
         return {};
+    }
+    if (requestParams.startTime != requestParams.endTime) { // time range analysis
+        stmt->BindParams(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
@@ -208,20 +232,28 @@ std::vector<CpuCubeOpInfo> SystemViewOverallDbRepo::QueryCpuCubeOp(
 }
 
 std::vector<OverallTmpInfo> SystemViewOverallDbRepo::QueryKernelEventsForSystemViewOverall(
-    const std::shared_ptr<VirtualTraceDatabase> &database, const std::map<uint64_t, uint64_t> &flowDict,
-    int deviceId)
+    const Protocol::SystemViewOverallReqParam &requestParams, const std::shared_ptr<VirtualTraceDatabase> &database,
+    const std::map<uint64_t, uint64_t> &flowDict, int deviceId)
 {
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string timeCondSql;
+    if (requestParams.startTime != requestParams.endTime) {
+        timeCondSql += " AND t.endNs >= ? AND t.startNs <= ? ";
+    }
     std::string sql =
         "select t.rowid as opId, depth, cti.name as opName, cti.opType, t.startNs as startTime, "
         " round((t.endNs - t.startNs)/1000.0, 2) as duration, cubeTime from TASK t join COMPUTE_TASK_INFO cti on "
         " cti.globalTaskId = t.globalTaskId join tmpPmu pmu on pmu.globalTaskId = t.globalTaskId "
-        " where t.deviceId = ?;";
+        " where t.deviceId = ? " + timeCondSql + " ;";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql while querying kernel events for system view overall.");
         return {};
     }
     stmt->BindParams(deviceId);
+    if (requestParams.startTime != requestParams.endTime) { // time range analysis
+        stmt->BindParams(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+    }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to execute query while querying kernel events for system view overall.");
@@ -287,7 +319,8 @@ void SystemViewOverallDbRepo::QueryCommunicationOverlapOverallInfos(
     std::vector<Protocol::ThreadTraces> uncovered{};
     uint64_t totalTime = 0;
     int deviceId = StringUtil::StringToInt(requestParams.deviceId);
-    ParamsForOAData paramsForOaData = { QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL, "2", 0 };
+    ParamsForOAData paramsForOaData = { TraceDatabaseSqlConst::GetOverlapAnalysisDbSqlByType(requestParams), "2",
+        TraceTime::Instance().GetStartTime(), requestParams.startTime, requestParams.endTime };
     // "2" for not overlap
     if (!database->QueryOverlapAnalysisData(paramsForOaData, deviceId, uncovered, totalTime)) { // 2
         return; // QueryOverlapAnalysisData has all needed log
@@ -309,14 +342,14 @@ void SystemViewOverallDbRepo::QueryCommunicationOverlapOverallInfos(
         };
         responseBody.emplace_back(notOverlapped);
     }
-    BindParamsForGMAndCS bindParamsForGmAndCs = { deviceId, overallHelper };
+    BindParamsForGMAndCS bindParamsForGmAndCs = { deviceId, overallHelper, requestParams };
     QueryGroupMapAndCalculateSummary(database, responseBody, it, uncovered, bindParamsForGmAndCs);
 }
 void SystemViewOverallDbRepo::QueryGroupMapAndCalculateSummary(const std::shared_ptr<VirtualTraceDatabase> &database,
     std::vector<Protocol::SystemViewOverallRes> &responseBody, std::vector<Protocol::SystemViewOverallRes>::iterator it,
     const std::vector<Protocol::ThreadTraces>& uncovered, BindParamsForGMAndCS bindParamsForGmAndCs)
 {
-    // 查询泳道与通信Group间的对应关系
+    // 查询泳道与通信Group间的对应关系，无需时间范围过滤
     std::map<std::string, std::string> groupMap{};
     std::string groupMapSql;
     if (database->GetMetaVersion() == "1.0.0") {
@@ -335,12 +368,14 @@ void SystemViewOverallDbRepo::QueryGroupMapAndCalculateSummary(const std::shared
     } else {
         commSummarySql4Db = QUERY_COMMUNICATION_SUMMARY_DB_SQL;
     }
-    std::string sql4Summary = TraceDatabaseSqlConst::GeneratorCommunicationSummarySql4Db({}, {}, commSummarySql4Db);
+    std::string sql4Summary = TraceDatabaseSqlConst::GeneratorCommunicationSummarySql4Db(bindParamsForGmAndCs.requestParams, commSummarySql4Db);
     // 如果不存在上文就会添加，因此此处一定能找到
     it = std::find_if(responseBody.begin(), responseBody.end(), [](const Protocol::SystemViewOverallRes &item) {
         return item.name == COMMUNICATION_NOT_OVERLAP_TIME;
     });
-    ParamsForCalCSData paramsForCalCsData = { sql4Summary, bindParamsForGmAndCs.overallHelper };
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    ParamsForCalCSData paramsForCalCsData = { sql4Summary, bindParamsForGmAndCs.overallHelper, minTimestamp,
+                                              bindParamsForGmAndCs.requestParams.startTime, bindParamsForGmAndCs.requestParams.endTime };
     database->CalculateCommunicationSummaryData(uncovered, groupMap, paramsForCalCsData,
         bindParamsForGmAndCs.deviceId, *it);
 }
@@ -356,6 +391,7 @@ bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const Sys
     if (!database->QueryMetaVersion()) {
         return false;
     }
+    // 此处为预先查询分组，无需时间范围过滤
     std::string sql;
     if (database->GetMetaVersion() == "1.0.0") {
         sql = QUERY_COMMUNICATION_GROUP_ID_DB_1_0_SQL;
@@ -376,12 +412,12 @@ bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const Sys
         return false;
     }
 
-    auto stmt2 = database->CreatPreparedStatement(QUERY_COMMUNICATION_OP_BY_GROUP_ID_DB_SQL);
+    auto stmt2 = database->CreatPreparedStatement(TraceDatabaseSqlConst::GetCommunicationOpDbSqlByGroupId(params));
     if (stmt2 == nullptr) {
         ServerLog::Error("Failed to prepare sql for query communication ops time data for db scene.");
         return false;
     }
-    ParamsForCOTData paramsForCotData = { groupId, offset };
+    ParamsForCOTData paramsForCotData = { groupId, offset, params.startTime, params.endTime };
     if (!TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(stmt2, paramsForCotData, deviceId,
                                                                     notOverlapData, opsDetails)) {
         ServerLog::Error("Failed to query data for Query Communication Ops Time Data By Group Name: ",
