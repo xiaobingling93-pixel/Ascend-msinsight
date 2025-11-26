@@ -270,7 +270,7 @@ export const vectorCoreModule1V5: Inode = {
         },
         //  VEC_TO_Dcache 52
         {
-            id: 'VEC_TO_UB',
+            id: 'VEC_TO_Dcache',
             label: 'VEC_TO_DCACHE',
             x: 580,
             top: '46%+55',

@@ -1438,6 +1438,14 @@ const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
         }).on('mouseout', (): void => { hideFormula(); });
 };
 
+/**
+ * 获取内存单元标签
+ * @param data 比较数据对象，包含基准和比较数据
+ * @param isCompared 是否进行比较
+ * @param showAs 显示类型，如'bandwidth'等
+ * @param tDetails 可选的翻译函数
+ * @returns 返回格式化后的内存单元标签字符串
+ */
 const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean, showAs: string, tDetails?: TFunction): string => {
     let label = String(getFormatNum(data.compare[showAs]));
     if (isCompared) {
@@ -1452,6 +1460,11 @@ const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean,
     return label;
 };
 
+/**
+ * 更新标签
+ * @param svg D3选择器对象，用于操作SVG元素
+ * @param labelDic 路径标签字典
+ */
 const updatePath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition, tDetails?: TFunction): void => {
     const { showAs, memoryUnit } = data;
     const labelDic: Record<string, string> = {};
@@ -1477,6 +1490,12 @@ const updateLabel = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, 
         });
 };
 
+/**
+ * 更新热点路径
+ * @param svg D3选择器对象，用于操作SVG元素
+ * @param peakDic 峰值比例字典
+ * @param peakSet 峰值比例集合
+ */
 const updateHotPath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, peakDic: Record<string, number>, peakSet: Set<number>): void => {
     const colorDic: Record<number, string> = {};
     [...peakSet].forEach(peakRatio => {
