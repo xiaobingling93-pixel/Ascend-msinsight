@@ -139,8 +139,6 @@ importers:
 
   framework: {}
 
-  jupyter: {}
-
   leaks: {}
 
   lib: {}

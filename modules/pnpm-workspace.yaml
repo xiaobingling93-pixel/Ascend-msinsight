@@ -9,4 +9,3 @@ packages:
   - 'statistic'
   - 'timeline'
   - 'reinforcement-learning'
-  - 'jupyter'

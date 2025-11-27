@@ -18,8 +18,6 @@
   },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
-    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false tsc --declaration",
-    "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider tsc --declaration",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
