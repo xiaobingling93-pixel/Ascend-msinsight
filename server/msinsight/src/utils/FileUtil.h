@@ -343,14 +343,7 @@ public:
                 return file.substr(index + 1, index2 - index - 1);
             }
         }
-        // 取上上层目录名
-        std::string rankId = GetRankIdFromPath(timeLineFile);
-        // 上上层目录名没有则取文件的名字
-        if (rankId.empty()) {
-            size_t index3 = timeLineFile.find_last_of('.');
-            rankId = timeLineFile.substr(parent.length() + 1, index3 - parent.length() - 1);
-        }
-        return rankId;
+        return timeLineFile;
     }
 
     static std::string GetRankIdFromPath(const std::string &filePath)
