@@ -37,7 +37,12 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonRes
             copyHeader.rangeFilterable = false;
             copyHeader.searchable = false;
         }
-        headers.PushBack(copyHeader.ToTableHeaderJson(allocator), allocator);
+        auto headerJson = copyHeader.ToTableHeaderJson(allocator);
+        if (copyHeader.key == OpMemoryColumn::SIZE) {
+            JsonUtil::AddMember(headerJson, "min", OperatorMemoryTableView::DEFAULT_MIN_SIZE, allocator);
+            JsonUtil::AddMember(headerJson, "max", OperatorMemoryTableView::DEFAULT_MAX_SIZE, allocator);
+        }
+        headers.PushBack(headerJson, allocator);
     }
     json_t operatorDiffDetail(kArrayType);
     for (const MemoryOperatorComparison& anOperator : response.operatorDiffDetails) {

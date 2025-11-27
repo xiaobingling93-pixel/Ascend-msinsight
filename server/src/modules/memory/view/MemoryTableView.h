@@ -11,6 +11,8 @@
 namespace Dic::Module::Memory {
 namespace OperatorMemoryTableView {
 using namespace Dic::Protocol;
+    constexpr int64_t DEFAULT_MAX_SIZE = std::numeric_limits<int32_t>::max();
+    constexpr int64_t DEFAULT_MIN_SIZE = std::numeric_limits<int32_t>::min();
     inline const std::vector<TableViewColumn> FIELD_FULL_COLUMNS = {
         { "ID", "id" }, // 不可见
         { "Name", OpMemoryColumn::NAME, true, true, true, false }, // 可搜索 可排序
