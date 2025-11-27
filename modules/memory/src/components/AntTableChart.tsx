@@ -142,7 +142,8 @@ const getTableColumns = function (
         if (col.searchable) {
             return { ...column, ...fetchColumnFilterProps(col.key, col.name.replace(' ', '')) };
         } else if (col.rangeFilterable) {
-            return { ...column, ...fetchColumnFilterProps(col.key, col.name.replace(' ', ''), true) };
+            const filterOptions = { min: col.min, max: col.max };
+            return { ...column, ...fetchColumnFilterProps(col.key, col.name.replace(' ', ''), true, filterOptions) };
         } else {
             return column;
         }

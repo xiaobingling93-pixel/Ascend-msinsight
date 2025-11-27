@@ -252,6 +252,8 @@ export interface MemoryTableColumn {
     sortable?: boolean;
     searchable?: boolean;
     rangeFilterable?: boolean;
+    min?: number;
+    max?: number;
 }
 
 /**

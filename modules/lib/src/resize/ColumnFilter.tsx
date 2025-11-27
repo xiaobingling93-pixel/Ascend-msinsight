@@ -20,6 +20,13 @@ interface FilterProps {
     clearFilters?: () => void;
     dataIndex: string;
 }
+
+interface FilterOptions {
+    max?: number;
+    min?: number;
+    precision?: number;
+}
+
 const state = {
     searchText: '',
     searchedColumn: '',
@@ -58,7 +65,7 @@ const handleRange = (
     setSelectedKeys?: (selectedKeys: string[]) => void,
 ): void => {
     const min = selectedKeys[0] === undefined ? '0' : String(selectedKeys[0]);
-    const max = selectedKeys[1] === undefined ? '1000000000000' : String(selectedKeys[1]);
+    const max = selectedKeys[1] === undefined ? String(Number.MAX_SAFE_INTEGER) : String(selectedKeys[1]);
     if (Number(min) > Number(max)) {
         message.error(i18n.t('buttonText:limitMinMax'));
         return;
@@ -121,7 +128,7 @@ const rangeChange = (value: ValueType | null, selectedKeys: FilterProps['selecte
         setSelectedKeys(newSelectKeys);
     }
 };
-const filterRange = (params: FilterProps) => {
+const filterRange = (params: FilterProps, filterOptions?: FilterOptions) => {
     const { setSelectedKeys, selectedKeys, confirm, clearFilters, dataIndex } = params;
     return (<div style={{ padding: 8 }} onKeyDown={(e): void => e.stopPropagation()}>
         <InputNumber
@@ -131,8 +138,8 @@ const filterRange = (params: FilterProps) => {
             onChange={(value): void => { rangeChange(value, selectedKeys, setSelectedKeys, 0); }}
             onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
             size="small" style={{ marginBottom: 8, marginRight: 8 }}
-            min={0} max={1000000000000}
-            precision={0}
+            min={filterOptions?.min ?? 0} max={filterOptions?.max ?? Number.MAX_SAFE_INTEGER}
+            precision={filterOptions?.precision ?? 3}
         />
         <InputNumber
             ref={(node): void => { state.searchMaxInput = node as null; }}
@@ -141,8 +148,8 @@ const filterRange = (params: FilterProps) => {
             onChange={(value): void => { rangeChange(value, selectedKeys, setSelectedKeys, 1); }}
             onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
             size="small" style={{ marginBottom: 8 }}
-            min={0} max={1000000000000}
-            precision={0}
+            min={filterOptions?.min ?? 0} max={filterOptions?.max ?? Number.MAX_SAFE_INTEGER}
+            precision={filterOptions?.precision ?? 3}
         />
         <ButtonGroup>
             <Button
@@ -158,11 +165,12 @@ const filterRange = (params: FilterProps) => {
     </div>);
 };
 
-export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: string, showRange: boolean = false): ColumnType<any> {
+export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: string, showRange: boolean = false,
+    filterOptions?: FilterOptions): ColumnType<any> {
     const getColumnFilterProps = (dataIndex: string): ColumnType<any> => ({
         filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }): React.ReactNode => {
             const params = { setSelectedKeys, selectedKeys, confirm, clearFilters, dataIndex };
-            return showRange ? filterRange(params) : filterSearch(params, columnTitle);
+            return showRange ? filterRange(params, filterOptions) : filterSearch(params, columnTitle);
         },
         filterIcon: () => (
             <ColumnFilterIcon />
