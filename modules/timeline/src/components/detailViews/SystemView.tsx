@@ -184,12 +184,16 @@ export const SystemView = observer((props: any) => {
 
 const TimeRangeInfo = observer((props: { session: Session }) => {
     const { session } = props;
+    const { t } = useTranslation('timeline');
     return (
         session.isTimeAnalysisMode && session.timeAnalysisRange
             ? <div className={'time-range-info'}>
-                Time filter:{' '}
+                {t('contextMenu.Time Filter')}
+                {': '}
                 <strong>{getDetailTimeDisplay(session.timeAnalysisRange[0])}</strong>
-                {' '}to{' '}
+                {' '}
+                {t('contextMenu.to')}
+                {' '}
                 <strong>{getDetailTimeDisplay(session.timeAnalysisRange[1])}</strong>
             </div>
             : <></>
