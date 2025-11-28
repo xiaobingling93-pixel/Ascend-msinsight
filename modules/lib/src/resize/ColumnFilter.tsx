@@ -63,9 +63,10 @@ const handleRange = (
     confirm: FilterDropdownProps['confirm'],
     dataIndex: string,
     setSelectedKeys?: (selectedKeys: string[]) => void,
+    filterOptions?: FilterOptions,
 ): void => {
-    const min = selectedKeys[0] === undefined ? '0' : String(selectedKeys[0]);
-    const max = selectedKeys[1] === undefined ? String(Number.MAX_SAFE_INTEGER) : String(selectedKeys[1]);
+    const min = selectedKeys[0] === undefined ? String(filterOptions?.min ?? 0) : String(selectedKeys[0]);
+    const max = selectedKeys[1] === undefined ? String(filterOptions?.max ?? Number.MAX_SAFE_INTEGER) : String(selectedKeys[1]);
     if (Number(min) > Number(max)) {
         message.error(i18n.t('buttonText:limitMinMax'));
         return;
@@ -136,7 +137,7 @@ const filterRange = (params: FilterProps, filterOptions?: FilterOptions) => {
             placeholder={i18n.t('buttonText:Min')}
             value={selectedKeys[0]}
             onChange={(value): void => { rangeChange(value, selectedKeys, setSelectedKeys, 0); }}
-            onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
+            onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys, filterOptions)}
             size="small" style={{ marginBottom: 8, marginRight: 8 }}
             min={filterOptions?.min ?? 0} max={filterOptions?.max ?? Number.MAX_SAFE_INTEGER}
             precision={filterOptions?.precision ?? 3}
@@ -146,7 +147,7 @@ const filterRange = (params: FilterProps, filterOptions?: FilterOptions) => {
             placeholder={i18n.t('buttonText:Max')}
             value={selectedKeys[1]}
             onChange={(value): void => { rangeChange(value, selectedKeys, setSelectedKeys, 1); }}
-            onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
+            onPressEnter={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys, filterOptions)}
             size="small" style={{ marginBottom: 8 }}
             min={filterOptions?.min ?? 0} max={filterOptions?.max ?? Number.MAX_SAFE_INTEGER}
             precision={filterOptions?.precision ?? 3}
@@ -154,7 +155,7 @@ const filterRange = (params: FilterProps, filterOptions?: FilterOptions) => {
         <ButtonGroup>
             <Button
                 type="primary"
-                onClick={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys)}
+                onClick={(): void => handleRange(selectedKeys as string[], confirm, dataIndex, setSelectedKeys, filterOptions)}
                 size="small" style={{ marginRight: 8 }}
             >{i18n.t('buttonText:Search')}</Button>
             <Button
