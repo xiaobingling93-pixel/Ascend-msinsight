@@ -3,7 +3,7 @@
  */
 #include <gtest/gtest.h>
 #include <string>
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "OpMemoryTable.h"
 using namespace Dic::Module::Memory;
 class OpMemoryTableTest : public ::testing::Test {};

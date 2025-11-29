@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include "QueryTableDataDetailHandler.h"
 #include "QueryTableDataNameListHandler.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "HandlerTest.cpp"
 
 TEST_F(HandlerTest, QueryTableDataDetailHandlerTestNormal)

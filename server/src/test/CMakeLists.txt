@@ -106,7 +106,6 @@ message(STATUS "MOCKCPP_INCLUDE_DIR: ${MOCKCPP_INCLUDE_DIR}")
 
 add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp
         FullDbTestSuit.cpp modules/timeline/handler/HandlerTest.cpp modules/timeline/protocol/ProtocolTest.cpp
-        modules/timeline/database/DatabaseTest.cpp
         ../../msinsight/include/utils/NumberSafeUtil.h
         utils/NumberSafeUtilTest.cpp)
 add_dependencies(insight_test mockcpp_build)

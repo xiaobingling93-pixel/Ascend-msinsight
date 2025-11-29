@@ -3,7 +3,7 @@
  */
 #include <gtest/gtest.h>
 #include <string>
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "TextMemoryDataBase.h"
 #include "MemoryTableView.h"
 #include "OperatorTable.h"

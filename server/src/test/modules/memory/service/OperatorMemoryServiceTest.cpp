@@ -3,7 +3,7 @@
  */
 #include <gtest/gtest.h>
 #include "OperatorMemoryService.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "OperatorTable.h"
 #include "OpMemoryTable.h"
 using namespace Dic::Module::Memory;

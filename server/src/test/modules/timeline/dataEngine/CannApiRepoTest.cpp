@@ -5,7 +5,7 @@
 #include "CannApiRepo_mock_data.h"
 #include "CannApiRepo.h"
 #include "TrackInfoManager.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "TableDefaultMock.h"
 using namespace Dic::TimeLine::CannApiRepo::Mock;
 using namespace Dic::TimeLine::Table::Default::Mock;

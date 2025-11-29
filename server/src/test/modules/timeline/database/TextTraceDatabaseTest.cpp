@@ -2,13 +2,12 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <gtest/gtest.h>
-#include "DatabaseTest.cpp"
 #include "TextTraceDatabase.h"
 
-class TextTraceDatabaseTest : public DatabaseTest {
+class TextTraceDatabaseTest : public testing::Test {
 };
 
-TEST_F(DatabaseTest, OpenDb)
+TEST_F(TextTraceDatabaseTest, OpenDb)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
@@ -19,7 +18,7 @@ TEST_F(DatabaseTest, OpenDb)
 /**
  * db路径有日志注入
  */
-TEST_F(DatabaseTest, TestOpenDbWithPathInject)
+TEST_F(TextTraceDatabaseTest, TestOpenDbWithPathInject)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Database database(sqlMutex);
@@ -31,7 +30,7 @@ TEST_F(DatabaseTest, TestOpenDbWithPathInject)
 /**
  * db路径超过最大限制
  */
-TEST_F(DatabaseTest, TestOpenDbWithPathLengthExceedLimit)
+TEST_F(TextTraceDatabaseTest, TestOpenDbWithPathLengthExceedLimit)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Database database(sqlMutex);
@@ -52,7 +51,7 @@ TEST_F(DatabaseTest, TestOpenDbWithPathLengthExceedLimit)
     database.CloseDb();
 }
 
-TEST_F(DatabaseTest, InitStmt)
+TEST_F(TextTraceDatabaseTest, InitStmt)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
@@ -60,7 +59,7 @@ TEST_F(DatabaseTest, InitStmt)
     EXPECT_EQ(success, false);
 }
 
-TEST_F(DatabaseTest, CreateTable)
+TEST_F(TextTraceDatabaseTest, CreateTable)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
@@ -72,7 +71,7 @@ TEST_F(DatabaseTest, CreateTable)
     EXPECT_EQ(success, true);
 }
 
-TEST_F(DatabaseTest, DropTable)
+TEST_F(TextTraceDatabaseTest, DropTable)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
@@ -80,7 +79,7 @@ TEST_F(DatabaseTest, DropTable)
     EXPECT_EQ(success, false);
 }
 
-TEST_F(DatabaseTest, CreateIndex)
+TEST_F(TextTraceDatabaseTest, CreateIndex)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
@@ -92,7 +91,7 @@ TEST_F(DatabaseTest, CreateIndex)
     EXPECT_EQ(success, true);
 }
 
-TEST_F(DatabaseTest, InsertSlice)
+TEST_F(TextTraceDatabaseTest, InsertSlice)
 {
     std::recursive_mutex sqlMutex;
     const int size = 1000;
@@ -106,7 +105,7 @@ TEST_F(DatabaseTest, InsertSlice)
 }
 
 
-TEST_F(DatabaseTest, InsertFlow)
+TEST_F(TextTraceDatabaseTest, InsertFlow)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
@@ -119,7 +118,7 @@ TEST_F(DatabaseTest, InsertFlow)
     EXPECT_EQ(success, true);
 }
 
-TEST_F(DatabaseTest, InsertCounter)
+TEST_F(TextTraceDatabaseTest, InsertCounter)
 {
     std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);

@@ -3,7 +3,7 @@
  */
 #include <gtest/gtest.h>
 #include "Database.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 using namespace Dic::Global::PROFILER::MockUtil;
 class DataBaseTest : public ::testing::Test {
 protected:

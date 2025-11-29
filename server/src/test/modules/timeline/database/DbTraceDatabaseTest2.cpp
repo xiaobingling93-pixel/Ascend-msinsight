@@ -2,49 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <gtest/gtest.h>
-#include "DatabaseTest.cpp"
 #include "DbTraceDataBase.h"
 #include "CollectionTimeService.h"
 #include "TraceDatabaseHelper.h"
 #include "NpuInfoRepoMock.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 using namespace Dic::Global::PROFILER::MockUtil;
-class DbDatabaseTest2 : public ::testing::Test {
+class DbTraceDatabaseTest2 : public ::testing::Test {
 protected:
-    const std::string taskTableSql = "CREATE TABLE TASK (startNs INTEGER,endNs INTEGER,deviceId INTEGER,connectionId "
-        "INTEGER,globalTaskId INTEGER,globalPid INTEGER,taskType INTEGER,contextId "
-        "INTEGER,streamId INTEGER,taskId INTEGER,modelId INTEGER, depth integer);";
-    const std::string commucationInfoSql =
-        "CREATE TABLE COMMUNICATION_TASK_INFO (name INTEGER,globalTaskId INTEGER,taskType INTEGER,planeId "
-        "INTEGER,groupName INTEGER,notifyId INTEGER,rdmaType INTEGER,srcRank INTEGER,dstRank INTEGER,transportType "
-        "INTEGER,size INTEGER,dataType INTEGER,linkType INTEGER,opId INTEGER);";
-    const std::string commucationOpSql =
-        "CREATE TABLE COMMUNICATION_OP (opName INTEGER,startNs INTEGER,endNs INTEGER,connectionId INTEGER,groupName "
-        "INTEGER,opId INTEGER PRIMARY KEY,relay INTEGER,retry INTEGER,dataType INTEGER,algType INTEGER,count "
-        "NUMERIC,opType INTEGER, waitNs INTEGER, opConnectionId TEXT);";
-    const std::string pytorchApiSql =
-        "CREATE TABLE PYTORCH_API (startNs TEXT, endNs TEXT, globalTid INTEGER, connectionId INTEGER, name INTEGER, "
-        "sequenceNumber INTEGER, fwdThreadId INTEGER, inputDtypes INTEGER, inputShapes INTEGER, callchainId INTEGER, "
-        "type INTEGER, depth integer);";
-    const std::string canSql = "CREATE TABLE CANN_API (startNs INTEGER,endNs INTEGER,type INTEGER,globalTid "
-        "INTEGER,connectionId INTEGER PRIMARY KEY,name INTEGER, depth integer);";
-    const std::string mstxSql = "CREATE TABLE MSTX_EVENTS (startNs INTEGER,endNs INTEGER,eventType INTEGER,rangeId "
-        "INTEGER,category INTEGER,message INTEGER,globalTid INTEGER,endGlobalTid "
-        "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
-    std::string osrtSql = "CREATE TABLE OSRT_API(name INTEGER, globalTid NUMERIC, startNs INTEGER, endNs INTEGER);";
-    const std::string enumApiType = "CREATE TABLE ENUM_API_TYPE (id INTEGER PRIMARY KEY,name TEXT);";
-    std::string computeSql =
-        "CREATE TABLE COMPUTE_TASK_INFO (name INTEGER,globalTaskId INTEGER PRIMARY KEY,blockDim INTEGER,mixBlockDim "
-        "INTEGER,taskType INTEGER,opType INTEGER,inputFormats INTEGER,inputDataTypes INTEGER,inputShapes "
-        "INTEGER,outputFormats INTEGER,outputDataTypes INTEGER,outputShapes INTEGER,attrInfo INTEGER, waitNs INTEGER);";
-    std::string stringIdsSql = "CREATE TABLE STRING_IDS (id INTEGER PRIMARY KEY,value TEXT);";
-    std::string overlap = "CREATE TABLE OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
-        "startNs integer, endNs integer, type integer);";
-    const std::string schedulerTable = "CREATE table COMMUNICATION_SCHEDULE_TASK_INFO("
-         "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, opType INTEGER);";
-    std::string AICoreFreq = "CREATE TABLE AICORE_FREQ (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
-        "startNs integer, endNs integer, type integer);";
-
     const std::string pytorchDataSql = "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", "
         "\"connectionId\", \"name\", \"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", "
         "\"callchainId\", \"depth\") VALUES ('1718180918997274130', '1718180918997289000', 8785587534247538, 0, "
@@ -82,7 +47,7 @@ public:
         metaVersion = version;
     }
 };
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenTaskNotExist)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenTaskNotExist)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -92,16 +57,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenTaskNotExist)
     EXPECT_EQ(metaData.size(), 0);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamTrackExist)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenStreamTrackExist)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_TASK,
+        TableName::DB_COMMUNICATION_TASK_INFO};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -127,15 +92,15 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamTrackExist)
     EXPECT_EQ(metaData[0]->children[0]->metaData.cardId, fileId);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithoutDomain)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithoutDomain)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_MSTX_EVENTS, TableName::DB_TASK};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -171,16 +136,15 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithoutDomain)
     EXPECT_EQ(metaData[first]->children[1]->metaData.cardId, fileId);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithDomain)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithDomain)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_MSTX_EVENTS, TableName::DB_TASK, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -222,14 +186,15 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithDomain)
 /**
  * 只存在task表不存在commucation相关表就一个泳道都没有
  */
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenTaskExistCommucationNotExist)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenTaskExistCommucationNotExist)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     const uint8_t expectProcessCount = 1;
@@ -240,17 +205,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenTaskExistCommucationNotExist)
 /**
  * 查询hccl的plane泳道
  */
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExist)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExist)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_TASK,
+        TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -293,17 +257,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExist)
 /**
  * 查询hccl的plane泳道(deviceId唯一)
  */
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenDeviceUnique)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenDeviceUnique)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_TASK,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -339,17 +302,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenDeviceUnique)
 /**
  * 过滤plane为4294967295的泳道
  */
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrong)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrong)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_TASK,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -391,17 +353,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrong)
  * 查询hccl的plane泳道
  * metaVersion 1.1.0
  */
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExistVersion_1_1_0)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExistVersion_1_1_0)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     database.SetMetaVersion("1.1.0");
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_TASK,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -449,17 +410,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExistVersion_1_1_0)
  * 过滤plane为4294967295的泳道
  * metaVersion 1.1.0
  */
-TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrongVersion_1_1_0)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrongVersion_1_1_0)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     database.SetMetaVersion("1.1.0");
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_TASK,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -504,18 +464,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrongVersion_1_1_0
 /**
  * 测试pytorch，cann，mstx都存在的情况下的泳道信息
  */
-TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
+TEST_F(DbTraceDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_PYTORCH_API, TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS,
+                                      TableName::DB_ENUM_API_TYPE, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchApiSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     DatabaseTestCaseMockUtil::InsertData(db, pytorchDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
@@ -550,17 +508,16 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
 /**
  * 测试cann，mstx都存在但pytorch不存在的情况下的泳道信息
  */
-TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack)
+TEST_F(DbTraceDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS,
+                                      TableName::DB_ENUM_API_TYPE, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, numeApiDataSql);
@@ -586,7 +543,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack
 }
 
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenDbNotOpen)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenDbNotOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -597,7 +554,7 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenDbNotOpen)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenSqlInject)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenSqlInject)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -612,16 +569,15 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenSqlInject)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHardware)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenHardware)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_COMPUTE_TASK_INFO, TableName::DB_STRING_IDS,
+                                      TableName::DB_COMMUNICATION_SCHEDULE_TASK_INFO};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
@@ -632,16 +588,15 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHardware)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHCCL)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenHCCL)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_STRING_IDS,
+                                      TableName::DB_COMMUNICATION_TASK_INFO};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
@@ -652,16 +607,15 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHCCL)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCommunication)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenCommunication)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_STRING_IDS,
+                                      TableName::DB_COMMUNICATION_TASK_INFO};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
@@ -672,15 +626,14 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCommunication)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCANN)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenCANN)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_CANN_API, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
@@ -691,15 +644,14 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCANN)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenPython)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenPython)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchApiSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_PYTORCH_API, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
@@ -710,14 +662,14 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenPython)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenOverlap)
+TEST_F(DbTraceDatabaseTest2, TestQuerySystemViewDataWhenOverlap)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_OVERLAP_ANALYSIS, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string overlapData = "INSERT INTO \"main\".\"OVERLAP_ANALYSIS\" (\"id\", \"deviceId\", \"startNs\", "
         "\"endNs\", \"type\") VALUES (5, 0, 1723510445657911820, 1723510445657974180, 1);";
     std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
@@ -741,7 +693,7 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenOverlap)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryFlowCategoryListWhenDbOpen)
+TEST_F(DbTraceDatabaseTest2, TestQueryFlowCategoryListWhenDbOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -758,7 +710,7 @@ TEST_F(DbDatabaseTest2, TestQueryFlowCategoryListWhenDbOpen)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryCommunicationStatisticsData)
+TEST_F(DbTraceDatabaseTest2, TestQueryCommunicationStatisticsData)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -768,16 +720,15 @@ TEST_F(DbDatabaseTest2, TestQueryCommunicationStatisticsData)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbOpen)
+TEST_F(DbTraceDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string opData =
         "INSERT INTO \"main\".\"COMMUNICATION_OP\" (\"opName\", \"startNs\", \"endNs\", \"connectionId\", "
         "\"groupName\", \"opId\", \"relay\", \"retry\", \"dataType\", \"algType\", \"count\", \"opType\", \"waitNs\") "
@@ -807,16 +758,15 @@ TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbOpen)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenUniqueDevice)
+TEST_F(DbTraceDatabaseTest2, TestQueryCommunicationKernelInfoWhenUniqueDevice)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string opData =
         "INSERT INTO \"main\".\"COMMUNICATION_OP\" (\"opName\", \"startNs\", \"endNs\", \"connectionId\", "
         "\"groupName\", \"opId\", \"relay\", \"retry\", \"dataType\", \"algType\", \"count\", \"opType\", \"waitNs\") "
@@ -846,7 +796,7 @@ TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenUniqueDevice)
     RestoreRepoFunc();
 }
 
-TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbNotOpen)
+TEST_F(DbTraceDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbNotOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -857,7 +807,7 @@ TEST_F(DbDatabaseTest2, TestQueryCommunicationKernelInfoWhenDbNotOpen)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryHostInfoWhenTableIsWrong)
+TEST_F(DbTraceDatabaseTest2, TestQueryHostInfoWhenTableIsWrong)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -873,7 +823,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostInfoWhenTableIsWrong)
     EXPECT_EQ(std::empty(result), true);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryHostInfoWhenTimeTableIsExist)
+TEST_F(DbTraceDatabaseTest2, TestQueryHostInfoWhenTimeTableIsExist)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -895,13 +845,14 @@ TEST_F(DbDatabaseTest2, TestQueryHostInfoWhenTimeTableIsExist)
     Dic::Module::FullDb::CollectionTimeService::Instance().Reset();
 }
 
-TEST_F(DbDatabaseTest2, TestQueryFwdBwdDataByFlowWhenTableNotRight)
+TEST_F(DbTraceDatabaseTest2, TestQueryFwdBwdDataByFlowWhenTableNotRight)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchApiSql);
+    const std::vector<TableName> list{TableName::DB_PYTORCH_API};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string connTable = "CREATE TABLE CONNECTION_IDS (id INTEGER, connectionId INTEGER);";
     std::string catTable = "CREATE TABLE connectionCats(connectionId INT,cat);";
     std::string apiTypeTable = "CREATE TABLE ENUM_API_TYPE (id INTEGER PRIMARY KEY,name TEXT);";
@@ -918,16 +869,16 @@ TEST_F(DbDatabaseTest2, TestQueryFwdBwdDataByFlowWhenTableNotRight)
     EXPECT_EQ(fwdBwdData.size(), 0);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryFwdBwdFromMstxSuccess)
+TEST_F(DbTraceDatabaseTest2, TestQueryFwdBwdFromMstxSuccess)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string mstxInfoSql = "CREATE TABLE StepTaskInfo (name TEXT, startNs INTEGER, endNs INTEGER, type INTEGER);";
     DatabaseTestCaseMockUtil::CreateTable(db, mstxInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     database.SetDbPtr(db);
     std::vector<Protocol::ThreadTraces> traceList;
     bool res = database.QueryFwdBwdFromMstx(traceList);
@@ -936,14 +887,14 @@ TEST_F(DbDatabaseTest2, TestQueryFwdBwdFromMstxSuccess)
     EXPECT_EQ(traceList.size(), expectSize);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryP2PCommunicationOpHaveConnectionIdSucceess)
+TEST_F(DbTraceDatabaseTest2, TestQueryP2PCommunicationOpHaveConnectionIdSucceess)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::vector<TableName> list{TableName::DB_COMMUNICATION_OP, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     std::vector<Protocol::ThreadTraces> traceList;
     bool res = database.QueryP2PCommunicationOpHaveConnectionId(traceList);
@@ -952,7 +903,7 @@ TEST_F(DbDatabaseTest2, TestQueryP2PCommunicationOpHaveConnectionIdSucceess)
     EXPECT_EQ(traceList.size(), expectSize);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryP2PCommunicationOpDataWhenDbNotOpen)
+TEST_F(DbTraceDatabaseTest2, TestQueryP2PCommunicationOpDataWhenDbNotOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -964,7 +915,7 @@ TEST_F(DbDatabaseTest2, TestQueryP2PCommunicationOpDataWhenDbNotOpen)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenDbNotOpen)
+TEST_F(DbTraceDatabaseTest2, TestQueryConnectionIdWhenDbNotOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -974,7 +925,7 @@ TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenDbNotOpen)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenHccl)
+TEST_F(DbTraceDatabaseTest2, TestQueryConnectionIdWhenHccl)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -985,7 +936,7 @@ TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenHccl)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenCann)
+TEST_F(DbTraceDatabaseTest2, TestQueryConnectionIdWhenCann)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -996,7 +947,7 @@ TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenCann)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenApi)
+TEST_F(DbTraceDatabaseTest2, TestQueryConnectionIdWhenApi)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1007,7 +958,7 @@ TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenApi)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenMstx)
+TEST_F(DbTraceDatabaseTest2, TestQueryConnectionIdWhenMstx)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1018,7 +969,7 @@ TEST_F(DbDatabaseTest2, TestQueryConnectionIdWhenMstx)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSoc)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenSoc)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1031,7 +982,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSoc)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenAcc)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenAcc)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1044,7 +995,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenAcc)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPU)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenNPU)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1057,13 +1008,14 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPU)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPUQuerySuccess)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenNPUQuerySuccess)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchApiSql);
+    const std::vector<TableName> list{TableName::DB_PYTORCH_API};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string stringTable = "CREATE TABLE STRING_IDS (id INTEGER, value VARCHAR);";
     std::string npuTable = "CREATE TABLE NPU_MEM (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,"
         "deviceId INTEGER);";
@@ -1094,7 +1046,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPUQuerySuccess)
     EXPECT_EQ(args, "{\"B\":28036571136}");
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenQOSQuerySuccess)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenQOSQuerySuccess)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1129,7 +1081,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenQOSQuerySuccess)
     EXPECT_EQ(args, "{\"Bandwidth(B/s)\":3611295744}");
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSimple)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenSimple)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1142,7 +1094,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSimple)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenRoce)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenRoce)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1155,7 +1107,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenRoce)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenRoH)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenRoH)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1168,7 +1120,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenRoH)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNIC)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenNIC)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1181,7 +1133,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNIC)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenHCCS)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenHCCS)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1194,7 +1146,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenHCCS)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenPCIE)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenPCIE)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1207,7 +1159,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenPCIE)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenAICORE)
+TEST_F(DbTraceDatabaseTest2, TestQueryUnitCounterWhenAICORE)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1220,7 +1172,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenAICORE)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryThreadsByPidWhenApi)
+TEST_F(DbTraceDatabaseTest2, TestQueryThreadsByPidWhenApi)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1234,7 +1186,7 @@ TEST_F(DbDatabaseTest2, TestQueryThreadsByPidWhenApi)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryThreadsByPidWhenOVERLAP)
+TEST_F(DbTraceDatabaseTest2, TestQueryThreadsByPidWhenOVERLAP)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1248,7 +1200,7 @@ TEST_F(DbDatabaseTest2, TestQueryThreadsByPidWhenOVERLAP)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryThreadsByPidWhenMstx)
+TEST_F(DbTraceDatabaseTest2, TestQueryThreadsByPidWhenMstx)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1262,7 +1214,7 @@ TEST_F(DbDatabaseTest2, TestQueryThreadsByPidWhenMstx)
         Dic::Module::DatabaseException);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenApi)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenApi)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1279,7 +1231,7 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenApi)
     EXPECT_EQ(res, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWare)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenHardWare)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1296,7 +1248,7 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWare)
     EXPECT_EQ(res, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWareAndTidIsNotEmpty)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenHardWareAndTidIsNotEmpty)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1314,14 +1266,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWareAndTidIsNotEmpty)
     EXPECT_EQ(res, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithoutMSTX)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4StreamWithoutMSTX)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    const std::vector<TableName> list{TableName::DB_TASK};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -1366,16 +1319,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithoutMSTX)
     ASSERT_EQ(body.eventDetailList.size(), 3); // 3
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithInvalidDomain)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithInvalidDomain)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_STRING_IDS, TableName::DB_MSTX_EVENTS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -1421,16 +1373,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithInvalidDomain)
     ASSERT_EQ(body.eventDetailList.size(), 1);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithValidDomain)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithValidDomain)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_STRING_IDS, TableName::DB_MSTX_EVENTS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string taskTableInsert =
         "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -1476,16 +1427,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithValidDomain)
     ASSERT_EQ(body.eventDetailList.size(), 1);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCann)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenCann)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_ENUM_API_TYPE, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string insertStringIdsSql = "INSERT INTO \"STRING_IDS\" (\"id\", \"value\") "
                                      "VALUES (5413, 'cann_test');";
     DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
@@ -1507,16 +1457,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCann)
     EXPECT_EQ(body.eventDetailList[0]->name, "cann_test");
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCannWithHccl)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenCannWithHccl)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_ENUM_API_TYPE, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string insertEnumSql = "INSERT INTO \"ENUM_API_TYPE\" (\"id\", \"name\") "
                                 "VALUES (20000, 'hccl');";
     std::string insertStringIdsSql = "INSERT INTO \"STRING_IDS\" (\"id\", \"value\") "
@@ -1541,17 +1490,16 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCannWithHccl)
     EXPECT_EQ(body.eventDetailList[0]->name, "cann_test");
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHccl)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenHccl)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string insertTaskSql = "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", "
                                 "\"globalTaskId\", \"globalPid\", \"taskType\", \"contextId\", \"streamId\", "
                                 "\"taskId\", \"modelId\", \"depth\") VALUES (1737098043298003143, "
@@ -1584,17 +1532,16 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHccl)
     EXPECT_EQ(body.eventDetailList[0]->name, "hcom_broadcast__559_0_1");
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHcclAndTidNotEmpty)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenHcclAndTidNotEmpty)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+                                      TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string insertTaskSql = "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", "
                                 "\"globalTaskId\", \"globalPid\", \"taskType\", \"contextId\", \"streamId\", "
                                 "\"taskId\", \"modelId\", \"depth\") VALUES (1737098043298003143, "
@@ -1628,7 +1575,7 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHcclAndTidNotEmpty)
     EXPECT_EQ(body.eventDetailList[0]->name, "hcom_broadcast__559_0_1");
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlap)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenOverlap)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1642,7 +1589,7 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlap)
     EXPECT_EQ(res, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlapAndTidNotEmpty)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenOverlapAndTidNotEmpty)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1660,7 +1607,7 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlapAndTidNotEmpty)
     EXPECT_EQ(res, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOther)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4PytorchWhenOther)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
@@ -1678,15 +1625,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOther)
     EXPECT_EQ(res, false);
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4MSTX)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4MSTX)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_MSTX_EVENTS, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string mstxTableInsert =
         "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
         "domainId, connectionId, depth) VALUES "
@@ -1711,15 +1658,15 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4MSTX)
     EXPECT_EQ(body.eventDetailList[0]->name, "start");
 }
 
-TEST_F(DbDatabaseTest2, TestQueryEventsView4OSRT)
+TEST_F(DbTraceDatabaseTest2, TestQueryEventsView4OSRT)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_OSRT_API, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, osrtSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string osrtTableInsert =
         "INSERT INTO OSRT_API (name, globalTid, startNs, endNs) VALUES "
         "(12, 4785999999999, 1000, 20000)";
@@ -1742,21 +1689,21 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4OSRT)
     EXPECT_EQ(body.eventDetailList[0]->name, "futex");
 }
 
-TEST_F(DbDatabaseTest2, TestIsValidGroupNameValueSuccess)
+TEST_F(DbTraceDatabaseTest2, TestIsValidGroupNameValueSuccess)
 {
     const std::string groupNameValue = "10.170.22.98%enp67s0f5_60000_0_1708156014257149";
     const bool res = Dic::Protocol::TraceDatabaseHelper::IsValidHCCLGroupNameValue(groupNameValue);
     EXPECT_EQ(res, true);
 }
 
-TEST_F(DbDatabaseTest2, TestIsValidGroupNameValueFail)
+TEST_F(DbTraceDatabaseTest2, TestIsValidGroupNameValueFail)
 {
     const std::string groupNameValue = "0";
     const bool res = Dic::Protocol::TraceDatabaseHelper::IsValidHCCLGroupNameValue(groupNameValue);
     EXPECT_EQ(res, false);
 }
 
-TEST_F(DbDatabaseTest2, TestGetHostPath)
+TEST_F(DbTraceDatabaseTest2, TestGetHostPath)
 {
 #ifdef _WIN32
     std::string filePath1 = R"(D:\GUI_TEST_DATA\32B\actor worker\ma-job_ascend_pt\ASCEND_PROFILER_OUTPUT\a.db)";
@@ -1785,15 +1732,15 @@ TEST_F(DbDatabaseTest2, TestGetHostPath)
     EXPECT_EQ(result4, "");
 }
 
-TEST_F(DbDatabaseTest2, TestBuildOverlapInfoListWithFreeTimeAfterComputingAndCommunication)
+TEST_F(DbTraceDatabaseTest2, TestBuildOverlapInfoListWithFreeTimeAfterComputingAndCommunication)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     std::string taskTableInsert =
         "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
         "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "

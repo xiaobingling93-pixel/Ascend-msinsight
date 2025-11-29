@@ -6,7 +6,7 @@
 #include "WsSessionManager.h"
 #include "OperatorMemoryService.h"
 #include "RenderEngine.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "ServerLog.h"
 #include "FindSliceByAllocationTimeHandler.h"
 

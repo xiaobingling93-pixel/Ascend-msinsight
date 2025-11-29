@@ -1,9 +1,14 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2025. All rights reserved.
  */
+
+#ifndef PROFILER_SERVER_DATABASETESTCASEMOCKUTIL_H
+#define PROFILER_SERVER_DATABASETESTCASEMOCKUTIL_H
+
 #include <iostream>
 #include <sqlite3.h>
 #include <string>
+#include "DatabaseTestConst.h"
 namespace Dic::Global::PROFILER::MockUtil {
 class DatabaseTestCaseMockUtil {
 public:
@@ -22,8 +27,16 @@ public:
         int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, nullptr);
         if (rc != SQLITE_OK) {
             std::cout << "Create table is failed" << std::endl;
-            sqlite3_free(nullptr);
             sqlite3_close(db);
+        }
+    }
+
+    static void CreateTablesFromList(sqlite3 *&db, const std::vector<TableName> &list)
+    {
+        for (const auto &item : list) {
+            if (CREATE_TABLE_SQL_MAP.find(item) != CREATE_TABLE_SQL_MAP.end()) {
+                CreateTable(db, CREATE_TABLE_SQL_MAP.at(item));
+            }
         }
     }
 
@@ -55,3 +68,5 @@ public:
     }
 };
 }
+
+#endif // PROFILER_SERVER_DATABASETESTCASEMOCKUTIL_H

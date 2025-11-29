@@ -6,7 +6,7 @@
 #include "TextTraceDatabase.h"
 #include "../../../defaultMock/MockFileReader.h"
 #include "EventParser.h"
-#include "../../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../../DatabaseTestCaseMockUtil.h"
 #include "SliceTable.h"
 #include "ParserStatusManager.h"
 #include "SimulationSliceCacheManager.h"

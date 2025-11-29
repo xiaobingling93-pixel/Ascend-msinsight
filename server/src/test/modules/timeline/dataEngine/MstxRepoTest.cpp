@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include "MstxRepo.h"
 #include "TrackInfoManager.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "TableDefaultMock.h"
 using namespace Dic::Module::Timeline;
 using namespace Dic::TimeLine::Table::Default::Mock;

@@ -5,7 +5,7 @@
 #include "OverlapAnsRepo.h"
 #include "TrackInfoManager.h"
 #include "DataBaseManager.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 using namespace Dic::Module::Timeline;
 using namespace Dic::Global::PROFILER::MockUtil;
 

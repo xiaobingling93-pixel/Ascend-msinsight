@@ -8,7 +8,7 @@
 #include "NpuInfoRepoMock.h"
 #include "TraceDatabaseHelper.h"
 #include "TrackInfoManager.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 using namespace Dic::Global::PROFILER::MockUtil;
 using namespace Dic::Module::Timeline;
 class DbTraceDatabaseTest : public ::testing::Test {
@@ -23,49 +23,6 @@ protected:
             InitStringsCache();
         }
     };
-    std::string pytorchSql = "CREATE TABLE PYTORCH_API (startNs TEXT, endNs TEXT, globalTid INTEGER, connectionId "
-        "INTEGER, name INTEGER, sequenceNumber INTEGER, fwdThreadId INTEGER, inputDtypes INTEGER, "
-        "inputShapes INTEGER, callchainId INTEGER, type INTEGER, depth integer);";
-    std::string stringIdsSql = "CREATE TABLE STRING_IDS (id INTEGER PRIMARY KEY,value TEXT);";
-    std::string computeSql =
-        "CREATE TABLE COMPUTE_TASK_INFO (name INTEGER,globalTaskId INTEGER PRIMARY KEY,blockDim INTEGER,mixBlockDim "
-        "INTEGER,taskType INTEGER,opType INTEGER,inputFormats INTEGER,inputDataTypes INTEGER,inputShapes "
-        "INTEGER,outputFormats INTEGER,outputDataTypes INTEGER,outputShapes INTEGER,attrInfo INTEGER, waitNs INTEGER);";
-    std::string taskSql = "CREATE TABLE TASK (startNs INTEGER,endNs INTEGER,deviceId INTEGER,connectionId "
-        "INTEGER,globalTaskId INTEGER,globalPid INTEGER,taskType INTEGER,contextId INTEGER,streamId "
-        "INTEGER,taskId INTEGER,modelId INTEGER, depth integer);";
-    std::string schedulerTable = "CREATE table COMMUNICATION_SCHEDULE_TASK_INFO("
-         "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, opType INTEGER);";
-    std::string comcaInfoSql =
-        "CREATE TABLE COMMUNICATION_TASK_INFO (name INTEGER,globalTaskId INTEGER,taskType INTEGER,planeId "
-        "INTEGER,groupName INTEGER,notifyId INTEGER,rdmaType INTEGER,srcRank INTEGER,dstRank INTEGER,transportType "
-        "INTEGER,size INTEGER,dataType INTEGER,linkType INTEGER,opId INTEGER);";
-    std::string comcaOpSql = "CREATE TABLE COMMUNICATION_OP (opName INTEGER,startNs INTEGER,endNs INTEGER,connectionId "
-        "INTEGER,groupName INTEGER,opId INTEGER PRIMARY KEY,relay INTEGER,retry INTEGER,dataType "
-        "INTEGER,algType INTEGER,count NUMERIC,opType INTEGER, waitNs INTEGER);";
-    std::string cannSql = "CREATE TABLE CANN_API (startNs INTEGER,endNs INTEGER,type INTEGER,globalTid "
-        "INTEGER,connectionId INTEGER PRIMARY KEY,name INTEGER, depth integer);";
-    std::string connectionCatSql = "CREATE TABLE connectionCats(connectionId INT,cat);";
-    std::string connectIds = "CREATE TABLE CONNECTION_IDS (id INTEGER, connectionId INTEGER);";
-    std::string mstxSql = "CREATE TABLE MSTX_EVENTS (startNs INTEGER,endNs INTEGER,eventType INTEGER,rangeId "
-        "INTEGER,category INTEGER,message INTEGER,globalTid INTEGER,endGlobalTid "
-        "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
-    std::string osrtSql = "CREATE TABLE OSRT_API(name INTEGER, globalTid NUMERIC, startNs INTEGER, endNs INTEGER);";
-    std::string overlap = "CREATE TABLE OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
-        "startNs integer, endNs integer, type integer);";
-    std::string npuInfoSql = "CREATE TABLE NPU_INFO(id INTEGER, name TEXT);";
-    std::string accPmuSql = "CREATE TABLE ACC_PMU (accId INTEGER,readBwLevel INTEGER,writeBwLevel INTEGER,readOstLevel "
-        "INTEGER,writeOstLevel INTEGER,timestampNs NUMERIC,deviceId INTEGER);";
-    std::string socSql = "CREATE TABLE SOC_BANDWIDTH_LEVEL (l2BufferBwLevel INTEGER,mataBwLevel INTEGER,timestampNs "
-        "NUMERIC,deviceId INTEGER);";
-    std::string menSql =
-        "CREATE TABLE NPU_MEM (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,deviceId INTEGER);";
-    std::string hccsSql =
-        "CREATE TABLE HCCS (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,deviceId INTEGER);";
-    std::string pcieSql =
-        "CREATE TABLE PCIE (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,deviceId INTEGER);";
-    std::string aiCoreSql =
-        "CREATE TABLE AICORE_FREQ (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,deviceId INTEGER);";
 
     std::string taskIncludingMSTXInsert1 =
         "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
@@ -349,8 +306,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryAffinityOptimizerWhenTableExist)
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_PYTORCH_API};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string pyData =
         "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
         "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"type\", \"depth\") "
@@ -376,7 +334,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryAffinityOptimizerWhenTableNotExist)
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_PYTORCH_API};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::KernelDetailsParams params;
     params.orderBy = "name";
@@ -406,9 +366,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryAICpuOpCanBeOptimizedWhenDbOpen)
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_TASK, TableName::DB_COMPUTE_TASK_INFO};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string comData = "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", "
         "\"mixBlockDim\", \"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", "
         "\"inputShapes\", \"outputFormats\", \"outputDataTypes\", \"outputShapes\", \"attrInfo\", "
@@ -472,9 +432,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_TASK, TableName::DB_COMPUTE_TASK_INFO};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
@@ -494,16 +453,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_COMPUTE_TASK_INFO,
+        TableName::DB_COMMUNICATION_SCHEDULE_TASK_INFO, TableName::DB_TASK, TableName::DB_CANN_API,
+        TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_COMMUNICATION_OP, TableName::DB_PYTORCH_API,
+        TableName::DB_MSTX_EVENTS, TableName::DB_OVERLAP_ANALYSIS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string taskData =
         "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") "
@@ -542,16 +496,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenHavingDeviceM
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_COMPUTE_TASK_INFO,
+        TableName::DB_COMMUNICATION_SCHEDULE_TASK_INFO, TableName::DB_TASK, TableName::DB_CANN_API,
+        TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_COMMUNICATION_OP, TableName::DB_PYTORCH_API,
+        TableName::DB_MSTX_EVENTS, TableName::DB_OVERLAP_ANALYSIS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     DatabaseTestCaseMockUtil::InsertData(db, taskIncludingMSTXInsert1);
     DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert1);
     DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert1);
@@ -584,16 +533,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_COMPUTE_TASK_INFO,
+        TableName::DB_COMMUNICATION_SCHEDULE_TASK_INFO, TableName::DB_TASK, TableName::DB_CANN_API,
+        TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_COMMUNICATION_OP, TableName::DB_PYTORCH_API,
+        TableName::DB_MSTX_EVENTS, TableName::DB_OVERLAP_ANALYSIS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.rankId = "";
@@ -619,16 +563,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenMstx)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_COMPUTE_TASK_INFO,
+        TableName::DB_COMMUNICATION_SCHEDULE_TASK_INFO, TableName::DB_TASK, TableName::DB_CANN_API,
+        TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_COMMUNICATION_OP, TableName::DB_PYTORCH_API,
+        TableName::DB_MSTX_EVENTS, TableName::DB_OVERLAP_ANALYSIS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     requestParams.rankId = "";
@@ -654,16 +593,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_COMPUTE_TASK_INFO,
+        TableName::DB_COMMUNICATION_SCHEDULE_TASK_INFO, TableName::DB_TASK, TableName::DB_CANN_API,
+        TableName::DB_COMMUNICATION_TASK_INFO, TableName::DB_COMMUNICATION_OP, TableName::DB_PYTORCH_API,
+        TableName::DB_MSTX_EVENTS, TableName::DB_OVERLAP_ANALYSIS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string pyData =
         "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
         "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"type\", \"depth\") "
@@ -702,8 +636,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenOsrt)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, osrtSql);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_OSRT_API};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string osrtData =
         "INSERT INTO OSRT_API (name, globalTid, startNs, endNs) VALUES (100, 324875, 199, 2540);";
     std::string stringIdsData = "INSERT INTO STRING_IDS (id, value) VALUES (100, 'add');";
@@ -753,9 +687,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryAclnnOpCountExceedThresholdWhenDbOpen)
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string comData = "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", "
         "\"mixBlockDim\", \"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", "
         "\"inputShapes\", \"outputFormats\", \"outputDataTypes\", \"outputShapes\", \"attrInfo\", "
@@ -797,9 +731,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryFuseableOpDataWhenDbOpen)
     bool result0 = database.QueryFuseableOpData(params, rule, data, minTimestamp);
     EXPECT_EQ(result0, false);
     sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string comData = "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", "
         "\"mixBlockDim\", \"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", "
         "\"inputShapes\", \"outputFormats\", \"outputDataTypes\", \"outputShapes\", \"attrInfo\", "
@@ -830,8 +764,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryAffinityAPIDataWhenDbOpen)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    const std::vector<TableName> list{TableName::DB_STRING_IDS, TableName::DB_PYTORCH_API};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     std::string pyData =
         "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
         "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"type\", \"depth\") "
@@ -869,12 +803,9 @@ TEST_F(DbTraceDatabaseTest, TestGetCounterUnitsAndDataTypesWhenACCPMU)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, accPmuSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, socSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, menSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, hccsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pcieSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, aiCoreSql);
+    const std::vector<TableName> list{TableName::DB_ACC_PMU, TableName::DB_SOC_BANDWIDTH_LEVEL, TableName::DB_NPU_MEM,
+        TableName::DB_HCCS, TableName::DB_PCIE, TableName::DB_AICORE_FREQ};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     database.SetDbPtr(db);
     const std::string fileId = "ll";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
@@ -905,14 +836,10 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsOneThenReturnFal
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectionCatSql);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     const std::string connectIdCatData =
         "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
     const std::string cannApiData =
@@ -937,14 +864,10 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsTwoThenReturnTru
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectionCatSql);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     const std::string connectIdCatData =
         "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
     const std::string cannApiData =
@@ -985,14 +908,10 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenDeviceUniqueThenReturnTrue)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectionCatSql);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     const std::string connectIdCatData =
         "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
     const std::string cannApiData =
@@ -1035,14 +954,10 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenRankIdAndDeviceIdNotSame)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectionCatSql);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     const std::string connectIdCatData =
         "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
     const std::string cannApiData =
@@ -1087,13 +1002,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToCANNToAscendHardware)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
-    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, npuInfoSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     const std::string connectIdsData =
         "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
     const std::string cannApiData =

@@ -8,7 +8,7 @@
 #include "TrackInfoManager.h"
 #include "DeviceFlowRepo.h"
 #include "CommucationOpTable.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 using namespace Dic::Global::PROFILER::MockUtil;
 using namespace Dic::Module::FullDb;
 class DeviceFlowRepoTest : public DeviceFlowRepo, public ::testing::Test {

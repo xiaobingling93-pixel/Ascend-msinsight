@@ -5,7 +5,7 @@
 #include "HcclRepo_mock_data.h"
 #include "CommucationOpTable.h"
 #include "HcclRepo.h"
-#include "../../../DatabaseTestCaseMockUtil.cpp"
+#include "../../../DatabaseTestCaseMockUtil.h"
 #include "EnumHcclDataTypeTable.h"
 #include "TableDefaultMock.h"
 #include "MetaDataCacheManager.h"
