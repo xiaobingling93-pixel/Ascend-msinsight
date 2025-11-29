@@ -53,7 +53,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
     // add response to response queue in session
-    SendResponse(std::move(responsePtr), true);
+    SendImportActionRes(std::move(responsePtr));
     std::for_each(projectInfos.begin(), projectInfos.end(), [](const auto& project) {
         if (!Global::ProjectExplorerManager::Instance().UpdateParseFileInfo(project.projectName,
                                                                             project.subParseFileInfo)) {

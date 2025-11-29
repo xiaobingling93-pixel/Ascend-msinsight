@@ -41,7 +41,7 @@ void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     }
     response.body.isIE = true;
     ModuleRequestHandler::SetResponseResult(response, true);
-    SendResponse(std::move(responsePtr), true);
+    SendImportActionRes(std::move(responsePtr));
     servitizationOpenApi->Parse(rankListMap);
     ParserTraceData(rankListMap);
 }

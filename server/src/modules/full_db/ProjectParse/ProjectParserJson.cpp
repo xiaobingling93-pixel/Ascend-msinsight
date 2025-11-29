@@ -53,7 +53,7 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
         response.body.isSimulation = true;
         auto [hasTraceJson, hasMemoryData, hasOperatorData] = CheckHasTraceJsonMemoryDataOperatorData(projectInfos);
         response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData;
-        SendResponse(std::move(responsePtr), true);
+        SendImportActionRes(std::move(responsePtr));
         for (const auto &rankEntry : rankListMap) {
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second.parseFileList,
                                                                   rankEntry.first,
@@ -73,7 +73,7 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
     auto [hasTraceJson, hasMemoryData, hasOperatorData] = CheckHasTraceJsonMemoryDataOperatorData(projectInfos);
     response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData && !isCluster;
     ModuleRequestHandler::SetResponseResult(response, true);
-    SendResponse(std::move(responsePtr), true);
+    SendImportActionRes(std::move(responsePtr));
     std::for_each(projectInfos.begin(), projectInfos.end(), [](const auto& project) {
         if (!Global::ProjectExplorerManager::Instance().UpdateParseFileInfo(project.projectName,
                                                                             project.subParseFileInfo)) {

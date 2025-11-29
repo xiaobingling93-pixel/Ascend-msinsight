@@ -595,5 +595,16 @@ std::set<std::string> ProjectParserBase::ParseDeviceIdSetFromDb(const std::strin
     return deviceId;
 }
 
+void ProjectParserBase::SendImportActionRes(std::unique_ptr<ImportActionResponse> responsePtr)
+{
+    std::sort(responsePtr->body.result.begin(), responsePtr->body.result.end(), [](const Action& a, const Action& b) {
+        if (a.cardName.size() != b.cardName.size())
+            return a.cardName.size() < b.cardName.size();
+
+        return a.cardName < b.cardName;
+    });
+    SendResponse(std::move(responsePtr), true);
+}
+
 ProjectAnalyzeRegister<ProjectParserBase> pReg(ParserType::OTHER);
 }

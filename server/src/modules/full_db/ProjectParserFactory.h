@@ -34,7 +34,7 @@ public:
         response.moduleName  = MODULE_TIMELINE;
         response.body.reset = false;
         ModuleRequestHandler::SetResponseResult(response, true);
-        SendResponse(std::move(responsePtr), true);
+        SendImportActionRes(std::move(responsePtr));
     };
     virtual void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
         Global::BaselineInfo &baselineInfo)
@@ -120,6 +120,7 @@ protected:
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 
     static bool IsMindFormsRankData(const std::vector<std::string>& parentFolders);
+    void SendImportActionRes(std::unique_ptr<ImportActionResponse> responsePtr);
 };
 
 class ParserFactory {

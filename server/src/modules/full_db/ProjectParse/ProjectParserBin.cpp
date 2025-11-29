@@ -27,7 +27,7 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
     if (std::empty(projectInfos)) {
         SendParseFailEvent("", "", "Project explorer info is not existed.");
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
-        SendResponse(std::move(responsePtr), true);
+        SendImportActionRes(std::move(responsePtr));
         return;
     }
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
@@ -60,7 +60,7 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
         HandleCompute(response, selectedFolder);
         Timeline::TraceTime::Instance().SetIsSimulation(true);
         SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
-        SendResponse(std::move(responsePtr), true);
+        SendImportActionRes(std::move(responsePtr));
     } else {
         if (!errorMessage.empty()) {
             Dic::Protocol::SendReadFileFailEvent(selectedFolder, errorMessage);
@@ -69,7 +69,7 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
         }
 
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
-        SendResponse(std::move(responsePtr), true);
+        SendImportActionRes(std::move(responsePtr));
     }
 }
 
