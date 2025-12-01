@@ -50,7 +50,7 @@
       "Free time = The time on the NPU when it is neither computing nor communicating; Preparing Time is not included in this",
       "Total Time = Computing(Not Overlapped) + Computing_Communication Overlapped + Communication(Not Overlapped) + Free",
       "Total Computing Ratio = Computing / Total Time",
-      "Communication Ratio = Communication(Not Overlapped) / Total Time"
+      "Communication Ratio = Communication / Total Time = (Communication(Not Overlapped) + Computing_Communication Overlapped) / Total Time"
     ],
     "Computation/CommunicationDescribeWithPreparing": [
       "Total Computing = Sum of kernel time on NPU",
@@ -59,7 +59,7 @@
       "Free time = The time on the NPU when it is neither computing nor communicating; Preparing Time is not included in this",
       "Total Time = Preparing + Computing(Not Overlapped) + Computing_Communication Overlapped + Communication(Not Overlapped) + Free",
       "Total Computing Ratio = Computing / Total Time",
-      "Communication Ratio = Communication(Not Overlapped) / Total Time"
+      "Communication Ratio = Communication / Total Time = (Communication(Not Overlapped) + Computing_Communication Overlapped) / Total Time"
     ],
     "Computation/CommunicationLastDescribe": "Click Bar Chart Display The Single Rank Computation / Communication Detail",
     "Index": "Index",
