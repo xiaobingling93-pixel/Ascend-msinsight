@@ -122,39 +122,39 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> &data
     size_t durationIndex = dataMap[DURATION];
     size_t deviceIndex = dataMap.count(Dic::DEVICE_ID) ? dataMap[DEVICE] : dataMap[DEVICETYPE];
     anOperator.name = row[nameIndex];
-    anOperator.size = NumberUtil::StringToDouble(row[sizeIndex]);
+    anOperator.size = NumberUtil::StringToDouble(row[sizeIndex], true);
     anOperator.allocationTime = NumberUtil::TimestampUsToNs(
-        NumberUtil::StringToLongDouble(row[allocationTimeIndex]));
-    anOperator.duration = NumberUtil::StringToDouble(row[durationIndex]);
+        NumberUtil::StringToLongDouble(row[allocationTimeIndex], true));
+    anOperator.duration = NumberUtil::StringToDouble(row[durationIndex], true);
     anOperator.deviceType = DeleteNPUPrefix(row[deviceIndex]);
 
     if (dataMap.count(RELEASE_TIME)) {
         size_t releaseTimeIndex = dataMap[RELEASE_TIME];
         anOperator.releaseTime = NumberUtil::TimestampUsToNs(
-            NumberUtil::StringToLongDouble(row[releaseTimeIndex]));
+            NumberUtil::StringToLongDouble(row[releaseTimeIndex], true));
     } else {
         anOperator.releaseTime = NumberUtil::TimestampUsToNs(
-            NumberUtil::StringToLongDouble(row[allocationTimeIndex]) + anOperator.duration);
+            NumberUtil::StringToLongDouble(row[allocationTimeIndex], true) + anOperator.duration);
     }
 
     if (dataMap.find(ALLOCATION_ACTIVE_MB) != dataMap.end()) {
-        anOperator.activeDuration = NumberUtil::StringToDouble(row[dataMap[ACTIVE_DURATION]]);
+        anOperator.activeDuration = NumberUtil::StringToDouble(row[dataMap[ACTIVE_DURATION]], true);
         anOperator.activeReleaseTime = NumberUtil::TimestampUsToNs(
-            NumberUtil::StringToLongDouble(row[dataMap[ACTIVE_RELEASE_TIME]]));
-        anOperator.allocationActive = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ACTIVE_MB]]);
-        anOperator.releaseActive = NumberUtil::StringToDouble(row[dataMap[RELEASE_ACTIVE_MB]]);
+            NumberUtil::StringToLongDouble(row[dataMap[ACTIVE_RELEASE_TIME]], true));
+        anOperator.allocationActive = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ACTIVE_MB]], true);
+        anOperator.releaseActive = NumberUtil::StringToDouble(row[dataMap[RELEASE_ACTIVE_MB]], true);
         anOperator.streamId = row[dataMap[STREAM_PTR]];
     }
     if (dataMap.find(ALLOCATION_ALLOCATED_KB) != dataMap.end()) {
-        anOperator.allocationAllocated = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ALLOCATED_KB]]) / KB_TO_MB;
-        anOperator.allocationReserved = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_RESERVED_KB]]) / KB_TO_MB;
-        anOperator.releaseAllocated = NumberUtil::StringToDouble(row[dataMap[RELEASE_ALLOCATED_KB]]) / KB_TO_MB;
-        anOperator.releaseReserved = NumberUtil::StringToDouble(row[dataMap[RELEASE_RESERVED_KB]]) / KB_TO_MB;
+        anOperator.allocationAllocated = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ALLOCATED_KB]], true) / KB_TO_MB;
+        anOperator.allocationReserved = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_RESERVED_KB]], true) / KB_TO_MB;
+        anOperator.releaseAllocated = NumberUtil::StringToDouble(row[dataMap[RELEASE_ALLOCATED_KB]], true) / KB_TO_MB;
+        anOperator.releaseReserved = NumberUtil::StringToDouble(row[dataMap[RELEASE_RESERVED_KB]], true) / KB_TO_MB;
     } else {
-        anOperator.allocationAllocated = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ALLOCATED_MB]]);
-        anOperator.allocationReserved = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_RESERVED_MB]]);
-        anOperator.releaseAllocated = NumberUtil::StringToDouble(row[dataMap[RELEASE_ALLOCATED_MB]]);
-        anOperator.releaseReserved = NumberUtil::StringToDouble(row[dataMap[RELEASE_RESERVED_MB]]);
+        anOperator.allocationAllocated = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ALLOCATED_MB]], true);
+        anOperator.allocationReserved = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_RESERVED_MB]], true);
+        anOperator.releaseAllocated = NumberUtil::StringToDouble(row[dataMap[RELEASE_ALLOCATED_MB]], true);
+        anOperator.releaseReserved = NumberUtil::StringToDouble(row[dataMap[RELEASE_RESERVED_MB]], true);
     }
 
     return anOperator;
@@ -166,25 +166,25 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
     size_t nameIndex = dataMap[COMPONENT];
     size_t timeStampIndex = dataMap[TIMESTAMP];
     record.component = row[nameIndex];
-    record.timesTamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timeStampIndex]));
+    record.timesTamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timeStampIndex], true));
     // msprof场景
     if (dataMap.count(Dic::DEVICE_ID)) {
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_KB];
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_KB];
         size_t deviceTypeIndex = dataMap[DEVICE];
-        record.totalAllocated = NumberUtil::StringToDouble(row[totalAllocatedIndex]) / KB_TO_MB;
-        record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]) / KB_TO_MB;
+        record.totalAllocated = NumberUtil::StringToDouble(row[totalAllocatedIndex], true) / KB_TO_MB;
+        record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex], true) / KB_TO_MB;
         record.totalActivated = dataMap.count(TOTAL_ACTIVE_KB) == 0 ?
-                0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_KB]]) / KB_TO_MB;
+                0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_KB]], true) / KB_TO_MB;
         record.deviceType = DeleteNPUPrefix(row[deviceTypeIndex]);
     } else {
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_MB];
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
         size_t deviceTypeIndex = dataMap[DEVICETYPE];
-        record.totalAllocated = NumberUtil::StringToDouble(row[totalAllocatedIndex]);
-        record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
+        record.totalAllocated = NumberUtil::StringToDouble(row[totalAllocatedIndex], true);
+        record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex], true);
         record.totalActivated = dataMap.count(TOTAL_ACTIVE_MB) == 0 ?
-                0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_MB]]);
+                0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_MB]], true);
         record.deviceType = DeleteNPUPrefix(row[deviceTypeIndex]);
     }
     if (dataMap.find(STREAM_PTR) != dataMap.end()) {
@@ -210,7 +210,7 @@ StaticOp MemoryParse::mapperToStaticOpDetail(std::map<std::string, size_t> dataM
     size_t size = dataMap[SIZE_KB];
     staticOp.nodeIndexStart = NumberUtil::StringToLongLong(row[nodeIndexStart]);
     staticOp.nodeIndexEnd = NumberUtil::StringToLongLong(row[nodeIndexEnd]);
-    staticOp.size = NumberUtil::StringToDouble(row[size]);
+    staticOp.size = NumberUtil::StringToDouble(row[size], true);
 
     return staticOp;
 }
@@ -222,14 +222,14 @@ Component MemoryParse::mapperToComponentDetail(std::map<std::string, size_t> dat
     size_t timestampIndex = dataMap[TIMESTAMP];
     size_t deviceIndex = dataMap[DEVICE];
     component.component = row[componentIndex];
-    component.timestamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timestampIndex]));
+    component.timestamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timestampIndex], true));
     component.device = DeleteNPUPrefix(row[deviceIndex]);
     if (dataMap.find(TOTAL_RESERVED_MB) != dataMap.end()) {
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
-        component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
+        component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex], true);
     } else {
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_KB];
-        component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]) / mbToKb;
+        component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex], true) / mbToKb;
     }
 
     return component;

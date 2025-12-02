@@ -98,7 +98,7 @@ TEST_F(TestSuit, QueryMemoryOperatorWithTime)
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    bool result = database->QueryOperatorDetail(requestParams, responseBody);
+    int64_t result = database->QueryOperatorDetail(requestParams, responseBody);
     int expectSize = 28;
     EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);

@@ -234,25 +234,54 @@ public:
         }
     }
 
-    static inline double StringToDouble(const std::string& usStr)
+    /***
+     * 用于预处理数字字符串，找到头尾第一个数字字符并剪裁
+     * @attention：该方法无法处理数字字符中夹杂非法数字字符场景！如"123a.456"无法被处理
+     * @param numericStr 待预处理字符串
+     * @return 预处理后字符串
+     */
+    static inline std::string TrimNumericString(const std::string &numericStr)
+    {
+        if (numericStr.empty()) {
+            return "0";
+        }
+        size_t totalSize = numericStr.size();
+        size_t start = 0;
+        while (start < totalSize && (numericStr[start] - '0' < 0 || numericStr[start] - '0' > 9)) {
+            if (numericStr[start] == '-' || numericStr[start] == '+') {
+                break;
+            }
+            start++;
+        }
+        if (start >= totalSize) {
+            return "0";
+        }
+        size_t end = totalSize;
+        while (end > start && (numericStr[end - 1] - '0' < 0 || numericStr[end - 1] - '0' > 9)) {
+            end--;
+        }
+        return numericStr.substr(start, end - start);
+    }
+
+    static inline double StringToDouble(const std::string& usStr, bool trim = false)
     {
         if (usStr.empty()) {
             return 0;
         }
         try {
-            return std::stod(usStr);
+            return std::stod(trim ? TrimNumericString(usStr) : usStr);
         } catch (std::exception &) {
             return 0;
         }
     }
 
-    static inline long double StringToLongDouble(const std::string& usStr)
+    static inline long double StringToLongDouble(const std::string& usStr, bool trim = false)
     {
         if (usStr.empty()) {
             return 0;
         }
         try {
-            return std::stold(usStr);
+            return std::stold(trim ? TrimNumericString(usStr) : usStr);
         } catch (std::invalid_argument& e) {
             Server::ServerLog::Error("Value out of range: ", e.what());
             return 0;

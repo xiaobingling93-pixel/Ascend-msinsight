@@ -291,6 +291,22 @@ TEST(NumberUtil, TruncateNumberString)
     }
 }
 
+TEST(NumberUtil, TrimNumericString)
+{
+    std::unordered_map<std::string, std::string> testMap = {
+        {"\"123.456\t\"", "123.456"},
+        {"\t\"-123.987\t\"", "-123.987"},
+        {"0.000\t\n", "0.000"},
+        {"", "0"},
+        {"\t", "0"},
+        {"\t\t", "0"},
+    };
+
+    for (auto &testItem: testMap) {
+        EXPECT_EQ(NumberUtil::TrimNumericString(testItem.first), testItem.second);
+    }
+}
+
 TEST(NumberUtil, TimestampUsToNsStableReturnValid) {
     EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNsStable("1695297849996490.053011100000"));
     EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNsStable("1695297849996490.0535"));
