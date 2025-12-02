@@ -3,4 +3,5 @@
  */
 export * from './ColumnFilter';
 export { ResizeTable } from './ResizeTable';
+export type { ResizeTableRef } from './ResizeTable';
 export * from './Resizor';

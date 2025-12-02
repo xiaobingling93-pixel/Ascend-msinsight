@@ -1,10 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
+import React, { cloneElement, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { type PaginationProps, Table } from 'antd';
-import type { ColumnsType, TablePaginationConfig, TableProps } from 'antd/es/table';
+import type { ColumnGroupType, ColumnsType, ColumnType, TablePaginationConfig, TableProps } from 'antd/es/table';
 import { isArray } from 'lodash';
 import { Resizor } from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
@@ -12,6 +12,13 @@ import { copyTableToClipboard, limitInput, StyledEmpty } from '../utils';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
 import { CaretRightIcon, CopyOutlinedIcon } from '../icon/Icon';
 import type { JSX } from '@emotion/react/jsx-runtime';
+import type { FilterValue } from 'antd/lib/table/interface';
+
+export interface ResizeTableRef {
+    clearAllFilters: () => void;
+    clearAllSorts: () => void;
+    // ... 其他需要暴露的方法
+}
 
 const Support = React.forwardRef(
     (props: ResizeTableProps<any>) => {
@@ -361,8 +368,70 @@ const handleChangeSafe = (onChange?: (...p: any) => void, ...params: any): void 
     }
 };
 
+// 清除所有列过滤
+const clearAllFilters = (mergeColumns: ColumnsType<any>, setFiltersState: (val: Record<string, any[]>) => void): void => {
+    const empty: Record<string, any[]> = {};
+
+    mergeColumns?.forEach((col: any) => {
+        const key = col.dataIndex;
+        if (typeof key === 'string') {
+            empty[key] = [];
+        }
+    });
+
+    setFiltersState(empty);
+};
+
+// 重置 filteredValue
+const handleFilteredValueReset = (filters: Record<string, FilterValue | null>, setFiltersState: any): void => {
+    Object.entries(filters).forEach(([key, val]) => {
+        setFiltersState((prev: Record<string, any[]>) => ({
+            ...prev,
+            [key]: val,
+        }));
+    });
+};
+
+// 重置 sortOrder
+const handleSortOrderReset = (sorter: any, setSortState: (val: SortState) => void): void => {
+    if ('order' in sorter) {
+        setSortState({
+            columnKey: sorter.field as string,
+            order: sorter.order || null,
+        });
+    } else {
+        setSortState({});
+    }
+};
+
+// 每列的 filterState 值
+const getFilteredValue = (col: ColumnType<any> | ColumnGroupType<any>, filtersState: Record<string, any[]>): null | any => {
+    if ('children' in col) return null;
+
+    const idx = col.dataIndex;
+
+    if (typeof idx === 'string' || typeof idx === 'number') {
+        return filtersState[idx];
+    }
+    return null;
+};
+
+// 每列的 sortOrder 值
+const getSortedValue = (col: ColumnType<any> | ColumnGroupType<any>, sortState: SortState): null | any => {
+    if ('children' in col) return null;
+    const key = col.dataIndex as string | undefined;
+    return key && key === sortState.columnKey
+        ? sortState.order ?? null
+        : null;
+};
+
+interface SortState {
+    columnKey?: string;
+    order?: 'ascend' | 'descend' | null;
+}
+
 const EMPTY_VIEW_HEIGHT = 60;
-export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): JSX.Element {
+export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, ref: React.Ref<ResizeTableRef>): JSX.Element {
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, rowHoverable = true,
@@ -370,31 +439,33 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): JSX.El
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
     const marginY = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
+    const [filtersState, setFiltersState] = useState<Record<string, any[]>>({});
+    const [sortState, setSortState] = useState<SortState>({});
 
     // ============================ Resize ============================
-    useEffect(() => {
-        setColumns(propColumns ?? []);
-    }, [JSON.stringify(propColumns)]);
+    useEffect(() => { setColumns(propColumns ?? []); }, [JSON.stringify(propColumns)]);
+
     const mergeColumns: any = useMemo(() => columns.map((col, index) => ({
         ...col,
         onHeaderCell: () => ({
-            onResize: (_diff: number, width: number, nextWidth?: number): void =>
-                resizeColumns({ columns, setColumns, index, width, nextWidth, minThWidth, variableTotalWidth }),
+            onResize: (_diff: number, width: number, nextWidth?: number): void => resizeColumns({ columns, setColumns, index, width, nextWidth, minThWidth, variableTotalWidth }),
             resizable: variableTotalWidth || (propColumns !== undefined && index !== propColumns.length - 1),
         }),
         // ============================ filters ============================
         ...((isArray(col.filters) && col.filters.length > 0) ? getColumnSearchProps() : {}),
-    })), [columns]);
+        filteredValue: getFilteredValue(col, filtersState),
+        sortOrder: getSortedValue(col, sortState),
+    })), [columns, filtersState, sortState]);
+
+    useImperativeHandle(ref, (): ResizeTableRef => ({
+        clearAllFilters: () => clearAllFilters(mergeColumns, setFiltersState),
+        clearAllSorts(): void { setSortState({}); },
+    }));
 
     // ============================ virtual ============================
-    const ref = useRef(null);
-    const { data: renderList, boxRef, targetRef } = useWatchVirtualRender(
-        { visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 32, dataSource: dataSource ?? [] });
-    useEffect(() => {
-        if (virtual && ref.current !== null) {
-            getVirtualElement(ref.current as Element, boxRef, targetRef);
-        }
-    }, []);
+    const innerTableRef = useRef(null);
+    const { data: renderList, boxRef, targetRef } = useWatchVirtualRender({ visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 32, dataSource: dataSource ?? [] });
+    useEffect(() => { if (virtual && innerTableRef.current !== null) { getVirtualElement(innerTableRef.current as Element, boxRef, targetRef); } }, []);
 
     // ============================ pagination ============================
     const fullPagination = useMemo(() => getFullPagination(pagination, dataSource?.length), [pagination]);
@@ -402,21 +473,23 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): JSX.El
     // ============================ expandable ============================
     const fullExpandable = useMemo(() => getFullExpandable(expandable), [expandable]);
 
-    const copyTable = async (): Promise<void> => {
-        await copyTableToClipboard(columns, dataSource as any[]);
-    };
+    const copyTable = async (): Promise<void> => { await copyTableToClipboard(columns, dataSource as any[]); };
 
     // 出现分页跳转输入框
-    useEffect(() => {
-        limitInput();
-    }, [dataSource?.length, fullPagination]);
+    useEffect(() => { limitInput(); }, [dataSource?.length, fullPagination]);
+
+    const handleTableChange: TableProps<any>['onChange'] = (...params): void => {
+        const filters = params[1]; const sorter = params[2];
+
+        handleFilteredValueReset(filters, setFiltersState);
+        handleSortOrderReset(sorter, setSortState);
+        handleChangeSafe(onChange, ...params);
+    };
 
     return (
-        <ResizeTableContainer id={id} style={{ ...(style ?? {}), position: 'relative' }} ref={ref}>
-            {(allowCopy && (dataSource ?? []).length > 0) && <div className="exportTableBtn" onClick={copyTable}>
-                <CopyOutlinedIcon style={{ width: '100%', height: '100%', lineHeight: '32px', display: 'inline-block' }} />
-            </div>}
-            <StyledTable {...restProps} onChange={(...params: any): void => { handleChangeSafe(onChange, ...params); }}
+        <ResizeTableContainer id={id} style={{ ...(style ?? {}), position: 'relative' }} ref={innerTableRef}>
+            {(allowCopy && (dataSource ?? []).length > 0) && <div className="exportTableBtn" onClick={copyTable}><CopyOutlinedIcon style={{ width: '100%', height: '100%', lineHeight: '32px', display: 'inline-block' }} /></div>}
+            <StyledTable {...restProps} onChange={handleTableChange}
                 pagination={virtual ? false : fullPagination} expandable={fullExpandable} rowHoverable={rowHoverable} scroll={scroll}
                 dataSource={virtual ? renderList : dataSource} components={{ header: { cell: resizableTitle } }}
                 className={`${className ?? ''} ${variableTotalWidth ? 'variableTotalWidth' : ''}`} columns={mergeColumns}
@@ -425,3 +498,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): JSX.El
         </ResizeTableContainer>
     );
 };
+
+export const ResizeTable = React.forwardRef(ResizeTableInner) as <T extends object>(
+    props: ResizeTableProps<T> & { ref?: React.Ref<ResizeTableRef> }
+) => React.ReactElement;

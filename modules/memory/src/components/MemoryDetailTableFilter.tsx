@@ -136,8 +136,8 @@ const MemoryStaticAndCompareDetailTableFilter = observer(({ session, memorySessi
     );
 });
 
-const MemoryDynamicDetailTableFilter = observer(({ session, memorySession, queryDetailData }:
-{ session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void }) => {
+const MemoryDynamicDetailTableFilter = observer(({ session, memorySession, queryDetailData, onReset }:
+{ session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void; onReset: () => void }) => {
     // 是否为比对场景
     const isCompare: boolean = session.compareRank.isCompare;
     const isDisabled: boolean = memorySession.isBtnDisabled;
@@ -148,6 +148,13 @@ const MemoryDynamicDetailTableFilter = observer(({ session, memorySession, query
             memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = value.target.checked;
         });
         queryDetailData(true);
+    };
+
+    const handleReset = (): void => {
+        runInAction(() => {
+            memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = DEFAULT_SHOW_WITHIN_INTERVAL;
+        });
+        onReset();
     };
 
     useEffect(() => {
@@ -166,17 +173,23 @@ const MemoryDynamicDetailTableFilter = observer(({ session, memorySession, query
                 disabled={isDisabled}
                 onChange={onShowPassThroughTimeIntervalDataCheckboxChanged}
             />
+            <Button
+                data-testid={'reset-btn'}
+                onClick={handleReset}
+            >
+                {t('searchCriteria.Button Reset')}
+            </Button>
         </SearchBox>
     );
 });
 
-const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailData }:
-{ session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void }) => {
+const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailData, onReset }:
+{ session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void; onReset: () => void }) => {
     return <>
         {
             memorySession.memoryType === MemoryGraphType.STATIC || session.compareRank.isCompare
                 ? <MemoryStaticAndCompareDetailTableFilter session={session} memorySession={memorySession} queryDetailData={queryDetailData} />
-                : <MemoryDynamicDetailTableFilter session={session} memorySession={memorySession} queryDetailData={queryDetailData} />
+                : <MemoryDynamicDetailTableFilter session={session} memorySession={memorySession} queryDetailData={queryDetailData} onReset={onReset} />
         }
     </>;
 });

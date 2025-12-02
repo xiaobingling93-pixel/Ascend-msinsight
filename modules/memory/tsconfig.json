@@ -23,7 +23,12 @@
     "jsx": "react",
     "jsxImportSource": "@emotion/react",
     "useDefineForClassFields": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "paths": {
+      // 告诉 TS：@insight/lib 实际上在 packages/lib/
+      "@insight/lib/*": ["../lib/*"],
+      "@insight/lib": ["../lib"]
+    }
   },
   "include": [
     "src"

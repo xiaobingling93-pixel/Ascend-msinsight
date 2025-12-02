@@ -4,7 +4,7 @@
 
 import type { TableProps } from 'antd/es/table';
 import type { SortOrder, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import i18n from '@insight/lib/i18n';
@@ -21,6 +21,7 @@ import { fetchOperatorPosition, fetchTableDataByComponent } from '../utils/Reque
 import type { CardInfo, Session } from '../entity/session';
 import { handleOperatorDetails } from './MemoryDetailTable';
 import connector from '../connection';
+import type { ResizeTableRef } from '@insight/lib/src/resize';
 
 interface IProps {
     tableData: MemoryTable;
@@ -35,6 +36,7 @@ interface IProps {
     selectedCard: CardInfo;
     onFiltersChange: (filter: any) => void;
     needUseKeyMap: boolean;
+    ref: React.ForwardedRef<ResizeTableRef>;
 }
 
 interface IColName {
@@ -184,7 +186,7 @@ async function redirectToTimeline(record: OperatorDetail, card: CardInfo): Promi
 }
 
 // eslint-disable-next-line max-lines-per-function
-export const AntTableChart: React.FC<IProps> = (props) => {
+export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.ForwardedRef<ResizeTableRef>) => {
     const { t } = useTranslation('memory');
     const {
         tableData, onRowSelected, current, pageSize,
@@ -268,6 +270,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         <Dropdown menu={{ items }} trigger={['contextMenu']}>
             <div>
                 <ResizeTable
+                    ref={ref}
                     columns={columns as TableColumnsType<OperatorDetail>}
                     allowCopy
                     dataSource={tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
@@ -295,7 +298,8 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             </div>
         </Dropdown>
     );
-};
+});
+AntTableChart.displayName = 'AntTableChart';
 
 let pagination: TablePaginationConfig = {
     defaultCurrent: 1,

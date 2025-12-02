@@ -99,6 +99,7 @@ const createMockMemorySession = (overrides = {}) => ({
 });
 
 const mockQueryDetailData = jest.fn();
+const mockOnReset = jest.fn();
 
 jest.mock('react-i18next', () => ({
     useTranslation: () => ({
@@ -132,6 +133,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -151,6 +153,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -167,6 +170,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
             const nameInput = screen.getByPlaceholderText('Search by Name');
@@ -182,6 +186,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -209,6 +214,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -234,6 +240,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -253,6 +260,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -268,6 +276,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -287,6 +296,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -297,6 +307,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={newSession as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -314,13 +325,14 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
             expect(screen.getByTestId('input-onlyShowAllocatedOrReleased')).toBeInTheDocument();
             expect(screen.queryByPlaceholderText('Search by Name')).not.toBeInTheDocument();
             expect(screen.queryByText('Query')).not.toBeInTheDocument();
-            expect(screen.queryByText('Reset')).not.toBeInTheDocument();
+            expect(screen.queryByText('Reset')).toBeInTheDocument();
         });
 
         it('handles checkbox change and triggers query in dynamic mode', () => {
@@ -332,6 +344,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -353,6 +366,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -369,6 +383,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -379,6 +394,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={newSession as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
             // Should switch to static mode rendering, so checkbox should not be present
@@ -396,6 +412,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -415,6 +432,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 
@@ -432,6 +450,7 @@ describe('MemoryDetailTableFilter', () => {
                     session={session as Session}
                     memorySession={memorySession as MemorySession}
                     queryDetailData={mockQueryDetailData}
+                    onReset={mockOnReset}
                 />,
             );
 

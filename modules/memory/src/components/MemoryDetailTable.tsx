@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { Spin, CollapsiblePanel } from '@insight/lib/components';
@@ -17,6 +17,7 @@ import { MemorySizeQueryCondition, OperatorMemoryCondition, StaticMemoryConditio
 import { fetchDynamicOperatorMaxMin, fetchStaticOperatorMaxMin, operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
 import { customConsole as console } from '@insight/lib/utils';
 import { SortOrder } from 'antd/lib/table/interface';
+import type { ResizeTableRef } from '@insight/lib';
 
 const enum CompareSource {
     DIFFERENCE = 'Difference',
@@ -326,14 +327,24 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
         session.isAllMemoryCompletedSwitch, memorySession.order, memorySession.orderBy, memorySession.filters,
         memorySession.rangeFilters, t]);
+
+    const tableRef = useRef<ResizeTableRef>(null);
+
+    const handleReset = (): void => {
+        clearFilters();
+        tableRef.current?.clearAllFilters();
+        tableRef.current?.clearAllSorts();
+    };
+
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
             {memorySession.groupId === GroupBy.COMPONENT
                 ? <TableByComponent session={session} />
                 : <>
-                    <MemoryDetailTableFilter session={session} memorySession={memorySession} queryDetailData={setDetailTableData}></MemoryDetailTableFilter>
+                    <MemoryDetailTableFilter session={session} memorySession={memorySession} queryDetailData={setDetailTableData} onReset={handleReset}></MemoryDetailTableFilter>
                     <Spin spinning={tableSpin}>
                         <AntTableChart
+                            ref={tableRef}
                             tableData={{
                                 columns: memoryTableHead,
                                 rows: memoryTableData,
