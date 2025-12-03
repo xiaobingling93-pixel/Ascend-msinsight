@@ -334,17 +334,12 @@ const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: M
             }
             newLines[checkedCategories[i]] = res;
         }
-        Object.values(session.singleLinkLine)
-            .forEach(datas => {
-                datas?.forEach((data) => {
-                    const { category } = data as unknown as FlowEvent;
-                    if (!checkedCategories.includes(category)) {
-                        newLines[category] = session.singleLinkLine[category];
-                    }
-                });
-            });
         newLines[session.ridLineType] = await fetchLinkLinesMap.get(session.ridLineType)?.(session);
         runInAction(() => {
+            if (checkedCategories.length > 0) {
+                session.drawLineMode = 'all';
+                session.singleLinkLine = {};
+            }
             session.linkLines = newLines;
             session.renderTrigger = !session.renderTrigger;
             session.linkLineCategories = checkedCategories;
@@ -425,6 +420,11 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
         session?.unitsConfig.offsetConfig.timestampOffset,
         session.viewedExpandedCardIdSet, session.ridLineType];
     React.useEffect(updateLineData, dependencyParam);
+    React.useEffect(() => {
+        if (session.drawLineMode === 'single') {
+            setCheckedCategories([]);
+        }
+    }, [session.drawLineMode]);
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });

@@ -5,9 +5,10 @@ import { observable, observe } from 'mobx';
 import * as d3 from 'd3';
 import { getTimeOffset } from '../../../insight/units/utils';
 import { Session } from '../../../entity/session';
-import { getHeight, processIsCol, UNDRAW_HEIGHT } from './draw';
+import { checkLineIsVisible, getHeight, processIsCol, UNDRAW_HEIGHT } from './draw';
 import { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { handlerEmptyString } from '../../../utils/string';
+import { InsightUnit } from '../../../entity/insight';
 
 function generateCalculateWHWithCache(): {
     calculateWHWithCacheFunc: Function;
@@ -23,13 +24,13 @@ function generateCalculateWHWithCache(): {
     const disposer = observe(WIDTH_DEPENDENCIES, (change) => {
         WIDTH_CACHE.clear(); // 根据宽度变化更新宽度缓存
     });
-    function getWidthWithCache({ timestamp, cardId, pid }: { timestamp: number; cardId: string; pid: string },
-        li: d3.ScaleLinear<number, number>, session: Session): number {
-        const key = `${timestamp}-${cardId}-${pid}`;
+    function getWidthWithCache(paramsOfCache: { timestamp: number; cardId: string; pid: string; getTimeOffset?: Record<string, number>},
+        li: d3.ScaleLinear<number, number>, session: Session, units: InsightUnit[]): number {
+        const key = `${paramsOfCache.timestamp}-${paramsOfCache.cardId}-${paramsOfCache.pid}`;
         if (WIDTH_CACHE.has(key)) {
             return WIDTH_CACHE.get(key) ?? 0;
         }
-        const width = li(timestamp - getTimeOffset(session, { cardId, processId: pid }));
+        const width = li(paramsOfCache.timestamp - getTimeOffset(session, { cardId: paramsOfCache.cardId, processId: paramsOfCache.pid }, units, paramsOfCache?.getTimeOffset));
         WIDTH_CACHE.set(key, width);
         return width;
     }
@@ -54,10 +55,7 @@ function generateCalculateWHWithCache(): {
             WIDTH_DEPENDENCIES.canvasWith = canvasWith;
             WIDTH_DEPENDENCIES.domainStart = domainStart;
             WIDTH_DEPENDENCIES.domainEnd = domainEnd;
-            return {
-                getWidthWithCache,
-                getHeightWithCache,
-            };
+            return { getWidthWithCache, getHeightWithCache };
         },
         disposer,
     };
@@ -76,33 +74,80 @@ export interface LinkLineData {
     arrowWidth?: number;
 }
 
-export function calculateLinkLines(rawList: Array<Record<string, unknown>>, session: Session, ctx: CanvasRenderingContext2D): LinkLineData[] {
+export interface CalculateArgOption {
+    rawList: Array<Record<string, unknown>>;
+    session: Session;
+    ctx: CanvasRenderingContext2D;
+    category: string;
+}
+
+interface LineOption {
+    width: number;
+    height: number;
+    targetX: number;
+    targetY: number;
+    sourceX?: number;
+    sourceY?: number;
+}
+
+/**
+ * 校验待绘制的连线是否在画布内
+ * @param lineOption
+ */
+export function checkIsValidLine(lineOption: LineOption): boolean {
+    const { sourceX = 0, sourceY = 0, targetX, targetY, width, height } = lineOption;
+    return !((sourceX < 0 && targetX < 0) || (sourceX > width && targetX > width) || (sourceY < 0 && targetY < 0) || (sourceY > height && targetY > height));
+}
+
+/**
+ * 校验待绘制的箭头是否在画布内
+ * @param lineOption
+ */
+export function checkIsValidArrow(lineOption: LineOption): boolean {
+    const { targetX, targetY, width, height } = lineOption;
+    return targetX >= 0 && targetY >= 0 && targetX <= width && targetY <= height;
+}
+
+/**
+ * 计算需要绘制的连线信息（画布位置、偏移量等）
+ * @param rawList
+ * @param session
+ * @param ctx
+ * @param category
+ * @param units
+ */
+export function calculateLinkLines(rawList: Array<Record<string, unknown>>, session: Session, ctx: CanvasRenderingContext2D, category: string, units: InsightUnit[] = []): { [key: string]: LinkLineData[] } {
     const canvasWidth = ctx.canvas.clientWidth;
+    const canvasHeight = ctx.canvas.clientHeight;
     const domainStart = session.domainRange.domainStart;
     const domainEnd = session.domainRange.domainEnd;
     const li = d3.scaleLinear().range([0, canvasWidth]).domain([domainStart, domainEnd]);
     const { getWidthWithCache, getHeightWithCache } = calculateWHWithCacheFunc(canvasWidth, domainStart, domainEnd);
+    const timestampOffset = session.unitsConfig.offsetConfig.timestampOffset;
 
-    return rawList.map((data): LinkLineData => {
-        const { category, from, to, cardId } = data as unknown as FlowEvent;
+    const validLinesMap: { [key: string]: LinkLineData[] } = {};
+    for (const data of rawList) {
+        if (!checkLineIsVisible(data, category)) { continue; }
+        const { category: cat, from, to, cardId } = data as unknown as FlowEvent;
         const [targetCardId, sourceCardId] = [handlerEmptyString(to.rankId ?? '', cardId), handlerEmptyString(from.rankId ?? '', cardId)];
 
-        const [targetX, targetY] = [getWidthWithCache({ timestamp: to.timestamp, cardId: targetCardId, pid: to.pid }, li, session),
-            getHeightWithCache(to, targetCardId, category, session)];
-        const [sourceX, sourceY] = [getWidthWithCache({ timestamp: from.timestamp + (from?.duration ?? 0), cardId: sourceCardId, pid: from.pid }, li, session),
-            getHeightWithCache(from, sourceCardId, category, session)];
+        const [targetX, targetY] = [getWidthWithCache({ timestamp: to.timestamp, cardId: targetCardId, pid: to.pid }, li, session, units, timestampOffset),
+            getHeightWithCache(to, targetCardId, cat, session)];
+        const [sourceX, sourceY] = [getWidthWithCache({ timestamp: from.timestamp + (from?.duration ?? 0), cardId: sourceCardId, pid: from.pid }, li, session, units, timestampOffset),
+            getHeightWithCache(from, sourceCardId, cat, session)];
         const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
         const offset = ((targetX - sourceX) / 2);
         const isAllCol = (processIsCol.get(`${targetCardId}-${to.pid}`) ?? false) &&
             (processIsCol.get(`${sourceCardId}-${from.pid}`) ?? false);
-        return {
-            category,
-            targetX,
-            targetY: isAllCol ? undefined : targetY,
-            sourceX,
-            sourceY: isAllCol ? undefined : sourceY,
-            targetPos,
-            offset,
-        };
-    }).filter(({ targetY, sourceY }) => !(sourceY === undefined || targetY === undefined) && !(sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT));
+        if (isAllCol || sourceY === undefined || targetY === undefined) { continue; }
+        const isInUnit = !(sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT);
+        const isInside = checkIsValidLine({ targetX, targetY, sourceX, sourceY, width: canvasWidth, height: canvasHeight });
+        // 跳过隐藏泳道或不在画布内的连线
+        if (!isInUnit || !isInside) { continue; }
+        if (!validLinesMap[targetY]) {
+            validLinesMap[targetY] = [];
+        }
+        validLinesMap[targetY].push({ category: cat, targetX, targetY, sourceX, sourceY, targetPos, offset });
+    }
+    return validLinesMap;
 }

@@ -188,6 +188,7 @@ export class Session {
     doContextSearch?: boolean;
     showEvent?: boolean;
     linkLines: LinkLines = {};
+    drawLineMode: 'all' | 'single' = 'all';
     mapOfLinkLines: Map<string, MapValueOfLinkLines> = new Map();
 
     totalHeight: number = 0;
@@ -301,6 +302,8 @@ export class Session {
             printSessionInfo: false,
             linkLines: false,
             mapOfLinkLines: false,
+            singleLinkLine: false,
+            resetOfSliceSelection: false,
         });
         this._name = conf?.name ?? this.id;
         this._interval = 100;

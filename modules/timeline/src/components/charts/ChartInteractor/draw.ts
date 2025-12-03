@@ -12,16 +12,17 @@ import { getTextParser } from '../TimelineAxis';
 import { TIME_LINE_AXIS_HEIGHT_PX } from '../../ChartContainer/ChartContainer';
 import type { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { hashToNumber } from '../../../utils/colorUtils';
-import { ChartDesc, LinkLine, UnitHeight } from '../../../entity/insight';
+import { ChartDesc, UnitHeight } from '../../../entity/insight';
 import type { InsightUnit } from '../../../entity/insight';
 import type { ThreadMetaData } from '../../../entity/data';
 import { colorPalette } from '../../../insight/units/utils';
 import { handlerEmptyString } from '../../../utils/string';
-import { forEach, groupBy, isNil, keys } from 'lodash';
-import { calculateLinkLines, LinkLineData } from './calculateLinkLines';
+import { forEach, isNil } from 'lodash';
+import { calculateLinkLines, LinkLineData, checkIsValidArrow } from './calculateLinkLines';
 import { ThemeName } from '@insight/lib/theme';
 import { getClassNameByMetadata } from '../../ChartContainer/Units/Units';
 import type { ChartType } from '../../../entity/chart';
+import { toJS } from 'mobx';
 
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
@@ -45,6 +46,15 @@ interface MaskRangeOption {
     selectedRange?: [number, number];
     clickPos?: ExtendPos;
     mousePosNow?: Pos;
+}
+
+interface DrawLinesByLayerParams {
+    ctx: CanvasRenderingContext2D;
+    rawList: Array<Record<string, unknown>>;
+    theme: Theme;
+    session: Session;
+    category: string;
+    units: InsightUnit[];
 }
 
 function drawArrowPath(ctx: CanvasRenderingContext2D, option: Omit<DrawArrowOption, 'color'>): void {
@@ -304,7 +314,6 @@ const drawMaskRange = ({
 /**
  * 校验是否为算子框选模式
  * @param session
- * @param checkIsAllowed
  */
 export function checkIsSliceMode(session: Session): boolean {
     const { active, targetUnit } = session.sliceSelection;
@@ -487,7 +496,7 @@ const threadIsCol: Map<string, boolean> = new Map();
 // 是否是进程缩略图
 export const processIsCol: Map<string, boolean> = new Map();
 // 泳道是否已隐藏
-const unitIsHidden: Map<string, boolean> = new Map();
+const unitIsHidden: Set<string> = new Set();
 
 const markUnitHidden = (unit: InsightUnit, metadata: ThreadMetaData): void => {
     if (isNil(metadata.cardId) || metadata.cardId === '') {
@@ -496,12 +505,12 @@ const markUnitHidden = (unit: InsightUnit, metadata: ThreadMetaData): void => {
     if (!unit.isUnitVisible) {
         let key = metadata.cardId;
         if (!isNil(metadata.processId) && metadata.processId !== '') {
-            key += `-${metadata.processId}`;
+            key += `_${metadata.processId}`;
         }
         if (!isNil(metadata.threadId) && metadata.threadId !== '') {
-            key += `-${metadata.threadId}`;
+            key += `_${metadata.threadId}`;
         }
-        unitIsHidden.set(key, true);
+        unitIsHidden.add(key);
     }
 };
 
@@ -679,50 +688,73 @@ export const getHeight = (session: Session, data: DataBlock, cardId: string, cat
     return height;
 };
 
-function sourceOrTargetLinkUnitIsHidden(
-    { targetCardId, sourceCardId, to, from }: {targetCardId: string; sourceCardId: string; to: DataBlock; from: DataBlock},
-): boolean {
-    const unitKeys = [
-        targetCardId,
-        `${targetCardId}-${to.pid}`,
-        `${targetCardId}-${to.pid}-${to.tid}`,
-        sourceCardId,
-        `${sourceCardId}-${from.pid}`,
-        `${sourceCardId}-${from.pid}-${from.tid}`,
-    ];
-
-    for (const key of unitKeys) {
-        if (unitIsHidden.get(key)) {
-            return true;
-        }
-    }
-
-    return false;
+function sourceOrTargetLinkUnitIsHidden({
+    targetCardId,
+    sourceCardId,
+    to,
+    from,
+}: {
+    targetCardId: string;
+    sourceCardId: string;
+    to: DataBlock;
+    from: DataBlock;
+}): boolean {
+    return (
+        unitIsHidden.has(targetCardId) ||
+        unitIsHidden.has(`${targetCardId}_${to.pid}`) ||
+        unitIsHidden.has(`${targetCardId}_${to.pid}_${to.tid}`) ||
+        unitIsHidden.has(sourceCardId) ||
+        unitIsHidden.has(`${sourceCardId}_${from.pid}`) ||
+        unitIsHidden.has(`${sourceCardId}_${from.pid}_${from.tid}`)
+    );
 }
 
-function filterToShowLinkLine(data: Record<string, unknown>, checkedCategory: string): boolean {
+/**
+ * 校验连线是否显示（隐藏泳道时）
+ * @param data
+ * @param checkedCategory
+ */
+export function checkLineIsVisible(data: Record<string, unknown>, checkedCategory: string): boolean {
     const { category, from, to, cardId } = data as unknown as FlowEvent;
     if (category !== checkedCategory) {
         return false;
     }
     const [targetCardId, sourceCardId] = [handlerEmptyString(to.rankId ?? '', cardId), handlerEmptyString(from.rankId ?? '', cardId)];
-    if (sourceOrTargetLinkUnitIsHidden({ targetCardId, sourceCardId, to, from })) {
-        return false;
-    }
-    return true;
+    return !sourceOrTargetLinkUnitIsHidden({ targetCardId, sourceCardId, to, from });
 }
 
-function drawLinkLinesByLayer(ctx: CanvasRenderingContext2D, dataList: LinkLineData[], theme: Theme): void {
-    const layerMap = groupBy(dataList, ({ targetY }) => targetY);
-    const sortedKeys = keys(layerMap).sort((a, b) => Number(a) - Number(b));
-    forEach(sortedKeys, (key) => batchDrawLinkLines(ctx, layerMap[key], theme.selectedChartColor));
+/**
+ * 根据连线末端坐标升序绘制连线
+ * @param ctx
+ * @param rawList
+ * @param theme
+ * @param session
+ * @param category
+ */
+function drawLinkLinesByLayer({ ctx, rawList, theme, session, category, units }: DrawLinesByLayerParams): void {
+    const linkLineMap = calculateLinkLines(rawList, session, ctx, category, units);
+    const sortedKeys = Object.keys(linkLineMap).sort((a, b) => Number(a) - Number(b));
+    const strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
+    forEach(sortedKeys, (key) => batchDrawLinkLines(ctx, linkLineMap[key], strokeStyle, theme.selectedChartColor));
 }
 
-function batchDrawLinkLines(ctx: CanvasRenderingContext2D, dataList: LinkLineData[], fillStyle: string): void {
-    const arrowOptions: Array<Omit<DrawArrowOption, 'color'>> = dataList.map(({ targetX, targetY, targetPos, offset }) => {
+/**
+ * 批量绘制连线
+ * @param ctx
+ * @param dataList
+ * @param strokeStyle
+ * @param fillStyle
+ */
+function batchDrawLinkLines(ctx: CanvasRenderingContext2D, dataList: LinkLineData[], strokeStyle: string, fillStyle: string): void {
+    ctx.strokeStyle = strokeStyle;
+    ctx.beginPath();
+    const arrowOptions: Array<Omit<DrawArrowOption, 'color'>> = [];
+    for (const { sourceX, sourceY, targetX, targetY, targetPos, offset } of dataList) {
+        ctx.moveTo(sourceX, sourceY);
+        ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
         const len = targetPos.length;
-        if (len === 0) {
-            return undefined;
+        if (len === 0 || !checkIsValidArrow({ targetX, targetY, width: ctx.canvas.width, height: ctx.canvas.height })) {
+            continue;
         }
         let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
         fromX = fromX / len;
@@ -730,22 +762,16 @@ function batchDrawLinkLines(ctx: CanvasRenderingContext2D, dataList: LinkLineDat
         const yLen = Math.abs(fromY - targetY);
         const xLen = Math.abs(fromX - targetX);
         if (xLen === 0) {
-            return undefined;
+            continue;
         }
-        return {
+        arrowOptions.push({
             toX: targetX,
             toY: targetY,
             fromX: targetX - offset,
             fromY: targetY + (((fromY - targetY) * Math.sqrt(yLen) / xLen) + Math.abs(fromY - targetY)),
             length: 10,
             angle: 30,
-        };
-    }).filter((item) => item !== undefined) as Array<Omit<DrawArrowOption, 'color'>>;
-    // draw line
-    ctx.beginPath();
-    for (const { targetX, targetY, sourceX, sourceY, offset } of dataList) {
-        ctx.moveTo(sourceX, sourceY);
-        ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
+        });
     }
     ctx.stroke();
     ctx.closePath();
@@ -765,25 +791,19 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
     const clipTop = pinnedAreaHeight + UNDRAW_HEIGHT;
     ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
     ctx.clip();
-    ctx.beginPath();
-    const tempCategories = session.linkLineCategories;
-    const checkedCategories = [...tempCategories];
-    checkedCategories.push(session.ridLineType);
-    for (const checkedCategory of checkedCategories) {
-        ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(checkedCategory, colorPalette.length)]];
-        const rawList = Object.values(session.linkLines).flatMap((list) => list === undefined ? [] : list)
-            .filter((data) => filterToShowLinkLine(data, checkedCategory));
-        const dataList = calculateLinkLines(rawList, session, ctx);
-        drawLinkLinesByLayer(ctx, dataList, theme);
+    const units = toJS(session.units);
+    if (session.linkLineCategories.length) {
+        const checkedCategories = [...session.linkLineCategories, session.ridLineType];
+        for (const checkedCategory of checkedCategories) {
+            const rawList = session.linkLines[checkedCategory] ?? [];
+            drawLinkLinesByLayer({ ctx, rawList, theme, session, category: checkedCategory, units });
+        }
     }
-    const lineList: LinkLine = Object.values(session.singleLinkLine)
-        .flatMap((list) => list === undefined ? [] as LinkLine : list);
-    const categoryMap = groupBy(lineList, (item: FlowEvent) => item.category ?? '');
-    forEach(categoryMap, (list: any[], category: string): void => {
-        ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
-        const dataList = calculateLinkLines(list, session, ctx);
-        drawLinkLinesByLayer(ctx, dataList, theme);
-    });
+    if (session.drawLineMode === 'single') {
+        forEach(session.singleLinkLine, (list: any, category: string): void => {
+            drawLinkLinesByLayer({ ctx, rawList: list, theme, session, category, units });
+        });
+    }
     ctx.restore();
 };
 

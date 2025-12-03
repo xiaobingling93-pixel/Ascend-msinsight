@@ -20,16 +20,20 @@ export const colorPalette: Array<keyof Theme['colorPalette']> = [
     'amethystPurple',
     'limeGreen',
 ];
-export function getTimeOffset(session: Session, metaData: { cardId?: string; processId?: string }): number {
-    const timeOffsetKey = getTimeOffsetKey(session, metaData);
+export function getTimeOffset(session: Session, metaData: { cardId?: string; processId?: string }, units: InsightUnit[] = [], timestampOffset?: Record<string, number>): number {
+    const timeOffsetKey = getTimeOffsetKey(session, metaData, units);
+    timestampOffset = timestampOffset ?? session?.unitsConfig.offsetConfig.timestampOffset;
     // 查询泳道chart参数加上时间偏移
     return metaData.cardId !== undefined
-        ? session?.unitsConfig.offsetConfig.timestampOffset?.[timeOffsetKey] ?? 0
+        ? timestampOffset?.[timeOffsetKey] ?? 0
         : 0;
 }
 
-export function getTimeOffsetKey(session: Session, metaData: { cardId?: string; processId?: string }): string {
-    const unit = session.units.find(value => containCardId(value, metaData.cardId ?? ''));
+export function getTimeOffsetKey(session: Session, metaData: { cardId?: string; processId?: string }, units: InsightUnit[] = []): string {
+    if (units.length === 0) {
+        units = session.units;
+    }
+    const unit = units.find(value => containCardId(value, metaData.cardId ?? ''));
     const realCardId = unit ? (unit.metadata as CardMetaData).cardId : 'Host';
     let realProcessId = metaData.processId;
     // db数据的Host侧有2层process类型的泳道，第二层的processId的前32位是第一层的ProcessId，后32位是本泳道的threadId

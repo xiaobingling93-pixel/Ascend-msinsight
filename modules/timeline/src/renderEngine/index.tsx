@@ -58,9 +58,9 @@ export class RenderEngine {
             if (task.status === 'pending') {
                 task.action();
                 task.type === 'once' && (task.status = 'fullfilled');
-            };
+            }
         });
     }
-};
+}
 
 export const renderEngine = new RenderEngine();

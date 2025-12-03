@@ -457,7 +457,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 newLines[cat] = singleCatLinkLine;
             }
             runInAction(() => {
-                session.linkLines = newLines;
+                session.drawLineMode = 'single';
+                session.linkLines = {};
                 session.singleLinkLine = newLines;
                 session.renderTrigger = !session.renderTrigger;
             });
