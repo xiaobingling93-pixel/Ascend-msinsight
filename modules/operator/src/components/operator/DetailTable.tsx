@@ -1,8 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { ResizeTable } from '@insight/lib/resize';
-import React, { useState, useEffect } from 'react';
+import { ResizeTable, type ResizeTableRef } from '@insight/lib/resize';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button, Tooltip, message, CollapsiblePanel } from '@insight/lib/components';
@@ -260,6 +260,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     // 从condition对象中获取数据库路径
     GdbPath = condition.dbPath;
     const { t } = useTranslation();
+    const tableRef = useRef<ResizeTableRef>(null);
     const [cols, setCols] = useState<any[]>(useColMap(isCompare)[OperatorGroup.OPERATOR].l0);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
@@ -374,6 +375,14 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         });
     };
 
+    const handleReset = (): void => {
+        GdbPath = condition.dbPath;
+        setSorter(defaultSorter);
+        setPage(defaultPage);
+        setFilters(defaultFilters);
+        updateFullCondition({ ...defaultSorter, ...defaultPage, ...defaultFilters, ...condition });
+    };
+
     const updateTable = async (): Promise<void> => {
         setLoading(true);
         try {
@@ -417,11 +426,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
 
     // 触发条件是同一工程切换页签时
     useEffect(() => {
-        GdbPath = condition.dbPath;
-        setSorter(defaultSorter);
-        setPage(defaultPage);
-        setFilters(defaultFilters);
-        updateFullCondition({ ...defaultSorter, ...defaultPage, ...defaultFilters, ...condition });
+        handleReset();
     }, [condition.group]);
 
     // 触发条件是切换不同工程的时候，包括非比对变成比对
@@ -434,7 +439,15 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         filters.type, filters.opType, filters.name, filters.opName, filters.accCore,
         condition.rankId, condition.topK, condition.isCompare]);
 
+    // 切换或删除项目清空表格筛选状态
+    useEffect((): void => {
+        handleReset();
+        tableRef.current?.clearAllFilters();
+        tableRef.current?.clearAllSorts();
+    }, [session.projectChangedTrigger]);
+
     return <ResizeTable
+        ref={tableRef}
         size="small"
         minThWidth={50}
         loading={loading}

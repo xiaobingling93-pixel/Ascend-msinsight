@@ -36,6 +36,7 @@ export class Session {
     isDark: boolean = true;
     // global param
     dirInfo: DirInfo = { rankId: '', isCompare: false };
+    projectChangedTrigger: boolean = true; // 删除或切换工程后触发
     constructor() {
         makeAutoObservable(this);
     }

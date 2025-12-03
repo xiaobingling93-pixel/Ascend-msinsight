@@ -30,6 +30,7 @@ export class Session {
     isAllMemoryCompletedSwitch: boolean = false;
     // rankId 实际是 cardId: `{host} {rankId}`
     compareRank: ICompareRankInfo = { rankId: '', isCompare: false };
+    projectChangedTrigger: boolean = true; // 删除或切换工程后触发
 
     constructor() {
         makeAutoObservable(this);

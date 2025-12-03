@@ -155,6 +155,13 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     const [tableSpin, setTableSpin] = useState<boolean>(false);
     const [total, setTotal] = useState<number>(0);
     const { t } = useTranslation('memory');
+    const tableRef = useRef<ResizeTableRef>(null);
+
+    const handleReset = (): void => {
+        clearFilters();
+        tableRef.current?.clearAllFilters();
+        tableRef.current?.clearAllSorts();
+    };
 
     const onRowSelected = (record?: any, rowIndex?: number): void => {
         setSelectedRecord(memorySession, record);
@@ -328,13 +335,9 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         session.isAllMemoryCompletedSwitch, memorySession.order, memorySession.orderBy, memorySession.filters,
         memorySession.rangeFilters, t]);
 
-    const tableRef = useRef<ResizeTableRef>(null);
-
-    const handleReset = (): void => {
-        clearFilters();
-        tableRef.current?.clearAllFilters();
-        tableRef.current?.clearAllSorts();
-    };
+    useEffect(() => {
+        handleReset();
+    }, [session.projectChangedTrigger]);
 
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>

@@ -78,6 +78,7 @@ export const resetHandler: NotificationHandler = (data): void => {
             return;
         }
         session.allCardInfos = [];
+        session.projectChangedTrigger = !session.projectChangedTrigger;
     });
 };
 
