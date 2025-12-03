@@ -13,6 +13,10 @@ const timeRangeAnalysisMenuVisible = (session: Session): boolean => {
     if (session.selectedRange === undefined || session.selectedUnits === undefined) {
         return false;
     }
+    // 算子调优和服务化调优不支持
+    if (session.isSimulation || session.isIE) {
+        return false;
+    }
     return session.selectedUnits.length !== 0;
 };
 
@@ -21,6 +25,10 @@ const applyTimeRangeAnalysisMenuVisible = (session: Session): boolean => {
         return false;
     }
     if (session.selectedData === undefined) {
+        return false;
+    }
+    // 算子调优和服务化调优不支持
+    if (session.isSimulation || session.isIE) {
         return false;
     }
     return true;
