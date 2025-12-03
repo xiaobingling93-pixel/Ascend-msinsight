@@ -24,6 +24,7 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     }
     double start = NumberUtil::StringToDouble(request.params.start);
     double end = NumberUtil::StringToDouble(request.params.end);
+    response.rankOffsetNs = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(request.params.rankId);
     if (MemoryParse::Instance().Exist(request.params.GetRequestKey())) {
         CurveView curve = MemoryParse::Instance().ComputeCurve(start, end, request.params.GetRequestKey());
         responsePtr->data.title = curve.title;

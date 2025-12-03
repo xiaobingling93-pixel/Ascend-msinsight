@@ -130,6 +130,7 @@ struct MemoryFindSliceResponse : public Response {
 struct MemoryViewResponse : public Response {
     MemoryViewResponse() : Response(REQ_RES_MEMORY_VIEW) {}
     MemoryViewData data;
+    uint64_t rankOffsetNs{0};
 };
 
 struct OperatorSize {

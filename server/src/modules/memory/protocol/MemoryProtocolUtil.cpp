@@ -163,6 +163,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const M
     JsonUtil::AddMember(body, "legends", legends, allocator);
     JsonUtil::AddMember(body, "lines", linesList, allocator);
     JsonUtil::AddMember(body, "title", response.data.title, allocator);
+    JsonUtil::AddMember(body, "rankOffsetNs", response.rankOffsetNs, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
