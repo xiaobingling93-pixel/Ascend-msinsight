@@ -54,6 +54,7 @@ struct Metadata {
     std::string rankId;
     uint64_t lockStartTime = 0;
     uint64_t lockEndTime = 0;
+    bool hidePythonFunction = false;
 };
 
 struct SearchAllSliceParams {

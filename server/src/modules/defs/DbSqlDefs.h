@@ -212,6 +212,11 @@ const static std::string API_THREADS_BY_PID =
         " main where globalTid = ? and endNs >= ? AND startNs <= ?"
         " ORDER BY depth ASC, startNs ASC;";
 
+const static std::string API_THREADS_BY_PID_AND_NO_PYTHON_FUNCTION =
+        "select startNs, endNs - startNs as duration, endNs, name, depth from PYTORCH_API "
+        " main where globalTid = ? and endNs >= ? AND startNs <= ? and type != 50003 " // 50003 is the python function
+        " ORDER BY depth ASC, startNs ASC;";
+
 const static std::string OVERLAP_ANALYSIS_THREAD_BY_PID =
         "select startNs, endNs - startNs as duration, endNs, 'OVERLAP_ANALYSIS'||type as name, "
         " 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? and type = ? "

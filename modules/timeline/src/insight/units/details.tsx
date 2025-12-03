@@ -77,13 +77,15 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
         const selectedUnits = isValidSliceMode ? getSelectedUnitsOfSliceMode(session) : [...session.selectedUnits];
         const paramsOfDepth = isValidSliceMode ? { startDepth: rangeOfLevels[0].toString(), endDepth: rangeOfLevels[1].toString() } : {};
         session.sliceSelection.searchOfSlice = isValidSliceMode;
+        const pythonFunctionConfig = session.unitsConfig.filterConfig.pythonFunction;
 
         const metadataList = selectedUnits.flatMap(selectUnit => {
-            const { threadId, threadIdList, processId, metaType } = selectUnit?.metadata as ThreadMetaData;
+            const { cardId, threadId, threadIdList, threadName, processId, metaType } = selectUnit?.metadata as ThreadMetaData;
+            const hidePythonFunction = pythonFunctionConfig?.[`${cardId}_${threadName}`] ?? false;
             if (Array.isArray(threadIdList)) {
-                return threadIdList.map(tid => ({ tid, metaType, pid: processId }));
+                return threadIdList.map(tid => ({ tid, metaType, pid: processId, hidePythonFunction }));
             }
-            return [{ tid: threadId, pid: processId, metaType }];
+            return [{ tid: threadId, pid: processId, metaType, hidePythonFunction }];
         });
 
         const params = {

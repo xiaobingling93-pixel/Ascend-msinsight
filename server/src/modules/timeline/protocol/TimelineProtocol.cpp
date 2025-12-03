@@ -218,6 +218,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsRequest(const json_t &js
                     .pid = JsonUtil::GetString(metaData, "pid"),
                     .metaType = JsonUtil::GetString(metaData, "metaType")
             };
+            JsonUtil::SetByJsonKeyValue(data.hidePythonFunction, metaData, "hidePythonFunction");
             reqPtr->params.metadataList.emplace_back(std::move(data));
         }
     }
