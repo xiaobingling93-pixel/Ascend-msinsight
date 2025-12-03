@@ -18,7 +18,6 @@ class KernelParseTest : public KernelParse, public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        DataBaseManager::Instance().SetDataType(DataType::TEXT);
         std::ofstream outfile;
         for (const auto& item : tmpFiles) {
             outfile.open(Dic::FileUtil::GetCurrPath() + item, std::ios::out);

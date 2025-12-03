@@ -18,7 +18,9 @@ public:
     ProjectParserDb() = default;
     ~ProjectParserDb() override = default;
 
-    void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
+    void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                ImportActionRequest &request,
+                ImportActionResponse &response) final;
     void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
         Global::BaselineInfo &baselineInfo) override;
     ProjectTypeEnum GetProjectType(const std::string &dataPath) override;

@@ -50,7 +50,8 @@ TEST_F(ProjectParserTest, ParserBaseParser)
     ProjectParserBase parser;
     ProjectExplorerInfo info;
     ImportActionRequest request;
-    parser.Parser({info}, request);
+    ImportActionResponse response;
+    parser.Parser({info}, request, response);
 }
 
 TEST_F(ProjectParserTest, ParserBaseline)

@@ -49,6 +49,7 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr,
                                    const std::string &rankId,
                                    const std::string &fileId)
 {
+    ParserStatusManager::Instance().WaitStartParse();
     if (!InitParser(filePathArr, rankId, fileId)) {
         auto msg = "Failed to open db. Please delete dbFile and try again or see logs in " +
                    ServerLog::GetCurrentLogPath();

@@ -40,7 +40,9 @@ TEST_F(ParserIETest, TestParser)
     std::vector<Dic::Module::Global::ProjectExplorerInfo> projectInfos;
     projectInfos.emplace_back(info);
     ImportActionRequest request;
-    parserIe.Parser(projectInfos, request);
+    ImportActionResponse response;
+    request.params.path.emplace_back("");
+    parserIe.Parser(projectInfos, request, response);
     parserIe.Reset();
     Dic::Module::Timeline::TraceFileParser::Instance().Reset();
     Dic::Module::Timeline::DataBaseManager::Instance().Clear();

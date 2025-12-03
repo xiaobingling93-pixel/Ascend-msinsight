@@ -33,8 +33,8 @@ TEST_F(MemoryParserTest, OperatorParseNormalTest)
                                "/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db";
     const std::string filePath = currPath.substr(0, index) + dataPath;
     const std::string dbFilePath = currPath.substr(0, index) + dbPath;
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, dbFilePath);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbFilePath);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
@@ -69,8 +69,8 @@ TEST_F(MemoryParserTest, OperatorParseEmptyLineTest)
                                     "Release Total Active(MB),Stream Ptr,Device Type";
     outfile << tableColumn;
     outfile.close();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, dbFilePath);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbFilePath);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
@@ -96,8 +96,8 @@ TEST_F(MemoryParserTest, RecordParseNormalTest)
                                "/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db";
     const std::string filePath = currPath.substr(0, index) + dataPath;
     const std::string dbFilePath = currPath.substr(0, index) + dbPath;
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, dbFilePath);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbFilePath);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
@@ -129,8 +129,8 @@ TEST_F(MemoryParserTest, RecordParseEmptyLineTest)
                                     "Stream Ptr,Device Type";
     outfile << tableColumn;
     outfile.close();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, dbFilePath);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbFilePath);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
@@ -161,8 +161,8 @@ TEST_F(MemoryParserTest, StaticOpParseNormalTest)
     const std::string tableColumn = "Device_id,Op Name,Model Name,Graph ID,Node Index Start,Node Index End,Size(KB)";
     outfile << tableColumn;
     outfile.close();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, dbFilePath);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbFilePath);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));
@@ -194,8 +194,8 @@ TEST_F(MemoryParserTest, StaticOpParseEmptyLineTest)
     const std::string tableColumn = "Device_id,Op Name,Model Name,Graph ID,Node Index Start,Node Index End,Size(KB)";
     outfile << tableColumn;
     outfile.close();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
-    DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, dbFilePath);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbFilePath);
     ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, ParserStatus::RUNNING);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         DataBaseManager::Instance().CreateMemoryDataBase(fileId, dbFilePath));

@@ -27,7 +27,7 @@ void RLPipelineService::Clear()
 std::vector<Protocol::RLPipelineNode> RLPipelineService::SearchNode(const std::string &rankId)
 {
     // 查找mstx数据
-    FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataType();
+    FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataTypeByRank(rankId);
     std::vector<std::string> taskNameList = RLMstxConfigManager::Instance().GetMstxTaskNameList();
     std::vector<FullDb::CompeteSliceDomain> mstxSliceList =
         FullDb::RenderEngine::Instance()->QueryMstxRLDetail(rankId, dataType, taskNameList);

@@ -39,7 +39,8 @@ public:
         currPath = currPath.substr(0, index - server.length()); // 取 server 前的文件路径
         std::string dbPath3 = currPath + R"(/server/src/test/test_data/full_db/msprof_0.db)";
 
-        DataBaseManager::Instance().SetDataType(DataType::DB);
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath3);
+        DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbPath3);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
         ParserType allocType = parserType.second;
         std::shared_ptr<ProjectParserBase> factory = ParserFactory::GetProjectParser(allocType);
@@ -58,13 +59,11 @@ public:
         projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
         projectExplorerInfoList.push_back(projectExplorerInfo);
 
-        if (allocType != ParserType::JSON) {
-            ParserFactory::Reset();
-        }
         ImportActionRequest request;
         // 从ImportActionHandler可以看出，Parser方法的第一个参数是vector，但永远只有一个元素，所以DT中不要传多个元素的vector
-        factory->Parser(projectExplorerInfoList, request);
-
+        ImportActionResponse response;
+        factory->Parser(projectExplorerInfoList, request, response);
+        Timeline::DataBaseManager::Instance().SetRankIdFileIdMapping("2", dbPath3);
         Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", dbPath3, "");
         Timeline::DataBaseManager::Instance().SetDbPathMapping("2", dbPath3, "");
         while (ParserStatusManager::Instance().GetParserStatus("2") != ParserStatus::FINISH_ALL) {

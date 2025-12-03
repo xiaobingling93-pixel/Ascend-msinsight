@@ -573,6 +573,7 @@ bool MemoryParse::Parse(const RankEntry &rankEntry)
 
 void MemoryParse::PreParseTask(const MemoryFilePairs& filePair, const std::string& fileId)
 {
+    ParserStatusManager::Instance().WaitStartParse();
     std::string message;
     if (!InitParser(filePair, fileId, message)) {
         ServerLog::Error("Failed to parse memory files for fileId:", fileId, ", reason: ", message);

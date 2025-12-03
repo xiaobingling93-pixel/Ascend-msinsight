@@ -12,6 +12,7 @@
 #include "TraceTime.h"
 #include "BaselineManager.h"
 #include "TrackInfoManager.h"
+#include "ParserStatusManager.h"
 #include "KernelParse.h"
 
 namespace Dic::Module::Summary {
@@ -110,6 +111,7 @@ void KernelParse::PreParseTask(const std::vector<std::string> &filePathList, con
                                const std::string &fileId)
 {
     std::string message;
+    Dic::Module::Timeline::ParserStatusManager::Instance().WaitStartParse();
     if (!InitParser(filePathList, rankId, fileId, message)) {
         Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + rankId);
         ServerLog::Error("Failed to parse summary files for fileId:", rankId, "reason: ", message);

@@ -18,6 +18,7 @@
 namespace Dic {
 class ThreadPool {
 public:
+    static ThreadPool& Instance();
     explicit ThreadPool(uint32_t threadCount);
     ~ThreadPool();
     ThreadPool(const ThreadPool &) = delete;
@@ -32,7 +33,7 @@ public:
      * @param args: the task argument
      * @return the future of the result, future.get() throw exception of the task.
      */
-    template<typename F, typename ...Args>
+    template<class F, class ...Args>
     auto AddTask(F &&f, const std::string &parentTraceId, Args &&...args) -> std::future<decltype(f(args...))>
     {
         std::function<decltype(f(args...))()> func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
@@ -43,6 +44,7 @@ public:
             TraceIdManager::SetTraceId(traceId);
             (*task)();
         };
+        std::unique_lock lock(taskMutex);
         taskQueue.Push(wrapperFunc);
         taskCv.notify_one();
         return task->get_future();

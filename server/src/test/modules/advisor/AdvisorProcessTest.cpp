@@ -30,8 +30,6 @@ protected:
 
 TEST_F(AdvisorProcessTest, AclnnOpAdvisorProcessSuccessfulWithSpecificParam)
 {
-    Dic::Module::Timeline::DataBaseManager::Instance().SetDataType(DataType::TEXT);
-
     AclnnOperatorResBody resBody = {};
     auto res = AclnnOpAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);
@@ -40,8 +38,6 @@ TEST_F(AdvisorProcessTest, AclnnOpAdvisorProcessSuccessfulWithSpecificParam)
 
 TEST_F(AdvisorProcessTest, AffinityAPIAdvisorProcessSuccessfulWithSpecificParam)
 {
-    Dic::Module::Timeline::DataBaseManager::Instance().SetDataType(DataType::TEXT);
-
     AffinityAPIResBody resBody = {};
     auto res = AffinityAPIAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);
@@ -51,8 +47,6 @@ TEST_F(AdvisorProcessTest, AffinityAPIAdvisorProcessSuccessfulWithSpecificParam)
 
 TEST_F(AdvisorProcessTest, AffinityOptimizerAdvisorProcessSuccessfulWithSpecificParam)
 {
-    Dic::Module::Timeline::DataBaseManager::Instance().SetDataType(DataType::TEXT);
-
     AffinityOptimizerResBody resBody = {};
     auto res = AffinityOptimizerAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);
@@ -61,8 +55,6 @@ TEST_F(AdvisorProcessTest, AffinityOptimizerAdvisorProcessSuccessfulWithSpecific
 
 TEST_F(AdvisorProcessTest, AICpuOpAdvisorProcessSuccessfulWithSpecificParam)
 {
-    Dic::Module::Timeline::DataBaseManager::Instance().SetDataType(DataType::TEXT);
-
     AICpuOperatorResBody resBody = {};
     auto res = AICpuOpAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);
@@ -71,8 +63,6 @@ TEST_F(AdvisorProcessTest, AICpuOpAdvisorProcessSuccessfulWithSpecificParam)
 
 TEST_F(AdvisorProcessTest, FusedOpAdvisorProcessSuccessfulWithSpecificParam)
 {
-    Dic::Module::Timeline::DataBaseManager::Instance().SetDataType(DataType::TEXT);
-
     OperatorFusionResBody resBody = {};
     auto res = FusedOpAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);
@@ -81,8 +71,6 @@ TEST_F(AdvisorProcessTest, FusedOpAdvisorProcessSuccessfulWithSpecificParam)
 
 TEST_F(AdvisorProcessTest, OperatorDispatchAdvisorProcessSuccessfulWithSpecificParam)
 {
-    Dic::Module::Timeline::DataBaseManager::Instance().SetDataType(DataType::TEXT);
-
     OperatorDispatchResBody resBody = {};
     auto res = OperatorDispatchAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);

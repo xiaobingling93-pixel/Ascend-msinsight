@@ -23,7 +23,7 @@ class TraceParserTest : PerformanceTest {
 TEST_F(PerformanceTest, testTraceParser1P2GBTime)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, <#initializer#>);
     DataBaseManager::Instance().CreateTraceConnectionPool("0",
         std::string(test1P2GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
     TraceFileParser::Instance().Parse(
@@ -50,7 +50,7 @@ TEST_F(PerformanceTest, testTraceParser1P2GBTime)
 TEST_F(PerformanceTest, testTraceParser1P5GBTime)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, <#initializer#>);
     DataBaseManager::Instance().CreateTraceConnectionPool("0",
         std::string(test1P5GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
     TraceFileParser::Instance().Parse(

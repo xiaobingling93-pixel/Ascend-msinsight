@@ -37,9 +37,9 @@ public:
         int index = currPath.find("server");
         currPath = currPath.substr(0, index);
         std::string dbPath = R"(test/data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/)";
-        DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
         std::string dbPathFull = StringUtil::StrJoin(currPath, dbPath, "ascend_pytorch_profiler_0.db");
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPathFull);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPathFull);
         auto memoryDatabase = std::dynamic_pointer_cast<DbMemoryDataBase, VirtualMemoryDataBase>(
             DataBaseManager::Instance().CreateMemoryDataBase("0", dbPathFull));
         DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPathFull, "0", "0");

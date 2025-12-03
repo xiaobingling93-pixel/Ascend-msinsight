@@ -40,15 +40,13 @@ public:
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(nullptr);
-        WsSessionManager::Instance().AddSession(std::move(session));
         std::string subStr = "server";
         size_t index = currPath.rfind(subStr);
         currPath = currPath.substr(0, index - 1);
         std::string dbPath3 = currPath +
             R"(/test/data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
-        DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath3);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath3);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath3);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
         ParserType allocType = parserType.second;
@@ -69,12 +67,9 @@ public:
         parseFileInfo->parseFilePath = dbPath3;
         projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
         projectExplorerInfoList.push_back(projectExplorerInfo);
-
-        if (allocType != ParserType::JSON) {
-            ParserFactory::Reset();
-        }
         ImportActionRequest request;
-        factory->Parser(projectExplorerInfoList, request);
+        ImportActionResponse response;
+        factory->Parser(projectExplorerInfoList, request, response);
         Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", dbPath3, "ubuntu3538958389648580163_0");
         Timeline::DataBaseManager::Instance().SetDbPathMapping("0", dbPath3, "ubuntu3538958389648580163_0");
         while (ParserStatusManager::Instance().GetParserStatus("ubuntu3538958389648580163_0 0") !=
@@ -100,7 +95,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryOverlapAnalysisDataForOverallMetricTest
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -125,7 +120,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryDataForComputingOverallMetricTestWithPm
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -167,7 +162,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhe
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -192,7 +187,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTest
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -202,9 +197,9 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTest
     SystemViewOverallHelper computeHelper;
     UnitThreadsOperatorsResponse response;
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    std::string sql = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+    std::string sql = DataBaseManager::Instance().GetDataType(database->GetDbPath()) == DataType::TEXT ?
         TextSqlConstant::GetOverlapAnalysisTextSqlByType(requestParams) : TraceDatabaseSqlConst::GetOverlapAnalysisDbSqlByType(requestParams);
-    std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+    std::string type = DataBaseManager::Instance().GetDataType(database->GetDbPath()) == DataType::TEXT ?
                        "Communication(Not Overlapped)" : "2";
     uint64_t totalTime = 0;
     std::vector<Protocol::ThreadTraces> notOverlapData{};

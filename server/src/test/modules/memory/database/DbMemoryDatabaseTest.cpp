@@ -26,9 +26,9 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
         std::string dbPath = StringUtil::StrJoin(currPath, dbPath3, "ascend_pytorch_profiler.db");
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath);
         auto memoryDatabase =
             std::dynamic_pointer_cast<DbMemoryDataBase, Dic::Module::Memory::VirtualMemoryDataBase>(
                 DataBaseManager::Instance().CreateMemoryDataBase("0", dbPath));
@@ -78,7 +78,6 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireComponentTable)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorData)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
@@ -348,7 +347,6 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNumByStreamExpectSeveral)
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireOperatorTable)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.deviceId = "0";

@@ -25,7 +25,7 @@ bool SystemMemoryDatabase::CreateTable()
     }
     std::string sql = "CREATE TABLE " + projectExplorerTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
          "projectName TEXT, fileName TEXT, projectType INTEGER, importType TEXT, fileId Text, accessTime TEXT, "
-         "UNIQUE (projectName, fileName) );"
+         "UNIQUE (projectName, fileName, projectType) );"
          "CREATE TABLE " + parseFileInfoTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
                                                 "projectExplorerId INTEGER, parseFilePath TEXT, fileId Text, "
                                                 "subId TEXT,type INTEGER, clusterPath TEXT, "
@@ -51,8 +51,7 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateProject(const ProjectExplorerInf
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT INTO " + projectExplorerTable +
         "(projectName, fileName, projectType, importType, fileId, accessTime) VALUES(?, ?, ?, ?, ?, ?)";
-    sql += " ON CONFLICT(projectName, fileName) DO UPDATE SET"
-           " projectType = EXCLUDED.projectType,"
+    sql += " ON CONFLICT(projectName, fileName, projectType) DO UPDATE SET"
            " importType = EXCLUDED.importType,"
            " fileId = EXCLUDED.fileId,"
            " accessTime = EXCLUDED.accessTime;";

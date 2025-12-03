@@ -82,13 +82,12 @@ public:
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseWithOutHost(const std::string &rankId);
     std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseInCluster(const std::string& clusterPath,
                                                                     const std::string &rankId);
-    DataType GetDataType();
-    void SetDataType(DataType type);
-    FileType GetFileType();
+    DataType GetDataType(const std::string &fileId);
+    DataType GetDataTypeByRank(const std::string& rankId);
+    void SetDataType(DataType type, const std::string &fileId);
+    FileType GetFileType(const std::string &fileId);
     FileType GetFileTypeByRankId(const std::string &rankId);
-    void SetFileType(FileType type);
-    void SetBaselineDataType(DataType type);
-    void SetBaselineFileType(FileType type);
+    void SetFileType(FileType type, const std::string &fileId);
     bool ResetBaseline();
     void SetDbPathMapping(const std::string& rankId, const std::string& dbPath, const std::string& hostId);
     bool IsContainDatabasePath(const std::string& databasePath);
@@ -120,9 +119,8 @@ private:
     DataBaseManager() = default;
     ~DataBaseManager() = default;
     std::recursive_mutex mutex;
-    DataType dataType = DataType::TEXT;
-    DataType baselineType = DataType::TEXT;
-    FileType fileType = FileType::PYTORCH;
+    std::unordered_map<FileId, DataType> dataTypeMap;
+    std::unordered_map<FileId, FileType> fileTypeMap;
 
     std::map<std::string, std::recursive_mutex> dbMutexMap;
     std::map<RankId, DbPath> dbFilePathMap;

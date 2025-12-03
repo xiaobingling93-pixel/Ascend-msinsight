@@ -24,17 +24,13 @@ bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     std::unique_ptr<ResetWindowResponse> responsePtr = std::make_unique<ResetWindowResponse>();
     ResetWindowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    DataType type = DataBaseManager::Instance().GetDataType();
     std::shared_ptr<IE::ServitizationOpenApi> openApi = std::make_shared<IE::ServitizationOpenApi>();
     openApi->Reset();
-    if (type == DataType::TEXT) {
-        TraceFileParser::Instance().Reset();
-        Summary::KernelParse::Instance().Reset();
-        Memory::MemoryParse::Instance().Reset();
-        Source::SourceFileParser::Instance().Reset();
-    } else {
-        FullDb::FullDbParser::Instance().Reset();
-    }
+    TraceFileParser::Instance().Reset();
+    Summary::KernelParse::Instance().Reset();
+    Memory::MemoryParse::Instance().Reset();
+    Source::SourceFileParser::Instance().Reset();
+    FullDb::FullDbParser::Instance().Reset();
     BaselineManagerService::ResetBaseline();
     SetResponseResult(response, true);
     // add response to response queue in session

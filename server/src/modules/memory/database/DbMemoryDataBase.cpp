@@ -50,7 +50,7 @@ int64_t DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &re
                                               std::vector<Protocol::MemoryOperator> &opDetails)
 {
     std::string sql;
-    const FileType type = DataBaseManager::Instance().GetFileType();
+    const FileType type = DataBaseManager::Instance().GetFileType(path);
     const uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     const uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
     // 溢出防护
@@ -72,7 +72,7 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &
     std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
     std::string sql;
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileType(path);
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string startTimeStr = std::to_string(startTime);
     std::string offsetTimeStr = std::to_string(offsetTime);
@@ -90,7 +90,7 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
                                             std::vector<Protocol::MemoryComponent> &componentDetails)
 {
     std::string sql;
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileType(path);
     if (type == FileType::PYTORCH) {
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
         uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(requestParams.rankId);
@@ -128,7 +128,7 @@ bool DbMemoryDataBase::QueryEntireComponentTable(Protocol::MemoryComponentParams
     std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime)
 {
     std::string sql;
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileType(path);
     if (type == FileType::PYTORCH) {
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
         sql = "SELECT t4.name, ROUND(t3.size / (1024.0 * 1024.0), 2), t3.timestamp_maxsize FROM "
@@ -151,7 +151,7 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
                                        Protocol::MemoryViewData &operatorBody, uint64_t offsetTime)
 {
     std::string sql = "";
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileType(path);
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (type == FileType::PYTORCH) {
         sql += "select * from ( ";
@@ -184,7 +184,7 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
 bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum)
 {
     std::string sql;
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileType(path);
     if (type == FileType::PYTORCH) {
         sql = "SELECT count(*) FROM (SELECT t2.name FROM " + TABLE_NPU_MODULE_MEM +
             " AS t1 JOIN ENUM_MODULE AS t2 ON t1.moduleId = t2.id WHERE deviceId = ? "
@@ -199,7 +199,7 @@ bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &
 
 bool DbMemoryDataBase::QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max)
 {
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileType(path);
     std::string sql = "";
     if (type == FileType::PYTORCH) {
         sql += "SELECT ROUND(min(size)/ 1024.0, 2) as minSize, "

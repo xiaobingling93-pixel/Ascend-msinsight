@@ -93,7 +93,7 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryRankIds)
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
         Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb"));
     EXPECT_NE(database, nullptr);
-    DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
+    DataBaseManager::Instance().SetFileType(FileType::MS_PROF, database->GetDbPath());
     auto rankIds = database->QueryRankId();
     EXPECT_EQ(rankIds.size(), 8); // size = 8
 }

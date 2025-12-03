@@ -37,7 +37,10 @@ public:
         std::string refPath1 = R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
         std::string dbPath0 = currPath + refPath0 + "mindstudio_insight_data.db";
         std::string dbPath1 = currPath + refPath1 + "mindstudio_insight_data.db";
-        DataBaseManager::Instance().SetDataType(DataType::TEXT);
+        DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath0);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath0);
+        DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath1);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath1);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath0);
         DataBaseManager::Instance().CreateTraceConnectionPool("1", dbPath1);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath0, "0", "0");

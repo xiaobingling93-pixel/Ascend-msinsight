@@ -15,13 +15,13 @@ using namespace Dic::Module::Timeline;
 std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string deviceId, std::string deviceIdColumnName)
 {
     std::vector<std::string> streams = {};
-    DataType type = DataBaseManager::Instance().GetDataType();
+    DataType type = DataBaseManager::Instance().GetDataType(path);
     std::string sql = "";
     if (type == DataType::TEXT) {
         sql += "SELECT stream FROM " + recordTable + " WHERE deviceId = ? AND stream <> '' "
             "Group BY stream ORDER BY timestamp ASC";
     } else if (type == DataType::DB) {
-        FileType fileType = DataBaseManager::Instance().GetFileType();
+        FileType fileType = DataBaseManager::Instance().GetFileType(path);
         if (fileType == FileType::PYTORCH) {
             std::string streamPtrColumnName = "streamPtr";
             std::string timeColumnName = "timestamp";
@@ -99,7 +99,7 @@ bool VirtualMemoryDataBase::ExecuteOperatorSize(Protocol::MemoryOperatorSizePara
         return false;
     }
     int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+    if (Timeline::DataBaseManager::Instance().GetDataType(path) == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
     } else {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
@@ -147,7 +147,7 @@ bool VirtualMemoryDataBase::ExecuteComponentTotalNum(Protocol::MemoryComponentPa
     }
 
     int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+    if (Timeline::DataBaseManager::Instance().GetDataType(path) == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
     } else {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
@@ -202,7 +202,7 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryVie
         return false;
     }
     int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+    if (Timeline::DataBaseManager::Instance().GetDataType(path) == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
     } else {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
@@ -287,7 +287,7 @@ int64_t VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorPar
     }
     // 此处index不会自增溢出回绕，因为无论是filters、rangeFilters已在前序从json获取时判断了均在枚举列中，不可能超出列总数14
     int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+    if (Timeline::DataBaseManager::Instance().GetDataType(path) == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
     } else {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
@@ -343,7 +343,7 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(Protocol::MemoryOper
     }
 
     int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+    if (Timeline::DataBaseManager::Instance().GetDataType(path) == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
     } else {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);
@@ -396,7 +396,7 @@ bool VirtualMemoryDataBase::ExecuteComponentDetail(Protocol::MemoryComponentPara
         return false;
     }
     int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+    if (Timeline::DataBaseManager::Instance().GetDataType(path) == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
     } else {
         sqlite3_bind_int64(stmt, index++, StringUtil::StringToInt(requestParams.deviceId));
@@ -429,7 +429,7 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireComponentTable(Protocol::MemoryCom
     }
 
     int index = bindStartIndex;
-    if (Timeline::DataBaseManager::Instance().GetDataType() == DataType::TEXT) {
+    if (Timeline::DataBaseManager::Instance().GetDataType(path) == DataType::TEXT) {
         sqlite3_bind_text(stmt, index++, requestParams.deviceId.c_str(), requestParams.deviceId.length(), nullptr);
     } else {
         int deviceId = StringUtil::StringToInt(requestParams.deviceId);

@@ -85,6 +85,7 @@ std::shared_ptr<DbTraceDataBase> FullDbParser::GetTraceDatabase(const std::strin
 
 void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds)
 {
+    ParserStatusManager::Instance().WaitStartParse();
     auto start = std::chrono::high_resolution_clock::now();
     std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineRankId(rankIds[0])) ?
         rankIds[0] : filePath;

@@ -14,7 +14,6 @@ class CommunicationTest : TestSuit {
 
 TEST_F(TestSuit, QueryIterationsData)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryIterations(responseBody);
@@ -222,7 +221,6 @@ TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)
 
 TEST_F(TestSuit, QueryMatrixSortOpNames)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     Dic::Protocol::OperatorNamesParams requestParams;
@@ -236,7 +234,6 @@ TEST_F(TestSuit, QueryMatrixSortOpNames)
 
 TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenSingleStep)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "2";
     std::unordered_map<std::uint32_t, Dic::Module::StepStatistic> data{};
@@ -253,7 +250,6 @@ TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenSingleStep)
 
 TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenSingleStep)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "2";
     std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
@@ -263,7 +259,6 @@ TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenSingleStep)
 
 TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenAllStep)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "";
     std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
@@ -273,7 +268,6 @@ TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenAllStep)
 
 TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenAllStep)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "";
     std::unordered_map<std::uint32_t, Dic::Module::StepStatistic> data{};

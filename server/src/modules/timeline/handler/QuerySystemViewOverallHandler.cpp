@@ -72,7 +72,7 @@ bool QuerySystemViewOverallHandler::CalOverallData(SystemViewOverallRequest &req
         return false;
     }
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(request.fileId));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return false;
@@ -97,7 +97,7 @@ double QuerySystemViewOverallHandler::GetOverlapAnalysisData(SystemViewOverallHe
 {
     double e2eTime{};
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(request.fileId));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return e2eTime;

@@ -51,9 +51,9 @@ TEST_F(ParserBinTest, ParserWithValidData)
         ProjectActionEnum::ADD_FILE,
         false
     };
-
+    ImportActionResponse response;
     ProjectParserBin parserBin;
-    parserBin.Parser({info}, request);
+    parserBin.Parser({info}, request, response);
     BaselineInfo baselineInfo = {
         "localhost",
         "0",
@@ -106,7 +106,8 @@ TEST_F(ParserBinTest, ResponseHasRankList)
     };
 
     ProjectParserBin parserBin;
-    parserBin.Parser({info}, request);
+    ImportActionResponse response;
+    parserBin.Parser({info}, request, response);
     auto rankList = Timeline::TrackInfoManager::Instance().GetRankListByFileId(
         "./ParserBinTest_mindstudio_insight_data.db", "./ParserBinTest.bin");
     EXPECT_FALSE(rankList.empty());

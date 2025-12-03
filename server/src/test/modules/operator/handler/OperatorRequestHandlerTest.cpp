@@ -58,8 +58,8 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::DB);
         std::string fullDbPath = StringUtil::StrJoin(currPath, dbPath3, "msprof_0.db");
+        DataBaseManager::Instance().SetDataType(DataType::DB, fullDbPath);
         auto summeryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
                 DataBaseManager::Instance().CreateSummaryDatabase("2", fullDbPath));

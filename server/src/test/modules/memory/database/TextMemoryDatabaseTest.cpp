@@ -65,7 +65,6 @@ TEST_F(TestSuit, QueryMemoryEntireComponentTable)
 
 TEST_F(TestSuit, QueryMemoryOperatorData)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";

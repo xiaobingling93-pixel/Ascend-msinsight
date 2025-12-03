@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <shared_mutex>
+#include <atomic>
 #include "vector"
 #include "condition_variable"
 #include "GlobalDefs.h"
@@ -52,6 +53,12 @@ public:
         const std::pair<ProjectTypeEnum, std::vector<std::string>> &filePathPair);
     std::pair<ProjectTypeEnum, std::vector<std::string>> QueryPendingFilePath(const std::string &fileId);
 
+    void WaitStartParse();
+
+    void NotifyStartParse();
+
+    void ResetParse();
+
 private:
     ParserStatusManager() = default;
     ~ParserStatusManager() = default;
@@ -69,6 +76,9 @@ private:
     const std::vector<ParserStatus> finalStateList = {
         ParserStatus::FINISH, ParserStatus::FINISH_ALL, ParserStatus::TERMINATE
     };
+    std::condition_variable importResCv;
+    std::mutex importMutex;
+    std::atomic<bool> importRes{true};  // 默认为true， UT中无需设置
 };
 } // end of namespace Timeline
 } // end of namespace Module

@@ -74,11 +74,13 @@ TEST_F(DbTraceDatabaseTest, TestQueryRankIdWithRankDeviceExist)
         {
             isOpen = true;
             db = dbPtr;
+            path = "TestQueryRankIdWithRankDeviceExist";
             return;
         }
     };
     Dic::Protocol::DataBaseManager::Instance().Clear();
-    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH);
+    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH,
+                                                           "TestQueryRankIdWithRankDeviceExist");
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
@@ -115,6 +117,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryRankIdWithNpuInfoExist)
         {
             isOpen = true;
             db = dbPtr;
+            path = "TestQueryRankIdWithNpuInfoExist";
             return;
         }
     };
@@ -123,7 +126,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryRankIdWithNpuInfoExist)
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
     std::string sql = "CREATE TABLE NPU_INFO (id INTEGER, name TEXT);";
-    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::MS_PROF);
+    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::MS_PROF,
+                                                           "TestQueryRankIdWithNpuInfoExist");
     DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, sql);
     std::string insertSql = "INSERT INTO NPU_INFO (id, name) VALUES (3, 'h'), (4, 'kk');";
     DatabaseTestCaseMockUtil::InsertData(db, insertSql);
@@ -165,11 +169,13 @@ TEST_F(DbTraceDatabaseTest, TestQueryRankIdAndDeviceMapWithRankDeviceExist)
         {
             isOpen = true;
             db = dbPtr;
+            path = "TestQueryRankIdAndDeviceMapWithRankDeviceExist";
             return;
         }
     };
     Dic::Protocol::DataBaseManager::Instance().Clear();
-    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH);
+    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH,
+                                                           "TestQueryRankIdAndDeviceMapWithRankDeviceExist");
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
@@ -202,11 +208,13 @@ TEST_F(DbTraceDatabaseTest, TestQueryRankIdAndDeviceMapWithRankDeviceWrongColumn
         {
             isOpen = true;
             db = dbPtr;
+            path = "TestQueryRankIdAndDeviceMapWithRankDeviceWrongColumn";
             return;
         }
     };
     Dic::Protocol::DataBaseManager::Instance().Clear();
-    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH);
+    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH,
+                                                           "TestQueryRankIdAndDeviceMapWithRankDeviceWrongColumn");
     std::recursive_mutex testMutex;
     MockDatabase dataBase(testMutex);
     sqlite3 *db = nullptr;
@@ -232,11 +240,13 @@ TEST_F(DbTraceDatabaseTest, TestGetDeviceIdWithHostExist)
         {
             isOpen = true;
             db = dbPtr;
+            path = "TestGetDeviceIdWithHostExist";
             return;
         }
     };
     Dic::Protocol::DataBaseManager::Instance().Clear();
-    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH);
+    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH,
+                                                           "TestGetDeviceIdWithHostExist");
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;
@@ -269,11 +279,12 @@ TEST_F(DbTraceDatabaseTest, TestGetDeviceIdWithHostNotExist)
         {
             isOpen = true;
             db = dbPtr;
+            path = "TestGetDeviceIdWithHostNotExist";
             return;
         }
     };
     Dic::Protocol::DataBaseManager::Instance().Clear();
-    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH);
+    Dic::Protocol::DataBaseManager::Instance().SetFileType(Dic::Protocol::FileType::PYTORCH, "TestGetDeviceIdWithHostNotExist");
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
     sqlite3 *db = nullptr;

@@ -30,8 +30,8 @@ public:
         Dic::Server::WsChannel *ws;
         std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
-        DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath);
     }
     static void TearDownTestSuite()

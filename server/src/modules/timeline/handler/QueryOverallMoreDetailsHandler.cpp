@@ -66,7 +66,7 @@ void QueryOverallMoreDetailsHandler::GetComputingOverallMetricDetails(
     UnitThreadsOperatorsResponse &response, uint64_t minTimestamp, SystemViewOverallHelper &overallHelper)
 {
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataTypeByRank(params.rankId));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -133,9 +133,9 @@ void QueryOverallMoreDetailsHandler::GetCommunicationOverallMetricDetails(
     std::vector<Protocol::ThreadTraces> notOverlapData{};
     if (params.categoryList[0] == COMMUNICATION_NOT_OVERLAP_TIME) {
         uint64_t totalTime = 0;
-        std::string sql = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+        std::string sql = DataBaseManager::Instance().GetDataTypeByRank(params.rankId) == DataType::TEXT ?
             TextSqlConstant::GetOverlapAnalysisTextSqlByType(params) : TraceDatabaseSqlConst::GetOverlapAnalysisDbSqlByType(params);
-        std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+        std::string type = DataBaseManager::Instance().GetDataTypeByRank(params.rankId) == DataType::TEXT ?
             "Communication(Not Overlapped)" : "2";
         ParamsForOAData paramsForOaData = { sql, type, minTimestamp, params.startTime, params.endTime };
         int deviceId = StringUtil::StringToInt(params.deviceId);
@@ -146,7 +146,7 @@ void QueryOverallMoreDetailsHandler::GetCommunicationOverallMetricDetails(
     }
     overallHelper.needResponse = false;
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataTypeByRank(params.rankId));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;

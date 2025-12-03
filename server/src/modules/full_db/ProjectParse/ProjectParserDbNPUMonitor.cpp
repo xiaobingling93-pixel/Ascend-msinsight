@@ -31,7 +31,7 @@ std::vector<std::string> ProjectParserDbNPUMonitor::GetParseFileByImportFile(con
         return {importFile};
     }
     // npumonitor的表结构和PTA的db格式相同
-    DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, importFile);
     return npuMonitorFiles;
 }
 
@@ -58,8 +58,8 @@ void ProjectParserDbNPUMonitor::ParserBaseline(const Global::ProjectExplorerInfo
         return;
     }
 
-    DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
+    DataBaseManager::Instance().SetFileType(FileType::PYTORCH, baselineInfo.parsedFilePath);
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB, baselineInfo.parsedFilePath);
     bool isParsed = Timeline::DataBaseManager::Instance().IsContainDatabasePath(baselineInfo.parsedFilePath);
     auto hostInfoMap = GetReportFiles({projectInfo}, baselineInfo.parsedFilePath);
     if (std::empty(hostInfoMap)) {

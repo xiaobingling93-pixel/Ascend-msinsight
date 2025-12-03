@@ -22,16 +22,11 @@ namespace Dic {
 namespace Module {
 using namespace Timeline;
 using namespace Dic::Server;
-void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                             ImportActionRequest &request,
+                             ImportActionResponse &response)
 {
-    std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr;
     ModuleRequestHandler::SetBaseResponse(request, response);
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
-    response.body.reset = IsNeedReset(request);
-    if (response.body.reset) {
-        ParserFactory::Reset();
-    }
     // 待解析的数据文件单独处理
     std::vector<std::string> dataFiles = {};
     for (const auto &projectInfo : projectInfos) {
@@ -40,7 +35,6 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
             response.body.subParseFileInfo.push_back(item);
         }
     }
-    response.body.projectFileTree = projectInfos[0].projectFileTree;
     auto hostInfoMap = GetReportFiles(projectInfos);
     SetHostInfo(hostInfoMap, response);
     SetParseCallBack();
@@ -49,11 +43,12 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     ProjectTypeEnum curProjectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     response.body.isCluster = CheckIsOpenClusterTag(request.params.projectAction, curProjectTypeEnum,
                                                     projectInfos[0].projectName);
-    response.body.isLeaks = DataBaseManager::Instance().GetFileType() == FileType::MEM_SCOPE;
+
+    response.body.isLeaks = DataBaseManager::Instance().GetFileTypeByRankId(projectInfos[0].subParseFileInfo[0]->rankId) == FileType::MEM_SCOPE;
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
+    MergeFileTree(response.body.projectFileTree, projectInfos[0].projectFileTree);
     // add response to response queue in session
-    SendImportActionRes(std::move(responsePtr));
     std::for_each(projectInfos.begin(), projectInfos.end(), [](const auto& project) {
         if (!Global::ProjectExplorerManager::Instance().UpdateParseFileInfo(project.projectName,
                                                                             project.subParseFileInfo)) {
@@ -96,6 +91,7 @@ void ProjectParserDb::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo,
                                      std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
                                      const std::string &projectName)
 {
+    ParserStatusManager::Instance().WaitStartParse();
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (curProjectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
         auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(clusterInfo->parseFilePath,
@@ -254,7 +250,6 @@ bool TryGetMemScopeFilesByImportFolderOrFile(const std::string &importFile, std:
 {
     memScopeFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(memScopeDbReg));
     if (IsSingleMemScopeDbFile(importFile) || !memScopeFiles.empty()) {
-        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE);
         if (memScopeFiles.empty()) {
             memScopeFiles.push_back(importFile);
         }
@@ -265,8 +260,14 @@ bool TryGetMemScopeFilesByImportFolderOrFile(const std::string &importFile, std:
 
 std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::string &importFile, std::string &error)
 {
+    DataBaseManager::Instance().SetDataType(DataType::DB, importFile);
     std::vector<std::string> memScopeFiles;
     if (TryGetMemScopeFilesByImportFolderOrFile(importFile, memScopeFiles) && !memScopeFiles.empty()) {
+        std::for_each(memScopeFiles.begin(), memScopeFiles.end(), [](const auto &memScopeFile) {
+            DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, memScopeFile);
+            DataBaseManager::Instance().SetDataType(DataType::DB, memScopeFile);
+        });
+        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, importFile);
         return memScopeFiles;
     }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
@@ -282,13 +283,15 @@ std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::st
         return { importFile };
     }
     std::vector<std::string> reportFiles = {};
+    FileType fileType;
     if (!frameworkFiles.empty()) {
         reportFiles = frameworkFiles;
-        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+        fileType = FileType::PYTORCH;
     } else if (!msprofFiles.empty()) {
         reportFiles = msprofFiles;
-        DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
+        fileType = FileType::MS_PROF;
     }
+    DataBaseManager::Instance().SetFileType(fileType, importFile);
     std::vector<std::string> res;
     for (const auto &item : reportFiles) {
         res.push_back(FileUtil::GetParentPath(item));
@@ -312,7 +315,6 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
     if (file.empty()) {
         return;
     }
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
     bool isParsed = Timeline::DataBaseManager::Instance().IsContainDatabasePath(file);
     auto hostInfoMap = GetReportFiles({projectInfo}, parseFilePath);
     if (std::empty(hostInfoMap)) {
@@ -484,17 +486,22 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
     if (!FileUtil::IsFolder(filePath)) {
         dbFiles.emplace_back(filePath);
         if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(memScopeDbReg))) {
-            DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE);
+            DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, filePath);
+            DataBaseManager::Instance().SetDataType(DataType::DB, filePath);
         }
         return dbFiles;
     }
     // 静态初始化，避免重复调用时正则编译开销
-    static std::vector<std::regex> dbRegex = {
-        std::regex{memScopeDbReg}, std::regex{pytorchDBReg},
-        std::regex{mindsporeDBReg}, std::regex{msprofDBReg}};
-    for (const auto &dbRegx: dbRegex) {
+    static std::map<FileType, std::regex> dbRegex = {
+        {FileType::MEM_SCOPE, std::regex{memScopeDbReg}}, {FileType::PYTORCH, std::regex{pytorchDBReg}},
+        {FileType::PYTORCH, std::regex{mindsporeDBReg}}, {FileType::MS_PROF, std::regex{msprofDBReg}}};
+    for (const auto &[type, dbRegx]: dbRegex) {
         std::vector<std::string> res = FileUtil::FindFilesWithFilter(filePath, dbRegx);
         if (!res.empty()) {
+            std::for_each(res.begin(), res.end(), [&type](const auto& file) {
+                DataBaseManager::Instance().SetDataType(DataType::DB, file);
+                DataBaseManager::Instance().SetFileType(type, file);
+            });
             return res;
         }
     }
@@ -529,13 +536,16 @@ std::string ProjectParserDb::GetBaselineDbFile(const std::string &path)
         return "";
     }
     std::string file;
+    FileType fileType;
     if (!frameworkFiles.empty()) {
-        DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
+        fileType = FileType::PYTORCH;
         file = frameworkFiles[0];
     } else {
-        DataBaseManager::Instance().SetBaselineFileType(FileType::MS_PROF);
+        fileType = FileType::MS_PROF;
         file = msprofFiles[0];
     }
+    DataBaseManager::Instance().SetFileType(fileType, file);
+    DataBaseManager::Instance().SetDataType(DataType::DB, file);
     return file;
 }
 void ProjectParserDb::SetRankDeviceMap(std::shared_ptr<ParseFileInfo> parseFileInfo,

@@ -153,7 +153,7 @@ std::vector<Protocol::RLPipelineNode> RLMicroBatchMegatronClassifier::QueryMicro
     if (microBatchNames.empty()) {
         return {};
     }
-    FullDb::DataType type = DataBaseManager::Instance().GetDataType();
+    FullDb::DataType type = DataBaseManager::Instance().GetDataType(fileId);
     auto microBatchInDbs = RenderEngine::Instance()->QueryMstxRLDetail(fileId, type, microBatchNames, taskNode.startTime,
                                                                        NumberSafe::Add(taskNode.startTime, taskNode.duration));
     if (microBatchInDbs.empty()) {

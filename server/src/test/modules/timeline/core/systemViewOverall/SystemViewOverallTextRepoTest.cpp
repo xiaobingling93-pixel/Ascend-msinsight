@@ -33,7 +33,10 @@ public:
         std::string refPathWithoutPMU = R"(/test/data/pytorch/text/level0/rank1_ascend_pt/ASCEND_PROFILER_OUTPUT/)";
         std::string refPath0Db = currPath + refPath0 + "mindstudio_insight_data.db";
         std::string refPathWithoutPMUDb = currPath + refPathWithoutPMU + "mindstudio_insight_data.db";
-        DataBaseManager::Instance().SetDataType(DataType::TEXT);
+        DataBaseManager::Instance().SetDataType(DataType::TEXT, refPath0Db);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, refPath0Db);
+        DataBaseManager::Instance().SetDataType(DataType::TEXT, refPathWithoutPMUDb);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, refPathWithoutPMUDb);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", refPath0Db);
         DataBaseManager::Instance().CreateTraceConnectionPool("1", refPathWithoutPMUDb);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(refPath0Db, "0", "0");
@@ -93,7 +96,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryOverlapAnalysisDataForOverallMetricTe
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -119,7 +122,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -217,7 +220,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("1");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -237,7 +240,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOverlapOverallInfosTestW
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -263,7 +266,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOpsTimeDataByGroupNameTe
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
-        DataBaseManager::Instance().GetDataType());
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
         return;
@@ -273,9 +276,9 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOpsTimeDataByGroupNameTe
     SystemViewOverallHelper computeHelper;
     UnitThreadsOperatorsResponse response;
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    std::string sql = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+    std::string sql = DataBaseManager::Instance().GetDataType(database->GetDbPath()) == DataType::TEXT ?
         TextSqlConstant::GetOverlapAnalysisTextSqlByType(requestParams) : TraceDatabaseSqlConst::GetOverlapAnalysisDbSqlByType(requestParams);
-    std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
+    std::string type = DataBaseManager::Instance().GetDataType(database->GetDbPath()) == DataType::TEXT ?
                        "Communication(Not Overlapped)" : "2";
     uint64_t totalTime = 0;
     std::vector<Protocol::ThreadTraces> notOverlapData{};

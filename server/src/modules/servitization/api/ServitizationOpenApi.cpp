@@ -6,9 +6,11 @@
 #include "IEProtocolEvent.h"
 #include "WsSender.h"
 #include "ServitizationOpenApi.h"
+#include "ParserStatusManager.h"
 namespace Dic::Module::IE {
 bool ServitizationOpenApi::Parse(const std::unordered_map<std::string, std::string>& inputs)
 {
+    Dic::Module::Timeline::ParserStatusManager::Instance().WaitStartParse();
     bool res = false;
     for (const auto& item : inputs) {
         std::string dir = FileUtil::GetParentPath(item.second);

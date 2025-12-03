@@ -13,7 +13,9 @@ public:
     ParserIE() = default;
     ~ParserIE() override;
 
-    void Parser(const std::vector<Global::ProjectExplorerInfo>& projectInfos, ImportActionRequest& request) final;
+    void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                ImportActionRequest &request,
+                ImportActionResponse &response) final;
     ProjectTypeEnum GetProjectType(const std::string& dataPath) final;
     std::vector<std::string> GetParseFileByImportFile(const std::string& importFile, std::string& error);
     static void BuildProjectExploreInfo(ProjectExplorerInfo& projectInfo, const std::vector<std::string>& parsedFiles);
@@ -21,13 +23,12 @@ public:
 
 protected:
     std::shared_ptr<IE::ServitizationOpenApi> servitizationOpenApi = std::make_shared<IE::ServitizationOpenApi>();
-
 private:
     std::vector<std::string> FindIEFile(const std::string& path);
     void SetParseCallBack(FileParser& fileParser);
     std::unordered_map<std::string, std::string> GetRankListMap(
         const std::vector<Global::ProjectExplorerInfo>& projectInfos);
-    void ParserTraceData(const std::unordered_map<std::string, std::string>& rankListMap);
+    static void ParserTraceData(const std::unordered_map<std::string, std::string>& rankListMap);
     static void FillBaseResponseInfo(const ImportActionRequest& request, ImportActionResponse& response,
                                      const std::vector<ProjectExplorerInfo>& projectInfos);
 };

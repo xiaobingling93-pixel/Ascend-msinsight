@@ -9,6 +9,8 @@
 #include "ProjectParserFactory.h"
 #include "ProjectAnalyze.h"
 #include "BaselineManagerService.h"
+#include "ParserIE.h"
+#include "ParserStatusManager.h"
 #include "ImportActionHandler.h"
 
 
@@ -33,6 +35,7 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
     // 清理当前的基线缓存
     BaselineManagerService::ResetBaseline();
+    ParserStatusManager::Instance().ResetParse();
     if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
         // ConvertToRealPath 调用 FileUtil::ConvertToRealPath 方法，其中 FileUtil::CheckDirValid 已做软链接检查
         if (!request.params.ConvertToRealPath(warnMsg)) {
@@ -90,16 +93,27 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
     std::for_each(projectExplorerInfo.begin(), projectExplorerInfo.end(), [](const auto& project) {
         ImportActionHandler::LogIfFileNotExist(project);
     });
-    if (projectExplorerInfo[0].projectType < static_cast<int>(ProjectTypeEnum::DB) ||
-        projectExplorerInfo[0].projectType > static_cast<int>(ProjectTypeEnum::OTHER)) {
+    auto invalid = std::any_of(projectExplorerInfo.begin(), projectExplorerInfo.end(), [](const auto &project) {
+        return (project.projectType < static_cast<int>(ProjectTypeEnum::DB)
+            || project.projectType > static_cast<int>(ProjectTypeEnum::OTHER));
+    });
+    if (invalid) {
         ServerLog::Warn("Project type invalid!");
         return false;
     }
-    auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
-    ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
-    std::shared_ptr<ProjectParserBase> factory = ParserFactory::GetProjectParser(parserType);
-    ParserFactory::Reset();
-    factory->Parser(projectExplorerInfo, request);
+    auto response = std::make_unique<ImportActionResponse>();
+    response->body.reset = IsNeedReset(request);
+    if (response->body.reset) {
+        ParserFactory::Reset();
+    }
+    std::for_each(projectExplorerInfo.begin(), projectExplorerInfo.end(), [&request, &response](const auto &project) {
+        auto projectEnum = static_cast<ProjectTypeEnum>(project.projectType);
+        ParserType parserType = coverProjectTypeToParserType(projectEnum);
+        auto parser = ParserFactory::GetProjectParser(parserType);
+        parser->Parser({project}, request, *response);
+    });
+    ProjectParserBase::SendImportActionRes(std::move(response));
+    ParserStatusManager::Instance().NotifyStartParse();
     return true;
 }
 
@@ -107,16 +121,58 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
 {
     // 如果入参的文件内容不为空，则通过文件判断文件类型获取工厂
     std::string importPath = request.params.path[0];
+    auto parserList = GetParserTypeList(importPath);
+    // 联合导入，将不同类型的数据视为多个工程，降低改动成本
+    auto response = std::make_unique<ImportActionResponse>();
+    auto invalid = std::all_of(parserList.begin(), parserList.end(), [&request, &warnMsg, &response](ParserType type) {
+        auto project = BuildProjectInfo(type, request, warnMsg);
+        if (!project) {
+            return false;
+        }
+        auto parser = ParserFactory::GetProjectParser(type);
+        if (parser) {
+            parser->Parser({project.value()}, request, *response);
+        }
+        return true;
+    });
+    if (!invalid) {
+        ServerLog::Warn("There is error occur when import");
+        return false;
+    }
+    ProjectParserBase::SendImportActionRes(std::move(response));
+    ParserStatusManager::Instance().NotifyStartParse();
+    return true;
+}
+
+std::vector<ParserType> ImportActionHandler::GetParserTypeList(const std::string &importPath)
+{
+    std::vector<ParserType> result;
+    std::unique_ptr<ParserIE> ie = std::make_unique<Dic::Module::ParserIE>();
+    bool existIE = ie->ExistIEFile(importPath);
+    if (existIE) {
+        result.emplace_back(ParserType::IE);
+    }
     std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(importPath);
-    ParserType allocType = parserType.second;
+    // 只有IE文件时
+    if (parserType.second == ParserType::OTHER && existIE) {
+        return result;
+    }
+    result.emplace_back(parserType.second);
+    return result;
+}
+
+std::optional<ProjectExplorerInfo> ImportActionHandler::BuildProjectInfo(ParserType allocType,
+                                                                         ImportActionRequest &request,
+                                                                         std::string &warnMsg)
+{
+    std::string importPath = request.params.path[0];
     std::shared_ptr<ProjectParserBase> projectParser = ParserFactory::GetProjectParser(allocType);
     // 路径列表不为空，需要进行文件目录的新增、覆盖
     ProjectTypeEnum projectType = projectParser->GetProjectType(importPath);
-    Global::ProjectExplorerInfo projectExplorerInfo;
     // 获取文件列表
     std::vector<std::string> tempFiles = projectParser->GetParseFileByImportFile(importPath, warnMsg);
     std::vector<std::string> parseFileList;
-    for (const auto &item: tempFiles) {
+    for (const auto &item : tempFiles) {
         if (FileUtil::CheckWritableByOther(item)) {
             parseFileList.emplace_back(item);
         }
@@ -132,22 +188,30 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
         SendParseFailEvent(warnMsg);
         // 这里不能return false，return false会导致插件导入时数据管理器无法保存目录，且对于一般的性能数据，导入失败时也保存目录
     }
-    projectExplorerInfo.fileName = importPath;
-    projectExplorerInfo.projectName = request.params.projectName;
-    projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
-    projectExplorerInfo.importType = "import";
-    projectExplorerInfo.accessTime = TimeUtil::Instance().NowStr();
-    ProjectAnalyze::Instance().ProjectExportInfoBuild(allocType, parseFileList, projectExplorerInfo);
-    if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer({projectExplorerInfo},
+    ProjectExplorerInfo project;
+    project.fileName = importPath;
+    project.projectName = request.params.projectName;
+    project.projectType = static_cast<int64_t>(projectType);
+    project.importType = "import";
+    project.accessTime = TimeUtil::Instance().NowStr();
+    ProjectAnalyze::Instance().ProjectExportInfoBuild(allocType, parseFileList, project);
+    if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer({project},
                                                                         request.params.isConflict)) {
-        return false;
+        return std::nullopt;
     }
-
-    LogIfFileNotExist(projectExplorerInfo);
-    // 以下情况需要对当前导入内容进行重置：1.导入数据和原来数据有冲突；2.无冲突，但是当前选中项目与目标项目不一致；
-    if (allocType != ParserType::JSON && allocType != ParserType::DB) {
-        ParserFactory::Reset();
+    LogIfFileNotExist(project);
+    return project;
+}
+bool ImportActionHandler::IsNeedReset(const Protocol::ImportActionRequest &request)
+{
+    // 如果是切换项目，则必须重置
+    if (request.params.projectAction == ProjectActionEnum::TRANSFER_PROJECT) {
+        return true;
     }
-    projectParser->Parser({std::move(projectExplorerInfo)}, request);
-    return true;
+    // 新增文件时，以下情况需要对当前导入内容进行重置：1.导入数据和原来数据有冲突；2.无冲突，但是当前选中项目与目标项目不一致；
+    std::string curProjectName = request.projectName;
+    if (request.params.isConflict || (!curProjectName.empty() && curProjectName != request.params.projectName)) {
+        return true;
+    }
+    return false;
 }

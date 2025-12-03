@@ -18,7 +18,6 @@ const std::string GROUP_INPUT_SHAPE = "Input Shape";
 
 TEST_F(TestSuit, QueryOperatorDurationInfoByOpType)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorDurationReqParams params = {"0", "0", GROUP_OPERATOR_TYPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};

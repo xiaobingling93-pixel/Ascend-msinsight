@@ -29,9 +29,8 @@ bool DataBaseManager::CreateTraceConnectionPool(const std::string &rankId, const
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::recursive_mutex> lock(mutex);
     databasePathSet.emplace(dbPath);
-    bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
     SetRankIdFileIdMapping(rankId, dbPath);
-    DataType curDataType = isBaseline ? baselineType : dataType;
+    DataType curDataType = GetDataType(dbPath);
     std::string fileId = dbPath;
     if (traceDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
@@ -111,8 +110,7 @@ std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::CreateSummaryD
 {
     std::unique_lock lock(mutex);
     databasePathSet.emplace(dbPath);
-    bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
-    DataType curDataType = isBaseline ? baselineType : dataType;
+    DataType curDataType = GetDataType(dbPath);
     std::string fileId = dbPath;
     SetRankIdFileIdMapping(rankId, fileId);
     if (summaryDatabaseMap.count(fileId) == 0) {
@@ -131,8 +129,7 @@ std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::CreateMemoryData
 {
     std::unique_lock lock(mutex);
     databasePathSet.emplace(dbPath);
-    bool isBaseline = Global::BaselineManager::Instance().IsBaselineRankId(rankId);
-    DataType curDataType = isBaseline ? baselineType : dataType;
+    DataType curDataType = GetDataType(dbPath);
     std::string fileId = dbPath;
     SetRankIdFileIdMapping(rankId, fileId);
     if (memoryDatabaseMap.count(fileId) == 0) {
@@ -261,8 +258,9 @@ void DataBaseManager::Clear()
     host2DbPath.clear();
     databasePathSet.clear();
     memScopeDatabaseMap.clear();
-    fileType = FileType::PYTORCH;
     rankId2FileIdMap.clear();
+    dataTypeMap.clear();
+    fileTypeMap.clear();
 }
 
 void DataBaseManager::Clear(DatabaseType type)
@@ -396,44 +394,39 @@ std::recursive_mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
     return dbMutexMap[fileId];
 }
 
-DataType DataBaseManager::GetDataType()
+DataType DataBaseManager::GetDataType(const std::string &fileId)
 {
-    return dataType;
+    if (fileId.empty()) {
+        Server::ServerLog::Error("Failed to get data type: fileId is empty.");
+    }
+    if (dataTypeMap.find(fileId) == dataTypeMap.end()) {
+        return DataType::TEXT;
+    }
+    return dataTypeMap[fileId];
 }
-void DataBaseManager::SetDataType(DataType type)
+void DataBaseManager::SetDataType(DataType type, const std::string &fileId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    dataType = type;
+    dataTypeMap[fileId] = type;
 }
 
-FileType DataBaseManager::GetFileType()
+FileType DataBaseManager::GetFileType(const std::string &fileId)
 {
-    return fileType;
+    if (fileTypeMap.find(fileId) == fileTypeMap.end()) {
+        return FileType::PYTORCH;
+    }
+    return fileTypeMap[fileId];
 }
 
 FileType DataBaseManager::GetFileTypeByRankId(const std::string &rankId)
 {
-    if (!rankId.empty() && Global::BaselineManager::Instance().IsBaselineRankId(rankId)) {
-        return baselineFileType;
-    }
-    return fileType;
+    auto fileId = GetFileIdByRankId(rankId);
+    return GetFileType(fileId);
 }
-void DataBaseManager::SetFileType(FileType type)
+void DataBaseManager::SetFileType(FileType type, const std::string &fileId)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex);
-    fileType = type;
-}
-
-void DataBaseManager::SetBaselineFileType(FileType type)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex);
-    baselineFileType = type;
-}
-
-void DataBaseManager::SetBaselineDataType(DataType type)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex);
-    baselineType = type;
+    fileTypeMap[fileId] = type;
 }
 
 void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &dbPath,
@@ -557,6 +550,11 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseInCluster
     auto clusterId = FileUtil::GetFileName(clusterPath);
     auto rankIdWithHost = TrackInfoManager::Instance().GetRankInCluster(clusterId, rankId);
     return GetTraceDatabaseByRankId(rankIdWithHost);
+}
+DataType DataBaseManager::GetDataTypeByRank(const std::string &rankId)
+{
+    auto fileId = GetFileIdByRankId(rankId);
+    return dataTypeMap[fileId];
 }
 } // end of namespace Timeline
 } // end of namespace Module

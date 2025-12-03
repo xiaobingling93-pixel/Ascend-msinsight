@@ -22,19 +22,18 @@ class ProjectParserBase {
 public:
     ProjectParserBase() = default;
     virtual ~ProjectParserBase() = default;
-    virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+    virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                        ImportActionRequest &request,
+                        ImportActionResponse &response)
     {
         // 需要返回应答
-        auto responsePtr = std::make_unique<ImportActionResponse>();
-        ImportActionResponse& response  = *responsePtr;
-        responsePtr->body.isCluster = false;
+        response.body.isCluster = false;
         ModuleRequestHandler::SetBaseResponse(request, response);
         response.body.subParseFileInfo = {};
         response.command = Protocol::REQ_RES_IMPORT_ACTION;
         response.moduleName  = MODULE_TIMELINE;
         response.body.reset = false;
         ModuleRequestHandler::SetResponseResult(response, true);
-        SendImportActionRes(std::move(responsePtr));
     };
     virtual void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
         Global::BaselineInfo &baselineInfo)
@@ -96,6 +95,7 @@ public:
     static void SendUnitFinishNotify(const std::string &fileId, bool res, const std::string &unitName,
                                      const std::string &error = "");
 
+    static void SendImportActionRes(std::unique_ptr<ImportActionResponse> responsePtr);
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;
@@ -120,7 +120,8 @@ protected:
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 
     static bool IsMindFormsRankData(const std::vector<std::string>& parentFolders);
-    void SendImportActionRes(std::unique_ptr<ImportActionResponse> responsePtr);
+
+    static void MergeFileTree(std::vector<std::shared_ptr<ParseFileInfo>>& rootTree, const std::vector<std::shared_ptr<ParseFileInfo>>& childrenTree);
 };
 
 class ParserFactory {

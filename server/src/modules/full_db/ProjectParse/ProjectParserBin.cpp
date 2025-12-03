@@ -19,19 +19,17 @@ namespace Dic::Module {
 using namespace Dic::Server;
 using namespace Dic::Module::Global;
 
-void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+void ProjectParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                              ImportActionRequest &request,
+                              ImportActionResponse &response)
 {
-    std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr;
     ModuleRequestHandler::SetBaseResponse(request, response);
     if (std::empty(projectInfos)) {
         SendParseFailEvent("", "", "Project explorer info is not existed.");
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
-        SendImportActionRes(std::move(responsePtr));
         return;
     }
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
-
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT, request.params.path[0]);
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
@@ -41,6 +39,7 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
     for (auto &item: projectInfos[0].projectFileTree) {
         for (auto &subItem: item->subParseFile) {
             subItem->rankId = subItem->parseFilePath;
+            Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT, subItem->parseFilePath);
         }
     }
     if (!Global::ProjectExplorerManager::Instance().UpdateParseFileInfo(projectInfos[0].projectName,
@@ -60,16 +59,12 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
         HandleCompute(response, selectedFolder);
         Timeline::TraceTime::Instance().SetIsSimulation(true);
         SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
-        SendImportActionRes(std::move(responsePtr));
     } else {
         if (!errorMessage.empty()) {
             Dic::Protocol::SendReadFileFailEvent(selectedFolder, errorMessage);
         } else {
             SendParseFailEvent("", "", "Import file is invalid, path: " + selectedFolder);
         }
-
-        // 这里需要返回一个true应答,否则前端会陷入不停loading中
-        SendImportActionRes(std::move(responsePtr));
     }
 }
 

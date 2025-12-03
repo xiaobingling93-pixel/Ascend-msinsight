@@ -30,7 +30,7 @@ public:
         std::string dbPath = currPath +
             R"(/test/data/pytorch/db/level2/rank0_ascend_pt)";
 
-        DataBaseManager::Instance().SetDataType(DataType::DB);
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath, ParserType::DB);
         ParserType allocType = parserType.second;
         std::shared_ptr<ProjectParserBase> factory = ParserFactory::GetProjectParser(allocType);
@@ -53,8 +53,9 @@ public:
             ParserFactory::Reset();
         }
         ImportActionRequest request;
+        ImportActionResponse response;
         // 从ImportActionHandler可以看出，Parser方法的第一个参数是vector，但永远只有一个元素，所以DT中不要传多个元素的vector
-        factory->Parser(projectExplorerInfoList, request);
+        factory->Parser(projectExplorerInfoList, request, response);
 
         Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDbNew", dbPath, "");
         Timeline::DataBaseManager::Instance().SetDbPathMapping("2", dbPath, "");

@@ -26,8 +26,9 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
+        std::string dbFilePath = currPath + dbPath3 + "cluster_analysis.db";
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbFilePath);
+        DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbFilePath);
         auto culsterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
         culsterDatabase->OpenDb(currPath + dbPath3 + "cluster_analysis.db", false);
     }

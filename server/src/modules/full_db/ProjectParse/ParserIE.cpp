@@ -16,12 +16,12 @@ using namespace Timeline;
 using namespace Dic::Server;
 ParserIE::~ParserIE() = default;
 
-void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                      ImportActionRequest &request,
+                      ImportActionResponse &response)
 {
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT, request.params.path[0]);
     // 基础信息填充
-    std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr;
     FillBaseResponseInfo(request, response, projectInfos);
     // 获取rankid及文件映射关系信息
     std::unordered_map<std::string, std::string> rankListMap = GetRankListMap(projectInfos);
@@ -41,23 +41,20 @@ void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     }
     response.body.isIE = true;
     ModuleRequestHandler::SetResponseResult(response, true);
-    SendImportActionRes(std::move(responsePtr));
-    servitizationOpenApi->Parse(rankListMap);
-    ParserTraceData(rankListMap);
+
+    ThreadPool::Instance().AddTask(ParserIE::ParserTraceData, TraceIdManager::GetTraceId(), rankListMap);
 }
 
 void ParserIE::FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
                                     const std::vector<ProjectExplorerInfo> &projectInfos)
 {
     ModuleRequestHandler::SetBaseResponse(request, response);
-    response.body.subParseFileInfo = projectInfos[0].subParseFileInfo;
-    response.body.projectFileTree = projectInfos[0].projectFileTree;
+    response.body.subParseFileInfo.insert(response.body.subParseFileInfo.end(),
+                                          projectInfos[0].subParseFileInfo.begin(),
+                                          projectInfos[0].subParseFileInfo.end());
+    MergeFileTree(response.body.projectFileTree, projectInfos[0].projectFileTree);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
-    response.body.reset = IsNeedReset(request);
-    if (response.body.reset) {
-        ParserFactory::Reset();
-    }
 }
 
 std::unordered_map<std::string, std::string> ParserIE::GetRankListMap(
@@ -99,6 +96,9 @@ std::unordered_map<std::string, std::string> ParserIE::GetRankListMap(
 void ParserIE::ParserTraceData(const std::unordered_map<std::string, std::string> &rankListMap)
 {
     // 对metadata数据进行解析
+    ParserStatusManager::Instance().WaitStartParse();
+    auto serverApi = std::make_shared<IE::ServitizationOpenApi>();
+    serverApi->Parse(rankListMap);
     bool isParseTraceJson = rankListMap.size() < PENDIND_CRITICAL_VALUE;
     for (const auto &rankEntry : rankListMap) {
         if (!isParseTraceJson) {
@@ -125,7 +125,7 @@ void ParserIE::SetParseCallBack(FileParser &fileParser)
     // 复用解析完成回调函数设置逻辑
     std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> progressFunc =
         std::bind(ParseProgressCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-        std::placeholders::_4);
+                  std::placeholders::_4);
     fileParser.SetParseProgressCallBack(progressFunc);
 }
 
@@ -148,12 +148,12 @@ std::vector<std::string> ParserIE::GetParseFileByImportFile(const std::string &i
 {
     // 如果是文件，直接返回
     if (!FileUtil::IsFolder(importFile)) {
-        return { importFile };
+        return {importFile};
     }
     auto traceFiles = FindIEFile(importFile);
     if (traceFiles.empty()) {
         ServerLog::Info(error);
-        return { importFile };
+        return {importFile};
     }
     // 将所有文件的父目录放到一个set集合中（利用set进行去重）
     std::set<std::string> resultSet;
@@ -161,7 +161,7 @@ std::vector<std::string> ParserIE::GetParseFileByImportFile(const std::string &i
         resultSet.insert(FileUtil::GetParentPath(item));
     }
     if (resultSet.empty()) {
-        return { importFile };
+        return {importFile};
     }
     // 转换成vector返回
     std::vector<std::string> result(resultSet.begin(), resultSet.end());
@@ -177,10 +177,10 @@ bool ParserIE::ExistIEFile(const std::string &file)
     return !res.empty();
 }
 
-void ParserIE::BuildProjectExploreInfo(ProjectExplorerInfo& projectInfo, const std::vector<std::string>& parsedFiles)
+void ParserIE::BuildProjectExploreInfo(ProjectExplorerInfo &projectInfo, const std::vector<std::string> &parsedFiles)
 {
     ProjectParserBase::BuildProjectExploreInfo(projectInfo, parsedFiles);
-    std::for_each(parsedFiles.begin(), parsedFiles.end(), [&projectInfo](const std::string& file) {
+    std::for_each(parsedFiles.begin(), parsedFiles.end(), [&projectInfo](const std::string &file) {
         auto parseFileInfoRank = std::make_shared<ParseFileInfo>();
         parseFileInfoRank->parseFilePath = file;
         parseFileInfoRank->type = ParseFileType::RANK;

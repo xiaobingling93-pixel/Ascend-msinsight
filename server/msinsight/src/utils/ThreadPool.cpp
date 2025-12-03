@@ -81,4 +81,10 @@ void ThreadPool::WaitForAllTasks()
     waiting = false;
     ServerLog::Info("[Thread pool] All tasks completed.");
 }
+ThreadPool& ThreadPool::Instance()
+{
+    auto maxThreadCount = std::thread::hardware_concurrency();
+    static ThreadPool pool(maxThreadCount);
+    return pool;
+}
 }

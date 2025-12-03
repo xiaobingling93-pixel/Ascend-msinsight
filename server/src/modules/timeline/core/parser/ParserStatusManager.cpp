@@ -239,6 +239,22 @@ std::pair<ProjectTypeEnum, std::vector<std::string>> ParserStatusManager::QueryP
     std::unique_lock lock(mutex);
     return pendingRankAndFilePathMap[fileId];
 }
+void ParserStatusManager::WaitStartParse()
+{
+    std::unique_lock lock(importMutex);
+    importResCv.wait(lock, [this] { return importRes.load(); });
+}
+void ParserStatusManager::NotifyStartParse()
+{
+    std::lock_guard lock(importMutex);
+    importResCv.notify_all();
+    importRes.store(true);
+}
+void ParserStatusManager::ResetParse()
+{
+    std::lock_guard lock(importMutex);
+    importRes.store(false);
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

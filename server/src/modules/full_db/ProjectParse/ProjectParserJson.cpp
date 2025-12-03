@@ -34,16 +34,19 @@ ProjectParserJson::ProjectParserJson()
 
 
 // LCOV_EXCL_BR_START
-void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+void ProjectParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                               ImportActionRequest &request,
+                               ImportActionResponse &response)
 {
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
     // 基础信息填充
-    std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr;
     FillBaseResponseInfo(request, response, projectInfos);
     // 获取rankid及文件映射关系信息
     std::map<std::string, RankEntry> rankListMap = GetRankEntryMap(projectInfos, false);
     UpdateRankIdToDevice(rankListMap);
+    std::for_each(rankListMap.begin(), rankListMap.end(), [](const auto& item) {
+        Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT, item.second.fileId);
+    });
+
     // 设置基础响应内容
     SetBaseAction(rankListMap, response);
     // 解析内容
@@ -53,7 +56,6 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
         response.body.isSimulation = true;
         auto [hasTraceJson, hasMemoryData, hasOperatorData] = CheckHasTraceJsonMemoryDataOperatorData(projectInfos);
         response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData;
-        SendImportActionRes(std::move(responsePtr));
         for (const auto &rankEntry : rankListMap) {
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second.parseFileList,
                                                                   rankEntry.first,
@@ -73,7 +75,6 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
     auto [hasTraceJson, hasMemoryData, hasOperatorData] = CheckHasTraceJsonMemoryDataOperatorData(projectInfos);
     response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData && !isCluster;
     ModuleRequestHandler::SetResponseResult(response, true);
-    SendImportActionRes(std::move(responsePtr));
     std::for_each(projectInfos.begin(), projectInfos.end(), [](const auto& project) {
         if (!Global::ProjectExplorerManager::Instance().UpdateParseFileInfo(project.projectName,
                                                                             project.subParseFileInfo)) {
@@ -96,10 +97,6 @@ void ProjectParserJson::FillBaseResponseInfo(const ImportActionRequest &request,
     });
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
-    response.body.reset = IsNeedReset(request);
-    if (response.body.reset) {
-        ParserFactory::Reset();
-    }
 }
 
 std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
@@ -321,6 +318,7 @@ void ProjectParserJson::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInf
                                        std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
                                        const std::string &projectName)
 {
+    ParserStatusManager::Instance().WaitStartParse();
     if (clusterInfo == nullptr || clusterInfo->type != ParseFileType::CLUSTER || clusterInfo->parseFilePath.empty()) {
         ServerLog::Warn("Invalid cluster to parsed, end process");
         return;

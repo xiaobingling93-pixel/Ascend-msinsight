@@ -20,7 +20,6 @@ class TextAdvisorTest : TestSuit {
 
 TEST_F(TestSuit, QueryAffinityApiAdvisorSuccessInText)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();

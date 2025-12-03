@@ -29,7 +29,7 @@ public:
         g_testDbPath = currPath + R"(/src/test/test_data/test_data_engine.db)";
 #endif
         g_testDataBase.OpenDb(g_testDbPath, true);
-        DataBaseManager::Instance().SetDataType(DataType::DB);
+        DataBaseManager::Instance().SetDataType(DataType::DB, g_testDbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", g_testDbPath);
     }
 

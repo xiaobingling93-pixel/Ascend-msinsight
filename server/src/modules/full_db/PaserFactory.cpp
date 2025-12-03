@@ -48,10 +48,6 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::strin
     if (StringUtil::EndWith(path, computeBinSuffix)) {
         return std::make_pair(path, ParserType::BIN);
     }
-    std::unique_ptr<ParserIE> ie = std::make_unique<ParserIE>();
-    if (ie->ExistIEFile(path)) {
-        return std::make_pair(path, ParserType::IE);
-    }
     if (FileUtil::FindIfDbTypeByRegex(path, std::regex(traceViewReg), std::regex(DB_REG))) {
         return std::make_pair(path, ParserType::DB);
     }
@@ -194,7 +190,8 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
     event->body.fileId = fileId;
     std::vector<std::string> taskNameList = RL::RLMstxConfigManager::Instance().GetMstxTaskNameList();
     auto mstxSliceList = FullDb::RenderEngine::Instance()->QueryMstxRLDetail(rankId,
-        Timeline::DataBaseManager::Instance().GetDataType(), taskNameList);
+        Timeline::DataBaseManager::Instance().GetDataType(fileId),
+        taskNameList);
     event->body.isRl = !mstxSliceList.empty();
     event->body.rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
     SearchMetaData(rankId, fileId, event->body.unit.children);
@@ -326,6 +323,7 @@ bool ProjectParserBase::ParseHeatMapToCluster(const std::vector<std::shared_ptr<
 
 void ProjectParserBase::ParsePostProcess(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos)
 {
+    ParserStatusManager::Instance().WaitStartParse();
     // 全量db和json场景需要存储集群和单卡的映射关系
     for (const auto &cluster: clusterInfos) {
         for (const auto &child: cluster->subParseFile) {
@@ -353,6 +351,7 @@ void ProjectParserBase::ParsePostProcess(const std::vector<std::shared_ptr<Parse
 
 void ProjectParserBase::SendAllParseSuccess()
 {
+    ParserStatusManager::Instance().WaitStartParse();
     std::string notFinishTask = "";
     while (!ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
 #ifdef INSIGHT_DEBUG
@@ -593,6 +592,23 @@ std::set<std::string> ProjectParserBase::ParseDeviceIdSetFromDb(const std::strin
         return deviceId;
     }
     return deviceId;
+}
+void ProjectParserBase::MergeFileTree(std::vector<std::shared_ptr<ParseFileInfo>> &rootTree, const std::vector<std::shared_ptr<ParseFileInfo>> &childrenTree)
+{
+    if (rootTree.empty()) {
+        rootTree = childrenTree;
+        return;
+    }
+    if (childrenTree.empty()) {
+        return;
+    }
+    if (rootTree[0]->subId == childrenTree[0]->subId) {
+        rootTree[0]->subParseFile.insert(rootTree[0]->subParseFile.begin(),
+                                         childrenTree[0]->subParseFile.begin(),
+                                         childrenTree[0]->subParseFile.end());
+    } else {
+        rootTree.insert(rootTree.end(), childrenTree.begin(), childrenTree.end());
+    }
 }
 
 void ProjectParserBase::SendImportActionRes(std::unique_ptr<ImportActionResponse> responsePtr)

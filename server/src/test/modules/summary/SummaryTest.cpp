@@ -12,7 +12,6 @@ class SummaryTest : TestSuit {
 
 TEST_F(TestSuit, QueryComputeStatisticsData)
 {
-    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     Dic::Protocol::SummaryStatisticParams requestParams;
     requestParams.rankId = "0";

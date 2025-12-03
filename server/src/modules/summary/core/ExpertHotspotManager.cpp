@@ -488,7 +488,7 @@ bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, con
         return false;
     }
     ModelInfo modelInfo;
-    FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataType();
+    FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataTypeByRank(rankIdList[0]);
     std::vector<std::string> cannApiList;
     cannApiList.insert(cannApiList.end(), layerExecuteApiNameList.begin(), layerExecuteApiNameList.end());
     cannApiList.insert(cannApiList.end(), groupedMatmulApiNameList.begin(), groupedMatmulApiNameList.end());

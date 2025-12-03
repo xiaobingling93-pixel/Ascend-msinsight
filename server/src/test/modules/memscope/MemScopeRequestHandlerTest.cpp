@@ -33,11 +33,12 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE);
+        std::string dbFilePath = currPath + dbPath3 + "leaks_dump_20250806.dat";
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbFilePath);
+        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, dbFilePath);
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("");
         ASSERT_TRUE(memoryDatabase != nullptr);
-        ASSERT_TRUE(memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_20250806.dat", false));
+        ASSERT_TRUE(memoryDatabase->OpenDb(dbFilePath, false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
         ASSERT_TRUE(MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
     }

@@ -30,8 +30,8 @@ public:
         Dic::Server::WsChannel *ws;
         std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
-        DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath);
     }
 
@@ -49,7 +49,6 @@ public:
 
 TEST_F(DBAdvisorTest, QueryAffinityApiAdvisorSuccessInDb)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
@@ -69,7 +68,6 @@ TEST_F(DBAdvisorTest, QueryAffinityApiAdvisorSuccessInDb)
 
 TEST_F(DBAdvisorTest, QueryAffinityOptimizerAdvisorSuccessDb)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
@@ -82,7 +80,6 @@ TEST_F(DBAdvisorTest, QueryAffinityOptimizerAdvisorSuccessDb)
 
 TEST_F(DBAdvisorTest, QueryAclNNOperatorAdvisorSuccessDb)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
@@ -95,7 +92,6 @@ TEST_F(DBAdvisorTest, QueryAclNNOperatorAdvisorSuccessDb)
 
 TEST_F(DBAdvisorTest, QueryAICPUOperatorAdvisorSuccessDb)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
@@ -110,7 +106,6 @@ TEST_F(DBAdvisorTest, QueryAICPUOperatorAdvisorSuccessDb)
 
 TEST_F(DBAdvisorTest, QueryFusedOperatorAdvisorSuccessDb)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
@@ -123,7 +118,6 @@ TEST_F(DBAdvisorTest, QueryFusedOperatorAdvisorSuccessDb)
 
 TEST_F(DBAdvisorTest, QueryOperatorDispatchAdvisorSuccessOnDb)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();

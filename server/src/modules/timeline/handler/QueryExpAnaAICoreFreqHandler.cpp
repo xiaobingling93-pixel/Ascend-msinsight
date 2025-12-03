@@ -40,7 +40,7 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get system view AI core freq table response data.");
     }
-    auto dbType = Timeline::DataBaseManager::Instance().GetDataType();
+    auto dbType = Timeline::DataBaseManager::Instance().GetDataType(request.fileId);
     response.body.rankId = dbType == Timeline::DataType::TEXT ? request.params.rankId : database->GetDbPath();
     if (maxFreq != 0) {
         // 计算百分比需要乘以100

@@ -897,7 +897,7 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
         std::unordered_map<std::string, std::string> rankAndDeviceMap;
         sqlite3_stmt *stmt = nullptr;
         std::string sql;
-        FileType type = DataBaseManager::Instance().GetFileType();
+        FileType type = DataBaseManager::Instance().GetFileType(path);
         if (type == FileType::MS_PROF || !CheckTableDataInvalid(TABLE_PYTORCH_INFO)) {
             return rankAndDeviceMap;
         } else if (type == FileType::PYTORCH) {
@@ -989,7 +989,7 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
     }
     sqlite3_stmt *stmt = nullptr;
     std::string sql;
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileType(path);
     if (type == FileType::MS_PROF) {
         sql = "SELECT id FROM " + TABLE_NPU_INFO;
     } else if (type == FileType::PYTORCH) {

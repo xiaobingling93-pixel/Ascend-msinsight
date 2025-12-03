@@ -142,6 +142,7 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
 
 void SourceFileParser::PreParseTask(const std::string &rankId, const std::string &fileId)
 {
+    ParserStatusManager::Instance().WaitStartParse();
     ServerLog::Info("Start to parse simulation timeline file. file id: ", rankId);
     if (!InitParser(rankId, fileId)) {
         ParseEndCallBack(rankId, false, "Failed to open db. Please delete dbFile and try again.", fileId);

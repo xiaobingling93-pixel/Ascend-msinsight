@@ -25,8 +25,8 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::DB);
         std::string dbPath = StringUtil::StrJoin(currPath, dbPath3, "msprof_0.db");
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         auto summeryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
                 DataBaseManager::Instance().CreateSummaryDatabase("2", dbPath));
@@ -42,7 +42,6 @@ const std::string GROUP_INPUT_SHAPE = "Input Shape";
 
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOpType)
 {
-    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
     Dic::Protocol::OperatorDurationReqParams params = {"2", "2", GROUP_OPERATOR_TYPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};

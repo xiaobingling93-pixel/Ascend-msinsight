@@ -23,7 +23,7 @@ public:
         currPath = currPath.substr(0, index + 1);
         g_testDbPath = currPath + R"(/src/test/test_data/test_overlap_database.db)";
         g_testDataBase.OpenDb(g_testDbPath, false);
-        DataBaseManager::Instance().SetDataType(DataType::DB);
+        DataBaseManager::Instance().SetDataType(DataType::DB, g_testDbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", g_testDbPath);
     }
 

@@ -103,6 +103,9 @@ bool ProjectExplorerManager::SaveProjectExplorerToDb(const std::string &projectN
     }
     std::unordered_map<std::string, int64_t> ukIdMap;
     for (const auto &item: projectExplorerInfoData) {
+        if (item.projectType != projectExplorerInfo.projectType) {
+            continue;
+        }
         ukIdMap[item.projectName + item.fileName] = item.id;
     }
 
