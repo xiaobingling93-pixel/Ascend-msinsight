@@ -191,7 +191,7 @@ pub fn main() {
         return;
     };
 
-    if let Ok((eventloop, webview)) = webview::run_script(&root_path, port) {
+    if let Ok((eventloop, webview)) = webview::run_script(&root_path, &cache_path, port) {
         run_server(&root_path, &cache_path, port);
         webview::run_event_loop(eventloop, webview)
     }

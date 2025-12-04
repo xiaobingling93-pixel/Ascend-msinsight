@@ -6,8 +6,8 @@ mod cleanup;
 #[cfg(windows)]
 pub mod webview2err;
 
-use std::{fs::read, path::PathBuf, sync::Arc};
-
+use std::{fs::read, path::PathBuf, sync::Arc, process::Command};
+use std::path::Path;
 #[cfg(target_os = "macos")]
 use wry::application::menu::{MenuBar, MenuItem};
 pub use wry::webview::webview_version;
@@ -24,6 +24,7 @@ const MIMETYPE_HTML: &str = "text/html";
 
 fn create_webview(
     window: Window,
+    cache_path: Arc<PathBuf>,
     resource_path: Arc<PathBuf>,
     port: u16,
     proxy: Arc<EventLoopProxy<PathBuf>>,
@@ -56,7 +57,58 @@ fn create_webview(
 
             true
         })
+        .with_ipc_handler(move |_, front_end_msg| {
+            println!("Platform received message from frontend: {}", front_end_msg);
+            // "showLogInExplorer"表示打开日志路径
+            if front_end_msg == "showLogInExplorer" {
+                open_in_explorer(cache_path.as_ref().to_str().expect("Cache path is not valid UTF-8"));
+                return;
+            }
+            // "openProjectInExplorer|***"表示打开文件路径，***是文件的具体路径
+            if front_end_msg.starts_with("openProjectInExplorer") {
+                handle_open_project_msg(&front_end_msg);
+                return;
+            }
+        })
         .build()
+}
+
+fn handle_open_project_msg(front_end_msg: &str) {
+    if let Some(index) = front_end_msg.find('|') {
+        if index + 1 >= front_end_msg.len() {
+            eprintln!("Front end message: open project in explorer has a syntax error");
+            return;
+        }
+        let path = &front_end_msg[index + 1..];
+        let mut path = Path::new(path);
+        if !path.exists() {
+            eprintln!("Front end message: open project in explorer path does not exist");
+            return;
+        }
+        // 如果传入的 path 是一个文件，打开文件所在目录而不是文件
+        if path.is_file() {
+            path = path.parent().expect("Failed to get parent directory");
+        }
+        let path = path.to_str().expect("Path is not valid UTF-8");
+        open_in_explorer(&path);
+    }
+}
+
+fn open_in_explorer(path: &str) {
+    #[cfg(target_os = "windows")]
+    let mut command = Command::new("explorer");
+    #[cfg(target_os = "linux")]
+    let mut command = Command::new("xdg-open");
+    #[cfg(target_os = "macos")]
+    let mut command = Command::new("open");
+
+    let result = match command
+        .arg(path)
+        .spawn()
+    {
+        Ok(_) => format!("Opened {} in explorer successfully", path),
+        Err(e) => format!("Failed to open {} in explorer, error message: {}", path, e),
+    };
 }
 
 fn handle_user_event(webview: &WebView, path: PathBuf) {
@@ -129,6 +181,7 @@ fn macos_menu() -> MenuBar {
 // run script
 pub fn run_script(
     root_path: &PathBuf,
+    cache_path: &PathBuf,
     port: u16,
 ) -> wry::Result<(EventLoop<PathBuf>, WebView)> {
     let event_loop = EventLoop::with_user_event();
@@ -151,10 +204,12 @@ pub fn run_script(
 
     let resource_path = Arc::new(root_path.to_path_buf());
 
+    let log_path = Arc::new(cache_path.to_path_buf());
+
     #[cfg(windows)]
     set_windows_icon(&window, root_path);
 
-    let webview = create_webview(window, resource_path, port, proxy)?;
+    let webview = create_webview(window, log_path, resource_path, port, proxy)?;
 
     Ok((event_loop, webview))
 }
