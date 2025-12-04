@@ -1468,10 +1468,16 @@ std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(cons
 
 std::string DbTraceDataBase::GetHcclOperatorMetaData(const std::string &fileId)
 {
-    std::string sql = "with main as (select planeId, op.groupName, sids.value as groupNameValue from " +
-        TABLE_COMMUNICATION_TASK_INFO + " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
-       " join COMMUNICATION_OP op on op.opId = info.opId "
-       " left join STRING_IDS sids on op.groupName = sids.id where task.deviceId = ?) "
+    // 这里COMMUNICATION_TASK_INFO和COMMUNICATION_OP表关联后，按照planeId和groupName分组，
+    // 理论上每一组都会有很多globalTaskId，但是我们只需要任意一个globalTaskId即可，就能够根据这个信息去Task表关联判断deviceId的信息
+    // 这里仍然使用关联TASK表去判断deviceId是为了兼容老数据，后续可以完全使用COMMUNICATION_OP表进行判断
+    // 届时可以去掉这里globalTaskId的逻辑
+    std::string sql = "with main as (SELECT groupTemp.planeId, groupTemp.groupName ,sids.value AS groupNameValue FROM "
+       " (SELECT info.planeId, op.groupName, info.globalTaskId FROM COMMUNICATION_TASK_INFO info "
+       " JOIN COMMUNICATION_OP op ON op.opId = info.opId GROUP BY info.planeId,op.groupName ) groupTemp "
+       " LEFT JOIN TASK task ON task.globalTaskId = groupTemp.globalTaskId "
+       " LEFT JOIN STRING_IDS sids ON groupTemp.groupName = sids.id "
+       " WHERE task.deviceId = ?) "
        " select 'Plane ' || planeId as name, groupName || '_' || planeId as tid, 0 as maxDepth, "
        " groupName, groupNameValue, planeId from main group by planeId, groupName union ";
     if (!TraceDatabaseHelper::IsDeviceIdUnique(fileId)) {
