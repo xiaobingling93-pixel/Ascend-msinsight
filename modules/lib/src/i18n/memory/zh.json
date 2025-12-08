@@ -1,6 +1,7 @@
 {
   "memory": {
     "Find in Timeline": "跳转至时间线视图",
+    "Show in Timeline": "在时间线中显示",
     "Invalid Size Warning": "无效查询条件：“最大值”不能小于“最小值”",
     "Memory Analysis": "内存分析",
     "Memory Allocation/Release Details": "内存申请/释放详情",
@@ -130,7 +131,8 @@
       "Details": "详情",
       "Component": "组件",
       "Peak Memory Reserved(MB)": "保留内存峰值(MB)",
-      "Timestamp(ms)": "时间戳(ms)"
+      "Timestamp(ms)": "时间戳(ms)",
+      "Operation": "操作"
     },
     "tableHeadTooltip": {
       "Allocation Time(ms)": "Tensor内存分配时间",

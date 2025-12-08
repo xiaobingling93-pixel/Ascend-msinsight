@@ -2,6 +2,8 @@
   "communication": {
     "Find in Timeline": "Find in Timeline",
     "Find in Communication": "Find in Communication",
+    "Show in Timeline": "Show in Timeline",
+    "Show in Communication": "Show in Communication",
     "Align according to selected operator": "Align according to selected operator",
     "Restore default state": "Restore default state",
     "bandwidth": "Bandwidth",
@@ -94,7 +96,8 @@
       "duration(us)": "duration(us)",
       "name": "name",
       "group name": "group name",
-      "rankId": "rank id"
+      "rankId": "rank id",
+      "Operation": "Operation"
     },
     "tableHeadTooltip": {
       "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapsed time = Sum of communication event time",

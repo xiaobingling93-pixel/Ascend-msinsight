@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button, CollapsiblePanel } from '@insight/lib/components';
-import { type MenuProps, message, type TableColumnsType, Dropdown } from 'antd';
+import { message, type TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
@@ -146,7 +146,7 @@ async function findInCommunication(condition: ConditionDataType): Promise<void> 
 }
 
 // Total Communication Operators 表
-const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
+const OperatorsTable = ({ record: parentRow, conditions }: any): JSX.Element => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = { field: 'elapseTime', order: 'descend' };
     const [dataSource, setDataSource] = useState<any[]>([]);
@@ -154,42 +154,22 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const [sorter, setSorter] = useState(defaultSorter);
     const [loading, setLoading] = useState(false);
     const { t } = useTranslation('communication');
-    const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
-    const useMenuItems = (): MenuProps['items'] => {
-        return [
-            {
-                label: t('Find in Timeline'),
-                key: 'findInTimeline',
-                onClick: (): void => {
-                    redirectToTimeline();
-                },
-            },
-            {
-                label: t('Find in Communication'),
-                key: 'findInCommunication',
-                onClick: (): void => {
-                    findInCommunication(conditions);
-                },
-            },
-        ];
-    };
-    const items = useMenuItems();
 
     useEffect(() => {
         updateTableData(page, sorter);
-    }, [page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rankId]);
+    }, [page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, parentRow.rankId]);
     const updateTableData = async(_page: any, _sorter: {field: string;order: string}): Promise<void> => {
         setLoading(true);
         const res = await queryOperatorDetails({
-            iterationId: record.source === Source.COMPARISON ? conditions.iterationId : conditions.baselineIterationId,
-            rankId: record.rankId,
-            dbPath: record.dbPath ?? '',
+            iterationId: parentRow.source === Source.COMPARISON ? conditions.iterationId : conditions.baselineIterationId,
+            rankId: parentRow.rankId,
+            dbPath: parentRow.dbPath ?? '',
             currentPage: _page.current,
             pageSize: _page.pageSize,
             orderBy: _sorter.field,
             order: _sorter.order,
             stage: conditions.stage,
-            queryType: record.source,
+            queryType: parentRow.source,
             pgName: conditions.pgName,
             groupIdHash: conditions.groupIdHash,
         }).finally(() => {
@@ -204,39 +184,38 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
         ...useCommonColumns().map(item => {
             return { ...item, sorter: true };
         }),
-    ];
-    const onRow = (rowData: any): React.HTMLAttributes<any> => {
-        return {
-            onMouseLeave: (): void => {
-                if (shouldBlockMouseLeave) {
-                    setShouldBlockMouseLeave(false);
-                }
-            },
-            onContextMenu: (event: any): void => {
-                event.preventDefault(); // 阻止默认的右键菜单
-                selectedOpDetail = rowData as OpDetail;
-                if (selectedOpDetail !== undefined) {
-                    selectedOpDetail.rankId = record.rankId;
-                }
-                setShouldBlockMouseLeave(true);
-            },
-        };
-    };
-    return (
-        <Dropdown menu={{ items }} trigger={['contextMenu']}>
-            <div>
-                <ResizeTable columns={columns} dataSource={dataSource} size="small" allowCopy
-                    loading={loading}
-                    pagination={getPageConfigWithPageData(page, setPage)}
-                    onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
-                        if (extra.action === 'sort') {
-                            setSorter(newSorter);
+        {
+            title: `${t('tableHead.Operation')}`,
+            dataIndex: 'operation',
+            fixed: 'right',
+            render: (_: any, record) => {
+                return (<>
+                    <Button type="link" style={{ marginRight: '8px' }} onClick={(): void => {
+                        selectedOpDetail = record as unknown as OpDetail;
+                        if (selectedOpDetail !== undefined) {
+                            selectedOpDetail.rankId = parentRow.rankId;
                         }
-                    }}
-                    onRow={onRow}
-                />
-            </div>
-        </Dropdown>
+                        redirectToTimeline();
+                    }}>{t('Show in Timeline')}</Button>
+                    <Button type="link" onClick={(): void => {
+                        findInCommunication(conditions);
+                    }}>{t('Show in Communication')}</Button>
+                </>);
+            },
+        },
+    ];
+    return (
+        <div>
+            <ResizeTable columns={columns} dataSource={dataSource} size="small" allowCopy
+                loading={loading}
+                pagination={getPageConfigWithPageData(page, setPage)}
+                onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
+                    if (extra.action === 'sort') {
+                        setSorter(newSorter);
+                    }
+                }}
+            />
+        </div>
     );
 };
 

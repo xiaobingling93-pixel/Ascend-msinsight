@@ -30,7 +30,7 @@ describe('test Table in memory', () => {
     it('renders table headers correctly', () => {
         render(testTable);
         const columns = screen.getAllByRole('columnheader');
-        expect(columns.length).toBe(tableData.columns.length);
+        expect(columns.length - 1).toBe(tableData.columns.length);
         tableData.columns.forEach(column => expect(screen.getByText(column.name)).toBeDefined());
     });
 

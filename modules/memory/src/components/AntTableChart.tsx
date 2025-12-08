@@ -12,8 +12,7 @@ import type { ComponentMemory, GetTableDataResponse, MemoryTable, MemoryTableCol
 import { ResizeTable, fetchColumnFilterProps } from '@insight/lib/resize';
 import { Button, Spin } from '@insight/lib/components';
 import { DownOutlined } from '@ant-design/icons';
-import type { TableColumnsType, MenuProps } from 'antd';
-import { Dropdown } from 'antd';
+import type { TableColumnsType } from 'antd';
 import { type Theme, useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useRootStore } from '../context/context';
@@ -58,6 +57,15 @@ interface IColName {
     releaseReserved: string;
     releaseActive: string;
     streamId: string;
+}
+
+interface GetColumnsParams {
+    columns: MemoryTableColumn[];
+    theme: Theme;
+    t: TFunction;
+    isCompare: boolean;
+    setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>;
+    selectedCard?: CardInfo;
 }
 
 const orderByColName: IColName = {
@@ -119,13 +127,7 @@ const renderExpandColomn = (
         : <></>;
 };
 
-const getTableColumns = function (
-    columns: MemoryTableColumn[],
-    theme: Theme,
-    t: TFunction,
-    isCompare: boolean,
-    setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>,
-): TableColumnsType<RenderExpandRecord> {
+const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKeys, selectedCard }: GetColumnsParams): TableColumnsType<RenderExpandRecord> {
     const useTextColor = (data: string | number, record: RenderExpandRecord): JSX.Element | number | string => {
         return (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data;
     };
@@ -161,10 +163,17 @@ const getTableColumns = function (
             },
         });
     }
+    dataColumns.push({
+        key: 'operation',
+        title: t('Operation', { defaultValue: 'Operation', keyPrefix: 'tableHead' }),
+        fixed: 'right',
+        render: (_: any, record: any) => (<Button type="link"
+            onClick={(): void => {
+                redirectToTimeline(record, selectedCard as CardInfo);
+            }}>{t('Show in Timeline')}</Button>),
+    } as unknown as RenderExpandRecord);
     return dataColumns;
 };
-
-let selectedRecord: OperatorDetail | undefined;
 
 async function redirectToTimeline(record: OperatorDetail, card: CardInfo): Promise<void> {
     const res = await fetchOperatorPosition({
@@ -193,33 +202,13 @@ export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.For
         onPageChange, total, onOrderChange, onOrderByChange, isCompare, selectedCard,
         onFiltersChange, needUseKeyMap = true,
     } = props;
-    const [open, setOpen] = useState<boolean>(false);
-    const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
     const theme = useTheme();
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
 
     const columns = useMemo(
-        () => getTableColumns(tableData.columns, theme, t, isCompare, setExpandedKeys),
+        () => getTableColumns({ columns: tableData.columns, theme, t, isCompare, setExpandedKeys, selectedCard }),
         [tableData.columns, t, isCompare],
     );
-
-    const useMenuItems = (): MenuProps['items'] => {
-        if (selectedRecord === undefined || !open) {
-            return [];
-        }
-        return [
-            {
-                label: t('Find in Timeline'),
-                key: 'findInTimeline',
-                onClick: (): void => {
-                    if (selectedRecord !== undefined) {
-                        redirectToTimeline(selectedRecord, selectedCard);
-                    }
-                },
-            },
-        ];
-    };
-    const items = useMenuItems();
 
     // key is used to reset the Table state (page and sort) if the columns change
     const key = useMemo(() => `${Math.random()}`, [tableData.columns]);
@@ -246,18 +235,7 @@ export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.For
                 onRowSelected?.(record, rowIndex);
             },
             onMouseLeave: (event: any): void => {
-                if (shouldBlockMouseLeave) {
-                    setShouldBlockMouseLeave(false);
-                    return;
-                }
-                setOpen(false);
                 onRowSelected?.(undefined, undefined);
-            },
-            onContextMenu: (event: any): void => {
-                event.preventDefault(); // 阻止默认的右键菜单
-                selectedRecord = record;
-                setOpen(true);
-                setShouldBlockMouseLeave(true);
             },
         };
     };
@@ -267,36 +245,32 @@ export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.For
     }, [JSON.stringify(tableData), current, pageSize]);
 
     return (
-        <Dropdown menu={{ items }} trigger={['contextMenu']}>
-            <div>
-                <ResizeTable
-                    ref={ref}
-                    columns={columns as TableColumnsType<OperatorDetail>}
-                    allowCopy
-                    dataSource={tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
-                    onChange={onTableChange}
-                    scroll={{
-                        x: 150 * columns.length,
-                    }}
-                    pagination={{
-                        current,
-                        pageSize,
-                        pageSizeOptions: ['10', '20', '30', '50', '100'],
-                        onChange,
-                        total,
-                        showTotal: (totalNum: number): string => i18n.t('PaginationTotal', { total: totalNum }),
-                        showQuickJumper: true,
-                    }}
-                    rowClassName="memory-ant-table-row"
-                    key={key}
-                    onRow={onRow}
-                    expandable={{
-                        expandIcon: () => <></>,
-                        expandedRowKeys,
-                    }}
-                />
-            </div>
-        </Dropdown>
+        <div>
+            <ResizeTable
+                ref={ref}
+                columns={columns as TableColumnsType<OperatorDetail>}
+                allowCopy
+                dataSource={tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
+                onChange={onTableChange}
+                scroll={{ x: 150 * columns.length }}
+                pagination={{
+                    current,
+                    pageSize,
+                    pageSizeOptions: ['10', '20', '30', '50', '100'],
+                    onChange,
+                    total,
+                    showTotal: (totalNum: number): string => i18n.t('PaginationTotal', { total: totalNum }),
+                    showQuickJumper: true,
+                }}
+                rowClassName="memory-ant-table-row"
+                key={key}
+                onRow={onRow}
+                expandable={{
+                    expandIcon: () => <></>,
+                    expandedRowKeys,
+                }}
+            />
+        </div>
     );
 });
 AntTableChart.displayName = 'AntTableChart';
@@ -359,7 +333,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
     }, [memorySession?.selectedRankId, session.compareRank.isCompare, session.isAllMemoryCompletedSwitch]);
     useEffect(() => {
         pagination = { ...pagination, total: response.totalNum };
-        setColumns(getTableColumns(response.columnAttr, theme, t, session.compareRank.isCompare, setExpandedKeys) as TableColumnsType<ComponentMemory>);
+        setColumns(getTableColumns({ columns: response.columnAttr, theme, t, isCompare: session.compareRank.isCompare, setExpandedKeys }) as TableColumnsType<ComponentMemory>);
         setTableData(handleOperatorDetails(response.componentDetail, session.compareRank.isCompare, t));
     }, [response, session.language]);
 

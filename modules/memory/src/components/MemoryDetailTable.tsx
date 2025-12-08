@@ -243,7 +243,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         let newParam = param;
         if (memorySession.order !== null) {
             newParam = { order: memorySession.order, orderBy: memorySession.orderBy, ...param };
-        };
+        }
         setTableSpin(true);
         runInAction(() => {
             memorySession.isBtnDisabled = true;
