@@ -12,6 +12,8 @@
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
 #include "DomainObject.h"
+#include "SliceAnalyzer.h"
+#include "FlowAnalyzer.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Module::Timeline;
@@ -56,7 +58,7 @@ struct QUERY_THREAD_SAME_OPERATORS_PARAMS {
 };
 class DbTraceDataBase : public VirtualTraceDatabase {
 public:
-    explicit DbTraceDataBase(std::recursive_mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {};
+    explicit DbTraceDataBase(std::recursive_mutex &sqlMutex);
     ~DbTraceDataBase();
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
@@ -216,6 +218,9 @@ private:
     std::vector<WAIT_TIME> taskWaitTimeCache;
     std::vector<OVERLAP_INFO> timeInfoCache;
     std::vector<std::string> rankIds;
+
+    std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = nullptr;
+    std::unique_ptr<FlowAnalyzer> flowAnalyzerPtr = nullptr;
 
     bool SetConfig() override;
     void CreateTemporaryTable();

@@ -1602,6 +1602,7 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
     uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
                       (requestParams.current - 1) * requestParams.pageSize;
     uint64_t count = 0;
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint32_t>> trackIdDepthCache;
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
@@ -1613,16 +1614,22 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
         uint64_t trackId = resultSet->GetUint64("track_id");
+        auto item = trackIdDepthCache.find(trackId);
+        if (item != trackIdDepthCache.end()) {
+            sameOperatorsDetail.depth = item->second[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
+        } else {
+            std::unordered_map<uint64_t, uint32_t> depthCache;
+            SliceQuery sliceQuery;
+            sliceQuery.rankId = requestParams.rankId;
+            sliceQuery.trackId = trackId;
+            sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
+            trackIdDepthCache[trackId] = depthCache;
+            sameOperatorsDetail.depth = depthCache[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
+        }
         TrackInfo trackInfo;
         TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo, requestParams.rankId);
         sameOperatorsDetail.tid = trackInfo.threadId;
         sameOperatorsDetail.pid = trackInfo.processId;
-        SliceQuery sliceQuery;
-        sliceQuery.rankId = requestParams.rankId;
-        sliceQuery.trackId = trackId;
-        std::unordered_map<uint64_t, uint32_t> depthCache;
-        sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
-        sameOperatorsDetail.depth = depthCache[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
         if (!requestParams.startDepth.empty() && !requestParams.endDepth.empty() &&
             !(sameOperatorsDetail.depth >= NumberUtil::StringToUint32(requestParams.startDepth) &&
             sameOperatorsDetail.depth <= NumberUtil::StringToUint32(requestParams.endDepth))) {

@@ -420,6 +420,7 @@ void DbTraceDataBase::ExecuteQueryDbThreadSameOperatorsDetails(const std::unique
     uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
                       (requestParams.current - 1) * requestParams.pageSize;
     uint64_t count = 0;
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint32_t>> trackIdDepthCache;
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
@@ -432,6 +433,19 @@ void DbTraceDataBase::ExecuteQueryDbThreadSameOperatorsDetails(const std::unique
             sameOperatorsDetail.tid = tidList[0];
         }
         sameOperatorsDetail.pid = resultSet->GetString(col++);
+        uint64_t trackId = TrackInfoManager::Instance().GetTrackId(requestParams.rankId, sameOperatorsDetail.pid, sameOperatorsDetail.tid);
+        auto item = trackIdDepthCache.find(trackId);
+        if (item != trackIdDepthCache.end()) {
+            sameOperatorsDetail.depth = item->second[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
+        } else {
+            std::unordered_map<uint64_t, uint32_t> depthCache;
+            SliceQuery sliceQuery;
+            sliceQuery.rankId = requestParams.rankId;
+            sliceQuery.trackId = trackId;
+            sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
+            trackIdDepthCache[trackId] = depthCache;
+            sameOperatorsDetail.depth = depthCache[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
+        }
         if (!requestParams.startDepth.empty() && !requestParams.endDepth.empty() &&
             !(sameOperatorsDetail.depth >= NumberUtil::StringToUint32(requestParams.startDepth) &&
               sameOperatorsDetail.depth <= NumberUtil::StringToUint32(requestParams.endDepth))) {

@@ -17,12 +17,24 @@ namespace Dic::Module::FullDb {
 using namespace Server;
 std::map<std::string, std::map<std::string, std::string>> DbTraceDataBase::stringsCache = {};
 
+DbTraceDataBase::DbTraceDataBase(std::recursive_mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex)
+{
+    if (sliceAnalyzerPtr == nullptr) {
+        sliceAnalyzerPtr = std::make_unique<SliceAnalyzer>();
+    }
+    if (flowAnalyzerPtr == nullptr) {
+        flowAnalyzerPtr = std::make_unique<FlowAnalyzer>();
+    }
+}
+
 DbTraceDataBase::~DbTraceDataBase()
 {
     updateCannApiDepthStmt = nullptr;
     insertOverlapStmt = nullptr;
     updateApiDepthStmt = nullptr;
     updateTaskDepthStmt = nullptr;
+    sliceAnalyzerPtr = nullptr;
+    flowAnalyzerPtr = nullptr;
 }
 
 bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
