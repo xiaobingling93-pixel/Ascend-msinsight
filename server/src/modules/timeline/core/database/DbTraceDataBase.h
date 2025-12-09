@@ -258,9 +258,26 @@ private:
         const std::vector<std::string> tidList);
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
-    void ExecuteQueryUnitFlowsForTable(const std::pair<std::string, std::string> &tableAndSql,
-        uint64_t minTimestamp, const std::string &connectionId, const std::vector<uint64_t> &deviceIdList,
-        std::vector<FlowLocation> &flowLocations);
+
+    // 点击单个算子显示连线相关方法
+    std::vector<FlowLocation> ExecuteQueryUnitFlowsForTable(const Protocol::UnitFlowsParams &requestParams,
+        const std::pair<std::string, std::string> &tableAndSql,
+        uint64_t minTimestamp, const std::string &connectionId, const std::vector<uint64_t> &deviceIdList);
+    bool AssembleUnitFlowOfTypeMSTX(const std::vector<FlowLocation> &mstxFlowLocationList,
+        const std::vector<FlowLocation> &taskFlowLocationList, const std::string &connectionId,
+        Protocol::UnitFlowsBody &responseBody);
+    bool AssembleUnitFlowOfTypePyTorchToCANNToAscendHardwareToCommunication(
+        const std::vector<FlowLocation> &pytorchFlowLocationList, const std::vector<FlowLocation> &cannFlowLocationList,
+        const std::vector<FlowLocation> &taskFlowLocationList,
+        const std::vector<FlowLocation> &communicationOpFlowLocationList, const std::string &connectionId,
+        Protocol::UnitFlowsBody &responseBody);
+    bool AssembleUnitFlowOfTypeAsyncTaskQueue(
+        const std::vector<FlowLocation> &pytorchFlowLocationList, const std::string &connectionId,
+        Protocol::UnitFlowsBody &responseBody);
+    bool AssembleUnitFlowOfTypeFwdBwd(
+        const std::vector<FlowLocation> &pytorchFlowLocationList, const std::string &connectionId,
+        Protocol::UnitFlowsBody &responseBody);
+
     uint32_t SearchSliceNameCount(const Protocol::SearchCountParams &params);
 
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,

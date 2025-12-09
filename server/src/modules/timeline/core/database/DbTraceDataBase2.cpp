@@ -117,9 +117,11 @@ void DbTraceDataBase::ProcessHostCounterEventsMetadata(const std::string &fileId
     }
 }
 
-void DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const std::pair<std::string, std::string> &tableAndSql,
-                                                    uint64_t minTimestamp, const std::string &connectionId, const std::vector<uint64_t> &deviceIdList,
-                                                    std::vector<FlowLocation> &flowLocations)
+std::vector<FlowLocation> DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const Protocol::UnitFlowsParams &requestParams,
+                                                                         const std::pair<std::string, std::string> &tableAndSql,
+                                                                         uint64_t minTimestamp,
+                                                                         const std::string &connectionId,
+                                                                         const std::vector<uint64_t> &deviceIdList)
 {
     auto stmt = CreatPreparedStatement();
     std::string sql = "with constValue as (select ? as minTime, ? as connectionId) " + tableAndSql.second +
@@ -131,6 +133,7 @@ void DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const std::pair<std::string,
         resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId);
     }
 
+    std::vector<FlowLocation> flowLocations;
     while (resultSet->Next()) {
         auto metaType = resultSet->GetString("metaType");
         auto rankId = resultSet->GetString("deviceId");
@@ -156,60 +159,179 @@ void DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const std::pair<std::string,
         }
         flowLocations.push_back(location);
     }
-}
-
-bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestParams,
-                                     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
-{
-    auto stmt = CreatPreparedStatement();
-    auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
-    // connectionId为-1和UINT32_MAX都表示无效值，无连线，因此不能继续搜索，否则会将所有无连线的算子都连起来
-    if (!connectionId.has_value() ||
-        connectionId.value() == "-1" || connectionId.value() == std::to_string(UINT32_MAX)) {
-        return false;
-    }
-    std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(requestParams.rankId);
-    std::string comSql = deviceIdList.size() == 1 ? COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE : COM_OP_UNIT_FLOW_SQL;
-    std::vector<FlowLocation> flowLocations;
-    std::map<std::string, std::string> sqlMap{{"PYTORCH_API", PYTORCH_UNIT_FLOW_SQL},
-        {"CANN_API", CANN_UNIT_FLOW_SQL}, {"TASK", TASK_UNIT_FLOW_SQL},
-        {"COMMUNICATION_OP", comSql}, {"MSTX_EVENTS", MSTX_UNIT_FLOW_SQL}};
-    for (const auto &item : sqlMap) {
-        ExecuteQueryUnitFlowsForTable(item, minTimestamp, connectionId.value(), deviceIdList, flowLocations);
-    }
-    if (flowLocations.size() < 2) { // 小于2表示没有连线
-        return false;
-    }
-    // 同connectionId的算子按时间排序后相邻的连线
-    std::sort(flowLocations.begin(), flowLocations.end(),
-        [] (const FlowLocation &a, const FlowLocation &b) { return a.timestamp < b.timestamp;});
     for (auto &item: flowLocations) {
         if (item.rankId == path) {
             item.rankId = requestParams.rankId;
         }
     }
-    std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
-    for (size_t index = 1; index < flowLocations.size(); index++) {
-        UnitSingleFlow singleFlow;
-        singleFlow.id = connectionId.value();
-        singleFlow.from = flowLocations[index - 1];
-        singleFlow.to = flowLocations[index];
-        if (singleFlow.from.rankId != singleFlow.to.rankId) {
-            continue;
-        }
-        if (singleFlow.from.metaType == singleFlow.to.metaType && singleFlow.from.metaType == TABLE_API) {
-            singleFlow.cat = singleFlow.from.name.find("Enqueue") != std::string::npos ? "async_task_queue" : "fwdbwd";
-        }
-        singleFlow.cat = singleFlow.from.metaType == TABLE_CANN_API ? "HostToDevice" : singleFlow.cat;
-        singleFlow.cat = singleFlow.from.metaType == TABLE_MSTX_EVENTS ? "MsTx" : singleFlow.cat;
-        if (singleFlow.from.metaType == TABLE_API && singleFlow.to.metaType == TABLE_CANN_API) {
-            singleFlow.cat = "async_npu";
-        }
-        flowMap[singleFlow.cat].push_back(singleFlow);
+    return flowLocations;
+}
+
+// 先查找是否有MSTX类型连线，有的话一定是MSTX类型连线
+// 然后查找TASK/COMMUNICATION_OP是否有该连线，如果有就是torch-cann-task-communication类型连线
+// 否则就是async_task_queue fwd_bwd类型连线
+bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestParams,
+                                     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
+{
+    auto stmt = CreatPreparedStatement();
+    auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
+    // connectionId为-1和UINT32_MAX都表示无效值，无连线，因此不能继续搜索
+    if (!connectionId.has_value() ||
+        connectionId.value() == "-1" || connectionId.value() == std::to_string(UINT32_MAX)) {
+        ServerLog::Warn("Connection id of current operator is null or invalid value.");
+        return false;
     }
-    for (const auto &item: flowMap) {
-        responseBody.unitAllFlows.push_back({ .cat = item.first, .flows = item.second });
+
+    std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(requestParams.rankId);
+    std::string comSql = deviceIdList.size() == 1 ? COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE : COM_OP_UNIT_FLOW_SQL;
+    std::vector<FlowLocation> pytorchFlowLocationList =
+        ExecuteQueryUnitFlowsForTable(requestParams, {"PYTORCH_API", PYTORCH_UNIT_FLOW_SQL}, minTimestamp,
+        connectionId.value(), deviceIdList);
+    std::vector<FlowLocation> cannFlowLocationList =
+        ExecuteQueryUnitFlowsForTable(requestParams, {"CANN_API", CANN_UNIT_FLOW_SQL}, minTimestamp,
+        connectionId.value(), deviceIdList);
+    std::vector<FlowLocation> taskFlowLocationList =
+        ExecuteQueryUnitFlowsForTable(requestParams, {"TASK", TASK_UNIT_FLOW_SQL}, minTimestamp,
+        connectionId.value(), deviceIdList);
+    std::vector<FlowLocation> communicationOpFlowLocationList =
+        ExecuteQueryUnitFlowsForTable(requestParams, {"COMMUNICATION_OP", comSql}, minTimestamp,
+        connectionId.value(), deviceIdList);
+    std::vector<FlowLocation> mstxFlowLocationList =
+        ExecuteQueryUnitFlowsForTable(requestParams, {"MSTX_EVENTS", MSTX_UNIT_FLOW_SQL}, minTimestamp,
+        connectionId.value(), deviceIdList);
+
+    if (AssembleUnitFlowOfTypeMSTX(mstxFlowLocationList, taskFlowLocationList, connectionId.value(), responseBody)) {
+        return true;
     }
+    if (AssembleUnitFlowOfTypePyTorchToCANNToAscendHardwareToCommunication(pytorchFlowLocationList,
+        cannFlowLocationList, taskFlowLocationList, communicationOpFlowLocationList, connectionId.value(),
+        responseBody)) {
+        return true;
+    }
+    if (AssembleUnitFlowOfTypeAsyncTaskQueue(pytorchFlowLocationList, connectionId.value(), responseBody)) {
+        return true;
+    }
+    if (AssembleUnitFlowOfTypeFwdBwd(pytorchFlowLocationList, connectionId.value(), responseBody)) {
+        return true;
+    }
+    ServerLog::Warn("Failed to find relevant flow event for current operator.");
+    return false;
+}
+
+bool DbTraceDataBase::AssembleUnitFlowOfTypeMSTX(const std::vector<FlowLocation> &mstxFlowLocationList,
+                                                 const std::vector<FlowLocation> &taskFlowLocationList,
+                                                 const std::string &connectionId,
+                                                 Protocol::UnitFlowsBody &responseBody)
+{
+    if (mstxFlowLocationList.empty() || taskFlowLocationList.empty()) {
+        return false;
+    }
+    // 要求rankId相等是为了解决PyTorch多device场景如下问题：
+    // 某个Host侧算子只会和特定deviceId（比如0）的Device侧算子连线
+    // 但是对于其它deviceId（比如1），QueryUnitFlows()的SQL也会查询出deviceId=0的该算子，导致界面上deviceId=1也显示连线，但连线末端无算子
+    if (mstxFlowLocationList[0].rankId != taskFlowLocationList[0].rankId) {
+        return false;
+    }
+    // MSTX类型连线只允许一对一
+    UnitSingleFlow singleFlow{.cat = "MsTx", .id = connectionId, .from = mstxFlowLocationList[0],
+        .to = taskFlowLocationList[0]};
+    std::vector<UnitSingleFlow> flows{singleFlow};
+    responseBody.unitAllFlows.push_back({.cat = singleFlow.cat, .flows = flows});
+    return true;
+}
+
+bool DbTraceDataBase::AssembleUnitFlowOfTypePyTorchToCANNToAscendHardwareToCommunication(
+    const std::vector<FlowLocation> &pytorchFlowLocationList, const std::vector<FlowLocation> &cannFlowLocationList,
+    const std::vector<FlowLocation> &taskFlowLocationList,
+    const std::vector<FlowLocation> &communicationOpFlowLocationList, const std::string &connectionId,
+    Protocol::UnitFlowsBody &responseBody)
+{
+    if (taskFlowLocationList.empty() && communicationOpFlowLocationList.empty()) {
+        return false;
+    }
+    if (pytorchFlowLocationList.empty() && cannFlowLocationList.empty()) {
+        return false;
+    }
+    if (!cannFlowLocationList.empty()) {
+        // HostToDevice类型连线每个泳道只取第一个算子，避免出现aclgraph等场景TASK表同connectionId的算子过多导致返回前端连线过多，界面卡死的问题
+        // 要求rankId相等是为了解决PyTorch多device场景如下问题：
+        // 某个Host侧算子只会和特定deviceId（比如0）的Device侧算子连线
+        // 但是对于其它deviceId（比如1），QueryUnitFlows()的SQL也会查询出deviceId=0的该算子，导致界面上deviceId=1也显示连线，但连线末端无算子
+        std::vector<UnitSingleFlow> flows;
+        if (!taskFlowLocationList.empty() && cannFlowLocationList[0].rankId == taskFlowLocationList[0].rankId) {
+            UnitSingleFlow singleFlow{.cat = "HostToDevice", .id = connectionId, .from = cannFlowLocationList[0],
+                .to = taskFlowLocationList[0]};
+            flows.push_back(singleFlow);
+        }
+        if (!communicationOpFlowLocationList.empty() &&
+            cannFlowLocationList[0].rankId == communicationOpFlowLocationList[0].rankId) {
+            UnitSingleFlow singleFlow{.cat = "HostToDevice", .id = connectionId, .from = cannFlowLocationList[0],
+                .to = communicationOpFlowLocationList[0]};
+            flows.push_back(singleFlow);
+        }
+        if (!flows.empty()) {
+            responseBody.unitAllFlows.push_back({.cat = "HostToDevice", .flows = flows});
+        }
+    }
+    if (!pytorchFlowLocationList.empty()) {
+        // async_npu类型连线每个泳道只取第一个算子，避免出现aclgraph等场景TASK表同connectionId的算子过多导致返回前端连线过多，界面卡死的问题
+        // 要求rankId相等是为了解决PyTorch多device场景如下问题：
+        // 某个Host侧算子只会和特定deviceId（比如0）的Device侧算子连线
+        // 但是对于其它deviceId（比如1），QueryUnitFlows()的SQL也会查询出deviceId=0的该算子，导致界面上deviceId=1也显示连线，但连线末端无算子
+        std::vector<UnitSingleFlow> flows;
+        if (!taskFlowLocationList.empty() && pytorchFlowLocationList[0].rankId == taskFlowLocationList[0].rankId) {
+            UnitSingleFlow singleFlow{.cat = "async_npu", .id = connectionId, .from = pytorchFlowLocationList[0],
+                .to = taskFlowLocationList[0]};
+            flows.push_back(singleFlow);
+        }
+        if (!communicationOpFlowLocationList.empty() &&
+            pytorchFlowLocationList[0].rankId == communicationOpFlowLocationList[0].rankId) {
+            UnitSingleFlow singleFlow{.cat = "async_npu", .id = connectionId, .from = pytorchFlowLocationList[0],
+                .to = communicationOpFlowLocationList[0]};
+            flows.push_back(singleFlow);
+        }
+        if (!flows.empty()) {
+            responseBody.unitAllFlows.push_back({.cat = "async_npu", .flows = flows});
+        }
+    }
+    if (responseBody.unitAllFlows.empty()) {
+        return false;
+    }
+    return true;
+}
+
+bool DbTraceDataBase::AssembleUnitFlowOfTypeAsyncTaskQueue(
+    const std::vector<FlowLocation> &pytorchFlowLocationList, const std::string &connectionId,
+    Protocol::UnitFlowsBody &responseBody)
+{
+    // async_task_queue是PyTorch和PyTorch连线，要求PyTorch同connectionId算子至少有2个
+    if (pytorchFlowLocationList.size() < 2) {
+        return false;
+    }
+    // async_task_queue类型连线只允许一对一
+    if (!StringUtil::StartWith(pytorchFlowLocationList[0].name, "Enqueue")) {
+        return false;
+    }
+    UnitSingleFlow singleFlow{.cat = "async_task_queue", .id = connectionId, .from = pytorchFlowLocationList[0],
+        .to = pytorchFlowLocationList[1]};
+    std::vector<UnitSingleFlow> flows{singleFlow};
+    responseBody.unitAllFlows.push_back({.cat = singleFlow.cat, .flows = flows});
+    return true;
+}
+
+bool DbTraceDataBase::AssembleUnitFlowOfTypeFwdBwd(const std::vector<FlowLocation> &pytorchFlowLocationList,
+                                                   const std::string &connectionId,
+                                                   Protocol::UnitFlowsBody &responseBody)
+{
+    // async_task_queue是PyTorch和PyTorch连线，要求PyTorch同connectionId算子至少有2个
+    if (pytorchFlowLocationList.size() < 2) {
+        return false;
+    }
+    // fwdbwd类型连线只允许一对一
+    UnitSingleFlow singleFlow{.cat = "fwdbwd", .id = connectionId, .from = pytorchFlowLocationList[0],
+        .to = pytorchFlowLocationList[1]};
+    std::vector<UnitSingleFlow> flows{singleFlow};
+    responseBody.unitAllFlows.push_back({.cat = singleFlow.cat, .flows = flows});
     return true;
 }
 

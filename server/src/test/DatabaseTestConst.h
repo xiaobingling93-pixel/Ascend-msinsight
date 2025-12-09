@@ -23,6 +23,7 @@ enum class TableName {
     DB_COMMUNICATION_TASK_INFO,
     DB_COMMUNICATION_SCHEDULE_TASK_INFO,
     DB_NPU_INFO,
+    DB_RANK_DEVICE_MAP,
     DB_ENUM_API_TYPE,
     // db counter
     DB_AICORE_FREQ,
@@ -50,6 +51,7 @@ extern const std::string CREATE_TABLE_DB_COMMUNICATION_OP_SQL;
 extern const std::string CREATE_TABLE_DB_COMMUNICATION_TASK_INFO_SQL;
 extern const std::string CREATE_TABLE_DB_COMMUNICATION_SCHEDULE_TASK_INFO_SQL;
 extern const std::string CREATE_TABLE_DB_NPU_INFO_SQL;
+extern const std::string CREATE_TABLE_DB_RANK_DEVICE_MAP_SQL;
 extern const std::string CREATE_TABLE_DB_ENUM_API_TYPE_SQL;
 
 // db counter

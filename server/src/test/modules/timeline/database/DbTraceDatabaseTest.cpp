@@ -43,6 +43,25 @@ protected:
     std::string stringIdsTableInsert1 =
         "INSERT INTO STRING_IDS(id, value) VALUES (239, 'compute'), (240, 'communication'), "
         "(447, 'start'), (448, 'hcom_allReduce')";
+
+    // QueryUnitFlows使用的插入数据SQL
+    // 同connectionId，只连接第一个
+    std::string taskDataInsertForQueryUnitFlows =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
+        "(80, 100, 0, 19, 183022, 20366, 7166, 4294967295, 0, 39, 4294967295, 0),"
+        "(90, 110, 0, 19, 183022, 20366, 7166, 4294967295, 0, 39, 4294967295, 0);";
+    // 同connectionId，只连接第一个
+    std::string communicationOpDataInsertForQueryUnitFlows =
+        "INSERT INTO COMMUNICATION_OP (opName, startNs, endNs, connectionId, "
+        "groupName, opId, relay, retry, dataType, algType, count, opType, waitNs) "
+        "VALUES (6, 110, 130, 19, 8, 1, 0, 0, 4, 9, 1, 10, 726280), (8, 150, 170, 19, 8, 2, 0, 0, 4, 9, 1, 10, 2985);";
+    std::string rankDeviceMapDataInsertForQueryUnitFlows =
+        "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (0, 0);";
+    std::string pytorchDataInsertForQueryUnitFlows =
+        "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
+        "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
+        "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);";
 };
 namespace Dic::Protocol {
 using namespace Dic::Module::Timeline;
@@ -824,7 +843,7 @@ TEST_F(DbTraceDatabaseTest, TestGetCounterUnitsAndDataTypesWhenACCPMU)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsNotEmptyThenReturnFalse)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsEmptyThenReturnFalse)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
@@ -834,53 +853,48 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsNotEmptyThenRetu
         DatabaseTestCaseMockUtil::CreateTable(db, item.second);
     }
     database.SetDbPtr(db);
-    const std::string fileId = "ll";
     const Dic::Protocol::UnitFlowsParams requestParams;
     Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, false);
+    RestoreRepoFunc();
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsOneThenReturnFalse)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenCANNAndNoDeviceDataThenReturnFalse)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
     const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
-        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
-        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
+        TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS};
     DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
-    const std::string connectIdCatData =
-        "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
     const std::string cannApiData =
         "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
         "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
         "0);";
-    DatabaseTestCaseMockUtil::InsertData(db, connectIdCatData);
     DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
     database.SetDbPtr(db);
-    const std::string fileId = "ll";
     Dic::Protocol::UnitFlowsParams requestParams;
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
     Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, false);
+    RestoreRepoFunc();
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsTwoThenReturnTrue)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromCANNToAscendHardwareThenReturnTrue)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
     const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
-        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
-        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
+        TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS};
     DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
-    const std::string connectIdCatData =
-        "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
     const std::string cannApiData =
         "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
         "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
@@ -890,62 +904,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsTwoThenReturnTru
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
         "(1734925661780577867, 1734925661780577887, 15, 476320, 183022, 20366, 7166, 4294967295, 0, 39, "
         "4294967295, 0);";
-    const std::string computeData =
-        "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", \"mixBlockDim\", "
-        "\"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", \"inputShapes\", \"outputFormats\", "
-        "\"outputDataTypes\", \"outputShapes\", \"attrInfo\", \"waitNs\") VALUES (0, 183022, 48, 0, 1, 2, 4, 5, 6, 4, "
-        "5, 6, "
-        "3, 0);";
-    DatabaseTestCaseMockUtil::InsertData(db, connectIdCatData);
     DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
     DatabaseTestCaseMockUtil::InsertData(db, taskData);
-    DatabaseTestCaseMockUtil::InsertData(db, computeData);
     database.SetDbPtr(db);
-    const std::string fileId = "ll";
-    Dic::Protocol::UnitFlowsParams requestParams;
-    requestParams.id = "476320";
-    requestParams.metaType = "CANN_API";
-    requestParams.rankId = "15";
-    Dic::Protocol::UnitFlowsBody responseBody;
-    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
-    EXPECT_EQ(result, true);
-    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "15");
-    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
-}
-
-TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenDeviceUniqueThenReturnTrue)
-{
-    std::recursive_mutex testMutex;
-    MockDatabase2 database(testMutex);
-    sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDB(db);
-    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
-        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
-        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
-    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
-    const std::string connectIdCatData =
-        "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
-    const std::string cannApiData =
-        "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
-        "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
-        "0);";
-    const std::string taskData =
-        "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
-        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
-        "(1734925661780577867, 1734925661780577887, 15, 476320, 183022, 20366, 7166, 4294967295, 0, 39, "
-        "4294967295, 0);";
-    const std::string computeData =
-        "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", \"mixBlockDim\", "
-        "\"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", \"inputShapes\", \"outputFormats\", "
-        "\"outputDataTypes\", \"outputShapes\", \"attrInfo\", \"waitNs\") VALUES (0, 183022, 48, 0, 1, 2, 4, 5, 6, 4, "
-        "5, 6, "
-        "3, 0);";
-    DatabaseTestCaseMockUtil::InsertData(db, connectIdCatData);
-    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
-    DatabaseTestCaseMockUtil::InsertData(db, taskData);
-    DatabaseTestCaseMockUtil::InsertData(db, computeData);
-    database.SetDbPtr(db);
-    const std::string fileId = "ll";
     Dic::Protocol::UnitFlowsParams requestParams;
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
@@ -953,24 +914,26 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenDeviceUniqueThenReturnTrue)
     Dic::Protocol::UnitFlowsBody responseBody;
     MockNpuInfoRepoFunc();
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
-    EXPECT_EQ(result, true);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "HostToDevice");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "15");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.metaType, "CANN_API");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.metaType, "Ascend Hardware");
     RestoreRepoFunc();
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenRankIdAndDeviceIdNotSame)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromCANNToAscendHardwareAndDeviceUniqueThenReturnTrue)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
     const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
-        TableName::DB_COMPUTE_TASK_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
-        TableName::DB_CONNECTION_IDS, TableName::DB_CONNECTION_CATS};
+        TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS};
     DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
-    const std::string connectIdCatData =
-        "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
     const std::string cannApiData =
         "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
         "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
@@ -980,80 +943,458 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenRankIdAndDeviceIdNotSame)
         "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
         "(1734925661780577867, 1734925661780577887, 15, 476320, 183022, 20366, 7166, 4294967295, 0, 39, "
         "4294967295, 0);";
-    const std::string computeData =
-        "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", \"mixBlockDim\", "
-        "\"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", \"inputShapes\", \"outputFormats\", "
-        "\"outputDataTypes\", \"outputShapes\", \"attrInfo\", \"waitNs\") VALUES (0, 183022, 48, 0, 1, 2, 4, 5, 6, 4, "
-        "5, 6, "
-        "3, 0);";
-    DatabaseTestCaseMockUtil::InsertData(db, connectIdCatData);
     DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
     DatabaseTestCaseMockUtil::InsertData(db, taskData);
-    DatabaseTestCaseMockUtil::InsertData(db, computeData);
-    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
-    DatabaseTestCaseMockUtil::CreateTable(db, sql);
-    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (999, 15), (276878, 7);";
-    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
     database.SetDbPtr(db);
-    const std::string fileId = "ll";
     Dic::Protocol::UnitFlowsParams requestParams;
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
-    requestParams.rankId = "999";
+    requestParams.rankId = "15";
     Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
-    EXPECT_EQ(result, true);
-    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "999");
-    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "999");
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "HostToDevice");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "15");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.metaType, "CANN_API");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.metaType, "Ascend Hardware");
+    RestoreRepoFunc();
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToCANNToAscendHardware)
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromCANNToAscendHardwareAndRankIdAndDeviceIdNotSame)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
     const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
-        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS};
+        TableName::DB_TASK, TableName::DB_COMMUNICATION_OP,
+        TableName::DB_CONNECTION_IDS, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string cannApiData =
+        "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
+        "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
+        "0);";
+    const std::string taskData =
+        "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1734925661780577867, 1734925661780577887, 15, 476320, 183022, 20366, 7166, 4294967295, 0, 39, "
+        "4294967295, 0);";
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (999, 15), (276878, 7);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "476320";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "999";
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "HostToDevice");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "999");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "999");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.metaType, "CANN_API");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.metaType, "Ascend Hardware");
+    RestoreRepoFunc();
+}
+
+// PyTorch->CANN->Ascend Hardware连线，修改前不能通过，修改后能通过，每条泳道最多有一个算子和其它泳道连线
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToCANNToAscendHardware)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
     DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
     const std::string connectIdsData =
         "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
     const std::string cannApiData =
         "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
         "name, depth) VALUES (50, 70, 10000, 87471303975183, 19, 7052, 0);";
-    std::string pytorchData =
+    const std::string pytorchData =
         "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
         "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
         "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);";
-    const std::string taskData =
-        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
-        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
-        "(80, 100, 1, 19, 183022, 20366, 7166, 4294967295, 0, 39, 4294967295, 0);";
-    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
     DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
     DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
-    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskDataInsertForQueryUnitFlows);
     DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
     DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
-    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
-    DatabaseTestCaseMockUtil::CreateTable(db, sql);
-    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
-    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
     database.SetDbPtr(db);
 
     Dic::Protocol::UnitFlowsParams requestParams;
     requestParams.id = "19";
     requestParams.metaType = "CANN_API";
-    requestParams.rankId = "1";
+    requestParams.rankId = "0";
 
     Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     ASSERT_EQ(result, true);
     ASSERT_EQ(responseBody.unitAllFlows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "HostToDevice");
+    EXPECT_EQ(responseBody.unitAllFlows[1].cat, "async_npu");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
+    ASSERT_EQ(responseBody.unitAllFlows[1].flows.size(), 1);
     EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 50); // 50
     EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 80); // 80
     EXPECT_EQ(responseBody.unitAllFlows[1].flows[0].from.timestamp, 20); // 20
-    EXPECT_EQ(responseBody.unitAllFlows[1].flows[0].to.timestamp, 50); // 50
+    EXPECT_EQ(responseBody.unitAllFlows[1].flows[0].to.timestamp, 80); // 80
+    RestoreRepoFunc();
+}
+
+// PyTorch->CANN->Ascend Hardware->Communication连线，修改前不能通过，修改后能通过，每条泳道最多有一个算子和其它泳道连线
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToCANNToAscendHardwareToCommunication)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string cannApiData =
+        "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
+        "name, depth) VALUES (50, 70, 10000, 87471303975183, 19, 7052, 0);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskDataInsertForQueryUnitFlows);
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchDataInsertForQueryUnitFlows);
+    DatabaseTestCaseMockUtil::InsertData(db, communicationOpDataInsertForQueryUnitFlows);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "19";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "0";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "HostToDevice");
+    EXPECT_EQ(responseBody.unitAllFlows[1].cat, "async_npu");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 2); // 2
+    ASSERT_EQ(responseBody.unitAllFlows[1].flows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 50); // 50
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 80); // 80
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].from.timestamp, 50); // 50
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].to.timestamp, 110); // 110
+    EXPECT_EQ(responseBody.unitAllFlows[1].flows[0].from.timestamp, 20); // 20
+    EXPECT_EQ(responseBody.unitAllFlows[1].flows[0].to.timestamp, 80); // 80
+    EXPECT_EQ(responseBody.unitAllFlows[1].flows[1].from.timestamp, 20); // 20
+    EXPECT_EQ(responseBody.unitAllFlows[1].flows[1].to.timestamp, 110); // 110
+    RestoreRepoFunc();
+}
+
+// CANN->Ascend Hardware->Communication连线，修改前不能通过，修改后能通过，每条泳道最多有一个算子和其它泳道连线，npumonitor采集数据无PyTorch层
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromCANNToAscendHardwareToCommunication)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string cannApiData =
+        "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
+        "name, depth) VALUES (50, 70, 10000, 87471303975183, 19, 7052, 0);";
+    // 同connectionId，只连接第一个
+    const std::string taskData =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
+        "(80, 100, 0, 19, 183022, 20366, 7166, 4294967295, 0, 39, 4294967295, 0),"
+        "(90, 110, 0, 19, 183022, 20366, 7166, 4294967295, 0, 39, 4294967295, 0);";
+    // 同connectionId，只连接第一个
+    const std::string communicationOpData =
+        "INSERT INTO COMMUNICATION_OP (opName, startNs, endNs, connectionId, "
+        "groupName, opId, relay, retry, dataType, algType, count, opType, waitNs) "
+        "VALUES (6, 110, 130, 19, 8, 1, 0, 0, 4, 9, 1, 10, 726280), (8, 150, 170, 19, 8, 2, 0, 0, 4, 9, 1, 10, 2985);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, communicationOpData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "19";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "0";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "HostToDevice");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 50); // 50
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 80); // 80
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].from.timestamp, 50); // 50
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].to.timestamp, 110); // 110
+    RestoreRepoFunc();
+}
+
+// 增加测试用例
+// CANN->Communication连线，修改前不能通过，修改后能通过，每条泳道最多有一个算子和其它泳道连线，npumonitor采集数据无PyTorch层，可能无Ascend Hardware层
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromCANNToCommunication)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string cannApiData =
+        "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
+        "name, depth) VALUES (50, 70, 10000, 87471303975183, 19, 7052, 0);";
+    // 同connectionId，只连接第一个
+    const std::string communicationOpData =
+        "INSERT INTO COMMUNICATION_OP (opName, startNs, endNs, connectionId, "
+        "groupName, opId, relay, retry, dataType, algType, count, opType, waitNs) "
+        "VALUES (6, 110, 130, 19, 8, 1, 0, 0, 4, 9, 1, 10, 726280), (8, 150, 170, 19, 8, 2, 0, 0, 4, 9, 1, 10, 2985);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, communicationOpData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "19";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "0";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "HostToDevice");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 50); // 50
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 110); // 110
+    RestoreRepoFunc();
+}
+
+// PyTorch->Ascend Hardware->Communication连线，修改前不能通过，修改后能通过，每条泳道最多有一个算子和其它泳道连线
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToAscendHardwareToCommunication)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string pytorchData =
+        "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
+        "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
+        "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);";
+    const std::string cannApiData =
+        "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
+        "name, depth) VALUES (50, 70, 10000, 87471303975183, 20, 7052, 0);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskDataInsertForQueryUnitFlows);
+    DatabaseTestCaseMockUtil::InsertData(db, communicationOpDataInsertForQueryUnitFlows);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "Ascend Hardware";
+    requestParams.rankId = "0";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "async_npu");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 20); // 20
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 80); // 80
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].from.timestamp, 20); // 20
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].to.timestamp, 110); // 110
+    RestoreRepoFunc();
+}
+
+// PyTorch->Ascend Hardware连线，修改前不能通过，修改后能通过，每条泳道最多有一个算子和其它泳道连线
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToAscendHardware)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string pytorchData =
+        "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
+        "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
+        "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);";
+    const std::string cannApiData =
+        "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
+        "name, depth) VALUES (50, 70, 10000, 87471303975183, 20, 7052, 0);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskDataInsertForQueryUnitFlows);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "Ascend Hardware";
+    requestParams.rankId = "0";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "async_npu");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 20); // 20
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 80); // 80
+    RestoreRepoFunc();
+}
+
+// MSTX连线，修改前和修改后都能通过，只允许一对一
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromMSTXToAscendHardware)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+
+    const std::string taskData =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) "
+        "VALUES (10, 30, 0, 4294967295, 7480, 1984976, 1, 4294967295, 2, 12658, 4294967295, 0),"
+        "(20, 40, 0, 4000000002, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, 0),"
+        "(25, 70, 0, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, 0),"
+        "(180, 200, 0, 19, 4000000001, 20366, 7166, 4294967295, 0, 39, 4294967295, 0);";
+    std::string mstxData =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(10, 20, 2, 4294967295, 4294967295, 447, 4754301164515056, 4754301164515056, 239, 4000000001, 0),"
+        "(12, 20, 2, 4294967295, 4294967295, 448, 4754301164515056, 4754301164515056, 240, 4000000002, 0);";
+
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "MSTX_EVENTS";
+    requestParams.rankId = "0";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "MsTx");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.rankId, "0");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.rankId, "0");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 10); // 10
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 25); // 25
+    RestoreRepoFunc();
+}
+
+// async_task_queue连线，修改前和修改后都能通过，只允许一对一，增加deque在前测试
+// fwdbwd连线，修改前和修改后都能通过，只允许一对一
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToPyTorchFlowTypeFwdBwd)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CONNECTION_IDS, TableName::DB_CANN_API, TableName::DB_PYTORCH_API,
+        TableName::DB_TASK, TableName::DB_NPU_INFO, TableName::DB_MSTX_EVENTS,
+        TableName::DB_COMMUNICATION_OP, TableName::DB_RANK_DEVICE_MAP};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+
+    const std::string pytorchData =
+        "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
+        "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
+        "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3),"
+        "(30, 90, 17738580008830245, 25, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3),"
+        "(150, 170, 17738580008830245, 79, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);";
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19), (25, 19), (79, 19);";
+
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (0, 'abc')";
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, rankDeviceMapDataInsertForQueryUnitFlows);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "PYTORCH_API";
+    requestParams.rankId = "0";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    MockNpuInfoRepoFunc();
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].cat, "fwdbwd");
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1);
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.rankId, "0");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.rankId, "0");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 20); // 20
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 30); // 30
+    RestoreRepoFunc();
 }
 
 TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenPython)
