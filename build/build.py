@@ -325,7 +325,9 @@ def build_light_package(version, os_name, is_huaweicloud):
         cmd_list = [Const.CARGO, 'build', '--release']
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
     if is_huaweicloud:
-        shutil.copyfile(os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py"),
+        shutil.copytree(os.path.join(PROJECT_PATH, "plugins", "ProfilerServerProxy"),
+                        os.path.join(profiler_path, "ProfilerServerProxy"))
+        shutil.copyfile(os.path.join(PROJECT_PATH, "build", "huaweicloud_proxy_start_script.py"),
                         os.path.join(profiler_path, "start_script.py"))
         cmd_list = cmd_list + ["--no-default-features"]
         package_name = Const.ASCEND_INSIGHT_PREFIX + '_huaweicloud_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
