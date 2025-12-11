@@ -3,6 +3,7 @@
  */
 
 import type { TableProps } from 'antd/es/table';
+import { message as Message } from 'antd';
 import type { SortOrder, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -66,6 +67,7 @@ interface GetColumnsParams {
     isCompare: boolean;
     setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>;
     selectedCard?: CardInfo;
+    isComp?: boolean;
 }
 
 const orderByColName: IColName = {
@@ -105,7 +107,7 @@ const getCompareRows = (data: string | number, theme: Theme): JSX.Element | numb
     return <CompareDiv style={{ color: dataNum >= 0 ? theme.successColor : theme.dangerColor }} title={`${data}`}>{data}</CompareDiv>;
 };
 
-const renderExpandColomn = (
+const renderExpandColumn = (
     record: RenderExpandRecord,
     t: TFunction,
     setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>,
@@ -127,7 +129,7 @@ const renderExpandColomn = (
         : <></>;
 };
 
-const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKeys, selectedCard }: GetColumnsParams): TableColumnsType<RenderExpandRecord> {
+const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKeys, selectedCard, isComp }: GetColumnsParams): TableColumnsType<RenderExpandRecord> {
     const useTextColor = (data: string | number, record: RenderExpandRecord): JSX.Element | number | string => {
         return (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data;
     };
@@ -159,39 +161,46 @@ const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKey
             sorter: false,
             fixed: 'right',
             render: (_: any, record: RenderExpandRecord): JSX.Element => {
-                return renderExpandColomn(record, t, setExpandedKeys);
+                return renderExpandColumn(record, t, setExpandedKeys);
             },
         });
     }
-    dataColumns.push({
-        key: 'operation',
-        title: t('Operation', { defaultValue: 'Operation', keyPrefix: 'tableHead' }),
-        fixed: 'right',
-        render: (_: any, record: any) => (<Button type="link"
-            onClick={(): void => {
-                redirectToTimeline(record, selectedCard as CardInfo);
-            }}>{t('Show in Timeline')}</Button>),
-    } as unknown as RenderExpandRecord);
+    if (!isComp) {
+        dataColumns.push({
+            key: `operation_${selectedCard?.cardId}`,
+            title: t('Operation', { defaultValue: 'Operation', keyPrefix: 'tableHead' }),
+            fixed: 'right',
+            render: (_: any, record: any) => (<Button type="link"
+                onClick={(): void => {
+                    redirectToTimeline(record, selectedCard as CardInfo);
+                }}>{t('Show in Timeline')}</Button>),
+        } as unknown as RenderExpandRecord);
+    }
+
     return dataColumns;
 };
 
 async function redirectToTimeline(record: OperatorDetail, card: CardInfo): Promise<void> {
-    const res = await fetchOperatorPosition({
-        id: record.id,
-        name: record.name,
-        rankId: card.cardId,
-        dbPath: card.dbPath,
-    });
-    connector.send({
-        event: 'switchModule',
-        body: {
-            switchTo: 'timeline',
-            toModuleEvent: 'locateUnit',
-            params: {
-                ...res,
+    try {
+        const res = await fetchOperatorPosition({
+            id: record.id,
+            name: record.name,
+            rankId: card.cardId,
+            dbPath: card.dbPath,
+        });
+        connector.send({
+            event: 'switchModule',
+            body: {
+                switchTo: 'timeline',
+                toModuleEvent: 'locateUnit',
+                params: {
+                    ...res,
+                },
             },
-        },
-    });
+        });
+    } catch (e: any) {
+        Message.error(e.message);
+    }
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -207,7 +216,7 @@ export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.For
 
     const columns = useMemo(
         () => getTableColumns({ columns: tableData.columns, theme, t, isCompare, setExpandedKeys, selectedCard }),
-        [tableData.columns, t, isCompare],
+        [tableData.columns, t, isCompare, selectedCard],
     );
 
     // key is used to reset the Table state (page and sort) if the columns change
@@ -333,7 +342,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
     }, [memorySession?.selectedRankId, session.compareRank.isCompare, session.isAllMemoryCompletedSwitch]);
     useEffect(() => {
         pagination = { ...pagination, total: response.totalNum };
-        setColumns(getTableColumns({ columns: response.columnAttr, theme, t, isCompare: session.compareRank.isCompare, setExpandedKeys }) as TableColumnsType<ComponentMemory>);
+        setColumns(getTableColumns({ columns: response.columnAttr, theme, t, isCompare: session.compareRank.isCompare, setExpandedKeys, isComp: true }) as TableColumnsType<ComponentMemory>);
         setTableData(handleOperatorDetails(response.componentDetail, session.compareRank.isCompare, t));
     }, [response, session.language]);
 
