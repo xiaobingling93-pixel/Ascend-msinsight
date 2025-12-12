@@ -22,6 +22,7 @@ import { getRankInfoKey } from '@insight/lib/utils';
 import React from 'react';
 import { RankInfo } from '../api/interface';
 import { queryOneKernel } from '../components/detailViews/Common';
+
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const MAX_PARSE_SIZE = 32;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {

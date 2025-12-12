@@ -42,8 +42,8 @@ import { getDefaultColumData, getPageData, PageType } from '../../components/det
 import { safeJSONParse } from '@insight/lib/utils';
 import { SorterResult } from 'antd/lib/table/interface';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
-import { queryAllSameOperatorsDuration } from '../../api/request';
-import type { OpData } from '../../api/interface';
+import { getUnitFlows, queryAllSameOperatorsDuration } from '../../api/request';
+import { GetUnitFlowsParams, OpData } from '../../api/interface';
 import connector from '../../connection';
 
 const MAX_UNIT_CANVAS_HEIGHT = 50_000; // 画布高度上限
@@ -304,7 +304,7 @@ function isSameUnit(selectedMeta?: SelectedDataType, currentMeta?: ThreadMetaDat
  * @param flow
  * @param referFlow
  */
-function handleLinkLinesMap(session: Session, flow: FlowEvent, referFlow: { rankId: string; dbPath: string }): void {
+export function handleLinkLinesMap(session: Session, flow: FlowEvent, referFlow: { rankId: string; dbPath: string }): void {
     const getKey = (point: FlowPoint): string => {
         const { pid, tid, depth, timestamp } = point;
         return `${pid}_${tid}_${depth}_${timestamp}`;
@@ -437,7 +437,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             const timestampOffset = getTimeOffset(session, metadata as ThreadMetaData);
             linkFlow.startTime = timestampOffset + (linkFlow.startTime as number);
             linkFlow.endTime = timestampOffset + (linkFlow.endTime as number);
-            const raw = await window.request((metadata as ThreadMetaData).dataSource as DataSource, { command: 'unit/flows', params: linkFlow as Record<string, unknown> }) as any;
+            const raw = await getUnitFlows(linkFlow as GetUnitFlowsParams);
             const categoryFlowEvents = raw.unitAllFlows as CategoryFlows[] ?? [];
             const newLines: LinkLines = {};
             session.mapOfLinkLines.clear();

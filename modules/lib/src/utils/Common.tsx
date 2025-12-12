@@ -11,7 +11,7 @@ import {
     disposeAdaptiveEchart,
     getAdaptiveEchart,
     getDefaultChartOptions,
-    getLegendStyle
+    getLegendStyle,
 } from './EchartUtils';
 import { Empty, message } from '../components/index';
 import { type Theme, useTheme } from '@emotion/react';
@@ -787,3 +787,7 @@ export const colorPalette: Array<keyof Theme['colorPalette']> = [
     'amethystPurple',
     'limeGreen',
 ];
+
+// 判断对象不为空
+export const isNotEmpty = (obj: any): boolean =>
+    obj && typeof obj === 'object' && !Array.isArray(obj) && Object.keys(obj).length > 0;

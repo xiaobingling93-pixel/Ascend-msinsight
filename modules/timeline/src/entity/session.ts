@@ -9,7 +9,7 @@ import i18n from '@insight/lib/i18n';
 import { type Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { type TimeStamp } from './common';
-import { Domain, DomainRange } from './domain';
+import { Domain, DomainRange, MAX_ZOOM_DURATION } from './domain';
 import type { InsightUnit, UnitMatcher, LinkLines } from './insight';
 import { type TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { platform } from '../platforms';
@@ -436,9 +436,15 @@ export class Session {
     }
 
     set domainRange(domainRange: DomainRange) {
-        this._domain.domainRange = domainRange;
+        const { domainStart, domainEnd } = domainRange;
+        let range = domainRange;
+
+        if (domainEnd - domainStart > MAX_ZOOM_DURATION) {
+            range = { domainStart, domainEnd: domainStart + MAX_ZOOM_DURATION };
+        }
+        this._domain.domainRange = range;
         if (!this._disableZoomingHistory) {
-            this.debouncedSetZoomingHistory(domainRange);
+            this.debouncedSetZoomingHistory(range);
         }
     }
 

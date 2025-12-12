@@ -12,6 +12,7 @@ import { getSliceTimeDisplay } from './AscendUnit';
 import { getTimeOffset } from './utils';
 import { checkIsValidSlice } from '../../components/charts/ChartInteractor/draw';
 import { checkIsSameUnit } from '../../components/ChartContainer/Units/UnitInfo';
+import { GetUnitFlowsParams } from '../../api/interface';
 
 const isSelfTimeHidden = (session: Session): boolean => {
     return session.isSimulation;
@@ -142,7 +143,7 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
     },
 }) as DetailDescriptor<unknown>;
 
-export const generateFlowParam = function(metadata: ThreadMetaData, data: any, metaType?: string): Record<string, unknown> {
+export const generateFlowParam = function(metadata: ThreadMetaData, data: any, metaType?: string): Partial<GetUnitFlowsParams> {
     return {
         rankId: metadata.cardId ?? '',
         dbPath: metadata.dbPath ?? '',

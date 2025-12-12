@@ -18,7 +18,7 @@ import {
     QueryAllSameOperatorsDurationParams,
     QueryCommunicationKernelDetailParams,
     QueryCommunicationKernelDetailResult,
-    CreateCurveParams, CreateCurveResult,
+    CreateCurveParams, CreateCurveResult, GetUnitFlowsParams, GetUnitFlowsResult,
 } from './interface';
 import connector from '../connection';
 
@@ -91,4 +91,8 @@ export async function queryCommunicationKernelDetail(params: QueryCommunicationK
 
 export async function createCurve(params: CreateCurveParams): Promise<CreateCurveResult> {
     return window.requestData('create/curve', params, 'timeline');
+}
+
+export async function getUnitFlows(params: GetUnitFlowsParams): Promise<GetUnitFlowsResult> {
+    return window.requestData('unit/flows', params, 'timeline');
 }

@@ -7,6 +7,7 @@ import type { TimeStamp } from './common';
 
 export const GOLDEN_RATE = 0.1236;
 export const PAN_RATE = 0.05; // 平移倍率
+export const MAX_ZOOM_DURATION = 3 * 60 * 1e9; // 最大缩放范围 3分钟
 
 export interface DomainRange {
     domainStart: TimeStamp;
@@ -128,13 +129,24 @@ export class Domain {
 
     set zoom({ zoomCount, zoomPoint }: { zoomCount: number; zoomPoint?: TimeStamp }) {
         // deprecate once operation when the domain is up to boundary and this operation is invalid.
-        const notFit = (this.duration === this.maxDuration && zoomCount > 0) || (this.duration === this._LOWER_BOUND && zoomCount < 0);
+        const notFit = (this.duration === this.maxDuration && zoomCount > 0) ||
+            (this.duration === this._LOWER_BOUND && zoomCount < 0) ||
+            (this.duration >= MAX_ZOOM_DURATION && zoomCount > 0); // 新增：限制缩小
+
         if (notFit) {
             return;
         }
+
         const zoomEnd = (this._domainEnd > this._endTimeAll) && zoomCount < 0 ? this._endTimeAll : this._domainEnd;
         const zoomCenterLine = (zoomPoint ?? 0) > zoomEnd ? zoomEnd : zoomPoint;
-        const newDuration = clamp(this.duration * Math.pow(this.ZOOM_RATE, zoomCount), this._LOWER_BOUND, this.maxDuration);
+
+        // 修改 clamp 的上界
+        const newDuration = clamp(
+            this.duration * Math.pow(this.ZOOM_RATE, zoomCount),
+            this._LOWER_BOUND,
+            Math.min(this.maxDuration, MAX_ZOOM_DURATION), // 使用两者中的较小值
+        );
+
         [this._domainStart, this._domainEnd] = zoomCenterify({
             domain: [this._domainStart, zoomEnd],
             newDuration,

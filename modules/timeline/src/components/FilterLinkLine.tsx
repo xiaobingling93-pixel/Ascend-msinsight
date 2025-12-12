@@ -2,17 +2,17 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import styled from '@emotion/styled';
-import _ from 'lodash';
+import _, { debounce } from 'lodash';
 import { Button, Checkbox, Input, Tooltip } from '@insight/lib/components';
 import { observer } from 'mobx-react';
-import React, { type ChangeEvent, useRef, useState } from 'react';
+import React, { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { LinkIcon } from '@insight/lib/icon';
-import type { Session } from '../entity/session';
+import type { SelectedDataType, Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import { useTranslation } from 'react-i18next';
 import { StyledEmpty } from './base/StyledEmpty';
 import { action, runInAction } from 'mobx';
-import type { InsightUnit, LinkLines } from '../entity/insight';
+import type { InsightUnit, LinkLine, LinkLines } from '../entity/insight';
 import { CardUnit, ProcessUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
@@ -20,6 +20,9 @@ import { CardMetaData, type HostMetaData, ProcessMetaData, ThreadMetaData } from
 import i18n from '@insight/lib/i18n';
 import { message, Spin } from 'antd';
 import connector from '../connection/index';
+import { getUnitFlows } from '../api/request';
+import { FlowItem } from '../api/interface';
+import { isNotEmpty } from '@insight/lib';
 
 const FilterContainer = styled.div`
     display: flex;
@@ -347,6 +350,60 @@ const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: M
     };
 };
 
+/**
+ * 查询单条连线
+ */
+const getSingleFlow = async (session: Session): Promise<void> => {
+    if (session.drawLineMode === 'single' && isNotEmpty(session.singleLinkLine) && isNotEmpty(session.selectedData)) {
+        const {
+            startTime,
+            duration,
+            threadId,
+            cardId,
+            dbPath,
+            id,
+            processId,
+            timestamp,
+            metaType,
+        } = session.selectedData as SelectedDataType;
+
+        if (cardId === undefined || id === undefined) {
+            return;
+        }
+        const raw = await getUnitFlows({
+            dbPath,
+            rankId: cardId,
+            tid: threadId,
+            pid: processId,
+            startTime,
+            endTime: (timestamp ?? startTime) + duration,
+            id,
+            metaType,
+            isSimulation: session.isSimulation,
+        });
+        const categoryFlowEvents = raw.unitAllFlows as FlowItem[] ?? [];
+        const newLines: LinkLines = {};
+        for (const categoryFlowEvent of categoryFlowEvents) {
+            const cat = categoryFlowEvent.cat;
+            const singleCatLinkLine: LinkLine = [];
+            for (const flow of categoryFlowEvent.flows) {
+                const singleLine: Record<string, unknown> = {
+                    category: flow.cat,
+                    cardId,
+                    from: flow.from,
+                    to: flow.to,
+                };
+                singleCatLinkLine.push(singleLine);
+            }
+            newLines[cat] = singleCatLinkLine;
+        }
+        runInAction(() => {
+            session.singleLinkLine = newLines;
+            session.renderTrigger = !session.renderTrigger;
+        });
+    }
+};
+
 const LinkLineFilterBody = observer(({ session, isSuspend, checkedCategories, setCheckedCategories }:
 { session: Session; isSuspend: boolean; checkedCategories: string[]; setCheckedCategories: React.Dispatch<React.SetStateAction<string[]>> }): JSX.Element => {
     let { categories: displayCategories, loading } = useGetCategories(session, isSuspend);
@@ -430,6 +487,17 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });
     };
     const ref = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        const fn = debounce(getSingleFlow, 300);
+        fn(session);
+
+        return () => fn.cancel();
+    }, [
+        session.domainRange.domainStart,
+        session.domainRange.domainEnd,
+        session?.unitsConfig.offsetConfig.timestampOffset,
+    ]);
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
             title={<LinkLineFilterBody

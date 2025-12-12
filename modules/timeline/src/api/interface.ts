@@ -229,3 +229,44 @@ export interface QueryCommunicationKernelDetailResult {
 export interface CreateCurveResult {
     curveName: string;
 }
+
+export interface GetUnitFlowsParams {
+    dbPath?: string;
+    rankId: string;
+    tid: string;
+    pid: string;
+    startTime: number;
+    endTime: number;
+    id: string;
+    metaType?: string;
+    isSimulation: boolean;
+}
+
+interface FlowItemInfoPoint {
+    depth: number;
+    duration: number;
+    id: string;
+    metaType: string;
+    name: string;
+    pid: string;
+    rankId: string;
+    tid: string;
+    timestamp: number;
+}
+
+interface FlowItemInfo {
+    cat: string;
+    id: string;
+    title: string;
+    from: FlowItemInfoPoint;
+    to: FlowItemInfoPoint;
+}
+
+export interface FlowItem {
+    cat: string;
+    flows: FlowItemInfo[];
+}
+
+export interface GetUnitFlowsResult {
+    unitAllFlows: FlowItem[];
+}
