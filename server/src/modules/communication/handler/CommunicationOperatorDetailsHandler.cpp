@@ -25,7 +25,8 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     OperatorDetailsResponse &response = *responsePtr;
@@ -39,6 +40,7 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(type);
     if (database == nullptr || !database->QueryOperatorsCount(request.params, response.body) ||
         !database->QueryAllOperators(request.params, response.body)) {
+        SetCommunicationError(ErrorCode::QUERY_COMMUNICATION_OPERATOR_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication operator data.");
         session.OnResponse(std::move(responsePtr));

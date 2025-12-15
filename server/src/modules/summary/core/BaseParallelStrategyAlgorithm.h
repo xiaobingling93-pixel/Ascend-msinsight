@@ -12,6 +12,7 @@
 #include "SummaryProtocolRequest.h"
 #include "ParallelStrategyAlgorithmDef.h"
 #include "TopNAdviceMaintainer.h"
+#include "SummaryErrorManager.h"
 
 namespace Dic::Module::Summary {
 

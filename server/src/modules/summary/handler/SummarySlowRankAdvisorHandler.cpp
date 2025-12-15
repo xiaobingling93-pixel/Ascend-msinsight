@@ -17,18 +17,19 @@ bool SummarySlowRankAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     // check request parameter
     std::string err;
     if (!request.params.CheckParams(err)) {
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
         SendResponse(std::move(responsePtr), false, err);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Failed to get connection for summary slow rank advisor.");
+        SetSummaryError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath());
     if (algPtr == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Failed to get algorithm by project name for summary slow rank "
-                                                    "advisor.");
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     BaseParallelStrategyAlgorithm &algorithm = *algPtr;

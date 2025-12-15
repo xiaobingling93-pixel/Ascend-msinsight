@@ -27,11 +27,13 @@ bool DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryDistributionData(request.params, response.body)) {
+        SetCommunicationError(ErrorCode::QUERY_COMMUNICATION_DISTRIBUTION_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication distribution data.");
         session.OnResponse(std::move(responsePtr));

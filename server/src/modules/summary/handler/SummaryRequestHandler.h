@@ -7,6 +7,7 @@
 
 #include "ModuleRequestHandler.h"
 #include "ProtocolDefs.h"
+#include "SummaryErrorManager.h"
 
 namespace Dic {
 namespace Module {

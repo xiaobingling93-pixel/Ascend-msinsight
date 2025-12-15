@@ -89,6 +89,7 @@ namespace Dic::Module::Operator {
         std::string errorMsg;
         if (!request.params.CommonCheck(errorMsg)) {
             ServerLog::Error(errorMsg);
+            SetOperatorError(ErrorCode::PARAMS_ERROR);
             SetBaseResponse(request, response);
             SetResponseResult(response, false);
             SendResponse(std::move(responsePtr), false);
@@ -121,6 +122,7 @@ namespace Dic::Module::Operator {
         std::vector<Protocol::OperatorDetailInfoRes> cmpRes;
         if (!database || !database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query current detail info by rankId.");
+            SetOperatorError(ErrorCode::QUERY_ALL_DETAIL_FAILED);
             return false;
         }
         std::set<std::string> cmpPmuHeader = database->GetPmuColumns();
@@ -128,6 +130,7 @@ namespace Dic::Module::Operator {
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             ServerLog::Error("[Operator]Failed to get baseline id.");
+            SetOperatorError(ErrorCode::GET_BASELINE_ID_FAILED);
             return false;
         }
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
@@ -136,6 +139,7 @@ namespace Dic::Module::Operator {
         if (!databaseBaseline ||
             !databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query baseline detail Info by baselineId.");
+            SetOperatorError(ErrorCode::QUERY_ALL_DETAIL_FAILED);
             return false;
         }
         std::set<std::string> basePmuHeader = databaseBaseline->GetPmuColumns();
@@ -165,11 +169,13 @@ namespace Dic::Module::Operator {
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
+            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             return false;
         }
         request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorDetailInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query detail Info by rankId");
+            SetOperatorError(ErrorCode::QUERY_DETAIL_FAILED);
             return false;
         }
         return true;

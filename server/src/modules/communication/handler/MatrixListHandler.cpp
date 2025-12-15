@@ -28,7 +28,8 @@ bool MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     // query data

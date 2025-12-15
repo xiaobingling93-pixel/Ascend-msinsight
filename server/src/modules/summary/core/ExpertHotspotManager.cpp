@@ -13,6 +13,7 @@
 #include "CollectionUtil.h"
 #include "ModelGenConfigParser.h"
 #include "ExpertHotspotManager.h"
+#include "SummaryErrorManager.h"
 
 namespace Dic {
 namespace Module {
@@ -25,6 +26,7 @@ std::map<std::string, ModelInfo> ExpertHotspotManager::ParseHotspotData(const st
     // 清空老数据
     if (!database->DeleteExpertHotspot("", version)) {
         errorMsg = "Failed to clear old expert hotspot data, version:" + version;
+        SetSummaryError(ErrorCode::CLEAR_EXPERT_HOTSPOT_FAILED);
         return {};
     }
     ExpertHotspotParser parser(database, config);
@@ -45,6 +47,7 @@ std::map<std::string, ModelInfo> ExpertHotspotManager::ParseDeploymentData(
     // 清空老数据
     if (!database->DeleteDeployment("", version)) {
         errorMsg = "Failed to clear old expert deployment data, version:" + version;
+        SetSummaryError(ErrorCode::CLEAR_DEPLOYMENT_FAILED);
         return {};
     }
     // 文件解析
@@ -104,12 +107,14 @@ bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, co
     // 参数校验，ConvertToRealPath方法中会调用CheckDirValid方法对文件进行校验
     std::string realFilePath = filePath;
     if (!FileUtil::ConvertToRealPath(errorMsg, realFilePath)) {
+        SetSummaryError(ErrorCode::GET_REAL_PATH_FAILED);
         return false;
     }
     // 获取db
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (database == nullptr) {
         errorMsg = "Cluster database is not exist.";
+        SetSummaryError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
 
@@ -121,6 +126,7 @@ bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, co
     bool isParseDeployment = !deploymentFiles.empty();
     if (!isParseHotspot && !isParseDeployment) {
         errorMsg = "No parsable files found";
+        SetSummaryError(ErrorCode::GET_PARSED_FILES_FAILED);
         return false;
     }
 
@@ -138,7 +144,12 @@ bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, co
         return false;
     }
     // 配置信息保存
-    return MergeAndSaveModelInfo(hotspotModelInfo, deploymentModelInfo, database);
+    bool res = MergeAndSaveModelInfo(hotspotModelInfo, deploymentModelInfo, database);
+    if (!res) {
+        SetSummaryError(ErrorCode::GET_PARSED_FILES_FAILED);
+        return false;
+    }
+    return true;
 }
 
 bool ExpertHotspotManager::SaveModelInfo(const ModelInfo &modelInfo, std::shared_ptr<VirtualClusterDatabase> &db)
@@ -168,6 +179,7 @@ bool ExpertHotspotManager::UpdateModelInfo(const std::string &clusterPath, Model
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (database == nullptr) {
         errorMsg = "Fail to update model info, database not exist.";
+        SetSummaryError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     ModelInfo curModelInfo = GetModelInfo(database);
@@ -175,12 +187,14 @@ bool ExpertHotspotManager::UpdateModelInfo(const std::string &clusterPath, Model
     if (curModelInfo.rankNumber != 0 && curModelInfo.expertNumber != 0 &&
         curModelInfo.expertNumber != newModelInfo.expertNumber) {
         errorMsg = "Fail to update model info, the number of expert number can't be modify.";
+        SetSummaryError(ErrorCode::UPDATE_MODEL_INFO_MODIFY_FAILED);
         return false;
     }
     uint64_t totalLayer = NumberSafe::Add(curModelInfo.moeLayer, newModelInfo.denseLayerList.size());
     if (newModelInfo.modelLayer < 0 || static_cast<uint64_t>(newModelInfo.modelLayer) < totalLayer) {
         errorMsg = "Fail to update model info, "
                    "the sum of moe and dense layers is less than the total number of layers in the model.";
+        SetSummaryError(ErrorCode::UPDATE_MODEL_INFO_NOT_EQUAL_FAILED);
         return false;
     }
     curModelInfo.modelLayer = newModelInfo.modelLayer;

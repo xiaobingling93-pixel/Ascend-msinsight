@@ -425,6 +425,7 @@ bool ClusterService::AnalyzeCommunicationSlowRanks(const Protocol::DurationListP
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(params.clusterPath);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for analyze communication slow rank list.");
+        SetCommunicationError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     if (!CheckOpNameList(params, database)) {
@@ -443,6 +444,7 @@ bool ClusterService::AnalyzeCommunicationSlowRanks(const Protocol::DurationListP
     // 异常算子定位
     for (auto &slowRank : body.slowRankList) {
         if (!database->QuerySlowOpByCommDuration(params, fastestRank.rankId, slowRank)) {
+            SetCommunicationError(ErrorCode::QUERY_SLOW_OPERATOR_FAILED);
             return false;
         }
     }

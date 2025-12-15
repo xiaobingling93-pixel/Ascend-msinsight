@@ -8,6 +8,7 @@
 #include "ModuleRequestHandler.h"
 #include "ProtocolDefs.h"
 #include "NumberUtil.h"
+#include "MemoryErrorManager.h"
 
 namespace Dic {
 namespace Module {

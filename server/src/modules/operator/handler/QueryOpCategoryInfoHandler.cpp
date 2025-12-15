@@ -29,6 +29,7 @@ namespace Dic::Module::Operator {
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             ServerLog::Error("[Operator]Failed to query Category Info by empty deviceId.");
+            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
@@ -36,6 +37,7 @@ namespace Dic::Module::Operator {
         request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
             ServerLog::Error("[Operator]Failed to query Category Info by rankId.");
+            SetOperatorError(ErrorCode::QUERY_DURATION_FAILED);
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
@@ -50,6 +52,7 @@ namespace Dic::Module::Operator {
         std::string errMsg;
         if (!params.CommonCheck(errMsg)) {
             ServerLog::Warn(errMsg);
+            SetOperatorError(ErrorCode::PARAMS_ERROR);
             return false;
         }
         return true;

@@ -15,7 +15,7 @@ namespace Dic::Module::Operator {
     public:
         ExportOpDetailsHandler()
         {
-            command = Protocol::REQ_RES_OPERATOR_MORE_INFO;
+            command = Protocol::REQ_RES_OPERATOR_EXPORT_DETAILS;
         }
 
         ~ExportOpDetailsHandler() override = default;

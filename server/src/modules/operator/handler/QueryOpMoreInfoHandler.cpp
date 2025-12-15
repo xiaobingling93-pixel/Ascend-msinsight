@@ -23,6 +23,7 @@ namespace Dic::Module::Operator {
         std::string errMsg;
         if (!request.params.CommonCheck(errMsg)) {
             ServerLog::Error("[Operator]Failed to check request parameter in query op more info.%", errMsg);
+            SetOperatorError(ErrorCode::PARAMS_ERROR);
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
@@ -32,6 +33,7 @@ namespace Dic::Module::Operator {
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             ServerLog::Error("[Operator]Failed to query More Info by empty deviceId.%");
+            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
@@ -39,6 +41,7 @@ namespace Dic::Module::Operator {
         request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorMoreInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query More Info by rankId.");
+            SetOperatorError(ErrorCode::QUERY_MORE_INFO_FAILED);
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;

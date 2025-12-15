@@ -98,13 +98,15 @@ namespace Dic::Module::Operator {
         std::unique_ptr<OperatorStatisticInfoResponse> responsePtr = std::make_unique<OperatorStatisticInfoResponse>();
         OperatorStatisticInfoResponse &response = *responsePtr;
 
-        bool rst = true;
+        bool rst = false;
         std::string errorMsg;
         if ((request.params.topK != 0) && request.params.CommonCheck(errorMsg) &&
             request.params.StatisticGroupCheck(errorMsg)) {
             rst = request.params.isCompare ?
                 HandleCompareDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr)) :
                 HandleStatisticcDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr));
+        } else {
+            SetOperatorError(ErrorCode::PARAMS_ERROR);
         }
         SetBaseResponse(request, response);
         SendResponse(std::move(responsePtr), rst);
@@ -118,17 +120,20 @@ namespace Dic::Module::Operator {
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
+            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             return false;
         }
         request.params.deviceId = deviceId;
         std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
         if (!database || !database->QueryAllOperatorStatisticInfo(request.params, compareRes)) {
             ServerLog::Error("[Operator]Failed to query current Statistic Info by rankId.");
+            SetOperatorError(ErrorCode::QUERY_ALL_STATISTIC_FAILED);
             return false;
         }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             ServerLog::Error("[Operator]Failed to get baseline id.");
+            SetOperatorError(ErrorCode::GET_BASELINE_ID_FAILED);
             return false;
         }
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
@@ -136,6 +141,7 @@ namespace Dic::Module::Operator {
         request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId);
         if (!databaseBaseline || !databaseBaseline->QueryAllOperatorStatisticInfo(request.params, baselineRes)) {
             ServerLog::Error("[Operator]Failed to query baseline Statistic Info by baselineId.");
+            SetOperatorError(ErrorCode::QUERY_ALL_STATISTIC_FAILED);
             return false;
         }
         std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
@@ -158,11 +164,13 @@ namespace Dic::Module::Operator {
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
+            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             return false;
         }
         request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorStatisticInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query Statistic Info by rankId.");
+            SetOperatorError(ErrorCode::QUERY_STATISTIC_FAILED);
             return false;
         }
         GetObjFunc func = [](const StatisticCmpRes & stat) {

@@ -31,6 +31,7 @@ bool MindIELLMParallelStrategyAlgorithm::UpdateParallelDimension(const std::stri
         paraOrderWithEp = {TP_PARA, DP_PARA, PP_PARA, MOE_TP_PARA, EP_PARA};
     } else {
         err = "Failed to update parallel view. Unexpected algorithm for the MindIE-LLM.";
+        SetSummaryError(ErrorCode::UPDATE_PARALLEL_VIEW_FAILED);
         return false;
     }
     bool res = UpdateShowMap(err);
@@ -177,6 +178,7 @@ bool MindIELLMParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &
 {
     if (wordSize == 1) {
         err = "Failed to get connections for the MindIE-LLM. Parallel strategy configs have not been updated yet.";
+        SetSummaryError(ErrorCode::GET_ALGORITHM_CONNECTIONS_FAILED);
         return false;
     }
     // 计算并行通信域, 先处理tp/dp/pp

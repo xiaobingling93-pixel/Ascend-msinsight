@@ -24,25 +24,29 @@ bool SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseInCluster(request.params.clusterPath, request.params.rankId);
         if (database == nullptr) {
-            SendResponse(std::move(responsePtr), false, "Failed to get connection for get summary statistics.");
+            SetSummaryError(ErrorCode::PARAMS_ERROR);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
     }
     if (!request.params.timeFlag.empty() && request.params.timeFlag.find("compute") != std::string::npos) {
         if (!database->QueryComputeStatisticsData(request.params, response.body)) {
-            SendResponse(std::move(responsePtr), false, "Query compute statistics data is failed.");
+            SetSummaryError(ErrorCode::QUERY_COMPUTE_STATISTICS_FAILED);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
     } else {
         if (!database->QueryCommunicationStatisticsData(request.params, response.body)) {
-            SendResponse(std::move(responsePtr), false, "Query communication statistics data is failed.");
+            SetSummaryError(ErrorCode::QUERY_COMMUNICATION_STATISTICS_FAILED);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
     }

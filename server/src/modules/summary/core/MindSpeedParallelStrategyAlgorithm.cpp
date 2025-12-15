@@ -99,6 +99,7 @@ bool MindSpeedParallelStrategyAlgorithm::UpdateParallelDimension(const std::stri
         paraOrder = {TP_PARA, CP_PARA, DP_PARA, PP_PARA};
     } else {
         err = "Failed to update parallel view. Unexpected algorithm for MindSpeed.";
+        SetSummaryError(ErrorCode::UPDATE_PARALLEL_VIEW_FAILED);
         return false;
     }
     paraOrderWithEp = paraOrder;
@@ -311,6 +312,7 @@ bool MindSpeedParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &
 {
     if (wordSize == 1) {
         err = "Failed to get connections for MindSpeed. Parallel strategy configs have not been updated yet.";
+        SetSummaryError(ErrorCode::GET_ALGORITHM_CONNECTIONS_FAILED);
         return false;
     }
     // 先把ep置为1，生成与ep无关通信域

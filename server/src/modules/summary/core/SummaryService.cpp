@@ -7,6 +7,7 @@
 #include "DataBaseManager.h"
 #include "CollectionUtil.h"
 #include "BaselineManager.h"
+#include "SummaryErrorManager.h"
 
 using namespace Dic::Module::Summary;
 using namespace Dic::Module::Global;
@@ -184,6 +185,7 @@ bool SummaryService::QueryParallelismPerformanceInfo(const ParallelismPerformanc
 
     if (compareIndicatorData.empty() && baselineIndicatorData.empty()) {
         ServerLog::Error("Fail to query parallelism performance info.");
+        SetSummaryError(ErrorCode::QUERY_PARALLELISM_PERFORMANCE_FAILED);
         return false;
     }
     MergeParallelismPerformance(compareIndicatorData, baselineIndicatorData, indicatorData);

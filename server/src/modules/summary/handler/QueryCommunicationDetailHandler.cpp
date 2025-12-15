@@ -19,13 +19,15 @@ bool QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Re
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDataBaseByFileId(request.fileId);
     if (!database || !database->QueryCommunicationOpDetail(request.params, response.commDetails) or
         !database->QueryTotalNumByAcceleratorCore(request.params.timeFlag, response.totalNum)) {
         ServerLog::Warn("Failed to query communication detail or get total num.");
+        SetSummaryError(ErrorCode::QUERY_COMMUNICATION_DETAIL_FAILED);
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;

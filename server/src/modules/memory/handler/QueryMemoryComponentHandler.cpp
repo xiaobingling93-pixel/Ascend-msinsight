@@ -21,18 +21,21 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetMemoryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
     if (!database) {
-        SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
+        SetMemoryError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory component data.");
+        SetMemoryError(ErrorCode::GET_DEVICE_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     request.params.deviceId = deviceId;
@@ -40,7 +43,8 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
         std::vector<MemoryComponent> componentDetails;
         if (!database->QueryComponentDetail(request.params, response.columnAttr, componentDetails) ||
         !database->QueryComponentsTotalNum(request.params, response.totalNum)) {
-            SendResponse(std::move(responsePtr), false, "Failed to query memory component data.");
+            SetMemoryError(ErrorCode::QUERY_MEMORY_COMPONENT_FAILED);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
         for (const auto &item : componentDetails) {
@@ -51,7 +55,7 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
         std::vector<MemoryComponent> compareData;
         std::vector<MemoryComponent> baselineData;
         if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
-            SendResponse(std::move(responsePtr), false, errorMsg);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
         ExecuteComparisonAlgorithm(compareData, baselineData, request, response);
@@ -69,22 +73,26 @@ bool QueryMemoryComponentHandler::GetRespectiveData(std::shared_ptr<VirtualMemor
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
         errorMsg = "Failed to get baseline id.";
+        SetMemoryError(ErrorCode::GET_BASELINE_ID_FAILED);
         return false;
     }
     auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(baselineId);
     if (!databaseBaseline) {
         errorMsg = "Failed to connect to database of baseline.";
+        SetMemoryError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(request.params.rankId);
     if (!database->QueryEntireComponentTable(request.params, compareData, offsetTimeCompare)) {
         errorMsg = "Failed to query memory component compare data.";
+        SetMemoryError(ErrorCode::QUERY_MEMORY_COMPONENT_COMPARE_FAILED);
         return false;
     }
     request.params.deviceId = FullDb::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId);
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(baselineId);
     if (!databaseBaseline->QueryEntireComponentTable(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory component baseline data.";
+        SetMemoryError(ErrorCode::QUERY_MEMORY_COMPONENT_BASELINE_FAILED);
         return false;
     }
     return true;

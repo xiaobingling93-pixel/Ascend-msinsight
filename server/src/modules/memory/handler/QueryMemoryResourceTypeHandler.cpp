@@ -17,12 +17,14 @@ namespace Memory {
         SetBaseResponse(request, response);
         std::string errorMsg;
         if (!CheckStrParamValid(request.rankId, errorMsg)) {
-            SendResponse(std::move(responsePtr), false, errorMsg);
+            SetMemoryError(ErrorCode::PARAMS_ERROR);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
         auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.rankId);
         if (!database || !database->QueryMemoryResourceType(response.type)) {
-            SendResponse(std::move(responsePtr), false, "Failed to query memory resource type data.");
+            SetMemoryError(ErrorCode::QUERY_MEMORY_RESOURCE_TYPE_FAILED);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
         // add response to response queue in session

@@ -20,7 +20,8 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
     std::unique_ptr<QueryParallelStrategyResponse> responsePtr = std::make_unique<QueryParallelStrategyResponse>();
     std::string errMsg;
     if (!request.params.CheckParams(errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     QueryParallelStrategyResponse &response = *responsePtr;
@@ -29,6 +30,7 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
     WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryParallelStrategyConfig(response.config, response.level)) {
+        SetSummaryError(ErrorCode::QUERY_PARALLEL_STATISTICS_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query parallel strategy config.");
         session.OnResponse(std::move(responsePtr));
@@ -39,7 +41,7 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
     }
     if (!ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(
         database->GetDbPath(), response.config, errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     // 如果存在baseline，则对baseline进行同样的设置
@@ -47,7 +49,7 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
         BaselineManager::Instance().GetBaseLineClusterPath());
     if (baselineDatabase != nullptr && !ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(
         baselineDatabase->GetDbPath(), response.config, errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     session.OnResponse(std::move(responsePtr));

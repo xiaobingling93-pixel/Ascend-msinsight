@@ -25,7 +25,8 @@ bool GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     ClusterService::QueryGroupInfo(request, response);

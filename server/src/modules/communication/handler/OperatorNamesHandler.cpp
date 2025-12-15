@@ -24,11 +24,13 @@ bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryOperatorNames(request.params, response.body)) {
+        SetCommunicationError(ErrorCode::QUERY_OPERATOR_NAMES_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get operator names response data.");
         session.OnResponse(std::move(responsePtr));

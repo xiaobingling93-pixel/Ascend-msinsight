@@ -9,6 +9,7 @@
 #include "MindIELLMParallelStrategyAlgorithm.h"
 #include "VLLMParallelStrategyAlgorithm.h"
 #include "ParallelStrategyAlgorithmManager.h"
+#include "SummaryErrorManager.h"
 using namespace Dic::Server;
 namespace Dic::Module::Summary {
 ParallelStrategyAlgorithmManager &ParallelStrategyAlgorithmManager::Instance()
@@ -81,6 +82,7 @@ bool ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& p
     auto algorithm = CreateAlgorithm(config.algorithm);
     if (!algorithm) {
         errMsg = "Failed to add algorithm to manager. Unexpected algorithm.";
+        SetSummaryError(ErrorCode::ADD_ALGORITHM_FAILED);
         return false;
     }
     algorithmMap.emplace(projectName, algorithm);
@@ -117,6 +119,7 @@ std::shared_ptr<BaseParallelStrategyAlgorithm> ParallelStrategyAlgorithmManager:
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (algorithmMap.count(projectName) == 0) {
+        SetSummaryError(ErrorCode::GET_ALGORITHM_FAILED);
         return nullptr;
     }
     ServerLog::Info("Success to get algorithm by project name.");

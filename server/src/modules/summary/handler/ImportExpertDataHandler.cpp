@@ -17,13 +17,14 @@ bool ImportExpertDataHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
     if (!ExpertHotspotManager::InitExpertHotspotData(request.params.filePath, request.params.version, errorMsg,
                                                      request.params.clusterPath)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     SendResponse(std::move(responsePtr), true);

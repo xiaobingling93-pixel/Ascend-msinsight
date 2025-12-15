@@ -31,6 +31,7 @@ bool VLLMParallelStrategyAlgorithm::UpdateParallelDimension(const std::string& t
         paraOrderWithEp = {TP_PARA, PP_PARA, DP_PARA, EP_PARA};
     } else {
         err = "Failed to update parallel view. Unexpected algorithm for the vLLM.";
+        SetSummaryError(ErrorCode::UPDATE_PARALLEL_VIEW_FAILED);
         return false;
     }
     bool res = UpdateShowMap(err);
@@ -111,6 +112,7 @@ bool VLLMParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &err)
 {
     if (wordSize == 1) {
         err = "Failed to get connections for vLLM. Parallel strategy configs have not been updated yet.";
+        SetSummaryError(ErrorCode::GET_ALGORITHM_CONNECTIONS_FAILED);
         return false;
     }
     // 计算并行通信域时无需考虑ep

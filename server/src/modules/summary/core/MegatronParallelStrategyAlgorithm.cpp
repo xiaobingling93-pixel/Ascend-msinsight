@@ -66,6 +66,7 @@ bool MegatronParallelStrategyAlgorithm::UpdateParallelDimension(const std::strin
         paraOrder = {TP_PARA, CP_PARA, PP_PARA, DP_PARA};
     } else {
         err = "Failed to update parallel view. Unexpected algorithm for Megatron-LM.";
+        SetSummaryError(ErrorCode::UPDATE_PARALLEL_VIEW_FAILED);
         return false;
     }
     paraOrderWithEp = paraOrder;
@@ -211,6 +212,7 @@ bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &e
 {
     if (wordSize == 1) {
         err = "Failed to get connections for Megatron. Parallel strategy configs have not been updated yet.";
+        SetSummaryError(ErrorCode::GET_ALGORITHM_CONNECTIONS_FAILED);
         return false;
     }
     // 计算并行通信域时无需考虑ep

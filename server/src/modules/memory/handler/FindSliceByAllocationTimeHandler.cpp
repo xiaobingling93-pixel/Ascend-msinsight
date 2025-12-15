@@ -10,45 +10,54 @@ using namespace Dic::Server;
 
 bool FindSliceByAllocationTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    MemoryFindSliceRequest &request = dynamic_cast<MemoryFindSliceRequest &>(*requestPtr.get());
+    MemoryFindSliceRequest& request = dynamic_cast<MemoryFindSliceRequest&>(*requestPtr.get());
     std::unique_ptr<MemoryFindSliceResponse> responsePtr = std::make_unique<MemoryFindSliceResponse>();
-    MemoryFindSliceResponse &response = *responsePtr.get();
+    MemoryFindSliceResponse& response = *responsePtr.get();
     SetBaseResponse(request, response);
     std::string paramCheckErrMsg;
     if (!request.params.CommonCheck(paramCheckErrMsg)) {
-        SendResponse(std::move(responsePtr), false, paramCheckErrMsg);
+        SetMemoryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         ServerLog::Warn("Invalid paramn. ", paramCheckErrMsg);
         return false;
     }
     if (renderEngine == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Failed to find slice. timeline not exist!");
+        SetMemoryError(ErrorCode::QUERY_SLICE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         ServerLog::Warn("Failed to find slice. timeline not exist!");
         return false;
     }
     OperatorDomain target = operatorMemoryService->ComputeAllocationTimeById(request.params.rankId, request.params.id);
     if (std::empty(target.metaType)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory operator");
+        SetMemoryError(ErrorCode::QUERY_MEMORY_OPERATOR_FAILED);
+        SendResponse(std::move(responsePtr), false);
         ServerLog::Warn("Failed to query memory operator!");
         return false;
     }
     Timeline::CompeteSliceDomain slice = renderEngine->FindSliceByTimePoint(request.params.rankId, request.params.name,
                                                                             target.allocationTime, target.metaType);
     if (std::empty(slice.tid) && std::empty(slice.pid)) {
-        SendResponse(std::move(responsePtr), false, "Failed to find slice in timeline!");
+        SetMemoryError(ErrorCode::QUERY_SLICE_IN_TIMELINE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     // multi device text data, need replace cardId with min deviceId
     auto projects = ProjectExplorerManager::Instance().QueryProjectExplorer(request.projectName, {});
     if (!projects.empty() && projects[0].projectType != static_cast<int>(ProjectTypeEnum::DB)) {
         auto deviceInfos = projects[0].GetDeviceInfos();
-        std::sort(deviceInfos.begin(), deviceInfos.end(), [](auto &l, auto &r) {
-            return l->deviceId < r->deviceId;
-        });
+        std::sort(deviceInfos.begin(), deviceInfos.end(), [](auto& l, auto& r) { return l->deviceId < r->deviceId; });
         if (!deviceInfos.empty()) {
             slice.cardId = deviceInfos[0]->rankId;
         }
     }
+    populateResponseData(response, target, slice);
+    SendResponse(std::move(responsePtr), true);
+    return true;
+}
 
+void FindSliceByAllocationTimeHandler::populateResponseData(MemoryFindSliceResponse& response, OperatorDomain& target,
+                                                            Timeline::CompeteSliceDomain& slice)
+{
     response.data.metaType = target.metaType;
     response.data.depth = slice.depth;
     response.data.processId = slice.pid;
@@ -57,7 +66,5 @@ bool FindSliceByAllocationTimeHandler::HandleRequest(std::unique_ptr<Protocol::R
     response.data.startTime = slice.timestamp - Timeline::TraceTime::Instance().GetStartTime();
     response.data.id = std::to_string(slice.id);
     response.data.duration = slice.duration;
-    SendResponse(std::move(responsePtr), true);
-    return true;
 }
-}
+}  // namespace Dic::Module::Memory

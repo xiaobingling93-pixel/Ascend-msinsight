@@ -17,7 +17,8 @@ bool QueryParallelismPerformanceHandler::HandleRequest(std::unique_ptr<Protocol:
     // check request parameter
     std::string err;
     if (!request.params.CheckParams(err)) {
-        SendResponse(std::move(responsePtr), false, err);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     bool res = SummaryService::QueryParallelismPerformanceInfo(request.params, response.indicatorData);

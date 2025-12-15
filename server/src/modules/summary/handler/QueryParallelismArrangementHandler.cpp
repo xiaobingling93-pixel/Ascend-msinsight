@@ -18,16 +18,18 @@ bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol:
     // check request parameter
     std::string err;
     if (!request.params.CheckParams(err)) {
-        SendResponse(std::move(responsePtr), false, err);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Failed to get connection for query parallelism arrangement.");
+        SetSummaryError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!QueryArrangementByDimension(database->GetDbPath(), err, request, response)) {
-        SendResponse(std::move(responsePtr), false, err);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     for (const auto &item: FullDb::TrackInfoManager::Instance().GetRankIdToFileIdByClusterDb(
@@ -46,7 +48,6 @@ bool QueryParallelismArrangementHandler::QueryArrangementByDimension(const std::
     }
     auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(projectName);
     if (algPtr == nullptr) {
-        err = "Failed to get algorithm by project name for query parallelism arrangement.";
         return false;
     }
     BaseParallelStrategyAlgorithm &algorithm = *algPtr;

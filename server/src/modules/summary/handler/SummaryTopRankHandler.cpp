@@ -22,7 +22,8 @@ bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     SummaryTopRankResponse &response = *responsePtr;
     std::string errMsg;
     if (!request.params.CheckParams(errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return true;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession();

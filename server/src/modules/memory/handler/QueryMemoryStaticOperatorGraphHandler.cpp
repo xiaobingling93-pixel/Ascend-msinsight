@@ -22,25 +22,28 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetMemoryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
     if (!database) {
-        SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
+        SetMemoryError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
     if (!request.params.isCompare) {
         if (!database->QueryStaticOperatorGraph(request.params, response.data)) {
-            SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph data.");
+            SetMemoryError(ErrorCode::QUERY_MEMORY_STATIC_OPERATOR_GRAPH_FAILED);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
     } else {
         StaticOperatorGraphItem compareData;
         StaticOperatorGraphItem baselineData;
         if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
-            SendResponse(std::move(responsePtr), false, errorMsg);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
         ExecuteComparisonAlgorithm(compareData, baselineData, response);
@@ -58,19 +61,23 @@ bool QueryMemoryStaticOperatorGraphHandler::GetRespectiveData(std::shared_ptr<Vi
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
         errorMsg = "Failed to get baseline id.";
+        SetMemoryError(ErrorCode::GET_BASELINE_ID_FAILED);
         return false;
     }
     auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(baselineId);
     if (!databaseBaseline) {
         errorMsg = "Failed to connect to database of baseline.";
+        SetMemoryError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     if (!database->QueryStaticOperatorGraph(request.params, compareData)) {
         errorMsg = "Failed to query memory static operator graph compare data.";
+        SetMemoryError(ErrorCode::QUERY_MEMORY_STATIC_OPERATOR_GRAPH_COMPARE_FAILED);
         return false;
     }
     if (!databaseBaseline->QueryStaticOperatorGraph(request.params, baselineData)) {
         errorMsg = "Failed to query memory static operator graph baseline data.";
+        SetMemoryError(ErrorCode::QUERY_MEMORY_STATIC_OPERATOR_GRAPH_BASELINE_FAILED);
         return false;
     }
     return true;

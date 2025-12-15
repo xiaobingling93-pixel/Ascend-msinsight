@@ -15,7 +15,8 @@ namespace Dic::Module::Summary {
         SetBaseResponse(request, response);
         std::string errorMsg;
         if (!request.params.CheckParams(errorMsg)) {
-            SendResponse(std::move(responsePtr), false, errorMsg);
+            SetSummaryError(ErrorCode::PARAMS_ERROR);
+            SendResponse(std::move(responsePtr), false);
             return true;
         }
         // 查询模型信息

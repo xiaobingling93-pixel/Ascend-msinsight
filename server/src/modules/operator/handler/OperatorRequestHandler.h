@@ -7,6 +7,7 @@
 
 #include "ModuleRequestHandler.h"
 #include "ProtocolDefs.h"
+#include "OperatorErrorManager.h"
 
 namespace Dic::Module::Operator {
     class OperatorRequestHandler : public ModuleRequestHandler {

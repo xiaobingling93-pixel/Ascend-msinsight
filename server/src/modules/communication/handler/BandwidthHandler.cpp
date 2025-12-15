@@ -23,7 +23,8 @@ bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     BandwidthDataResponse &response = *responsePtr;
@@ -32,6 +33,7 @@ bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryBandwidthData(request.params, response.body)) {
+        SetCommunicationError(ErrorCode::QUERY_COMMUNICATION_BANDWIDTH_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication bandwidth data.");
         session.OnResponse(std::move(responsePtr));

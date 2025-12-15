@@ -19,6 +19,8 @@ public:
     };
     ~QueryMemoryOperatorHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    static bool GetRespectiveDataNotCompare(std::shared_ptr<VirtualMemoryDataBase> database,
+                                            MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &response);
     static bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
         std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
         MemoryOperatorRequest &request, std::string &errorMsg);
@@ -55,11 +57,10 @@ private:
         {"Release Total Allocated(MB)", "number", "releaseAllocated"},
         {"Release Total Reserved(MB)", "number", "releaseReserved"},
         {"Release Total Active(MB)", "number", "releaseActive"},
-        {"Stream", "string", "streamId"}
-    };
+        {"Stream", "string", "streamId"}};
 };
-} // end of namespace Memory
-} // end of namespace Module
-} // end of namespace Dic
+}  // end of namespace Memory
+}  // end of namespace Module
+}  // end of namespace Dic
 
-#endif // PROFILER_SERVER_QUERY_MEMORY_OPERATOR_HANDLER_H
+#endif  // PROFILER_SERVER_QUERY_MEMORY_OPERATOR_HANDLER_H

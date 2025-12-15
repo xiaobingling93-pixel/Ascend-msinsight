@@ -21,11 +21,12 @@ bool CommunicationSlowRankAnalysisHandler::HandleRequest(std::unique_ptr<Protoco
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!ClusterService::AnalyzeCommunicationSlowRanks(request.params, response.body)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     SetResponseResult(response, true);

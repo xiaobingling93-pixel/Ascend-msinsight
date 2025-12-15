@@ -144,6 +144,7 @@ namespace Dic::Module::Operator {
         std::string errMsg;
         if (!request.params.CommonCheck(errMsg) || !request.params.StatisticGroupCheck(errMsg)) {
             ServerLog::Error(errMsg);
+            SetOperatorError(ErrorCode::PARAMS_ERROR);
             SendResponse(std::move(responsePtr), false);
             return false;
         }
@@ -151,6 +152,7 @@ namespace Dic::Module::Operator {
         request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
         if (request.params.deviceId.empty()) {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail because empty device id.");
+            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             SendResponse(std::move(responsePtr), false);
             return false;
         }
@@ -196,6 +198,7 @@ namespace Dic::Module::Operator {
         auto it = CsvHandleStatisticInfoMap.find(request.params.group);
         if (it == CsvHandleStatisticInfoMap.end()) {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
+            SetOperatorError(ErrorCode::GET_CSV_HANDLE_FAILED);
             return false;
         }
         if (!CreateCsvFile(request, response)) {
@@ -238,6 +241,7 @@ namespace Dic::Module::Operator {
         auto it = CsvHandleDetailInfoMap.find(request.params.group);
         if (it == CsvHandleDetailInfoMap.end()) {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
+            SetOperatorError(ErrorCode::GET_CSV_HANDLE_FAILED);
             return false;
         }
         if (!CreateCsvFile(request, response)) {
@@ -294,6 +298,7 @@ namespace Dic::Module::Operator {
         auto it = CsvHandleStatisticInfoMap.find(request.params.group);
         if (it == CsvHandleStatisticInfoMap.end()) {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
+            SetOperatorError(ErrorCode::GET_CSV_HANDLE_FAILED);
             return false;
         }
         if (!CreateCsvFile(request, response)) {
@@ -305,6 +310,7 @@ namespace Dic::Module::Operator {
             statisticReqParams.current++;
             if (!database || !database->QueryOperatorStatisticInfo(statisticReqParams, statisticReqResponse)) {
                 ServerLog::Error("[Operator]Failed to query Statistic Info in export op detail.");
+                SetOperatorError(ErrorCode::QUERY_STATISTIC_FAILED);
                 DestroyFile();
                 return false;
             }
@@ -343,6 +349,7 @@ namespace Dic::Module::Operator {
         auto it = CsvHandleDetailInfoMap.find(request.params.group);
         if (it == CsvHandleDetailInfoMap.end()) {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail.");
+            SetOperatorError(ErrorCode::GET_CSV_HANDLE_FAILED);
             return false;
         }
         if (!CreateCsvFile(request, response)) {
@@ -352,6 +359,7 @@ namespace Dic::Module::Operator {
             statisticReqParams.current++;
             if (!database || !database->QueryOperatorDetailInfo(statisticReqParams, detailInfoReqResponse)) {
                 ServerLog::Error("[Operator]Failed to query detail Info in export op detail");
+                SetOperatorError(ErrorCode::QUERY_DETAIL_FAILED);
                 DestroyFile();
                 return false;
             }

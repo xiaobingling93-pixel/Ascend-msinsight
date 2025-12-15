@@ -124,6 +124,7 @@ bool BaseParallelStrategyAlgorithm::UpdateShowMap(std::string &err)
         return true;
     }
     err = "Failed to update show map for parallel view. Unexpected dimension.";
+    SetSummaryError(ErrorCode::CONNECT_DATABASE_FAILED);
     return false;
 }
 

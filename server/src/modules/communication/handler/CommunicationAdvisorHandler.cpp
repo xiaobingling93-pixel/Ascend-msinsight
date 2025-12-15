@@ -24,7 +24,8 @@ bool CommunicationAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     CommunicationAdvisorResponse &response = *responsePtr;
     std::string errMsg;
     if (!request.params.CheckParams(errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     SetBaseResponse(request, response);

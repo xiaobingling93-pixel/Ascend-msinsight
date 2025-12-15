@@ -16,7 +16,8 @@ bool QueryExpertHotspotHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     ModelInfo modelInfo;
@@ -24,13 +25,13 @@ bool QueryExpertHotspotHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     modelInfo.expertNumber = request.params.expertNum;
     modelInfo.modelLayer = request.params.layerNum;
     if (!ExpertHotspotManager::UpdateModelInfo(request.params.clusterPath, modelInfo, errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     response.body.hotspotInfos = ExpertHotspotManager::QueryExpertHotspotData(request.params.clusterPath,
                                                                               request.params.modelStage,
                                                                               request.params.version);
-    SendResponse(std::move(responsePtr), true, "");
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 }

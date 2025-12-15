@@ -22,11 +22,13 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetMemoryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
     if (!database) {
+        SetMemoryError(ErrorCode::CONNECT_DATABASE_FAILED);
         SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
         return false;
     }
@@ -35,6 +37,7 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         std::vector<StaticOperatorItem> opDetails;
         if (!database->QueryStaticOperatorList(request.params, response.columnAttr, opDetails) or
             !database->QueryStaticOperatorsTotalNum(request.params, response.totalNum)) {
+            SetMemoryError(ErrorCode::QUERY_MEMORY_STATIC_OPERATOR_FAILED);
             SendResponse(std::move(responsePtr), false, "Failed to query memory static operator data.");
             return false;
         }
@@ -46,7 +49,7 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         std::vector<StaticOperatorItem> compareData;
         std::vector<StaticOperatorItem> baselineData;
         if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
-            SendResponse(std::move(responsePtr), false, errorMsg);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
         ExecuteComparisonAlgorithm(compareData, baselineData, request, response);
@@ -62,19 +65,23 @@ bool QueryMemoryStaticOperatorListHandler::GetRespectiveData(std::shared_ptr<Vir
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
         errorMsg = "Failed to get baseline id.";
+        SetMemoryError(ErrorCode::GET_BASELINE_ID_FAILED);
         return false;
     }
     auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(baselineId);
     if (!databaseBaseline) {
         errorMsg = "Failed to connect to database of baseline.";
+        SetMemoryError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     if (!database->QueryEntireStaticOperatorTable(request.params, compareData)) {
         errorMsg = "Failed to query memory static operator compare data.";
+        SetMemoryError(ErrorCode::QUERY_MEMORY_STATIC_OPERATOR_COMPARE_FAILED);
         return false;
     }
     if (!databaseBaseline->QueryEntireStaticOperatorTable(request.params, baselineData)) {
         errorMsg = "Failed to query memory static operator baseline data.";
+        SetMemoryError(ErrorCode::QUERY_MEMORY_STATIC_OPERATOR_BASELINE_FAILED);
         return false;
     }
     return true;

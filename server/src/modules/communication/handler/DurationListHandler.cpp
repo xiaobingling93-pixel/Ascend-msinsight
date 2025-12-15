@@ -24,7 +24,8 @@ bool DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     ClusterService::QueryDurationList(request.params, response.body);

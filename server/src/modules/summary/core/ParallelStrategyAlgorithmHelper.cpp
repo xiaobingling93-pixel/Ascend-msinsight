@@ -5,6 +5,7 @@
 #include "ServerLog.h"
 #include "StringUtil.h"
 #include "ParallelStrategyAlgorithmHelper.h"
+#include "SummaryErrorManager.h"
 
 namespace Dic::Module::Summary {
  /**
@@ -38,6 +39,7 @@ std::vector<bool> ParallelStrategyAlgorithmHelper::GetMask(const std::vector<std
     std::vector<bool> mask(order.size(), false);
     if (token.size() > order.size()) {
         Server::ServerLog::Error("Failed to get mask for generate orthogonal rank groups. Unexpected order or token.");
+        SetSummaryError(ErrorCode::GET_MASK_FAILED);
         return {};
     }
     // 按照order顺序，将被计入的通信域置为true
@@ -103,6 +105,7 @@ allGroupsType ParallelStrategyAlgorithmHelper::GenerateMaskedOrthogonalRankGroup
     if (parallelSize.size() != mask.size()) {
         Server::ServerLog::Error("Failed to generate orthogonal rank groups. Unexpected parallel size or "
                                  "rank groups mask.");
+        SetSummaryError(ErrorCode::GENERATE_ORTHOGONAL_FAILED);
         return {};
     }
     std::vector<uint32_t> maskedShape{};
@@ -131,6 +134,7 @@ allGroupsType ParallelStrategyAlgorithmHelper::GenerateMaskedOrthogonalRankGroup
     if (wordSize % groupSize != 0) {
         Server::ServerLog::Error("Failed to generate orthogonal rank groups. Word size is not divisible by group "
                                  "size.");
+        SetSummaryError(ErrorCode::GENERATE_ORTHOGONAL_FAILED);
         return {};
     }
     uint32_t numOfGroup = wordSize / groupSize;

@@ -27,19 +27,21 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     std::string level = PARALLEL_CONFIG_LEVEL_CONFIGURED;
     if (database == nullptr || !database->UpdateParallelStrategyConfig(request.params.config, level, response.msg)) {
-        SendResponse(std::move(responsePtr), false, "Failed to update parallel strategy config.");
+        SetSummaryError(ErrorCode::UPDATE_PARALLEL_STRATEGY_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::string errMsg;
     if (!ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(
         database->GetDbPath(), request.params.config, errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     // 如果存在baseline，则对baseline进行同样的设置
@@ -47,7 +49,7 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
         BaselineManager::Instance().GetBaseLineClusterPath());
     if (baselineDatabase != nullptr && !ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(
         baselineDatabase->GetDbPath(), request.params.config, errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     session.OnResponse(std::move(responsePtr));

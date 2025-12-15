@@ -23,12 +23,14 @@ bool QueryFwdBwdTimelineHandler::HandleRequest(std::unique_ptr<Protocol::Request
     // check request parameter
     std::string err;
     if (!request.params.CheckParams(err)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query fwd/bwd timeline data due to error parameters.");
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::vector<std::string> rankIds = StringUtil::SplitStringWithParenthesesByComma(request.params.stageId);
     if (rankIds.empty()) {
-        SendResponse(std::move(responsePtr), false, "Failed to query fwd/bwd timeline data due to empty rank ids.");
+        SetSummaryError(ErrorCode::GET_RANK_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     dataMap.clear();

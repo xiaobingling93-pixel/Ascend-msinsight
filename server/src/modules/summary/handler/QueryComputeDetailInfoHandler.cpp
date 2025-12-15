@@ -19,13 +19,15 @@ bool QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SendResponse(std::move(responsePtr), false, errorMsg);
+        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDataBaseByFileId(request.fileId);
     if (!database || !database->QueryComputeOpDetail(request.params, response.computeDetails) or
         !database->QueryTotalNumByAcceleratorCore(request.params.timeFlag, response.totalNum)) {
         ServerLog::Warn("Failed to query compute detail or query total num.");
+        SetSummaryError(ErrorCode::QUERY_COMPUTE_DETAIL_FAILED);
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;

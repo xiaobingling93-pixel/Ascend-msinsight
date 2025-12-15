@@ -9,6 +9,7 @@
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
 #include "DataBaseManager.h"
+#include "CommunicationErrorManage.h"
 
 namespace Dic {
 namespace Module {
