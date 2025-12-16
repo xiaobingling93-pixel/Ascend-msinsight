@@ -1,0 +1,23 @@
+File,Start Line,End Line,OP,Tips
+NA,NA,NA,torch_npu.npu.set_compile_mode,"If it is a dynamic shape scenario, it is recommended to set torch_npu.npu.set_compile_mode(jit_compile=False) above the training entry file; if it is a fixed shape scenario, it is recommended to set torch_npu.npu.set_compile_mode(jit_compile=True) above the training entry file."
+NA,NA,NA,TASK_QUEUE_ENABLE,"If you want to improve performance, please set environment variables 'export TASK_QUEUE_ENABLE=1'."
+NA,NA,NA,HCCL_OP_BASE_FFTS_MODE_ENABLE,"If you want to improve performance, please set environment variables 'export HCCL_OP_BASE_FFTS_MODE_ENABLE=TRUE'."
+train.py,22,22,torch.nn.Linear,"Replaced by fusion operator NpuLinear, add in front of the file that needs to be replaced:
+
+ class NpuLinear(torch.nn.Linear):
+    def forward(self, x):
+        if not x.is_npu:
+            return super(NpuLinear, self).forward(x)
+        input_shape = x.size()
+        if x.dim() == 3:
+            x = x.reshape(-1, self.in_features)
+            return torch.npu_linear(x, self.weight, self.bias).view(input_shape[0],
+                                                                    input_shape[1], self.out_features)
+        elif x.dim() == 2:
+            return torch.npu_linear(x, self.weight, self.bias)
+        else:
+            raise RuntimeError('not support this dim')
+
+nn.Linear = NpuLinear
+"
+train.py,40,40,torch.optim.SGD,Try modifying to apex.optimizers.NpuFusedSGD.

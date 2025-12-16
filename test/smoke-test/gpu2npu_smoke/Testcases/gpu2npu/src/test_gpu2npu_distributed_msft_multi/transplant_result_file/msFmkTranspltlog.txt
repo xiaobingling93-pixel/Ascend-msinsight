@@ -1,0 +1,28 @@
+2023-12-30 04:15:11 [INFO]    Initialing rules...
+2023-12-30 04:15:11 [INFO]    MsFmkTransplt start working now, please wait for a moment.
+2023-12-30 04:15:11 [WARNING] Since jedi is not correctly installed, global analysis will not take effect. You can install it via pip.
+2023-12-30 04:15:11 [INFO]    Analysis start...
+2023-12-30 04:15:11 [INFO]    [Progress:  0.00%]  Start analysis train.py.
+2023-12-30 04:15:12 [INFO]    [Progress:  0.00%]  line: 22 ~ 22 Operation Type: SUGGESTION Message: torch.nn.Linear has a suggestion about performance
+2023-12-30 04:15:12 [INFO]    [Progress:  0.00%]  line: 40 ~ 40 Operation Type: SUGGESTION Message: torch.optim.SGD has a suggestion about performance
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 43 ~ 43 Operation Type: INSERT Message: add statement of sampler.set_epoch
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 38 ~ 40 Operation Type: INSERT Message: init statement of DistributedDataParallel
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 1 ~ 1 Operation Type: INSERT Message: import torch_npu
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 19 ~ 24 Operation Type: INSERT Message: ['import torch.npu', "if torch.npu.current_device() != DEVICE_ID:\n torch.npu.set_device(f'npu:{DEVICE_ID}')", "RANK_SIZE = int(os.getenv('RANK_SIZE'))", "RANK_ID = int(os.getenv('RANK_ID'))", "torch.distributed.init_process_group('hccl', rank=RANK_ID, world_size=RANK_SIZE)"]
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 29 ~ 32 Operation Type: INSERT Message: ['import os', 'DEVICE_ID= 0', "if os.getenv('DEVICE_ID') and str.isdigit(os.getenv('DEVICE_ID')):\n DEVICE_ID= int(os.getenv('DEVICE_ID'))"]
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 37 ~ 37 Operation Type: MODIFY Message: change function cuda to npu
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 45 ~ 45 Operation Type: MODIFY Message: change function cuda to npu
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  line: 52 ~ 52 Operation Type: MODIFY Message: change function cuda to npu
+2023-12-30 04:15:13 [INFO]    [Progress:  0.00%]  Analysis train.py complete.
+2023-12-30 04:15:13 [INFO]    [Progress:100.00%]  MsFmkTransplt run success, welcome to the next use.
+2023-12-30 04:15:13 [INFO]    The detailed transplant result files are in the output path you defined, the relative path is test_to_distributed_msft_multi.
++----------------------------+------------+
+|           files            | statistics |
++----------------------------+------------+
+| api_performance_advice.csv |     5      |
+|      cuda_op_list.csv      |     0      |
+|    unsupported_api.csv     |     0      |
+|      unknown_api.csv       |     0      |
+|  api_precision_advice.csv  |     0      |
+|      change_list.csv       |     8      |
++----------------------------+------------+

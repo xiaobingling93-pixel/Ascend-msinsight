@@ -1,0 +1,1 @@
+bash run_gpu2npu.sh pt21 /home/l30044004/smoke_gpu2npu/gpu2npu_smoke-master/WorkSpace/gpu2npu.log /home/l30044004/smoke_gpu2npu/gpu2npu_smoke-master/WorkSpace/gpu2npu_out/
