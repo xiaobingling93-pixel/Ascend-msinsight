@@ -35,6 +35,7 @@
 #include "SystemViewOverallHelper.h"
 #include "DominQuery.h"
 #include "ClusterDef.h"
+#include "AdvisorProtocolResponse.h"
 
 namespace Dic::Module::Timeline {
 const uint64_t AICPU_OP_DURATION_THRESHOLD = 20000; // 20us
@@ -119,8 +120,8 @@ public:
         const std::set<std::string> &pattern, uint64_t minTimestamp,
         std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data,
         std::map<uint64_t, std::vector<uint32_t>> &indexs) = 0;
-    virtual bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
-        std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) = 0;
+    virtual bool QueryFusibleOpData(const Protocol::KernelDetailsParams &params, const std::vector<Timeline::FuseableOpRule> &rule,
+        Protocol::OperatorFusionResBody &resBody, uint64_t minTimestamp) = 0;
     virtual bool QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold) = 0;
     virtual bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,

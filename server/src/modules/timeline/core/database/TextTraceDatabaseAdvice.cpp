@@ -21,6 +21,7 @@
 #include "TraceDatabaseSqlConst.h"
 #include "ServerLog.h"
 #include "TextTraceDatabase.h"
+#include "TextAdviceSqlConstant.h"
 #include "TraceDatabaseHelper.h"
 
 namespace Dic::Module::Timeline {
@@ -146,6 +147,45 @@ bool TextTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsPara
         one.threadId = resultSet->GetString("tid");
         one.pid = resultSet->GetString("pid");
         data.emplace_back(one);
+    }
+    return true;
+}
+
+bool TextTraceDatabase::QueryFusibleOpData(const KernelDetailsParams &params, const std::vector<Timeline::FuseableOpRule> &rule,
+                                           Protocol::OperatorFusionResBody &resBody, uint64_t minTimestamp)
+{
+    std::string sql = TextAdviceSqlConstant::GenerateFusibleOpFilterTextSql(params, rule);
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
+        return false;
+    }
+    uint64_t offset = (params.current - 1) * params.pageSize;
+    std::unique_ptr<SqliteResultSet> resultSet;
+    if (params.startTime == params.endTime) {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, params.pageSize, offset);
+    } else {
+        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp, params.pageSize, offset);
+    }
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query Fuseable Operator.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::OperatorFusionData one{};
+        one.baseInfo.id = resultSet->GetString("id");
+        one.baseInfo.rankId = params.rankId;
+        one.baseInfo.startTime = resultSet->GetUint64("startTime");
+        one.baseInfo.duration = resultSet->GetUint64("duration");
+        one.baseInfo.pid = resultSet->GetString("pid");
+        one.baseInfo.tid = resultSet->GetString("tid");
+        one.baseInfo.depth = 0;
+        one.name = resultSet->GetString("name");
+        one.originOpList = resultSet->GetString("originOpList");
+        one.fusedOp = resultSet->GetString("fusedOp");
+        one.note = "";
+        resBody.datas.emplace_back(one);
+        resBody.size = resultSet->GetUint64("total_count");
     }
     return true;
 }

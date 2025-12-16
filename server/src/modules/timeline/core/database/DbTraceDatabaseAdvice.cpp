@@ -21,6 +21,7 @@
 #include <cstdint>
 #include "CommonDefs.h"
 #include "TraceDatabaseSqlConst.h"
+#include "DbAdviceSqlConstant.h"
 #include "TableDefs.h"
 #include "DbTraceDataBase.h"
 namespace Dic::Module::FullDb {
@@ -186,16 +187,16 @@ bool DbTraceDataBase::QueryAffinityAPIData(const KernelDetailsParams &params,
     return true;
 }
 
-bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
-                                          std::vector<FlowLocation> &data, uint64_t minTimestamp)
+bool DbTraceDataBase::QueryFusibleOpData(const KernelDetailsParams &params, const std::vector<Timeline::FuseableOpRule> &rule,
+    Protocol::OperatorFusionResBody &resBody, uint64_t minTimestamp)
 {
-    std::string sql = TraceDatabaseSqlConst::GenerateFuseableOpFilterDbSql(params, rule);
+    std::string sql = DbAdviceSqlConstant::GenerateFusibleOpFilterDbSql(params, rule);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query Fusible Operator.");
         return false;
     }
-    return QueryFusibleOpDataForDB(params, stmt, rule, data, minTimestamp);
+    return QueryFusibleOpDataForDB(params, stmt, rule, resBody, minTimestamp);
 }
 
 bool DbTraceDataBase::QueryOperatorDispatchData(const KernelDetailsParams &params,
@@ -359,15 +360,16 @@ bool DbTraceDataBase::QueryP2PCommunicationOpHaveConnectionId(std::vector<Thread
 
 bool DbTraceDataBase::QueryFusibleOpDataForDB(const KernelDetailsParams &params,
                                               std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                              const FuseableOpRule &rule,
-                                              std::vector<FlowLocation> &data, uint64_t minTimestamp)
+                                              const std::vector<Timeline::FuseableOpRule> &rule,
+                                              Protocol::OperatorFusionResBody &resBody, uint64_t minTimestamp)
 {
     int deviceId = StringUtil::StringToInt(params.deviceId);
+    uint64_t offset = (params.current - 1) * params.pageSize;
     std::unique_ptr<SqliteResultSet> resultSet;
     if (params.startTime == params.endTime) { // default request, not time range analysis
-        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId);
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, params.pageSize, offset);
     } else {
-        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp);
+        resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp, params.pageSize, offset);
     }
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for query Fusible Operator.", stmt->GetErrorMessage());
@@ -375,18 +377,20 @@ bool DbTraceDataBase::QueryFusibleOpDataForDB(const KernelDetailsParams &params,
     }
 
     while (resultSet->Next()) {
-        FlowLocation one{};
-        one.id = resultSet->GetString("id");
+        Protocol::OperatorFusionData one{};
+        one.baseInfo.id = resultSet->GetString("id");
+        one.baseInfo.rankId = params.rankId;
+        one.baseInfo.startTime = resultSet->GetUint64("startTime");
+        one.baseInfo.duration = resultSet->GetUint64("duration");
+        one.baseInfo.pid = resultSet->GetString("pid");
+        one.baseInfo.tid = resultSet->GetString("tid");
+        one.baseInfo.depth = resultSet->GetUint64("depth");
         one.name = resultSet->GetString("name");
-        one.timestamp = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
-        one.type = StringUtil::join(rule.opList, ", ");
-        one.metaType = rule.fusedOp;
-        one.note = rule.note;
-        data.emplace_back(one);
+        one.originOpList = resultSet->GetString("originOpList");
+        one.fusedOp = resultSet->GetString("fusedOp");
+        one.note = "";
+        resBody.datas.emplace_back(one);
+        resBody.size = resultSet->GetUint64("total_count");
     }
 
     return true;

@@ -1202,20 +1202,20 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryP2PCommunicationOpDataWhenDbNotOpen)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(TextTraceDatabaseMockTest, TestQueryFuseableOpDataWhenDbNotOpen)
+TEST_F(TextTraceDatabaseMockTest, TestQueryFusibleOpDataWhenDbNotOpen)
 {
     std::recursive_mutex sqlMutex;
     MockDatabase database(sqlMutex);
     const Dic::Protocol::KernelDetailsParams params;
-    Dic::Module::Timeline::FuseableOpRule rule;
-    std::vector<Dic::Protocol::FlowLocation> data;
+    std::vector<Dic::Module::Timeline::FuseableOpRule> rule;
+    Protocol::OperatorFusionResBody resBody;
     const uint64_t minTimestamp = 9;
-    rule.opList.emplace_back("19");
-    bool result = database.QueryFuseableOpData(params, rule, data, minTimestamp);
+    rule.push_back({{"19"}, "", ""});
+    bool result = database.QueryFusibleOpData(params, rule, resBody, minTimestamp);
     EXPECT_EQ(result, false);
 }
 
-TEST_F(TextTraceDatabaseMockTest, TestQueryFuseableOpDataWhenDbOpen)
+TEST_F(TextTraceDatabaseMockTest, TestQueryFusibleOpDataWhenDbOpen)
 {
     std::recursive_mutex sqlMutex;
     MockDatabase database(sqlMutex);
@@ -1250,13 +1250,13 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryFuseableOpDataWhenDbOpen)
     DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
     DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
     Dic::Protocol::KernelDetailsParams params;
-    Dic::Module::Timeline::FuseableOpRule rule;
-    std::vector<Dic::Protocol::FlowLocation> data;
+    std::vector<Dic::Module::Timeline::FuseableOpRule> rule;
+    Protocol::OperatorFusionResBody resBody;
     const uint64_t minTimestamp = 9;
-    rule.opList.emplace_back("Transpose");
+    rule.push_back({{"Transpose"}, "", ""});
     params.orderBy = "name";
     params.order = "DESC";
-    bool result = database.QueryFuseableOpData(params, rule, data, minTimestamp);
+    bool result = database.QueryFusibleOpData(params, rule, resBody, minTimestamp);
     EXPECT_EQ(result, true);
 }
 

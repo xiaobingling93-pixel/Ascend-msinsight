@@ -779,18 +779,18 @@ TEST_F(DbTraceDatabaseTest, TestQueryAclnnOpCountExceedThresholdWhenDbOpen)
     EXPECT_EQ(result, true);
 }
 
-TEST_F(DbTraceDatabaseTest, TestQueryFuseableOpDataWhenDbOpen)
+TEST_F(DbTraceDatabaseTest, TestQueryFusibleOpDataWhenDbOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
     Dic::Protocol::KernelDetailsParams params;
     params.orderBy = "name";
     params.order = "DESC";
-    Dic::Module::Timeline::FuseableOpRule rule;
-    rule.opList.emplace_back("Transpose");
-    std::vector<Dic::Protocol::FlowLocation> data;
+    std::vector<Dic::Module::Timeline::FuseableOpRule> rule;
+    rule.push_back({{"Transpose"}, "", ""});
+    Protocol::OperatorFusionResBody resBody;
     const uint64_t minTimestamp = 0;
-    bool result0 = database.QueryFuseableOpData(params, rule, data, minTimestamp);
+    bool result0 = database.QueryFusibleOpData(params, rule, resBody, minTimestamp);
     EXPECT_EQ(result0, false);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
@@ -813,11 +813,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryFuseableOpDataWhenDbOpen)
     DatabaseTestCaseMockUtil::InsertData(db, strData);
     DatabaseTestCaseMockUtil::InsertData(db, taskData);
     database.SetDbPtr(db);
-    bool result = database.QueryFuseableOpData(params, rule, data, minTimestamp);
+    bool result = database.QueryFusibleOpData(params, rule, resBody, minTimestamp);
     EXPECT_EQ(result, true);
-    rule.opList.emplace_back("Transpose2");
-    bool result2 = database.QueryFuseableOpData(params, rule, data, minTimestamp);
-    EXPECT_EQ(result, true);
+    rule[0].opList.emplace_back("Transpose2");
+    bool result2 = database.QueryFusibleOpData(params, rule, resBody, minTimestamp);
+    EXPECT_EQ(result2, true);
 }
 
 TEST_F(DbTraceDatabaseTest, TestQueryAffinityAPIDataWhenDbOpen)

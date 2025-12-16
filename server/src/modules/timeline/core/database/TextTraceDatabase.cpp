@@ -1898,41 +1898,6 @@ bool TextTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
     return true;
 }
 
-bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
-    std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
-{
-    std::string sql = TextSqlConstant::GenerateFuseableOpFilterTextSql(params, rule);
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
-        return false;
-    }
-    std::unique_ptr<SqliteResultSet> resultSet;
-    if (params.startTime == params.endTime) {
-        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId);
-    } else {
-        resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, params.startTime + minTimestamp, params.endTime + minTimestamp);
-    }
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query Fuseable Operator.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::FlowLocation one{};
-        one.id = resultSet->GetString("id");
-        one.name = resultSet->GetString("name");
-        one.timestamp = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
-        one.pid = resultSet->GetString("pid");
-        one.tid = resultSet->GetString("tid");
-        one.type = StringUtil::join(rule.opList, ", ");
-        one.metaType = rule.fusedOp;
-        one.note = rule.note;
-        data.emplace_back(one);
-    }
-    return true;
-}
-
 bool TextTraceDatabase::QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold)
 {

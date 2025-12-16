@@ -96,10 +96,10 @@ TEST_F(TestSuit, QueryFusedOperatorAdvisorSuccessText)
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
-    std::vector<Protocol::FlowLocation> data{};
-    auto result = db->QueryFuseableOpData(params, FUSEABLE_OPERATER_RULE_LIST.at(0), data, startTime);
+    Protocol::OperatorFusionResBody resBody;
+    auto result = db->QueryFusibleOpData(params, FUSEABLE_OPERATER_RULE_LIST, resBody, startTime);
     EXPECT_TRUE(result);
-    EXPECT_EQ(data.size(), 0);
+    EXPECT_EQ(resBody.size, 0);
 }
 
 TEST_F(TestSuit, QueryOperatorDispatchAdvisorSuccessOnText)

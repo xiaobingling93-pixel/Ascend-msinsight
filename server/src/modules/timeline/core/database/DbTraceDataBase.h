@@ -145,8 +145,8 @@ public:
     bool QueryAffinityAPIData(const Protocol::KernelDetailsParams &params, const std::set<std::string> &pattern,
         uint64_t minTimestamp, std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data,
         std::map<uint64_t, std::vector<uint32_t>> &indexes) override;
-    bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
-        std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) override;
+    bool QueryFusibleOpData(const Protocol::KernelDetailsParams &params, const std::vector<Timeline::FuseableOpRule> &rule,
+        Protocol::OperatorFusionResBody &resBody, uint64_t minTimestamp) override;
     bool QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold) override;
     bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
@@ -197,8 +197,8 @@ public:
                                                      const std::vector<TrackQuery> &trackQuery);
 
     static bool QueryFusibleOpDataForDB(const KernelDetailsParams &params,
-                                        std::unique_ptr<SqlitePreparedStatement> &stmt, const FuseableOpRule &rule,
-                                        std::vector<FlowLocation> &data, uint64_t minTimestamp);
+                                        std::unique_ptr<SqlitePreparedStatement> &stmt, const std::vector<Timeline::FuseableOpRule> &rule,
+                                        Protocol::OperatorFusionResBody &resBody, uint64_t minTimestamp);
 
     static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t minTimestamp,
         const KernelDetailsParams &params, uint64_t threshold, std::vector<KernelBaseInfo> &data);

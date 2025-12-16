@@ -385,33 +385,6 @@ public:
         return sql;
     }
 
-    static std::string GenerateFuseableOpFilterDbSql(const Protocol::KernelDetailsParams &params,
-        const Timeline::FuseableOpRule &rule)
-    {
-        std::string timeCondSql;
-        if (params.startTime != params.endTime) {
-            timeCondSql += " AND task.endNs >= ? AND task.startNs <= ? ";
-        }
-        std::string sql = "WITH data AS ( "
-            "SELECT info.ROWID as id, task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
-            "task.startNs - ? as startTime, (task.endNs - task.startNs) as duration, 'Ascend Hardware' as pid, "
-            "task.streamId as tid, task.depth as depth, "
-            "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
-            "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
-            "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
-            "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
-            "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
-            "WHERE task.deviceId = ? "  + timeCondSql + " ) "
-            "SELECT d0.* FROM data d0 ";
-        for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
-            std::string table = "d" + std::to_string(i);
-            sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
-                " AND " + table + ".op_type = '" + rule.opList.at(i) + "' ";
-        }
-        sql += "WHERE d0.op_type = '" +  rule.opList.at(0) + "' ORDER BY " + params.orderBy + " " + params.order;
-        return sql;
-    }
-
     static std::string QueryAffinityOptimizerDbSql(const std::string &optimizers, const Protocol::KernelDetailsParams &params)
     {
         std::string timeCondSql;
