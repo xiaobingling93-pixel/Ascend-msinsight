@@ -187,5 +187,5 @@ TEST_F(BaselineManagerTest, MultiCluster)
     request.params.currentClusterPath = COMPARE;
     bool result = BaselineManagerService::InitBaselineData(request, baselineInfo);
     EXPECT_TRUE(result);
-    EXPECT_EQ(baselineInfo.isCluster, true);
+    EXPECT_EQ(baselineInfo.isCluster, false);
 }

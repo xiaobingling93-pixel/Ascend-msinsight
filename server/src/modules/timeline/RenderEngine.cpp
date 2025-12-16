@@ -211,6 +211,9 @@ std::vector<CompeteSliceDomain> RenderEngine::QueryMstxRLDetail(const std::strin
     PROCESS_TYPE processType = type == DataType::TEXT ? PROCESS_TYPE::TEXT : PROCESS_TYPE::MS_TX;
     SliceQueryByNameList sliceQuery{rankId, "", nameList, processType, startTime, endTime, {"Python", "CANN"}, "CPU"};
     std::vector<CompeteSliceDomain> res;
+    if (!dataEngine) {
+        return {};
+    }
     dataEngine->QuerySliceDetailInfoByNameList(sliceQuery, res);
     return res;
 }
