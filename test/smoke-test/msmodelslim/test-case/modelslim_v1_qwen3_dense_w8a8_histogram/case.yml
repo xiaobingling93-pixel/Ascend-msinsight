@@ -1,0 +1,6 @@
+case_type: modelslim
+case_name: modelslim_v1_qwen3_dense_w8a8_histogram
+enable: y
+script:
+  start: run.sh
+timeout: 10

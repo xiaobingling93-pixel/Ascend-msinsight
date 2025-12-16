@@ -1,0 +1,7 @@
+case_type: modelslim
+case_name: calibration_select
+enable: y
+script:
+  start: run.sh
+timeout: 10
+rank_size: 1

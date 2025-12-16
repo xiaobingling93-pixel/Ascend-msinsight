@@ -1,0 +1,37 @@
+apiversion: modelslim_v1
+metadata:
+  config_id: kvsmooth
+  score: 90
+  label:
+    w_bit: 8
+    a_bit: 8
+    is_sparse: False
+    kv_cache: True
+
+spec:
+  process:
+    - type: "kv_smooth"
+      smooth_factor: 1.0
+      include: 
+        - "*"
+      exclude: 
+        - "model.layers.0.self_attn"
+
+    - type: "linear_quant"
+      qconfig:
+        act:
+          scope: "per_tensor"   # default is per_tensor
+          dtype: "int8"        # default is int8
+          symmetric: False      # default is True
+          method: "minmax"      # default is minmax
+        weight:
+          scope: "per_channel"   # default is per_channel
+          dtype: "int8"        # default is int8
+          symmetric: True       # default is True
+          method: "minmax"      # default is minmax
+      include: ["*"]
+      exclude: ["*down_proj*"]
+
+  save:
+    - type: "ascendv1_saver"
+      part_file_size: 4

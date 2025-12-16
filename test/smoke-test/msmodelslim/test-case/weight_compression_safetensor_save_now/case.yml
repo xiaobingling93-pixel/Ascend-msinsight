@@ -1,0 +1,8 @@
+case_type: modelslim
+case_name: weight_compression_safetensor_save_now
+enable: y
+script:
+  start: run.sh
+timeout: 15
+rank_size: 1
+exec_seq: 1

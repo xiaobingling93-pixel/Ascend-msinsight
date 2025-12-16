@@ -1,0 +1,7 @@
+case_type: modelslim
+case_name: multimodal_sd_modelslim_v1_wan2_1_w8a8
+enable: y
+script:
+  start: run.sh
+timeout: 10
+rank_size: 1
