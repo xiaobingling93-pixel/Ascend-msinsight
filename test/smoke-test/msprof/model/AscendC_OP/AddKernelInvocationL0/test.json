@@ -1,0 +1,47 @@
+{
+    "kernel_name": "add_custom",
+    "kernel_path": "aicore.bin.0",
+    "blockdim": 8,
+    "mode": "onboard",
+    "simulator_dump_path": "./model",
+    "soc_version": "Ascend910B1",
+    "output_data_path": "./data",
+    "device_id": 0,
+    "magic": "RT_DEV_BINARY_MAGIC_ELF_AIVEC",
+    "test_cases": [
+      {
+        "case_name": "Test_AddCustom_001",
+        "param_desc": [
+          {
+            "param_type": "input",
+            "type": "float16",
+            "shape": [
+              8,
+              2048
+            ],
+            "data_path": "./input/input_x.bin", 
+            "name": "x"
+          },
+          {
+            "param_type": "input",
+            "type": "float16",
+            "shape": [
+              8,
+              2048
+            ],
+            "data_path": "./input/input_y.bin",
+            "name": "y"
+          },
+          {
+            "param_type": "output",
+            "type": "float16",
+            "shape": [
+              8,
+              2048
+            ],
+            "name": "z"
+          }
+        ]
+      }
+    ]
+  }

@@ -1,0 +1,8 @@
+mindspore:
+    base_url: http://mindspore-repo.csi.rnd.huawei.com/mindspore/release/mindspore/mindspore/version
+    branch: master
+    version: "2.7.1"
+local:
+    local_dir: /tmp/mindspore_pkg
+ascend:
+    ascend_libs_dir: /usr/local/Ascend/ascend-toolkit/latest/lib64

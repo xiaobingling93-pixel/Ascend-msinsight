@@ -1,0 +1,46 @@
+profile:
+    framework: mindspore
+    result_path: output/profiler/collection_result/ms
+    wait: 0
+    warmup: 1
+    active: 10
+    repeat: 1
+    skip_first: 0
+    level: Level0
+    with_stack: False
+    with_memory: False
+    with_cpu: True
+    data_simplification: False
+    record_shapes: False
+    aicore_metrics: PipeUtilization
+    l2_cache: False
+    hbm_ddr: False
+    pcie: False
+    data_process: False
+    context_mode: pynative
+
+model:
+    name: tiny_transformer
+
+# 参数说明
+# - framework: 支持的框架类型为 [mindspore, pytorch]
+# - result_path: 结果保存路径
+# - wait: 等待步数
+# - warmup: 预热步数
+# - active: 采集步数
+# - repeat: 重复次数
+# - skip_first: 跳过前几次迭代
+# - level: Profiler 级别，MindSpore 支持 [LevelNone, Level0, Level1, Level2]，PyTorch 支持 [Level_none, Level0, Level1, Level2]
+# - with_stack: 是否采集堆栈信息
+# - with_memory: 是否采集内存信息
+# - with_cpu: 是否采集框架侧数据
+# - data_simplification: 是否简化数据
+# - record_shapes: 是否记录张量形状（不支持 MindSpore）
+# - aicore_metrics: AICore 指标类型，MindSpore 支持 [PipeUtilization, ArithmeticUtilization, Memory, MemoryL0, MemoryUB, ResourceConflictRatio, L2Cache, None]，
+#   PyTorch 支持 [ACL_AICORE_PIPE_UTILIZATION, ACL_AICORE_ARITHMETIC_UTILIZATION, ACL_AICORE_MEMORY_BANDWIDTH, ACL_AICORE_L0B_AND_WIDTH, ACL_AICORE_MEMORY_UB, ACL_AICORE_RESOURCE_CONFLICT_RATIO, ACL_AICORE_L2_CACHE, ACL_AICORE_MEMORY_ACCESS, ACL_AICORE_NONE]
+# - l2_cache: 是否采集 L2 缓存数据（仅支持 MindSpore）
+# - hbm_ddr: 是否采集 HBM/DDR 数据（仅支持 MindSpore）
+# - pcie: 是否采集 PCIe 数据（仅支持 MindSpore）
+# - data_process: 是否采集数据处理数据（仅支持 MindSpore）
+# - context_mode: 运行模式，仅支持 MindSpore，可选值为 [pynative, kbk, o2]，pangu 模型仅支持 pynative
+# - model.name: 模型名称，支持的模型为 [tiny_transformer, pangu38bv3, ]

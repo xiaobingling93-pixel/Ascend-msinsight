@@ -1,0 +1,14 @@
+build_command
+  sed -i 's/setup.py/setup.py egg_info --tag-date/g' ci/build.sh
+  BUILD_WITHOUT_SHA=1 sh ci/build.sh --python=3.7
+buildInfo
+    apex_branch   master
+    apex_commit       49a7994
+    pytorch_branch    v1.11.0
+    pytorch_commit    8e8d840
+    commit_op-plugin  4458e9e
+    commit_Tensorpipe 
+    commit_torchair   
+    build_time        2024-02-22 02:16:24
+    gcc_version       gcc (GCC) 7.5.0
+https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v1.11.0/20240222.2/pytorch_v1.11.0_py37.tar.gz

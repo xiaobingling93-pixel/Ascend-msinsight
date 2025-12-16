@@ -1,0 +1,4 @@
+conda_env:
+#  name: profiler_performance_daily
+  name: performance310
+  python_version: "3.10"

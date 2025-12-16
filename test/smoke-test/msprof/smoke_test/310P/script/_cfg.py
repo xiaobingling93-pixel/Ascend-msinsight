@@ -1,0 +1,655 @@
+# -*- coding: utf-8 -*-
+import os
+
+
+class ConfigPaths:
+    # environment and common path
+    log_level = "export ASCEND_GLOBAL_EVENT_ENABLE=1; " \
+                "export ASCEND_GLOBAL_LOG_LEVEL=0; " \
+                "export ASCEND_SLOG_PRINT_TO_STDOUT=1"
+    ascend_path = "/usr/local/Ascend"
+    tfplugin_env_path = "source {}/tfplugin/set_env.sh".format(ascend_path)
+    ascend_toolkit_path = "{}/ascend-toolkit".format(ascend_path)
+    toolkit_env_path = "source {}/set_env.sh".format(ascend_toolkit_path)
+    # toolkit_env_path = "source /usr/local/Ascend/CANN-6.4/bin/setenv.bash".format(ascend_toolkit_path)
+    latest_path = "{}/latest".format(ascend_toolkit_path)
+    msprofbin_path = "{}/tools/profiler/bin/msprof".format(latest_path)
+    analysis_path = "{}/tools/profiler/profiler_tool/analysis".format(latest_path)
+    # msprofbin_path = "/usr/local/Ascend/CANN-6.4/tools/profiler/bin/msprof".format(latest_path)
+    # analysis_path = "/usr/local/Ascend/CANN-6.4/tools/profiler/profiler_tool/analysis".format(latest_path)
+    msprofpy_path = "{}/msprof/msprof.py".format(analysis_path)
+    msprofinfo_path = "python3 {}/interface/get_msprof_info.py -dir".format(analysis_path)
+    result_path = "/home/result_dir"
+    model_path = "/home/msprof_smoke_test/model/"
+    add_main_path = os.path.join(model_path, "resnet50_main/out/")
+    aclapi_path = os.path.join(model_path, "AclApi")
+    aclapiStepInfo_path = os.path.join(model_path, "AclApiStepInfo")
+    acljson_path = os.path.join(model_path, "AclJson")
+    msproftx_path = os.path.join(model_path, "Msproftx")
+    opst_path = os.path.join(model_path, "OpSt")
+    graphapi_path = os.path.join(model_path, "GraphApi")
+    pyaclapi_path = os.path.join(model_path, "PyAclApi")
+    subscription_path = os.path.join(model_path, "AclApiSubscription")
+    infer_path = os.path.join(model_path, "RunDevId0")
+    addop_path = os.path.join(model_path, "AddOp/run")
+    cannProfiling_path = os.path.join(model_path, "CannProfiling-Pytorch")
+    exportTensorFlow_path = os.path.join(model_path, "Export-TensorFlow")
+    msprofbinPytorch_path = os.path.join(model_path, "MsprofbinPyTorch")
+    msprofbinTensorFlow_path = os.path.join(model_path, "MsprofbinTensorFlow")
+    sessionrunTensorFlow_path = os.path.join(model_path, "SessionRun-TensorFlow")
+    bertSquadPytorch_path = ""
+    cpmFinetunePytorch_path = ""
+    tacotron2Pytorch_path = ""
+    autoAugmentTensorFlow_path = ""
+    dcganTensorFlow_path = ""
+    gcMcTensorFlow_path = ""
+    dockerTensorFlow_path = ""
+    innerOneStepPytorch_path = os.path.join(model_path, "Inner-One-Step_for_PyTorch")
+    loopTensorFlow_path = os.path.join(model_path, "Loop_for_TensorFlow")
+    noLoopTensorFlow_path = os.path.join(model_path, "No-Loop_for_TensorFlow")
+    netMindSpore_path = ""
+    resNet50MindSpore_path = ""
+    singleOp65535Pytorch_path = os.path.join(model_path, "Single-Op-65535_for_PyTorch")
+    singleOpPytorch_path = os.path.join(model_path, "Single-Op_for_PyTorch")
+    stepPytorch_path = os.path.join(model_path, "Step_for_PyTorch")
+    singleOpTensorFlow_path = ""
+    yolov5MindSpore_path = ""
+    fpBpTensorFlow_path = ""
+    op_cost_baseline_path = "/home/msprof_smoke_test/smoke_test/310P/baseline/op_meantime_baseline_310P.json"
+    op_statistic_json_path = "/home/msprof_smoke_test/compare_profiling/op_statistic_avg_time.json"
+
+
+class ConfigValues:
+    # common value
+    dev_id = 0
+    pass_res = "pass"
+    fail_res = "fail"
+    timeline = "timeline"
+    summary = "summary"
+    data = "data"
+    host = "host"
+    device = "device"
+    aclapi_switch = ["ACL_PROF_ACL_API=on", "ACL_PROF_TASK_TIME=on", "ACL_PROF_AICPU=on", "ACL_PROF_L2CACHE=on",
+                     "ACL_PROF_RUNTIME_API=on", "ACL_PROF_SYS_HARDWARE_MEM_FREQ=on", "ACL_PROF_LLC_MODE=read",
+                     "ACL_PROF_SYS_INTERCONNECTION_FREQ=on", "ACL_PROF_DVPP_FREQ=on",
+                     "ACL_PROF_HOST_SYS=cpu,mem", "ACL_PROF_HOST_SYS_USAGE=cpu,mem",
+                     "ACL_PROF_HOST_SYS_USAGE_FREQ=cpu,mem", "ACL_PROF_HCCL_TRACE=off", "ACL_PROF_MSPROFTX=off"]
+    acljson_switch = ["aicpu=on", "l2=on", "hccl=off", "task_time=on", "ascendcl=on", "runtime_api=on",
+                      "sys_hardware_mem_freq=on", "llc_profiling=write",
+                      "sys_interconnection_freq=on", "dvpp_freq=on", "host_sys=cpu,mem", "host_sys_usage=cpu,mem",
+                      "host_sys_usage_freq=cpu,mem", "msproftx=off"]
+    msproftx_switch = ["ACL_PROF_TASK_TIME=on", "ACL_PROF_MSPROFTX=on"]
+    opst_switch = ["ascendcl=on", "task_time=on", "runtime_api=on"]
+    pyaclapi_switch = ["ACL_PROF_ACL_API=on", "ACL_PROF_TASK_TIME=on", "ACL_PROF_AICPU=on", "ACL_PROF_L2CACHE=on",
+                       "ACL_PROF_RUNTIME_API=on", "ACL_PROF_HCCL_TRACE=off", "ACL_PROF_MSPROFTX=off"]
+    tensorflow_switch = ["hccl=off", "aicpu=on", "l2=on", "msproftx=off", "task_time=on", "runtime_api=on",
+                         "sys_hardware_mem_freq=on", "llc_profiling=write", "sys_io_sampling_freq=on",
+                         "sys_interconnection_freq=on", "dvpp_freq=on", "host_sys=cpu,mem", "host_sys_usage=cpu,mem",
+                         "host_sys_usage_freq=cpu,mem", "training_trace=on", "task_trace=on"]
+    pytorch_switch = ["ACL_PROF_ACL_API=on", "ACL_PROF_TASK_TIME=on", "ACL_PROF_AICPU=on", "ACL_PROF_L2CACHE=on",
+                      "ACL_PROF_HCCL_TRACE=off", "ACL_PROF_TRAINING_TRACE=on", "ACL_PROF_MSPROFTX=on",
+                      "TORCH_CALL_STACK=on", "ACL_PROF_RUNTIME_API=on"]
+    mindspore_switch = []
+    msprofbin_switch = ["ascendcl=on", "model-execution=on", "runtime-api=on", "task-time=on", "aicpu=on",
+                        "sys-hardware-mem=on", "sys-cpu-profiling=on", "sys-profiling=on", "sys-pid-profiling=on",
+                        "dvpp-profiling=on", "llc-profiling=read", "aic-mode=task-based",
+                        "aic-metrics=PipeUtilization", "sys_interconnection_freq=on", "l2=on"]
+
+
+class ConfigCmd:
+    app_switch = "--application='{}/out/main'".format(ConfigPaths.infer_path)
+    perf_iotop_cmd = "sudo msprof_data_collection.sh get-version perf; " \
+                     "sudo msprof_data_collection.sh get-version iotop;"
+    # common cmd
+    all_switch = "{}; {}; " \
+                 "{} --ascendcl=on --model-execution=on --runtime-api=on --task-time=on --ai-core=on --l2=on " \
+                 "--aic-freq=100 --aicpu=on --sys-hardware-mem=on --sys-hardware-mem-freq=50 --sys-cpu-profiling=on " \
+                 "--sys-cpu-freq=50 --sys-profiling=on --sys-sampling-freq=10 --sys-pid-profiling=on " \
+                 "--sys-pid-sampling-freq=10 --sys-interconnection-profiling=on --sys-interconnection-freq=50 " \
+                 "--dvpp-profiling=on --dvpp-freq=50 --l2=on {}".format(ConfigPaths.log_level,
+                                                                        ConfigPaths.toolkit_env_path,
+                                                                        ConfigPaths.msprofbin_path, app_switch)
+    all_sys_switch = "{}; {}; " \
+                     "{} --sys-period=10 --sys-devices=all --ai-core=on --aic-freq=100 --sys-hardware-mem=on " \
+                     "--sys-hardware-mem-freq=50 --sys-cpu-profiling=on --sys-cpu-freq=50 --sys-profiling=on " \
+                     "--sys-sampling-freq=10 --sys-pid-profiling=on --sys-pid-sampling-freq=10 " \
+                     "--sys-interconnection-profiling=on --sys-interconnection-freq=50 " \
+                     "--dvpp-profiling=on --dvpp-freq=50".format(ConfigPaths.log_level, ConfigPaths.toolkit_env_path,
+                                                                 ConfigPaths.msprofbin_path)
+    all_app_switch = "{}; {}; " \
+                     "{} --ascendcl=on --model-execution=on --runtime-api=on --task-time=on --l2=on --ai-core=on " \
+                     "--aic-freq=100 --aicpu=on --sys-hardware-mem=on {}".format(ConfigPaths.log_level,
+                                                                                 ConfigPaths.toolkit_env_path,
+                                                                                 ConfigPaths.msprofbin_path, app_switch)
+    single_sys_switch = "{}; {}; " \
+                        "{} --sys-period=10 --sys-devices=all --ai-core=off --sys-hardware-mem=off " \
+                        "--sys-cpu-profiling=off --sys-profiling=off --sys-pid-profiling=off " \
+                        "--sys-interconnection-profiling=off --dvpp-profiling=off".format(ConfigPaths.log_level,
+                                                                                          ConfigPaths.toolkit_env_path,
+                                                                                          ConfigPaths.msprofbin_path,
+                                                                                          ConfigValues.dev_id)
+    single_app_switch = "{}; {}; " \
+                        "{} --ascendcl=off --model-execution=off --runtime-api=off --task-time=off --ai-core=off " \
+                        "--aicpu=off --dvpp-profiling=off --l2=off {}".format(ConfigPaths.log_level,
+                                                                              ConfigPaths.toolkit_env_path,
+                                                                              ConfigPaths.msprofbin_path, app_switch)
+
+
+class ConfigTableHeaders:
+    table_header = {
+        "acl": "Name,Type,Start Time,Duration(us),Process ID,Thread ID",
+        "api_statistic": "Level,API Name,Time(us),Count,Avg(us),Min(us),Max(us),Variance",
+        "acl_statistic": "Name,Type,Time(%),Time(us),Count,Avg(us),Min(us),Max(us),Process ID,Thread ID",
+        "aicpu": "Timestamp(us),Node,Compute_time(us),Memcpy_time(us),Task_time(us),Dispatch_time(us),Total_time(us),"
+                 "Stream ID,Task ID",
+        "ai_core_utilization": {
+            "sample-based": {
+                "ArithmeticUtilization": "Core ID,mac_fp16_ratio,mac_int8_ratio,vec_fp32_ratio,vec_fp16_ratio,"
+                                         "vec_int32_ratio,vec_misc_ratio,cube_fops,vector_fops",
+                "L2Cache": "Core ID,write_cache_hit,write_cache_miss_allocate,r0_read_cache_hit,"
+                           "r0_read_cache_miss_allocate,r1_read_cache_hit,r1_read_cache_miss_allocate",
+                "Memory": "Core ID,ub_read_bw(GB/s),ub_write_bw(GB/s),l1_read_bw(GB/s),l1_write_bw(GB/s),"
+                          "main_mem_read_bw(GB/s),main_mem_write_bw(GB/s)",
+                "MemoryL0": "Core ID,l0a_read_bw(GB/s),l0a_write_bw(GB/s),l0b_read_bw(GB/s),l0b_write_bw(GB/s),"
+                            "l0c_read_bw(GB/s),l0c_write_bw(GB/s),l0c_read_bw_cube(GB/s),l0c_write_bw_cube(GB/s)",
+                "MemoryUB": "Core ID,ub_read_bw_vector(GB/s),ub_write_bw_vector(GB/s),ub_read_bw_scalar(GB/s),"
+                            "ub_write_bw_scalar(GB/s)",
+                "MemoryUB_": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                             "icache_miss_rate,memory_bound",
+                "PipeUtilization": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                                   "icache_miss_rate,memory_bound",
+                "ResourceConflictRatio": "Core ID,vec_bankgroup_cflt_ratio,vec_bank_cflt_ratio,vec_resc_cflt_ratio",
+            },
+            "task-based": {
+                "ArithmeticUtilization": "Core ID,mac_fp16_ratio,mac_int8_ratio,vec_fp32_ratio,vec_fp16_ratio,"
+                                         "vec_int32_ratio,vec_misc_ratio,cube_fops,vector_fops",
+                "L2Cache": "Core ID,write_cache_hit,write_cache_miss_allocate,r0_read_cache_hit,"
+                           "r0_read_cache_miss_allocate,r1_read_cache_hit,r1_read_cache_miss_allocate",
+                "Memory": "Core ID,ub_read_bw(GB/s),ub_write_bw(GB/s),l1_read_bw(GB/s),l1_write_bw(GB/s),"
+                          "main_mem_read_bw(GB/s),main_mem_write_bw(GB/s)",
+                "MemoryL0": "Core ID,l0a_read_bw(GB/s),l0a_write_bw(GB/s),l0b_read_bw(GB/s),l0b_write_bw(GB/s),"
+                            "l0c_read_bw(GB/s),l0c_write_bw(GB/s),l0c_read_bw_cube(GB/s),l0c_write_bw_cube(GB/s)",
+                "MemoryUB": "Core ID,ub_read_bw_vector(GB/s),ub_write_bw_vector(GB/s),ub_read_bw_scalar(GB/s),"
+                            "ub_write_bw_scalar(GB/s)",
+                "MemoryUB_": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                             "icache_miss_rate,memory_bound",
+                "PipeUtilization": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                                   "icache_miss_rate,memory_bound",
+                "ResourceConflictRatio": "Core ID,vec_bankgroup_cflt_ratio,vec_bank_cflt_ratio,vec_resc_cflt_ratio",
+            },
+        },
+        "ai_vector_core_utilization": {
+            "sample-based": {
+                "ArithmeticUtilization": "Core ID,mac_fp16_ratio,mac_int8_ratio,vec_fp32_ratio,vec_fp16_ratio,"
+                                         "vec_int32_ratio,vec_misc_ratio,cube_fops,vector_fops",
+                "L2Cache": "Core ID,write_cache_hit,write_cache_miss_allocate,r0_read_cache_hit,"
+                           "r0_read_cache_miss_allocate,r1_read_cache_hit,r1_read_cache_miss_allocate",
+                "Memory": "Core ID,ub_read_bw(GB/s),ub_write_bw(GB/s),l1_read_bw(GB/s),l1_write_bw(GB/s),"
+                          "main_mem_read_bw(GB/s),main_mem_write_bw(GB/s)",
+                "MemoryL0": "Core ID,l0a_read_bw(GB/s),l0a_write_bw(GB/s),l0b_read_bw(GB/s),l0b_write_bw(GB/s),"
+                            "l0c_read_bw(GB/s),l0c_write_bw(GB/s),l0c_read_bw_cube(GB/s),l0c_write_bw_cube(GB/s)",
+                "MemoryUB_": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                             "icache_miss_rate,memory_bound",
+                "MemoryUB": "Core ID,ub_read_bw_vector(GB/s),ub_write_bw_vector(GB/s),ub_read_bw_scalar(GB/s),"
+                            "ub_write_bw_scalar(GB/s)",
+                "PipeUtilization": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                                   "icache_miss_rate,memory_bound",
+                "ResourceConflictRatio": "Core ID,vec_bankgroup_cflt_ratio,vec_bank_cflt_ratio,vec_resc_cflt_ratio",
+            },
+            "task-based": {
+                "ArithmeticUtilization": "Core ID,mac_fp16_ratio,mac_int8_ratio,vec_fp32_ratio,vec_fp16_ratio,"
+                                         "vec_int32_ratio,vec_misc_ratio,cube_fops,vector_fops",
+                "Memory": "Core ID,ub_read_bw(GB/s),ub_write_bw(GB/s),l1_read_bw(GB/s),l1_write_bw(GB/s),"
+                          "main_mem_read_bw(GB/s),main_mem_write_bw(GB/s)",
+                "MemoryL0": "Core ID,l0a_read_bw(GB/s),l0a_write_bw(GB/s),l0b_read_bw(GB/s),l0b_write_bw(GB/s),"
+                            "l0c_read_bw(GB/s),l0c_write_bw(GB/s),l0c_read_bw_cube(GB/s),l0c_write_bw_cube(GB/s)",
+                "MemoryUB_": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                             "icache_miss_rate,memory_bound",
+                "MemoryUB": "Core ID,ub_read_bw_vector(GB/s),ub_write_bw_vector(GB/s),ub_read_bw_scalar(GB/s),"
+                            "ub_write_bw_scalar(GB/s)",
+                "PipeUtilization": "Core ID,vec_ratio,mac_ratio,scalar_ratio,mte1_ratio,mte2_ratio,mte3_ratio,"
+                                   "icache_miss_rate,memory_bound",
+                "ResourceConflictRatio": "Core ID,vec_bankgroup_cflt_ratio,vec_bank_cflt_ratio,vec_resc_cflt_ratio",
+            },
+        },
+        "ai_cpu_pmu_events": "Event,Name,Count",
+        "ai_cpu_top_function": "Function,Module,Cycles,Cycles(%)",
+        "ai_stack_time": "Infer ID,Module,API,Start Time,Duration(ns)",
+        "cpu_usage": "Cpu Type,User(%),Sys(%),IoWait(%),Irq(%),Soft(%),Idle(%)",
+        "ctrl_cpu_pmu_events": "Event,Name,Count",
+        "ctrl_cpu_top_function": "Function,Module,Cycles,Cycles(%)",
+        "ddr": "Metric,Read(MB/s),Write(MB/s)",
+        "dp": "Timestamp(us),Action,Source,Cached Buffer Size",
+        "dvpp": "Dvpp Id,Engine Type,Engine ID,All Time(us),All Frame,All Utilization(%)",
+        "fusion_op": "Model Name,Model ID,Fusion Op,Original Ops,Memory Input(KB),Memory Output(KB),"
+                     "Memory Weight(KB),Memory Workspace(KB),Memory Total(KB)",
+        "ge_op_execute": "Thread ID,OP Name,OP Type,Event Type,Start Time,Duration(us)",
+        "hbm": "Metric,Read(MB/s),Write(MB/s)",
+        "hccs": "Mode,Max,Min,Average",
+        "host_cpu_usage": "Total Cpu Numbers,Occupied Cpu Numbers,Recommend Cpu Numbers",
+        "host_disk_usage": "Peak Disk Read(KB/s),Recommend Disk Read(KB/s),Peak Disk Write(KB/s),"
+                           "Recommend Disk Write(KB/s)",
+        "host_mem_usage": "Total Memory(KB),Peak Used Memory(KB),Recommend Memory(KB)",
+        "host_network_usage": "Netcard Speed(KB/s),Peak Used Speed(KB/s),Recommend Speed(KB/s)",
+        "llc_aicpu": "Metric,CPU0(KB),CPU1(KB),CPU2(KB),CPU3(KB),Total(KB)",
+        "llc_bandwidth": "Metric,l3c_rd,l3c_wr",
+        "llc_ctrlcpu": "Metric,CPU0(KB),CPU1(KB),CPU2(KB),CPU3(KB),Total(KB)",
+        "llc_read_write": "Mode,Task,Hit Rate(%),Throughput(MB/s)",
+        "l2_cache": "Stream Id,Task Id,Hit Rate,Victim Rate,Op Name",
+        "msprof_tx": "pid,tid,category,event_type,payload_type,payload_value,Start_time(us),End_time(us),"
+                     "message_type,message,Device Start_time(us),Device End_time(us)",
+        "nic": "Timestamp(us),Bandwidth(MB/s),Rx Bandwidth efficiency(%),rxPacket/s,rxError rate(%),rxDropped rate(%),"
+               "Tx Bandwidth efficiency(%),txPacket/s,txError rate(%),txDropped rate(%),funcId",
+        "npu_mem": "event,ddr(KB),hbm(KB),memory(KB),timestamp(us)",
+        "npu_module_mem": "Component,Timestamp(us),Total Reserved(KB),Device",
+        "op_statistic": {"WholeNetwork": "Model Name,OP Type,Core Type,Count,Total Time(us),Min Time(us),Avg Time(us),"
+                                         "Max Time(us),Ratio(%)",
+                         "AllData": "OP Type,Core Type,Count,Total Time(us),Min Time(us),Avg Time(us),Max Time(us),"
+                                    "Ratio(%)"},
+        "op_summary": {
+            "sample-based": {
+                "ArithmeticUtilization": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,"
+                                         "Task Type,Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,"
+                                         "HF32 Eligible,Input Shapes,Input Data Types,Input Formats,Output Shapes,Output Data Types,"
+                                         "Output Formats",
+                "L2Cache": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                           "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,Mix Block Dim,"
+                           "HF32 Eligible,Input Shapes,Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats,"
+                           "Context ID",
+                "Memory": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                          "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                          "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats",
+                "MemoryL0": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                            "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                            "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats",
+                "MemoryUB": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                            "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                            "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats",
+                "PipeUtilization": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                                   "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                                   "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats",
+                "ResourceConflictRatio": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                                         "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,"
+                                         "HF32 Eligible,Input Shapes,Input Data Types,Input Formats,Output Shapes,Output Data Types,"
+                                         "Output Formats",
+            },
+            "task-based": {
+                "ArithmeticUtilization": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type"
+                                         ",Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,"
+                                         "HF32 Eligible,Input Shapes,Input Data Types,Input Formats,Output Shapes,Output Data Types,"
+                                         "Output Formats,aicore_time(us),total_cycles,mac_fp16_ratio,mac_int8_ratio,"
+                                         "vec_fp32_ratio,vec_fp16_ratio,vec_int32_ratio,vec_misc_ratio,cube_fops,"
+                                         "vector_fops",
+                "L2Cache": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                           "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,Mix Block Dim,"
+                           "HF32 Eligible,Input Shapes,Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats,"
+                           "Context ID,aicore_time(us),aic_total_cycles,aic_write_cache_hit,"
+                           "aic_write_cache_miss_allocate,aic_r0_read_cache_hit,"
+                           "aic_r0_read_cache_miss_allocate,aic_r1_read_cache_hit,aic_r1_read_cache_miss_allocate,"
+                           "aiv_time(us),aiv_total_cycles,aiv_write_cache_hit,aiv_write_cache_miss_allocate,"
+                           "aiv_r0_read_cache_hit,aiv_r0_read_cache_miss_allocate,aiv_r1_read_cache_hit,"
+                           "aiv_r1_read_cache_miss_allocate",
+                "Memory": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                          "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                          "Input Data Types,Input Formats,Output Shapes,Output Data Types,"
+                          "Output Formats,aicore_time(us),total_cycles,"
+                          "ub_read_bw(GB/s),ub_write_bw(GB/s),l1_read_bw(GB/s),l1_write_bw(GB/s),"
+                          "main_mem_read_bw(GB/s),main_mem_write_bw(GB/s)",
+                "MemoryL0": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                            "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                            "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats,"
+                            "aicore_time(us),total_cycles,l0a_read_bw(GB/s),l0a_write_bw(GB/s),l0b_read_bw(GB/s),"
+                            "l0b_write_bw(GB/s),l0c_read_bw(GB/s),l0c_write_bw(GB/s),l0c_read_bw_cube(GB/s),"
+                            "l0c_write_bw_cube(GB/s)",
+                "MemoryUB": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                            "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                            "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats,"
+                            "aicore_time(us),total_cycles,ub_read_bw_vector(GB/s),ub_write_bw_vector(GB/s),"
+                            "ub_read_bw_scalar(GB/s),ub_write_bw_scalar(GB/s)",
+                "PipeUtilization": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                                   "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                                   "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats,"
+                                   "aicore_time(us),total_cycles,vec_time(us),vec_ratio,mac_time(us),mac_ratio,"
+                                   "scalar_time(us),scalar_ratio,mte1_time(us),mte1_ratio,mte2_time(us),mte2_ratio,"
+                                   "mte3_time(us),mte3_ratio,icache_miss_rate,memory_bound,cube_utilization(%)",
+                "PipeUtilization_not_compatible": "Model Name,Model ID,Task ID,Stream ID,Infer ID,Op Name,OP Type,OP State,Task Type,"
+                                                  "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,HF32 Eligible,Input Shapes,"
+                                                  "Input Data Types,Input Formats,Output Shapes,Output Data Types,Output Formats,"
+                                                  "aicore_time(us),total_cycles,vec_time(us),vec_ratio,mac_time(us),mac_ratio,"
+                                                  "scalar_time(us),scalar_ratio,mte1_time(us),mte1_ratio,mte2_time(us),mte2_ratio,"
+                                                  "mte3_time(us),mte3_ratio,icache_miss_rate,memory_bound,cube_utilization(%)",
+                "ResourceConflictRatio": "Model ID,Task ID,Stream ID,Op Name,OP Type,OP State,Task Type,"
+                                         "Task Start Time(us),Task Duration(us),Task Wait Time(us),Block Dim,"
+                                         "HF32 Eligible,Input Shapes,Input Data Types,Input Formats,Output Shapes,Output Data Types,"
+                                         "Output Formats,aicore_time(us),total_cycles,vec_bankgroup_cflt_ratio,"
+                                         "vec_bank_cflt_ratio,vec_resc_cflt_ratio",
+            },
+        },
+        "os_runtime_statistic": "Process ID,Thread ID,Name,Time(%),Time(us),Count,Avg(us),Max(us),Min(us)",
+        "pcie": "Mode,Min,Max,Avg",
+        "process_cpu_usage": "PID,Name,CPU(%)",
+        "process_mem": "PID,Name,Size(pages),Resident(pages),Shared(pages)",
+        "roce": "Timestamp(us),Bandwidth(MB/s),Rx Bandwidth efficiency(%),rxPacket/s,rxError rate(%),rxDropped rate(%),"
+                "Tx Bandwidth efficiency(%),txPacket/s,txError rate(%),txDropped rate(%),funcId",
+        "runtime_api": "Name,Stream ID,Time(%),Time(ns),Calls,Avg(ns),Min(ns),Max(ns),Process ID,Thread ID",
+        "step_trace": "Iteration ID,FP Start(us),BP End(us),Iteration End(us),Iteration Time(us),FP to BP Time(us),"
+                      "Iteration Refresh(us),Data Aug Bound(us),Model ID",
+        "sys_mem": "Memory Total(kB),Memory Free(kB),Buffers(kB),Cached(kB),Share Memory(kB),Commit Limit(kB),"
+                   "Committed AS(kB),Huge Pages Total(pages),Huge Pages Free(pages)",
+        "task_time": "kernel_name,kernel_type,stream_id,task_id,task_time(us),task_start(us),task_stop(us)",
+        "ts_cpu_pmu_events": "Event,Name,Count",
+        "ts_cpu_top_function": "Function,Cycles,Cycles(%)",
+    }
+
+
+class ConfigSwitchRes:
+    # default result
+    prof_dev_dir = ["data", "dev_start.log.0", "dev_start.log.0.done", "end_info.0", "end_info.0.done",
+                    "host_start.log.0", "host_start.log.0.done", "info.json.0", "info.json.0.done",
+                    "sample.json", "sample.json.done", "sqlite", "start_info.0", "start_info.0.done", "summary",
+                    "timeline"]
+    prof_host_dir = ['data', 'end_info', 'end_info.done', 'host_start.log', 'host_start.log.done', 'info.json', 'info.json.done', 'sample.json',
+                     'sample.json.done', 'sqlite', 'start_info', 'start_info.done', 'summary', 'timeline']
+    #prof_host_dir = ['data', 'end_info', 'end_info.done', 'info.json', 'info.json.done', 'log', 'sample.json',
+    #                 'sample.json.done', 'sqlite', 'start_info', 'start_info.done', 'summary', 'timeline']
+    # switch result
+    switch_option = {
+        "ai-core": {
+            "timeline": ["ai_core_utilization"],
+            "summary": ["ai_core_utilization"],
+        },
+        "ascendcl": {
+            "timeline": ["msprof"],
+            "summary": ["prof_rule", "api_statistic"],
+        },
+        "ACL_PROF_ACL_API": {
+            "timeline": ["msprof"],
+            "summary": ["prof_rule", "api_statistic"],
+        },
+        "model-execution": {
+            "timeline": ['msprof'],
+            "summary": ['fusion_op'],
+        },
+        "runtime-api": {
+            "timeline": ['msprof'],
+            "summary": ['prof_rule', 'api_statistic'],
+        },
+        "runtime_api": {
+            "timeline": ['msprof'],
+            "summary": ['prof_rule', 'api_statistic'],
+        },
+        "ACL_PROF_RUNTIME_API": {
+            "timeline": ['msprof'],
+            "summary": ['prof_rule', 'api_statistic'],
+        },
+        "task-time": {
+            "timeline": ["step_trace", "msprof", "task_time"],
+            "summary": ["fusion_op", "prof_rule", 'op_statistic', 'op_summary',
+                        'step_trace', 'task_time', 'api_statistic'],
+        },
+        "task_time": {
+            "timeline": ["step_trace", "msprof", "task_time"],
+            "summary": ["fusion_op", "prof_rule", 'op_statistic', 'op_summary',
+                        'step_trace', 'task_time', 'api_statistic'],
+        },
+        "ACL_PROF_TASK_TIME": {
+            "timeline": ["step_trace", "msprof", "task_time"],
+            "summary": ["fusion_op", "prof_rule", 'op_statistic', 'op_summary',
+                        'step_trace', 'task_time', 'api_statistic'],
+        },
+        "hccl": {
+            "timeline": ["hccl"],
+            "summary": [],
+        },
+        "ACL_PROF_HCCL_TRACE": {
+            "timeline": ["hccl"],
+            "summary": [],
+        },
+        "aicpu": {
+            "timeline": [],
+            "summary": ["aicpu", "prof_rule"],
+        },
+        "ACL_PROF_AICPU": {
+            "timeline": [],
+            "summary": ["aicpu", "prof_rule"],
+        },
+        "l2": {
+            "timeline": [],
+            "summary": ["l2_cache"],
+        },
+        "ACL_PROF_L2CACHE": {
+            "timeline": [],
+            "summary": ["l2_cache"],
+        },
+        "task_trace": {
+            "timeline": ["task_time"],
+            "summary": ["task_time"],
+        },
+        "training_trace": {
+            "timeline": ["task_time"],
+            "summary": ["task_time"],
+        },
+        "ACL_PROF_TRAINING_TRACE": {
+            "timeline": ["task_time"],
+            "summary": ["task_time"],
+        },
+        "sys-hardware-mem": {
+            "timeline": ["ddr", "hbm", "npu_mem", "msprof"],
+            "summary": ["ddr", "hbm", "npu_mem", "npu_module_mem", "prof_rule"],
+        },
+        "sys_hardware_mem_freq": {
+            "timeline": ["ddr", "hbm", "npu_mem", "msprof"],
+            "summary": ["ddr", "hbm", "npu_mem", "npu_module_mem", "prof_rule"],
+        },
+        "ACL_PROF_SYS_HARDWARE_MEM_FREQ": {
+            "timeline": ["ddr", "hbm", "npu_mem", "msprof"],
+            "summary": ["ddr", "hbm", "npu_mem", "npu_module_mem", "prof_rule"],
+        },
+        "sys-cpu-profiling": {
+            "timeline": [],
+            "summary": ["ai_cpu_top_function", "ai_cpu_pmu_events", "ctrl_cpu_top_function", "ctrl_cpu_pmu_events",
+                        "ts_cpu_top_function", "ts_cpu_pmu_events", "prof_rule"],
+        },
+        "sys-profiling": {
+            "timeline": [],
+            "summary": ["cpu_usage", "sys_mem", "prof_rule"],
+        },
+        "sys-pid-profiling": {
+            "timeline": [],
+            "summary": ["process_cpu_usage", "process_mem", "prof_rule"],
+        },
+        "sys-io-profiling": {
+            "timeline": ["nic", "roce", "msprof"],
+            "summary": ["nic", "roce", "prof_rule"],
+        },
+        "sys_io_sampling_freq": {
+            "timeline": ["nic", "roce", "msprof"],
+            "summary": ["nic", "roce", "prof_rule"],
+        },
+        "ACL_PROF_SYS_IO_FREQ": {
+            "timeline": ["nic", "roce", "msprof"],
+            "summary": ["nic", "roce", "prof_rule"],
+        },
+        "sys-interconnection-profiling": {
+            "timeline": ["hccs", "pcie", "msprof"],
+            "summary": ["hccs", "pcie", "prof_rule"],
+        },
+        "sys_interconnection_freq": {
+            "timeline": ["hccs", "pcie", "msprof"],
+            "summary": ["hccs", "pcie", "prof_rule"],
+        },
+        "ACL_PROF_SYS_INTERCONNECTION_FREQ": {
+            "timeline": ["hccs", "pcie", "msprof"],
+            "summary": ["hccs", "pcie", "prof_rule"],
+        },
+        "dvpp-profiling": {
+            "timeline": [],
+            "summary": ["dvpp", "prof_rule"],
+        },
+        "dvpp_freq": {
+            "timeline": [],
+            "summary": ["dvpp", "prof_rule"],
+        },
+        "ACL_PROF_DVPP_FREQ": {
+            "timeline": [],
+            "summary": ["dvpp", "prof_rule"],
+        },
+        "msproftx": {
+            "timeline": ["msprof", "msprof_tx"],
+            "summary": ["msprof_tx", ],
+        },
+        "ACL_PROF_MSPROFTX": {
+            "timeline": ["msprof", "msprof_tx"],
+            "summary": ["msprof_tx"],
+        },
+        "TORCH_CALL_STACK": {
+            "timeline": [],
+            "summary": [],
+        },
+        "llc-profiling": {
+            "read": {
+                "timeline": ["llc_read_write"],
+                "summary": ["llc_read_write"],
+            },
+            "write": {
+                "timeline": ["llc_read_write"],
+                "summary": ["llc_read_write"],
+            },
+            "bandwidth": {
+                "timeline": ["llc_bandwidth"],
+                "summary": ["llc_bandwidth"],
+            },
+            "capacity": {
+                "timeline": ["llc_aicpu", "llc_ctrlcpu"],
+                "summary": ["llc_aicpu", "llc_ctrlcpu"],
+            },
+        },
+        "llc_profiling": {
+            "read": {
+                "timeline": ["llc_read_write"],
+                "summary": ["llc_read_write"],
+            },
+            "write": {
+                "timeline": ["llc_read_write"],
+                "summary": ["llc_read_write"],
+            },
+            "bandwidth": {
+                "timeline": ["llc_bandwidth"],
+                "summary": ["llc_bandwidth"],
+            },
+            "capacity": {
+                "timeline": ["llc_aicpu", "llc_ctrlcpu"],
+                "summary": ["llc_aicpu", "llc_ctrlcpu"],
+            },
+        },
+        "ACL_PROF_LLC_MODE": {
+            "read": {
+                "timeline": ["llc_read_write"],
+                "summary": ["llc_read_write"],
+            },
+            "write": {
+                "timeline": ["llc_read_write"],
+                "summary": ["llc_read_write"],
+            },
+            "bandwidth": {
+                "timeline": ["llc_bandwidth"],
+                "summary": ["llc_bandwidth"],
+            },
+            "capacity": {
+                "timeline": ["llc_aicpu", "llc_ctrlcpu"],
+                "summary": ["llc_aicpu", "llc_ctrlcpu"],
+            },
+        },
+        "host-sys": {
+            "cpu": {
+                "timeline": ["host_cpu_usage", "msprof"],
+                "summary": ["host_cpu_usage"],
+            },
+            "mem": {
+                "timeline": ["host_mem_usage", "msprof"],
+                "summary": ["host_mem_usage"],
+            },
+            "disk": {
+                "timeline": ["host_disk_usage", "msprof"],
+                "summary": ["host_disk_usage"],
+            },
+            "network": {
+                "timeline": ["host_network_usage", "msprof"],
+                "summary": ["host_network_usage"],
+            },
+            "osrt": {
+                "timeline": ["os_runtime_api", "msprof"],
+                "summary": ["os_runtime_statistic"],
+            },
+        },
+        "host_sys": {
+            "cpu": {
+                "timeline": ["host_cpu_usage", "msprof"],
+                "summary": ["host_cpu_usage"],
+            },
+            "mem": {
+                "timeline": ["host_mem_usage", "msprof"],
+                "summary": ["host_mem_usage"],
+            },
+        },
+        "ACL_PROF_HOST_SYS": {
+            "cpu": {
+                "timeline": ["host_cpu_usage", "msprof"],
+                "summary": ["host_cpu_usage"],
+            },
+            "mem": {
+                "timeline": ["host_mem_usage", "msprof"],
+                "summary": ["host_mem_usage"],
+            },
+        },
+        "host-sys-usage": {
+            "cpu": {
+                "timeline": [],
+                "summary": ["cpu_usage", "process_cpu_usage"],
+            },
+            "mem": {
+                "timeline": [],
+                "summary": ["sys_mem", "process_mem"],
+            },
+        },
+        "host_sys_usage": {
+            "cpu": {
+                "timeline": [],
+                "summary": ["sys_mem", "process_cpu_usage"],
+            },
+            "mem": {
+                "timeline": [],
+                "summary": ["cpu_usage", "process_mem"],
+            },
+        },
+        "ACL_PROF_HOST_SYS_USAGE": {
+            "cpu": {
+                "timeline": [],
+                "summary": ["cpu_usage", "process_cpu_usage"],
+            },
+            "mem": {
+                "timeline": [],
+                "summary": ["sys_mem", "process_mem"],
+            },
+        },
+        "ACL_PROF_HOST_SYS_USAGE_FREQ": {
+            "cpu": {
+                "timeline": [],
+                "summary": ["cpu_usage", "process_cpu_usage"],
+            },
+            "mem": {
+                "timeline": [],
+                "summary": ["sys_mem", "process_mem"],
+            }
+        },
+        "host_sys_usage_freq": {
+            "cpu": {
+                "timeline": [],
+                "summary": ["cpu_usage", "process_cpu_usage"],
+            },
+            "mem": {
+                "timeline": [],
+                "summary": ["sys_mem", "process_mem"],
+            }
+        },
+    }

@@ -1,0 +1,6 @@
+pta:
+    user_name: "pAtlasCIAccount"
+    user_pwd: "encryption:ETMsDgAAAXISxDz2ABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwCAABAAEGekJxTeB7lA1eMP1+S3BfwAAAAgk4CgWJP2ug+4BGHm9H/T1ZK7HKVY3Bfc4ynoU8LvWw4AFEFs8suGO2Do3HoUcM7V6lNKUDva"
+    version: "v2.8.0"
+local:
+    local_dir: /tmp/pta_pkg
