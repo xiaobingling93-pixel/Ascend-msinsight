@@ -1,0 +1,1 @@
+g++ main.cpp ../common/SQLiteLogger.cpp ../common/ActivityRegistry.cpp -o main -I /usr/local/Ascend/ascend-toolkit/latest/tools/mspti/include -I ./common -lsqlite3 -ggdb
