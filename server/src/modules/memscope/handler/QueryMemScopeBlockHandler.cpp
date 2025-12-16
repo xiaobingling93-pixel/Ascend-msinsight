@@ -68,46 +68,49 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
         Server::ServerLog::Error("Empty sorted events");
         return;
     }
-    std::stack<std::shared_ptr<MemoryBlockItem>> currentBlockStack;
-    std::stack<std::shared_ptr<MemoryBlockItem>> tempBlockStack;
+    std::list<std::shared_ptr<MemoryBlockItem>> currentBlocks;
     uint64_t currentTotalSize = 0;
     response.maxTimestamp = sortedEvents.back()->timestamp;
     response.minTimestamp = sortedEvents[0]->timestamp;
     for (size_t idx = 0; idx < sortedEvents.size(); idx++) {
-        auto eventPtr = sortedEvents[idx];
+        auto &eventPtr = sortedEvents[idx];
         if (eventPtr->type == SimpleBlockEventType::MALLOC) {
-            currentBlockStack.push(eventPtr->blockItemPtr);
+            currentBlocks.push_back(eventPtr->blockItemPtr);
             eventPtr->blockItemPtr->AddPathPoint(eventPtr->timestamp, currentTotalSize);
             currentTotalSize = NumberSafe::Add(currentTotalSize, eventPtr->blockItemPtr->size);
             response.maxSize = std::max(response.maxSize, currentTotalSize);
             continue;
         }
-        while (!currentBlockStack.empty()) {
-            std::shared_ptr<MemoryBlockItem> tempItemPtr = currentBlockStack.top();
-            currentBlockStack.pop();
-            currentTotalSize = NumberSafe::Sub(currentTotalSize, tempItemPtr->size);
-            tempItemPtr->AddPathPoint(eventPtr->timestamp, currentTotalSize);
-            if (tempItemPtr->id != eventPtr->blockItemPtr->id) {
-                tempBlockStack.push(tempItemPtr);
+        auto it = currentBlocks.end();
+        for (auto rit = currentBlocks.rbegin(); rit != currentBlocks.rend(); ++rit) {
+            currentTotalSize = NumberSafe::Sub(currentTotalSize, (*rit)->size);
+            (*rit)->AddPathPoint(eventPtr->timestamp, currentTotalSize);
+            // 找到释放事件所对应的block
+            if (eventPtr->blockItemPtr->id == (*rit)->id) {
+                // 转换为正向迭代器
+                it = (++rit).base();
+                break;
             }
         }
-        while (!tempBlockStack.empty()) {
-            std::shared_ptr<MemoryBlockItem> tempItemPtr = tempBlockStack.top();
-            tempBlockStack.pop();
-            currentBlockStack.push(tempItemPtr);
-            // 此处忽略截断的精度丢失
-            uint64_t  tmpTimestamp = idx + 1 < sortedEvents.size() ?
-                    (eventPtr->timestamp + sortedEvents[idx+1]->timestamp)/2 : response.maxTimestamp;
-            tempItemPtr->AddPathPoint(tmpTimestamp, currentTotalSize);
-            currentTotalSize = NumberSafe::Add(currentTotalSize, tempItemPtr->size);
+        if (it == currentBlocks.end()) {
+            Server::ServerLog::Warn("[MemScope] Exception on build memory block view: cannot found % in alloc history.",
+                                    eventPtr->blockItemPtr->id);
+            continue;
+        }
+        (*it)->AddPathPoint(eventPtr->timestamp, currentTotalSize);
+        it = currentBlocks.erase(it);
+        // 此处忽略截断的精度丢失
+        uint64_t tmpTimestamp = idx + 1 < sortedEvents.size() ?
+                                    (eventPtr->timestamp + sortedEvents[idx+1]->timestamp)/2 : response.maxTimestamp;
+        for (; it != currentBlocks.end(); ++it) {
+            (*it)->AddPathPoint(tmpTimestamp, currentTotalSize);
+            currentTotalSize = NumberSafe::Add(currentTotalSize, (*it)->size);
         }
     }
     // 处理剩余块
-    while (!currentBlockStack.empty()) {
-        std::shared_ptr<MemoryBlockItem> tempItemPtr = currentBlockStack.top();
-        currentBlockStack.pop();
-        tempItemPtr->AddPathPoint(response.maxTimestamp, currentTotalSize);
-        currentTotalSize = NumberSafe::Sub(currentTotalSize, tempItemPtr->size);
+    for (auto rit = currentBlocks.rbegin(); rit != currentBlocks.rend(); ++rit) {
+        currentTotalSize = NumberSafe::Sub(currentTotalSize, (*rit)->size);
+        (*rit)->AddPathPoint(response.maxTimestamp, currentTotalSize);
     }
     response.total = response.blocks.size();
 }
