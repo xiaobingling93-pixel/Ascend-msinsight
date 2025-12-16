@@ -244,6 +244,7 @@ TEST_F(ClusterServiceTest, QueryDurationListSuccess)
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.groupIdHash = "9350434047717501483";
+    params.baselineGroupIdHash = "9350434047717501483";
     params.baselineIterationId = "2";
     params.isCompare = true;
     params.clusterPath = filePath;

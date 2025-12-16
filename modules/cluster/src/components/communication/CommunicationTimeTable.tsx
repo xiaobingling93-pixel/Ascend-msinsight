@@ -192,7 +192,7 @@ const OperatorsTable = ({ record: parentRow, conditions }: any): JSX.Element => 
             stage: conditions.stage,
             queryType: parentRow.source,
             pgName: conditions.pgName,
-            groupIdHash: conditions.groupIdHash,
+            groupIdHash: parentRow.source === Source.COMPARISON ? conditions.groupIdHash : conditions.baselineGroupIdHash,
         }).finally(() => {
             setLoading(false);
         });

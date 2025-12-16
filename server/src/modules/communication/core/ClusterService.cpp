@@ -420,7 +420,7 @@ void ClusterService::QueryDurationList(Protocol::DurationListParams &params, Pro
     if (params.isCompare) {
         Protocol::DurationListParams baselineParams(params);
         baselineParams.iterationId = params.baselineIterationId;
-        baselineParams.groupIdHash = params.groupIdHash;
+        baselineParams.groupIdHash = params.baselineGroupIdHash;
         auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(
             BaselineManager::Instance().GetBaseLineClusterPath());
         if (baselineDatabase == nullptr ||
