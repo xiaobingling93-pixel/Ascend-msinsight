@@ -138,6 +138,9 @@ void KernelParse::PostParseTask(const std::set<std::string> &devices,
                                 const std::string &fileId)
 {
     Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + rankId);
+    if (Global::BaselineManager::Instance().IsBaselineRankId(rankId)) {
+        return;
+    }
     if (devices.size() == 1 && devices.count(rankId) == 1) {
         ParseEndCallBack(rankId, fileId, true, "");
     } else {
