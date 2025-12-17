@@ -20,7 +20,6 @@ import re
 import os
 import logging
 from abc import abstractmethod
-from curses.ascii import isdigit
 
 import tqdm
 import argparse
@@ -61,19 +60,31 @@ def get_meta_event(pid, tid):
 
 
 class CompleteEvent(object):
-    def __init__(self, comm, pid, st, args, cpu):
+    def __init__(self, comm, pid, st, cpu, prio):
         self.comm = comm
         self.pid = pid
         self.st = st
-        self.args = args
         self.cpu = "CPU " + cpu
+        self.total_runtime = 0
+        self.vruntime = 0
+        self.end_state = ""
+        self.prio = prio
 
-    def end(self, ts):
+    def update_runtime(self, runtime, vruntime):
+        if runtime is not None:
+            self.total_runtime += int(runtime.split()[0])
+        if vruntime is not None:
+            self.vruntime = vruntime
+
+    def end(self, ts, end_state, prio):
         self.dur = ts - self.st
+        self.end_state = end_state
+        self.prio = prio
 
     def to_event_json(self):
         return get_trace_event(self.comm + ":" + self.pid, CPU_SCHED_PID, self.cpu, self.st, self.dur,
-                               {'host_pid': self.pid})
+                               {'host_pid': self.pid, 'total_runtime': str(self.total_runtime) + " [ns]",
+                                'vruntime': self.vruntime, 'end_state': self.end_state, 'prio': self.prio})
 
 
 class Process(object):
@@ -204,7 +215,7 @@ class TimeStampTran:
         return (timestamp - self.mono_raw_start) + self.utc_start_timestamp
 
     def __str_to_int(self, num_str):
-        if not all((isdigit(c) or c == '.') for c in num_str) or num_str.count('.') > 1:
+        if not all((c.isdigit() or c == '.') for c in num_str) or num_str.count('.') > 1:
             logging.error("Invalid format")
             return 0
         pos = num_str.find('.')
@@ -281,6 +292,8 @@ class SchedFtraceParse(FtraceParse):
             self.parse_sched_free(sched_event)
         if sched_event['action'] == 'sched_process_exec':
             self.parse_sched_process_exec(sched_event)
+        if sched_event['action'] == 'sched_stat_runtime':
+            self.parse_sched_stat_runtime(sched_event)
 
     def parse_sched_switch(self, entry: dict):
         # draw kernel part
@@ -289,12 +302,12 @@ class SchedFtraceParse(FtraceParse):
         kwargs = self.parse_sched_param(entry['args'])
         prev_comm = kwargs['prev_comm'] + ':' + kwargs['prev_pid']
         if prev_comm in self.cpu_stats[cpu].keys():
-            self.cpu_stats[cpu][prev_comm].end(timestamp)
+            self.cpu_stats[cpu][prev_comm].end(timestamp, kwargs['prev_state'], kwargs['prev_prio'])
             self.add_trace_event(self.cpu_stats[cpu][prev_comm].to_event_json())
             del self.cpu_stats[cpu][prev_comm]
         next_name = kwargs['next_comm'] + ':' + kwargs['next_pid']
         self.cpu_stats[cpu][next_name] = CompleteEvent(kwargs['next_comm'], kwargs['next_pid'], timestamp,
-                                                       args=entry['args'], cpu=cpu)
+                                                       cpu, kwargs['next_prio'])
         if prev_comm not in self.process_state.keys():
             self.process_state[prev_comm] = Process(kwargs['prev_comm'], kwargs['prev_pid'], timestamp)
         self.process_state[prev_comm].sleep(timestamp)
@@ -328,9 +341,22 @@ class SchedFtraceParse(FtraceParse):
         pid = kwargs['pid']
         filename = kwargs['filename'].split('/')[-1]
         process = filename + ':' + PidTran().get_ns_pid(pid)
-        self.cpu_stats[cpu][process] = CompleteEvent(filename, pid, ts, None, cpu)
+        self.cpu_stats[cpu][process] = CompleteEvent(filename, pid, ts, cpu, "unkown")
         self.process_state[process] = Process(filename, pid, ts)
         self.process_state[process].run(ts)
+
+    def parse_sched_stat_runtime(self, entry):
+        ts = entry['timestamp']
+        cpu = entry['cpu']
+        kwargs = self.parse_sched_param(entry['args'])
+        comm = kwargs['comm']
+        pid = kwargs['pid']
+        process = comm + ':' + PidTran().get_ns_pid(pid)
+        # 当前进程已存在，更新运行时间
+        if process in self.cpu_stats[cpu]:
+            self.cpu_stats[cpu][process].update_runtime(kwargs.get('runtime'), kwargs.get('vruntime', None))
+        else:
+            self.cpu_stats[cpu][process] = CompleteEvent(comm, pid, ts, cpu, "unknown")
 
     def parse_sched_param(self, string: str):
         kv = string.split(' ')
