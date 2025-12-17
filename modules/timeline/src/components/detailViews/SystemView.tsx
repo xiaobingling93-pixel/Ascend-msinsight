@@ -325,6 +325,8 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
                         } else {
                             setSystemViewItems(statsSystemViewItems);
                         }
+                    }).catch(() => {
+                        setSystemViewItems(statsSystemViewItems);
                     });
                 } else {
                     setSystemViewItems(statsSystemViewItems);
