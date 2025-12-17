@@ -721,6 +721,12 @@ export const removeBaselineHandler: NotificationHandler = async (data): Promise<
                 return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
             });
             clearTimeMarkerFlags(session);
+            // 取消对比时，删除底部面板Rank ID下拉框对比卡的数据选项
+            for (const [key] of session.rankCardInfoMap) {
+                if (key.includes('_Baseline')) {
+                    session.rankCardInfoMap.delete(key);
+                }
+            }
         });
     } catch (error) {
         console.error(error);
