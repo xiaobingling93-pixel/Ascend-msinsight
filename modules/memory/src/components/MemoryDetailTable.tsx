@@ -328,6 +328,10 @@ const MemoryDetailTable = observer(({ session, memorySession }:
             setDetailTableData();
             return;
         }
+        // 如果分组类型是组件，不应该调用获取size的接口
+        if (memorySession.groupId === GroupBy.COMPONENT) {
+            return;
+        }
         const fetchSizeApi = getFetchSizeApi(memorySession.memoryType);
         const params = buildSearchSizeParam(memorySession, isCompare);
         fetchSizeApi(params).then((res: { minSize: number; maxSize: number }) => {
