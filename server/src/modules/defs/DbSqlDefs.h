@@ -183,7 +183,7 @@ const static std::string COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE =
 // full_db_update_wait_time
 const static std::string FULL_DB_UPDATE_TIME =
         "SELECT deviceId, startNs, endNs,'compute' AS type, CTI.ROWID AS id FROM TASK main JOIN "
-        " COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
+        " COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT TASK.deviceId, "
         "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
         "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
 
