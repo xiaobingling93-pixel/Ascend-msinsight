@@ -638,6 +638,128 @@ config.json
 
 ### 前端部分
 
+1. 添加新模块目录
+
+   在 modules 目录创建新的模块
+
+   ```shell
+       .
+       ├── modules
+       │   ├── framework
+       │   ├── new_module
+       │   └── package.json
+   ```
+
+   新模块可参考如下目录结构
+
+   ```shell
+       .
+       ├── new_module
+       │   ├── src
+       │   │   ├── assets
+       │   │   ├── components
+       │   │   ├── connection
+       │   │   ├── store
+       │   │   ├── theme
+       │   │   ├── units
+       │   │   ├── App.tsx
+       │   │   ├── index.tsx
+       │   │   └── index.css
+       │   ├── craco.config.js
+       │   ├── tsconfig.json
+       │   └── package.json
+   ```
+
+2. 构建配置
+   
+   craco.config.js
+
+   ```js
+   const { webpackCfg, configureConfig } = require("../build-config");
+
+   const path = require("path");
+
+   const libPath = path.resolve(__dirname, "../lib/src");
+   const echartsPath = require.resolve("echarts");
+
+   module.exports = {
+     devServer: {
+       port: 3001,
+       open: false,
+       client: {
+         overlay: {
+           runtimeErrors: (error) => {
+             // 禁止界面展示错误：ResizeObserver loop completed with undelivered notifications
+             return !error?.message.includes("ResizeObserver");
+           },
+         },
+       },
+     },
+     webpack: {
+       alias: webpackCfg.alias,
+       configure: (webpackConfig) => {
+         return configureConfig(webpackConfig, [libPath, echartsPath]);
+       },
+     },
+   };
+   ```
+
+3. 基础 scripts 配置
+   
+   package.json
+
+   ```json
+   {
+       "scripts": {
+           "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
+           "build": "cross-env NODE_OPTIONS=\"==--max-old-space-size=3072 --openssl-legacy-provider\" NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
+           "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\Timeline\\ /E /I /Y",
+           "publishLinux": "cp -rf ./build/* ../framework/public/plugins/Timeline",
+           ... // 自定义配置
+       }
+   }
+   ```
+
+4. src 中必要模块
+
+   **theme：** 主题
+
+   theme/index.ts
+
+   ```ts
+   export { themeInstance } from "@insight/lib/theme";
+   export type { ThemeItem } from "@insight/lib/theme";
+   ```
+
+   **connection：** 通信
+
+   connection/index.ts
+
+   ```ts
+   import { ClientConnector } from "@insight/lib/connection";
+   export default new ClientConnector({
+     getTargetWindow: (): any[] => [window.parent],
+     module: [new_module_request_name],
+   });
+   ```
+
+   其他部分根据新模块的实际需求自定义
+
+5. 在主服务中加入新模块（微服务）
+
+   framework 模块的 moduleConfig.ts 中，在 modulesConfig 中配置新模块
+   
+   ```ts
+   {
+        name: '[new_module]',   // 新模块的微服务名，自定义
+        requestName: '[new_module_request_name]', // 前后端交互的模块名，与后端协定
+        attributes: {
+            src: isDev ? 'http://localhost:[new_port]/' : './plugins/[new_module]/index.html', // 本地开发端口自行分配
+        },
+        isDefault: true, // 默认是否显示该微服务
+        ... // 其他配置条件
+    }
+   ```
 
 **代码来源：** `build/build.py`
 
@@ -1004,7 +1126,105 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
 
 ### 前端部分
 
-- 待补充
+1. 配置DB场景显示模块
+
+   framework/src/moduleConfig.ts
+
+   ```ts
+   
+    [
+       {
+          name: 'Timeline',
+          requestName: 'timeline',
+          attributes: {
+             src: isDev ? 'http://localhost:3000/' : './plugins/Timeline/index.html',
+          },
+          isIE: true,
+       },
+       {
+
+          name: 'Statistic',
+          requestName: 'statistic',
+          attributes: {
+             src: isDev ? 'http://localhost:3006/' : './plugins/Statistic/index.html',
+          },
+          isIE: true,
+       }
+    ]
+
+   ```
+
+2. 导入DB文件
+
+   选择DB文件并发送解析指令`import/action`
+
+    ```ts
+   async function handleProjectAction({ action, project, isConflict, selectedFileType, selectedFilePath, selectedRankId }:
+   {action: ProjectAction;project: Project;isConflict: boolean;selectedFileType?: LayerType;selectedFilePath?: string;selectedRankId?: string}): Promise<void> {
+       ...
+       runInAction(async() => {
+           ...
+           const res = await addDataPath(newProject, action, isConflict, session);
+           ...
+       });
+       ...
+   }
+   ```
+   **代码来源：** `modules/framework/src/units/Project.tsx`
+   
+   
+3. 主服务将解析结果发送给微服务
+
+   ```ts
+   export const addDataPath = async function(project: Project, action: ProjectAction, isConflict: boolean, session: Session): Promise<boolean> {
+      ...
+      connector.send({
+         event: 'remote/import',
+         body: { dataSource: transformTimelineDataSource(project), importResult: res, switchProject },
+         target: 'plugin',
+      });
+      ...
+   }
+   ```
+   **代码来源：** `modules/framework/src/centralServer/server.ts`
+
+
+4. 微服务处理数据生成卡/泳道菜单
+
+   ```ts
+      export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+         ...
+         runInAction(() => {
+            initUnitInfo(session, result, dataSource, isNeedResetRankId); // 根据解析结果初始化泳道信息
+        });
+        sendSessionUpdate(result, session);
+         ...
+      }
+   ```
+   **代码来源：** `modules/timeline/src/connection/handler.ts`
+
+
+5. 微服务接收并处理卡解析结果
+
+   parse/success
+   ```ts
+   export const parseSuccessHandler: NotificationHandler = (data): void => {
+     ...
+   }
+   ```
+   **代码来源：** `modules/timeline/src/connection/handler.ts`
+
+
+6. 微服务获取泳道数据并绘制泳道图
+   ```tsx
+      const ThreadUnit = unit<ThreadMetaData>({
+        name: 'Thread',
+        pinType: 'copied',
+        chart: chart()
+      })
+   ```
+   **代码来源：** `modules/timeline/src/insight/units/AscendUnit.tsx`
+
 
 ### 后端部分
 
