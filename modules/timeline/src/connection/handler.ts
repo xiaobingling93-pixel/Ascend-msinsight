@@ -35,6 +35,7 @@ import { savePageSetting, recoverPageSetting, updatePageSetting } from '../utils
 import { errorCenter, getRankInfoKey, WsError, ErrorCode } from '@insight/lib/utils';
 import { RankInfo } from '../api/interface';
 import { queryOneKernel } from '../components/detailViews/Common';
+import { TIME_MAKER_DEFAULT } from '../entity/timeMaker';
 
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const MAX_PARSE_SIZE = 32;
@@ -447,6 +448,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
         session.isNeedResetRankId = isNeedResetRankId;
         runInAction(() => {
             initUnitInfo(session, result, dataSource, isNeedResetRankId);
+            clearTimeMarkerFlags(session);
         });
         sendSessionUpdate(result, session);
         connector.send({
@@ -646,9 +648,10 @@ function resetSession(): void {
 }
 
 const clearTimeMarkerFlags = (session: Session): void => {
-    session.timelineMaker.selectedFlag = undefined;
-    session.timelineMaker.refreshTrigger = (session.timelineMaker.refreshTrigger + 1) % 10;
-    session.timelineMaker.timelineFlagList.splice(0);
+    session.timelineMaker = {
+        ...TIME_MAKER_DEFAULT,
+        refreshTrigger: (session.timelineMaker.refreshTrigger + 1) % 10,
+    };
 };
 
 /**

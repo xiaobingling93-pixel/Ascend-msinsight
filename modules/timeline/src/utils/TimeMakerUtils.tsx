@@ -70,13 +70,13 @@ const deleteAll = (props: TimeLineMakerProps): void => {
     });
 };
 
-export const handleTimeMakerAction = (props: TimeLineMakerProps): void => {
+export const handleTimeMakerAction = (props: TimeLineMakerProps): { destroy: () => void } | undefined => {
     const onToolTipVisibleChange = props.onToolTipVisibleChange;
     if (onToolTipVisibleChange === undefined) {
         return;
     }
     onToolTipVisibleChange(true);
-    Modal.confirm({
+    return Modal.confirm({
         modalRender: () => <ThemeProvider theme={themeInstance.getThemeType()}>
             <TimeMakerListElement session={props.session} onToolTipVisibleChange={onToolTipVisibleChange}/>
         </ThemeProvider>,

@@ -39,12 +39,19 @@ const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
 export const TimeMakerButton = observer(({ session }: { session: Session }): JSX.Element | null => {
     const { t } = useTranslation();
     const [isSuspend, updateIsSuspend] = useState(false);
+    const [timelineMarkerModal, setTimelineMarkerModal] = useState<{ destroy: () => void } | undefined>(undefined);
     const onToolTipVisibleChange = (open: boolean): void => {
         updateIsSuspend(open);
     };
     const timeMakerProps = { session, onToolTipVisibleChange };
+
+    React.useEffect(() => {
+        timelineMarkerModal?.destroy();
+        updateIsSuspend(false);
+    }, [session.timelineMaker.refreshTrigger]);
+
     return <CustomButton data-testid={'tool-marker'} icon={FlagIcon as any} tooltip={t('timelineMarker:markerList')}
-        isSuspend={ isSuspend } onClick={ (): void => { handleTimeMakerAction(timeMakerProps); }}/>;
+        isSuspend={ isSuspend } onClick={ (): void => { setTimelineMarkerModal(handleTimeMakerAction(timeMakerProps)); }}/>;
 });
 
 const CanvasContainer = styled.div`
