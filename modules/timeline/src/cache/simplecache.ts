@@ -33,31 +33,62 @@ export class SimpleCache {
     data: Map<string, any>;
     timePerPx: number = -1;
 
+    private readonly methodSemaphores = new Map<Method, MethodSemaphore>();
+
+    private getSemaphore(method: Method): MethodSemaphore | undefined {
+        return this.methodSemaphores.get(method);
+    }
+
     constructor() {
         this.data = new Map();
         this.data.set('unit/counter', new Map<string, Record<string, unknown>>());
         this.data.set('unit/threadTracesSummary', new Map<string, Record<string, unknown>>());
+
+        // 只对 summary 限流，限流为20条
+        this.methodSemaphores.set(
+            'unit/threadTracesSummary',
+            new MethodSemaphore(20),
+        );
     }
 
     tryFetchFromCache = async (
         method: Method, requestKey: string, params: Record<string, unknown> & { timePerPx: number }, metaData?: unknown,
     ): Promise<Record<string, unknown> | undefined> => {
-        if (this.data.get(method).get(requestKey) === undefined) {
-            try {
-                const result = await handlerMap.get(method)?.(params, metaData);
-                if (result !== undefined && result.length === 0) {
-                    this.data.get(method).set(requestKey, undefined);
-                }
-
-                if (result !== undefined && result.length >= 1) {
-                    this.timePerPx = params.timePerPx;
-                    this.data.get(method).set(requestKey, result);
-                }
-            } catch (e) {
-                console.warn('Failed to try fetch from cache', method, requestKey, e);
-                return undefined;
-            }
+        const methodCache = this.data.get(method);
+        if (!methodCache) {
+            return undefined;
         }
+
+        // 已有缓存，直接返回
+        if (methodCache.get(requestKey) !== undefined) {
+            return {
+                data: processorMap.get(method)?.(params, this.data, requestKey),
+            };
+        }
+
+        const semaphore = this.getSemaphore(method);
+
+        if (semaphore) {
+            await semaphore.acquire();
+        }
+
+        try {
+            const result = await handlerMap.get(method)?.(params, metaData);
+            if (result !== undefined && result.length === 0) {
+                methodCache.set(requestKey, undefined);
+            }
+
+            if (result !== undefined && result.length >= 1) {
+                this.timePerPx = params.timePerPx;
+                methodCache.set(requestKey, result);
+            }
+        } catch (e) {
+            console.warn('Failed to try fetch from cache', method, requestKey, e);
+            return undefined;
+        } finally {
+            semaphore?.release();
+        }
+
         if (this.data.get(method).get(requestKey) === undefined) {
             console.warn('Failed to try fetch from cache', method, requestKey);
             return undefined;
@@ -71,6 +102,7 @@ export class SimpleCache {
         this.data.forEach((value) => {
             value?.clear();
         });
+        this.methodSemaphores.forEach(s => s.clear());
     }
 }
 
@@ -143,4 +175,40 @@ function counterArr(params: Record<string, unknown>, data: Map<string, unknown>,
     const startIndex = binarySearchLastSmall(result, (arr: number[]) => arr[0], start);
     const endIndex = binarySearchFirstBig(result, (arr: number[]) => arr[0], end);
     return result.slice(startIndex === 0 ? startIndex : startIndex - 1, endIndex + 2);
+}
+
+class MethodSemaphore {
+    private readonly maxConcurrent: number;
+    private inFlight = 0;
+    private readonly waitQueue: Array<() => void> = [];
+
+    constructor(maxConcurrent: number) {
+        this.maxConcurrent = maxConcurrent;
+    }
+
+    async acquire(): Promise<void> {
+        if (this.inFlight < this.maxConcurrent) {
+            this.inFlight++;
+            return;
+        }
+
+        await new Promise<void>(resolve => {
+            this.waitQueue.push(resolve);
+        });
+
+        this.inFlight++;
+    }
+
+    release(): void {
+        this.inFlight--;
+        const next = this.waitQueue.shift();
+        if (next) {
+            next();
+        }
+    }
+
+    clear(): void {
+        this.inFlight = 0;
+        this.waitQueue.length = 0;
+    }
 }
