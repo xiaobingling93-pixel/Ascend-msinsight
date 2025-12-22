@@ -2,7 +2,7 @@
 
 ## 最新消息
 
-- [2025.12.30]：MindStudio Insight项目首次上线。
+- [2025.12.30]：MindStudio Insight项目首次上线
 
 ## 简介
 
