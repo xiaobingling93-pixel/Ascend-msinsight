@@ -169,7 +169,7 @@ def build_server():
 
 def build_frontend():
     os.putenv('npm_config_strict_ssl', 'false')
-    os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
+    os.putenv('npm_config_registry', 'https://registry.npmmirror.com/')
 
     module_name = 'frontend'
     module_build_path = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.BUILD_DIR)
@@ -191,8 +191,7 @@ def build_frontend():
 
 def set_npm_config():
     os.putenv('npm_config_strict_ssl', 'false')
-    os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
-    os.putenv('npm_config_@cloudsop:registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm')
+    os.putenv('npm_config_registry', 'https://registry.npmmirror.com/')
 
 
 def build_vscode(vscode_version, os_name):
@@ -266,8 +265,8 @@ def build_jupyterlab(jupyterlab_version, os_name):
     requirements_path = os.path.join(plugin_path, 'requirements.txt')
 
     # 下载构建依赖
-    result = exec_command([Const.PIP, 'install', '--trusted-host', 'cmc.centralrepo.rnd.huawei.com', '-i',
-                           'https://cmc.centralrepo.rnd.huawei.com/artifactory/pypi-central-repo/simple/',
+    result = exec_command([Const.PIP, 'install', '--trusted-host', 'pypi.tuna.tsinghua.edu.cn', '-i',
+                           'https://pypi.tuna.tsinghua.edu.cn/simple',
                            '-r', requirements_path],
                           plugin_path, 'jupyterlab_plugin')
     if result != 0:
@@ -341,7 +340,7 @@ def build_package(version, os_name):
 def build_light_package(version, os_name, is_huaweicloud):
     if is_huaweicloud and os_name != "linux-aarch64" and os_name != "linux-x86_64":
         return 0
-    os.putenv('CARGO_REGISTRY', 'https://mirrors.tools.huawei.com/rust/crates.io-index/')
+    os.putenv('CARGO_REGISTRY', 'https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index')
     if os.getenv('BEPHOME') is not None:  # 规避目前cargo不能跑bep问题
         os.putenv('LD_PRELOAD', '')
 

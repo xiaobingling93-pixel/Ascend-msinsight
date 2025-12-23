@@ -36,42 +36,42 @@ OPEN_SOURCE = [
     [
         'googletest',
         'v1.13.0',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/google/googletest.git'
+        'https://github.com/google/googletest.git'
     ],
     [
         'mockcpp',
         'master',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/sinojelly/mockcpp.git'
+        'https://github.com/sinojelly/mockcpp.git'
     ],
     [
         'libuv',
         'v1.44.2',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/libuv/libuv.git'
+        'https://gitcode.com/gh_mirrors/li/libuv.git'
     ],
     [
         'uSockets',
         'v0.8.6',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/uNetworking/uSockets.git'
+        'https://gitcode.com/gh_mirrors/us/uSockets.git'
     ],
     [
         'uWebSockets',
         'v20.48.0',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/uNetworking/uWebSockets.git'
+        'https://gitcode.com/gh_mirrors/uw/uWebSockets.git'
     ],
     [
         'rapidjson',
-        '6089180ecb704cb2b136777798fa1be303618975-htrunk1',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/Tencent/rapidjson.git'
+        'master',
+        'https://gitcode.com/GitHub_Trending/ra/rapidjson.git'
     ],
     [
         'sqlite3_src',
-        '3.46.1',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/www.sqlite.org/sqlite.git'
+        'version-3.46.1',
+        'https://gitcode.com/gh_mirrors/sq/sqlite.git'
     ],
     [
         'att',
-        'v6.0.0-ATT-htrunk18',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/Ascend/att.git'
+        'master',
+        'https://gitcode.com/Ascend/mstt.git'
     ]
 ]
 
@@ -86,7 +86,7 @@ def download_3rd_party():
     for source in OPEN_SOURCE:
         if os.path.exists(os.path.join(THIRD_PARTY_DIR, source[0])):
             continue
-        download_cmd = ['git', 'clone', '-b', source[1], source[2], source[0], '--depth=1']
+        download_cmd = ['git', 'clone', '-b', source[1], source[2], source[0]]
         output = subprocess.Popen(download_cmd, cwd=THIRD_PARTY_DIR, stdout=subprocess.PIPE)
         log_output(output)
 

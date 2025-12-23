@@ -70,8 +70,7 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
     // 这里包含一个隐藏逻辑，当前json切片为50M，当前线程在解析过较大切片后，不用再重新申请内存池，后续优化下这块内存
     auto allocator = Dic::Module::JsonParseMemPool::Instance().GetMemBuff(std::this_thread::get_id());
     document_t doc(allocator.get());
-    doc.SetMaxLeafNum(JsonUtil::MAX_JSON_LEAF_NUMBER);
-    doc.Parse<kParseNumbersAsStringsFlag | kParseJsonVerifyFlag>(buffer.data());
+    doc.Parse<kParseNumbersAsStringsFlag>(buffer.data());
     if (doc.HasParseError()) {
         error = "File is not valid json. " + error;
         ServerLog::Error("Event Parser. fileId:", fileId, ". ", error);

@@ -558,7 +558,7 @@ void VirtualClusterDatabase::GetStepsOrRanksObject(const std::string &jsonStr,
     std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     std::string err;
-    auto json = JsonUtil::TryParse<kParseJsonVerifyFlag>(jsonStr, err);
+    auto json = JsonUtil::TryParse(jsonStr, err);
     if (!json || !err.empty()) {
         ServerLog::Error("Failed to parse json on get steps or ranks: %.", err);
         return;

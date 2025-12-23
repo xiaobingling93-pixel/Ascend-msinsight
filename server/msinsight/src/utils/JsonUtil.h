@@ -92,15 +92,14 @@ public:
 
     static inline std::optional<document_t> TryParse(const std::string &jsonStr, std::string &error)
     {
-        return TryParse<kParseJsonVerifyFlag>(jsonStr, error);
+        return TryParse<kParseDefaultFlags>(jsonStr, error);
     }
 
     template <unsigned parseFlags>
     static inline std::optional<document_t> TryParse(const std::string &jsonStr, std::string &error)
     {
         document_t doc;
-        doc.SetMaxLeafNum(MAX_JSON_LEAF_NUMBER);
-        doc.Parse<parseFlags | kParseJsonVerifyFlag>(jsonStr.c_str(), jsonStr.length());
+        doc.Parse<parseFlags>(jsonStr.c_str(), jsonStr.length());
         if (doc.HasParseError()) {
             static const size_t PRINT_ERROR_SIZE = 10;
             auto offset = doc.GetErrorOffset();

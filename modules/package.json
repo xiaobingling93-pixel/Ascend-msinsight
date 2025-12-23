@@ -15,7 +15,6 @@
         "testTimeline": "cd timeline && pnpm test"
     },
     "dependencies": {
-        "@cloudsop/horizon": "0.0.77",
         "@emotion/react": "11.14.0",
         "@emotion/styled": "11.14.0",
         "antd": "4.24.13",
@@ -27,6 +26,8 @@
         "mobx": "6.10.0",
         "mobx-react": "9.0.0",
         "react-i18next": "13.2.2",
+        "react": "18.2.0",
+        "react-dom": "18.1.0",
         "@insight/lib": "workspace:*"
     },
     "devDependencies": {

@@ -1,5 +1,4 @@
-[registries.openSources]
-index = "https://szv-open.codehub.huawei.com/cargo/cargo-central-repo.git"
-[source.openSources]
-registry = "https://szv-open.codehub.huawei.com/cargo/cargo-central-repo.git"
-replace-with = 'innersource'
+[source.crates-io]
+replace-with = "tuna"
+[source.tuna]
+registry = "https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index"
