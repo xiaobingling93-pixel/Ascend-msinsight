@@ -36,12 +36,12 @@ OPEN_SOURCE = [
     [
         'googletest',
         'v1.13.0',
-        'https://github.com/google/googletest.git'
+        'https://gitcode.com/GitHub_Trending/go/googletest.git'
     ],
     [
         'mockcpp',
-        'master',
-        'https://github.com/sinojelly/mockcpp.git'
+        'main',
+        'https://gitee.com/aronic/mockcpp.git'
     ],
     [
         'libuv',
