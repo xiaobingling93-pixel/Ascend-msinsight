@@ -64,8 +64,7 @@ CHECK_FILE_LIST = [
     ]
 ]
 
-SQLITE3_SOURCE_URL = 'https://cmc.cloudartifact.szv.dragon.tools.huawei.com/artifactory/opensource_general/SQLite/' \
-                     '3.40.1/package/sqlite-autoconf-3400100.tar.gz'
+SQLITE3_SOURCE_URL = 'https://www.sqlite.org/2022/sqlite-autoconf-3400100.tar.gz'
 
 
 def log(info):
