@@ -27,7 +27,7 @@ import type { CompareData } from '@/utils/Compare';
 import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
 
-// Scene：数据场景：默认、集群、算子调优、Jupter、Leaks、只trace.json文件
+// Scene：数据场景：默认、集群、算子调优、Leaks、只trace.json文件
 export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL' | 'HybridParse';
 
 interface ContextMenu {
@@ -153,7 +153,7 @@ export class Session {
         makeAutoObservable(this);
     }
 
-    // 导入数据场景：默认、集群、算子调优、Jupter、只trace.json
+    // 导入数据场景：默认、集群、算子调优、只trace.json
     get scene(): Scene {
         let scene: Scene;
         if (this.isHybridParse) {

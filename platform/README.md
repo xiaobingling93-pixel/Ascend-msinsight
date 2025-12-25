@@ -20,26 +20,6 @@ rustc --version
 cargo -V
 ```
 
-##### 1.1.2 [华为内部安装](http://3ms.huawei.com/km/groups/3945424/blogs/details/10400033)
-
-1. 首先配置环境变量，将以下变量添加到环境变量中
-   
-   RUSTUP_DIST_SERVER http://rust.inhuawei.com/rustup-static
-   
-   RUSTUP_UPDATE_ROOT [Index of /rustup-static/rustup/](http://rust.inhuawei.com/rustup-static/rustup)
-
-2. 进入[huawei_rust_server](http://rust.inhuawei.com/rustup-static/rustup/dist/)下载对应平台的rustup-init.exe安装文件，进行安装。
-
-3. 安装过程中如果出现需要 Visual Studio 2013 或更新版本的 C++ build tools的提示，同上安装 [Build Tools for Visual Studio 2019](https://visualstudio.microsoft.com/visual-cpp-build-tools/)。
-
-4. 安装完成之后，检查是否正确安装，打开shell并运行以下命令，成功获取最新稳定版的版本号说明安装成功。
-
-```shell
-rustc --version
-
-cargo -V
-```
-
 ### 1.2 配置
 
 ##### 1.2.1 华为镜像配置

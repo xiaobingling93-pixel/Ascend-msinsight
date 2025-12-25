@@ -22,7 +22,7 @@
 
 #### 3.1.1 fork代码到自己仓库，并使用git从自己远程仓库clone代码到本地
 
-[MindStudio-Insight](/MindStudio-Insight)
+[MindStudio-Insight](https://gitcode.com/Ascend/msinsight)
 
 #### 3.1.2 使用clion或其他软件打开MindStudio-Insight文件夹下的server文件夹
 
@@ -39,17 +39,17 @@
 3. 选择**构建、执行、部署**中的**CMake**选项，并且将**工具链**指向自己下载好的MinGW
 ![CMake_toolchain_setting](./figures/CMake_toolchain_setting.png)
 
-### 3.2 三方库的下载与执行编译
+### 3.2 第三方库的下载与执行编译
 
-#### 3.2.1 下载三方库与预运行三方库
+#### 3.2.1 下载第三方库与预运行第三方库
 
 在server文件夹下新建一个新的终端，在终端中运行如下代码,成功执行如下**图3-1 download_third_party_success**，**图3-2 预运行成功**所示
 注：在执行此步骤之前请保证网络畅通
 
-```
-cd .\build\
-python .\download_third_party.py
-python .\preprocess_third_party.py
+```shell
+cd build
+python download_third_party.py
+python preprocess_third_party.py
 ```
 
 **图3-1 download_third_party_success** 
@@ -621,7 +621,7 @@ config.json
 在MindStudio Insight安装目录下执行
 
 ```shell
-    python resource/profile/plugin_install.py install --path=XXX_plugin.zip
+    python resource/profiler/plugin_install.py install --path=XXX_plugin.zip
 ```
 
 ### 插件使用
@@ -843,7 +843,7 @@ useEffect(() => {
 
 ```ts
 // 在此处添加新增模块对应的导入数据场景
-// Scene：数据场景：默认、集群、算子调优、Jupter、Leaks、只trace.json文件
+// Scene：数据场景：默认、集群、算子调优、Leaks、只trace.json文件
 export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL' | 'HybridParse';
 
 export class Session {
@@ -862,7 +862,7 @@ export class Session {
     instrVersion: number = -1;
 
     // 需添加新模块至场景中
-    // 导入数据场景：默认、集群、算子调优、Jupter、只trace.json
+    // 导入数据场景：默认、集群、算子调优、只trace.json
     get scene(): Scene {
         let scene: Scene;
         if (this.isHybridParse) {
