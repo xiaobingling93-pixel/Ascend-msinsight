@@ -86,7 +86,7 @@ def download_3rd_party():
     for source in OPEN_SOURCE:
         if os.path.exists(os.path.join(THIRD_PARTY_DIR, source[0])):
             continue
-        download_cmd = ['git', 'clone', '-b', source[1], source[2], source[0]]
+        download_cmd = ['git', 'clone', '-b', source[1], source[2], source[0], '--depth=1']
         output = subprocess.Popen(download_cmd, cwd=THIRD_PARTY_DIR, stdout=subprocess.PIPE)
         log_output(output)
 

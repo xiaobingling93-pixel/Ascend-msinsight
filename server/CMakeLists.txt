@@ -29,8 +29,8 @@ set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-unknown-pragmas -Wno-unused-parameter 
 # set some compile warn as error which is not allow
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=implicit-fallthrough -Werror=switch")
 # Compiler Security Options
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
 
 # 构建脚本中使用的是release
 if (CMAKE_BUILD_TYPE MATCHES "Release")
@@ -50,7 +50,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
         message(STATUS "Build type = ${CMAKE_BUILD_TYPE}, static = enable.")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--nxcompat -Wl,--dynamicbase -s -pie")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,--nxcompat -Wl,--dynamicbase -s -pie")
-        add_link_options(-static)
     endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     if ((NOT CMAKE_BUILD_TYPE MATCHES "Debug") AND (NOT CMAKE_BUILD_TYPE MATCHES "PROFILE"))
