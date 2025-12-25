@@ -35,18 +35,18 @@ fi
 cd ../output/linux-x86_64/bin
 
 ./insight_test
-
-cd ${BUILD_DIR}
-echo ${BUILD_DIR}
-test_dir=$(find ${BUILD_DIR} -name 'insight_test.dir')
-echo ${test_dir}
-echo "********************** Generate insight_test Coverage Start.************************"
-LCOV_RC="--rc lcov_branch_coverage=1 --rc geninfo_no_exception_branch=1"
-lcov -c -d ${test_dir} -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
-lcov -r ${COV_DIR}/lcov_insight_test.info '*include*' -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
-lcov -r ${COV_DIR}/lcov_insight_test.info '*test*' -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
-lcov -r ${COV_DIR}/lcov_insight_test.info '*third_party*' -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
-echo "********************** Generate insight_test Coverage Stop.*************************"
-
-genhtml ${COV_DIR}/lcov_insight_test.info -o ${COV_DIR}/result --branch-coverage
-echo "report: ${COV_DIR}"
+# 平台暂时不支持覆盖率，这里先屏蔽
+#cd ${BUILD_DIR}
+#echo ${BUILD_DIR}
+#test_dir=$(find ${BUILD_DIR} -name 'insight_test.dir')
+#echo ${test_dir}
+#echo "********************** Generate insight_test Coverage Start.************************"
+#LCOV_RC="--rc lcov_branch_coverage=1 --rc geninfo_no_exception_branch=1"
+#lcov -c -d ${test_dir} -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
+#lcov -r ${COV_DIR}/lcov_insight_test.info '*include*' -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
+#lcov -r ${COV_DIR}/lcov_insight_test.info '*test*' -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
+#lcov -r ${COV_DIR}/lcov_insight_test.info '*third_party*' -o ${COV_DIR}/lcov_insight_test.info ${LCOV_RC}
+#echo "********************** Generate insight_test Coverage Stop.*************************"
+#
+#genhtml ${COV_DIR}/lcov_insight_test.info -o ${COV_DIR}/result --branch-coverage
+#echo "report: ${COV_DIR}"
