@@ -137,6 +137,12 @@ def build():
         shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(script_path, CLUSTER_ANALYSE), copy_function=shutil.copy2)
         shutil.copytree(PROF_COMMON_DIR, os.path.join(script_path, PROF_COMMON), copy_function=shutil.copy2)
     else:
+        cluster_analysis_py = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
+        cluster_analysis_patch_py = os.path.join(BUILD_DIR, 'cluster_analysis_patch.py')
+        result = patch_cluster_analysis_source_for_pyinstaller(cluster_analysis_py, cluster_analysis_patch_py)
+        if not result:
+            build_log('Failed to patch cluster_analysis.py')
+            return -1
         build_att = [
             'pyinstaller', '--distpath=' + att_bin_dir, Spec_Path
         ]
@@ -148,6 +154,11 @@ def build():
     build_log('end build.\n')
 
     return 0
+
+
+def patch_cluster_analysis_source_for_pyinstaller(cluster_analysis_py: str, patch_source_path: str):
+    from patch_source_for_build import patch_source
+    return patch_source(cluster_analysis_py, patch_source_path)
 
 
 def init_log(name):
