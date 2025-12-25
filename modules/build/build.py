@@ -44,7 +44,7 @@ MODULES_MAP = {
     'timeline': 'Timeline',
 }
 
-BUILD_PROCESS_COUNT = 3 if platform.system() == 'Windows' else min(multiprocessing.cpu_count(), len(MODULES_MAP))
+BUILD_PROCESS_COUNT = 3
 
 
 def clean():
