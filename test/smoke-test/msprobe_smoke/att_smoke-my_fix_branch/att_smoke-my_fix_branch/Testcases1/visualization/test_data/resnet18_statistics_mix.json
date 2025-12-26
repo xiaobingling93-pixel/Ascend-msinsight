@@ -1,5 +1,0 @@
-{
-    "npu_path": "./resnet18_statistics_mix/step0/rank",
-    "bench_path": "./resnet18_statistics_mix/step0/rank",
-    "is_print_compare_log": true
-}

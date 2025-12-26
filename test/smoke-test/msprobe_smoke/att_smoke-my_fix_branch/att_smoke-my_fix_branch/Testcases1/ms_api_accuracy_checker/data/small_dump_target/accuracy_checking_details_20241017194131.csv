@@ -1,2 +1,0 @@
-﻿API Name,Bench Dtype,Tested Dtype,Shape,Cosine,MaxAbsErr,MaxRelativeErr,Status,Message
-Mint.where.0.forward.output.0,Int64,Int64,"(1, 4096)",1.0,0.0,0.0,pass,

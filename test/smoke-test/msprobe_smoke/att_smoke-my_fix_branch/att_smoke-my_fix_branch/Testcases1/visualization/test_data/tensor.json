@@ -1,5 +1,0 @@
-{
-    "npu_path": "./llama2_tensor_dump/npu",
-    "bench_path": "./llama2_tensor_dump/npu",
-    "is_print_compare_log": true
-}

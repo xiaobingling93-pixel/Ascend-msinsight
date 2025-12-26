@@ -1,1 +1,0 @@
-gcc -fPIC -shared mspti_lib.cpp -o mspti_lib.so -I${ASCEND_TOOLKIT_HOME}/tools/mspti/include

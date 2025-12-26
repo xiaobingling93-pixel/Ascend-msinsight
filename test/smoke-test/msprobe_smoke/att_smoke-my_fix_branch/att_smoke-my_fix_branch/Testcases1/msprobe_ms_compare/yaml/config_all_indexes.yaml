@@ -1,3 +1,0 @@
-api:
-  - Tensor.__sub__
-  - Functional.celu

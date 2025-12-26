@@ -1,6 +1,0 @@
-﻿API name,Forward Test Success,Backward Test Success,Message
-Functional.conv2d.0,SKIP,SKIP,name 'devive_exec_params' is not defined
-Functional.conv2d.1,SKIP,SKIP,name 'devive_exec_params' is not defined
-Functional.conv2d.2,SKIP,SKIP,name 'devive_exec_params' is not defined
-Functional.conv2d.3,SKIP,SKIP,name 'devive_exec_params' is not defined
-Functional.conv2d.4,SKIP,SKIP,name 'devive_exec_params' is not defined

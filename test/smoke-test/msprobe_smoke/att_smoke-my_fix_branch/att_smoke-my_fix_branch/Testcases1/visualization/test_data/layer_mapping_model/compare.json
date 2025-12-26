@@ -1,5 +1,0 @@
-{
-    "npu_path": "./train1/step0/rank",
-    "bench_path": "./train2/step0/rank",
-    "is_print_compare_log": true
-}

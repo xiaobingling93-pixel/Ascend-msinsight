@@ -1,3 +1,0 @@
-api:
-  - ParallelAttention
-  - dense_h_to_4h.RowParallelLinear

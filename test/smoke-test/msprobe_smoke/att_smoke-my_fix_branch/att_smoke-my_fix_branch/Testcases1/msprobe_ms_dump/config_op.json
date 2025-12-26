@@ -1,9 +1,0 @@
-{
-    "dump_json_path": "./baseline/Larger_L1_task_statistics_step_2_rank_0_1_scope_all_list_all_data_mode_all/step2/rank0/dump.json",
-    "api_name": "Functional.add.0",
-    "extract_api_path": "./Functional.add.0.json",
-    "propagation": "forward", 
-    "data_mode": "random_data", 
-    "random_seed": 1234, 
-    "iter_times": 1
-}

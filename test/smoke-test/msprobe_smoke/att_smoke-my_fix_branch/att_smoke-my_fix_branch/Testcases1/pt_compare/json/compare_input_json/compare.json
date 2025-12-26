@@ -1,6 +1,0 @@
-{
-    "npu_path":"/home/maoyanlong/att_smoke_new/Testcases1/pt_compare/test_data/test_compare_summary_mode/npu/step0/rank/dump.json",
-    "bench_path":"/home/maoyanlong/att_smoke_new/Testcases1/pt_compare/test_data/test_compare_summary_mode/cpu/step0/rank/dump.json",
-    "stack_path":"/home/maoyanlong/att_smoke_new/Testcases1/pt_compare/test_data/test_compare_summary_mode/npu/step0/rank/stack.json",
-    "is_print_compare_log": true
-}

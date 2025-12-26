@@ -1,4 +1,0 @@
-{
-    "npu_path":"./llama2_distributed_p2p/step0",
-    "is_print_compare_log": true
-}

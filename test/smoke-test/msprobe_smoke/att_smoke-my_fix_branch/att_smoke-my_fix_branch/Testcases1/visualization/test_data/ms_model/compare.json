@@ -1,5 +1,0 @@
-{
-    "npu_path": "./ms_tensor_dump/step0/rank0",
-    "bench_path": "./ms_tensor_dump/step0/rank0",
-    "is_print_compare_log": true
-}

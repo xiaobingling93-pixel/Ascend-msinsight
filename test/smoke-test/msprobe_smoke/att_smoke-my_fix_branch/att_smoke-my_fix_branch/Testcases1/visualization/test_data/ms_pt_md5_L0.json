@@ -1,5 +1,0 @@
-{
-    "npu_path": "./dump_ms_pt_md5_L0/dump_ms/step0/rank0",
-    "bench_path": "./dump_ms_pt_md5_L0/dump_pt/step0/rank0",
-    "is_print_compare_log": true
-}               

@@ -1,3 +1,0 @@
-# att_smoke
-
-test

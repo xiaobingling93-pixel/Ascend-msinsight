@@ -1,6 +1,0 @@
-{
-    "task": "run_ut",
-    "run_ut": {
-        "white_list": ["__mul__"]
-    }
-}

@@ -1,5 +1,0 @@
-{
-    "npu_path": "./llama2_md5_dump/npu",
-    "bench_path": "./llama2_md5_dump/bench",
-    "is_print_compare_log": true
-}

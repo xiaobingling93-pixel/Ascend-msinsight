@@ -1,9 +1,0 @@
-test_monitor_cc.sh  4
-test_monitor_mv.sh  2
-test_monitor_print_struct.sh  4
-test_monitor_ur.sh  4
-test_monitor_wg_time.sh  4
-test_monitor_wg.sh  2
-test_monitor_xy_forward.sh  4
-test_monitor_xy.sh  2
-test_monitor_xy_forward_single_ops.sh 4

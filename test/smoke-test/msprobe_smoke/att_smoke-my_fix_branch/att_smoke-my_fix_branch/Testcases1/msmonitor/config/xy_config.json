@@ -1,8 +1,0 @@
-{
-    "targets":{
-    },
-    "xy_distribution": true,
-    "format": "csv",
-    "all_xy": true,
-    "ops": ["norm", "min", "max", "mean", "nans"]
-}

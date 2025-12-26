@@ -1,4 +1,0 @@
-{
-    "npu_path":"./vit_overflow_dump/rank0",
-    "is_print_compare_log": true
-}

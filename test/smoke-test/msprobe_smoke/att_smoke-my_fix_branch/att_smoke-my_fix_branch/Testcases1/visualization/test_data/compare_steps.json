@@ -1,5 +1,0 @@
-{
-    "npu_path":"./llama2_steps",
-    "bench_path":"./llama2_steps",
-    "is_print_compare_log": true
-}

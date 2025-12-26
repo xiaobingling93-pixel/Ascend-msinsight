@@ -1,3 +1,0 @@
-test_ms_grade_probe_pynative_mode_L0_small.sh      1
-test_ms_grade_probe_pynative_mode_L1_small.sh      1
-test_ms_grade_probe_pynative_mode_L2_small.sh      1

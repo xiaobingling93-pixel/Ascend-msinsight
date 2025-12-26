@@ -1,8 +1,0 @@
-{
-    "targets":{
-    },
-    "print_struct": true,
-    "wg_distribution": true,
-    "format": "csv",
-    "ops": ["norm"]
-}

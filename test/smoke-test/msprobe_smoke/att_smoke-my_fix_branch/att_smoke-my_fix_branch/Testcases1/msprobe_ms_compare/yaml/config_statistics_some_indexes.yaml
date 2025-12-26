@@ -1,6 +1,0 @@
-api:
-  - Distributed.all_reduce
-  - Distributed.all_gather_into_tensor
-compare_index:
-  - Max diff
-  - MaxRelativeErr

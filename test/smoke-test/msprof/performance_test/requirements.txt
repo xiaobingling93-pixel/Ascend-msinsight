@@ -1,5 +1,0 @@
-colorama
-lxml
-tenacity
-matplotlib
-seaborn

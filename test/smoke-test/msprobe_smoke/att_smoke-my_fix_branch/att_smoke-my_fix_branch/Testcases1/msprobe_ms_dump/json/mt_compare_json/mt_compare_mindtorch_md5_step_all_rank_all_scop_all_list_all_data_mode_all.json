@@ -1,5 +1,0 @@
-{
-    "npu_path": "/home/maoyanlong/att_smoke_new/Testcases1/msprobe_ms_dump/baseline/mindtorch_Larger_L1_task_md5_step_all_rank_all_scop_all_list_all_data_mode_all/step2",
-    "bench_path": "/home/maoyanlong/att_smoke_new/Testcases1/msprobe_ms_dump/baseline/mindtorch_Larger_L1_task_md5_step_all_rank_all_scop_all_list_all_data_mode_all/step2",
-    "is_print_compare_log": true
-}

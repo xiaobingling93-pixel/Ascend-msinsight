@@ -1,8 +1,0 @@
-{
-    "smtp_config": {
-        "open_mock": "open_mock"
-    },
-    "recipients": [
-        "open_mock"
-    ]
-}

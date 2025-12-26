@@ -1,6 +1,0 @@
-{
-    "npu_path":"/home/maoyanlong/att_smoke_new/Testcases1/msprobe_ms_compare/test_data/test_lm_compare_statistics/ms/dump.json",
-    "bench_path":"/home/maoyanlong/att_smoke_new/Testcases1/msprobe_ms_compare/test_data/test_lm_compare_statistics/pt/dump.json",
-    "stack_path":"/home/maoyanlong/att_smoke_new/Testcases1/msprobe_ms_compare/test_data/test_lm_compare_statistics/ms/stack.json",
-    "is_print_compare_log": true
-}

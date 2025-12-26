@@ -1,5 +1,0 @@
-{
-    "npu_path": "./fuzzy_match_param_tensor/linear3_tensor/step0/rank",
-    "bench_path": "./fuzzy_match_param_tensor/linear3_tensor_1/step0/rank",
-    "is_print_compare_log": true
-}

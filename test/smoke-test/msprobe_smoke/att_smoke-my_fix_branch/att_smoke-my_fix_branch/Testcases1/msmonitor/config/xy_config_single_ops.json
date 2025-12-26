@@ -1,9 +1,0 @@
-{
-    "targets":{
-    },
-    "xy_distribution": true,
-    "format": "csv",
-    "forward_only": true,
-    "all_xy": true,
-    "ops": ["norm"]
-}

@@ -1,6 +1,0 @@
-test_pangu38B.sh                4
-test_ms_run_ut_small_case.sh              4
-test_ms_multi_run_ut.sh         4
-test_ms_continue_multi_run_ut.sh   4
-test_ms_continue_run_ut.sh  4
-test_ms_multi_run_ut_mindtorch.sh  2
