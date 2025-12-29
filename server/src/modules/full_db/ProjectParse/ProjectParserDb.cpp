@@ -508,8 +508,10 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
         dbFiles.emplace_back(filePath);
         if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(memScopeDbReg))) {
             DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, filePath);
-            DataBaseManager::Instance().SetDataType(DataType::DB, filePath);
+        } else if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(npumonitorDBReg))) {
+            DataBaseManager::Instance().SetFileType(FileType::PYTORCH, filePath);
         }
+        DataBaseManager::Instance().SetDataType(DataType::DB, filePath);
         return dbFiles;
     }
     // 静态初始化，避免重复调用时正则编译开销

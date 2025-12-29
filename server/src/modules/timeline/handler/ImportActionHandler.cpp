@@ -140,6 +140,10 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
     auto parserList = GetParserTypeList(importPath);
     // 联合导入，将不同类型的数据视为多个工程，降低改动成本
     auto response = std::make_unique<ImportActionResponse>();
+    response->body.reset = IsNeedReset(request);
+    if (response->body.reset) {
+        ParserFactory::Reset();
+    }
     auto invalid = std::all_of(parserList.begin(), parserList.end(), [&request, &warnMsg, &response](ParserType type) {
         auto project = BuildProjectInfo(type, request, warnMsg);
         if (!project) {
