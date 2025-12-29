@@ -882,7 +882,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     if len(sys.argv) > 1 and sys.argv[1].lower() == 'clean':
         return clean_build_cache()
-    idea_version = load_version_info('7.0.RC3')
+    idea_version = load_version_info('8.3.T1')
     # 修改Windows产物exe版本信息
     update_winexe_version_info(idea_version)
     update_plugins_version(idea_version)
