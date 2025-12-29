@@ -70,7 +70,7 @@ python preprocess_third_party.py
 **图3-3 重新加载CMake成功** 
 ![reload_CMake_success](./figures/reload_CMake_success.png)
 
-### 3.3 Clion中的Main函数配置与启动
+### 3.3 Clion中的Main函数配置与启动，后端开发者测试
 
 #### 3.3.1 Main函数的配置 
 
@@ -88,6 +88,20 @@ python preprocess_third_party.py
 
 - 构建成功如下图所示
 ![build_complete](./figures/build_complete.png)
+
+#### 3.3.3 后端开发者测试
+
+- 测试框架：GoogleTest
+
+- 覆盖率：后端覆盖率的要求是行覆盖率达到80%，分支覆盖率达到60%。Linux系统上，运行如下代码即可生成覆盖率，覆盖率文件位置是build_llt/output/cpp_coverage/result/index.html。
+```
+cd build
+bash cpp_coverage.sh
+```
+- 新增开发者测试：后端合入新特性代码时，要求同时补充DT，DT代码位置是server/src/test。在CLion设置的**构建、执行、部署**中的**CMake**选项中添加环境变量`DEV_TYPE=true`，然后重新加载CMake，就可以构建insight_test可执行文件。构建完成后，如果测试用例名称为`TEST_F(TestSuit, TestCase)`，那么执行如下命令就可以只执行TestSuit测试套件的用例，更多用法可以参考GoogleTest官方文档：
+```
+./insight_test --gtest_filter=TestSuit.*
+```
 
 ### 3.4. 在WebStorm启动前端
 
