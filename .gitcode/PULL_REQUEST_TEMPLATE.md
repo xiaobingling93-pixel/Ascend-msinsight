@@ -1,9 +1,9 @@
 
 感谢您贡献的Pull Request！
-在提交之前，请务必阅读 [Contributing](../docs/zh/developer_guide/contributing.zh-CN.md)。
+在提交之前，请务必阅读 [Contributing](https://gitcode.com/Ascend/msinsight/blob/master/docs/zh/developer_guide/contributing.zh-CN.md)。
 
 Thanks for sending a pull request!
-BEFORE SUBMITTING, PLEASE READ [Contributing](../docs/zh/developer_guide/contributing.zh-CN.md).
+BEFORE SUBMITTING, PLEASE READ [Contributing](https://gitcode.com/Ascend/msinsight/blob/master/docs/zh/developer_guide/contributing.zh-CN.md).
 
 ## PR描述 (What this PR does / why we need it?)
 
