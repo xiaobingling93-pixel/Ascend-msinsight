@@ -60,7 +60,7 @@ public:
             Dic::Server::WsSessionManager::Instance().RemoveSession();
         }
         DataBaseManager::Instance().Clear();
-        BaselineManagerService::ResetBaseline();
+        BaselineManagerService::ResetBaseline(true);
     }
 
     static void InitDbManager()

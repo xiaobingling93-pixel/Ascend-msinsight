@@ -104,7 +104,10 @@ struct BaselineSettingRequest : public Request {
     BaselineSettingParams params;
 };
 
-struct BaselineCancelParams {};
+struct BaselineCancelParams {
+    std::string projectName;
+    std::string filePath;
+};
 struct BaselineCancelRequest : public Request {
     BaselineCancelRequest(): Request(REQ_RES_PROJECT_CANCEL_BASELINE) {}
     BaselineCancelParams params;

@@ -30,7 +30,9 @@ bool Dic::Module::CancelBaselineHandler::HandleRequest(std::unique_ptr<Request> 
     std::unique_ptr<BaselineCancelResponse> responsePtr = std::make_unique<BaselineCancelResponse>();
     BaselineCancelResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    BaselineManagerService::ResetBaseline();
+    // 基线为当前工程卡时不需要清理缓存
+    bool isCurrentProject = request.projectName == request.params.projectName;
+    BaselineManagerService::ResetBaseline(!isCurrentProject);
     SendResponse(std::move(responsePtr), true);
     return true;
 }

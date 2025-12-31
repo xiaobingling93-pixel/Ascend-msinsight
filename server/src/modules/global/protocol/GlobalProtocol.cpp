@@ -175,6 +175,8 @@ std::unique_ptr<Request> GlobalProtocol::ToCancelBaselineRequest(const json_t &j
         error = "Failed to set request project explorer delete info, command is: " + reqPtr->command;
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.filePath, json["params"], "filePath");
     return reqPtr;
 }
 

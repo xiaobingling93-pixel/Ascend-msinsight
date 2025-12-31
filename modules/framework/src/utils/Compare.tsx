@@ -69,7 +69,7 @@ export const sendTabRemoveBaseline = function(dataSource: any, singleDataPath: s
 export const setBaselineData = async ({ projectName, fileType, filePath, rankId, baselineClusterPath, currentClusterPath }: ClusterFile): Promise<void> => {
     const session = store.sessionStore.activeSession;
     // 取消原来的基线数据
-    cancelBaselineData();
+    await cancelBaselineData();
 
     // 设置新的基线
     // 通知后台
@@ -146,7 +146,7 @@ export const cancelBaselineData = async (): Promise<void> => {
     sendTabRemoveBaseline(dataSourceForTimeline, filePath);
     sendClusterBaselineStatus(false);
     // 通知后台
-    await cancelBaseline();
+    await cancelBaseline({ projectName, filePath });
     // 取消基线文件，同时也取消对比文件
     runInAction(() => {
         session.compareSet = {

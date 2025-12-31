@@ -147,10 +147,10 @@ export const setBaseline = async (file: ClusterFile): Promise<Partial<CompareDat
 /**
  * 取消基线数据
  */
-export const cancelBaseline = async (): Promise<unknown> => {
+export const cancelBaseline = async (params: { projectName: string; filePath: string }): Promise<unknown> => {
     return request('global', {
         command: 'global/cancelBaseline',
-        params: {},
+        params,
     });
 };
 

@@ -45,7 +45,7 @@ bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     Memory::MemoryParse::Instance().Reset();
     Source::SourceFileParser::Instance().Reset();
     FullDb::FullDbParser::Instance().Reset();
-    BaselineManagerService::ResetBaseline();
+    BaselineManagerService::ResetBaseline(true);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

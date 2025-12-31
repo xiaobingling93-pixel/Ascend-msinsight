@@ -27,7 +27,7 @@ namespace Module {
 namespace Global {
 class BaselineManagerService {
 public:
-    static void ResetBaseline();
+    static void ResetBaseline(bool force);
     static bool InitBaselineData(const Protocol::BaselineSettingRequest &request, BaselineInfo &baselineInfo);
 private:
     static bool IsClusterBaseline(ProjectTypeEnum projectTypeEnum,

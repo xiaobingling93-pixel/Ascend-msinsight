@@ -102,7 +102,7 @@ public:
     FileType GetFileType(const std::string &fileId);
     FileType GetFileTypeByRankId(const std::string &rankId);
     void SetFileType(FileType type, const std::string &fileId);
-    bool ResetBaseline();
+    bool ResetBaseline(bool force);
     void SetDbPathMapping(const std::string& rankId, const std::string& dbPath, const std::string& hostId);
     bool IsContainDatabasePath(const std::string& databasePath);
     std::string GetDeviceIdFromRankId(const std::string &rankId);

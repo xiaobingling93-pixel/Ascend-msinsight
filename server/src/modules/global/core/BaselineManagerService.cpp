@@ -28,12 +28,12 @@ using namespace Dic::Module::Summary;
 namespace Dic {
 namespace Module {
 namespace Global {
-void BaselineManagerService::ResetBaseline()
+void BaselineManagerService::ResetBaseline(bool force)
 {
     // 没有解析进程时才可以reset
     auto baselineId = Dic::Module::Timeline::BaselineManager::Instance().GetBaselineId();
     Dic::Module::Timeline::ParserStatusManager::Instance().WaitAllFinished({baselineId});
-    Dic::Module::Timeline::DataBaseManager::Instance().ResetBaseline();
+    Dic::Module::Timeline::DataBaseManager::Instance().ResetBaseline(force);
     BaselineManager::Instance().Reset();
     Source::SourceFileParser::Instance().ResetBaseline();
 }
@@ -96,7 +96,7 @@ bool BaselineManagerService::CheckIsSupportCompare(const std::vector<ProjectExpl
 bool BaselineManagerService::InitBaselineData(const Protocol::BaselineSettingRequest &request,
                                               BaselineInfo &baselineInfo)
 {
-    ResetBaseline();
+    ResetBaseline(true);
     // 查询详细数据
     std::vector<std::string> filePathList;
     if (!request.params.filePath.empty()) {

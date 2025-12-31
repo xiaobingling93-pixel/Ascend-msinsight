@@ -482,7 +482,7 @@ void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::str
     host2DbPath[hostId].push_back(dbPath);
 }
 
-bool DataBaseManager::ResetBaseline()
+bool DataBaseManager::ResetBaseline(bool force)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex);
     for (const auto &item : memoryBaselineDatabaseMap) {
@@ -498,7 +498,7 @@ bool DataBaseManager::ResetBaseline()
     }
     summaryBaselineDatabaseMap.clear();
     auto baselineRankId = BaselineManager::Instance().GetBaselineId();
-    if (!baselineRankId.empty() && baselineRankId.find("Baseline") != std::string::npos) {
+    if (force) {
         auto baseFileId = GetFileIdByRankId(baselineRankId);
         traceDatabaseMap.erase(baseFileId);
         rankId2FileIdMap.erase(baselineRankId);

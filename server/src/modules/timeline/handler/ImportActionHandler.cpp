@@ -49,7 +49,7 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return false;
     }
     // 清理当前的基线缓存
-    BaselineManagerService::ResetBaseline();
+    BaselineManagerService::ResetBaseline(true);
     ParserStatusManager::Instance().ResetParse();
     if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
         // ConvertToRealPath 调用 FileUtil::ConvertToRealPath 方法，其中 FileUtil::CheckDirValid 已做软链接检查
