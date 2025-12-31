@@ -878,3 +878,195 @@ PRIMARY KEY ("key")
 
 # 创建好的profiler.db拖入Insight即可看见新增泳道
 
+#7 开发者本地出包 指南
+
+## Windows环境
+
+### 环境依赖安装
+
+依赖安装用户可以自行进行，如果对安装依赖有疑问，可以见文档附录
+
+| 软件名称          | 版本               | 用途                 |
+|---------------|------------------|--------------------|
+| rust          | 1.89             | 底座编译构建             |
+| windows11SDK  | 10.0.22000.0+    | windows平台基础开发运行时   |
+| MSVC          | v143             | windows平台基础开发运行时   |
+| mingw         | 10.0+ （msvcrt版本） | 后台编译器              |
+| Ninja         | 无要求              | 后台编译               |
+| cmake         | 3.16~3.20        |                    |
+| nsis          | 无要求              | 安装包打包软件            |
+| nsProcess插件   | unicode support  | 打包软件插件，用于检查是否有重复运行 |
+| node          | v18.20.8+        | 前端构建               |
+| pnpm          | 无要求              | 前端构建               |
+| python        | 3.11+            | 集群工具打包             |
+
+python requirements:
+
+运行时requirements：
+```
+click
+tabulate
+networkx
+jinja2
+PyYaml
+tqdm
+prettytable
+ijson
+xlsxwriter>=3.0.6
+sqlalchemy
+numpy<=1.26.4
+pandas<=2.3.2
+psutil
+```
+
+开发时requirements：
+```shell
+pyinstaller
+```
+
+### 编译出包
+
+1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
+
+2.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
+
+### windows环境依赖安装附录
+
++ windows运行时安装（windows11SDK和MSVC）
+
+  下载Visual Studio Installer，双击打开, 进入安装界面，选择如下依赖（通常默认即可）：
+
+  ![image-20251226102953614](./figures/MSVC_install.png)
+
++ mingw安装
+
+  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://winlibs.com/))下载对应的软件包，注意选择MSVCRT版本（>11.2）以确保编译出来的包具备更好的迁移性
+
+  下载后解压到任意目录下，然后修改系统中的PATH变量，向其中添加mingw64下bin目录路径，如下图所示，假设解压在C盘根目录下
+
+
+
+![image-20251226103754205](./figures/mingw_path_add.png)
+
++ nsProcess插件安装
+
+  首先需要安装NSIS，需要安装在C:\\program（x86)目录下。从[NsProcess plugin - NSIS](https://nsis.sourceforge.io/NsProcess_plugin)上 获取nsProcess的压缩包。把下载压缩包里面的Include/nsProcess.h 放到 C:\Program Files (x86)\NSIS\Include
+
+  把Plugin/nsProcess.dll 放到 C:\Program Files (x86)\NSIS\Plugins\x86-unicode中
+  把Plugin/nsProcessw.dll 放到 C:\Program Files (x86)\NSIS\Plugins\x86-unicode中
+
++ Rust
+
+   安装方式：推荐使用官方工具 rustup 安装
+   
+   官网：https://www.rust-lang.org
+   
+   安装完成校验：
+   ```
+   rustc --version
+   cargo --version
+   ```
+   说明：用于底座代码的编译与构建，建议使用稳定版并保持版本不低于要求。
+   
++ Ninja
+   
+   安装方式：
+   
+   Windows 可通过官网下载二进制文件，或使用包管理工具（如 Chocolatey、Scoop）安装
+
+   官网：https://ninja-build.org
+   
+   安装完成校验：
+   
+   `ninja --version`
+   
+   说明：作为 CMake 的后台构建工具使用。
+
++ Node.js
+
+   安装方式：通过 Node.js 官方安装包安装
+   
+   官网：https://nodejs.org
+   
+   版本要求：v18.20.8 及以上（建议使用 LTS 版本）
+
+   安装完成校验：
+   ```
+   node --version
+   npm --version
+   ```
+   说明：用于前端工程的构建与依赖管理。
+
++ pnpm
+
+   安装方式：在已安装 Node.js 的前提下，通过 npm 全局安装
+   
+   `npm install -g pnpm`
+   
+   安装完成校验：
+   
+   `pnpm --version`
+   
+   说明：前端项目的包管理工具。
+
++ Python
+   
+   安装方式：通过 Python 官方安装包安装
+   
+   官网：https://www.python.org
+   
+   版本要求：Python 3.11 及以上
+   
+   安装完成校验：
+   ```
+   python --version
+   pip --version
+   ```
+   说明：用于集群工具及相关脚本的打包与运行，安装时请勾选“Add Python to PATH”。
+
+## Mac出包
+
+### 环境依赖
+
+| 软件名称     | 版本        | 用途         |
+| ------------ |-----------| ------------ |
+| rust         | 1.89      | 底座编译构建 |
+| cargo-bundle | 无要求       |              |
+| Ninja        | 无要求       | 后台编译     |
+| node         | v18.20.8+ | 前端构建     |
+| pnpm         | 无要求       | 前端构建     |
+| python       | 3.11+     | 集群工具打包 |
+| clang        | 15      |              |
+| cmake        | 3.16~3.20 |              |
+
+python requirements:
+
+运行时requirements：
+```
+click
+tabulate
+networkx
+jinja2
+PyYaml
+tqdm
+prettytable
+ijson
+xlsxwriter>=3.0.6
+sqlalchemy
+numpy<=1.26.4
+pandas<=2.3.2
+psutil
+```
+
+开发时requirements：
+```shell
+pyinstaller
+```
+
+
+
+### 编译出包
+
+1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
+
+2.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
