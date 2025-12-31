@@ -89,7 +89,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
     };
     useEffect(() => {
         const newIdOpts = Object.keys(session.deviceIds).map((id: string) => ({ label: id, value: id }));
-        if (newIdOpts.length > 0 && session.threadIds.length > 0) {
+        if (newIdOpts.length > 0) {
             const newTypeOpts = session.deviceIds[newIdOpts[0].value].map((type: string) => ({ label: type, value: type }));
             const newThreadOpts = session.threadIds.map((thread: number) => ({ label: thread, value: thread }));
             initLine(mouseEnter, mouseMove, mouseLeave);
@@ -99,7 +99,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                 session.threadOps = newThreadOpts;
                 session.deviceId = newIdOpts[0].value;
                 session.eventType = newTypeOpts[0].value;
-                session.threadId = newThreadOpts[0].value;
+                session.threadId = newThreadOpts[0]?.value ?? '';
             });
         }
         return () => {
