@@ -25,4 +25,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     switchLanguage: switchLanguageHandler,
     [PARSECOMPLETED]: parseCompletedHandler,
     'remote/remove': removeRemoteHandler,
+    'remote/reset': removeRemoteHandler,
 };
