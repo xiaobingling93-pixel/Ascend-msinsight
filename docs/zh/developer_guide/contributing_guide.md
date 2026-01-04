@@ -1,6 +1,6 @@
 # Contributing
 ## 构建与测试
-在提交PR之前，建议您先在本地搭建开发环境，构建`insight`并运行相关测试。
+在提交PR之前，建议您先在本地搭建开发环境，构建`insight`并运行相关测试。具体请参考：
 [搭建开发及测试环境](../developer_guide/development_guide.md)
 
 ## PR标题与分类
@@ -24,7 +24,7 @@
 ### 方式一：交互式变基（推荐）
 - 查看需要合并的最近几个commit（例如最近3个）：
 ``` bash
-git log --online -n 3
+git log --oneline -n 3
 ```
 - 启动交互式rebase (将`N`替换为需要合并的commit数量):
 ``` bash
@@ -55,5 +55,5 @@ git push --force-with-lease origin your-branch-name
 ```
 > 提示: 如果您不确定应基于哪个目标分支，请查看仓库的默认分支或咨询Maintainer.
 
-> 告警：切勿对共享或受保护的分支执行强制推送。
+> 警告：切勿对共享或受保护的分支执行强制推送。
 
