@@ -94,9 +94,9 @@ bool TextTraceDatabase::InitProcessThreadStmt()
     updateThreadNameStmt = CreatPreparedStatement(sql);
     sql = UPDATE_THREAD_SORTINDEX_SQL;
     updateThreadSortIndexStmt = CreatPreparedStatement(sql);
-    sql = SIMULATION_UPDATE_THREAD_NAME_SQL;
+    sql = SIMULATION_INSERT_THREAD_NAME_AND_SORT_INDEX_SQL;
     simulationInsertThreadNameStmt = CreatPreparedStatement(sql);
-    sql = SIMULATION_UPDATE_PROCESS_NAME_SQL;
+    sql = SIMULATION_INSERT_PROCESS_NAME_SQL;
     simulationInsertProcessNameStmt = CreatPreparedStatement(sql);
     if (updateProcessNameStmt == nullptr || updateProcessLabelStmt == nullptr ||
         updateProcessSortIndexStmt == nullptr || updateThreadNameStmt == nullptr ||
@@ -437,30 +437,6 @@ std::unique_ptr<SqlitePreparedStatement> TextTraceDatabase::GetCounterStmt(uint6
     return CreatPreparedStatement(sql);
 }
 
-void TextTraceDatabase::SimulationUpdateProcessSortIndex()
-{
-    std::vector<Protocol::SimpleSlice> simpleSliceVec;
-    std::string queryAllProcess = "select pid FROM " + processTable + " ORDER BY process_name, pid;";
-    auto processStmt = CreatPreparedStatement(queryAllProcess);
-    if (processStmt == nullptr) {
-        ServerLog::Error("Simulation update process sort index. Failed to prepare sql.", GetLastError());
-        return;
-    }
-    auto processResultSet = processStmt->ExecuteQuery();
-    if (processResultSet == nullptr) {
-        ServerLog::Error("Simulation update process sort index. Failed to get result set.",
-            processStmt->GetErrorMessage());
-        return;
-    }
-    uint32_t order = 0;
-    while (processResultSet->Next()) {
-        Trace::MetaData event;
-        event.pid = processResultSet->GetString("pid");
-        event.args.sortIndex = ++order;
-        UpdateProcessSortIndex(event);
-    }
-}
-
 bool TextTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
     Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
@@ -775,7 +751,7 @@ std::vector<Process> TextTraceDatabase::QueryAllProcess()
 {
     std::vector<Process> res;
     std::string sql = "SELECT pid, process_name, label, process_sort_index, parentPid FROM process ORDER BY "
-                      "process_sort_index, process_name";
+                      "process_sort_index ASC, process_name ASC";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query all process failed!.");
@@ -811,7 +787,7 @@ std::map<std::string, std::vector<Thread>> TextTraceDatabase::QueryAllThreadInfo
 {
     std::map<std::string, std::vector<Thread>> res;
     std::string sql = "select track_id,tid, pid, thread_name, thread_sort_index FROM thread where pid is not null "
-                      "ORDER BY pid, thread_sort_index, thread_name";
+                      "ORDER BY pid ASC, thread_sort_index ASC, thread_name ASC";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query all thread failed!.");

@@ -175,7 +175,6 @@ void TraceFileSimulationParser::EndParseTask(const std::string &rankId,
         return;
     }
     database->CreateIndex();
-    database->SimulationUpdateProcessSortIndex();
     CacheManager::Instance().ClearCacheByRankId(rankId);
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, fileId, true, "");

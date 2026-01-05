@@ -142,8 +142,6 @@ public:
     bool UpdateParseStatus(const std::string &status);
     bool HasFinishedParseLastTime(const std::string &statuInfo);
 
-    void SimulationUpdateProcessSortIndex();
-
     bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
         uint64_t minTimestamp) override;
     std::string QueryHostInfo() override;

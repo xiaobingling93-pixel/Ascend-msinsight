@@ -253,12 +253,22 @@ void EventParser::SimulationEventHandle(Trace::Event* eventPtr)
     event.tid = event.threadName;
     event.trackId = GetTrackId(event.pid, event.tid);
     event.end = event.ts + event.dur;
+    // thread泳道排序逻辑：
+    // 同pid的泳道，先按照thread_sort_index升序，同thread_sort_index按照thread_name升序
+    // thread_sort_index的来源：
+    // 采集侧通过Metadata Events类thread_sort_index事件指定，优先级最高
+    // 采集侧无Metadata Events时，代码通过SetThreadSortIndex()指定排序顺序，但优先级低于Metadata Events，所以相关SQL里得满足当前表中thread_sort_index为空才会插入
     ThreadEvent threadEvent;
     threadEvent.trackId = event.trackId;
     threadEvent.tid = event.tid;
     threadEvent.pid = event.pid;
     threadEvent.threadName = event.threadName;
     threadEvent.SetThreadSortIndex();
+    // process泳道排序逻辑：
+    // 先按照process_sort_index升序，同process_sort_index按照process_name升序
+    // process_sort_index的来源：
+    // 采集侧通过Metadata Events类process_sort_index事件指定，优先级最高
+    // 采集侧无Metadata Events时，代码未指定排序顺序，即使后续指定，优先级也低于Metadata Events，所以相关SQL里得满足当前表中process_sort_index为空才会插入
     ProcessEvent processEvent;
     processEvent.pid = event.pid;
     processEvent.processName = event.processName;

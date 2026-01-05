@@ -81,7 +81,11 @@ struct ThreadEvent : public Event {
         static std::map<std::string, uint32_t> orderMap = { { "SCALAR", 1 }, { "FLOWCTRL", 2 }, { "MTE1", 3 },
                                                             { "CUBE", 4 },   { "FIXP", 5 },     { "MTE2", 6 },
                                                             { "VECTOR", 7 }, { "MTE3", 8 },     { "CACHEMISS", 9 } };
-        threadSortIndex = orderMap[threadName];
+        if (orderMap.find(threadName) != orderMap.end()) {
+            threadSortIndex = orderMap[threadName];
+        } else {
+            threadSortIndex = 0;
+        }
     }
 };
 
