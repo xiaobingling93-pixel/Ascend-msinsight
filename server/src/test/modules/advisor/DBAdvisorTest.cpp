@@ -138,6 +138,6 @@ TEST_F(DBAdvisorTest, QueryOperatorDispatchAdvisorSuccessOnDb)
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
     std::vector<Protocol::KernelBaseInfo> data{};
     auto result = db->QueryOperatorDispatchData(params, data, startTime, OPERATOR_COMPILE_CNT_THRESHOLD);
-    EXPECT_FALSE(result); // less than threshold
-    EXPECT_EQ(data.size(), 19); // The size of data is 19
+    EXPECT_TRUE(result); // less than threshold
+    EXPECT_EQ(data.size(), 0); // The size of data is 19, but less than threshold 20 that data was clear
 }

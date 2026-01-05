@@ -1926,12 +1926,12 @@ bool TextTraceDatabase::QueryOperatorDispatchData(const Protocol::KernelDetailsP
         one.tid = resultSet->GetString("tid");
         data.emplace_back(one);
     }
-    if (data.size() < threshold) {
+    if (data.size() > 0 && data.size() < threshold) {
         ServerLog::Error(
             "Failed to get Operator Dispatch data because the total count should greater than or equal to "
             + std::to_string(threshold) + " ."
         );
-        return false;
+        data.clear();
     }
     return true;
 }
