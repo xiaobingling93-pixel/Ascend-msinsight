@@ -19,7 +19,8 @@
 import { register } from './register';
 import { runInAction } from 'mobx';
 import type { Session } from '../entity/session';
-import type { ThreadMetaData } from '../entity/data';
+import type { CardMetaData, ThreadMetaData } from '../entity/data';
+import { ProjectType } from '../entity/insight';
 
 const isEventMenuVisible = (session: Session): boolean => {
     // 必须只选中一个才能显示“跳转数据窗口事件视图”菜单项
@@ -41,6 +42,10 @@ const isEventMenuVisible = (session: Session): boolean => {
         }
     }
     if ((selectUnit.metadata as ThreadMetaData).threadName?.includes('Plane')) {
+        return false;
+    }
+    const targetInfo = session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === (selectUnit.metadata as CardMetaData)?.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
         return false;
     }
     return true;
