@@ -1481,6 +1481,7 @@ bool TextTraceDatabase::QueryCommunicationKernelInfo(const std::string &name, co
         SliceQuery sliceQuery;
         sliceQuery.rankId = rankId;
         sliceQuery.trackId = trackId;
+        body.id = std::to_string(id);
         body.startTime = startTime > Timeline::TraceTime::Instance().GetStartTime() ?
             startTime - Timeline::TraceTime::Instance().GetStartTime() :
             startTime;

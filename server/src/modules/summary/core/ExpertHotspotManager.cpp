@@ -443,6 +443,7 @@ bool ExpertHotspotManager::ExtractHeatMapFromTraceDb(const ExtractHeatMapParams 
     for (const auto &item: heatMapData) {
         clusterDb->InsertExpertHotspotDataForCache(item.second);
     }
+    clusterDb->SaveExpertHotspot();
     return true;
 }
 
