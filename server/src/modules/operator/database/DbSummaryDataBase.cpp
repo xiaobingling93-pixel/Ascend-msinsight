@@ -165,6 +165,12 @@ bool DbSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqP
 {
     std::string sql;
     if (type == Protocol::QueryType::CATEGORY) {
+        if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+        {
+            Server::ServerLog::Warn("Missing table % on querying operator duration info, "
+                                    "nothing will be done.", TABLE_COMMUNICATION_OP);
+            return true;
+        }
         sql = GenerateQueryCategoryDurationSql(reqParams);
     } else {
         sql = GenerateQueryComputeUnitDurationSql(reqParams);
@@ -246,6 +252,12 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
 bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                    Protocol::OperatorStatisticInfoResponse &response)
 {
+    if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+    {
+        Server::ServerLog::Warn("Missing table % on querying operator statistic info, "
+                                "nothing will be done.", TABLE_COMMUNICATION_OP);
+        return true;
+    }
     reqParams.rangeFilters = ConvertFiltersToRangeFilters(reqParams.filters);
     if (!QueryStatisticTotalNum(reqParams, response.total)) {
         ServerLog::Error("[Operator]Failed to query total num of statistic info.");
@@ -409,6 +421,12 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
 bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                 Protocol::OperatorDetailInfoResponse &response)
 {
+    if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+    {
+        Server::ServerLog::Warn("Missing table % on querying operator detail info, "
+                                "nothing will be done.", TABLE_COMMUNICATION_OP);
+        return true;
+    }
     if (!QueryDetailTotalNum(reqParams, response.total)) {
         ServerLog::Error("[Operator]Failed to query total num of detail info.");
         return false;
@@ -435,6 +453,12 @@ bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticRe
                                                    std::vector<Protocol::OperatorDetailInfoRes> &res,
                                                    std::string &level)
 {
+    if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+    {
+        Server::ServerLog::Warn("Missing table % on querying all operator detail info, "
+                                "nothing will be done.", TABLE_COMMUNICATION_OP);
+        return true;
+    }
     std::string sql = GenerateAllQueryDetailSql(reqParams);
     if (!ExecSqlGetDetailInfo(sql, reqParams, res)) {
         ServerLog::Error("Failed to exec query detail sql.");
