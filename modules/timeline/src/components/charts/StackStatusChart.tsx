@@ -38,6 +38,22 @@ const FONT_SIZE = 12;
 const DFT_PADDING = 8;
 const CHEVRON_WIDTH = 12;
 
+const fontMetricsCache = new Map();
+
+const getYOffset = (ctx: CanvasRenderingContext2D, text: string): number => {
+    const font = ctx.font;
+    if (fontMetricsCache.has(font)) {
+        return fontMetricsCache.get(font);
+    }
+
+    const m = ctx.measureText(text);
+    const offset =
+        (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+
+    fontMetricsCache.set(font, offset);
+    return offset;
+};
+
 const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D, overflow: OverflowType): string => {
     if (ctx.measureText(text).width <= maxWidth) { return text; }
     if (overflow === 'hidden') { return ''; }
@@ -173,11 +189,16 @@ const draw = ({ ctx, datas, xScale, yScale, theme, right, isSimulation, textConf
     }
     // 绘制节点上的文字
     ctx.fillStyle = '#FFFFFFE6';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
     if (height > UnitHeight.STANDARD - 1) {
         textToDraw.forEach(data => {
             const text = getMaxText(data.type, data.width - DFT_PADDING, ctx, overflow);
-            ctx.textAlign = 'center';
-            ctx.fillText(text, xScale(data.startTime) + (data.width / 2), yScale(data.depth) + ((height - FONT_SIZE) / 2) + 1);
+            const yOffset = getYOffset(ctx, text);
+            const x = xScale(data.startTime) + data.width / 2;
+            const y = yScale(data.depth) + height / 2 + yOffset;
+
+            ctx.fillText(text, x, Math.round(y) + 0.5);
         });
     }
 };
