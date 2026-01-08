@@ -152,7 +152,7 @@ interface DefaultInfoProps {
 const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProps): JSX.Element => {
     const tag = (typeof unit.tag === 'string') ? `${unit.tag}` : unit.tag?.(session, unit.metadata) ?? undefined;
     const tooltipInfo = getDefaultInfoTooltipTitle(unit, name);
-    const allNumeric = tooltipInfo.cardNames?.every(str => str.trim() !== '' && !isNaN(Number(str))) ?? false;
+    const allNumeric = tooltipInfo.cardNames?.every(str => str?.trim() !== '' && !isNaN(Number(str))) ?? false;
     return <DefaultInfoContainer>
         <div
             key={ `${getAutoKey(unit)} lane info` }
@@ -356,7 +356,7 @@ const InsightLaneInfoContainer = styled.div`
 function getProgressVisiable(unit: KeyedInsightUnit): boolean {
     return unit instanceof CardUnit && unit.metadata?.cardName !== 'Host' &&
         (unit.phase === 'analyzing' || unit.phase === 'download') && unit.shouldParse;
-};
+}
 
 function getParserVisiable(unit: KeyedInsightUnit): boolean {
     return unit instanceof CardUnit && unit.metadata?.cardName !== 'Host' && unit.shouldParse;
@@ -390,7 +390,7 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
         >{children}</Tooltip>
         : children;
     React.useEffect(() => {
-        if ((unit.metadata as CardMetaData).cardName.startsWith('Baseline')) { return; }
+        if ((unit.metadata as CardMetaData).cardName?.startsWith('Baseline')) { return; }
         if (session.isParserLoading) {
             runInAction((): void => {
                 unit.isParseLoading = true;
@@ -603,7 +603,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         }
     };
 
-    const onMouseLeft = (e: React.MouseEvent<HTMLElement, MouseEvent>): void => {
+    const onMouseLeft = (): void => {
         // 拖拽时或不是在此泳道触发的mousedown，则不触发点击事件
         if (isDragging || !isClickDownRef.current) {
             return;
