@@ -17,6 +17,7 @@
  */
 
 #include "SummaryErrorManager.h"
+#include "StringUtil.h"
 
 namespace Dic::Module::Summary {
 static const std::string unknownError = "Unknown error code";
@@ -67,8 +68,9 @@ const std::string& GetErrorMessage(ErrorCode code)
     }
 }
 
-void SetSummaryError(ErrorCode code)
+void SetSummaryError(ErrorCode code, const std::string& extendedMessage)
 {
-    ModuleRequestHandler::SetResponseError({.code = static_cast<int>(code), .message = GetErrorMessage(code)});
+    std::string message = extendedMessage.size() > 0 ? StringUtil::StrJoin(GetErrorMessage(code), ":", extendedMessage) : GetErrorMessage(code);
+    ModuleRequestHandler::SetResponseError({.code = static_cast<int>(code), .message = message});
 }
 }  // namespace Dic::Module::Summary

@@ -41,7 +41,7 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
-        SetSummaryError(ErrorCode::PARAMS_ERROR);
+        SetSummaryError(ErrorCode::PARAMS_ERROR, errorMsg);
         SendResponse(std::move(responsePtr), false);
         return false;
     }
