@@ -66,6 +66,6 @@ enum class ErrorCode {
 extern const std::map<ErrorCode, std::string> errorMessages;
 
 const std::string& GetErrorMessage(ErrorCode code);
-void SetSummaryError(ErrorCode code);
+void SetSummaryError(ErrorCode code, const std::string& extendedMessage = "");
 }  // namespace Dic::Module::Summary
 #endif  // PROFILER_SERVER_SUMMARYERRORMANAGER_H

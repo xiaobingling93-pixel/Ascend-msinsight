@@ -309,13 +309,10 @@ struct SetParallelStrategyParam {
     std::string clusterPath;
     bool CheckParams(std::string& errMsg) const
     {
-        std::string paramErr;
-        if (!config.CheckParams(paramErr)) {
-            errMsg = "[Summary] Failed to check parallel strategy config." + paramErr;
+        if (!config.CheckParams(errMsg)) {
             return false;
         }
-        if (!CheckStrParamValid(clusterPath, paramErr)) {
-            errMsg = "[Summary] Failed to check cluster." + paramErr;
+        if (!CheckStrParamValid(clusterPath, errMsg)) {
             return false;
         }
         return true;
