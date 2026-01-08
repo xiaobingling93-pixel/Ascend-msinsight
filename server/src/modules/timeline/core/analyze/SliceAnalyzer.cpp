@@ -236,6 +236,16 @@ void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set
         ids.emplace(item.first);
         depthMap[item.first] = item.second;
     }
+    bool isNeedFilterIds = true;
+    for (const auto &item : sliceDomainVec) {
+        if (item.id == 0) {
+            isNeedFilterIds = false;
+            break;
+        }
+    }
+    if (isNeedFilterIds) {
+        ids.erase(0);
+    }
     maxDepth = endList.size();
     havePythonFunction = instance.GetPythonFunctionStatus(sliceQuery.trackId) == PYTHON_FUNCTION_STATUS::EXIST;
     // 此处不管是否命中缓存，都需要刷新，是因为显示/隐藏python调用栈时，depth信息可能会被更新, 而QueryDepthInfo会查询缓存中的depth信息
