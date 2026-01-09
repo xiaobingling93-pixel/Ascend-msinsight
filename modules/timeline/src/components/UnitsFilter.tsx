@@ -383,10 +383,10 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         startFilter(session, cardSelection, unitSelection);
     }, [cardSelection, unitSelection]);
 
-    if (completeCardOptions.length === 0 && cardNames.size > 0) {
+    if (completeCardOptions.length !== cardNames.size && cardNames.size > 0) {
         handleSearch('', 'Card');
     }
-    if (completeUnitOptions.length === 0 && unitNames.size > 0) {
+    if (completeUnitOptions.length !== unitNames.size && unitNames.size > 0) {
         handleSearch('', 'Unit');
     }
 
