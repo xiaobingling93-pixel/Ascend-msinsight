@@ -324,7 +324,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     }, [memorySession.groupId]);
 
     useEffect(() => {
-        if (memorySession.selectedRankId === '') {
+        if (memorySession.selectedRankId === '' || memorySession.memoryType === '') {
             setDetailTableData();
             return;
         }
