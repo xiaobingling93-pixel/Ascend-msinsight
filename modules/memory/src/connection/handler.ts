@@ -72,12 +72,14 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             if (!session || !memorySession) {
                 return;
             }
+            memorySession.memoryType = '';
             session.memoryCardInfos = [];
             session.isAllMemoryCompletedSwitch = false;
             session.isCluster = false;
             session.compareRank.rankId = '';
             session.projectChangedTrigger = !session.projectChangedTrigger;
             memorySession.rankCondition = { options: [], value: 0 };
+            memorySession.memoryGraphId = '';
             memorySession.rangeFlagList = [];
             memorySession.timelineOffset = 0;
         });

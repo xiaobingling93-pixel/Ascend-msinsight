@@ -72,7 +72,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
     };
 
     useEffect(() => {
-        if (memorySession.selectedRankId === '' || memorySession.memoryGraphId === undefined) {
+        if (memorySession.selectedRankId === '' || memorySession.memoryGraphId === '') {
             setStaticLineChartData(undefined);
             setMemoryStaticCurveData(undefined);
             return;

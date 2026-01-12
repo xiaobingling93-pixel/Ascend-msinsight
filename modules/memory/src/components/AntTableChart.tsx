@@ -53,27 +53,6 @@ interface IProps {
     memoryType: MemoryGraphType;
 }
 
-interface IColName {
-    deviceId: string;
-    name: string;
-    opName: string;
-    nodeIndexStart: string;
-    nodeIndexEnd: string;
-    size: string;
-    allocationTime: string;
-    releaseTime: string;
-    duration: string;
-    activeReleaseTime: string;
-    activeDuration: string;
-    allocationAllocated: string;
-    allocationReserved: string;
-    allocationActive: string;
-    releaseAllocated: string;
-    releaseReserved: string;
-    releaseActive: string;
-    streamId: string;
-}
-
 interface GetColumnsParams {
     columns: MemoryTableColumn[];
     theme: Theme;
@@ -84,27 +63,6 @@ interface GetColumnsParams {
     isComp?: boolean;
     memoryType: MemoryGraphType;
 }
-
-const orderByColName: IColName = {
-    deviceId: 'deviceId',
-    name: 'name',
-    opName: 'op_name',
-    nodeIndexStart: 'node_index_start',
-    nodeIndexEnd: 'node_index_end',
-    size: 'size',
-    allocationTime: 'allocation_time',
-    releaseTime: 'release_time',
-    duration: 'duration',
-    activeReleaseTime: 'active_release_time',
-    activeDuration: 'active_duration',
-    allocationAllocated: 'allocation_allocated',
-    allocationReserved: 'allocation_reserve',
-    allocationActive: 'allocation_active',
-    releaseAllocated: 'release_allocated',
-    releaseReserved: 'release_reserve',
-    releaseActive: 'release_active',
-    streamId: 'stream',
-};
 
 const CompareDiv = styled.div`
     width: 100%;
@@ -240,7 +198,7 @@ export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.For
         if ((sorter as SorterResult<OperatorDetail>).order) {
             const orderByCol = `${(sorter as SorterResult<OperatorDetail>).field}`;
             onOrderChange((sorter as SorterResult<OperatorDetail>).order as SortOrder);
-            memoryType === MemoryGraphType.STATIC ? onOrderByChange(orderByColName[orderByCol as keyof IColName]) : onOrderByChange(orderByCol);
+            onOrderByChange(orderByCol);
         } else {
             onOrderChange(null);
         }
