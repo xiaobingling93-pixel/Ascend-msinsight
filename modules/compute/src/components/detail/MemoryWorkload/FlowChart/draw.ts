@@ -1038,6 +1038,11 @@ const transLineLabel = (origin: Iline, points: string): {x: number;y: number} =>
         default:
             break;
     }
+    // L1_TO_UB 连线的label位置
+    if (origin.id === 'L1_TO_UB') {
+        dx += 10;
+        dy -= 60;
+    }
     return { x: centerX + dx, y: centerY + dy };
 };
 const getAllLineBox = (line: IdrawLine[]): Ibox => {
@@ -1212,16 +1217,12 @@ const drawRectLabel = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, 
 const drawLine = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unknown>): void => {
     // 添加换行
     const glines = nodes.selectAll('g.line')
-        .data((d) => {
-            return d.line ?? [];
-        })
+        .data((d) => d.line ?? [])
         .enter()
         .append('g')
         .attr('class', 'line');
     glines.selectAll('polyline')
-        .data((d, i) => {
-            return [d];
-        })
+        .data(d => [d])
         .enter()
         .append('polyline')
         .attr('points', d => d.points)
@@ -1230,13 +1231,11 @@ const drawLine = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unkno
         .attr('fill', 'none')
         .attr('marker-end', 'url(#arrow)');
     glines.selectAll('text.line-label')
-        .data((d, i) => {
-            return [d];
-        })
+        .data((d) => [d])
         .enter()
         .append('text')
         .attr('class', 'line-label')
-        .attr('x', d => d.labelXy?.x ?? 0)
+        .attr('x', d => d.id === 'L1_TO_UB_2' ? '' : d.labelXy?.x ?? 0)
         .attr('y', d => d.labelXy?.y ?? 0)
         .attr('text-anchor', d => {
             switch (d.labelPosition) {
@@ -1544,6 +1543,9 @@ const updateHotPath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>
         })
         .attr('marker-end', d => {
             const lineid: any = ((d as IdrawLine)?.id ?? '').split('_append')[0];
+            if (lineid === 'L1_TO_UB_UB') {
+                return null;
+            }
             const memoryUnitId = Path[lineid];
             const peakRatio = peakDic[memoryUnitId];
             return `url(#arrow${peakRatio ?? ''})`;
