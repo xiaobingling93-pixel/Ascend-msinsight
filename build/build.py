@@ -677,6 +677,7 @@ def extract_numeric_part(version: str) -> List:
 def replace_version_block(content: str, version_info: str, version_info_value: str, version: str) -> str:
     lines = content.splitlines()
     new_lines = []
+    current_year = datetime.now().year
 
     for line in lines:
         stripped = line.strip()
@@ -693,6 +694,8 @@ def replace_version_block(content: str, version_info: str, version_info_value: s
         elif re.match(r'^\s*VALUE\s+"ProductVersion"', line):
             new_lines.append(re.sub(r'^(\s*)VALUE\s+"ProductVersion",\s*".*?"$',
                                     f'\\1VALUE "ProductVersion", "{version}"', line))
+        elif re.match(r'^\s*VALUE\s+"LegalCopyright"', line):
+            new_lines.append(re.sub(r'(\d{4})-\d{4}', rf'\1-{current_year}', line))
         else:
             new_lines.append(line)
 
