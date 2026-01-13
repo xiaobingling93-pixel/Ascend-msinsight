@@ -586,6 +586,60 @@ private:
         '|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n', '\"', '\'', '\t', '\r', '\f', '\u0000'};
 #endif
 };
+
+/**
+ * 该方法用于切分符合RFC 4180格式的标准CSV单行（以','为分隔符）, 在行末缺失数据时也能padding一个空字符串
+ * @param csvLine csv文件单行
+ * @return 切分后的字符串数组
+ */
+static std::vector<std::string> SplitCsvLine(const std::string& csvLine)
+{
+    const char sep = ',';
+    std::vector<std::string> result;
+    std::string field;
+    bool inQuotes = false;
+    size_t i = 0;
+    while (i < csvLine.size()) {
+        char c = csvLine[i];
+        if (!inQuotes) {
+            i++;
+            // 当前不在引号中，只有字段开头的 " 才开启引号模式
+            if (c == '"' && field.empty()) {
+                inQuotes = true;
+                continue;
+            }
+            if (c == sep) {
+                result.push_back(field);
+                field.clear();
+                continue;
+            }
+            // 忽略行尾结束符如'\r''\n'
+            if (c != '\r' && c != '\n') {
+                field += c;
+            }
+            continue;
+        }
+        // 当前在引号中
+        if (c == '"') {
+            // 检查是否为转义序列
+            if (i + 1 < csvLine.size() && csvLine[i + 1] == '"') {
+                field += '"';
+                i += 2; // 跳过""
+                continue;
+            }
+            // 结束引号
+            inQuotes = false;
+        } else {
+            // 引号内的普通字符均保留
+            field += c;
+        }
+        i++;
+    }
+    // 处理最后一个字段（无论是否在引号中）
+    result.push_back(field);
+    return result;
+}
+
 }
 
 #endif // DATA_INSIGHT_CORE_STRING_UTIL_H
