@@ -826,8 +826,6 @@ std::vector<std::string> FileUtil::FindFilesWithFilter(const std::string &path, 
     if (!FileUtil::IsFolder(path)) {
         if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
             matchedFiles.emplace_back(path);
-        } else {
-            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_EXIST);
         }
         return matchedFiles;
     }
