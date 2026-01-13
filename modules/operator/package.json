@@ -11,9 +11,7 @@
     "test:dev": "set REACT_APP_TEST=1&&react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint src --fix",
-    "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
-    "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\Operator\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build/* ../framework/public/plugins/Operator"
+    "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start"
   },
   "browserslist": {
     "production": [
