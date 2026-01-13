@@ -229,3 +229,83 @@ TEST(StringUtil, CheckSqlVaildNormal)
     bool result = StringUtil::CheckSqlValid(sql);
     EXPECT_TRUE(result);
 }
+
+TEST(StringUtil, SplitCsvLine_EmptyLine)
+{
+    EXPECT_EQ(SplitCsvLine(""), std::vector<std::string>{""});
+}
+
+TEST(StringUtil, SplitCsvLine_SingleField)
+{
+    EXPECT_EQ(SplitCsvLine("hello"), std::vector<std::string>{"hello"});
+}
+
+TEST(StringUtil, SplitCsvLine_SimpleFields)
+{
+    EXPECT_EQ(SplitCsvLine("a,b,c"), (std::vector<std::string>{"a", "b", "c"}));
+}
+
+TEST(StringUtil, SplitCsvLine_TrailingSeparator)
+{
+    // 行末有分隔符，应补空字段
+    EXPECT_EQ(SplitCsvLine("a,b,"), (std::vector<std::string>{"a", "b", ""}));
+}
+
+TEST(StringUtil, SplitCsvLine_LeadingSeparator)
+{
+    EXPECT_EQ(SplitCsvLine(",a,b"), (std::vector<std::string>{"", "a", "b"}));
+}
+
+TEST(StringUtil, SplitCsvLine_ConsecutiveSeparators)
+{
+    EXPECT_EQ(SplitCsvLine("a,,b"), (std::vector<std::string>{"a", "", "b"}));
+}
+
+TEST(StringUtil, SplitCsvLine_QuotedFieldWithoutSpecialChars)
+{
+    EXPECT_EQ(SplitCsvLine("a,,b"), (std::vector<std::string>{"a", "", "b"}));
+}
+
+TEST(StringUtil, SplitCsvLine_QuotedFieldWithComma)
+{
+    EXPECT_EQ(SplitCsvLine("\"hello, world\""), (std::vector<std::string>{"hello, world"}));
+}
+
+TEST(StringUtil, SplitCsvLine_QuotedFieldWithQuotes)
+{
+    EXPECT_EQ(SplitCsvLine("\"She said \"\"Hi\"\"\""), (std::vector<std::string>{"She said \"Hi\""}));
+}
+
+TEST(StringUtil, SplitCsvLine_MixedQuotedAndUnquoted)
+{
+    EXPECT_EQ(SplitCsvLine("apple,\"banana, split\",cherry"),
+              (std::vector<std::string>{"apple", "banana, split", "cherry"}));
+}
+
+TEST(StringUtil, SplitCsvLine_EmptyQuotedField) {
+    EXPECT_EQ(SplitCsvLine("\"\""), (std::vector<std::string>{""}));
+}
+
+TEST(StringUtil, SplitCsvLine_UnmatchedQuote) {
+    // RFC 4180 要求引号成对，但SplitCsvLine实现会把未闭合引号视为普通字符结尾
+    EXPECT_EQ(SplitCsvLine("\"unmatched"), (std::vector<std::string>{"unmatched"}));
+    EXPECT_EQ(SplitCsvLine("a,\"b,c"), (std::vector<std::string>{"a", "b,c"}));
+}
+
+TEST(StringUtil, SplitCsvLine_WhitespacePreservation) {
+    // CSV 不自动 trim 空格
+    EXPECT_EQ(SplitCsvLine(" a , b "), (std::vector<std::string>{" a ", " b "}));
+    EXPECT_EQ(SplitCsvLine("\" a \",\" b \""), (std::vector<std::string>{" a ", " b "}));
+}
+
+TEST(StringUtil, SplitCsvLine_NewlineAndCarriageReturnIgnoredAtEnd) {
+    // 注意：\r\n 在中间不会被忽略（但单行不应含出现换行）
+    EXPECT_EQ(SplitCsvLine("a,b\n"), (std::vector<std::string>{"a", "b"}));
+    EXPECT_EQ(SplitCsvLine("a,b\r"), (std::vector<std::string>{"a", "b"}));
+    EXPECT_EQ(SplitCsvLine("a,b\r\n"), (std::vector<std::string>{"a", "b"}));
+}
+
+TEST(StringUtil, SplitCsvLine_EscapedQuotesOnlyInQuotedFields) {
+    // 未加引号的 "" 应视为字面两个双引号
+    EXPECT_EQ(SplitCsvLine("a\"\"b,c"), (std::vector<std::string>{"a\"\"b", "c"}));
+}
