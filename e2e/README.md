@@ -20,9 +20,13 @@ npx playwright install
 
 ### 4、运行用例
 
+运行GUI前，请分别完成前端和后端的构建。
+
 ```sh
 # 运行所有用例
 npm run test
+# 运行预冒烟用例
+npm run test:smoke
 # 在 UI 模式下运行
 npm run test -- --ui
 # 运行单个测试文件

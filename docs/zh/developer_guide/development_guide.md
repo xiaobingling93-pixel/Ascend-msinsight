@@ -155,6 +155,41 @@ pnpm install
 - 网页端启动成功如下图所示
 ![insight_start_success](./figures/insight_start_success.png)
 
+### 3.5. 预冒烟测试
+预冒烟测试可以在Linux或Windows上进行
+
+#### 3.5.1 在Linux上进行预冒烟测试
+
+- 在Linux上进行预冒烟测试推荐使用docker
+
+- 要安装测试框架Playwright及其相关依赖，建议使用Playwright官方镜像，参考[Playwright官网](https://playwright.dev/docs/docker)，镜像tag为v1.57.0-jammy
+
+- 从镜像创建容器后，需要安装前端和后端需要的其它依赖，在容器中，执行build目录下的mindstudio_insight_gui_set_environment.sh脚本安装依赖
+
+```
+bash build/mindstudio_insight_gui_set_environment.sh
+```
+
+- 完成依赖安装后，在项目的根目录下执行
+
+```
+bash build/mindstudio_insight_gui_run.sh
+```
+
+以进行预冒烟测试，并查看结果
+
+#### 3.5.2 在Windows上进行预冒烟测试
+
+- 在Windows上进行预冒烟测试，安装依赖参考[GUI指导文档](https://gitcode.com/Ascend/msinsight/blob/master/e2e/README.md)
+
+- 在e2e目录下，执行
+
+```
+npm run test:smoke
+```
+
+以进行预冒烟测试，并查看结果
+
 ## 4 新增模块开发
 
 - 此部分只展示架构部分开发以及接入，具体模块实现逻辑请根据实际情况设计开发
@@ -878,7 +913,7 @@ PRIMARY KEY ("key")
 
 # 创建好的profiler.db拖入Insight即可看见新增泳道
 
-#7 开发者本地出包 指南
+# 7 开发者本地出包 指南
 
 ## Windows环境
 
