@@ -34,9 +34,6 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         return false;
     }
     std::vector<Protocol::FlowLocation> results = GetFlowLocationData(params);
-    if (results.empty()) {
-        return false;
-    }
     uint64_t start = params.pageSize * (params.currentPage - 1);
     for (uint64_t i = start; i < start + params.pageSize && i < results.size(); ++i) {
         auto item = results[i];
