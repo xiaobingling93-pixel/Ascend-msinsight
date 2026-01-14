@@ -241,4 +241,5 @@ export const light: Theme = {
     unitInfoTextColor: '#4E5865',
     scrollBarWidth: 7,
     splitLineColor: '#DFE5EF',
+    selectedBgColor: '#EBEFF6',
 };

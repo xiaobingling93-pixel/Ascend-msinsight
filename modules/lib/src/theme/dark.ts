@@ -241,5 +241,6 @@ export const dark: Theme = {
     unitInfoTextColor: '#BCBCBC',
     scrollBarWidth: 7,
     splitLineColor: '#3C3C3C',
+    selectedBgColor: '#343A43',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };
