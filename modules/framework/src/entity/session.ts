@@ -185,16 +185,16 @@ export class Session {
         return this._dataSources;
     }
 
-    get activeDataSource(): ActiveDataSource {
-        return this._activeDataSource;
-    }
-
     set dataSources(data: DataSource[]) {
         this._dataSources = data;
         this._dataSourceIndexMap = new Map();
         data.forEach((item, index): void => {
             this._dataSourceIndexMap.set(item.projectName, index);
         });
+    }
+
+    get activeDataSource(): ActiveDataSource {
+        return this._activeDataSource;
     }
 
     set activeDataSource(data: ActiveDataSource) {

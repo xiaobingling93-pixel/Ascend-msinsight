@@ -63,6 +63,9 @@ const ContentsContainer = styled.div`
             background: none;
         }
     }
+    .parent-node {
+        font-weight: 600;
+    }
     // 勾选状态
     .ant-tree-title {
         display: inline-block;
@@ -74,6 +77,7 @@ const ContentsContainer = styled.div`
     .content-body {
         display: flex;
         align-items: center;
+        padding-right: 6px;
     }
     .content-name {
         display:block;
@@ -89,7 +93,7 @@ const ContentsContainer = styled.div`
     .ant-tree-icon__docu + .ant-tree-title {
         width: 100%;
         font-size: 12px;
-        color: ${(props): string => props.theme.textColorTertiary};
+        color: ${(props): string => props.theme.textColorSecondary};
     }
     // 折叠图标
     .ant-tree-switcher-icon {
@@ -106,8 +110,8 @@ const ContentsContainer = styled.div`
         width: 16px;
     }
     // 选中效果/鼠标滑动效果
-    .ant-tree-treenode-selected, .ant-tree-treenode:hover {
-        background: ${(props): string => props.theme.bgColorLight};
+    .ant-tree-treenode-selected.leaf-node, .ant-tree-treenode:hover {
+        background: ${(props): string => props.theme.selectedBgColor};
 
         .btn-box {
             display: flex;
@@ -151,9 +155,9 @@ function ImportDataBtn({ projectName, session }: {projectName: string;session: S
     return <Tooltip placement="bottom" title={t('Import Data')} destroyTooltipOnHide={{ keepParent: false }}>
         <AddIcon onClick={(): void => { session.actionListener = { type: SessionAction.ADD_DATA_UNDER_PROJECT, value: projectName }; }}/>
     </Tooltip>;
-};
+}
 
-const createCompareRankIdFuncWithProjectName = (projectName: string):
+const createCompareRankIdFuncWithProjectName = ():
 (a: FileOrDirectory, b: FileOrDirectory) => number => (a, b) => {
     const aRankId = a.rankId ?? '';
     const bRankId = b.rankId ?? '';
@@ -172,6 +176,7 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
         layerData: data,
         checkable: false,
         isLeaf,
+        className: isLeaf ? 'leaf-node' : 'parent-node',
         title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={data.path}>
             <span className={`content-body ${getNodeClass(session, { projectName, fileType: layerType, filePath: data.path, rankId: data.rankId ?? '' })}`}>
                 <span className="content-text can-right-click" onContextMenu={(): void => {
@@ -187,7 +192,7 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
     };
     if (!isLeaf) {
         node.children = data.children.filter((child) => child.type !== undefined)
-            .sort(createCompareRankIdFuncWithProjectName(projectName))
+            .sort(createCompareRankIdFuncWithProjectName())
             .map((child) => getTreeNode(child, projectName, projectIndex, session, depth + 1));
     }
     return node;
@@ -206,6 +211,7 @@ const getTreeData = (session: Session): ProjectTreeDataNode[] => {
             layerType,
             layerData: dataSource,
             isLeaf: false,
+            className: 'parent-node',
             icon: <LocalImportIcon/>,
             title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={dataSource.projectName}>
                 <span className={`content-body ${getNodeClass(session, {
@@ -230,7 +236,7 @@ const getTreeData = (session: Session): ProjectTreeDataNode[] => {
                 </span>
             </Tooltip>,
             children: children?.filter((child) => child.type !== undefined)
-                .sort(createCompareRankIdFuncWithProjectName(dataSource.projectName))
+                .sort(createCompareRankIdFuncWithProjectName())
                 .map((child) => getTreeNode(child, dataSource.projectName, dataSourceIndex, session, 0)),
         };
     });

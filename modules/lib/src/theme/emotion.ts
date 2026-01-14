@@ -246,5 +246,6 @@ declare module '@emotion/react' {
         unitInfoTextColor: string;
         scrollBarWidth: number; // 滚动条宽度
         splitLineColor: string; // 分割线颜色
+        selectedBgColor: string; // 项目选中背景色
     }
 }
