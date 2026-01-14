@@ -43,7 +43,13 @@ bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
-    if (database == nullptr || !database->QueryMatrixSortOpNames(request.params, response.body)) {
+    if (database == nullptr) {
+        SetCommunicationError(ErrorCode::CLUSTER_ANALYSIS_FAILED);
+        SetResponseResult(response, false);
+        session.OnResponse(std::move(responsePtr));
+        return false;
+    }
+    if (!database->QueryMatrixSortOpNames(request.params, response.body)) {
         SetCommunicationError(ErrorCode::QUERY_MATRIX_SORT_OPERATOR_NAMES_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix sort op names response data.");

@@ -29,6 +29,7 @@ const std::map<ErrorCode, std::string> errorMessages = {
     {ErrorCode::GET_DEVICE_ID_FAILED, "Failed to get device id"},
 
     {ErrorCode::CONNECT_DATABASE_FAILED, "Failed to connect to database"},
+    {ErrorCode::CLUSTER_ANALYSIS_FAILED, "Cluster analysis failed, unable to retrieve cluster data"},
     {ErrorCode::QUERY_COMMUNICATION_BANDWIDTH_FAILED, "Failed to query communication bandwidth data"},
     {ErrorCode::QUERY_COMMUNICATION_OPERATOR_FAILED, "Failed to query communication operator data"},
     {ErrorCode::QUERY_SLOW_OPERATOR_FAILED, "Failed to query slow operator data"},
