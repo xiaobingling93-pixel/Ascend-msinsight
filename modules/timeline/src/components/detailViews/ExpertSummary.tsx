@@ -58,7 +58,9 @@ export const ExpertSummary = observer((props: SelectContentViewProps & { request
     };
 
     useEffect(() => {
-        req();
+        if (props.card.cardId) {
+            req();
+        }
     }, [props.card.cardId]);
 
     return <>
