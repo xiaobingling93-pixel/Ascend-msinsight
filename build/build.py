@@ -264,10 +264,8 @@ def build_jupyterlab(jupyterlab_version, os_name):
     requirements_path = os.path.join(plugin_path, 'requirements.txt')
 
     # 下载构建依赖
-    result = exec_command([Const.PIP, 'install', '--trusted-host', 'pypi.tuna.tsinghua.edu.cn', '-i',
-                           'https://pypi.tuna.tsinghua.edu.cn/simple',
-                           '-r', requirements_path],
-                          plugin_path, 'jupyterlab_plugin')
+    result = exec_command([Const.PIP, 'install', '-i', 'https://pypi.org/simple', '-r', requirements_path],
+                            plugin_path, 'jupyterlab_plugin')
     if result != 0:
         return 1
 
@@ -289,16 +287,16 @@ def build_jupyterlab(jupyterlab_version, os_name):
     # 2. 构建whl包
     setup_path, output_path = 'setup.py', 'output'
     result = exec_command([Const.PYTHON, setup_path, 'bdist_wheel',
-                           '--plat-name=' + get_os_platform(), '--dist-dir', output_path],
-                          plugin_path, 'jupyterlab_plugin')
+                            '--plat-name=' + get_os_platform(), '--dist-dir', output_path],
+                            plugin_path, 'jupyterlab_plugin')
     if result != 0:
         return 1
 
     # 3. 此处暂时需要构建两次
     setup_path, output_path = 'setup.py', 'output'
     result = exec_command([Const.PYTHON, setup_path, 'bdist_wheel',
-                           '--plat-name=' + get_os_platform(), '--dist-dir', output_path],
-                          plugin_path, 'jupyterlab_plugin')
+                            '--plat-name=' + get_os_platform(), '--dist-dir', output_path],
+                            plugin_path, 'jupyterlab_plugin')
     if result != 0:
         return 1
 
