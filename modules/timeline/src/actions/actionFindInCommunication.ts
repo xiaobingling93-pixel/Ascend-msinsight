@@ -21,8 +21,6 @@ import type { Session } from '../entity/session';
 import connector from '../connection';
 import { calculateSelectedUnitListStatus } from './actionPinUnits';
 import { queryCommunicationKernelDetail } from '../api/request';
-import { message } from 'antd';
-import i18n from '@insight/lib/i18n';
 
 async function findInCommunication(session: Session): Promise<void> {
     if (!session.selectedData) {
@@ -34,23 +32,20 @@ async function findInCommunication(session: Session): Promise<void> {
         dbPath,
         name,
     };
-    try {
-        const res = await queryCommunicationKernelDetail(params);
-        connector.send({
-            event: 'switchModule',
-            body: {
-                switchTo: 'communication',
-                toModuleEvent: 'locateCommunication',
-                params: {
-                    operatorName: session.selectedData?.name,
-                    iterationId: res?.step,
-                    stage: res?.group,
-                },
+
+    const res = await queryCommunicationKernelDetail(params);
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'communication',
+            toModuleEvent: 'locateCommunication',
+            params: {
+                operatorName: session.selectedData?.name,
+                iterationId: res?.step,
+                stage: res?.group,
             },
-        });
-    } catch (err) {
-        message.warning(i18n.t('timeline:contextMenu.Find in Communication Warning'));
-    }
+        },
+    });
 }
 
 export const actionFindInCommunication = register({
