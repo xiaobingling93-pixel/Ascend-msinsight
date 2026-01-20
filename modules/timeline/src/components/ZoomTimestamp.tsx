@@ -26,6 +26,8 @@ import { traceStart } from '../utils/traceLogger';
 import { getDuration } from '../utils/humanReadable';
 import { Tooltip } from '@insight/lib/components';
 import { useTranslation } from 'react-i18next';
+import { MAX_ZOOM_DURATION } from '../entity/domain';
+import { errorCenter, ErrorCode, i18n, WsError } from '@insight/lib';
 
 const TEXT_WIDTH = 50;
 const FONT_SIZE = 12;
@@ -83,6 +85,10 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
                     data-testid={'tool-zoom-in'}
                     disabled={isUpperBound}
                     onClick={(): void => {
+                        if (session.domain.duration >= MAX_ZOOM_DURATION) {
+                            errorCenter.handleError(new WsError(ErrorCode.ZOOM_LIMIT_WARNING, i18n.t('timeline:zoomOutLimitWarning', { maxDuration: MAX_ZOOM_DURATION / 60 / 1e9 })));
+                            return;
+                        }
                         runInAction(() => {
                             traceStart('zoomProportion', { action: 'zoomProportion' });
                             session.zoom = { zoomCount: 1 };
