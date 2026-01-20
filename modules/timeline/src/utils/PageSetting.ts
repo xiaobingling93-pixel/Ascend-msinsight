@@ -80,7 +80,7 @@ class UnitTreeTool {
                 pinnedUnits[pinnedUnitIdx] = unit;
             }
             // 泳道未展开不进行子泳道的展开恢复，但需要恢复子泳道的置顶状态
-            if (unit.children !== undefined && unit.children.length > 0 && Number(settingUnit.children.length) > 0) {
+            if (unit.children?.length && settingUnit?.children?.length) {
                 this.recoverSettingLimited(unit.children, settingUnit.children, pinnedUnits, iteration + 1);
             }
         });

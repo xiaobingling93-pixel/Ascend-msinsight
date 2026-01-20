@@ -211,7 +211,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     };
 
     return (
-        <div className="mb-30">
+        <div className="mb-30" style={{ paddingLeft: '24px', paddingRight: '24px' }}>
             <SearchBox>{renderFields()}</SearchBox>
         </div>
     );
