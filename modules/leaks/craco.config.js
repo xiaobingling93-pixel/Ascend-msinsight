@@ -30,6 +30,12 @@ module.exports = {
     webpack: {
         alias: webpackCfg.alias,
         configure: (webpackConfig) => {
+            // 添加 GLSL 文件处理规则 - 使用 webpack 5 的资源模块
+            webpackConfig.module.rules.push({
+                test: /\.glsl$/,
+                type: 'asset/source'
+            });
+
             return configureConfig(webpackConfig, [libPath, echartsPath]);
         }
     },
