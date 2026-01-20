@@ -572,6 +572,7 @@ const resetPage = (data?: Record<string, unknown>): void => {
         }
         session.isMultiDevice = false;
         session.isFullDb = false;
+        session.isNeedResetRankId = true;
         clearUnits(session, data);
         session.simpleCache.clear();
         let remoteMaxTimeStamps = 0;
