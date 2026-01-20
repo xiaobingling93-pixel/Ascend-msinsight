@@ -68,6 +68,9 @@ export const TableDataDetail = observer((props: SelectContentViewProps & { selec
             filterconditions,
         };
         if (param.rankId === '' || param.rankId === undefined) {
+            setColumn([]);
+            setDataSource([]);
+            setPage(defaultPage);
             return;
         }
         setLoading(true);
