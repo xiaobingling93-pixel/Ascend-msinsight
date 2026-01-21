@@ -58,7 +58,7 @@ trace-cmd是一个命令行工具，它封装了trace采集的过程，提供了
 
 | 参数 | 说明 | 示例 | 默认值 |
 |-----|-----|-----|-----|
-| `--cpu` | cpu_mask列表，多个核心使用逗号分隔<br>缺省时默认采集所有CPU核 | `--cpu=0,1,4` 采集CPU 0、1、4的数据 | None，采集**全部**CPU核心 |
+| `--cpu` | cpu_mask列表，指定采集的CPU核心。支持单个数字、逗号分隔及连字符范围。<br>缺省时默认采集所有CPU核 | `--cpu=0,1,4 (指定核)`<br>`--cpu=0-3,8 (混合写法)`<br>`--cpu=0-15 (范围写法)` | None，采集**全部**CPU核心 |
 | `--output` | 输出文件路径与文件名 | `--output=my_trace_data.txt` | `ftrace.txt` |
 | `--record_time` | 采集持续时间（单位：秒）<br>• 正值：采集指定秒数后自动停止<br>• ≤0：持续采集，需`Ctrl+C`手动终止，长时间采集，请注意磁盘空间占用情况。 | `--record_time=30` | 60 |
 |`--NSpid`| 容器场景下，可开启该开关，获取容器与宿主机PID映射关系，详见[采集容器中的Linux Kernel ftrace数据](#采集容器中的linux-kernel-ftrace数据) | `--NSpid` | 关闭 |
@@ -89,13 +89,13 @@ python train.py
 **1. 开始采集接口**
 
 ```python
-def ftrace_record_start(cpu_list: List[int] = None)
+def trace_record.ftrace_record_start(cpu_mask=[0,1,4])
 ```
 **参数**：
-+ `cpu_list`（可选）：指定要采集的CPU核心编号列表。默认为 `None`，表示采集所有可用CPU核心。
++ `cpu_mask`（可选）：指定要采集的CPU核心编号。支持 **List[int]** 或 **字符串**（如 `"0-4,8"`）。默认为 `None`，表示采集所有可用CPU核心。
 
 **注意：**
-> 采集数据量过大时，`trace-cmd show`步骤耗时会较长，建议使用`cpu_list`参数，推荐CPU采集核心数不超过16。
+> 采集数据量过大时，`trace-cmd show`步骤耗时会较长，建议使用`cpu_mask`参数，推荐CPU采集核心数不超过16。
 
 **2. 停止采集并保存数据接口**
 
@@ -110,15 +110,21 @@ def ftrace_record_stop(output: str)
 **使用示例**:
 
 ```python
-import ftrace_record
-def train()
-    ftrace_record_start(cpu=[0,1,4]) //开始采集ftrace
-    profiling_start() //开始采集profiling
+import trace_record
 
-    // 模型运行...
+def train(): 
+    # 方式一：传入字符串范围（可混合）
+    trace_record.ftrace_record_start(cpu_mask="0-4,7,10") 
+    
+    # 方式二：传入列表
+    # trace_record.ftrace_record_start(cpu_mask=[0,1,2,3,4]) 
+    
+    profiling_start() 
 
-    profiling_stop() // 停止采集profiling
-    ftrace_record_stop(output="ftrace.txt") // 停止采集ftrace
+    # 模型运行...
+
+    profiling_stop() 
+    trace_record.ftrace_record_stop(output="ftrace.txt")
 ```
 
 ### 4. 数据采集后处理
@@ -127,7 +133,7 @@ def train()
 
 **使用方法**
 ```bash
-python trace_convert.py [-h] [--input INPUT] [--output OUTPUT] [--cpu_list CPU_LIST] [--profiling_data PROFILING_DATA]
+python trace_convert.py [-h] [--input INPUT] [--output OUTPUT][--profiling_data PROFILING_DATA]
 ```
 **参数详解**
 
@@ -161,7 +167,7 @@ python trace_convert.py --input=result_dir/frace.txt --profiling_data=result_dir
 2. 使用`trace_convert.py`脚本进行数据后处理时，通过`--pid_mapping`参数，传入`pid_mapping.json`路径。脚本执行时，会自动将采集到的进程号转换为容器内进程号，以便于和profiling所采集进程号对应。
 
 ### 方式二：API接口模式
-可单独使用`trace_convert.py`脚本中的`ContainerPidMapper`类，提供以下对外接口：
+可单独使用 trace_record.py 脚本中的 ContainerPidMapper 类，提供以下对外接口：
 
 **类构造函数**
 

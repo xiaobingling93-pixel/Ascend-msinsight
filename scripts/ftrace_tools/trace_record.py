@@ -27,10 +27,76 @@ import json
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s]:%(message)s')
 
 
+def parse_cpu_arg(cpu_str):
+    """解析CPU参数字符串，支持单个数字和范围混合"""
+    cpus = set()
+    if not cpu_str: return None
+    
+    format_hint = "Please use non-negative integers (e.g., '0-3,5'). Negative values are not supported."
+
+    try:
+        parts = cpu_str.split(',')
+        for part in parts:
+            part = part.strip()
+            if not part: continue
+            
+            if '-' in part:
+                sub_parts = part.split('-')
+                # 是两个部分，且两个部分都是纯数字
+                if len(sub_parts) != 2 or not (sub_parts[0].isdigit() and sub_parts[1].isdigit()):
+                    logging.error(f"Invalid range format or negative value detected: '{part}'. {format_hint}")
+                    return None
+                
+                start, end = int(sub_parts[0]), int(sub_parts[1])
+                # 避免前大后小
+                if start > end:
+                    logging.error(f"Range start must be not greater than end: '{part}'.")
+                    return None
+                cpus.update(range(start, end + 1))
+            else:
+                # 检查是否为数字
+                if not part.isdigit():
+                    logging.error(f"Invalid CPU ID detected: '{part}'. {format_hint}")
+                    return None
+                cpus.add(int(part))
+    except Exception:
+        logging.error(f"Unexpected error parsing CPU arguments. {format_hint}")
+        return None
+    
+    return sorted(list(cpus))
+    
+
 def ftrace_record_start(cpu_mask=None):
     if os.getuid() != 0:
         logging.critical('Please run this script as root')
         return False
+    
+    format_hint = "Hint: CPU mask should be a string (e.g., '0-3,5') or a list of integers (e.g., [0, 1, 2])."
+
+    # 处理字符串输入
+    if isinstance(cpu_mask, str):
+        logging.info(f"API received string input: '{cpu_mask}', parsing...")
+        parsed_mask = parse_cpu_arg(cpu_mask)
+        if parsed_mask is None:
+            #在内部已有详细错误信息，直接返回false
+            return False
+        cpu_mask = parsed_mask
+        
+    # 处理列表输入
+    elif isinstance(cpu_mask, list):
+        invalid_elements = [c for c in cpu_mask if not (isinstance(c, int) and c >= 0)]
+        if invalid_elements:
+            logging.error(
+                f"Invalid CPU ID(s) detected in list: {invalid_elements}. {format_hint}"
+            )
+            return False
+        cpu_mask = sorted(list(set(cpu_mask)))
+        
+    # 非法类型
+    elif cpu_mask is not None:
+        logging.error(f"Unsupported CPU mask type. {format_hint}")
+        return False
+
     TraceRecord.trace_clear()
     TraceRecord.trace_start(cpu_mask)
     return True
@@ -334,11 +400,11 @@ def daemon_mode(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cpu', type=str, default=None)
+    parser.add_argument('--cpu', type=str, default=None,
+                        help="Specify CPU cores to collect. Supports single numbers, commas, and hyphen ranges. e.g., '0,1,4' or '0-3,8'. Default: collect all CPUs.")
     parser.add_argument('--output', type=str, default='ftrace.txt')
     parser.add_argument('--record_time', type=int, default=60,
                         help='record time, if pass <=0 will start long term record that user should attention the disk space')
-    parser.add_argument('--daemon', action='store_true', default=False, help='daemon mode')
     parser.add_argument('--rotation', type=int, default=30, help='rotation time, unit sec')
     parser.add_argument('--backup_count', type=int, default=6)
     parser.add_argument('--NSpid', action='store_true', help='will try to record the pid flex map')
@@ -350,9 +416,5 @@ if __name__ == "__main__":
         exit(1)
 
     args = parser.parse_args()
-    if args.cpu:
-        args.cpu = [int(i) for i in args.cpu.split(',')]
-    if args.daemon:
-        daemon_mode(args)
-    else:
-        normal_mode(args)
+    normal_mode(args)
+
