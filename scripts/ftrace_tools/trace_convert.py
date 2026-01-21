@@ -183,6 +183,7 @@ class PidTran:
 class TimeStampTran:
     def __init__(self):
         self.mono_raw_start = None
+        self.mono_raw_end = None
         self.utc_start_timestamp = None
         pass
 
@@ -193,6 +194,10 @@ class TimeStampTran:
             return
         self.mono_raw_start = int(start_info['clockMonotonicRaw'])
         self.utc_start_timestamp = int(start_info['collectionTimeBegin']) * 1000
+
+        end_info = self.__get_profiling_end_info(profiling_data)
+        if end_info is not None:
+            self.mono_raw_end = int(end_info['clockMonotonicRaw'])
 
     def __get_profiling_start_info(self, profiling_data):
         if profiling_data is None:
@@ -209,9 +214,32 @@ class TimeStampTran:
             start_info = json.load(f)
         return start_info
 
+    def __get_profiling_end_info(self, profiling_data):
+        if profiling_data is None:
+            return None
+        if not os.path.exists(profiling_data):
+            return None
+        # 递归查找end_info
+        end_info_path = glob.glob(os.path.join(profiling_data, "**", "end_info"), recursive=True)
+        if len(end_info_path) == 0:
+            logging.warning("Not find end_info in profiling data, end time filtering disabled")
+            return None
+        with open(end_info_path[0], 'r') as f:
+            end_info = json.load(f)
+        return end_info
+
     def get_utc_timestamp(self, uptime: str):
         # ns
         timestamp = self.__str_to_int(uptime)
+
+        # Filter events before profiling started
+        if self.mono_raw_start is not None and timestamp < self.mono_raw_start:
+            return None
+
+        # Filter events after profiling ended
+        if self.mono_raw_end is not None and timestamp > self.mono_raw_end:
+            return None
+
         return (timestamp - self.mono_raw_start) + self.utc_start_timestamp
 
     def __str_to_int(self, num_str):
@@ -260,6 +288,11 @@ class SchedFtraceParse(FtraceParse):
         if match is None:
             logging.debug("Not match regex:{}", event)
             return
+
+        timestamp = TimeStampTran().get_utc_timestamp(match.group('timestamp'))
+        if timestamp is None:
+            return
+
         task = match.group('task')
         pid = match.group('pid')
         pid = PidTran().get_ns_pid(pid)
