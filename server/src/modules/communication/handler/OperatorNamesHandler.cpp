@@ -20,6 +20,7 @@
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "BaselineManager.h"
 #include "OperatorNamesHandler.h"
 
 namespace Dic {
@@ -35,6 +36,13 @@ bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     std::unique_ptr<OperatorNamesResponse> responsePtr = std::make_unique<OperatorNamesResponse>();
     OperatorNamesResponse &response = *responsePtr;
     SetBaseResponse(request, response);
+    // 若为集群比对状态，直接返回Total Op Info
+    if (!BaselineManager::Instance().GetBaseLineClusterPath().empty()) {
+        response.body.push_back({"Total Op Info"});
+        SetResponseResult(response, true);
+        session.OnResponse(std::move(responsePtr));
+        return true;
+    }
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {

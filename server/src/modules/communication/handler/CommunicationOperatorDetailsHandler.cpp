@@ -38,14 +38,20 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
             std::make_unique<Protocol::OperatorDetailsResponse>();
     // check request parameters
     std::string errorMsg;
-    if (!request.params.CheckParams(errorMsg)) {
-        SetCommunicationError(ErrorCode::PARAMS_ERROR);
-        SendResponse(std::move(responsePtr), false);
-        return false;
-    }
     OperatorDetailsResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
+    if (!request.params.CheckParams(errorMsg)) {
+        // 集群比对状态下，若基线数据为空，入参校验失败后，前端不应弹出报错提示，SendResponse需返回true，非集群比对时，需返回false
+        if (!BaselineManager::Instance().GetBaseLineClusterPath().empty()) {
+            SendResponse(std::move(responsePtr), true);
+            return true;
+        }
+        SetCommunicationError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
+        ServerLog::Error(errorMsg);
+        return false;
+    }
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data

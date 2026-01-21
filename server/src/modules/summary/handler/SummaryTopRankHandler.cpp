@@ -34,6 +34,8 @@ bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     auto &request = dynamic_cast<SummaryTopRankRequest &>(*requestPtr);
     std::unique_ptr<SummaryTopRankResponse> responsePtr = std::make_unique<SummaryTopRankResponse>();
     SummaryTopRankResponse &response = *responsePtr;
+    SetBaseResponse(request, response);
+    SetResponseResult(response, true);
     std::string errMsg;
     if (!request.params.CheckParams(errMsg)) {
         SetSummaryError(ErrorCode::PARAMS_ERROR);
@@ -42,8 +44,6 @@ bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     }
     WsSession &session = *WsSessionManager::Instance().GetSession();
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
-    SetBaseResponse(request, response);
-    SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
     return true;

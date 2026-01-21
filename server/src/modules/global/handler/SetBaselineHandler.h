@@ -27,6 +27,7 @@ public:
     SetBaselineHandler()
     {
         command = REQ_RES_PROJECT_SET_BASELINE;
+        async = false;
     }
 
     ~SetBaselineHandler() override = default;

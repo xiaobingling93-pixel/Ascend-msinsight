@@ -30,7 +30,7 @@ import { type ConditionDataType, totalOperator, updateData } from './Filter';
 import { ResizeTable } from '@insight/lib/resize';
 import type { Session } from '../../entity/session';
 import { CaretDownIcon, CaretRightIcon } from '@insight/lib/icon';
-import { CompareNumber } from '@insight/lib/utils';
+import { CompareNumber, customConsole as console } from '@insight/lib/utils';
 import i18n from '@insight/lib/i18n';
 import type { DataItem, Duration } from './CommunicationTimeChart';
 import connector from '../../connection';
@@ -194,6 +194,8 @@ const OperatorsTable = ({ record: parentRow, conditions }: any): JSX.Element => 
             queryType: parentRow.source,
             pgName: conditions.pgName,
             groupIdHash: parentRow.source === Source.COMPARISON ? conditions.groupIdHash : conditions.baselineGroupIdHash,
+        }).catch((e) => {
+            console.log(e);
         }).finally(() => {
             setLoading(false);
         });

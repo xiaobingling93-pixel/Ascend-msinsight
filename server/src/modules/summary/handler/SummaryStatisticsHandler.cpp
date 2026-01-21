@@ -46,8 +46,9 @@ bool SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseInCluster(request.params.clusterPath, request.params.rankId);
         if (database == nullptr) {
-            SetSummaryError(ErrorCode::PARAMS_ERROR);
-            SendResponse(std::move(responsePtr), false);
+            // 若Timeline数据尚未加载，后端返回为空，此时前端不应弹出报错提示，因此此处SendResponse需返回true
+            SendResponse(std::move(responsePtr), true);
+            ServerLog::Warn("Failed to get trace database in cluster.");
             return false;
         }
     }
