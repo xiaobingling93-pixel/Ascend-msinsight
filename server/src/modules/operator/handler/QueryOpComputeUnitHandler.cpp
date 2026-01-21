@@ -40,6 +40,11 @@ namespace Dic::Module::Operator {
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        if (!database)
+        {
+            ServerLog::Warn("[Operator]Not exist operator database. Fail to get op compute unit info.");
+            return true;
+        }
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             ServerLog::Error("[Operator]Failed to query Compute Unit Info by empty deviceId.");
@@ -49,8 +54,7 @@ namespace Dic::Module::Operator {
             return false;
         }
         request.params.deviceId = deviceId;
-        if (!database
-            || !database->QueryOperatorDurationInfo(request.params, QueryType::COMPUTE_UNIT, response.datas)) {
+        if (!database->QueryOperatorDurationInfo(request.params, QueryType::COMPUTE_UNIT, response.datas)) {
             ServerLog::Error("[Operator]Failed to query Compute Unit Info by rankId.");
             SetOperatorError(ErrorCode::QUERY_DURATION_FAILED);
             SetResponseResult(response, false);

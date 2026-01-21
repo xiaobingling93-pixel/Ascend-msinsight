@@ -605,5 +605,5 @@ TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWithabnormalQue
     requestPtr->params.orderBy = "count";
     requestPtr->params.order = "descend";
     requestPtr->params.isCompare = false;
-    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
 }

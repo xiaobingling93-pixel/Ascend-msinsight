@@ -163,14 +163,12 @@ bool DbSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqP
                                                   Protocol::QueryType type,
                                                   std::vector<Protocol::OperatorDurationRes> &datas)
 {
+    if (!CheckOperatorTableExist(reqParams.group, "operator duration info"))
+    {
+        return true;
+    }
     std::string sql;
     if (type == Protocol::QueryType::CATEGORY) {
-        if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
-        {
-            Server::ServerLog::Warn("Missing table % on querying operator duration info, "
-                                    "nothing will be done.", TABLE_COMMUNICATION_OP);
-            return true;
-        }
         sql = GenerateQueryCategoryDurationSql(reqParams);
     } else {
         sql = GenerateQueryComputeUnitDurationSql(reqParams);
@@ -252,10 +250,8 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
 bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                    Protocol::OperatorStatisticInfoResponse &response)
 {
-    if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+    if (!CheckOperatorTableExist(reqParams.group, "operator statistic info"))
     {
-        Server::ServerLog::Warn("Missing table % on querying operator statistic info, "
-                                "nothing will be done.", TABLE_COMMUNICATION_OP);
         return true;
     }
     reqParams.rangeFilters = ConvertFiltersToRangeFilters(reqParams.filters);
@@ -421,10 +417,8 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
 bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                 Protocol::OperatorDetailInfoResponse &response)
 {
-    if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+    if (!CheckOperatorTableExist(reqParams.group, "operator detail info"))
     {
-        Server::ServerLog::Warn("Missing table % on querying operator detail info, "
-                                "nothing will be done.", TABLE_COMMUNICATION_OP);
         return true;
     }
     if (!QueryDetailTotalNum(reqParams, response.total)) {
@@ -453,10 +447,8 @@ bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticRe
                                                    std::vector<Protocol::OperatorDetailInfoRes> &res,
                                                    std::string &level)
 {
-    if (OperatorGroupConverter::IsCommunication(reqParams.group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+    if (!CheckOperatorTableExist(reqParams.group, "all operator detail info"))
     {
-        Server::ServerLog::Warn("Missing table % on querying all operator detail info, "
-                                "nothing will be done.", TABLE_COMMUNICATION_OP);
         return true;
     }
     std::string sql = GenerateAllQueryDetailSql(reqParams);
@@ -465,6 +457,24 @@ bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticRe
         return false;
     } else {
         level = OperatorGetLevel(res);
+    }
+    return true;
+}
+
+bool DbSummaryDataBase::CheckOperatorTableExist(const std::string &group, const std::string &logInfo)
+{
+    if (OperatorGroupConverter::IsCommunication(group) && !CheckTableExist(TABLE_COMMUNICATION_OP))
+    {
+        Server::ServerLog::Warn("Missing table % on querying %, nothing will be done.", TABLE_COMMUNICATION_OP,
+            logInfo);
+        return false;
+    }
+
+    if (OperatorGroupConverter::IsCommunication(group) && !CheckTableExist(TABLE_COMPUTE_TASK_INFO))
+    {
+        Server::ServerLog::Warn("Missing table % on querying %, nothing will be done.", TABLE_COMPUTE_TASK_INFO,
+            logInfo);
+        return false;
     }
     return true;
 }

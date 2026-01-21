@@ -176,13 +176,18 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        if (!database)
+        {
+            ServerLog::Warn("[Operator]Not exist operator database. Fail get statistic info.");
+            return true;
+        }
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             return false;
         }
         request.params.deviceId = deviceId;
-        if (!database || !database->QueryOperatorStatisticInfo(request.params, response)) {
+        if (!database->QueryOperatorStatisticInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query Statistic Info by rankId.");
             SetOperatorError(ErrorCode::QUERY_STATISTIC_FAILED);
             return false;
@@ -232,13 +237,7 @@ namespace Dic::Module::Operator {
     std::string QueryOpStatisticInfoHandler::CalDataCompare(const std::string &com,
                                                             const std::string &base)
     {
-        // profiling给的数据不一定都是double且有可能为空，是double就计算，不是double原样呈现
-        if (NumberUtil::IsDouble(com) && NumberUtil::IsDouble(base)) {
-            return NumberUtil::StringDoubleMinus(com, base);
-        } else {
-            // 注意这里如果两个数据都是空，那么还是按照原数据呈现不要做处理，方便区分是未上报还是数据有问题
-            return com + "->" + base;
-        }
+        return NumberUtil::StringDoubleMinus(com, base);
     }
 
     void QueryOpStatisticInfoHandler::SetOpInputShapeGroupData(OperatorStatisticCmpInfoRes &data)

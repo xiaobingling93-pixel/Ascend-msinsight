@@ -134,7 +134,12 @@ namespace Dic::Module::Operator {
         }
         request.params.deviceId = deviceId;
         std::vector<Protocol::OperatorDetailInfoRes> cmpRes;
-        if (!database || !database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
+        if (!database)
+        {
+            ServerLog::Warn("[Operator]Not exist operator database. Fail get op detail info.");
+            return true;
+        }
+        if (!database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query current detail info by rankId.");
             SetOperatorError(ErrorCode::QUERY_ALL_DETAIL_FAILED);
             return false;
@@ -181,13 +186,18 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        if (!database)
+        {
+            ServerLog::Warn("[Operator]Not exist operator database. Fail to get op detail info.");
+            return true;
+        }
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
             return false;
         }
         request.params.deviceId = deviceId;
-        if (!database || !database->QueryOperatorDetailInfo(request.params, response)) {
+        if (!database->QueryOperatorDetailInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query detail Info by rankId");
             SetOperatorError(ErrorCode::QUERY_DETAIL_FAILED);
             return false;

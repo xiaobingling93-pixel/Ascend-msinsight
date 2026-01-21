@@ -40,6 +40,11 @@ namespace Dic::Module::Operator {
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        if (!database)
+        {
+            ServerLog::Warn("[Operator]Not exist operator database. Fail to get op category info.");
+            return true;
+        }
         std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             ServerLog::Error("[Operator]Failed to query Category Info by empty deviceId.");
@@ -49,7 +54,7 @@ namespace Dic::Module::Operator {
             return false;
         }
         request.params.deviceId = deviceId;
-        if (!database || !database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
+        if (!database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
             ServerLog::Error("[Operator]Failed to query Category Info by rankId.");
             SetOperatorError(ErrorCode::QUERY_DURATION_FAILED);
             SetResponseResult(response, false);

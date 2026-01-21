@@ -74,6 +74,7 @@ private:
     bool QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total);
     std::string GenerateQueryMoreInfoSql(OperatorMoreInfoReqParams &reqParams);
     std::string GetCommSql(const CommunicationDetailParams& request);
+    bool CheckOperatorTableExist(const std::string &group, const std::string &logInfo);
 
     const uint32_t maxCategorySize = 50;
 
