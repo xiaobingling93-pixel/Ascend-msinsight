@@ -37,6 +37,7 @@ import { StyledEmpty } from '@insight/lib/utils';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, BaseSummary, SelectContentViewProps } from './SystemView';
 import { OverallMetrics } from './OverallMetrics';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
+import { ProjectType } from '../../entity/insight';
 
 const filterColumn = [
     'name', 'type', 'acceleratorCore', 'taskId', 'inputShapes', 'inputDataTypes',
@@ -100,7 +101,8 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
         }
     }, [status]);
     const updateData = async(pages: any, sorters: {field: string;order: string}, filtersConditions: any): Promise<void> => {
-        if (props.card === undefined || props.card.cardId === '') {
+        const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card?.cardId);
+        if (props.card === undefined || props.card.cardId === '' || targetInfo?.projectType === ProjectType.IE) {
             setDataSource([]);
             setPage(defaultPage);
             return;

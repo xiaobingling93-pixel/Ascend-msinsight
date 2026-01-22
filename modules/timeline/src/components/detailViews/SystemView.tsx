@@ -42,6 +42,7 @@ import { EventView } from './EventsView';
 import { TableDataView } from './TableDataView';
 import { Session } from '../../entity/session';
 import type { BaseSummaryRowItemType, CardRankInfo } from '../../api/interface';
+import { ProjectType } from '../../entity/insight';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
 const Container = styled.div`
@@ -431,7 +432,8 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
     }
     const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: BaseSummaryProps): Promise<void> => {
         const _isStats = prop.isStats as boolean;
-        if (props.card === undefined || props.card.cardId === '') {
+        const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card?.cardId);
+        if (props.card === undefined || props.card.cardId === '' || targetInfo?.projectType === ProjectType.IE) {
             setDataSource([]);
             setPage(defaultPage);
             return;
