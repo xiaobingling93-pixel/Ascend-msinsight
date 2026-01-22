@@ -23,111 +23,45 @@ import time
 import signal
 import threading
 import json
+from typing import Optional
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s]:%(message)s')
 
+DEFAULT_TRACE_BUFFER_SIZE = 282000 # 单位: KB(trace-cmd环形缓冲区大小默认值)
 
-def parse_cpu_arg(cpu_str):
-    """解析CPU参数字符串，支持单个数字和范围混合"""
-    cpus = set()
-    if not cpu_str: return None
-    
-    format_hint = "Please use non-negative integers (e.g., '0-3,5'). Negative values are not supported."
+# trace-cmd 事件白名单
+# cpu调度
+SCHED_EVENT_LIST = {
+    "sched_switch", "sched_wakeup", "sched_waking", "sched_wakeup_new", "sched_migrate_task",
+    "sched_process_fork", "sched_process_exec", "sched_process_exit"
+}
+# 中断
+IRQ_EVENT_LIST = {
+    "irq_handler_entry", "irq_handler_exit",
+    "softirq_raise", "softirq_entry", "softirq_exit"
+}
+# 锁竞争
+FUTEX_EVENT_LIST = {
+    "syscalls:sys_enter_futex", "syscalls:sys_exit_futex",
+}
 
-    try:
-        parts = cpu_str.split(',')
-        for part in parts:
-            part = part.strip()
-            if not part: continue
-            
-            if '-' in part:
-                sub_parts = part.split('-')
-                # 是两个部分，且两个部分都是纯数字
-                if len(sub_parts) != 2 or not (sub_parts[0].isdigit() and sub_parts[1].isdigit()):
-                    logging.error(f"Invalid range format or negative value detected: '{part}'. {format_hint}")
-                    return None
-                
-                start, end = int(sub_parts[0]), int(sub_parts[1])
-                # 避免前大后小
-                if start > end:
-                    logging.error(f"Range start must be not greater than end: '{part}'.")
-                    return None
-                cpus.update(range(start, end + 1))
-            else:
-                # 检查是否为数字
-                if not part.isdigit():
-                    logging.error(f"Invalid CPU ID detected: '{part}'. {format_hint}")
-                    return None
-                cpus.add(int(part))
-    except Exception:
-        logging.error(f"Unexpected error parsing CPU arguments. {format_hint}")
-        return None
-    
-    return sorted(list(cpus))
-    
-
-def ftrace_record_start(cpu_mask=None):
+def ftrace_record_start(cpu_mask=None, bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: Optional["TraceEventConfig"]=None,
+                        args=None):
     if os.getuid() != 0:
         logging.critical('Please run this script as root')
         return False
-    
-    format_hint = "Hint: CPU mask should be a string (e.g., '0-3,5') or a list of integers (e.g., [0, 1, 2])."
+    cpu_mask = CPUParser.normalize_cpu_mask(cpu_mask)
 
-    # 处理字符串输入
-    if isinstance(cpu_mask, str):
-        logging.info(f"API received string input: '{cpu_mask}', parsing...")
-        parsed_mask = parse_cpu_arg(cpu_mask)
-        if parsed_mask is None:
-            #在内部已有详细错误信息，直接返回false
-            return False
-        cpu_mask = parsed_mask
-        
-    # 处理列表输入
-    elif isinstance(cpu_mask, list):
-        invalid_elements = [c for c in cpu_mask if not (isinstance(c, int) and c >= 0)]
-        if invalid_elements:
-            logging.error(
-                f"Invalid CPU ID(s) detected in list: {invalid_elements}. {format_hint}"
-            )
-            return False
-        cpu_mask = sorted(list(set(cpu_mask)))
-        
-    # 非法类型
-    elif cpu_mask is not None:
-        logging.error(f"Unsupported CPU mask type. {format_hint}")
-        return False
+    if event_cfg is None:
+        event_cfg = TraceEventConfig()
+    if args is not None:
+        event_cfg.sched = args.sched
+        event_cfg.irq = args.irq
+        event_cfg.futex = args.futex
 
     TraceRecord.trace_clear()
-    TraceRecord.trace_start(cpu_mask)
+    TraceRecord.trace_start(cpu_mask, event_cfg=event_cfg, buffer_size=bf_size)
     return True
-
-
-def cpus_to_cpumask(cpus):
-    # 确保输入合法
-    for cpu in cpus:
-        if not isinstance(cpu, int) or cpu < 0:
-            raise ValueError(f"Invalid CPU ID: {cpu}")
-
-    # 构建位掩码（支持任意大小）
-    mask = 0
-    for cpu in cpus:
-        mask |= (1 << cpu)
-    if mask == 0:
-        return "0"
-    # 每 32 位一组，生成掩码字符串
-    parts = []
-    while mask:
-        # 取低 32 位
-        part = mask & 0xFFFFFFFF
-        parts.append(f"{part:08x}")  # 8位十六进制，左补0
-        mask >>= 32
-    # 如果为空，说明 mask 为 0
-    if not parts:
-        return "0"
-    # 反转顺序（低位在右，高位在左），用逗号连接
-    cpumask_str = ",".join(reversed(parts))
-    return cpumask_str
-
 
 def ftrace_record_stop(output):
     logging.info("Ending record, writing result to file...")
@@ -137,11 +71,115 @@ def ftrace_record_stop(output):
     TraceRecord.trace_reset()
     logging.info("Write finish")
 
-
 def on_exit():
     TraceRecord.trace_stop()
     return
 
+class TraceEventConfig:
+    def __init__(self, sched=1, irq=1, futex=0):
+        self.sched = sched
+        self.irq = irq
+        self.futex = futex
+
+class CPUParser:
+    """CPU参数解析器，支持字符串和列表格式的CPU掩码"""
+
+    @staticmethod
+    def parse_cpu_arg(cpu_str):
+        cpus = set()
+        if not cpu_str:
+            return None
+
+        format_hint = "Please use non-negative integers (e.g., '0-3,5'). Negative values are not supported."
+
+        try:
+            parts = cpu_str.split(',')
+            for part in parts:
+                part = part.strip()
+                if not part:
+                    continue
+
+                if '-' in part:
+                    sub_parts = part.split('-')
+                    # 是两个部分，且两个部分都是纯数字
+                    if len(sub_parts) != 2 or not (sub_parts[0].isdigit() and sub_parts[1].isdigit()):
+                        logging.error(f"Invalid range format or negative value detected: '{part}'. {format_hint}")
+                        return None
+
+                    start, end = int(sub_parts[0]), int(sub_parts[1])
+                    # 避免前大后小
+                    if start > end:
+                        logging.error(f"Range start must be not greater than end: '{part}'.")
+                        return None
+                    cpus.update(range(start, end + 1))
+                else:
+                    # 检查是否为数字
+                    if not part.isdigit():
+                        logging.error(f"Invalid CPU ID detected: '{part}'. {format_hint}")
+                        return None
+                    cpus.add(int(part))
+        except Exception:
+            logging.error(f"Unexpected error parsing CPU arguments. {format_hint}")
+            return None
+
+        return sorted(list(cpus))
+    @staticmethod
+    def normalize_cpu_mask(cpu_mask):
+        format_hint = "Hint: CPU mask should be a string (e.g., '0-3,5') or a list of integers (e.g., [0, 1, 2])."
+
+        # 合法：表示不绑定 CPU
+        if cpu_mask is None:
+            return None
+
+        # 处理字符串输入
+        if isinstance(cpu_mask, str):
+            logging.info(f"API received string input: '{cpu_mask}', parsing...")
+            parsed_mask = CPUParser.parse_cpu_arg(cpu_mask)
+            if parsed_mask is None:
+                #在内部已有详细错误信息，直接返回None
+                return None
+            return parsed_mask
+
+       # 处理列表输入
+        elif isinstance(cpu_mask, list):
+            invalid_elements = [c for c in cpu_mask if not (isinstance(c, int) and c >= 0)]
+            if invalid_elements:
+                logging.error(
+                    f"Invalid CPU ID(s) detected in list: {invalid_elements}. {format_hint}"
+                )
+                return None
+            return sorted(list(set(cpu_mask)))
+
+        # 非法类型
+        elif cpu_mask is not None:
+            logging.error(f"Unsupported CPU mask type. {format_hint}")
+            return None
+    @staticmethod
+    def cpus_to_cpumask(cpus):
+        # 确保输入合法
+        for cpu in cpus:
+            if not isinstance(cpu, int) or cpu < 0:
+                raise ValueError(f"Invalid CPU ID: {cpu}")
+
+        # 构建位掩码（支持任意大小）
+        mask = 0
+        for cpu in cpus:
+            mask |= (1 << cpu)
+        if mask == 0:
+            return "0"
+        # 每 32 位一组，生成掩码字符串
+        parts = []
+        while mask:
+            # 取低 32 位
+            part = mask & 0xFFFFFFFF
+            parts.append(f"{part:08x}")  # 8位十六进制，左补0
+            mask >>= 32
+        # 如果为空，说明 mask 为 0
+        if not parts:
+            return "0"
+        # 反转顺序（低位在右，高位在左），用逗号连接
+        cpumask_str = ",".join(reversed(parts))
+        return cpumask_str
 
 class TraceRecord:
     @staticmethod
@@ -153,11 +191,22 @@ class TraceRecord:
         TraceRecord.__run(['/usr/bin/trace-cmd', 'reset'])
 
     @staticmethod
-    def trace_start(cpu_mask, buffer_size='2820'):
-        start_command = ['/usr/bin/trace-cmd', 'start', '-b', buffer_size, '-e', 'sched:*', '-C', 'mono_raw']
+    def trace_start(cpu_mask, event_cfg, buffer_size=DEFAULT_TRACE_BUFFER_SIZE):
+        start_command = ['/usr/bin/trace-cmd', 'start', '-b', str(buffer_size), '-C', 'mono_raw']
+
+        if event_cfg.sched:
+            for event in SCHED_EVENT_LIST:
+                start_command.extend(['-e', event])
+        if event_cfg.irq:
+            for event in IRQ_EVENT_LIST:
+                start_command.extend(['-e', event])
+        if event_cfg.futex:
+            for event in FUTEX_EVENT_LIST:
+                start_command.extend(['-e', event])
+
         if cpu_mask is not None:
             start_command.append('-M')
-            start_command.append(cpus_to_cpumask(cpu_mask))
+            start_command.append(CPUParser.cpus_to_cpumask(cpu_mask))
         TraceRecord.__run(start_command)
 
     @staticmethod
@@ -180,7 +229,7 @@ class TraceRecord:
 def normal_mode(args):
     signal.signal(signal.SIGTERM, on_exit)
     try:
-        ftrace_record_start(args.cpu)
+        ftrace_record_start(args.cpu, args.bf_size, args)
         if args.NSpid:
             nspid_recorder = ContainerPidMapper()
             nspid_recorder.start(None)
@@ -403,10 +452,17 @@ if __name__ == "__main__":
     parser.add_argument('--cpu', type=str, default=None,
                         help="Specify CPU cores to collect. Supports single numbers, commas, and hyphen ranges. e.g., '0,1,4' or '0-3,8'. Default: collect all CPUs.")
     parser.add_argument('--output', type=str, default='ftrace.txt')
-    parser.add_argument('--record_time', type=int, default=60,
+    parser.add_argument('--record_time', type=int, default=30,
                         help='record time, if pass <=0 will start long term record that user should attention the disk space')
-    parser.add_argument('--rotation', type=int, default=30, help='rotation time, unit sec')
-    parser.add_argument('--backup_count', type=int, default=6)
+    parser.add_argument('--bf_size', type=int, default=DEFAULT_TRACE_BUFFER_SIZE,
+                        help = 'trace-cmd ring buffer size in KB, used to store ftrace events during tracing. '
+                               'Increase this value to avoid event loss when trace volume is large.')
+    parser.add_argument('--sched', type=int, choices=[0, 1], default=1,
+                        help='Enable sched events (default on). Use 0 to disable.')
+    parser.add_argument('--irq', type=int, choices=[0, 1], default=1,
+                        help='Enable irq/softirq events (default on). Use 0 to disable.')
+    parser.add_argument('--futex', type=int, choices=[0, 1], default=0,
+                        help='Enable futex syscall events (default off). Use 1 to enable.')
     parser.add_argument('--NSpid', action='store_true', help='will try to record the pid flex map')
     parser.add_argument('--duration', type=int, default=30)
     confirm = input(
@@ -417,4 +473,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     normal_mode(args)
-

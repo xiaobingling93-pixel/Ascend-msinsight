@@ -7,7 +7,7 @@
 ## 特性
 
 + 支持**命令行**和**API接口**两种方式的ftrace数据采集
-+ 支持将ftrace格式数据转换为Chrome Trace Json格式，联合Profiling数据导入MindStudio Insight，进行可视化展示
++ 支持将ftrace格式数据转换为Chrome Trace Json格式，**联合Profiling数据导入**MindStudio Insight，进行可视化展示
 + 支持**容器内**运行模型，宿主机采集Linux Kernel ftrace数据，并进行无缝PID映射
 
 ## Host Bound问题定位思路
@@ -21,18 +21,14 @@
 
 参考昇腾社区有关profiling采集相关的文档：[简介-CANN商用版8.3.RC1-昇腾社区](https://www.hiascend.com/document/detail/zh/canncommercial/83RC1/devaids/Profiling/atlasprofiling_16_0001.html)
 
+> 请注意Profiling采集配置。当前仅支持ftrace与Text类型的Profiling联合导入，暂不支持与DB类型的Profiling数据联合导入。
+
 ## Linux Kernel ftrace数据采集
 
 ### 1. Linux Kernel ftrace数据简介
 
-Linux内核内置了多种跟踪（trace）工具，其中ftrace作为从2.6.27版本开始引入主流内核的跟踪框架，可用于监控和调试内核中发生的各类事件，帮助开发人员深入分析系统运行时的内部行为。ftrace支持多种跟踪器，例如函数调用跟踪、上下文切换跟踪、中断延迟分析等，能够有效辅助定位内核态性能问题与调度异常。在本仓库中，仅开启了与CPU进程调度相关的事件（sched）。
-
-各种事件代表了不同的含义，这里我们主要关注以下几类事件：
-
-+ sched_switch: 记录了CPU上的进程切换
-+ sched_wakeup: 进程被唤醒
-+ sched_wakeup_new: 新创建的进程首次被唤醒
-+ shced_process_fork/shced_process_exec/sched_process_exit: 进程创建销毁
+Linux内核内置了多种跟踪（trace）工具，其中ftrace作为从2.6.27版本开始引入主流内核的跟踪框架，可用于监控和调试内核中发生的各类事件，帮助开发人员深入分析系统运行时的内部行为。ftrace支持多种跟踪器，例如函数调用跟踪、上下文切换跟踪、中断延迟分析等，能够有效辅助定位内核态性能问题与调度异常。
+在本仓库中，提供了与CPU进程调度相关的事件（sched）、中断 / 软中断相关事件（irq）、锁竞争相关事件（futex）的采集能力。
 
 trace-cmd是一个命令行工具，它封装了trace采集的过程，提供了更加简易的命令接口。
 
@@ -58,11 +54,14 @@ trace-cmd是一个命令行工具，它封装了trace采集的过程，提供了
 
 | 参数 | 说明 | 示例 | 默认值 |
 |-----|-----|-----|-----|
-| `--cpu` | cpu_mask列表，指定采集的CPU核心。支持单个数字、逗号分隔及连字符范围。<br>缺省时默认采集所有CPU核 | `--cpu=0,1,4 (指定核)`<br>`--cpu=0-3,8 (混合写法)`<br>`--cpu=0-15 (范围写法)` | None，采集**全部**CPU核心 |
+| `--cpu` | cpu_mask 列表，指定采集的 CPU 核心。支持单个数字、逗号分隔及连字符范围。<br>缺省时默认采集所有 CPU 核 | `--cpu=0,1,4 (指定核)`<br>`--cpu=0-3,8 (混合写法)`<br>`--cpu=0-15 (范围写法)` | None，采集 **全部** CPU 核心 |
 | `--output` | 输出文件路径与文件名 | `--output=my_trace_data.txt` | `ftrace.txt` |
-| `--record_time` | 采集持续时间（单位：秒）<br>• 正值：采集指定秒数后自动停止<br>• ≤0：持续采集，需`Ctrl+C`手动终止，长时间采集，请注意磁盘空间占用情况。 | `--record_time=30` | 60 |
-|`--NSpid`| 容器场景下，可开启该开关，获取容器与宿主机PID映射关系，详见[采集容器中的Linux Kernel ftrace数据](#采集容器中的linux-kernel-ftrace数据) | `--NSpid` | 关闭 |
-
+| `--record_time` | 采集持续时间（单位：秒）<br>• 正值：采集指定秒数后自动停止<br>• ≤0：持续采集，需 `Ctrl+C` 手动终止，长时间采集请注意磁盘空间占用 | `--record_time=30` | 60 |
+| `--bf_size` | trace-cmd 使用的 **ring buffer 大小（单位：KB）**，用于在内核侧缓存 ftrace 事件。<br>当采集数据量较大时，可适当增大该值，避免环形缓冲区数据覆盖导致 **trace event 丢失** | `--bf_size=409600` | `282000` |
+| `--sched` | 是否采集 **CPU 调度相关事件**，包括任务切换、唤醒、新任务启动等（如 `sched_switch`、`sched_wakeup`、`sched_wakeup_new`）。<br>主要用于分析 **调度延迟、任务切换频率、线程唤醒关系**。<br>• `1`：开启<br>• `0`：关闭 | `--sched=1`<br>`--sched=0` | `1`（开启） |
+| `--irq` | 是否采集 **中断 / 软中断相关事件**，包括硬中断与 softirq 的进入、退出及触发行为。<br>主要用于分析 **中断负载、软中断抖动、CPU 被中断打断的情况**。<br>• `1`：开启<br>• `0`：关闭 | `--irq=1`<br>`--irq=0` | `1`（开启） |
+| `--futex` | 是否采集 **futex 系统调用相关事件**，用于分析 **用户态锁竞争、线程阻塞与唤醒行为**。<br>常用于多线程程序、锁竞争严重的场景。<br>• `1`：开启<br>• `0`：关闭 | `--futex=1` | `0`（关闭） |
+| `--NSpid` | 容器场景下开启该开关，用于获取容器与宿主机 PID 映射关系，详见 [采集容器中的 Linux Kernel ftrace 数据](#采集容器中的linux-kernel-ftrace数据) | `--NSpid` | 关闭 |
 
 **使用示例:**
 
@@ -71,6 +70,8 @@ trace-cmd是一个命令行工具，它封装了trace采集的过程，提供了
 ```bash
 sudo python trace_record.py --record_time=30 --cpu=0,1,2,3,4
 ```
+**注意**：此处的--cpu=0,1,2,3,4仅为示例，实际使用时，建议根据绑核策略，选取一定量的CPU核心进行采集（**推荐CPU采集核心数不超过32，采集时长30s左右，否则采集数据量可能过大，解析落盘耗时较长，需耐心等待**）。
+
 2. 执行训练任务（在新终端中）：
 ```bash
 python train.py
@@ -79,9 +80,6 @@ python train.py
 
 脚本运行30秒后自动停止，默认生成 ftrace.txt 文件（或通过 --output 参数指定文件名）。
 
-**注意：**
-> 采集数据量过大时，`trace-cmd show`步骤耗时会较长，建议使用`--cpu`参数，推荐CPU采集核心数不超过16。
-
 #### 方法二：API接口采集模式
 
 `trace_record.py`中提供两个接口，分别控制ftrace采集的启停，允许开发者将数据采集逻辑精细地嵌入到应用程序中。这种方式适合需要动态控制采集时机、条件触发采集或与业务逻辑深度集成的场景。
@@ -89,13 +87,18 @@ python train.py
 **1. 开始采集接口**
 
 ```python
-def trace_record.ftrace_record_start(cpu_mask=[0,1,4])
+ftrace_record_start(cpu_mask=None, bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: TraceEventConfig = None, args=None)
 ```
 **参数**：
-+ `cpu_mask`（可选）：指定要采集的CPU核心编号。支持 **List[int]** 或 **字符串**（如 `"0-4,8"`）。默认为 `None`，表示采集所有可用CPU核心。
+- `cpu_mask`（可选）  
+  指定采集的 CPU 核心，支持 `List[int]` 或字符串（如 `"0-3,8"`）。默认为 `None`，表示采集全部 CPU。实际使用时，建议根据绑核策略，选取一定量的CPU核心进行采集（**推荐CPU采集核心数不超过32，采集时长30s左右，否则采集数据量可能过大，解析落盘耗时较长，需耐心等待**）。
 
-**注意：**
-> 采集数据量过大时，`trace-cmd show`步骤耗时会较长，建议使用`cpu_mask`参数，推荐CPU采集核心数不超过16。
+- `bf_size`（可选）  
+  trace-cmd ring buffer 大小（KB），用于缓存 ftrace 事件。采集数据量大时可适当增大，避免数据丢失。
+
+- `event_cfg`（可选）  
+  事件采集配置（`TraceEventConfig`），用于控制采集事件类型：`sched`（调度）、`irq`（中断）、`futex`（锁竞争）。  
+  默认值：`TraceEventConfig(sched=1, irq=1, futex=0)`。
 
 **2. 停止采集并保存数据接口**
 
@@ -130,6 +133,7 @@ def train():
 ### 4. 数据采集后处理
 
 `trace_convert.py`脚本用于将原始 ftrace 数据转换为 Chrome Trace JSON 格式，并与所采集的profiling数据时间轴对齐，以便导入 MindStudio Insight 可视化工具联合展示与分析。
+> 请注意Profiling采集配置。当前仅支持ftrace与Text类型的Profiling联合展示，暂不支持与DB类型的Profiling数据联合展示。
 
 **使用方法**
 ```bash
@@ -254,6 +258,7 @@ for output in outputs:
     generated_text = output.outputs[0].text
     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
 ```
+> 请注意Profiling采集配置。当前仅支持ftrace与Text类型的Profiling联合展示，暂不支持与DB类型的Profiling数据联合展示。
 
 在**宿主机**启动ftrace采集：
 ```bash
