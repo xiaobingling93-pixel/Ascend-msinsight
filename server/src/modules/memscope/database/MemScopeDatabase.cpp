@@ -880,7 +880,7 @@ sqlite3_stmt* MemScopeDatabase::BuildQueryBlocksByQueryParamsAndBindParam(const 
 {
     bool timeCondition = false;
     bool filtersCondition = false;
-    bool onlyAllocOrFreeInTimeRange = !isTable;
+    bool onlyAllocOrFreeInTimeRange = queryParams.onlyAllocOrFreeInTimeRange; // 仅展示时间范围内发生过申请或释放事件的内存块
     std::string conditionSql = BuildQueryBlocksConditionSqlByParams(queryParams, onlyAllocOrFreeInTimeRange,
                                                                     timeCondition, filtersCondition);
     std::string withInefficientCol = AppendInefficientBlockColumnSql(selectColumns, queryParams);

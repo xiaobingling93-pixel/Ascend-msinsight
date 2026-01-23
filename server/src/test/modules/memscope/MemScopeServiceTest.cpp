@@ -174,6 +174,7 @@ TEST_F(MemScopeServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
     queryParams.relativeTime = true;
     queryParams.startTimestamp = firstEvent.timestamp - 1;
     queryParams.endTimestamp = firstEvent.timestamp + 1;
+    queryParams.onlyAllocOrFreeInTimeRange = true;
     // 仅查询在时间范围内申请或释放的，理应只有一个内存块
     memoryDatabase->QueryMemoryBlocks(queryParams, false, blocks);
     EXPECT_EQ(blocks.size(), 1);
