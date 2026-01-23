@@ -256,7 +256,7 @@ def get_os_platform():
 
 def build_jupyterlab(jupyterlab_version, os_name):
     # 设置环境变量暂时不构建jupyterlab
-    if not os.getenv('BUILD_JUPYTERLAB'):
+    if os.getenv('BUILD_JUPYTERLAB', '').lower() != 'true':
         logging.info('The JupyterLab extension is not compiled because BUILD_JUPYTERLAB is not set.')
         return 0
 
