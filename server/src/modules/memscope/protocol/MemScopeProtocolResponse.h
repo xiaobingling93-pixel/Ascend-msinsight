@@ -31,83 +31,38 @@ namespace Dic::Protocol {
 using namespace Dic::Module;
 using namespace Dic::Module::MemScope;
 
-struct MemoryBlockItem : MemoryBlock {
-    std::vector<std::pair<std::uint64_t, std::uint64_t>> path;
-    MemoryBlockItem() = default;
-    explicit MemoryBlockItem(const MemoryBlock& block) : MemoryBlock(block) {}
-
-    void AddPathPoint(uint64_t timestamp, uint64_t size)
-    {
-        if (path.empty()) {
-            path.emplace_back(timestamp, size);
-            return;
-        }
-        std::pair<std::uint64_t, std::uint64_t> lastPoint = path.back();
-        // 如果新加入的点x值与最后一个点x值相同, 或者x值在最后一个点的x之前 视为无效点
-        if (timestamp <= lastPoint.first) {
-            return;
-        }
-        if (path.size() == 1) {
-            path.emplace_back(timestamp, size);
-            return;
-        }
-        // 如果新加入的点, y值与最后一个点的y值相同
-        std::pair<std::uint64_t, std::uint64_t> secondLastPoint = path[path.size() - 2];
-        if (size == lastPoint.second && size == secondLastPoint.second) {
-            // 如果倒数第二个点、最后一个点、和新加入的点y值都相同, 则中间点可省略
-            path.back().first = timestamp;
-            return;
-        }
-        path.emplace_back(timestamp, size);
-    }
-};
-
-static document_t ToMemScopeMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blockPtr, const bool withPath,
+static document_t ToMemScopeMemoryBlockJson(const MemoryBlock& block,
                                             Document::AllocatorType& allocator)
 {
     document_t json(kObjectType);
-    JsonUtil::AddMember(json, "id", blockPtr->id, allocator);
-    JsonUtil::AddMember(json, "addr", blockPtr->ptr, allocator);
-    JsonUtil::AddMember(json, "size", blockPtr->size, allocator);
-    JsonUtil::AddMember(json, "_startTimestamp", blockPtr->startTimestamp, allocator);
-    JsonUtil::AddMember(json, "_endTimestamp", blockPtr->endTimestamp, allocator);
-    JsonUtil::AddMember(json, "owner", blockPtr->owner, allocator);
-    JsonUtil::AddMember(json, "attr", blockPtr->attrJsonString, allocator);
-    JsonUtil::AddMember(json, "processId", blockPtr->processId, allocator);
-    JsonUtil::AddMember(json, "threadId", blockPtr->threadId, allocator);
-    JsonUtil::AddMember(json, "deviceId", blockPtr->deviceId, allocator);
-    JsonUtil::AddMember(json, "eventType", blockPtr->eventType, allocator);
-    JsonUtil::AddMember(json, "_firstAccessTimestamp", blockPtr->firstAccessTimestamp, allocator);
-    JsonUtil::AddMember(json, "_lastAccessTimestamp", blockPtr->lastAccessTimestamp, allocator);
-    JsonUtil::AddMember(json, "maxAccessInterval", blockPtr->maxAccessInterval, allocator);
-    JsonUtil::AddMember(json, "lazyUsed", blockPtr->lazyUsed, allocator);
-    JsonUtil::AddMember(json, "delayedFree", blockPtr->delayedFree, allocator);
-    JsonUtil::AddMember(json, "longIdle", blockPtr->longIdle, allocator);
-    document_t pathJson(kArrayType);
-    if (withPath) {
-        const std::shared_ptr<MemoryBlockItem> blockItemPtr = std::dynamic_pointer_cast<MemoryBlockItem>(blockPtr);
-        if (blockItemPtr) {
-            for (auto& point : blockItemPtr->path) {
-                document_t pointJson(kArrayType);
-                pointJson.PushBack(json_t().SetUint64(point.first), allocator);
-                pointJson.PushBack(json_t().SetUint64(point.second), allocator);
-                pathJson.PushBack(pointJson, allocator);
-            }
-        }
-        JsonUtil::AddMember(json, "path", pathJson, allocator);
-    }
+    JsonUtil::AddMember(json, "id", block.id, allocator);
+    JsonUtil::AddMember(json, "addr", block.ptr, allocator);
+    JsonUtil::AddMember(json, "size", block.size, allocator);
+    JsonUtil::AddMember(json, "_startTimestamp", block.startTimestamp, allocator);
+    JsonUtil::AddMember(json, "_endTimestamp", block.endTimestamp, allocator);
+    JsonUtil::AddMember(json, "owner", block.owner, allocator);
+    JsonUtil::AddMember(json, "attr", block.attrJsonString, allocator);
+    JsonUtil::AddMember(json, "processId", block.processId, allocator);
+    JsonUtil::AddMember(json, "threadId", block.threadId, allocator);
+    JsonUtil::AddMember(json, "deviceId", block.deviceId, allocator);
+    JsonUtil::AddMember(json, "eventType", block.eventType, allocator);
+    JsonUtil::AddMember(json, "_firstAccessTimestamp", block.firstAccessTimestamp, allocator);
+    JsonUtil::AddMember(json, "_lastAccessTimestamp", block.lastAccessTimestamp, allocator);
+    JsonUtil::AddMember(json, "maxAccessInterval", block.maxAccessInterval, allocator);
+    JsonUtil::AddMember(json, "lazyUsed", block.lazyUsed, allocator);
+    JsonUtil::AddMember(json, "delayedFree", block.delayedFree, allocator);
+    JsonUtil::AddMember(json, "longIdle", block.longIdle, allocator);
     return json;
 }
 
 struct MemScopeMemoryBlocksResponse : public JsonResponse {
     MemScopeMemoryBlocksResponse() : JsonResponse(REQ_RES_MEM_SCOPE_MEMORY_BLOCKS) {}
-    std::vector<std::shared_ptr<MemoryBlock>> blocks;
+    std::vector<MemoryBlock> blocks;
     uint64_t minTimestamp{};
     uint64_t maxTimestamp{};
     uint64_t minSize{};
     uint64_t maxSize{};
     uint64_t total{};
-    bool withPath{};
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
@@ -128,7 +83,7 @@ struct MemScopeMemoryBlocksResponse : public JsonResponse {
             }
         }
         for (const auto& block : blocks) {
-            auto blockJson = ToMemScopeMemoryBlockJson(block, withPath, allocator);
+            auto blockJson = ToMemScopeMemoryBlockJson(block, allocator);
             jsonBlocks.PushBack(blockJson, allocator);
         }
         JsonUtil::AddMember(body, "blocks", jsonBlocks, allocator);

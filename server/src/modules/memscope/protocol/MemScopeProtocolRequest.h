@@ -65,7 +65,8 @@ struct MemScopeMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, 
     std::string deviceId;
     std::string eventType;
     bool relativeTime;
-
+    // 标识是否仅请求start、end区间内申请或释放的block
+    bool onlyAllocOrFreeInTimeRange{false};
     // 低效内存识别相关请求参数
     Threshold lazyUsedThreshold;
     Threshold delayedFreeThreshold;
@@ -285,6 +286,8 @@ struct MemScopeMemoryBlockRequest : public Request {
         const json_t& param_json = json["params"];
         JsonUtil::SetByJsonKeyValue(reqPtr->isTable, param_json, "isTable");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.onlyInefficient, param_json, "onlyInefficient");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.onlyAllocOrFreeInTimeRange, param_json,
+            "onlyAllocOrFreeInTimeRange");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, param_json, "minSize");
