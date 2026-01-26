@@ -634,6 +634,10 @@ export const draw = (props: DrawCanvasArgs): void => {
         drawSelectedRange(ctx, selectedRange, xReverseScaleRef);
     }
 
+    updateDrawLines(ctx, session, theme);
+};
+
+const updateDrawLines = (ctx: CanvasRenderingContext2D, session: Session, theme: Theme): void => {
     heightMap.clear();
     threadIsCol.clear();
     processIsCol.clear();
@@ -667,6 +671,7 @@ export const drawMEventMask = (props: DrawCanvasArgs): void => {
         ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, maskRange[0], height);
         ctx.fillRect(maskRange[1], TIME_LINE_AXIS_HEIGHT_PX, width - maskRange[1], height);
         drawTimeDiff({ ctx, maskRange, xScale, isNsMode, theme, selectedRange });
+        updateDrawLines(ctx, session, theme);
     }
 };
 

@@ -254,7 +254,7 @@ const Interactor = ({
         draw(drawArgs);
         const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
-    }, [domainStart, domainEnd, endTimeAll, selectedRange, theme, scrollTop, renderTrigger, ...customRenderTriggers]);
+    }, [domainStart, domainEnd, endTimeAll, selectedRange, session.isTimeAnalysisMode, theme, scrollTop, renderTrigger, ...customRenderTriggers]);
 
     useEffect(() => {
         const drawArgs = getDrawArgs();
