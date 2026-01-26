@@ -467,8 +467,8 @@ export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, re
         }),
         // ============================ filters ============================
         ...((isArray(col.filters) && col.filters.length > 0) ? getColumnSearchProps() : {}),
-        filteredValue: getFilteredValue(col, filtersState),
-        sortOrder: getSortedValue(col, sortState),
+        ...(col.onFilter ? {} : { filteredValue: getFilteredValue(col, filtersState) }),
+        ...(col.sorter === true ? { sortOrder: getSortedValue(col, sortState) } : {}),
     })), [columns, filtersState, sortState]);
 
     useImperativeHandle(ref, (): ResizeTableRef => ({

@@ -66,7 +66,6 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     // 新增Summary(Totals)行
     const summary = (): React.ReactNode => dataSource?.length ? generateSummary(state, dataSource) : undefined;
     return <ResizeTable
-        key={`${session.selectedRange?.[0]}_${session.selectedRange?.[1]}_${dataSource.length}`}
         className={'table-slice-list'}
         {...state}
         summary={summary}
