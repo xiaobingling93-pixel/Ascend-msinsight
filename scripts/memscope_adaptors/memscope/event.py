@@ -1,0 +1,79 @@
+"""
+-------------------------------------------------------------------------
+This file is part of the MindStudio project.
+Copyright (c) 2026 Huawei Technologies Co.,Ltd.
+
+MindStudio is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+
+         http://license.coscl.org.cn/MulanPSL2
+
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+-------------------------------------------------------------------------
+"""
+import json
+from dataclasses import dataclass
+
+from .defs import DumpEventFieldDefs, PythonTraceEventFieldDefs
+
+
+@dataclass
+class MallocFreeEventAttr:
+    addr: str
+    size: str
+    used: str
+    total: str
+    stream_ptr: str = "N/A"
+    owner: str = "PTA"
+
+
+@dataclass
+class MemoryEvent:
+    event: str
+    event_type: str
+    name: str
+    timestamp: int
+    pid: int
+    tid: int
+    did: int
+    ptr: str
+    attr: dict
+    callstack_c: str = ""
+    callstack_py: str = ""
+
+    def to_dict(self):
+        return {
+            DumpEventFieldDefs.EVENT: self.event,
+            DumpEventFieldDefs.EVENT_TYPE: self.event_type,
+            DumpEventFieldDefs.NAME: self.name,
+            DumpEventFieldDefs.TIMESTAMP_NS: self.timestamp,
+            DumpEventFieldDefs.PID: self.pid,
+            DumpEventFieldDefs.TID: self.tid,
+            DumpEventFieldDefs.DEVICE_ID: self.did,
+            DumpEventFieldDefs.PTR: self.ptr,
+            DumpEventFieldDefs.ATTR: json.dumps(self.attr),
+            DumpEventFieldDefs.CALLSTACK_C: self.callstack_c,
+            DumpEventFieldDefs.CALLSTACK_PYTHON: self.callstack_py
+        }
+
+
+@dataclass
+class PythonTraceEvent:
+    func_info: str
+    start_time_ns: int
+    end_time_ns: int
+    tid: int
+    pid: int
+
+    def to_dict(self):
+        return {
+            PythonTraceEventFieldDefs.FUNC_INFO: self.func_info,
+            PythonTraceEventFieldDefs.START_TIME_NS: self.start_time_ns,
+            PythonTraceEventFieldDefs.END_TIME_NS: self.end_time_ns,
+            PythonTraceEventFieldDefs.TID: self.tid,
+            PythonTraceEventFieldDefs.PID: self.pid
+        }
