@@ -24,7 +24,7 @@
 #include "ModuleRequestHandler.h"
 
 namespace Dic::Module::Advisor {
-// 错误码枚举
+// 错误码枚举（9000以下错误码，前端弹窗，需被用户感知；9000以上错误码，无需用户感知，仅供调试）
 enum class ErrorCode {
     RESET_ERROR = 0,
     // 接口入参错误
@@ -34,14 +34,17 @@ enum class ErrorCode {
     GET_DEVICE_ID_FAILED = 2001,
     GET_ABSOLUTE_PATH_FAILED = 2101,
 
-    // 数据库错误
+    // 数据库错误(需被用户感知)
     CONNECT_DATABASE_FAILED = 3001,
-    QUERY_ACLNN_OPERATOR_COUNT_FAILED = 3101,
-    QUERY_AFFINITY_API_FAILED = 3102,
     DATA_ANOMALY_END_TIME_SMALLER_TIMESTAMP = 3103,
-    QUERY_AFFINITY_OPTIMIZER_FAILED = 3104,
-    QUERY_AI_CPU_OP_CAN_BE_OPTIMIZED_FAILED = 3105,
-    QUERY_OPERATOR_DISPATCH_FAILED = 3106,
+
+    // 9000以上区间错误码，无需被用户感知，仅供调试
+    QUERY_ACLNN_OPERATOR_COUNT_FAILED = 9101,
+    QUERY_AFFINITY_API_FAILED = 9102,
+    QUERY_AFFINITY_OPTIMIZER_FAILED = 9104,
+    QUERY_AI_CPU_OP_CAN_BE_OPTIMIZED_FAILED = 9105,
+    QUERY_OPERATOR_DISPATCH_FAILED = 9106,
+    QUERY_FUSED_OP_DATABASE_FAILED = 9107,
 };
 
 // 错误信息映射
