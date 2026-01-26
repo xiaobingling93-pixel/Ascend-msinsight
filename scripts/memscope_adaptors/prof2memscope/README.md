@@ -23,7 +23,10 @@ torch_npu.profiler.profile(
 ```
 
 ## 2.2 Profiling数据解析为memscope数据
-`usage: python3 dump.py [-h] [-s START] [-d DURATION] [-o OUTPUT_PATH] profiler_path`
+```shell
+# 在memscope_adaptors项目根目录下执行
+python3 prof2memscope/dump.py [-h] [-s START] [-d DURATION] [-o OUTPUT_PATH] profiler_path
+```
 
 参数说明如下
 - profiler_path (必需)

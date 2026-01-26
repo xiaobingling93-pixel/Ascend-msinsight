@@ -1,3 +1,20 @@
+"""
+-------------------------------------------------------------------------
+This file is part of the MindStudio project.
+Copyright (c) 2026 Huawei Technologies Co.,Ltd.
+
+MindStudio is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+
+         http://license.coscl.org.cn/MulanPSL2
+
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+-------------------------------------------------------------------------
+"""
 import os.path
 import logging
 import argparse
@@ -7,9 +24,9 @@ from typing import List
 from torch_npu.profiler.analysis._profiler_config import ProfilerConfig
 from torch_npu.profiler.analysis.prof_parse._event_tree_parser import EventTree, _EventType
 
-from utils import init_patch
+from profiler_event_analyze_patch import init_patch
 from memscope import MemoryEvent, PythonTraceEvent, MemScopeDb
-
+from prof_adaptor import EventBuilder
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,16 +55,16 @@ def analyze_profiler_events() -> (List[MemoryEvent], List[PythonTraceEvent]):
     for event in sorted_events:
         if event.tag is _EventType.Allocation:
             if DumpConfig.crop_mode is CropMode.NO_CROPPING or DumpConfig.start <= event.start_time_ns <= DumpConfig.end:
-                allocation_events.append(MemoryEvent(event))
+                allocation_events.append(EventBuilder.build_memory_event_by_prof_event(event))
         elif event.tag is _EventType.PyCall:
             # 无剪裁模式
             if DumpConfig.crop_mode is CropMode.NO_CROPPING:
-                python_trace_events.append(PythonTraceEvent(event))
+                python_trace_events.append(EventBuilder.build_python_trace_event_by_prof_event(event))
                 continue
             # 如果python调用与剪裁区间无交集，直接丢弃
             if event.start_time_ns > DumpConfig.end or event.end_time_ns < DumpConfig.start:
                 continue
-            trace_event = PythonTraceEvent(event)
+            trace_event = EventBuilder.build_python_trace_event_by_prof_event(event)
             # 取调用事件区间与剪裁起终点的交集
             trace_event.start_time_ns = max(DumpConfig.start, trace_event.start_time_ns)
             trace_event.end_time_ns = min(DumpConfig.end, trace_event.end_time_ns)
