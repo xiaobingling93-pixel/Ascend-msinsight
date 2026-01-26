@@ -72,6 +72,58 @@ TEST(StringUtil, Trim) {
     EXPECT_EQ(StringUtil::Trim(str4), "");
 }
 
+TEST(StringUtil, IsUtf8StrFastWithValidInput) {
+    // 空字符串
+    EXPECT_EQ(StringUtil::IsUtf8StrFast(""), true);
+    // ASCII 字符
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("Hello"), true);
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("123"), true);
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("A"), true);
+    // 有效的 2 字节 UTF-8 序列（拉丁字符，如 é）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xC3\xA9"), true);
+    // 有效的 3 字节 UTF-8 序列（中文字符）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("中"), true);
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("中国"), true);
+    // 有效的 4 字节 UTF-8 序列（如某些 emoji）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xF0\x9F\x98\x80"), true);
+    // 混合 ASCII 和 UTF-8
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("Hello 世界"), true);
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("test\xE4\xB8\xADtest"), true);
+}
+
+TEST(StringUtil, IsUtf8StrFastWithInvalidInput) {
+    // 不完整的 2 字节序列（只有起始字节）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xC3"), false);
+    // 不完整的 3 字节序列（只有起始字节）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xE4"), false);
+    // 不完整的 3 字节序列（只有前两个字节）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xE4\xB8"), false);
+    // 不完整的 4 字节序列（只有起始字节）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xF0"), false);
+    // 不完整的 4 字节序列（只有前两个字节）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xF0\x9F"), false);
+    // 不完整的 4 字节序列（只有前三个字节）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xF0\x9F\x98"), false);
+    // 孤立的延续字节（10xxxxxx）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\x80"), false);
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xBF"), false);
+    // 无效的起始字节后跟无效的延续字节
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xC3\x00"), false);
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xE4\xB8\x00"), false);
+    // 混合有效和无效序列
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("Hello\xC3World"), false);
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("中\x80国"), false);
+    // GBK 编码（非 UTF-8）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xD6\xD0"), false);  // "中" 的 GBK 编码
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xB9\xFA"), false);  // "国" 的 GBK 编码
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xD6\xD0\xB9\xFA"), false);  // "中国" 的 GBK 编码
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("Hello\xD6\xD0World"), false);  // GBK 和 ASCII 混合
+    // 其他非 UTF-8 编码（Latin-1 高位字节）
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\x80\x81"), false);  // 高位字节序列
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xFF\xFE"), false);  // 无效的字节序列
+    EXPECT_EQ(StringUtil::IsUtf8StrFast("\xFE\xFF"), false);  // BOM 标记（但作为普通字节检查）
+}
+
 
 #ifdef _WIN32
 TEST(StringUtil, GbkToUtf8) {

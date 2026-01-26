@@ -142,10 +142,59 @@ public:
         return str;
     }
 
+    /**
+     * 判断字符串是否为UTF-8编码，简化快速版
+     * 注意：为了效率，只检查UTF8核心规范，虽不完备，在非安全关键场景此规则已足够
+     * @param str 字符串
+     * @return true / false
+     */
+    static bool IsUtf8StrFast(const std::string& str) {
+        size_t i = 0;
+        while (i < str.length()) {
+            unsigned char c = static_cast<unsigned char>(str[i]);
+
+            // ASCII: 0xxxxxxx (0-127)
+            if (c <= 0x7F) {
+                i += 1;
+            }
+            // 2字节序列: 110xxxxx 10xxxxxx
+            else if ((c & 0xE0) == 0xC0) {
+                if (i + 1 >= str.length() || (static_cast<unsigned char>(str[i + 1]) & 0xC0) != 0x80) return false;
+                i += 2;
+            }
+            // 3字节序列: 1110xxxx 10xxxxxx 10xxxxxx
+            else if ((c & 0xF0) == 0xE0) {
+                if (i + 2 >= str.length() ||
+                    (static_cast<unsigned char>(str[i + 1]) & 0xC0) != 0x80 ||
+                    (static_cast<unsigned char>(str[i + 2]) & 0xC0) != 0x80) return false;
+                i += 3;
+            }
+            // 4字节序列: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+            else if ((c & 0xF8) == 0xF0) {
+                if (i + 3 >= str.length() ||
+                    (static_cast<unsigned char>(str[i + 1]) & 0xC0) != 0x80 ||
+                    (static_cast<unsigned char>(str[i + 2]) & 0xC0) != 0x80 ||
+                    (static_cast<unsigned char>(str[i + 3]) & 0xC0) != 0x80) return false;
+                i += 4;
+            }
+            else {
+                // 出现不符合 UTF-8 规范的字节（如孤立的 10xxxxxx）
+                return false;
+            }
+        }
+        return true;
+    }
+
     static std::string ToUtf8Str(const std::string &input)
     {
 #ifdef _WIN32
         static const unsigned int GBK_CODE_PAGE = 936;
+
+        // 如果是UTF-8直接返回，避免二次转换导致乱码
+        if (IsUtf8StrFast(input)) {
+            return input;
+        }
+
         UINT codePage = GetACP();
         if (codePage == GBK_CODE_PAGE) {
             return StringUtil::GbkToUtf8(input.c_str());
