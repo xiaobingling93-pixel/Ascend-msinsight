@@ -39,11 +39,13 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
     }
     param.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(params.rankId);
     if (param.deviceId.empty()) {
-        ServerLog::Error("Query Fused Operator advice failed to get deviceId.");
+        ServerLog::Error("Failed to get deviceId when query fused operator advice.");
         SetAdvisorError(ErrorCode::GET_DEVICE_ID_FAILED);
         return false;
     }
     if (!database->QueryFusibleOpData(param, FUSEABLE_OPERATER_RULE_LIST, resBody, startTime)) {
+        ServerLog::Error("Failed to query fused operator advice from database.");
+        SetAdvisorError(ErrorCode::QUERY_FUSED_OP_DATABASE_FAILED);
         return false;
     }
     resBody.dbPath = database->GetDbPath();

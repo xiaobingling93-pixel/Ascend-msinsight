@@ -38,6 +38,7 @@ const std::map<ErrorCode, std::string> errorMessages = {
     {ErrorCode::QUERY_AFFINITY_OPTIMIZER_FAILED, "Failed to query affinity optimizer"},
     {ErrorCode::QUERY_AI_CPU_OP_CAN_BE_OPTIMIZED_FAILED, "Failed to query can be optimized AI CPU Op"},
     {ErrorCode::QUERY_OPERATOR_DISPATCH_FAILED, "Failed to query operator dispatch data"},
+    {ErrorCode::QUERY_FUSED_OP_DATABASE_FAILED, "Failed to query fused operator advice from database"},
 };
 
 const std::string& GetErrorMessage(ErrorCode code)
