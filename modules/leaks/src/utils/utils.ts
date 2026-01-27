@@ -46,3 +46,33 @@ export const convertNanoseconds = (totalNs: number): string => {
     const nanoseconds = remainingAfterMilliseconds % 1e3;
     return `${seconds}s ${milliseconds.toString().padStart(3, '0')}ms ${microseconds.toString().padStart(3, '0')}us ${nanoseconds.toString().padStart(3, '0')}ns`;
 };
+
+const BASE_TIME = 1000 * 1000;
+export const formatTime = (time: number): string => {
+    return (time / BASE_TIME).toFixed(3);
+};
+
+// 单位定义（按 1024 进制）
+const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+const thresholds = [
+    1,
+    1024,
+    1024 * 1024,
+    1024 * 1024 * 1024,
+    1024 * 1024 * 1024 * 1024,
+];
+
+export const formatBytes = (bytes: number): string => {
+    const symbol = bytes < 1 ? -1 : 1;
+    // 找到合适的单位
+    let unitIndex = 0;
+    for (let i = thresholds.length - 1; i >= 0; i--) {
+        if (bytes * symbol >= thresholds[i]) {
+            unitIndex = i;
+            break;
+        }
+    }
+
+    const value = (bytes / thresholds[unitIndex]).toFixed(3);
+    return `${value} ${units[unitIndex]}`;
+};

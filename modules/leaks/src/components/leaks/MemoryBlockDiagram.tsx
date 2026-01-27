@@ -23,8 +23,7 @@ import {
     workerTransform,
     workerHoverItem,
     workerClickItem,
-} from '@/leaksWorker/worker';
-import useWorkerMessage from '@/leaksWorker/useWorkerMessage';
+} from '@/leaksWorker/blockWorker/worker';
 import { Session } from '@/entity/session';
 import { runInAction } from 'mobx';
 import { Axis, HoverItem, MarkLineBlock } from './tools';
@@ -35,7 +34,6 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
     const isDragging = useRef(false);
     const isClick = useRef(false);
     const dragStartPoint = useRef({ x: 0, y: 0 });
-    useWorkerMessage();
 
     const handleResize = (): void => {
         if (ref.current === null || containerRef.current === null) {

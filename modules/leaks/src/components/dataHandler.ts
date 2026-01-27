@@ -15,7 +15,7 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
-import { workerSetMemoryBlockData, workerTransform } from '@/leaksWorker/worker';
+import { workerSetMemoryBlockData, workerTransform } from '@/leaksWorker/blockWorker/worker';
 import {
     getMemoryDetailData, getFuncData, getBlockDetails, getEventDetails,
     type GraphParam, FuncParam, BlockParam, EventParam,

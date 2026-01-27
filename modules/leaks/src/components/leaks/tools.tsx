@@ -23,41 +23,12 @@ import React, { useEffect, useState } from 'react';
 import { type Theme, useTheme } from '@emotion/react';
 import { runInAction } from 'mobx';
 import styled from '@emotion/styled/macro';
+import { formatBytes, formatTime } from '@/utils/utils';
 
 interface AxisTick {
     position: number;
     value: string;
 }
-
-const BASE_TIME = 1000 * 1000;
-const formatTime = (time: number): string => {
-    return (time / BASE_TIME).toFixed(3);
-};
-
-// 单位定义（按 1024 进制）
-const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-const thresholds = [
-    1,
-    1024,
-    1024 * 1024,
-    1024 * 1024 * 1024,
-    1024 * 1024 * 1024 * 1024,
-];
-
-const formatBytes = (bytes: number): string => {
-    const symbol = bytes < 1 ? -1 : 1;
-    // 找到合适的单位
-    let unitIndex = 0;
-    for (let i = thresholds.length - 1; i >= 0; i--) {
-        if (bytes * symbol >= thresholds[i]) {
-            unitIndex = i;
-            break;
-        }
-    }
-
-    const value = (bytes / thresholds[unitIndex]).toFixed(3);
-    return `${value} ${units[unitIndex]}`;
-};
 
 export const Axis = observer(({ session }: { session: Session }): JSX.Element => {
     const { sizeInfo, renderOptions: { zoom, transform, viewport } } = session.leaksWorkerInfo;

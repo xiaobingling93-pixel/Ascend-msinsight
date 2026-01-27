@@ -31,6 +31,7 @@ import type { FilterValue } from 'antd/lib/table/interface';
 export interface ResizeTableRef {
     clearAllFilters: () => void;
     clearAllSorts: () => void;
+    getVirtualBoxDom: () => HTMLDivElement | null;
     // ... 其他需要暴露的方法
 }
 
@@ -112,6 +113,11 @@ const StyledTable = styled(Support)`
     tr.ant-table-row.click-able:hover > td.ant-table-cell {
         background: ${(p): string => p.theme.bgColorLight};
         cursor: pointer;
+    }
+
+    tr.ant-table-row.click-select > td.ant-table-cell {
+        background: ${(p): string => p.theme.majorColorLight1};
+        color: ${(p): string => p.theme.textColorPrimary};
     }
 
     tr.ant-table-row.selected-row > td.ant-table-cell {
@@ -471,11 +477,6 @@ export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, re
         ...(col.sorter === true ? { sortOrder: getSortedValue(col, sortState) } : {}),
     })), [columns, filtersState, sortState]);
 
-    useImperativeHandle(ref, (): ResizeTableRef => ({
-        clearAllFilters: () => clearAllFilters(mergeColumns, setFiltersState),
-        clearAllSorts(): void { setSortState({}); },
-    }));
-
     // ============================ virtual ============================
     const innerTableRef = useRef(null);
     const { data: renderList, boxRef, targetRef } = useWatchVirtualRender({ visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 32, dataSource: dataSource ?? [] });
@@ -488,6 +489,12 @@ export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, re
     const fullExpandable = useMemo(() => getFullExpandable(expandable), [expandable]);
 
     const copyTable = async (): Promise<void> => { await copyTableToClipboard(columns, dataSource as any[]); };
+
+    useImperativeHandle(ref, (): ResizeTableRef => ({
+        clearAllFilters: () => clearAllFilters(mergeColumns, setFiltersState),
+        clearAllSorts(): void { setSortState({}); },
+        getVirtualBoxDom(): HTMLDivElement | null { return boxRef.current; },
+    }));
 
     // 出现分页跳转输入框
     useEffect(() => { limitInput(); }, [dataSource?.length, fullPagination]);

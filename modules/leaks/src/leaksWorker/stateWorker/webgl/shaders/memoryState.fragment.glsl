@@ -1,7 +1,8 @@
+#version 300 es
 /*
  * -------------------------------------------------------------------------
  * This file is part of the MindStudio project.
- * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co.,Ltd.
  *
  * MindStudio is licensed under Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -15,21 +16,14 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
-import React from 'react';
-import { observer } from 'mobx-react';
-import { Session } from '../../entity/session';
-import MemoryStack from '../MemoryStack';
-import useWorkerMessage from '@/leaksWorker/useWorkerMessage';
 
-const index = observer((props: { session: Session }) => {
-    const { session } = props;
-    useWorkerMessage();
+precision highp float;
 
-    return <div style={{ display: 'flex', padding: 16, flexDirection: 'column', height: '100vh' }}>
-        <div style={{ flex: 1, overflow: 'auto', background: 'var(--mi-bg-color)', marginBottom: 16 }}>
-            <MemoryStack session={session} />
-        </div>
-    </div>;
-});
+in vec4 vColor;
 
-export default index;
+out vec4 fragColor;
+
+void main() {
+    fragColor = vColor;
+    return;
+}

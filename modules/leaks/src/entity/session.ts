@@ -60,6 +60,7 @@ const LEAKS_WORKER_INFO_DEFAULT = {
         y: -1,
     },
     hoverItem: null,
+    clickItem: null,
 };
 
 const MARK_LINE_POSITION_DEFAULT = {
@@ -130,6 +131,7 @@ export class Session {
         sizeInfo: Omit<RenderData, 'blocks'>;
         renderOptions: RenderOptions;
         hoverItem: Block | null;
+        clickItem: Block | null;
     } = LEAKS_WORKER_INFO_DEFAULT;
 
     markLineInfo: {

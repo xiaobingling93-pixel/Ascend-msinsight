@@ -17,7 +17,7 @@
  */
 
 import { WebGLRenderer } from './webgl/WebGLRenderer';
-import { buildBlockViewPath, getZoom, searchBlockDataByPoint } from './tools/dataProcess';
+import { buildBlockViewPath, getZoom, searchBlockDataByPoint } from '../tools/dataProcess';
 import { debounce } from 'lodash';
 
 let canvas: OffscreenCanvas;

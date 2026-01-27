@@ -151,7 +151,6 @@ const MemorySliceChart: any = observer(({ session }: { session: Session }): Reac
         <MIChart
             ref={chartRef}
             height="350px"
-            width="calc(100vw - 120px)"
             loading={loading}
             options={chartOptions}
         />

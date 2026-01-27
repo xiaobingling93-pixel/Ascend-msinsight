@@ -65,6 +65,9 @@
     "late-free": "late-free",
     "idle": "idle",
     "onlyInefficient": "Only Show Inefficient Blocks",
-    "allowTrim":"Allow Trim"
+    "allowTrim":"Allow Trim",
+    "sliceDetail": "Slice Detail",
+    "systemView": "System View",
+    "stateDiagram": "Memory Pool State Diagram"
   }
 }

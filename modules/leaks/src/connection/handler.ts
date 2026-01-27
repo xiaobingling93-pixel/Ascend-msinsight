@@ -19,7 +19,7 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import i18n from '@insight/lib/i18n';
-import { workerDestroy } from '@/leaksWorker/worker';
+import { workerDestroy } from '@/leaksWorker/blockWorker/worker';
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
