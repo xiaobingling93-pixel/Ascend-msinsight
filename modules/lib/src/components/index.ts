@@ -39,6 +39,7 @@ export { Text } from './MIText';
 export { default as CollapsiblePanel } from './CollapsiblePanel/index';
 export { default as BaseContainer } from './BaseContainer';
 export { Layout } from './Layout';
+export { DrawerButton } from './DrawerButton';
 
 export {
     Col,

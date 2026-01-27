@@ -65,6 +65,9 @@
     "late-free": "延迟释放",
     "idle": "过长闲置",
     "onlyInefficient": "只展示低效内存块",
-    "allowTrim":"允许压缩"
+    "allowTrim":"允许压缩",
+    "sliceDetail": "选中详情",
+    "systemView": "系统视图",
+    "stateDiagram": "内存池状态图"
   }
 }

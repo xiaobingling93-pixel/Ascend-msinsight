@@ -18,14 +18,14 @@
 
 import { store } from '../store';
 import { useEffect } from 'react';
-import { LeaksWorker } from './worker';
+import { BlockWorker } from './blockWorker/worker';
 import { runInAction } from 'mobx';
 
 const { sessionStore } = store;
 const session = sessionStore.activeSession;
 const useWorkerMessage = (): void => {
     useEffect(() => {
-        LeaksWorker.onmessage = (ev: MessageEvent<any>): void => {
+        BlockWorker.onmessage = (ev: MessageEvent<any>): void => {
             if (session === undefined) {
                 return;
             }
@@ -42,7 +42,7 @@ const useWorkerMessage = (): void => {
                     });
                     break;
                 case 'clickItemResult':
-                    // 暂时不需要特殊处理，后续和状态图联动使用
+                    session.leaksWorkerInfo.clickItem = ev.data.result;
                     break;
                 case 'print':
                     console.log(ev.data);

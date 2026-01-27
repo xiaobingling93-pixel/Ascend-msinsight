@@ -16,33 +16,33 @@
  * -------------------------------------------------------------------------
  */
 
-export const LeaksWorker = new Worker(new URL('./', import.meta.url));
+export const BlockWorker = new Worker(new URL('./', import.meta.url));
 
 // 向worker发送消息
 export const workerInitCanvas = ({ offscreenCanvas, width, height }: Omit<InitCanvasPayload, 'type' | 'devicePixelRatio'>): void => {
-    LeaksWorker.postMessage({ type: 'initCanvas', offscreenCanvas, devicePixelRatio, width, height }, [offscreenCanvas]);
+    BlockWorker.postMessage({ type: 'initCanvas', offscreenCanvas, devicePixelRatio, width, height }, [offscreenCanvas]);
 };
 
 export const workerSetMemoryBlockData = ({ data }: Omit<SetMemoryBlocksDataPayload, 'type'>): void => {
-    LeaksWorker.postMessage({ type: 'setMemoryBlockData', data });
+    BlockWorker.postMessage({ type: 'setMemoryBlockData', data });
 };
 
 export const workerResizeCanvas = ({ width, height }: Omit<ResizeCanvasPayload, 'type'>): void => {
-    LeaksWorker.postMessage({ type: 'resizeCanvas', width, height });
+    BlockWorker.postMessage({ type: 'resizeCanvas', width, height });
 };
 
 export const workerTransform = ({ transform }: Omit<TransformPayload, 'type'>): void => {
-    LeaksWorker.postMessage({ type: 'transform', transform });
+    BlockWorker.postMessage({ type: 'transform', transform });
 };
 
 export const workerHoverItem = ({ clientX, clientY }: Omit<HoverItemPayload, 'type'>): void => {
-    LeaksWorker.postMessage({ type: 'hoverItem', clientX, clientY });
+    BlockWorker.postMessage({ type: 'hoverItem', clientX, clientY });
 };
 
 export const workerClickItem = ({ clientX, clientY }: Omit<HoverItemPayload, 'type'>): void => {
-    LeaksWorker.postMessage({ type: 'clickItem', clientX, clientY });
+    BlockWorker.postMessage({ type: 'clickItem', clientX, clientY });
 };
 
 export const workerDestroy = (): void => {
-    LeaksWorker.postMessage({ type: 'destroy' });
+    BlockWorker.postMessage({ type: 'destroy' });
 };

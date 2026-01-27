@@ -29,7 +29,7 @@ import { getFuncNewData, getBarNewData } from './dataHandler';
 import { convertNanoseconds } from '../utils/utils';
 import { MemoryBlockDiagram } from './leaks/MemoryBlockDiagram';
 import MemoryDataZoom from './MemoryDataZoom';
-import { workerTransform } from '@/leaksWorker/worker';
+import { workerTransform } from '@/leaksWorker/blockWorker/worker';
 
 const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
     const { t } = useTranslation('leaks');

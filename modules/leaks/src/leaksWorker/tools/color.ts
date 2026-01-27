@@ -49,3 +49,8 @@ export const getColorByAddr = (addr: string, isHightlight: boolean = false, opac
     const index = hashHexAddressToIndex(addr);
     return hexToRgba(isHightlight ? highlightColors[index] : colors[index], opacity);
 };
+
+export const getColorByIndex = (index: number, isHightlight: boolean = false, opacity: number = 1): [number, number, number, number] => {
+    const colorNum = colors.length;
+    return hexToRgba(isHightlight ? highlightColors[index % colorNum] : colors[index % colorNum], opacity);
+};
