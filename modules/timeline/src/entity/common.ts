@@ -34,10 +34,10 @@ export interface PreOrderFlattenOptions<T> {
     // nodes that are to be flattened but should not appear in the result
     exclude?: (node: TreeNode<T>) => boolean;
     excludeEx?: (node: TreeNode<T>) => boolean;
-};
+}
 export function preOrderFlatten<T>(tree: Array<TreeNode<T>>, currentLevel: number, options?: PreOrderFlattenOptions<T>): T[] {
     tree.forEach(node => {
-        if ((node as any)[level] === undefined) {
+        if (!(node as any)[level]) {
             (node as any)[level] = currentLevel;
         }
     });

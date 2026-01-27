@@ -64,15 +64,17 @@ export function updateDataSourceAndParentMetaDataMap<T extends keyof MetaDataEnu
         processMetadata.dataSource = dataSource;
         insightMetaData.metadata.dataSource = dataSource;
         parentMetaDataTree.set(processMetadata, insightMetaData.metadata);
-        handleChildren(processInfo);
+        handleChildren(processInfo, dataSource);
     });
 }
 
-function handleChildren<T extends keyof MetaDataEnumType>(processInfo: InsightMetaData<T>): void {
+function handleChildren<T extends keyof MetaDataEnumType>(processInfo: InsightMetaData<T>, dataSource: DataSource): void {
     processInfo.children?.forEach(threadInfo => {
+        const threadMetadata = (threadInfo.metadata as ThreadMetaData);
+        threadMetadata.dataSource = dataSource;
         parentMetaDataTree.set(threadInfo.metadata, processInfo.metadata);
         if (threadInfo.children && threadInfo.children.length > 0) {
-            handleChildren(threadInfo);
+            handleChildren(threadInfo, dataSource);
         }
     });
 };
