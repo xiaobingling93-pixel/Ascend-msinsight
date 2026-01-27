@@ -458,20 +458,28 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
         if (_isStats) {
             params = { isQueryTotal: true, layer: prop.layerType, searchName, ...params };
         }
-        const res = await props.request(params).finally(() => setLoading(false));
-        if (_isStats) {
-            setDataSource(res.systemViewDetails);
-        } else {
-            const timestampoffset = getTimeOffset(props.session, props.card);
-            const dbPath = res.dbPath;
-            const data = res.data.map((item: any) => {
-                item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
-                item.dbPath = dbPath;
-                return item;
-            });
-            setDataSource(data);
+
+        try {
+            const res = await props.request(params);
+            if (_isStats) {
+                setDataSource(res.systemViewDetails);
+            } else {
+                const timestampoffset = getTimeOffset(props.session, props.card);
+                const dbPath = res.dbPath;
+                const data = res.data.map((item: any) => {
+                    item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
+                    item.dbPath = dbPath;
+                    return item;
+                });
+                setDataSource(data);
+            }
+            setPage({ ...page, total: res.count });
+        } catch (err) {
+            setDataSource([]);
+            setPage(defaultPage);
+        } finally {
+            setLoading(false);
         }
-        setPage({ ...page, total: res.count });
     };
     useEffect(() => {
         if (status === 'download') {

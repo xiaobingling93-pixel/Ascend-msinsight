@@ -42,7 +42,7 @@ export function createRequest(connector: ClientConnector) {
             return (data as any)?.body;
         } catch (error: any) {
             const wsError = new WsError(error.code, error.message);
-            if (!options?.silent) {
+            if (!options?.silent && error.code < 9000) {
                 errorCenter.handleError(wsError);
             }
 
