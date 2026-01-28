@@ -24,6 +24,7 @@ from abc import abstractmethod
 import tqdm
 import argparse
 import glob
+import time
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s]:%(message)s')
 CPU_SCHED_PID = "CPU Scheduling"
@@ -156,20 +157,29 @@ class PidTran:
         self.pid_mapping_path = None
         self.pid_status = None
 
-    def init(self, pid_mapping=None):
+    def initialize(self, pid_mapping=None):
         self.pid_mapping_path = pid_mapping
         self.load_pid_mapping(self.pid_mapping_path)
 
-    def load_pid_mapping(self, pid_status_file):
-        if pid_status_file is None:
-            return None
+    def load_pid_mapping(self, pid_mapping_path: str) -> bool:
+        if pid_mapping_path is None:
+            logging.info("No pid mapping path provided, pid mapping disabled.")
+            return True
+        if not os.path.exists(pid_mapping_path):
+            logging.warning("Pid mapping file not found: %s. pid mapping disabled.", pid_mapping_path)
+            return False
+
         try:
-            with open(pid_status_file, 'r') as file:
+            with open(pid_mapping_path, 'r') as file:
                 self.pid_status = json.load(file)
-                return None
-        except IOError as e:
-            logging.error("Open pid status file failed, exception={}".format(e))
-            return None
+                logging.info("Found pid mapping json, pid mapping enabled.")
+                return True
+        except json.JSONDecodeError as e:
+            logging.error("Invalid JSON in pid mapping file: %s, error=%s", pid_mapping_path, e)
+            return False
+        except (IOError, OSError) as e:
+            logging.error("Open pid mapping file failed: %s, error=%s", pid_mapping_path, e)
+            return False
 
     def get_ns_pid(self, pid):
         if self.pid_status is None:
@@ -187,46 +197,39 @@ class TimeStampTran:
         self.utc_start_timestamp = None
         pass
 
-    def init(self, profiling_data):
-        start_info = self.__get_profiling_start_info(profiling_data)
+    def initialize(self, profiling_data):
+        start_info = self.__get_profiling_time_info(profiling_data, "start_info")
         if start_info is None:
-            logging.critical("Can't find start info")
+            logging.error("Can't find profiling start time info")
             return
+        # 原始profiling文件中，mono_raw时间单位为ns，utc时间单位为us，此处归一为ns
         self.mono_raw_start = int(start_info['clockMonotonicRaw'])
-        self.utc_start_timestamp = int(start_info['collectionTimeBegin']) * 1000
+        self.utc_start_timestamp = int(start_info['collectionTimeBegin']) * 1000 # us -> ns
 
-        end_info = self.__get_profiling_end_info(profiling_data)
-        if end_info is not None:
-            self.mono_raw_end = int(end_info['clockMonotonicRaw'])
+        end_info = self.__get_profiling_time_info(profiling_data, "end_info")
+        if end_info is None:
+            logging.error("Can't find profiling end time info")
+            return
+        self.mono_raw_end = int(end_info['clockMonotonicRaw'])
 
-    def __get_profiling_start_info(self, profiling_data):
+    def __get_profiling_time_info(self, profiling_data, info_name:str):
+        """
+        info_name: "start_info" or "end_info"
+        return: dict or None
+        """
         if profiling_data is None:
             return {'clockMonotonicRaw': 0, 'collectionTimeBegin': 0}
         if not os.path.exists(profiling_data):
             logging.error("Profiling data path not exist")
-            # 递归查找start_info
+            # 递归查找time_info
             return None
-        start_info_path = glob.glob(os.path.join(profiling_data, "**", "start_info"), recursive=True)
-        if len(start_info_path) == 0:
-            logging.error("Not find start_info in profling data")
+        time_info_path = glob.glob(os.path.join(profiling_data, "**", info_name), recursive=True)
+        if len(time_info_path) == 0:
+            logging.error(f"Not find {info_name} in profling data")
             return None
-        with open(start_info_path[0], 'r') as f:
-            start_info = json.load(f)
-        return start_info
-
-    def __get_profiling_end_info(self, profiling_data):
-        if profiling_data is None:
-            return None
-        if not os.path.exists(profiling_data):
-            return None
-        # 递归查找end_info
-        end_info_path = glob.glob(os.path.join(profiling_data, "**", "end_info"), recursive=True)
-        if len(end_info_path) == 0:
-            logging.warning("Not find end_info in profiling data, end time filtering disabled")
-            return None
-        with open(end_info_path[0], 'r') as f:
-            end_info = json.load(f)
-        return end_info
+        with open(time_info_path[0], 'r') as f:
+            time_info = json.load(f)
+        return time_info
 
     def get_utc_timestamp(self, uptime: str):
         # ns
@@ -254,12 +257,12 @@ class TimeStampTran:
 
 class FtraceParse:
     @abstractmethod
-    def parse_one_event(self, event: str):
+    def parse_one_event(self, match):
         return
 
     @abstractmethod
-    def belong(self, event: str) -> bool:
-        return True
+    def belong(self, event: str):
+        return None
 
     @abstractmethod
     def get_result(self):
@@ -277,18 +280,14 @@ class SchedFtraceParse(FtraceParse):
 
         self.trace_event = []
 
-    def belong(self, event: str) -> bool:
-        match = self.sched_pattern.search(event.strip())
-        return match is not None
+    def belong(self, event: str):
+        if "sched" not in event:
+            return None
 
-    def parse_one_event(self, event: str):
-        if len(event) == 0:
-            return
-        match = self.sched_pattern.search(event.strip())
-        if match is None:
-            logging.debug("Not match regex:{}", event)
-            return
+        return self.sched_pattern.search(event.strip())
 
+
+    def parse_one_event(self, match):
         timestamp = TimeStampTran().get_utc_timestamp(match.group('timestamp'))
         if timestamp is None:
             return
@@ -297,7 +296,6 @@ class SchedFtraceParse(FtraceParse):
         pid = match.group('pid')
         pid = PidTran().get_ns_pid(pid)
         cpu = match.group('cpu')
-        timestamp = TimeStampTran().get_utc_timestamp(match.group('timestamp'))
         action = match.group('action')
         args = match.group('args')
         result = {"task": task, "pid": pid, "cpu": cpu, "timestamp": timestamp, "action": action, "args": args}
@@ -405,6 +403,14 @@ class SchedFtraceParse(FtraceParse):
                 continue
             k, v = item.split("=")
             kv_dic[k] = v
+
+        # 需要做 pid 映射的字段
+        pid_keys = ("pid", "prev_pid", "next_pid")
+
+        for k in pid_keys:
+            if k in kv_dic and kv_dic[k]:
+                kv_dic[k] = PidTran().get_ns_pid(kv_dic[k])
+
         return kv_dic
 
     def add_trace_event(self, event):
@@ -433,9 +439,9 @@ class TraceConverter:
         self.trace_file_path = trace_file_path
         self.parse_func_map = []
         self.pid_status = PidTran()
-        self.pid_status.init(pid_mapping)
+        self.pid_status.initialize(pid_mapping)
         self.time_tran = TimeStampTran()
-        self.time_tran.init(profiling_data)
+        self.time_tran.initialize(profiling_data)
         self.register_parser()
 
     def register_parser(self):
@@ -457,8 +463,10 @@ class TraceConverter:
         lines = file.readlines()
         for line in tqdm.tqdm(lines, desc="Parsing trace file", unit="line"):
             for parser in self.parse_func_map:
-                if parser.belong(line):
-                    parser.parse_one_event(line)
+                match = parser.belong(line)
+                if match:
+                    parser.parse_one_event(match)
+                    break
         file.close()
         return True
 
@@ -470,8 +478,14 @@ if __name__ == "__main__":
     parser.add_argument('--profiling_data', type=str, help='use profiling data to adjust start time')
     parser.add_argument('--pid_mapping', type=str, help='container pid map file')
     args = parser.parse_args()
+    
+    t_start = time.perf_counter()
     con = TraceConverter(args.input, args.profiling_data, args.pid_mapping)
     trace_event = con.parse()
     logging.info("Parse End, Start Write to file....")
+
     with open(args.output, 'w') as f:
-        json.dump(trace_event, f, indent=2)
+        json.dump(trace_event, f)
+
+    t_end = time.perf_counter()
+    logging.info(f"Total convert time: {t_end - t_start:.3f}s")

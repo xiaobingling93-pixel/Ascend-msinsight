@@ -63,7 +63,7 @@ def ftrace_record_start(cpu_mask=None, bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_
     TraceRecord.trace_start(cpu_mask, event_cfg=event_cfg, buffer_size=bf_size)
     return True
 
-def ftrace_record_stop(output):
+def ftrace_record_stop(output = "ftrace.txt"):
     logging.info("Ending record, writing result to file...")
     TraceRecord.trace_stop()
     TraceRecord.trace_show(output)
@@ -133,7 +133,7 @@ class CPUParser:
 
         # 处理字符串输入
         if isinstance(cpu_mask, str):
-            logging.info(f"API received string input: '{cpu_mask}', parsing...")
+            logging.info(f"Received cpu mask string input: '{cpu_mask}', parsing...")
             parsed_mask = CPUParser.parse_cpu_arg(cpu_mask)
             if parsed_mask is None:
                 #在内部已有详细错误信息，直接返回None
