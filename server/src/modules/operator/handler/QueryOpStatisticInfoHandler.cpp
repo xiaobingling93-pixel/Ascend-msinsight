@@ -139,7 +139,12 @@ namespace Dic::Module::Operator {
         }
         request.params.deviceId = deviceId;
         std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
-        if (!database || !database->QueryAllOperatorStatisticInfo(request.params, compareRes)) {
+        if (!database)
+        {
+            ServerLog::Warn("[Operator]Not exist compare operator database. Fail get op statistic info.");
+            return true;
+        }
+        if (!database->QueryAllOperatorStatisticInfo(request.params, compareRes)) {
             ServerLog::Error("[Operator]Failed to query current Statistic Info by rankId.");
             SetOperatorError(ErrorCode::QUERY_ALL_STATISTIC_FAILED);
             return false;
@@ -153,7 +158,12 @@ namespace Dic::Module::Operator {
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
         std::vector<Protocol::OperatorStatisticInfoRes> baselineRes;
         request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId);
-        if (!databaseBaseline || !databaseBaseline->QueryAllOperatorStatisticInfo(request.params, baselineRes)) {
+        if (!databaseBaseline)
+        {
+            ServerLog::Warn("[Operator]Not exist baseline operator database. Fail get op statistic info.");
+            return true;
+        }
+        if (!databaseBaseline->QueryAllOperatorStatisticInfo(request.params, baselineRes)) {
             ServerLog::Error("[Operator]Failed to query baseline Statistic Info by baselineId.");
             SetOperatorError(ErrorCode::QUERY_ALL_STATISTIC_FAILED);
             return false;

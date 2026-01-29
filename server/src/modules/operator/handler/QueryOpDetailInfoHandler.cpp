@@ -155,8 +155,12 @@ namespace Dic::Module::Operator {
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
         request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId);
-        if (!databaseBaseline ||
-            !databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
+        if (!databaseBaseline)
+        {
+            ServerLog::Warn("[Operator]Not exist baseline operator database. Fail get op detail info.");
+            return true;
+        }
+        if (!databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query baseline detail Info by baselineId.");
             SetOperatorError(ErrorCode::QUERY_ALL_DETAIL_FAILED);
             return false;
