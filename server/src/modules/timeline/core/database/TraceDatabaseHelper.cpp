@@ -1382,7 +1382,7 @@ void TraceDatabaseHelper::SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet
         detail.startTime = tempStartTime - minTimestamp;
         detail.duration = resultSet->GetDouble("duration");
         detail.waitTime = resultSet->GetDouble("waitTime");
-        detail.blockDim = resultSet->GetUint64("blockDim");
+        detail.blockNum = resultSet->GetUint64("blockNum");
         detail.inputShapes = resultSet->GetString("inputShapes");
         detail.inputDataTypes = resultSet->GetString("inputDataTypes");
         detail.inputFormats = resultSet->GetString("inputFormats");

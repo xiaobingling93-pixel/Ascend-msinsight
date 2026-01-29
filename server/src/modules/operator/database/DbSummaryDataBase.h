@@ -105,7 +105,7 @@ private:
     OperatorDetailInfoRes GetOperatorDetailRow(sqlite3_stmt *stmt);
     std::string GetGroupNameByIdListStr(const std::string &idListStr);
 
-    std::string blockDimColumnName;
+    std::string blockNumColumnName;
 };
 
 }

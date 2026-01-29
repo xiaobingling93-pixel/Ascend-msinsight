@@ -34,6 +34,7 @@ namespace Dic::Module::Summary {
 const std::string FIELD_TASK_ID = "Task ID";
 const std::string FIELD_OP_STATE = "OP State";
 const std::string FIELD_BLOCK_DIM = "Block Dim";
+const std::string FIELD_BLOCK_NUM = "Block Num";
 const std::string FIELD_INPUT_SHAPES = "Input Shapes";
 const std::string FIELD_INPUT_DATA_TYPES = "Input Data Types";
 const std::string FIELD_INPUT_FORMATS = "Input Formats";
@@ -64,11 +65,23 @@ const std::vector<std::vector<std::string>> VALID_HEADERS = {
         FIELD_START_TIME, FIELD_TYPE, FIELD_WAIT_TIME
     }, // pytorch header1
     {
+        FIELD_ACCELERATOR_CORE, FIELD_BLOCK_NUM, FIELD_DURATION, FIELD_NAME,
+        FIELD_START_TIME, FIELD_TYPE, FIELD_WAIT_TIME
+    }, // pytorch header1
+    {
         FIELD_ACCELERATOR_CORE, FIELD_BLOCK_DIM, FIELD_DURATION, FIELD_NAME,
         FIELD_TASK_START_TIME, FIELD_TYPE, FIELD_WAIT_TIME
     }, // pytorch header2
     {
+        FIELD_ACCELERATOR_CORE, FIELD_BLOCK_NUM, FIELD_DURATION, FIELD_NAME,
+        FIELD_TASK_START_TIME, FIELD_TYPE, FIELD_WAIT_TIME
+    }, // pytorch header2
+    {
         FIELD_BLOCK_DIM, FIELD_OP_TYPE, FIELD_OP_NAME, FIELD_TASK_DURATION,
+        FIELD_TASK_START_TIME, FIELD_TASK_TYPE, FIELD_TASK_WAIT_TIME,
+    }, // msprof header
+    {
+        FIELD_BLOCK_NUM, FIELD_OP_TYPE, FIELD_OP_NAME, FIELD_TASK_DURATION,
         FIELD_TASK_START_TIME, FIELD_TASK_TYPE, FIELD_TASK_WAIT_TIME,
     } // msprof header
 };
@@ -150,6 +163,8 @@ private:
         std::map<std::string, size_t> &dataMap,
         std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> &parseFuncList);
+
+    static bool blockDimReplacedByBlockNum;
 };
 
 } // end of namespace Dic::Module::Summary

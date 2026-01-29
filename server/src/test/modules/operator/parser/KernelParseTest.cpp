@@ -68,7 +68,7 @@ protected:
         EXPECT_EQ(a.startTime, b.startTime);
         EXPECT_EQ(a.duration, b.duration);
         EXPECT_EQ(a.waitTime, b.waitTime);
-        EXPECT_EQ(a.blockDim, b.blockDim);
+        EXPECT_EQ(a.blockNum, b.blockNum);
         EXPECT_EQ(a.inputShapes, b.inputShapes);
         EXPECT_EQ(a.inputDataTypes, b.inputDataTypes);
         EXPECT_EQ(a.inputFormats, b.inputFormats);

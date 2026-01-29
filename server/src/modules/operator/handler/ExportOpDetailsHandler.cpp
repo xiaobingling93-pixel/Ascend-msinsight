@@ -101,7 +101,7 @@ namespace {
         std::string csvStr = CheckColumn(data.name) + "," + CheckColumn(data.type) + ","
                 + CheckColumn(data.accCore) + "," + CheckColumn(data.startTime) + ","
                 + CheckColumn(data.duration) + ","+ CheckColumn(data.waitTime)+ ","
-                + CheckColumn(data.blockDim) + "," + CheckColumn(data.inputShape) + ","
+                + CheckColumn(data.blockNum) + "," + CheckColumn(data.inputShape) + ","
                 + CheckColumn(data.inputType) + "," + CheckColumn(data.inputFormat) + ","
                 + CheckColumn(data.outputShape) + "," + CheckColumn(data.outputType) + ","
                 + CheckColumn(data.outputFormat);

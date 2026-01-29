@@ -40,7 +40,7 @@ struct Kernel {
     int64_t startTime;
     double duration;
     double waitTime;
-    int64_t blockDim;
+    int64_t blockNum;
     std::string inputShapes;
     std::string inputDataTypes;
     std::string inputFormats;

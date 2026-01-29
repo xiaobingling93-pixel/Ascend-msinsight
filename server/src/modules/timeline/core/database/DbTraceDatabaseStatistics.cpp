@@ -19,28 +19,29 @@
 #include "DbTraceDataBase.h"
 namespace Dic::Module::FullDb {
 using namespace Server;
-std::string DbTraceDataBase::GetKernelDetailSql(const KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailSql(const KernelDetailsParams &requestParams, const std::string &blockNumColumnName)
 {
     try {
         std::ostringstream sqlStream;
         sqlStream << "with nameIds as (select id, value as realName from STRING_IDS),\n"
-                  << GetKernelDetailSqlWithHCCL(requestParams) << ",\n" // 第一次绑定 filter.second
-                  << GetKernelDetailSqlWithoutHCCL(requestParams) << ",\n" // 第二次绑定 filter.second
+                  << GetKernelDetailSqlWithHCCL(requestParams, blockNumColumnName) << ",\n" // 第一次绑定 filter.second
+                  << GetKernelDetailSqlWithoutHCCL(requestParams, blockNumColumnName) << ",\n" // 第二次绑定 filter.second
                   << "main_tmp as (select * from main_hccl UNION ALL select * from main_other), "
                   << "main as (SELECT ROWID as id, name, type, acceleratorCore, startTime,\n"
-                  << "duration, waitTime, blockDim, inputShapes, inputDataTypes, inputFormats,\n"
+                  << "duration, waitTime, " + blockNumColumnName + ", inputShapes, inputDataTypes, inputFormats,\n"
                   << "outputShapes, outputDataTypes, outputFormats, taskId FROM main_tmp \n";
         if (requestParams.startTime != requestParams.endTime) {
             sqlStream << " WHERE (startTime + duration*1000) >= ? AND startTime <= ? ";
         }
         sqlStream << ") SELECT id, (SELECT COUNT(*) FROM main) as num, name, type, acceleratorCore, startTime, "
-                  << "duration, waitTime, blockDim, inputShapes, inputDataTypes, inputFormats, "
+                  << "duration, waitTime, " + blockNumColumnName + ", inputShapes, inputDataTypes, inputFormats, "
                   << "outputShapes, outputDataTypes, outputFormats, taskId FROM main ";
         if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: %",
                              requestParams.orderBy);
         } else if (!requestParams.orderBy.empty() && !requestParams.order.empty()) {
-            sqlStream << " ORDER by " << requestParams.orderBy << " "
+            sqlStream << " ORDER by "
+                      << (requestParams.orderBy == "blockNum" ? blockNumColumnName : requestParams.orderBy) << " "
                       << (requestParams.order == "ascend" ? "ASC" : "DESC");
         }
         sqlStream << " LIMIT ? OFFSET ?";
@@ -94,7 +95,7 @@ std::string DbTraceDataBase::GetKernelDetailFilterSqlWithoutHCCL(const KernelDet
 }
 
 // throw DatabaseException
-std::string DbTraceDataBase::GetKernelDetailSqlWithHCCL(const KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailSqlWithHCCL(const KernelDetailsParams &requestParams, const std::string &blockNumColumnName)
 {
     const std::string filterSql = GetKernelDetailFilterSqlWithHCCL(requestParams); // 绑定 filter.second
     // 前置已有 with nameIds as (select id, value as realName from STRING_IDS)
@@ -102,7 +103,7 @@ std::string DbTraceDataBase::GetKernelDetailSqlWithHCCL(const KernelDetailsParam
         "  select info.ROWID, nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as type, "
         "  'HCCL' as acceleratorCore, info.startNs as startTime, "
         "  round((info.endNs - info.startNs)/1000.0, 3) as duration, "
-        "  0 as blockDim, round(waitNs/1000.0, 3) as waitTime, "
+        "  0 as " + blockNumColumnName + ", round(waitNs/1000.0, 3) as waitTime, "
         "  'N/A' as inputShapes, 'N/A' as inputDataTypes, 'N/A' as inputFormats, "
         "  'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats, "
         "  TASK.taskId as taskId"
@@ -113,15 +114,14 @@ std::string DbTraceDataBase::GetKernelDetailSqlWithHCCL(const KernelDetailsParam
 }
 
 // throw DatabaseException
-std::string DbTraceDataBase::GetKernelDetailSqlWithoutHCCL(const KernelDetailsParams &requestParams)
+std::string DbTraceDataBase::GetKernelDetailSqlWithoutHCCL(const KernelDetailsParams &requestParams, const std::string &blockNumColumnName)
 {
-    const std::string blockDimColumnName = "blockDim";
     const std::string filterSql = GetKernelDetailFilterSqlWithoutHCCL(requestParams); // 绑定 filter.second
     // 前置已有 with nameIds as (select id, value as realName from STRING_IDS)
     return " main_other_tmp as ("
         "  select TASK.ROWID, nameIds.realName as name, opType as type, info.taskType as acceleratorCore,"
         "  startNs as startTime, round((endNs - startNs)/1000.0, 3) as duration, "
-        "  " + blockDimColumnName + " as blockDim, round(waitNs/1000.0, 3) as waitTime, "
+        "  " + blockNumColumnName + ", round(waitNs/1000.0, 3) as waitTime, "
         "  inputShapes, inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, "
         "  TASK.taskId as taskId "
         "  from COMPUTE_TASK_INFO info JOIN TASK ON info.globalTaskId = TASK.globalTaskId "

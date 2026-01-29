@@ -388,7 +388,8 @@ bool DbTraceDataBase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICore
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
     Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = GetKernelDetailSql(requestParams);
+    const std::string blockNumColumnName = (CheckColumnExist(TABLE_COMPUTE_TASK_INFO, "blockNum") ? "blockNum" : "blockDim");
+    std::string sql = GetKernelDetailSql(requestParams, blockNumColumnName);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         Server::ServerLog::Error("Fail to prepare sql to query kernel detail data.");
@@ -406,7 +407,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
     if (requestParams.startTime != requestParams.endTime) {
         stmt->BindParams(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
     }
-    if (!ExcecuteQueryKernelDetailData(stmt, requestParams, responseBody, minTimestamp)) {
+    if (!ExcecuteQueryKernelDetailData(stmt, requestParams, responseBody, minTimestamp, blockNumColumnName)) {
         return false;
     }
     responseBody.pageSize = requestParams.pageSize;
@@ -417,7 +418,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
 
 bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
-    uint64_t minTimestamp)
+    uint64_t minTimestamp, const std::string &blockNumColumnName)
 {
     uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
         (requestParams.current - 1) * requestParams.pageSize;
@@ -439,7 +440,7 @@ bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePrepar
         detail.startTime = tempStartTime - minTimestamp;
         detail.duration = resultSet->GetDouble("duration");
         detail.waitTime = resultSet->GetDouble("waitTime");
-        detail.blockDim = resultSet->GetUint64("blockDim");
+        detail.blockNum = resultSet->GetUint64(blockNumColumnName);
         detail.inputShapes = GetStringCacheValue(path, resultSet->GetString("inputShapes"));
         detail.inputDataTypes = GetStringCacheValue(path, resultSet->GetString("inputDataTypes"));
         detail.inputFormats = GetStringCacheValue(path, resultSet->GetString("inputFormats"));
