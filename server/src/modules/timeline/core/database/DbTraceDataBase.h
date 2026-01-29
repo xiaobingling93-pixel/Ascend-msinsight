@@ -207,7 +207,7 @@ public:
         std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
         std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
 
-    static std::string GetKernelDetailSql(const KernelDetailsParams &requestParams);
+    static std::string GetKernelDetailSql(const KernelDetailsParams &requestParams, const std::string &blockNumColumnName);
 
 private:
     const uint32_t cacheSize = 5000;
@@ -268,7 +268,7 @@ private:
                            const PROCESS_TYPE &type) const;
     bool ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePreparedStatement> &stmt,
         const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
-        uint64_t minTimestamp);
+        uint64_t minTimestamp, const std::string &blockNumColumnName);
     void ExecuteQueryDbThreadSameOperatorsDetails(const std::unique_ptr<SqliteResultSet>& resultSet,
         const Protocol::UnitThreadsOperatorsParams &requestParams, Protocol::UnitThreadsOperatorsBody &responseBody,
         const std::vector<std::string> tidList);
@@ -311,9 +311,9 @@ private:
 
     static std::string GetKernelDetailFilterSqlWithoutHCCL(const KernelDetailsParams &requestParams);
 
-    static std::string GetKernelDetailSqlWithHCCL(const KernelDetailsParams &requestParams);
+    static std::string GetKernelDetailSqlWithHCCL(const KernelDetailsParams &requestParams, const std::string &blockNumColumnName);
 
-    static std::string GetKernelDetailSqlWithoutHCCL(const KernelDetailsParams &requestParams);
+    static std::string GetKernelDetailSqlWithoutHCCL(const KernelDetailsParams &requestParams, const std::string &blockNumColumnName);
 
     static void UpdateAscendHardwareFlowLocationName(const std::string &rankId, std::vector<FlowLocation> &flowLocations);
 };

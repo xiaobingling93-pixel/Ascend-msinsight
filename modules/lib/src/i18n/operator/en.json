@@ -44,7 +44,7 @@
       "WaitTime": "Wait Time",
       "TaskId": "Task ID",
       "Duration": "Duration",
-      "BlockDim": "Block Dim",
+      "BlockNum": "Block Num",
       "InputShapes": "Input Shapes",
       "InputDataTypes": "Input Data Types",
       "InputFormats": "Input Formats",

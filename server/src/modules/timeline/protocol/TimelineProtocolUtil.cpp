@@ -536,7 +536,7 @@ template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(cons
         JsonUtil::AddMember(itemJson, "duration", detail.duration, allocator);
         JsonUtil::AddMember(itemJson, "waitTime", detail.waitTime, allocator);
         JsonUtil::AddMember(itemJson, "taskId", detail.taskId, allocator);
-        JsonUtil::AddMember(itemJson, "blockDim", detail.blockDim, allocator);
+        JsonUtil::AddMember(itemJson, "blockNum", detail.blockNum, allocator);
         JsonUtil::AddMember(itemJson, "inputShapes", detail.inputShapes, allocator);
         JsonUtil::AddMember(itemJson, "inputDataTypes", detail.inputDataTypes, allocator);
         JsonUtil::AddMember(itemJson, "inputFormats", detail.inputFormats, allocator);

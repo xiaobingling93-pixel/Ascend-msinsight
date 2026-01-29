@@ -96,8 +96,8 @@ const useOpl2Columns = (isCompare: boolean): ColumnsType<any> => {
     return [
         ...useOpl0Columns(isCompare),
         {
-            title: t('BlockDim'),
-            dataIndex: 'blockDim',
+            title: t('BlockNum'),
+            dataIndex: 'blockNum',
             sorter: true,
             ellipsis: true,
         },

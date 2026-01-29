@@ -495,7 +495,7 @@ struct KernelDetail {
     uint64_t startTime;
     double duration;
     double waitTime;
-    uint64_t blockDim;
+    uint64_t blockNum;
     std::string inputShapes;
     std::string inputDataTypes;
     std::string inputFormats;

@@ -108,7 +108,7 @@ void AdDetaildMemberWithLabel(rapidjson::Value& parent, const char* label, const
     JsonUtil::AddMember(dataJson, "startTime", ele.startTime, allocator);
     JsonUtil::AddMember(dataJson, "duration", ele.duration, allocator);
     JsonUtil::AddMember(dataJson, "waitTime", ele.waitTime, allocator);
-    JsonUtil::AddMember(dataJson, "blockDim", ele.blockDim, allocator);
+    JsonUtil::AddMember(dataJson, "blockNum", ele.blockNum, allocator);
     JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
     JsonUtil::AddMember(dataJson, "inputType", ele.inputType, allocator);
     JsonUtil::AddMember(dataJson, "inputFormat", ele.inputFormat, allocator);
@@ -183,7 +183,7 @@ std::optional<document_t> ToResponseJson<OperatorMoreInfoResponse>(const Operato
         JsonUtil::AddMember(dataJson, "startTime", ele.startTime, allocator);
         JsonUtil::AddMember(dataJson, "duration", ele.duration, allocator);
         JsonUtil::AddMember(dataJson, "waitTime", ele.waitTime, allocator);
-        JsonUtil::AddMember(dataJson, "blockDim", ele.blockDim, allocator);
+        JsonUtil::AddMember(dataJson, "blockNum", ele.blockNum, allocator);
         JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
         JsonUtil::AddMember(dataJson, "inputType", ele.inputType, allocator);
         JsonUtil::AddMember(dataJson, "inputFormat", ele.inputFormat, allocator);

@@ -56,7 +56,7 @@ namespace Dic::Protocol {
         std::string startTime;
         std::string duration;
         std::string waitTime;
-        std::string blockDim;
+        std::string blockNum;
         std::string inputShape;
         std::string inputType;
         std::string inputFormat;

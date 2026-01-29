@@ -263,7 +263,7 @@ public:
             coreTypes = " AND accelerator_core = ? ";
         }
         std::string sql = "SELECT id, task_id as taskId, name, op_type AS type, accelerator_core AS acceleratorCore, "
-            "duration, start_time AS startTime, wait_time AS waitTime, block_dim AS blockDim, "
+            "duration, start_time AS startTime, wait_time AS waitTime, block_num AS blockNum, "
             "input_shapes AS inputShapes, input_data_types AS inputDataTypes, input_formats AS inputFormats, "
             "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
             "output_formats AS outputFormats FROM kernel_detail WHERE deviceId = ? ";

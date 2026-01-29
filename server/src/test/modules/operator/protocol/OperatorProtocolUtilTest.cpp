@@ -27,7 +27,7 @@
 using namespace Dic::Protocol;
 const std::vector<std::string> DETAIL_KEY = {
     "name", "type", "accCore", "startTime", "duration", "waitTime",
-    "blockDim", "inputShape", "inputType", "inputFormat", "outputShape",
+    "blockNum", "inputShape", "inputType", "inputFormat", "outputShape",
     "outputType", "outputFormat"
 };
 
@@ -68,7 +68,7 @@ protected:
         EXPECT_EQ(item["startTime"].GetString(), res.startTime);
         EXPECT_EQ(item["duration"].GetString(), res.duration);
         EXPECT_EQ(item["waitTime"].GetString(), res.waitTime);
-        EXPECT_EQ(item["blockDim"].GetString(), res.blockDim);
+        EXPECT_EQ(item["blockNum"].GetString(), res.blockNum);
         EXPECT_EQ(item["inputShape"].GetString(), res.inputShape);
         EXPECT_EQ(item["inputType"].GetString(), res.inputType);
         EXPECT_EQ(item["inputFormat"].GetString(), res.inputFormat);

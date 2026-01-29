@@ -123,7 +123,7 @@ struct ComputeDetail {
     std::string startTime;
     double duration;
     double waitTime;
-    int64_t blockDim;
+    int64_t blockNum;
     std::string inputShapes;
     std::string inputDataTypes;
     std::string inputFormats;

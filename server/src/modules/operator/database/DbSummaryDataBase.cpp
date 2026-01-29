@@ -35,7 +35,11 @@ bool DbSummaryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     auto result = Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion()
                   && AddCommunicationOpTableOpTypeIfNotExists();
-    blockDimColumnName = "blockDim";
+    if (CheckColumnExist(TABLE_COMPUTE_TASK_INFO, "blockNum")) {
+        blockNumColumnName = "blockNum";
+    } else {
+        blockNumColumnName = "blockDim";
+    }
     return result;
 }
 
@@ -68,7 +72,7 @@ bool DbSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams param
         computeDetail.startTime = sqlite3_column_string(stmt, col++);
         computeDetail.duration = sqlite3_column_double(stmt, col++);
         computeDetail.waitTime = sqlite3_column_double(stmt, col++);
-        computeDetail.blockDim = sqlite3_column_int64(stmt, col++);
+        computeDetail.blockNum = sqlite3_column_int64(stmt, col++);
         computeDetail.inputShapes = sqlite3_column_string(stmt, col++);
         computeDetail.inputDataTypes = sqlite3_column_string(stmt, col++);
         computeDetail.inputFormats = sqlite3_column_string(stmt, col++);
@@ -90,7 +94,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       "OP_TYPE.value as type, "
                       "CASE WHEN startNs == 0 THEN 0 ELSE ROUND((startNs - ?) /(1000.0 * 1000.0), 4) END AS startTime, "
                       "ROUND((endNs - startNs)/1000.0, 2) as duration, "
-                      "ROUND((waitNs)/1000.0, 3) as waitTime, " + blockDimColumnName + " as blockDim, "
+                      "ROUND((waitNs)/1000.0, 3) as waitTime, " + blockNumColumnName + " as blockDim, "
                       "INPUTSHAPES.value as inputShape, "
                       "INPUTDATATYPES.value as inputDataType, "
                       "INPUTFORMATS.value as inputFormat, "
@@ -527,7 +531,7 @@ OperatorDetailInfoRes DbSummaryDataBase::GetOperatorDetailRow(sqlite3_stmt *stmt
     one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
     std::string waitTime = Sqlite3ColumnConvertStrReturnNull(SQLITE_FLOAT, stmt, col++);
     one.waitTime = waitTime == "NULL" ? "Loading" : waitTime;
-    one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
+    one.blockNum = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
     one.inputShape = sqlite3_column_string(stmt, col++);
     one.inputType = sqlite3_column_string(stmt, col++);
     one.inputFormat = sqlite3_column_string(stmt, col++);
@@ -611,7 +615,9 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
     }
 
     if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
-        sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
+        sql += " ORDER by " +
+            (reqParams.orderBy == "blockNum" ? blockNumColumnName : reqParams.orderBy) +
+            " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
 
     sql += " LIMIT ? OFFSET ?";
@@ -646,7 +652,7 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
         one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
         std::string waitTime = Sqlite3ColumnConvertStrReturnNull(SQLITE_FLOAT, stmt, col++);
         one.waitTime = waitTime == "NULL" ? "Loading" : waitTime;
-        one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
+        one.blockNum = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
         one.inputShape = sqlite3_column_string(stmt, col++);
         one.inputType = sqlite3_column_string(stmt, col++);
         one.inputFormat = sqlite3_column_string(stmt, col++);
@@ -831,7 +837,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     } else {
         sql = " SELECT COUNT(*) as nums"
             " FROM ("
-            "   SELECT ROUND((endNs - startNs)/1000.0, 3) as duration, " + blockDimColumnName +
+            "   SELECT ROUND((endNs - startNs)/1000.0, 3) as duration, " + blockNumColumnName +
             "     , deviceId, streamId as step_id,NAME.value AS name,"
             "     OPTYPE.value AS type,TASKTYPE.value as accCore, startNs as startTime"
             "   FROM " + TABLE_COMPUTE_TASK_INFO +
@@ -944,11 +950,11 @@ std::string DbSummaryDataBase::GenerateQueryDetailSqlForOperator()
     // JoinExtraColName、 GetPMUTmpTableColSql、 CreatPMUTmpTableSql 为PMU数据处理，如果没有返回""
     std::string sql = " SELECT deviceId, step_id, name, type, accCore,"
         " CASE WHEN startTime == 0 THEN 'NA' ELSE  ROUND((startTime - ?) / (1000.0 * 1000.0), 2) END AS startTime, "
-        " duration, waitTime, " + blockDimColumnName + ","
+        " duration, waitTime, " + blockNumColumnName + ","
         " inputShape, inputType, inputFormat, outputShape, outputType, outputFormat "
         + JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end())) +
         " FROM ("
-        "     SELECT " + blockDimColumnName + ", deviceId, streamId as step_id,NAME.value AS name,"
+        "     SELECT " + blockNumColumnName + ", deviceId, streamId as step_id,NAME.value AS name,"
         "     OPTYPE.value AS type,TASKTYPE.value as accCore, startNs as startTime, "
         "     ROUND((endNs - startNs)/1000.0, 3) as duration, ROUND(waitNs/1000.0, 3) as waitTime, "
         "     INPUTSHAPES.value as inputShape, INPUTDATATYPES.value as inputType, "
@@ -986,7 +992,9 @@ std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqPar
         ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
                          "to generate all query detail sql.");
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
-        sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
+        sql += " ORDER by " +
+            (reqParams.orderBy == "blockNum" ? blockNumColumnName : reqParams.orderBy) +
+            " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
     return sql;
 }
@@ -1032,7 +1040,7 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForHCCL(std::string &sql
 {
     sql = " SELECT rank_id, step_id, name, type, accCore,"
         " CASE WHEN startTime == 0 THEN 'NA' ELSE  ROUND((startTime - ?) / (1000.0 * 1000.0), 2)"
-        " END AS startTime, duration, waitTime, NULL AS blockDim, NULL AS inputShape,"
+        " END AS startTime, duration, waitTime, NULL AS " + blockNumColumnName + ", NULL AS inputShape,"
         " NULL AS inputType, NULL AS inputFormat, NULL AS outputShape, NULL AS outputType,"
         " NULL AS outputFormat"
         " FROM ("
@@ -1055,11 +1063,11 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForOther(std::string &sq
     std::set<std::string> pmuClos = FetchPmuColumnNames();
     sql = " SELECT device_id, step_id, name, type, accCore,"
           " CASE WHEN startTime == 0 THEN 'NA' ELSE ROUND((startTime - ?) / (1000.0 * 1000.0), 2)"
-          " END AS startTime, duration, waitTime, blockDim,"
+          " END AS startTime, duration, waitTime, " + blockNumColumnName + ","
           " inputShape, inputType, inputFormat, outputShape, outputType, outputFormat "
           + JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end())) +
           " FROM ("
-          "     SELECT blockDim, deviceId as device_id, streamId as step_id, "
+          "     SELECT " + blockNumColumnName + ", deviceId as device_id, streamId as step_id, "
           "     NAME.value AS name,  OPTYPE.value AS type,"
           "  TASKTYPE.value as accCore,startNs as startTime,ROUND((endNs - startNs)/1000.0, 3) as duration,"
           "     ROUND((waitNs)/1000.0, 3) as waitTime, INPUTSHAPES.value as inputShape, "
@@ -1087,7 +1095,7 @@ std::string &DbSummaryDataBase::GenerateQueryDetailSqlForHCCL(std::string &sql) 
 {
     sql = " SELECT rank_id, step_id, name, type, accCore,"
           " CASE WHEN startTime == 0 THEN 'NA' ELSE  ROUND((startTime - ?) / (1000.0 * 1000.0), 2)"
-          " END AS startTime, duration, waitTime, NULL AS " + blockDimColumnName + ", NULL AS inputShape,"
+          " END AS startTime, duration, waitTime, NULL AS " + blockNumColumnName + ", NULL AS inputShape,"
           " NULL AS inputType, NULL AS inputFormat, NULL AS outputShape, NULL AS outputType,"
           " NULL AS outputFormat FROM ("
           "  SELECT NULL as rank_id, NULL as step_id, NAME.value AS name, TYPE.value AS type, "

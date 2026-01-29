@@ -43,7 +43,7 @@
       "WaitTime": "等待时间",
       "TaskId": "任务ID",
       "Duration": "时长",
-      "BlockDim": "Block数量",
+      "BlockNum": "Block数量",
       "InputShapes": "输入Shapes",
       "InputDataTypes": "输入数据类型",
       "InputFormats": "输入格式",

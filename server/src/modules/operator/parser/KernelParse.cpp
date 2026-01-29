@@ -31,7 +31,7 @@
 
 namespace Dic::Module::Summary {
 using namespace Dic::Server;
-
+bool KernelParse::blockDimReplacedByBlockNum = false;
 
 std::map<std::vector<std::string>, std::function<void(const std::map<std::string, size_t> &dataMap,
     const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> KernelParse::parseFuncMap;
@@ -62,7 +62,15 @@ void KernelParse::InitKernelParseMap()
         std::bind(&KernelParse::ParsePyTorchOpBaseInfoData, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::placeholders::_4));
     parseFuncMap.emplace(std::vector<std::string>{
+        FIELD_NAME, FIELD_TYPE, FIELD_ACCELERATOR_CORE, FIELD_DURATION, FIELD_WAIT_TIME, FIELD_BLOCK_NUM },
+        std::bind(&KernelParse::ParsePyTorchOpBaseInfoData, std::placeholders::_1, std::placeholders::_2,
+        std::placeholders::_3, std::placeholders::_4));
+    parseFuncMap.emplace(std::vector<std::string>{
         FIELD_OP_NAME, FIELD_OP_TYPE, FIELD_TASK_TYPE, FIELD_TASK_DURATION, FIELD_TASK_WAIT_TIME, FIELD_BLOCK_DIM },
+        std::bind(&KernelParse::ParseMsProfOpBaseInfoData, std::placeholders::_1, std::placeholders::_2,
+        std::placeholders::_3, std::placeholders::_4));
+    parseFuncMap.emplace(std::vector<std::string>{
+        FIELD_OP_NAME, FIELD_OP_TYPE, FIELD_TASK_TYPE, FIELD_TASK_DURATION, FIELD_TASK_WAIT_TIME, FIELD_BLOCK_NUM },
         std::bind(&KernelParse::ParseMsProfOpBaseInfoData, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::placeholders::_4));
     parseFuncMap.emplace(std::vector<std::string>{ STEP_ID },
@@ -302,7 +310,11 @@ inline void KernelParse::ParsePyTorchOpBaseInfoData(const std::map<std::string, 
     kernel.acceleratorCore = row[dataMap.at(FIELD_ACCELERATOR_CORE)];
     kernel.duration = NumberUtil::StringToDouble(row[dataMap.at(FIELD_DURATION)], true);
     kernel.waitTime = NumberUtil::StringToDouble(row[dataMap.at(FIELD_WAIT_TIME)], true);
-    kernel.blockDim = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_DIM)]);
+    if (blockDimReplacedByBlockNum) {
+        kernel.blockNum = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_NUM)]);
+    } else {
+        kernel.blockNum = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_DIM)]);
+    }
 }
 
 inline void KernelParse::ParsePyTorchStepInfoData(const std::map<std::string, size_t> &dataMap,
@@ -326,7 +338,11 @@ inline void KernelParse::ParseMsProfOpBaseInfoData(const std::map<std::string, s
     kernel.acceleratorCore = row[dataMap.at(FIELD_TASK_TYPE)];
     kernel.duration = NumberUtil::StringToDouble(row[dataMap.at(FIELD_TASK_DURATION)], true);
     kernel.waitTime = NumberUtil::StringToDouble(row[dataMap.at(FIELD_TASK_WAIT_TIME)], true);
-    kernel.blockDim = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_DIM)]);
+    if (blockDimReplacedByBlockNum) {
+        kernel.blockNum = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_NUM)]);
+    } else {
+        kernel.blockNum = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_DIM)]);
+    }
 }
 
 inline void KernelParse::ParseShapeInfoData(const std::map<std::string, size_t> &dataMap,
@@ -385,6 +401,7 @@ bool KernelParse::ProcessHeaderGetParseFunc(std::shared_ptr<TextSummaryDataBase>
     for (size_t i = 0; i < rowVector.size(); ++i) {
         dataMap[rowVector[i]] = i;
     }
+    blockDimReplacedByBlockNum = (std::find(rowVector.begin(), rowVector.end(), FIELD_BLOCK_NUM) != rowVector.end());
     // 获取每一列，更新db表
     if (!GetUtilizationColumns(rowVector, columns) or !db->ExtendColumns(TABLE_KERNEL, columns) or
         !db->InitStmt(columns)) {

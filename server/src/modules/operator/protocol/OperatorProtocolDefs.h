@@ -59,7 +59,7 @@ namespace OperatorDetailsView {
     constexpr std::string_view WAIT_TIME = "waitTime";
 
     // 仅计算算子
-    constexpr std::string_view BLOCK_DIM = "blockDim";
+    constexpr std::string_view BLOCK_NUM = "blockNum";
     constexpr std::string_view INPUT_SHAPES = "inputShape";
     constexpr std::string_view INPUT_DATA_TYPES = "inputType";
     constexpr std::string_view INPUT_FORMATS = "inputFormat";
@@ -69,7 +69,7 @@ namespace OperatorDetailsView {
 
     // 完整列
     inline const std::set<std::string_view> FULL_COLS = {
-        NAME, TYPE, ACC_CORE, START_TIME, DURATION, WAIT_TIME, BLOCK_DIM,
+        NAME, TYPE, ACC_CORE, START_TIME, DURATION, WAIT_TIME, BLOCK_NUM,
         INPUT_SHAPES, INPUT_DATA_TYPES, INPUT_FORMATS,
         OUTPUT_SHAPES, OUTPUT_DATA_TYPES, OUTPUT_FORMATS
     };

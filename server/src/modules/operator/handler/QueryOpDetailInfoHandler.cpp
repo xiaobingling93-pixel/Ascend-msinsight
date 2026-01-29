@@ -304,7 +304,7 @@ namespace Dic::Module::Operator {
         data.diff.startTime = CalPmuDataCompare(data.compare.startTime, data.baseline.startTime);
         data.diff.duration = CalPmuDataCompare(data.compare.duration, data.baseline.duration);
         data.diff.waitTime = CalPmuDataCompare(data.compare.waitTime, data.baseline.waitTime);
-        data.diff.blockDim = CalPmuDataCompare(data.compare.blockDim, data.baseline.blockDim);
+        data.diff.blockNum = CalPmuDataCompare(data.compare.blockNum, data.baseline.blockNum);
         data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
         data.diff.inputType = data.compare.inputType + "->" + data.baseline.inputType;
         data.diff.inputFormat = data.compare.inputFormat + "->" + data.baseline.inputFormat;

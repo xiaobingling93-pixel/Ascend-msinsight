@@ -50,7 +50,7 @@ bool TextSummaryDataBase::CreateTable()
     std::string sql =
         "CREATE TABLE " + TABLE_KERNEL + " (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId TEXT, step_id TEXT, " +
         "task_id TEXT, name TEXT, op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, " +
-        "wait_time INTEGER, block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, " +
+        "wait_time INTEGER, block_num INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, " +
         "output_shapes TEXT, output_data_types TEXT, output_formats TEXT);" +
         "CREATE INDEX rank_index ON " + TABLE_KERNEL + " (deviceId);";
     std::lock_guard<std::recursive_mutex> lock(mutex);
@@ -79,7 +79,7 @@ bool TextSummaryDataBase::InitStmt(const std::vector<std::string> &columns)
     }
     std::string sql =
             "INSERT INTO " + TABLE_KERNEL + " (deviceId, step_id, task_id, name, op_type, accelerator_core, " +
-            "start_time, duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, " +
+            "start_time, duration, wait_time, block_num, input_shapes, input_data_types, input_formats, " +
             "output_shapes, output_data_types, output_formats" + columnSql + ") " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
@@ -121,7 +121,7 @@ void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel> &kern
         sqlite3_bind_int64(stmt, idx++, event.startTime);
         sqlite3_bind_double(stmt, idx++, event.duration);
         sqlite3_bind_double(stmt, idx++, event.waitTime);
-        sqlite3_bind_int64(stmt, idx++, event.blockDim);
+        sqlite3_bind_int64(stmt, idx++, event.blockNum);
         sqlite3_bind_text(stmt, idx++, event.inputShapes.c_str(), event.inputShapes.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.inputDataTypes.c_str(), event.inputDataTypes.length(), SQLITE_TRANSIENT);
 
@@ -185,7 +185,7 @@ sqlite3_stmt *TextSummaryDataBase::GetKernelStmt(uint64_t paramLen, const std::v
         }
         std::string sql =
                 "INSERT INTO " + TABLE_KERNEL + " (deviceId, step_id, task_id, name, op_type, accelerator_core, " +
-                "start_time, duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, " +
+                "start_time, duration, wait_time, block_num, input_shapes, input_data_types, input_formats, " +
                 "output_shapes, output_data_types, output_formats" + columnSql + ") " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
@@ -267,7 +267,7 @@ bool TextSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams par
         computeDetail.startTime = sqlite3_column_string(stmt, col++);
         computeDetail.duration = sqlite3_column_double(stmt, col++);
         computeDetail.waitTime = sqlite3_column_double(stmt, col++);
-        computeDetail.blockDim = sqlite3_column_int64(stmt, col++);
+        computeDetail.blockNum = sqlite3_column_int64(stmt, col++);
         computeDetail.inputShapes = sqlite3_column_string(stmt, col++);
         computeDetail.inputDataTypes = sqlite3_column_string(stmt, col++);
         computeDetail.inputFormats = sqlite3_column_string(stmt, col++);
@@ -304,7 +304,7 @@ std::string TextSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
     if (request.orderBy.empty()) {
         sql = "SELECT name, op_type as type, "
               "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
-              "duration, wait_time as waitTime, block_dim as blockDim, "
+              "duration, wait_time as waitTime, block_num as blockNum, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + TABLE_KERNEL +
@@ -312,7 +312,7 @@ std::string TextSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
     } else {
         sql = "SELECT name, op_type as type, "
               "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
-              "duration, wait_time as waitTime, block_dim as blockDim, "
+              "duration, wait_time as waitTime, block_num as blockNum, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + TABLE_KERNEL +
@@ -793,7 +793,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string sqlTab =
                 " SELECT deviceId, step_id , name, op_type as type, accelerator_core as accCore,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
-                " END AS startTime, duration, wait_time as waitTime, block_dim as blockDim,"
+                " END AS startTime, duration, wait_time as waitTime, block_num as blockNum,"
                 " input_shapes as inputShape, input_data_types as inputType, input_formats as inputFormat, "
                 " output_shapes as outputShape, output_data_types as outputType, output_formats as outputFormat " +
                 pmuColumnNames;
@@ -896,7 +896,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             // 这三个界面上都呈现string类型
             one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
             one.waitTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
-            one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
+            one.blockNum = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
             one.inputShape = sqlite3_column_string(stmt, col++);
             one.inputType = sqlite3_column_string(stmt, col++);
             one.inputFormat = sqlite3_column_string(stmt, col++);
@@ -994,7 +994,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string sql =
                 " SELECT deviceId, step_id, name, op_type as type, accelerator_core as accCore,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
-                " END AS startTime, duration, wait_time as waitTime, block_dim as blockDim,"
+                " END AS startTime, duration, wait_time as waitTime, block_num as blockNum,"
                 " input_shapes as inputShape, input_data_types as inputType, input_formats as inputFormat, "
                 " output_shapes as outputShape, output_data_types as outputType, output_formats as outputFormat " +
                 pmuColumnNames +
@@ -1071,7 +1071,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             one.startTime = sqlite3_column_string(stmt, col++);
             one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
             one.waitTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
-            one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
+            one.blockNum = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
             one.inputShape = sqlite3_column_string(stmt, col++);
             one.inputType = sqlite3_column_string(stmt, col++);
             one.inputFormat = sqlite3_column_string(stmt, col++);

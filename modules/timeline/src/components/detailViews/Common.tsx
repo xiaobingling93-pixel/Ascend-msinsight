@@ -109,7 +109,7 @@ export const useKernelDetails = (): TableColumnsType<any> => {
         { title: `${t('Duration')}(us)`, dataIndex: 'duration', ...getDefaultColumData('duration') },
         { title: `${t('WaitTime')}(us)`, dataIndex: 'waitTime', ...getDefaultColumData('waitTime') },
         { title: t('TaskId'), dataIndex: 'taskId', ...getDefaultColumData('taskId'), ...fetchColumnFilterProps('taskId', 'TaskId') },
-        { title: t('BlockDim'), dataIndex: 'blockDim', ...getDefaultColumData('blockDim') },
+        { title: t('BlockNum'), dataIndex: 'blockNum', ...getDefaultColumData('blockNum') },
         { title: t('InputShapes'), dataIndex: 'inputShapes', ...getDefaultColumData('inputShapes'), ...fetchColumnFilterProps('inputShapes', 'InputShapes') },
         {
             title: t('InputDataTypes'),
