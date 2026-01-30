@@ -162,13 +162,13 @@ TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphResponse)
     DetailsInterCoreLoadSubCoreDetail subCoreDetail;
     float curRate = 11.0f;
     float maxRate = 23.0f;
-    subCoreDetail.SetCacheHitRateDimension(curRate, maxRate);
+    subCoreDetail.SetCacheHitRateDimension(curRate, maxRate, 0);
     uint64_t curCycles = 100;
     uint64_t minCycles = 10;
-    subCoreDetail.SetCyclesDimension(curCycles, minCycles);
+    subCoreDetail.SetCyclesDimension(curCycles, 0, 0);
     uint64_t curPut = 200;
     uint64_t minPut = 110;
-    subCoreDetail.SetThroughputDimension(curPut, minPut);
+    subCoreDetail.SetThroughputDimension(0, 0, 0);
     uint8_t subCoreIndex = 0;
     subCoreDetail.SetSubCoreName("cube", subCoreIndex);
     opDetail.AddSubCoreDetail(std::move(subCoreDetail));

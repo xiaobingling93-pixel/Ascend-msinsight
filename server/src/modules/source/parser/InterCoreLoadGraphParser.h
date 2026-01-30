@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include "pch.h"
+#include "NumberSafeUtil.h"
 #include "SourceProtocolResponse.h"
 
 namespace Dic {
@@ -88,6 +89,42 @@ struct InterCoreLoadAnalysisDetail {
     }
 };
 
+/**
+ * @brief  用于辅助计算核间负载的归一化值, 内部计算使用long double类型
+ */
+class SigmodStatHelper
+{
+public:
+    long double average = {};
+    int64_t count = {}; // normally the count
+    long double sigma = 0.0;
+    std::vector<long double> data; // copy the data
+    void  CalculateSigma()
+    {
+        if (data.empty()) {
+            return;
+        }
+        count = static_cast<int64_t>(data.size());
+        // 1. 计算均值
+        const long double sum = std::accumulate(data.begin(), data.end(), static_cast<long double>(0));
+        average = sum / static_cast<long double>(count);
+        if (count <= 1) {
+            sigma = 0.0;
+            return ;
+        }
+
+        // 2. 计算平方差之和
+        auto sq_sum = static_cast<long double>(0);
+        for (const long double x : data) {
+            const long double diff = std::abs(x - average);
+            sq_sum += diff * diff;
+        }
+        auto average_sq = sq_sum / static_cast<long double>(count - 1);
+        // 3. 样本标准差 (n - 1)
+        sigma = std::sqrt(average_sq);
+    }
+};
+
 class InterCoreLoadGraphParser {
 public:
     bool GetInterCoreLoadAnalysisInfo(const std::string& json, Dic::Protocol::DetailsInterCoreLoadGraphBody& body);
@@ -97,8 +134,17 @@ private:
     void ParseJsonOpDetailArray(InterCoreLoadAnalysisDetail &analysisDetail, const json_t &jsonOpDetailArray);
     void TransformAnalysisDetail(InterCoreLoadAnalysisDetail &analysisDetail);
     void Try2MoveSubCoreDetails(InterCoreOpDetail &source, InterCoreOpDetail &dest, uint8_t subCoreIndex);
+
+    void UpdateSigmodStats(const InterCoreSubCoreDetail &detail);
+    void FinishSigmodStats();
+    
     const uint8_t SUB_CORE_INDEX_0 = 0;
     const uint8_t SUB_CORE_INDEX_1 = 1;
+    std::unordered_map<std::string, SigmodStatHelper> cacheHitRatioSigmodStats;
+    std::unordered_map<std::string , SigmodStatHelper> cyclesSigmodStats;
+    std::unordered_map<std::string, SigmodStatHelper> throughputSigmodStats;
+    inline static const std::string SUBCORE_TYPE_VECTOR = "vector";
+    inline static const std::string SUBCORE_TYPE_CUBE = "cube";
 };
 
 } // Dic

@@ -20,14 +20,13 @@
 #define DIC_SOURCE_PROTOCOL_SOURCE_RESPONSE_H
 
 #include <vector>
+#include <cmath>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 #include "SourceDefs.h"
 
-namespace Dic {
-namespace Protocol {
-
+namespace Dic::Protocol {
 struct SourceCodeFileResBody {
     std::string fileContent;
 };
@@ -248,8 +247,8 @@ struct MemoryTable {
 
     void FillBaseInfoFromCompare()
     {
-        for (auto &item: tableDetail) {
-            for (auto &row: item.row) {
+        for (auto &item : tableDetail) {
+            for (auto &row : item.row) {
                 TableRow &baseline = row.baseline;
                 baseline.BaseInfoClone(row.compare);
                 TableRow &diff = row.diff;
@@ -289,62 +288,43 @@ struct DetailsInterCoreLoadSubCoreDetail {
     DetailsInterCoreLoadDimension<uint64_t> throughput = {{0, 0, 0}};
     DetailsInterCoreLoadDimension<float> cacheHitRate = {{0, 0, 0}};
 
-    void SetCyclesDimension(uint64_t curCycles, uint64_t minCycles)
+    void SetCyclesDimension(int64_t curCycles, long double average, long double sigma)
     {
-        if (minCycles == 0 || curCycles < minCycles) { // 说明所有的cycles数据都为0
-            return;
-        }
         cycles.value.compare = curCycles;
-        // 比较当前cycle数和最小cycle数的差值，如果大于最小cycles数，那么level直接置为1
-        uint64_t diff = curCycles - minCycles;
-        if (diff >= minCycles) {
-            cycles.level = 1;
+        if (std::abs(sigma) < std::numeric_limits<long double>::epsilon()) {
+            cycles.level = 0;
             return;
         }
-        // 10 表示 每增加10%，level由MAX_LEVEL减少1
-        if ((diff * 10 / minCycles) < static_cast<uint64_t>(maxLevel)) {
-            // 10 表示 每增加10%，level由MAX_LEVEL减少1;此处maxLevel=10, 无溢出风险
-            cycles.level = static_cast<int>(static_cast<uint64_t>(maxLevel) - diff * 10 / minCycles);
-        }
-        if (cycles.level < 1) {
-            cycles.level = 1;
-        }
+        const long double core = (static_cast<long double>(curCycles) - average) / sigma;
+        const long double sigmod = static_cast<long double>(1) / (static_cast<long double>(1) + std::exp(-core));
+        const int result = static_cast<int>(sigmod * 10);
+        cycles.level = result;
     }
 
-    void SetThroughputDimension(uint64_t curThroughput, uint64_t minThroughput)
+    void SetThroughputDimension(int64_t curThroughput, long double average, long double sigma)
     {
-        if (minThroughput == 0) { // 说明所有的throughput数据都为0
-            return;
-        }
         throughput.value.compare = curThroughput;
-        // 比较当前的throughput和最小的throughput的差值
-        uint64_t diff = curThroughput - minThroughput;
-        if (diff > minThroughput) {
-            // 如果差值大于一倍, level直接置为1
-            throughput.level = 1;
+        if (std::abs(sigma) < std::numeric_limits<long double>::epsilon()) {
+            throughput.level = 0;
             return;
         }
-        // 10 表示 每增加10%，level由MAX_LEVEL减少1
-        if ((diff * 10 / minThroughput) < static_cast<uint64_t>(maxLevel)) {
-            // 10 表示 每增加10%，level由MAX_LEVEL减少1直到等于1;此处maxLevel为10, 无溢出风险
-            throughput.level = static_cast<int>(static_cast<uint64_t>(maxLevel) - diff * 10 / minThroughput);
-        }
-        if (throughput.level < 1) {
-            throughput.level = 1;
-        }
+        const long double core = (static_cast<long double>(curThroughput) - average) / sigma;
+        const long double sigmod = static_cast<long double>(1) / (static_cast<long double>(1) + std::exp(-core));
+        const int result = static_cast<int>(sigmod * 10);
+        throughput.level = result;
     }
 
-    void SetCacheHitRateDimension(float curRate, float maxRate)
+    void SetCacheHitRateDimension(float curRate, long double averageRate, long double sigma)
     {
-        if (maxRate == 0) { // 说明所有的cache rate hit数据都为0
+        cacheHitRate.value.compare = curRate;
+        if (std::abs(sigma) < std::numeric_limits<long double>::epsilon()) {
+            cacheHitRate.level = 0;
             return;
         }
-        cacheHitRate.value.compare = curRate;
-        // 比较当前的cache hit rate和最大的rate之间的差值，每减小10%，level由MAX_LEVEL减少1直到等于1
-        cacheHitRate.level = maxLevel - (maxRate - curRate) * 10 / maxRate;
-        if (cacheHitRate.level < 1) {
-            cacheHitRate.level = 1;
-        }
+        const long double core = (static_cast<long double>(curRate) - averageRate) / sigma;
+        const long double sigmod = static_cast<long double>(1) / (static_cast<long double>(1) + std::exp(-core));
+        const int result = static_cast<int>(sigmod * 10);
+        cacheHitRate.level = result;
     }
 
     void SetSubCoreName(const std::string& type, uint8_t id)
@@ -399,8 +379,6 @@ struct CachelineRecordResponse : public Response {
     CachelineRecordResponse() : Response(std::string(REQ_RES_CACHELINE_RECORD)) {}
     CacheLineRecordResBody body;
 };
-
-} // end of namespace Protocol
-} // end of namespace Dic
+}
 
 #endif // DIC_SOURCE_PROTOCOL_SOURCE_RESPONSE_H
