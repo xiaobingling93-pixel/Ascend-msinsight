@@ -38,8 +38,8 @@ public:
 private:
     uint64_t GetBodyLength(const uint64_t &headPosition, const uint64_t &headLength) const;
 
-    const std::string REQ_DELIMITER = "\r\n\r\n";
-    const std::string HEAD_START = "Content-Length:";
+    inline const static std::string REQ_DELIMITER = "\r\n\r\n";
+    inline const static std::string HEAD_START = "Content-Length:";
     const uint32_t matchMinNum = 2;
     const uint64_t bufferLimit = 16 * 1024 * 1024;
     const uint64_t invalidBodyLen = std::numeric_limits<uint64_t>::max();

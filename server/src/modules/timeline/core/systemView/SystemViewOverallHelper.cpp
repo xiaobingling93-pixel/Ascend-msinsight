@@ -60,8 +60,8 @@ std::vector<SameOperatorsDetails> SystemViewOverallHelper::FilterComputingEvents
                 continue;
             }
             SameOperatorsDetails details;
-            const double scaled = kernelEvent.duration * timeScale;
-            if (scaled < 0 || scaled > static_cast<double>(UINT64_MAX)) { // 判断 duration * timeScale(固定为1000) 不能超过 UINT64_MAX
+            const long double scaled = kernelEvent.duration * timeScale;
+            if (scaled < 0 || scaled > static_cast<long double>(std::numeric_limits<int64_t>::max())) { // 判断 duration * timeScale(固定为1000) 不能超过 UINT64_MAX
                 ServerLog::Warn("Unexpected condition: kernel duration is too long. Duration: ", kernelEvent.duration);
                 continue;
             }

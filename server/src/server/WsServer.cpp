@@ -49,6 +49,9 @@ bool WsServer::Stop()
     listenStart = false;
     if (wsApp) {
         wsApp->close();
+        if (listenThreadPtr->joinable()) {
+            listenThreadPtr->join();
+        }
     }
     return true;
 }

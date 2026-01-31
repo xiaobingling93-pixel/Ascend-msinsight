@@ -607,6 +607,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
     requestParams.metaTypeList = {"CANN_API"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
+    requestParams.pageSize = 10;
+    requestParams.current = 1;
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
     std::vector<uint64_t> traceId;
@@ -637,6 +639,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenMstx)
     requestParams.metaTypeList = {"MSTX_EVENTS"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
+    requestParams.current = 1;
+    requestParams.pageSize = 10;
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
     std::vector<uint64_t> traceId;
@@ -680,6 +684,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     requestParams.startTime = min;
     requestParams.endTime = max;
     requestParams.name = "FORMAT_ND";
+    requestParams.current = 1;
+    requestParams.pageSize = 10;
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
     std::vector<uint64_t> traceId;
@@ -736,7 +742,9 @@ TEST_F(DbTraceDatabaseTest, TestQueryAclnnOpCountExceedThresholdWhenDbNotOpen)
 {
     std::recursive_mutex testMutex;
     MockDatabase2 database(testMutex);
-    const Dic::Protocol::KernelDetailsParams params;
+    Dic::Protocol::KernelDetailsParams params;
+    params.current = 1;
+    params.pageSize = 10;
     const uint64_t threshold = 0;
     std::vector<Dic::Protocol::KernelBaseInfo> data;
     const uint64_t minTimestamp = 0;
@@ -772,6 +780,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryAclnnOpCountExceedThresholdWhenDbOpen)
     Dic::Protocol::KernelDetailsParams params;
     params.orderBy = "name";
     params.order = "DESC";
+    params.current = 1;
+    params.pageSize = 10;
     const uint64_t threshold = 0;
     std::vector<Dic::Protocol::KernelBaseInfo> data;
     const uint64_t minTimestamp = 0;

@@ -700,6 +700,8 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenOverlap)
     requestParams.metaTypeList = {"OVERLAP_ANALYSIS"};
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
+    requestParams.current = 1;
+    requestParams.pageSize = 100; // expect page size 100
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
     const std::vector<uint64_t> traceId = {0};

@@ -137,7 +137,7 @@ private:
 
     void UpdateSigmodStats(const InterCoreSubCoreDetail &detail);
     void FinishSigmodStats();
-    
+
     const uint8_t SUB_CORE_INDEX_0 = 0;
     const uint8_t SUB_CORE_INDEX_1 = 1;
     std::unordered_map<std::string, SigmodStatHelper> cacheHitRatioSigmodStats;

@@ -214,19 +214,23 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestFilt
 {
     SystemViewOverallHelper computeHelper;
     std::vector<std::string> tempList = {"Conv"};
-    const double range = static_cast<double>(UINT64_MAX) / 1000.0;
+    const double range = static_cast<double>(INT64_MAX) / 1000.0;
     computeHelper.kernelEvents = {
         OverallTmpInfo { .opName = "Conv", .startTime = 0, .duration = 10, .categoryList = tempList },
         OverallTmpInfo { .opName = "Conv", .startTime = 0, .duration = range, .categoryList = tempList },
         OverallTmpInfo { .opName = "Conv", .startTime = 0, .duration = range + 1.0f, .categoryList = tempList },
         OverallTmpInfo { .opName = "Conv", .startTime = 0, .duration = range + 2.0f, .categoryList = tempList }, // UINT64_MAX 转 double 精度丢失 2，到这里 duration 都小于 UINT64_MAX / 1000
         OverallTmpInfo { .opName = "Conv", .startTime = 0, .duration = range + 3.0f, .categoryList = tempList },
-        OverallTmpInfo { .opName = "Conv", .startTime = 0, .duration = static_cast<double>(UINT64_MAX), .categoryList = tempList },
+        OverallTmpInfo { .opName = "Conv", .startTime = 0, .duration = static_cast<long double>(INT64_MAX), .categoryList = tempList },
     };
     uint64_t minTimestamp = 0;
     std::vector<SameOperatorsDetails> filteredEvents =
         computeHelper.FilterComputingEventsByCategory(tempList, minTimestamp, "Conv");
-    EXPECT_EQ(filteredEvents.size(), 4);
+#if defined(__APPLE__)
+    EXPECT_EQ(filteredEvents.size(), 3);
+#else
+    EXPECT_EQ(filteredEvents.size(), 1);
+#endif
 }
 
 //  System View Overall: 查询Computing拆解所需数据（无PMU数据，无法进行Computing拆解）

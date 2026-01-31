@@ -59,14 +59,18 @@ bool BinFileParseUtil::IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t up
     return realSize > upperLimit;
 }
 
-std::string BinFileParseUtil::GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum,
-    std::map<int, std::vector<Position>> &curBlockMap)
+std::string BinFileParseUtil::GetSingleContentStrByDataType(std::ifstream &file,
+                                                            DataTypeEnum dataTypeEnum,
+                                                            const std::map<int, std::vector<Position>> &curBlockMap)
 {
     if (!file.is_open()) {
         return "";
     }
+    if (curBlockMap.find(static_cast<int>(dataTypeEnum)) == curBlockMap.end()) {
+        return "";
+    }
     // 从文件获取内容
-    std::vector<Position> &baseInfoPos = curBlockMap[static_cast<int>(dataTypeEnum)];
+    const std::vector<Position> &baseInfoPos = curBlockMap.at(static_cast<int>(dataTypeEnum));
     if (baseInfoPos.empty()) {
         return "";
     }

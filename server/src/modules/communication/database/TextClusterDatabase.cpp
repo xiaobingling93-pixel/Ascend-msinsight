@@ -179,7 +179,6 @@ void TextClusterDatabase::ReleaseStmt()
 
 void TextClusterDatabase::SaveLastData()
 {
-    ServerLog::Info("Save_Last_Data ");
     if (!timeInfoCache.empty()) {
         InsertTimeInfoList(timeInfoCache);
         timeInfoCache.clear();

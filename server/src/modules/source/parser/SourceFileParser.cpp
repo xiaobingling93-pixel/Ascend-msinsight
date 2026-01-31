@@ -496,7 +496,7 @@ bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInt
     std::string curFilePath = isBaseline ? baselineFilePath : filePath;
     InterCoreLoadGraphParser parser;
     std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::binary);
-    std::map<int, std::vector<Position>> curBlockMap = isBaseline ? baselineDataBlockMap : dataBlockMap;
+    const std::map<int, std::vector<Position>>& curBlockMap = isBaseline ? baselineDataBlockMap : dataBlockMap;
     std::string json =
         BinFileParseUtil::GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_INTER_CORE_LOAD_GRAPH, curBlockMap);
     if (json.empty()) {

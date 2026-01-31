@@ -19,11 +19,12 @@
 #include "RLMstxConfigReader.h"
 #include "FileUtil.h"
 #include "gtest/gtest.h"
+#include "framework/DtFramework.h"
 #include <fstream>
 
 using namespace Dic::Module::RL;
 using namespace Dic;
-
+using namespace DT::Framework;
 class RLConfigReaderTest : public testing::Test {
 public:
     static std::string tempConfigPath;
@@ -31,11 +32,9 @@ public:
 protected:
     static void SetUpTestSuite()
     {
-        std::string currentPath = FileUtil::GetCurrPath();
-        auto pos = currentPath.find("server");
-        std::string srcPath = currentPath.substr(0, pos);
+        auto testDataPath = DT::Framework::DtFramework::GetTestDataDirPath(0);
         tempConfigPath =
-            FileUtil::SplicePath(srcPath, "server", "src", "test", "test_data", "rl", "RLConfig_tmp_test.json");
+            FileUtil::SplicePath(testDataPath, "rl", "RLConfig_tmp_test.json");
     }
 
     void WriteJsonIntoTestFile(const std::string &jsonStr)
@@ -69,10 +68,7 @@ TEST_F(RLConfigReaderTest, InvalidPath)
 
 TEST_F(RLConfigReaderTest, Normal)
 {
-    std::string currentPath = FileUtil::GetCurrPath();
-    auto pos = currentPath.find("server");
-    std::string srcPath = currentPath.substr(0, pos);
-    std::string configPath = FileUtil::SplicePath(srcPath, "server", "src", "test", "test_data", "rl", "RLConfig.json");
+    std::string configPath = FileUtil::SplicePath(DtFramework::GetTestDataDirPath(0), "rl", "RLConfig.json");
     RLMstxConfigReader reader;
     reader.SetConfigPath(configPath);
     auto res = reader.ReadConfigFile();

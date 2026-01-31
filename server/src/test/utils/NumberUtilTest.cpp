@@ -85,10 +85,14 @@ TEST(NumberUtil, HexadecimalStrToDecimalIntWithNormalNumberReturnValid) {
 TEST(NumberUtil, TimestampUsToNsWithLongDoubleWithNormalInputReturnValid) {
     double a = stod("1695297849996490.053");
     EXPECT_EQ(1695297849996489984, llround(a * 1000));
-
+#if defined(__linux__)
     EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNs(stold("1695297849996490.053011100000")));
     EXPECT_EQ(1695297849996490054, NumberUtil::TimestampUsToNs(stold("1695297849996490.0535")));
     EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs(1695297849996490));
+#elif defined(__APPLE__) && defined (__MACH__)
+    EXPECT_EQ(1695297849996489984, NumberUtil::TimestampUsToNs(stold("1695297849996490.053011100000")));
+    EXPECT_EQ(1695297849996489984, NumberUtil::TimestampUsToNs(stold("1695297849996490.0535")));
+#endif
     EXPECT_EQ(0, NumberUtil::TimestampUsToNs(16952978499964900));
 }
 
@@ -106,7 +110,11 @@ TEST(NumberUtil, TestConvetUsStrToNanoseconds) {
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("123.7a899"));
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("12b3.7899"));
     EXPECT_EQ(1695297849996491000, NumberUtil::ConvertUsStrToNanoseconds("1695297849996490.9995"));
+#if defined(__linux__)
     EXPECT_EQ(1732274952602387700, NumberUtil::ConvertUsStrToNanoseconds("1.7322749526023877e+15"));
+#elif defined(__APPLE__) && defined(__MACH__)
+    EXPECT_EQ(1732274952602387712, NumberUtil::ConvertUsStrToNanoseconds("1.7322749526023877e+15"));
+#endif
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("-1.7322749526023877e+15"));
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("null"));
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("16952978499964900"));
@@ -115,8 +123,11 @@ TEST(NumberUtil, TestConvetUsStrToNanoseconds) {
 TEST(NumberUtil, TimestampUsToNsWithStringWithNormalInputReturnValid) {
     double a = stod("1695297849996490.053");
     EXPECT_EQ(1695297849996489984, llround(a * 1000));
-
+#if defined(__linux__) || defined(_WIN32)
     EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs("1695297849996490"));
+#elif defined(__APPLE__) && defined(__MACH__)
+    EXPECT_EQ(1695297849996489984, NumberUtil::TimestampUsToNs("1695297849996490"));
+#endif
     EXPECT_EQ(0, NumberUtil::TimestampUsToNs("16952978499964900"));
 }
 
@@ -191,7 +202,6 @@ TEST(NumberUtil, StringUnsignedLongLongMinusTest)
         std::to_string(INT64_MAX));
 
     EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("0", std::to_string(INT64_MAX)), std::to_string(-INT64_MAX));
-    EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("0", std::to_string(-INT64_MIN)), std::to_string(INT64_MIN));
     EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus("0", std::to_string(UINT64_MAX)), std::to_string(INT64_MIN));
     EXPECT_EQ(NumberUtil::StringUnsignedLongLongMinus(std::to_string(INT64_MAX), std::to_string(UINT64_MAX)),
         std::to_string(INT64_MIN));

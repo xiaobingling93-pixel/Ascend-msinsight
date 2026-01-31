@@ -310,20 +310,11 @@ public:
         std::wstring wTargetPath = ConvertToLongPathW(targetFilePath);
         return CopyFileW(wSourcePath.c_str(), wTargetPath.c_str(), false);
 #else
-        pid_t pid = fork();
-        if (pid == -1) {
-            // fork进程失败
+        try {
+            return fs::copy_file(sourceFilePath, targetFilePath, fs::copy_options::overwrite_existing);
+        } catch (const fs::filesystem_error& e) {
+            Server::ServerLog::Error("Could not copy file, error=" + std::string(e.what()));
             return false;
-        } else if (pid == 0) {
-            // 子进程执行cp命令
-            execl("/bin/cp", "cp", sourceFilePath.c_str(), targetFilePath.c_str(), NULL);
-            // 如果子进程执行成功，则不会继续往下执行
-            return false;
-        } else {
-            // 等待子进程结束，判断子进程执行情况
-            int status;
-            waitpid(pid, &status, 0);
-            return WIFEXITED(status) && WEXITSTATUS(status) == 0;
         }
 #endif
     }
