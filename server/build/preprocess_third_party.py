@@ -36,7 +36,7 @@ THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 
 SQLITE_DIR = 'sqlite'
 SQLITE3_SRC_DIR = 'sqlite3_src'
-SQLITE3_AUTOCONF_DIR = 'sqlite-autoconf-3400100'
+SQLITE3_AUTOCONF_DIR = 'sqlite-autoconf-3460100'
 SQLITE_SRC_TAR = 'sqlite_src.tar.gz'
 
 BUILD_TITLE = '[Pre Process Third Party]'
@@ -64,7 +64,7 @@ CHECK_FILE_LIST = [
     ]
 ]
 
-SQLITE3_SOURCE_URL = 'https://www.sqlite.org/2022/sqlite-autoconf-3400100.tar.gz'
+SQLITE3_SOURCE_URL = 'https://www.sqlite.org/2024/sqlite-autoconf-3460100.tar.gz'
 
 
 def log(info):
