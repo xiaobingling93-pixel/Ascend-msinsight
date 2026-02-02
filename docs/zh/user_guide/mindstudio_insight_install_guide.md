@@ -10,7 +10,7 @@ MindStudio Insight支持在Windows、Linux和macOS系统上安装使用，并且
 
 **软件包下载**
 
-单击获取软件包（商用版）或获取软件包（社区版），确认版本信息后获取如[**表 1**  软件包清单](#软件包清单)所示软件包。
+单击获取[软件包（商用版）](https://www.hiascend.com/developer/download/commercial/result?module=sto)或获取[软件包（社区版）](https://www.hiascend.com/developer/download/community/result?module=speed+ie+pt+sto+cann)，确认版本信息后获取如[**表 1**  软件包清单](#软件包清单)所示软件包。
 
 下载本软件即表示您同意[华为企业业务最终用户许可协议（EULA）](https://e.huawei.com/cn/about/eula)的条款和条件。
 
