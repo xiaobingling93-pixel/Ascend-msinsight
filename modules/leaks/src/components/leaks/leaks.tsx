@@ -19,16 +19,19 @@ import React from 'react';
 import { observer } from 'mobx-react';
 import { Session } from '../../entity/session';
 import MemoryStack from '../MemoryStack';
+import { BottomTab } from './BottomTab';
 import useWorkerMessage from '@/leaksWorker/useWorkerMessage';
 
 const index = observer((props: { session: Session }) => {
     const { session } = props;
+
     useWorkerMessage();
 
     return <div style={{ display: 'flex', padding: 16, flexDirection: 'column', height: '100vh' }}>
         <div style={{ flex: 1, overflow: 'auto', background: 'var(--mi-bg-color)', marginBottom: 16 }}>
             <MemoryStack session={session} />
         </div>
+        <BottomTab session={session} />
     </div>;
 });
 

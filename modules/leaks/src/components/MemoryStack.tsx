@@ -23,7 +23,6 @@ import { runInAction } from 'mobx';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import MemorySliceChart from './MemorySliceChart';
 import MemoryFunctionCall from './MemoryFunctionCall';
-import MemoryTable from './MemoryTable';
 import { Label } from './Common';
 import { getFuncNewData, getBarNewData } from './dataHandler';
 import { convertNanoseconds } from '../utils/utils';
@@ -181,10 +180,6 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     <></>
                 )
             }
-            <CollapsiblePanel title={t('DetailsTable')} collapsible style={{ minWidth: 1000 }} destroy={false}>
-                <MemoryTable session={session} />
-            </CollapsiblePanel>
-
         </>
     );
 });
