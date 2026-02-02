@@ -28,6 +28,9 @@ import { Session } from '@/entity/session';
 import { runInAction } from 'mobx';
 import { Axis, HoverItem, MarkLineBlock } from './tools';
 
+const BASE_ZOOM_STEP = 0.1;
+const BASE_MOVE_STEP = 5;
+
 export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Element => {
     const containerRef = useRef<HTMLDivElement>(null);
     const ref = useRef<HTMLCanvasElement>(null);
@@ -69,8 +72,16 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
         const originalContentMouseY = (mouseY - currentTransform.y) / currentTransform.scale;
 
         // 计算新的缩放值
-        const deltaScale = ev.deltaY > 0 ? -0.1 : 0.1;
-        const newScale = Math.max(0.1, currentTransform.scale + deltaScale);
+        const direction = ev.deltaY > 0 ? -1 : 1; // -1: 缩小, +1: 放大
+
+        // 动态步长：离 1 越远，变化越快
+        const distanceFromOne = Math.abs(currentTransform.scale - 1) + 1; // 避免为0
+        const dynamicStep = BASE_ZOOM_STEP * distanceFromOne;
+
+        let newScale = currentTransform.scale + direction * dynamicStep;
+
+        // 限制最小缩放
+        newScale = Math.max(0.1, newScale);
 
         const maxRangeX = rect.width;
         const minRangeX = -rect.width * newScale;
@@ -106,6 +117,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
     };
 
     const handleMouseLeave = (): void => {
+        ref.current?.blur();
         isDragging.current = false;
         isClick.current = false;
         runInAction(() => {
@@ -118,6 +130,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
         if (ref.current === null) {
             return;
         }
+        ref.current.focus();
         if (isClick.current) {
             isClick.current = false;
             isDragging.current = true;
@@ -175,6 +188,54 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
         }
     };
 
+    const handleKeyDown = (ev: KeyboardEvent): void => {
+        if (ref.current === null) {
+            return;
+        }
+
+        const rect = ref.current.getBoundingClientRect();
+        const currentTransform = session.leaksWorkerInfo.renderOptions.transform;
+        const maxRangeX = rect.width;
+        const minRangeX = -rect.width * currentTransform.scale;
+        const maxRangeY = rect.height;
+        const minRangeY = -rect.height * currentTransform.scale;
+        let newTransformX = 0;
+        let newTransformY = 0;
+        switch (ev.key.toLowerCase()) {
+            case 'w':
+                newTransformY = BASE_MOVE_STEP * currentTransform.scale;
+                break;
+            case 's':
+                newTransformY = -BASE_MOVE_STEP * currentTransform.scale;
+                break;
+            case 'a':
+                newTransformX = BASE_MOVE_STEP * currentTransform.scale;
+                break;
+            case 'd':
+                newTransformX = -BASE_MOVE_STEP * currentTransform.scale;
+                break;
+            default:
+                break;
+        }
+
+        const currentMousePosition = session.markLineInfo.block;
+
+        workerHoverItem({ clientX: currentMousePosition.x, clientY: rect.height - currentMousePosition.y });
+        runInAction(() => {
+            session.markLineInfo.block = { ...currentMousePosition };
+        });
+        const transform = {
+            ...currentTransform,
+            x: Math.min(Math.max(currentTransform.x + newTransformX, minRangeX), maxRangeX),
+            y: Math.min(Math.max(currentTransform.y - newTransformY, minRangeY), maxRangeY),
+        };
+        runInAction(() => {
+            session.leaksWorkerInfo.renderOptions.transform = transform;
+        });
+
+        workerTransform({ transform });
+    };
+
     useEffect(() => {
         if (ref.current === null || containerRef.current === null) {
             return;
@@ -200,6 +261,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
             return;
         }
         const canvas = ref.current;
+        canvas.tabIndex = 0;
 
         window.addEventListener('resize', handleResize);
 
@@ -209,6 +271,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
         canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('mouseleave', handleMouseLeave);
         canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('keydown', handleKeyDown);
 
         return () => {
             window.removeEventListener('resize', handleResize);
@@ -219,6 +282,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
             canvas.removeEventListener('mouseup', handleMouseUp);
             canvas.removeEventListener('mouseleave', handleMouseLeave);
             canvas.removeEventListener('click', handleClick);
+            canvas.removeEventListener('keydown', handleKeyDown);
         };
     }, []);
 
@@ -227,7 +291,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
             <Axis session={session} />
             <canvas
                 ref={ref}
-                style={{ imageRendering: 'pixelated', touchAction: 'none' }}
+                style={{ imageRendering: 'pixelated', touchAction: 'none', outline: 'none' }}
             />
             <MarkLineBlock session={session} />
             <HoverItem session={session} />

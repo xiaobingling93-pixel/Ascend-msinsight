@@ -182,7 +182,7 @@ export const MarkLineBlock = observer(({ session }: { session: Session }): JSX.E
 
     useEffect(() => {
         getCurrentTime();
-    }, [block.x, viewport]);
+    }, [block, viewport]);
 
     useEffect(() => {
         const { minTimestamp, maxTimestamp } = sizeInfo;
