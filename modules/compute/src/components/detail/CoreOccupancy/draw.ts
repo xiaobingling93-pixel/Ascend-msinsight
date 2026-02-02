@@ -95,16 +95,17 @@ export const sizeConfig = {
 };
 
 export const COLOR: Record<string, string> = {
-    1: '#BC2021',
-    2: '#D32322',
-    3: '#EC2829',
-    4: '#ED3D3D',
-    5: '#EF5353',
-    6: '#A7CE52',
-    7: '#94C32B',
-    8: '#81BA06',
-    9: '#74A604',
-    10: '#679405',
+    0: '#FFF9C4',
+    1: '#FFF176',
+    2: '#FFD600',
+    3: '#FBC02D',
+    4: '#A7CE52',
+    5: '#81BA06',
+    6: '#679405',
+    7: '#EF5353',
+    8: '#EC2829',
+    9: '#D32322',
+    10: '#BC2021',
 };
 
 const MAX_TEXT_LENGTH = 50;
