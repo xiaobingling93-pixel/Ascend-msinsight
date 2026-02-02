@@ -87,7 +87,7 @@ function redirectToTimeline(time: string, rankId: string, groupName: string, dur
 }
 export const AntTableChart: React.FC<IProps> = (props) => {
     // 开发环境防止antd4 table组件报ResizeObserver loop错误，但会在没有数据时也显示有1条，生产环境不会报错也会正常显示
-    const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []) as DataDetail[];
+    const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{ name: 'unknown' }] : []) as DataDetail[];
     const { t } = useTranslation('statistic');
     const {
         tableData, onRowSelected, current, pageSize,
@@ -169,7 +169,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             <div>
                 <ResizeTable
                     columns={columns as TableColumnsType<DataDetail>}
-                    dataSource={tableData.rows.length === 0 ? defaultDataSource : tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
+                    dataSource={(tableData.rows.length === 0 ? defaultDataSource : tableData.rows).map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
                     onChange={onTableChange}
                     scroll={{
                         x: 150 * columns.length,

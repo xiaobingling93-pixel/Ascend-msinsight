@@ -28,8 +28,7 @@ export const parseStatisticCompletedHandler: NotificationHandler = async (data):
             if (!session) {
                 return;
             }
-            const rankIds = (data.rankIds ?? []) as string[];
-            session.iERankIds = [...rankIds];
+            session.iERankIds = session.iERankIds.concat((data.rankIds ?? []) as string[]);
         });
     } catch (err) {
         console.error(err);

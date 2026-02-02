@@ -23,7 +23,7 @@ import { useRootStore } from './context/context';
 import { themeInstance } from './theme/theme';
 import CurvePage from './pages/CurvePage';
 import { GlobalStyles } from '@insight/lib/theme';
-import { getInitStatus, registerEventHandlers } from './index';
+import { getInitStatus, registerEventHandlers, deregisterEventHandlers } from './index';
 
 export const App = observer(() => {
     const { sessionStore } = useRootStore();
@@ -38,6 +38,9 @@ export const App = observer(() => {
     useEffect(() => {
         registerEventHandlers();
         getInitStatus();
+        return () => {
+            deregisterEventHandlers();
+        };
     }, []);
 
     return (

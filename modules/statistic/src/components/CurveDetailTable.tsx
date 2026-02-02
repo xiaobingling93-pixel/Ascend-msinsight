@@ -107,7 +107,7 @@ const CurveDetailTable = observer(({ session, curveSession }:
         tableDataGet(param).then((resp: TableInfo) => {
             const tableDataDetails = resp.operatorDetail;
             setTotal(resp.totalNum);
-            setMemoryTableData(tableDataDetails);
+            setMemoryTableData(tableDataDetails.map((item, idx) => ({ ...item, name: item.name ?? idx })));
             if (JSON.stringify(memoryTableHead) !== JSON.stringify(resp.columnAttr)) {
                 setMemoryTableHead(resp.columnAttr);
             }

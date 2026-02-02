@@ -26,7 +26,7 @@ interface SendParams<T extends EventHanlder> {
     event: T extends ReservedEventHandler ? never : T;
 }
 type ListenerCallback = (res: MessageEvent) => void;
-interface ListenerHandler { event: EventHanlder; sequence: number }
+export interface ListenerHandler { event: EventHanlder; sequence: number }
 type TargetWindow = Window;
 type GetTragetWindows = () => TargetWindow[];
 type SendTargetKey = number | string;

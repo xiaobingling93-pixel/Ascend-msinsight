@@ -225,10 +225,13 @@ export const SelectedDataBottomPanel = observer(<T extends Record<string, unknow
     const sliceDetailData = data as AscendSliceDetail;
     const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: 800 });
     const [dataLink, setDataLink] = useState<string>('');
-    runInAction(() => {
-        session.ridLineType = dataLink;
-        session.renderTrigger = !session.renderTrigger;
-    });
+    useEffect(() => {
+        runInAction(() => {
+            session.drawLineMode = 'all';
+            session.ridLineType = dataLink;
+            session.renderTrigger = !session.renderTrigger;
+        });
+    }, [dataLink]);
     useEffect(() => {
         setDataLink('');
     }, [renderFields]);

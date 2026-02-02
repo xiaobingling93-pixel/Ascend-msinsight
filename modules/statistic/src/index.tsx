@@ -26,6 +26,7 @@ import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
 import '@insight/lib/i18n';
 import { disableShortcuts } from '@insight/lib/utils';
+import { ListenerHandler } from '@insight/lib/connection';
 
 interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
@@ -74,15 +75,26 @@ window.request = async (params): Promise<any> => {
     return (data as any).body;
 };
 
+const NOTIFICATION_LISTENERS_MAP = new Map<string, ListenerHandler>();
+
 export function registerEventHandlers(): void {
     Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
-        connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
+        const handler = connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
             const res = e.data;
             if (res.body === undefined || typeof res.body !== 'object') {
                 return;
             }
             callback(res.body);
         });
+        NOTIFICATION_LISTENERS_MAP.set(event, handler);
+    });
+}
+
+export function deregisterEventHandlers(): void {
+    Object.entries(NOTIFICATION_HANDLERS).forEach(([event]) => {
+        if (NOTIFICATION_LISTENERS_MAP.has(event)) {
+            connector.removeListener(NOTIFICATION_LISTENERS_MAP.get(event) as ListenerHandler);
+        }
     });
 }
 

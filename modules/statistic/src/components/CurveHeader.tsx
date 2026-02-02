@@ -19,7 +19,7 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
-import { SearchBox, FlexDiv } from '../utils/styleUtils';
+import { FlexDiv, SearchBox } from '../utils/styleUtils';
 import { Session } from '../entity/session';
 import { CurveSession } from '../entity/curveSession';
 import { Label } from './Common';
@@ -70,44 +70,34 @@ const CurveHeader = observer(({ session, curveSession }: { session: Session; cur
         });
     }, [session.iERankIds.join('')]);
     const renderFields = (): JSX.Element[] => {
-        const fields = [
-            {
-                key: 'rankId',
-                element:
-                    <FlexDiv>
-                        <Label name={t('searchCriteria.RankId')} />
-                        <Select
-                            id={'select-rankId'}
-                            value={curveSession.rankIdCondition.value}
-                            size="middle"
-                            onChange={onRankIdChanged}
-                            disabled={false}
-                            options={curveSession.rankIdCondition.options.map((rankId: string) => {
-                                return {
-                                    value: rankId,
-                                    label: rankId,
-                                };
-                            })}
-                        />
-                    </FlexDiv>,
-            },
-            {
-                key: 'groupId',
-                element:
-                    <FlexDiv>
-                        <Label name={<span>{t('searchCriteria.GroupBy')}</span>} />
-                        <Select
-                            id={'select-groupId'}
-                            value={curveSession.groupId}
-                            style={{ width: 180 }}
-                            onChange={onGroupByChanged}
-                            options={curveSession.groupCondition}
-                        />
-                    </FlexDiv>,
-            },
+        return [
+            <FlexDiv key="rankId">
+                <Label name={t('searchCriteria.RankId')}/>
+                <Select
+                    id={'select-rankId'}
+                    value={curveSession.rankIdCondition.value}
+                    size="middle"
+                    onChange={onRankIdChanged}
+                    disabled={false}
+                    options={curveSession.rankIdCondition.options.map((rankId: string) => {
+                        return {
+                            value: rankId,
+                            label: rankId,
+                        };
+                    })}
+                />
+            </FlexDiv>,
+            <FlexDiv key="groupId">
+                <Label name={<span>{t('searchCriteria.GroupBy')}</span>}/>
+                <Select
+                    id={'select-groupId'}
+                    value={curveSession.groupId}
+                    style={{ width: 180 }}
+                    onChange={onGroupByChanged}
+                    options={curveSession.groupCondition}
+                />
+            </FlexDiv>,
         ];
-        return fields
-            .map((field) => field.element);
     };
 
     return (
