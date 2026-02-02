@@ -58,3 +58,27 @@ interface Shader {
     vertexShader: string;
     fragmentShader: string;
 }
+
+interface Segment {
+    address: string;
+    stream: number;
+    totalSize: number;
+    callstack: string;
+    allocatedSize: number;
+    blocks: StateBlock[];
+    offsetX: number;
+    offsetY: number;
+}
+
+interface StateBlock {
+    offset: number;
+    blockId: number;
+    size: number;
+}
+
+type Theme = 'light' | 'dark';
+
+interface StateDataHoverResult {
+    type: 'segment' | 'block';
+    data: Segment;
+}

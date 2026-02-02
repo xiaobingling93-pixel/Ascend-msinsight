@@ -184,3 +184,79 @@ export const buildBlockViewPath = (blockView: SetMemoryBlocksDataPayload['data']
     }
     return blockView;
 };
+
+let X_GAP = 20;
+const Y_GAP = 20;
+const LINE_HEIGHT = 40;
+export const getMemoryStateRenderData = (data: Segment[], canvas: OffscreenCanvas): Segment[] => {
+    if (data.length < 1) {
+        return [];
+    }
+    const lastSegment = data[data.length - 1];
+    X_GAP = Math.max(Math.round(lastSegment.totalSize / 100), 20); // segment间的间隔取最长行的1/100
+    const maxSizeX = lastSegment.totalSize + X_GAP * 2; // 额外增加宽度，避免定格绘制
+    const stateRenderData: Segment[] = [];
+    let currentRow = 0;
+    let currentRowSum = X_GAP; // 当前行总长
+    for (let i = 0; i < data.length; i++) {
+        const segment = data[i];
+        if (segment.totalSize + currentRowSum + X_GAP <= maxSizeX) {
+            segment.offsetX = currentRowSum;
+            segment.offsetY = currentRow * (LINE_HEIGHT + Y_GAP) + Y_GAP;
+            stateRenderData.push(segment);
+            currentRowSum += segment.totalSize + X_GAP;
+        } else {
+            currentRow++;
+            segment.offsetX = X_GAP;
+            segment.offsetY = currentRow * (LINE_HEIGHT + Y_GAP) + Y_GAP;
+            stateRenderData.push(segment);
+            currentRowSum = segment.totalSize + X_GAP * 2;
+        }
+    }
+    return stateRenderData;
+};
+
+export const getMemoryStateZoom = (data: Segment[], canvas: OffscreenCanvas): RenderOptions['zoom'] => {
+    if (data.length < 1) {
+        return { x: 1, y: 1, offset: 0 };
+    }
+    const lastSegment = data[data.length - 1];
+    const maxSizeX = lastSegment.totalSize + X_GAP * 2; // 最长的行，额外增加宽度，避免定格绘制
+
+    const maxSizeY = lastSegment.offsetY + LINE_HEIGHT + Y_GAP;
+    return {
+        x: canvas.width / maxSizeX,
+        y: canvas.height / maxSizeY,
+        offset: 0, // 在状态图中没有意义
+    };
+};
+
+export const searchStateDataByPoint = (
+    data: Segment[],
+    { clientX, clientY }: Omit<HoverItemPayload, 'type'>,
+    transform: RenderOptions['transform'],
+    zoom: RenderOptions['zoom'],
+): StateDataHoverResult | null => {
+    // 将鼠标点击位置转换为真实坐标
+    const x = (clientX - transform.x) / zoom.x / transform.scale;
+    const y = (clientY - transform.y) / zoom.y / transform.scale;
+
+    for (let i = 0; i < data.length; i++) {
+        const segment = data[i];
+        if (x < segment.offsetX || x > segment.offsetX + segment.totalSize || y < segment.offsetY || y > segment.offsetY + LINE_HEIGHT) {
+            continue;
+        }
+        for (let j = 0; j < segment.blocks.length; j++) {
+            const block = segment.blocks[j];
+            const start = segment.offsetX + block.offset;
+            if (x < start || x > start + block.size) {
+                continue;
+            }
+            const { blocks, ...newSegment } = segment;
+            return { type: 'block', data: { ...newSegment, blocks: [block] } };
+        }
+        const { blocks, ...newSegment } = segment; // 去除blocks属性
+        return { type: 'segment', data: { ...newSegment, blocks: [] } };
+    }
+    return null; // 没有找到匹配的数据块
+};
