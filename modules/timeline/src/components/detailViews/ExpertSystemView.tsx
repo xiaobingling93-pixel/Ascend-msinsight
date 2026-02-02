@@ -39,59 +39,64 @@ import type { BaseSummaryRowItemType } from '../../api/interface';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import type { CardMetaData } from '../../entity/data';
 import { ProjectType } from '../../entity/insight';
+import { StyledEmpty } from '@insight/lib';
+
+const shouldHiddenContent = (props: SelectContentViewProps): boolean => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    return targetInfo === undefined || targetInfo.projectType === undefined || targetInfo.projectType === ProjectType.IE;
+};
+
+const HiddenContent = (): JSX.Element => {
+    return <div style={{ display: 'flex', height: '100%' }}>
+        <StyledEmpty style={{ margin: 'auto' }}/>
+    </div>;
+};
 
 const ExpertAnalysis = observer((props: SelectContentViewProps) => {
-    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
-    if (targetInfo?.projectType === ProjectType.IE) {
-        return <div></div>;
+    if (shouldHiddenContent(props)) {
+        return <HiddenContent />;
     }
     return <ExpertSummary request={queryExpertAnalysis} {...props} />;
 });
 
 const AffinityAPI = observer((props: SelectContentViewProps) => {
-    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
-    if (targetInfo?.projectType === ProjectType.IE) {
-        return <div></div>;
+    if (shouldHiddenContent(props)) {
+        return <HiddenContent />;
     }
     return <BaseSummary request={queryAffinityAPI} columns={affinityAPIColumns} {...props} />;
 });
 
 const AffinityOptimizer = observer((props: SelectContentViewProps) => {
-    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
-    if (targetInfo?.projectType === ProjectType.IE) {
-        return <div></div>;
+    if (shouldHiddenContent(props)) {
+        return <HiddenContent />;
     }
     return <BaseSummary request={queryAffinityOptimizer} columns={affinityOptimizerColumns} {...props} />;
 });
 
 const AICPUOperator = observer((props: SelectContentViewProps) => {
-    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
-    if (targetInfo?.projectType === ProjectType.IE) {
-        return <div></div>;
+    if (shouldHiddenContent(props)) {
+        return <HiddenContent />;
     }
     return <BaseSummary request={queryAICPUOperators} columns={aicpuOperatorColumns} {...props} />;
 });
 
 const ACLNNOperator = observer((props: SelectContentViewProps) => {
-    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
-    if (targetInfo?.projectType === ProjectType.IE) {
-        return <div></div>;
+    if (shouldHiddenContent(props)) {
+        return <HiddenContent />;
     }
     return <BaseSummary request={queryACLNNOperators} columns={aclnnOperatorColumns} {...props} />;
 });
 
 const FusedOperator = observer((props: SelectContentViewProps) => {
-    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
-    if (targetInfo?.projectType === ProjectType.IE) {
-        return <div></div>;
+    if (shouldHiddenContent(props)) {
+        return <HiddenContent />;
     }
     return <BaseSummary request={queryOperatorFusion} columns={fusionOperatorColumns} {...props} />;
 });
 
 const OperatorDispatch = observer((props: SelectContentViewProps) => {
-    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
-    if (targetInfo?.projectType === ProjectType.IE) {
-        return <div></div>;
+    if (shouldHiddenContent(props)) {
+        return <HiddenContent />;
     }
     return <BaseSummary request={queryOperatorDispatch} columns={operatorDispatchColumns} {...props} />;
 });
