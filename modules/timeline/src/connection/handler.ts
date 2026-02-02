@@ -751,6 +751,7 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
             if (session.remoteAttrs.has(remote) && !session.units.find(item => (item.metadata as any)?.dataSource.remote === remote)) {
                 session.remoteAttrs.delete(remote);
             }
+            session.deleteRankCardInfoMapItemByDbPath(metadata.dbPath);
         }
         session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
             const metadata = unit.metadata as any;

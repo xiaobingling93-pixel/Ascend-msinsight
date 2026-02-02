@@ -472,6 +472,19 @@ export class Session {
     }
 
     set units(units: InsightUnit[]) {
+        const rootUnits = getRootUnit(this._units); // db 情况 this._units 不是根泳道，因此需要先获取根泳道
+        if (rootUnits.length > 0) { // 更新根泳道到 units 的引用
+            const map = units.reduce((map, unit) => {
+                for (const root of rootUnits) {
+                    if (root !== unit.parent) { continue; }
+                    if (!map.has(root)) { map.set(root, []); }
+                    map.get(root)?.push(unit);
+                    break;
+                }
+                return map;
+            }, new Map<InsightUnit, InsightUnit[]>());
+            map.forEach((v, k) => { k.children = v; });
+        }
         this._units = units;
     }
 
@@ -576,6 +589,16 @@ export class Session {
         this.sliceSelection.rangeOfLevels = [];
         this.sliceSelection.selecting = isSelecting;
         this.sliceSelection.targetUnit = null;
+    }
+
+    deleteRankCardInfoMapItemByDbPath(dbPath: string): boolean {
+        for (const [k, v] of this._rankCardInfoMap) {
+            if (v.dbPath === dbPath) {
+                this._rankCardInfoMap.delete(k);
+                return true;
+            }
+        }
+        return false;
     }
 
     // 用于更新 unit 下的全部泳道是否可见

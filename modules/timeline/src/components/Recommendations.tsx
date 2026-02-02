@@ -194,7 +194,7 @@ const useInitial = (): InitialValue => {
             platform.trace('openRecommend', { template: template.name });
             const sessionConf: Partial<Session> = {
                 name: template.name,
-                units: insightStore.get(template.id)?.units?.map(Unit => new Unit(null as never)) ?? [],
+                units: insightStore.get(template.id)?.units?.map(Unit => new Unit(null as never)) ?? [], // 对于 host 场景 units 的 parent 将会消失
                 availableUnits: insightStore.get(template.id)?.availableUnits?.map(Unit => new Unit(null as never)) ?? [],
                 icon: template.icon,
                 isNsMode: template.isNsMode,
