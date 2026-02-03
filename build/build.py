@@ -254,6 +254,20 @@ def get_os_platform():
     return os_system + '_' + os_machine
 
 
+def get_os_tag():
+    os_info = platform.platform()
+    if os_info.find(Const.WINDOWS_OS) > -1:
+        return 'win'
+    framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
+    if os_info.find('mac') > -1:
+        return 'macos_' + framework
+    return 'linux_' + framework
+
+
+def get_package_name(version: str, os_tag: str):
+    return f"{Const.ASCEND_INSIGHT_PREFIX}_{version}_{os_tag}{Const.PACKAGE_SUFFIX}"
+
+
 def build_jupyterlab(jupyterlab_version, os_name):
     # 设置环境变量暂时不构建jupyterlab
     if os.getenv('BUILD_JUPYTERLAB', '').lower() != 'true':
@@ -301,7 +315,7 @@ def build_jupyterlab(jupyterlab_version, os_name):
         return 1
 
     # copy jupyterlab plugin to out directory
-    plugin_name = 'mindstudio_insight_jupyterlab-' + jupyterlab_version + '-py3-none-' + get_os_platform() + '.whl'
+    plugin_name = 'msinsight_jupyterlab-' + jupyterlab_version + '-py3-none-' + get_os_platform() + '.whl'
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
     whl_source_path = os.path.join(plugin_path, 'output')
     for file in os.listdir(whl_source_path):
@@ -335,7 +349,7 @@ def build_package(version, os_name):
 
 
 def build_light_package(version, os_name, is_huaweicloud):
-    if is_huaweicloud and os_name != "linux-aarch64" and os_name != "linux-x86_64":
+    if is_huaweicloud and 'linux' not in os_name:
         return 0
     os.putenv('CARGO_REGISTRY', 'https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index')
     if os.getenv('BEPHOME') is not None:  # 规避目前cargo不能跑bep问题
@@ -872,13 +886,6 @@ def main():
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
     vscode_version = ''.join(ch for ch in idea_version if not ch.isalpha())
     init()
-    os_info = platform.platform()
-    framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
-    os_name = 'linux-' + framework
-    if os_info.find(Const.WINDOWS_OS) > -1:
-        os_name = 'win'
-    elif os_info.find('mac') > -1:
-        os_name = 'darwin-' + framework
     result = build_server()
     if result != 0:
         logging.error('Failed to build server.')
@@ -887,8 +894,7 @@ def main():
     if result != 0:
         logging.error('Failed to build frontend.')
         return 1
-
-    return build_product_parallel(vscode_version, idea_version, os_name)
+    return build_product_parallel(vscode_version, idea_version, get_os_tag())
 
 
 if __name__ == "__main__":
