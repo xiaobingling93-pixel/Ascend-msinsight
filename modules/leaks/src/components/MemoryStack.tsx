@@ -83,6 +83,10 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         }
         setZoomMinTime(minTime);
         setZoomMaxTime(maxTime);
+        runInAction(() => {
+            session.maxTime = maxTime;
+            session.minTime = minTime;
+        });
     }, [session.allocationData.allocations]);
 
     return (
