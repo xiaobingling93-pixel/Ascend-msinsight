@@ -54,7 +54,7 @@ const useComputingDetailColumns = (): ColumnsType => {
         { title: `${t('StartTime')}(ms)`, dataIndex: 'startTime', sorter: true, ellipsis: true },
         { title: `${t('Duration')}(μs)`, dataIndex: 'duration', sorter: true, ellipsis: true },
         { title: `${t('WaitTime')}(μs)`, dataIndex: 'waitTime', sorter: true, ellipsis: true },
-        { title: t('BlockDim'), dataIndex: 'blockDim', sorter: true, ellipsis: true },
+        { title: t('BlockNum'), dataIndex: 'blockNum', sorter: true, ellipsis: true },
         {
             title: t('InputShapes'),
             dataIndex: 'inputShapes',

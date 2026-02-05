@@ -106,7 +106,7 @@ template <> std::optional<document_t> ToResponseJson<ComputeDetailResponse>(cons
         JsonUtil::AddMember(itemJson, "startTime", action.startTime, allocator);
         JsonUtil::AddMember(itemJson, "duration", action.duration, allocator);
         JsonUtil::AddMember(itemJson, "waitTime", action.waitTime, allocator);
-        JsonUtil::AddMember(itemJson, "blockDim", action.blockNum, allocator);
+        JsonUtil::AddMember(itemJson, "blockNum", action.blockNum, allocator);
         JsonUtil::AddMember(itemJson, "inputShapes", action.inputShapes, allocator);
         JsonUtil::AddMember(itemJson, "inputDataTypes", action.inputDataTypes, allocator);
         JsonUtil::AddMember(itemJson, "inputFormats", action.inputFormats, allocator);

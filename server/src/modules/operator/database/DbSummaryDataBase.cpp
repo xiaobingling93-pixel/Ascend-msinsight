@@ -94,7 +94,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       "OP_TYPE.value as type, "
                       "CASE WHEN startNs == 0 THEN 0 ELSE ROUND((startNs - ?) /(1000.0 * 1000.0), 4) END AS startTime, "
                       "ROUND((endNs - startNs)/1000.0, 2) as duration, "
-                      "ROUND((waitNs)/1000.0, 3) as waitTime, " + blockNumColumnName + " as blockDim, "
+                      "ROUND((waitNs)/1000.0, 3) as waitTime, " + blockNumColumnName + " as blockNum, "
                       "INPUTSHAPES.value as inputShape, "
                       "INPUTDATATYPES.value as inputDataType, "
                       "INPUTFORMATS.value as inputFormat, "
