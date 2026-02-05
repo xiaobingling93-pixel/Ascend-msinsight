@@ -43,10 +43,10 @@ void TestSuit::SetUpTestSuite()
     DataBaseManager::Instance().CreateTraceConnectionPool("1", dbPath1);
     DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath0, "0", "0");
     DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath1, "1", "1");
-    TraceFileParser::Instance().Parse({GetSrcTestPath() + refPath0 + "trace_view.json"},
+    JsonFileParserManager::GetTraceFileParser().Parse({GetSrcTestPath() + refPath0 + "trace_view.json"},
         "0", "", dbPath0);
     WaitParseEnd({"0"});
-    TraceFileParser::Instance().Parse({GetSrcTestPath() + refPath1 + "trace_view.json"}, 
+    JsonFileParserManager::GetTraceFileParser().Parse({GetSrcTestPath() + refPath1 + "trace_view.json"},
         "1", "", dbPath1);
     WaitParseEnd({"1"});
     std::string testDataPath = GetSrcTestPath() + R"(test_data)";
@@ -89,7 +89,7 @@ void TestSuit::WaitParseEnd(std::vector<std::string> statusList)
 void TestSuit::TearDownTestSuite()
 {
     KernelParse::Instance().Reset();
-    TraceFileParser::Instance().DeleteParseFiles({"0", "1"});
+    TraceFileParser::DeleteParseFiles({"0", "1"});
     DataBaseManager::Instance().EraseClusterDb(COMPARE);
     std::string tempPath = GetSrcTestPath();
     if (std::remove((tempPath + R"(test_data/cluster.db)").c_str()) != 0) {

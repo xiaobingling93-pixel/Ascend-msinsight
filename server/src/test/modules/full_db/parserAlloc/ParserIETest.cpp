@@ -17,7 +17,7 @@
  */
 #include <gtest/gtest.h>
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
+#include "JsonFileParserManager.h"
 #include "ParserIE.h"
 class ParserIETest : public ::testing::Test {};
 
@@ -58,7 +58,7 @@ TEST_F(ParserIETest, TestParser)
     request.params.path.emplace_back("");
     parserIe.Parser(projectInfos, request, response);
     parserIe.Reset();
-    Dic::Module::Timeline::TraceFileParser::Instance().Reset();
+    Module::Timeline::JsonFileParserManager::ResetAll();
     Dic::Module::Timeline::DataBaseManager::Instance().Clear();
 }
 

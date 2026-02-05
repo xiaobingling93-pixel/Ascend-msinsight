@@ -18,11 +18,12 @@
 #include "pch.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
 #include "TraceFileSimulationParser.h"
 #include "TraceTime.h"
 #include "ParserStatusManager.h"
+#include "JsonFileParserManager.h"
 #include "RemoteDeleteHandler.h"
+
 namespace Dic {
 namespace Module {
 namespace Timeline {
@@ -34,7 +35,7 @@ bool RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::unique_ptr<RemoteDeleteResponse> responsePtr = std::make_unique<RemoteDeleteResponse>();
     RemoteDeleteResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    TraceFileParser::Instance().DeleteParseFiles(request.params.rankId);
+    Timeline::JsonFileParserManager::GetTraceFileParser().DeleteParseFiles(request.params.rankId);
     TraceFileSimulationParser::Instance().DeleteParseFiles(request.params.rankId);
     GetUpdateTime(response.body);
     SetResponseResult(response, true);

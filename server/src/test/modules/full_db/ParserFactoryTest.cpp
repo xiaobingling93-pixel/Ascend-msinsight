@@ -108,6 +108,16 @@ TEST_F(ParserFactoryTest, GetImportTypeDbNPUMonitorTest)
 #endif
 }
 
+TEST_F(ParserFactoryTest, GetImportTypeACLGraphDebugTextTest)
+{
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find("server");
+    std::string pathList1{currPath.substr(0, index) + "test/data/aclgraph_debug/graph_debug.json"};
+    std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
+    std::pair<std::string, ParserType> expect1{pathList1, ParserType::ACLGRPAH_DEBUG_JSON};
+    EXPECT_EQ(result1, expect1);
+}
+
 TEST_F(ParserFactoryTest, GetImportTypeTextTest)
 {
 #ifdef __linux__

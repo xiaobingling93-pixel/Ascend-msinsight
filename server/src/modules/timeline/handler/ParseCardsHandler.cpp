@@ -18,9 +18,10 @@
 #include "pch.h"
 #include "WsSessionManager.h"
 #include "ParserStatusManager.h"
-#include "TraceFileParser.h"
 #include "FullDbParser.h"
+#include "JsonFileParserManager.h"
 #include "ParseCardsHandler.h"
+
 namespace Dic::Module::Timeline {
 using namespace Dic;
 using namespace Dic::Server;
@@ -35,8 +36,12 @@ bool Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Pro
             ServerLog::Warn("Parse cards file path is empty. card: %", item);
             continue;
         }
+        if (filePathPair.first == ProjectTypeEnum::ACLGRAPH_DEBUG) {
+            JsonFileParserManager::GetACLGraphDebugParser().Parse(filePathPair.second, item, "", request.params.fileIds[i]);
+            continue;
+        }
         if (filePathPair.first == ProjectTypeEnum::TRACE) {
-            TraceFileParser::Instance().Parse(filePathPair.second, item, "", request.params.fileIds[i]);
+            JsonFileParserManager::GetTraceFileParser().Parse(filePathPair.second, item, "", request.params.fileIds[i]);
             continue;
         }
         FullDb::FullDbParser::Instance().Parse({ item }, filePathPair.second[0]);

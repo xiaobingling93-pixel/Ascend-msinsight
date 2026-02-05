@@ -17,7 +17,7 @@
  */
 #include "pch.h"
 #include "WsSessionManager.h"
-#include "TraceFileParser.h"
+#include "JsonFileParserManager.h"
 #include "KernelParse.h"
 #include "MemoryParse.h"
 #include "FullDbParser.h"
@@ -40,7 +40,7 @@ bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     SetBaseResponse(request, response);
     std::shared_ptr<IE::ServitizationOpenApi> openApi = std::make_shared<IE::ServitizationOpenApi>();
     openApi->Reset();
-    TraceFileParser::Instance().Reset();
+    JsonFileParserManager::ResetAll();
     Summary::KernelParse::Instance().Reset();
     Memory::MemoryParse::Instance().Reset();
     Source::SourceFileParser::Instance().Reset();

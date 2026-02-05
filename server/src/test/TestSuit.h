@@ -19,7 +19,7 @@
 #define PROFILER_SERVER_TESTSUIT_H
 
 #include <gtest/gtest.h>
-#include "TraceFileParser.h"
+#include "JsonFileParserManager.h"
 #include "ClusterFileParser.h"
 #include "FileUtil.h"
 #include "DataBaseManager.h"

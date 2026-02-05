@@ -32,7 +32,9 @@ TEST_F(ProjectAnalyzeTest, ProjectAnalyzeRegister)
     ProjectAnalyzeRegister<ProjectParserBin> reg(ParserType::BIN);
     ProjectAnalyzeRegister<ProjectParserDb> reg2(ParserType::DB);
     ProjectAnalyzeRegister<ProjectParserJson> reg3(ParserType::JSON);
-    std::vector<ParserType> types = {ParserType::BIN, ParserType::DB, ParserType::JSON};
+    ProjectAnalyzeRegister<ProjectParserJson> reg4(ParserType::ACLGRPAH_DEBUG_JSON);
+    std::vector<ParserType> types = {ParserType::BIN, ParserType::DB, ParserType::JSON,
+        ParserType::ACLGRPAH_DEBUG_JSON};
     for (auto type: types) {
         ProjectExplorerInfo projectInfo;
         ProjectAnalyze::Instance().ProjectExportInfoBuild(type, {"test"}, projectInfo);

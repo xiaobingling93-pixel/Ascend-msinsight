@@ -27,40 +27,49 @@
 #include "FileParser.h"
 #include "ThreadPool.h"
 #include "JsonFileProcess.h"
+#include "TextTraceDatabase.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
 class TraceFileParser : public FileParser, protected JsonFileProcess {
 public:
-    static TraceFileParser &Instance();
+    // 构造时注入共享线程池
+    explicit TraceFileParser(std::shared_ptr<ThreadPool> threadPool): threadPool_(std::move(threadPool)) {
+        if (!threadPool_) {
+            Server::ServerLog::Error("ThreadPool cannot be null");
+        }
+    }
+    ~TraceFileParser() override = default;
     bool Parse(const std::vector<std::string> &filePathArr,
                const std::string &rankId,
                const std::string &selectedFolder,
                const std::string &fileId) override;
     void Reset() override;
     static void DeleteParseFiles(const std::vector<std::string> &fileIds);
-    static void ParseEndCallBack(const std::string &rankId,
+    void ParseEndCallBack(const std::string &rankId,
                                  const std::string &fileId,
                                  bool result,
                                  const std::string &message);
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid);
-
+    // 禁止拷贝
+    TraceFileParser(const TraceFileParser&) = delete;
+    TraceFileParser& operator=(const TraceFileParser&) = delete;
+protected:
+    // 后处理 Hook 函数，返回 false 表示后处理失败
+    virtual bool PostParse(std::shared_ptr<TextTraceDatabase> db);
 private:
-    TraceFileParser();
-    ~TraceFileParser() override;
-    const uint32_t maxThreadNum = 64;
-    std::unique_ptr<ThreadPool> threadPool;
+    std::shared_ptr<ThreadPool> threadPool_; // 共享线程池
     static bool CheckInitParser(const std::string &fileId);
-    static bool InitParser(const std::vector<std::string> &filePathArr,
+    bool InitParser(const std::vector<std::string> &filePathArr,
                            const std::string &rankId,
                            const std::string &fileId);
-    static void PreParseTask(const std::vector<std::string> &filePathArr,
+    void PreParseTask(const std::vector<std::string> &filePathArr,
                              const std::string &rankId,
                              const std::string &fileId);
-    static void ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos);
-    static void EndParseTask(const std::string &rankId, const std::vector<std::string> &filePathArr,
+    void ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos);
+    void EndParseTask(const std::string &rankId, const std::vector<std::string> &filePathArr,
                              std::shared_ptr<std::vector<std::future<void>>> futures,
                              std::chrono::time_point<std::chrono::high_resolution_clock> start);
     static void DeleteParseFileFromDisk(const std::string &fileId);
@@ -69,11 +78,9 @@ private:
     std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, uint64_t>> trackIdMap;
     uint64_t trackId = 0;
 
-    static void InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId);
+    void InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId);
 
     static std::string ComputeStatusInfoFromPathArr(const std::vector<std::string> &filePathArr);
-
-    void InitThreadPool();
 };
 } // end of namespace Timeline
 } // end of namespace Module

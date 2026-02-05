@@ -26,7 +26,6 @@
 #include "DataBaseManager.h"
 #include "ClusterFileParser.h"
 #include "TraceTime.h"
-#include "TraceFileParser.h"
 #include "MemoryParse.h"
 #include "FullDbParser.h"
 #include "ProjectExplorerManager.h"
@@ -37,6 +36,7 @@
 #include "ProjectAnalyze.h"
 #include "TrackInfoManager.h"
 #include "ExpertHotspotManager.h"
+#include "JsonFileParserManager.h"
 #include "RLMstxConfigManager.h"
 #include "RenderEngine.h"
 #include "TrackInfoManager.h"
@@ -50,7 +50,7 @@ using namespace Dic::Module::Global;
 std::mutex ParserFactory::mutex;
 std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::string &path)
 {
-    // 判别顺序是优先判别只支持单个文件导入的memscope(leaks) bin ipynb npumonitor文件，然后判别服务化调优数据，再判别系统调优数据
+    // 判别顺序是优先判别只支持单个文件导入的memscope(leaks) bin ipynb npumonitor aclGraph_debug文件，然后判别服务化调优数据，最后判别系统调优数据
     // 判别系统调优数据时，优先db，然后text，都没有再寻找npumonitor数据
     if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path),
                                                       std::regex(memScopeDbReg))) {
@@ -61,6 +61,9 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::strin
     }
     if (StringUtil::EndWith(path, computeBinSuffix)) {
         return std::make_pair(path, ParserType::BIN);
+    }
+    if (!FileUtil::IsFolder(path) && ProjectParserJson::IsACLGraphDebugJSON(path)) {
+        return std::make_pair(path, ParserType::ACLGRPAH_DEBUG_JSON);
     }
     if (FileUtil::FindIfDbTypeByRegex(path, std::regex(traceViewReg), std::regex(DB_REG))) {
         return std::make_pair(path, ParserType::DB);
@@ -84,8 +87,11 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
         case ParserType::BIN:
             alloc = std::make_shared<ProjectParserBin>();
             break;
+        case ParserType::ACLGRPAH_DEBUG_JSON:
+            alloc = std::make_shared<ProjectParserJson>(JsonFileParserManager::GetACLGraphDebugParser());
+            break;
         case ParserType::JSON:
-            alloc = std::make_shared<ProjectParserJson>();
+            alloc = std::make_shared<ProjectParserJson>(JsonFileParserManager::GetTraceFileParser());
             break;
         case ParserType::IE:
             alloc = std::make_shared<ParserIE>();
@@ -105,7 +111,7 @@ void ParserFactory::Reset()
     std::lock_guard<std::mutex> lock(mutex);
     std::shared_ptr<IE::ServitizationOpenApi> openApi = std::make_shared<IE::ServitizationOpenApi>();
     openApi->Reset();
-    TraceFileParser::Instance().Reset();
+    JsonFileParserManager::Instance().ResetAll();
     Summary::KernelParse::Instance().Reset();
     Memory::MemoryParse::Instance().Reset();
     FullDb::FullDbParser::Instance().Reset();

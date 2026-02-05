@@ -25,6 +25,23 @@
 #include "TrackInfoManager.h"
 #include "TextTraceDatabase.h"
 
+namespace {
+    Trace::Slice ConvertSliceDtoToTraceSlice(const SliceDto& dto) {
+        Trace::Slice slice;
+        slice.ts = dto.timestamp;          // timestamp → ts
+        slice.dur = dto.duration;          // duration → dur
+        slice.name = dto.name;
+        slice.trackId = dto.trackId;       // trackId → trackId
+        slice.cat = dto.cat.empty() ? std::nullopt : std::optional(dto.cat); // 处理 optional
+        slice.args = dto.args.empty() ? std::nullopt : std::optional(dto.args);
+        slice.cname = "";                  // 根据实际需求填充（原 InsertSQL 有 cname）
+        slice.end = dto.timestamp + dto.duration; // end_time = timestamp + duration
+        slice.flagId = dto.flagId;
+        // 注：pid/tid/cardId/metaType 等未在 InsertSQL 中使用，按需扩展
+        return slice;
+    }
+}
+
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
@@ -216,6 +233,54 @@ bool TextTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventLi
         return false;
     }
     return true;
+}
+
+bool TextTraceDatabase::ReplaceAllSlices(const std::vector<SliceDto>& slices) {
+    // ===== 1. 预转换（锁外执行，减少锁持有时间）=====
+    std::vector<Trace::Slice> traceSlices;
+    traceSlices.reserve(slices.size());
+    for (const auto& dto : slices) {
+        traceSlices.emplace_back(ConvertSliceDtoToTraceSlice(dto)); // 见下方转换函数
+    }
+
+    // ===== 2. 全程加锁 + 事务 =====
+    std::unique_lock<std::recursive_mutex> lock(mutex); // 与 InsertSliceList 递归锁兼容
+
+    if (sqlite3_exec(db, "BEGIN", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Begin transaction failed: ", sqlite3_errmsg(db));
+        return false;
+    }
+
+    // ===== 3. 清空（单文件场景：安全无 WHERE）=====
+    if (sqlite3_exec(db, "DELETE FROM slice", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
+        ServerLog::Error("Delete slices failed: ", sqlite3_errmsg(db));
+        return false;
+    }
+
+    // ===== 4. 分批次复用 InsertSliceList（无缝对接现有逻辑）=====
+    bool allSuccess = true;
+    const size_t total = traceSlices.size();
+    for (size_t i = 0; i < total && allSuccess; i += CACHE_SIZE) {
+        size_t batchEnd = std::min(i + CACHE_SIZE, total);
+        std::vector<Trace::Slice> batch(
+            traceSlices.begin() + i,
+            traceSlices.begin() + batchEnd
+        );
+        if (!InsertSliceList(batch)) { // 直接复用现有高性能插入
+            allSuccess = false;
+        }
+    }
+
+    // ===== 5. 提交/回滚 =====
+    if (allSuccess && sqlite3_exec(db, "COMMIT", nullptr, nullptr, nullptr) == SQLITE_OK) {
+        ServerLog::Debug("Replaced ", total, " slices atomically");
+        return true;
+    }
+
+    sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
+    ServerLog::Error("Slice replacement failed, rolled back");
+    return false;
 }
 
 std::unique_ptr<SqlitePreparedStatement> TextTraceDatabase::GetSliceStmt(uint64_t paramLen)
@@ -656,6 +721,37 @@ bool TextTraceDatabase::QuerySliceDtoById(const std::string &sliceId, SliceDto &
         int col = resultStartIndex;
         sliceDto.trackId = sliceSet->GetUint64(col++);
         sliceDto.flagId = sliceSet->GetString(col++);
+    }
+    return true;
+}
+
+bool TextTraceDatabase::QuerySliceDtoList(std::vector<SliceDto> &sliceDtoList)
+{
+    const std::string sliceSql = "select id, timestamp, duration, depth, track_id,"
+                                    "name, args, cat, flag_id from slice";
+    const auto sliceStmt = CreatPreparedStatement(sliceSql);
+    if (sliceStmt == nullptr) {
+        ServerLog::Error("Query slice list failed to prepare sql.");
+        return false;
+    }
+    const auto sliceSet = sliceStmt->ExecuteQuery();
+    if (sliceSet == nullptr) {
+        ServerLog::Error("Query slice list failed to get result set.", sliceStmt->GetErrorMessage());
+        return false;
+    }
+    while (sliceSet->Next()) {
+        int col = resultStartIndex;
+        sliceDtoList.push_back(SliceDto {
+            .id = sliceSet->GetUint64(col++),
+            .timestamp = sliceSet->GetUint64(col++),
+            .duration = sliceSet->GetUint64(col++),
+            .depth = sliceSet->GetUint32(col++),
+            .trackId = sliceSet->GetUint64(col++),
+            .name = sliceSet->GetString(col++),
+            .args = sliceSet->GetString(col++),
+            .cat = sliceSet->GetString(col++),
+            .flagId = sliceSet->GetString(col++),
+        });
     }
     return true;
 }

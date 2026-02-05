@@ -32,22 +32,6 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-TraceFileParser &TraceFileParser::Instance()
-{
-    static TraceFileParser instance;
-    return instance;
-}
-
-TraceFileParser::TraceFileParser()
-{
-    InitThreadPool();
-}
-
-TraceFileParser::~TraceFileParser()
-{
-    threadPool->ShutDown();
-}
-
 bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr,
                             const std::string &rankId,
                             const std::string &selectedFolder,
@@ -55,7 +39,11 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr,
 {
     ServerLog::Info("start parse. file id:", fileId);
     ParserStatusManager::Instance().SetParserStatus(rankId, ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), filePathArr, rankId, fileId);
+    auto preTask = [this, filePathArr, rankId = std::string(rankId), fileId = std::string(fileId)]()
+    {
+        PreParseTask(filePathArr, rankId, fileId);
+    };
+    threadPool_->AddTask(preTask, TraceIdManager::GetTraceId());
     return true;
 }
 
@@ -142,13 +130,12 @@ std::string TraceFileParser::ComputeStatusInfoFromPathArr(const std::vector<std:
 
 void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId)
 {
-    auto &instance = Instance();
     auto start = std::chrono::high_resolution_clock::now();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &filePath : filePathArr) {
         ServerLog::Info("Start parse. file id:", fileId, ". path:", filePath);
         auto splitFile = SplitFile(filePath);
-        instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
+        fileProgressMap[fileId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file. filePath: %", filePath);
             ParseEndCallBack(fileId, "", false, "Failed to split file: " + filePath);
@@ -156,11 +143,19 @@ void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathAr
         }
 
         for (const auto &pos : splitFile) {
-            auto future = instance.threadPool->AddTask(ParseTask, TraceIdManager::GetTraceId(), filePath, fileId, pos);
+            auto task = [this, filePath = std::string(filePath), fileId = std::string(fileId), pos]()
+            {
+                ParseTask(filePath, fileId, pos); // 安全调用成员函数
+            };
+            auto future = threadPool_->AddTask(std::move(task), TraceIdManager::GetTraceId());
             futures->emplace_back(std::move(future));
         }
     }
-    instance.threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), fileId, filePathArr, futures, start);
+    auto endTask = [this, fileId = std::string(fileId), filePathArr/* 按值捕获 */, futures, start]()
+    {
+        EndParseTask(fileId, filePathArr, futures, start); // 安全调用成员函数
+    };
+    threadPool_->AddTask(endTask, TraceIdManager::GetTraceId());
 }
 
 void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
@@ -188,10 +183,9 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
         }
     }
     // 发送单卡解析进度事件
-    auto &instance = TraceFileParser::Instance();
-    std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
+    std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[fileId];
     curFileProgress->AddToParsedSize(pos.second - pos.first);
-    instance.parseProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+    parseProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
                                    curFileProgress->GetProgressPercentage());
 }
 
@@ -235,7 +229,16 @@ void TraceFileParser::EndParseTask(const std::string &rankId, const std::vector<
     }
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, database->GetDbPath(), true, "");
-    ParserStatusManager::Instance().SetFinishStatus(rankId);
+    if (PostParse(database)) {
+        ParserStatusManager::Instance().SetFinishStatus(rankId);
+    } else {
+        ParserStatusManager::Instance().SetTerminateStatus(rankId);
+    }
+}
+
+bool TraceFileParser::PostParse(std::shared_ptr<TextTraceDatabase> db)
+{
+    return true; // do nothing
 }
 
 void TraceFileParser::ParseEndCallBack(const std::string &rankId,
@@ -244,9 +247,8 @@ void TraceFileParser::ParseEndCallBack(const std::string &rankId,
                                        const std::string &message)
 {
     auto oldStatus = ParserStatusManager::Instance().GetParserStatus(rankId);
-    auto &instance = TraceFileParser::Instance();
-    if (instance.parseEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
-        instance.parseEndCallback(rankId, fileId, result, message);
+    if (parseEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
+        parseEndCallback(rankId, fileId, result, message);
     }
 }
 
@@ -268,7 +270,7 @@ void TraceFileParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");
     ParserStatusManager::Instance().SetAllTerminateStatus();
-    threadPool->Reset();
+    threadPool_->Reset();
     ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->Reset();
     EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->Reset();
     ServerLog::Info("Task completed.");
@@ -318,13 +320,7 @@ void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
     }
 }
 
-void TraceFileParser::InitThreadPool()
-{
-    // 设置解析内存池的大小，根据32卡数据测试，性能最好的线程数大约为64
-    const uint32_t hardwareLimit = std::thread::hardware_concurrency();
-    const uint32_t threadCount = std::min(hardwareLimit, TraceFileParser::maxThreadNum);
-    threadPool = std::make_unique<ThreadPool>(threadCount);
-}
+
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

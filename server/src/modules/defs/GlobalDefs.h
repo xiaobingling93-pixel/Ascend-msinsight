@@ -40,6 +40,7 @@ enum class ParserType {
     JSON = 2,
     IE = 4,
     DB_NPUMONITOR = 5,
+    ACLGRPAH_DEBUG_JSON = 6,
     OTHER = 20
 };
 
@@ -69,7 +70,8 @@ enum class ProjectTypeEnum {
     DB_CLUSTER = 6,
     IE = 7,
     DB_NPUMONITOR = 8,
-    OTHER = 9
+    ACLGRAPH_DEBUG = 9,
+    OTHER = 100
 };
 
 inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {
@@ -114,6 +116,8 @@ static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTyp
             return ParserType::BIN;
         case ProjectTypeEnum::IE:
             return ParserType::IE;
+        case ProjectTypeEnum::ACLGRAPH_DEBUG:
+            return ParserType::ACLGRPAH_DEBUG_JSON;
         default:
             return ParserType::JSON;
     }
@@ -178,6 +182,7 @@ struct RankEntry {
     std::string parseFolder;
     std::vector<std::string> parseFileList;
     bool isDevice{false};
+    int64_t projectType = static_cast<int64_t>(ProjectTypeEnum::OTHER);
 };
 } // end of namespace Dic
 

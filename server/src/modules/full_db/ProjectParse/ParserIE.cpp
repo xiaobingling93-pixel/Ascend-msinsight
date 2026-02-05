@@ -17,13 +17,13 @@
  */
 #include "ParserIE.h"
 #include "ModuleRequestHandler.h"
-#include "TraceFileParser.h"
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
 #include "EventNotifyThreadPoolExecutor.h"
 #include "ServitizationOpenApi.h"
 #include "ProjectAnalyze.h"
 #include "TrackInfoManager.h"
+#include "JsonFileParserManager.h"
 
 namespace Dic::Module {
 using namespace Timeline;
@@ -51,7 +51,7 @@ void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
                                 static_cast<int>(ProjectTypeEnum::IE));
     }
     // 解析内容
-    SetParseCallBack(Timeline::TraceFileParser::Instance());
+    SetParseCallBack(Timeline::JsonFileParserManager::GetTraceFileParser());
     if (rankListMap.size() >= PENDIND_CRITICAL_VALUE) {
         response.body.isPending = true;
     }
@@ -122,7 +122,7 @@ void ParserIE::ParserTraceData(const std::unordered_map<std::string, std::string
                 { ProjectTypeEnum::IE, { rankEntry.second } });
             continue;
         }
-        Timeline::TraceFileParser::Instance().Parse({rankEntry.second},
+        Timeline::JsonFileParserManager::GetTraceFileParser().Parse({rankEntry.second},
                                                     rankEntry.first,
                                                     rankEntry.second,
                                                     rankEntry.second);

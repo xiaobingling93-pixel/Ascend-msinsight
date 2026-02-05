@@ -20,7 +20,7 @@
 #include "PerformanceTest.h"
 #include "FileUtil.h"
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
+#include "JsonFileParserManager.h"
 #include "ParserStatusManager.h"
 
 using namespace Performance;
@@ -37,10 +37,10 @@ class TraceParserTest : PerformanceTest {
 TEST_F(PerformanceTest, testTraceParser1P2GBTime)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT, <#initializer#>);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, "");
     DataBaseManager::Instance().CreateTraceConnectionPool("0",
         std::string(test1P2GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
-    TraceFileParser::Instance().Parse(
+    JsonFileParserManager::GetTraceFileParser().Parse(
         {std::string(test1P2GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"},
         "0", "", "");
     while (true) {
@@ -58,16 +58,16 @@ TEST_F(PerformanceTest, testTraceParser1P2GBTime)
     status.result = cost <= TIME_REFERENCE_1S ? "pass" : "failed";
     status.refTime = std::to_string(TIME_REFERENCE_1S);
     status.realTime = std::to_string(cost);
-    TraceFileParser::Instance().Reset();
+    JsonFileParserManager::GetTraceFileParser().Reset();
 }
 
 TEST_F(PerformanceTest, testTraceParser1P5GBTime)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    DataBaseManager::Instance().SetDataType(DataType::TEXT, <#initializer#>);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT, "");
     DataBaseManager::Instance().CreateTraceConnectionPool("0",
         std::string(test1P5GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
-    TraceFileParser::Instance().Parse(
+    JsonFileParserManager::GetTraceFileParser().Parse(
         {std::string(test1P5GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"},
         "0", "", "");
     while (true) {
@@ -85,5 +85,5 @@ TEST_F(PerformanceTest, testTraceParser1P5GBTime)
     status.result = cost <= TIME_REFERENCE_2S ? "pass" : "failed";
     status.refTime = std::to_string(TIME_REFERENCE_2S);
     status.realTime = std::to_string(cost);
-    TraceFileParser::Instance().Reset();
+    JsonFileParserManager::GetTraceFileParser().Reset();
 }

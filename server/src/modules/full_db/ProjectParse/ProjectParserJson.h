@@ -23,12 +23,16 @@
 #include "TimelineRequestHandler.h"
 #include "ClusterFileParser.h"
 #include "FileParser.h"
+#include "FileReader.h"
+#include "TraceFileParser.h"
 
 namespace Dic {
 namespace Module {
 class ProjectParserJson : public ProjectParserBase {
 public:
-    ProjectParserJson();
+    explicit ProjectParserJson(Timeline::TraceFileParser& parser): _fileParser(parser) {
+        fileReader = std::make_unique<FileReader>();
+    }
 
     ~ProjectParserJson() override = default;
 
@@ -44,6 +48,13 @@ public:
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) final;
 
     static bool ExistJsonFormatFile(const std::string &file);
+
+    /**
+     * 判断指定文件是否为 ACLGraphDebugJSON 格式
+     * @param filePath 文件路径
+     * @return 若前三行中存在 "pid": "*aclGraph"（区分大小写）则返回 true
+     */
+    static bool IsACLGraphDebugJSON(const std::string& filePath);
 
     static void BuildProjectExploreInfo(ProjectExplorerInfo &info, const std::vector<std::string> &parsedFiles);
 
@@ -65,12 +76,14 @@ protected:
     bool CheckParseFileInfoSize(const std::shared_ptr<Global::ParseFileInfo> &parseFileInfo,
                                 std::vector<std::string> &jsonFiles) const;
 
-    static std::tuple<bool, bool, bool> CheckHasTraceJsonMemoryDataOperatorData(
+    static std::tuple<bool, bool, bool> CheckHasJsonMemoryDataOperatorData(
             const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 
     static std::string GetFileIdWithDb(const std::string &filePath);
 
 private:
+    Timeline::TraceFileParser& _fileParser;
+
     std::vector<std::string> FindAllTraceFile(const std::string &path, std::string &error);
 
     static std::vector<std::string> FindTraceFile(const std::string &path, std::string &error, std::string &curScene);
@@ -103,7 +116,7 @@ private:
 
     std::vector<std::string> GetJsonFileUnderFolder(const std::string &path);
 
-    void ParserTraceData(const std::map<std::string, RankEntry> &rankListMap,
+    void ParserJsonData(const std::map<std::string, RankEntry> &rankListMap,
                          const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isShowCluster);
 
     static void FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,

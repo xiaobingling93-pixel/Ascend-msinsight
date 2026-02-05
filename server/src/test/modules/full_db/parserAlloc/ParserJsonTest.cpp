@@ -37,6 +37,7 @@ TEST_F(ParserJsonTest, TestJsonFileIsEmptyThenReturnFalse)
 {
     class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
+        MockParserJson(): ProjectParserJson(JsonFileParserManager::GetTraceFileParser()) {}
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
@@ -63,6 +64,7 @@ TEST_F(ParserJsonTest, TestJsonFileCountExceed100ThenReturnFalse)
 {
     class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
+        MockParserJson(): ProjectParserJson(JsonFileParserManager::GetTraceFileParser()) {}
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
@@ -103,6 +105,7 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenOneFileIs20GThenReturnFalse
     };
     class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
+        MockParserJson(): ProjectParserJson(JsonFileParserManager::GetTraceFileParser()) {}
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
@@ -140,6 +143,7 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenTotalFileSizeExceed20GThenR
     };
     class MockParserJson : public Dic::Module::ProjectParserJson {
     public:
+        MockParserJson(): ProjectParserJson(JsonFileParserManager::GetTraceFileParser()) {}
         void SetIFileReader(std::unique_ptr<IFileReader> fileReaderPtr)
         {
             fileReader = std::move(fileReaderPtr);
@@ -176,7 +180,7 @@ TEST_F(ParserJsonTest, TestCheckHasTraceJsonMemoryDataOperatorData)
                 parseFileInfo->parseFilePath = parseFile;
                 projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
             }
-            auto [hasJson, hasMemory, hasOp] = CheckHasTraceJsonMemoryDataOperatorData({projectExplorerInfo});
+            auto [hasJson, hasMemory, hasOp] = CheckHasJsonMemoryDataOperatorData({projectExplorerInfo});
             EXPECT_EQ(hasJson, false);
             EXPECT_EQ(hasMemory, false);
             EXPECT_EQ(hasOp, false);
@@ -191,7 +195,7 @@ TEST_F(ParserJsonTest, TestCheckHasTraceJsonMemoryDataOperatorData)
                 parseFileInfo->parseFilePath = parseFile;
                 projectExplorerInfo.subParseFileInfo.push_back(parseFileInfo);
             }
-            auto [hasJson, hasMemory, hasOp] = CheckHasTraceJsonMemoryDataOperatorData({projectExplorerInfo});
+            auto [hasJson, hasMemory, hasOp] = CheckHasJsonMemoryDataOperatorData({projectExplorerInfo});
             EXPECT_EQ(hasJson, true);
             EXPECT_EQ(hasMemory, true);
             EXPECT_EQ(hasOp, true);
@@ -240,7 +244,7 @@ TEST_F(ParserJsonTest, BuildProjectInfoWithAscendProfilerOutputDir)
 
 TEST_F(ParserJsonTest, GetParseFileByImportFile)
 {
-    ProjectParserJson parser;
+    ProjectParserJson parser(JsonFileParserManager::GetTraceFileParser());
     std::string msg;
     auto files = parser.GetParseFileByImportFile(
         GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)", msg);
@@ -276,4 +280,95 @@ TEST_F(ParserJsonTest, GetDeviceIdFromPath)
     std::string parseFolder = GetTestDataDir() + R"(/msprof/normal/PROF_20250620)";
     auto deviceId = ProjectParserJson::GetDeviceIdFromPath(parseFolder);
     EXPECT_EQ(deviceId, "");
+}
+
+// 测试夹具：管理临时文件生命周期
+class ACLGraphDebugJSONTest : public ::testing::Test {
+protected:
+    std::vector<std::string> tempFiles_;
+
+    // 创建带指定内容的临时文件，返回路径
+    std::string CreateTempFile(const std::string& content) {
+        // 使用Google Test提供的安全临时目录
+        std::string tempDir = ::testing::TempDir();
+        // 生成唯一文件名（含测试名避免冲突）
+        const ::testing::TestInfo* testInfo =
+            ::testing::UnitTest::GetInstance()->current_test_info();
+        std::string uniqueName = std::string(testInfo->name()) + "_" +
+                                  std::to_string(std::rand()) + ".json";
+        std::string path = tempDir + uniqueName;
+
+        std::ofstream file(path);
+        if (file.is_open()) {
+            file << content;
+            file.close();
+            tempFiles_.push_back(path);
+            return path;
+        }
+        return "";
+    }
+
+    void TearDown() override {
+        // 自动清理所有创建的临时文件
+        for (const auto& path : tempFiles_) {
+            std::remove(path.c_str());
+        }
+    }
+};
+
+// ===== 正向测试：严格小写 aclgraph =====
+TEST_F(ACLGraphDebugJSONTest, Valid_ExactLowercaseAclgraph) {
+    std::vector<std::string> valid_cases = {
+        R"({"pid": "aclGraph"})",               // 精确匹配
+        R"({"pid": "xxx aclGraph"})",           // 需求示例
+    };
+    for (const auto& content : valid_cases) {
+        std::string path = CreateTempFile(content);
+        ASSERT_FALSE(path.empty());
+        EXPECT_TRUE(ProjectParserJson::IsACLGraphDebugJSON(path))
+            << "Failed for valid content: " << content;
+        std::remove(path.c_str());
+    }
+}
+
+// ===== 负向测试：大小写变体应拒绝 =====
+TEST_F(ACLGraphDebugJSONTest, Invalid_UppercaseVariantsRejected) {
+    std::vector<std::string> invalid_cases = {
+        R"({"pid": "ACLGRAPH"})",      // 全大写
+        R"({"pid": "AclGraph"})",      // 驼峰（首字母大写）
+        R"({"pid": "ACLgraph"})",      // 前缀大写
+        R"({"pid": "aclgrAph"})",      // A 大写
+        R"({"pid": "Aclgraph"})",      // A 大写
+        R"({"pid": "aclGRAPH"})",      // 后缀大写
+        R"({"pid": "Ascend ACLGraph"})", // 混合大小写
+        R"({"pid": "xxx aclGraph debug"})", // 需求示例但带后缀
+        R"({"pid": "xxx ACLgraph"})",      // 需求示例但 ACL 大写
+        R"({"pid": "xxx aclgrAPh"})",      // 部分大写
+        R"({"pid": "xxx ACLGRAPH"})",      // 全大写
+        R"({"pid": "xxx acl-graph"})",     // 连字符（非 aclgraph）
+        R"({"pid": "xxx aclgrph"})",       // 拼写错误（缺 a）
+        R"({"pid": "xxx aclgrap"})",       // 拼写错误（缺 h）
+    };
+    for (const auto& content : invalid_cases) {
+        std::string path = CreateTempFile(content);
+        ASSERT_FALSE(path.empty());
+        EXPECT_FALSE(ProjectParserJson::IsACLGraphDebugJSON(path))
+            << "Should reject: " << content;
+        std::remove(path.c_str());
+    }
+}
+
+TEST_F(ACLGraphDebugJSONTest, Invalid_SomeWordsAfterAclgraph) {
+    std::string content = R"({"pid": "xxx_aclGraph_core", "name": "test"})";
+    std::string path = CreateTempFile(content);
+    ASSERT_FALSE(path.empty());
+    EXPECT_FALSE(ProjectParserJson::IsACLGraphDebugJSON(path));
+}
+
+TEST_F(ACLGraphDebugJSONTest, Invalid_MatchOnlyInFourthLine) {
+    std::string content =
+        "{}\n{}\n{}\n{\"pid\": \"xxx aclGraph\"}";
+    std::string path = CreateTempFile(content);
+    ASSERT_FALSE(path.empty());
+    EXPECT_FALSE(ProjectParserJson::IsACLGraphDebugJSON(path)); // 仅检查前三行
 }

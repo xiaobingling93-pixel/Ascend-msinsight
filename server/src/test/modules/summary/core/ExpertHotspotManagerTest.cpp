@@ -84,7 +84,7 @@ protected:
         const std::string dbPath = filePath + "mindstudio_insight_data.db";
         DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("100", dbPath);
-        TraceFileParser::Instance().Parse({filePath + "trace_view.json"}, "100", "", "");
+        JsonFileParserManager::GetTraceFileParser().Parse({filePath + "trace_view.json"}, "100", "", "");
         WaitParseEnd({"100"});
     }
 
@@ -107,7 +107,7 @@ protected:
         }
         db.reset();
         Dic::Module::FullDb::DataBaseManager::Instance().ClearClusterDb();
-        TraceFileParser::Instance().DeleteParseFiles({"100"});
+        TraceFileParser::DeleteParseFiles({"100"});
     }
 };
 

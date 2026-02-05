@@ -59,7 +59,8 @@ public:
     bool InsertFlow(const Trace::Flow &event);
     bool InsertCounter(const Trace::Counter &event);
     bool InsertSliceList(const std::vector<Trace::Slice> &eventList);
-    bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
+    virtual bool ReplaceAllSlices(const std::vector<SliceDto>& slices);
+    virtual bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
     bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
@@ -154,6 +155,8 @@ public:
 
     static void ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
                                                         std::vector<std::pair<std::string, std::string>> rawData);
+
+    virtual bool QuerySliceDtoList(std::vector<SliceDto> &sliceDtoList);
 
 private:
     const std::string sliceTable = "slice";

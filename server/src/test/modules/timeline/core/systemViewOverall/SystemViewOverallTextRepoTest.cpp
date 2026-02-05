@@ -18,8 +18,8 @@
 #include <gtest/gtest.h>
 #include "FileUtil.h"
 #include "ParamsParser.h"
-#include "TraceFileParser.h"
 #include "DataBaseManager.h"
+#include "JsonFileParserManager.h"
 #include "KernelParse.h"
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
@@ -55,10 +55,10 @@ public:
         DataBaseManager::Instance().CreateTraceConnectionPool("1", refPathWithoutPMUDb);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(refPath0Db, "0", "0");
         DataBaseManager::Instance().UpdateRankIdToDeviceId(refPathWithoutPMUDb, "1", "1");
-        TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",
+        JsonFileParserManager::GetTraceFileParser().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",
                                           refPath0Db);
         WaitParseEnd({"0"});
-        TraceFileParser::Instance().Parse({currPath + refPathWithoutPMU + "trace_view.json"}, "1", "",
+        JsonFileParserManager::GetTraceFileParser().Parse({currPath + refPathWithoutPMU + "trace_view.json"}, "1", "",
                                           refPathWithoutPMUDb);
         WaitParseEnd({"1"});
         std::string testDataPath0 = currPath + R"(/test/data/pytorch/text/level1/rank0_ascend_pt)";
@@ -95,8 +95,8 @@ public:
     {
         SystemViewOverallRepoFactory::Instance()->Reset();
         KernelParse::Instance().Reset();
-        TraceFileParser::Instance().DeleteParseFiles({"0"});
-        TraceFileParser::Instance().DeleteParseFiles({"1"});
+        TraceFileParser::DeleteParseFiles({"0"});
+        TraceFileParser::DeleteParseFiles({"1"});
     }
 
     static int Main(int argc, char** argv)
