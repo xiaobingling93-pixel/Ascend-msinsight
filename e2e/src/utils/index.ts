@@ -170,6 +170,7 @@ export async function setCompare(
     await rank2.click({ button: 'right' });
     const setComparisonBtn = frameworkPage.page.getByText('Set as Comparison Data');
     await setComparisonBtn.click();
+    await page.mouse.move(0,0);
     await frame.getByText('loading').first().waitFor({ state: 'hidden' });
     await frameworkPage.mouseOut();
 }

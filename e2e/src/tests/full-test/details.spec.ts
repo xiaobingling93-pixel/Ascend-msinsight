@@ -58,7 +58,7 @@ const imgMap = {
 };
 const inputMap = {
     coreOccupancyShowAsThroughput: 'Throughput',
-    computeWorkloadBlockId: '1',
+    computeWorkloadBlockId: '0',
 };
 
 test.describe('Details', () => {
@@ -78,23 +78,12 @@ test.describe('Details', () => {
 
     // 基本信息
     // 预期：基本信息文字、图表正确
-    test('test_details_baseinfo_data_correct', async ({ detailsPage }) => {
+    test('test_details_baseinfo_data_correct', async ({ detailsPage, page }) => {
         const { baseInfoContent } = detailsPage;
+        await page.mouse.move(0,0);
         await expect(baseInfoContent).toHaveScreenshot(imgMap.baseinfoDataCorrect);
     });
 
-    // 核间负载分析
-    // 预期：
-    // 1、初始加载颜色数值正确
-    // 2、下拉选项showAs修改后，数值、颜色正确
-    test('test_details_core_occupancy_correct', async ({ page, detailsPage }) => {
-        const { coreOccupancyContent, coreOccupancyShowAsSelector, detailsFrame } = detailsPage;
-        await expect(coreOccupancyContent).toHaveScreenshot(imgMap.coreOccupancyCorrect);
-        const showAsSelect = new SelectHelpers(page, coreOccupancyShowAsSelector, detailsFrame);
-        await showAsSelect.open();
-        await showAsSelect.selectOption(inputMap.coreOccupancyShowAsThroughput);
-        await expect(coreOccupancyContent).toHaveScreenshot(imgMap.coreOccupancyShowThroughput);
-    });
     // roofline瓶颈分析
     // 预期：导入数据，roofline图显示正确
     test('test_details_roofline', async ({ page, detailsPage }) => {
@@ -139,8 +128,9 @@ test.describe('Details', () => {
     });
     // 计算负载分析-计算负载信息表
     // 预期：瓶颈分析结果正确
-    test('test_details_compute_workload_table', async ({ detailsPage }) => {
+    test('test_details_compute_workload_table', async ({ detailsPage, page }) => {
         const { computeWorkloadTable } = detailsPage;
+        await page.mouse.move(0,0);
         await expect(computeWorkloadTable).toHaveScreenshot(imgMap.computeWorkloadTable);
     });
 
@@ -161,9 +151,38 @@ test.describe('Details', () => {
     });
     // 内存负载分析-内存负载信息表
     // 预期：内存负载信息表正确
-    test('test_details_memory_workload_table', async ({ detailsPage }) => {
+    test('test_details_memory_workload_table', async ({ detailsPage, page }) => {
         const { memoryWorkloadTable } = detailsPage;
+        await page.mouse.move(0,0);
         await expect(memoryWorkloadTable).toHaveScreenshot(imgMap.memoryWorkloadTable);
+    });
+});
+
+test.describe('Details(Core)', () => {
+    test.beforeEach(async ({ page, detailsPage, ws }, testInfo) => {
+        await page.goto('/');
+        await clearAllData(page);
+        await importData(page, FilePath.DETAILS_CORE);
+        await waitForAllParsed(page, detailsPage);
+        const opType = detailsPage.detailsFrame.getByText('mix').first();
+        await expect(opType).toBeVisible();
+    });
+
+    // 核间负载分析
+    // 预期：
+    // 1、初始加载颜色数值正确
+    // 2、下拉选项showAs修改后，数值、颜色正确
+    test('test_details_core_occupancy_correct', async ({ page, detailsPage }) => {
+        const { coreOccupancyContent, coreOccupancyShowAsSelector, detailsFrame } = detailsPage;
+        await expect(coreOccupancyContent).toHaveScreenshot(imgMap.coreOccupancyCorrect);
+        const showAsSelect = new SelectHelpers(page, coreOccupancyShowAsSelector, detailsFrame);
+        await showAsSelect.open();
+        await showAsSelect.selectOption(inputMap.coreOccupancyShowAsThroughput);
+        await expect(coreOccupancyContent).toHaveScreenshot(imgMap.coreOccupancyShowThroughput);
+    });
+
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 });
 

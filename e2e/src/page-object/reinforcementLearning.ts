@@ -22,6 +22,8 @@ import { FrameworkPage } from './framework';
 export class RLPage {
     readonly page: Page;
     readonly rLFrame: FrameLocator;
+    readonly taskTraceTimelineContent: Locator;
+    readonly taskExecutionTimeline: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -30,11 +32,8 @@ export class RLPage {
         this.taskExecutionTimeline = this.rLFrame.locator('#select-host');
     }
 
-    async goto(val): Promise<void> {
+    async goto(): Promise<void> {
         const frameworkPage = new FrameworkPage(this.page);
-        if(val !== 'RL') {
-            await frameworkPage.goto();
-        }
-        await frameworkPage.clickTab(val);
+        await frameworkPage.clickTab('RL');
     }
 }

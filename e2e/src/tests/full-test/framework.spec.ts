@@ -71,12 +71,12 @@ test.describe('Framework', () => {
         const frameworkPage = new FrameworkPage(page);
 
         const waitFirstRes = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
-        await importData(page, FilePath.DB_2025330);
+        await importData(page, FilePath.DB);
         await waitFirstRes;
         const waitSecondRes = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
-        await importData(page, FilePath.DB_memory);
+        await importData(page, FilePath.MULTI_NODES);
         await waitSecondRes;
-        await frameworkPage.projectList.getByText(FilePath.DB_2025330, { exact: true }).click({
+        await frameworkPage.projectList.getByText(FilePath.DB, { exact: true }).click({
             button: 'right',
         });
         await page.getByText('Set as Baseline Data').click();
