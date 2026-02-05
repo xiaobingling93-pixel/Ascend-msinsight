@@ -624,6 +624,8 @@ function resetSession(): void {
         // 因为时间范围分析利用了M键的竖向遮罩，所以移除时需要清空
         session.mKeyRender = false;
         session.mMaskRange = [];
+        session.ridLineType = '';
+        session.drawLineMode = 'all';
     });
 }
 
