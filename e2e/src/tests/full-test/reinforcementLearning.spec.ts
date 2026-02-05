@@ -18,8 +18,9 @@
 
 import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { RLPage } from '@/page-object';
-import {clearAllData, importData, setupWebSocketListener} from '@/utils';
+import { clearAllData, importData, setupWebSocketListener } from '@/utils';
 import { FilePath } from '@/utils/constants';
+import { FrameworkPage } from '../../page-object';
 
 interface TestFixtures {
     rLPage: RLPage;
@@ -39,11 +40,13 @@ const test = baseTest.extend<TestFixtures>({
 
 test.describe('Reinforcement-learning', () => {
     test.beforeEach(async ({ page, rLPage, ws }) => {
-        await rLPage.goto('timeline');
+        const frameworkPage = new FrameworkPage(page);
+        const { rLFrame } = rLPage;
+        await frameworkPage.goto();
         await clearAllData(page);
         await importData(page, FilePath.REINFORCEMENT_LEARNING);
-        await page.waitForTimeout(5000); // 模拟人类操作停顿
-        await rLPage.goto('RL');
+        await rLPage.goto();
+        await rLFrame.getByText('verl').waitFor({ state: 'visible' });
     });
 
     test.afterEach(async ({ page, ws }) => {
@@ -53,7 +56,7 @@ test.describe('Reinforcement-learning', () => {
     // 算子调优-图形化窗格-框选
     test('test_compute_reinforcement_learning_timeline', async ({ page, rLPage }) => {
         const { taskTraceTimelineContent } = rLPage;
-        await page.waitForTimeout(100); // 模拟人类操作停顿
+        await page.mouse.move(0,0);
         await expect(taskTraceTimelineContent).toHaveScreenshot('select-units-range.png', { maxDiffPixels: 100 });
     });
 });

@@ -35,6 +35,7 @@ export class SummaryPage {
     summaryFrame: FrameLocator;
     readonly fullmask: Locator;
     readonly btnGenerate: Locator;
+    readonly performanceMetric: Locator;
     readonly parallelismGraph: Locator;
     readonly parallelismGraphLoading: Locator;
     readonly parallelismGraphPlaceholder: Locator;
@@ -57,6 +58,7 @@ export class SummaryPage {
         this.summaryFrame = page.frameLocator('#Summary');
         this.fullmask = this.summaryFrame.locator('.fullmask');
         this.btnGenerate = this.summaryFrame.getByRole('button', { name: 'Generate' });
+        this.performanceMetric = this.summaryFrame.locator('#dataType');
         this.parallelismGraph = this.summaryFrame.locator('.parallelism-graph');
         this.parallelismGraphLoading = this.summaryFrame.getByTestId('parallelism-graph-loading');
         this.parallelismGraphPlaceholder = this.summaryFrame.getByTestId('parallelism-graph-placeholder');

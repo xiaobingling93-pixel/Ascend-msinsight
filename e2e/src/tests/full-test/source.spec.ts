@@ -45,16 +45,16 @@ const imgMap = {
     switchChineseLanguageSuccess: 'Chinese_Language.png',
 };
 const inputMap = {
-    secondFileName: '/home/huangning/code/samples/operator/AddCustomSample/KernelLaunch/AddKernelInvocationNeo/build/auto_gen/ascendc_kernels_sim/auto_gen_add_custom.cpp',
+    secondFileName: '/home/wangyunkai/code/samples/operator/ascendc/0_introduction/13_matmulleakyrelu_kernellaunch/MatmulLeakyReluInvocationAsync/matmul_leakyrelu_custom.cpp',
 };
 const resMap = {
-    secondFileContens:'#ifndef __ADD_CUSTOM__KERNEL_FUN_H_',
+    secondFileContens:'#include "kernel_operator.h"',
 };
 
 test.describe('Source', () => {
     test.beforeEach(async ({ page, sourcePage, ws }, testInfo) => {
         await page.goto('/');
-        const filePath = testInfo.title === 'test_source_sourceSelectChange' ? FilePath.SOURCE_MULTIFILE : FilePath.SOURCE;
+        const filePath = FilePath.OP_SIMULATOR_BIN;
         await importData(page, filePath);
         await sourcePage.goto();
         const coreValue = sourcePage.sourceFrame.getByText('core0');
@@ -80,7 +80,7 @@ test.describe('Source', () => {
         const { sourceFrame, coreSelector, mainContent } = sourcePage;
         const coreSelect = new SelectHelpers(page, coreSelector, sourceFrame);
         await coreSelect.open();
-        await coreSelect.selectOption('core10.veccore0');
+        await coreSelect.selectOption('core0.veccore1');
         await expect(mainContent).toHaveScreenshot(imgMap.coreSelectChangeSuccess);
     });
 
@@ -105,7 +105,7 @@ test.describe('Source', () => {
         const { mainContent } = sourcePage;
         const codeAttrTable = mainContent.locator('#CodeAttrTable');
         // 代码表中有指令数据的行
-        const td = codeAttrTable.locator('td', { hasText: '170' }).first();
+        const td = codeAttrTable.locator('td', { hasText: '16' }).first();
         await td.click();
         await expect(codeAttrTable.locator('tr.selected').first()).toBeVisible();
         await sourcePage.mouseOut();

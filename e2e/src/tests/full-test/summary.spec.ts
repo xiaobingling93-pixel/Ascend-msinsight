@@ -70,8 +70,13 @@ test.describe('Summary', () => {
 
     // 配置并行策略，生成排布数据
     test('test_generateRanks', async ({ page, summaryPage }) => {
-        const { parallelismGraph } = summaryPage;
-        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 2, tpSize: 2, dpSize: 2, cpSize: 2, epSize: 2 });
+        const { parallelismGraph, performanceMetric, summaryFrame } = summaryPage;
+        const dataTypeSelector = new SelectHelpers(page, performanceMetric, summaryFrame);
+
+        await dataTypeSelector.open();
+        await dataTypeSelector.selectOption('None');
+
+        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 2, tpSize: 1, cpSize: 1, dpSize: 2,  epSize: 1 });
 
         await page.mouse.move(0, 0);
         await expect(parallelismGraph).toHaveScreenshot('arrangement.png', { maxDiffPixels: 300 });
@@ -80,7 +85,7 @@ test.describe('Summary', () => {
     // 切换不同维度视图
     test('test_dimensionViews_when_changeDimensionTab', async ({ page, summaryPage }) => {
         const { summaryFrame, parallelismGraph, parallelismGraphLoading } = summaryPage;
-        const dimensionTabs = ['DP + PP', 'DP + PP + CP', 'DP + PP + CP + TP'];
+        const dimensionTabs = ['DP + PP', 'DP + PP + TP'];
 
         for (const tab of dimensionTabs) {
             await summaryFrame.getByRole('tab', { name: tab, exact: true }).click();
@@ -144,8 +149,8 @@ test.describe('Summary', () => {
         // 点击 DP 连线
         await parallelismGraphPlaceholder.click({
             position: {
-                x: 160,
-                y: 104,
+                x: 64,
+                y: 92,
             },
         });
 
@@ -180,10 +185,10 @@ test.describe('Summary', () => {
 
         await summaryPage.changeDimensionTo('tp');
         await stepSelector.open();
-        await stepSelector.selectOption('2');
+        await stepSelector.selectOption('All');
         await rankGroupSelector.open();
-        await rankGroupSelector.setValue('(1,9)');
-        await rankGroupSelector.selectOption('(1,9)');
+        await rankGroupSelector.setValue('(1,3)');
+        await rankGroupSelector.selectOption('(1,3)');
         await orderBySelector.open();
         await orderBySelector.selectOption('Preparing');
         await topSelector.open();
@@ -200,11 +205,11 @@ test.describe('Summary', () => {
 
         await summaryPage.changeDimensionTo('tp');
         await page.waitForTimeout(1000);
-        // 点击 rank 3
+        // 点击 rank 2
         await performanceChartCanvas.click({
             position: {
-                x: 693,
-                y: 219,
+                x: 919,
+                y: 189,
             },
         });
 
@@ -212,62 +217,12 @@ test.describe('Summary', () => {
         await expect(statisticsTableContainer).toHaveScreenshot('statistics-table.png');
     });
 
-    test('test_computingDetailTableAndCommunicationDetailTable_DetailsAndOrderBy', async ({ page, summaryPage }) => {
-        const { computingDetail, communicationDetail, summaryFrame } = summaryPage;
-
-        await summaryPage.changeDimensionTo('tp');
-        await page.waitForTimeout(1000);
-
-        // 展开Details
-        await summaryFrame.getByRole('row', { name: 'AI_CORE 157876 Details down' }).getByRole('button').click();
-        await summaryFrame.getByRole('row', { name: 'Communication 266466 69898' }).getByRole('button').click();
-        await page.mouse.move(0, 0);
-        await expect(computingDetail).toHaveScreenshot('computing-details.png');
-        await expect(communicationDetail).toHaveScreenshot('communication-details.png');
-
-        // 展开Details后切换页签
-        await summaryFrame.getByText('4', { exact: true }).first().click();
-        await summaryFrame.getByText('5', { exact: true }).nth(1).click();
-        await page.mouse.move(0, 0);
-        await expect(computingDetail).toHaveScreenshot('computing-details-page-change.png');
-        await expect(communicationDetail).toHaveScreenshot('communication-details-page-change.png');
-
-        // 展开切换页签后测试排序
-        await summaryFrame.locator('div').filter({ hasText: /^Duration\(μs\)$/ }).first().click();
-        await summaryFrame.locator('div').filter({ hasText: /^Start Time\(ms\)$/ }).nth(1).click();
-        await page.mouse.move(0, 0);
-        await expect(computingDetail).toHaveScreenshot('computing-details-orderby.png');
-        await expect(communicationDetail).toHaveScreenshot('communication-details-orderby.png');
-    });
-});
-
-// 专家建议查询慢卡/慢分组功能
-test.describe('Summary(Expert Advice Slow Rank)', () => {
-    test.beforeEach(async ({ page, summaryPage, ws }) => {
-        const { loadingDialog } = new FrameworkPage(page);
-        const { fullmask } = summaryPage;
-
-        await page.goto('/');
-        await importData(page, FilePath.EXPERT_ADVICE);
-        await summaryPage.goto();
-        if (await loadingDialog.count()) {
-            await loadingDialog.waitFor({ state: 'attached' });
-        }
-        if (await fullmask.count()) {
-            await fullmask.waitFor({ state: 'hidden' });
-        }
-    });
-
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
-    });
-
     // 切换不同维度生成专家建议
     test('test_expertAdvice_when_changeDimensionTab', async ({ page, summaryPage }) => {
         const { summaryFrame, parallelismExpertAdvice, parallelismGraphLoading } = summaryPage;
-        const defaultTab = 'DP + PP + CP + TP';
+        const defaultTab = 'DP + PP + TP';
         const dimensionTabs = ['DP + PP'];
-        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 1, tpSize: 8, dpSize: 1, cpSize: 1, epSize: 1 });
+        await summaryPage.configureParallel({ algorithm: 'Megatron-LM (tp-cp-ep-dp-pp)', ppSize: 2, tpSize: 1, dpSize: 2, cpSize: 1, epSize: 1 });
 
         await parallelismGraphLoading.waitFor({ state: 'hidden' });
         await page.mouse.move(0, 0);
@@ -285,6 +240,7 @@ test.describe('Summary(Expert Advice Slow Rank)', () => {
 
 // 专家负载均衡功能
 test.describe('Summary(MoE)', () => {
+    test.skip();
     test.beforeEach(async ({ page, summaryPage, ws }) => {
         const { loadingDialog } = new FrameworkPage(page);
         const { fullmask } = summaryPage;

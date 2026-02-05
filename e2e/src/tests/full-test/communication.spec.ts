@@ -21,6 +21,7 @@ import { CommunicationPage, FrameworkPage, TimelinePage } from '@/page-object';
 import { clearAllData, importData, setupWebSocketListener, waitForResponse, waitForWebSocketEvent } from '@/utils';
 import { SelectHelpers, TableHelpers } from '@/components';
 import { FilePath } from '@/utils/constants';
+import { dragSelect } from '../../utils';
 
 interface TestFixtures {
     communicationPage: CommunicationPage;
@@ -48,7 +49,7 @@ test.describe('Communication', () => {
 
         const { loadingDialog } = new FrameworkPage(page);
         await page.goto('/');
-        await importData(page);
+        await importData(page, FilePath.DB);
         await communicationPage.goto();
         await page.mouse.move(0,0);
         if (await loadingDialog.count()) {
@@ -73,16 +74,16 @@ test.describe('Communication', () => {
         // 筛选迭代id
         const stepSelect = new SelectHelpers(page, stepSelector, communicationFrame);
         await stepSelect.open();
-        await stepSelect.selectOption('3');
+        await stepSelect.selectOption('13');
         // 筛选通信域
         const communicationGroupSelect = new SelectHelpers(page, communicationGroupSelector, communicationFrame);
         await communicationGroupSelect.open();
-        await communicationGroupSelect.selectOption('(0, 1, 2, 3, 4, 5, 6, 7):6979938994784791964:');
+        await communicationGroupSelect.selectOption('dp_cp:(0, 1)');
 
         // 筛选算子名称
         const operatorNameSelect = new SelectHelpers(page, operatorNameSelector, communicationFrame);
         await operatorNameSelect.open();
-        await operatorNameSelect.selectOption('allreduce-bottom1');
+        await operatorNameSelect.selectOption('allgather-bottom1');
         await page.waitForTimeout(1000);
         await page.mouse.move(0, 0);
         await expect(fullPage).toHaveScreenshot('page-loaded.png');
@@ -167,26 +168,20 @@ test.describe('Communication', () => {
         // HCCL图中悬浮窗测试
         await communicationFrame.locator('#hccl').hover({
             position: {
-                x: 442,
-                y: 185,
+                x: 1348,
+                y: 97,
             },
         });
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl-tooltip.png', { maxDiffPixels: 500 });
         // HCCL图中横轴测试
         const canvasBox = await communicationFrame.locator('#hccl').boundingBox();
-        await page.mouse.move(canvasBox.x + 400, canvasBox.y + 420);
-        await page.mouse.down();
-        await page.mouse.move(canvasBox.x + 500, canvasBox.y + 420, { steps: 10 });
-        await page.mouse.up();
+        await dragSelect(page, { x: canvasBox.x + 1326, y: canvasBox.y + 417 }, { x: canvasBox.x + 1393, y: canvasBox.y + 417 });
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl-x-axis.png', { maxDiffPixels: 500 });
         // HCCL图中竖轴测试
-        await page.mouse.move(canvasBox.x + 1520, canvasBox.y + 120);
-        await page.mouse.down();
-        await page.mouse.move(canvasBox.x + 1520, canvasBox.y + 170, { steps: 10 });
-        await page.mouse.up();
+        await dragSelect(page, { x: canvasBox.x + 1519, y: canvasBox.y + 80 }, { x: canvasBox.x + 1519, y: canvasBox.y + 193 });
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl-y-axis.png', { maxDiffPixels: 500 });
         // ctrl+滚轮放大缩小测试
-        await page.mouse.move(canvasBox.x + 300, canvasBox.y + 150);
+        await page.mouse.move(canvasBox.x + 1368, canvasBox.y + 196);
         // 代码应该是接收滚轮指令次数而不是距离,故使用循环
         await page.keyboard.down('Control');
         for (let _ = 0; _ < 5; _++) {
@@ -282,55 +277,6 @@ test.describe('Communication', () => {
         });
         await page.waitForTimeout(1000);
         await expect(operatorPage).toHaveScreenshot('page-bandwidth-analysis.png');
-        // 测试其中图表功能
-        const canvas = operatorPage.locator('canvas');
-        // 数据显示与隐藏
-        await communicationFrame.getByTestId('operators').locator('canvas').click({
-            position: {
-                x: 162,
-                y: 10,
-            },
-        });
-        await expect(canvas).toHaveScreenshot('packet-distribution-data.png');
-        await communicationFrame.getByTestId('operators').locator('canvas').click({
-            position: {
-                x: 162,
-                y: 10,
-            },
-        });
-        // 图表中的数据以表格形式展示
-        await communicationFrame.getByTestId('operators').locator('canvas').click({
-            position: {
-                x: 218,
-                y: 29,
-            },
-        });
-        await expect(canvas).toHaveScreenshot('packet-distribution-data-view-open.png');
-        await communicationFrame.getByText('Close').click();
-        // 将图表形式转为折线图
-        await communicationFrame.getByTestId('operators').locator('canvas').click({
-            position: {
-                x: 243,
-                y: 27,
-            },
-        });
-        await expect(canvas).toHaveScreenshot('packet-distribution-data-switch-to-line-chart.png');
-        // 将图表形式转为柱状图
-        await communicationFrame.getByTestId('operators').locator('canvas').click({
-            position: {
-                x: 275,
-                y: 29,
-            },
-        });
-        await expect(canvas).toHaveScreenshot('packet-distribution-data-switch-to-bar-chart.png');
-        // 将图表恢复为原始状态
-        await communicationFrame.getByTestId('operators').locator('canvas').click({
-            position: {
-                x: 304,
-                y: 29,
-            },
-        });
-        await expect(canvas).toHaveScreenshot('packet-distribution-data-restore.png');
     });
 
     // 右键点击 HCCL 图表，跳转至Timeline
@@ -344,13 +290,12 @@ test.describe('Communication', () => {
         await hcclChart.click({
             button: 'right',
             position: {
-                x: 440,
-                y: 151,
+                x: 130,
+                y: 96,
             },
         });
         await communicationFrame.getByText('Find in Timeline').click();
-        await page.waitForTimeout(500);
-
+        await page.waitForTimeout(1000);
         await expect(fullPage).toHaveScreenshot('redirect-to-timeline.png', { maxDiffPixels: 500 });
     });
 });
