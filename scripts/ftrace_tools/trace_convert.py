@@ -15,6 +15,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 -------------------------------------------------------------------------
 """
+from collections import deque
 import json
 import re
 import os
@@ -25,6 +26,8 @@ import tqdm
 import argparse
 import glob
 import time
+import subprocess
+from typing import Dict, Deque
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s]:%(message)s')
 CPU_SCHED_PID = "CPU Scheduling"
@@ -59,6 +62,19 @@ def get_trace_event(name, pid, tid, ts, dur, args=None):
 def get_meta_event(pid, tid):
     return {"name": "process_name", 'ph': 'M', 'pid': pid, 'tid': tid}
 
+
+class InterruptEvent(object):
+    def __init__(self, comm, st, cpu, **kwargs):
+        self.comm = comm
+        self.st = st
+        self.cpu = "CPU " + cpu
+        self.dur = 0
+        self.et = 0
+        self.kwargs = kwargs
+    
+    def to_event_json(self):
+        return get_trace_event(self.comm, CPU_SCHED_PID, self.cpu, tran(self.st), tran(self.dur), args=self.kwargs)
+    
 
 class CompleteEvent(object):
     def __init__(self, comm, pid, st, cpu, prio):
@@ -218,7 +234,7 @@ class TimeStampTran:
         return: dict or None
         """
         if profiling_data is None:
-            return {'clockMonotonicRaw': 0, 'collectionTimeBegin': 0}
+            return {'clockMonotonicRaw': 0, 'collectionTimeBegin': 0} if info_name == "start_info" else None
         if not os.path.exists(profiling_data):
             logging.error("Profiling data path not exist")
             # 递归查找time_info
@@ -256,36 +272,12 @@ class TimeStampTran:
 
 
 class FtraceParse:
-    @abstractmethod
-    def parse_one_event(self, match):
-        return
-
-    @abstractmethod
-    def belong(self, event: str):
-        return None
-
-    @abstractmethod
-    def get_result(self):
-        return
-
-
-class SchedFtraceParse(FtraceParse):
-    def __init__(self):
-        self.cpu_stats = dict()
-        self.cpu_set = set()
-        self.process_state = {}
-        self.process_set = set()
-        self.sched_pattern = re.compile(
+    def __init__(self, file_type='dat'):
+        self.file_type = file_type
+        self.ftrace_pattern = re.compile(
             r'(?P<task>.*)-(?P<pid>\d+)\s+\[(?P<cpu>\d+)\]\s.{4,5}\s(?P<timestamp>[\d.]+):\s+(?P<action>.*):\s+(?P<args>.*)')
-
-        self.trace_event = []
-
-    def belong(self, event: str):
-        if "sched" not in event:
-            return None
-
-        return self.sched_pattern.search(event.strip())
-
+        self.ftrace_pattern_for_dat = re.compile(
+            r'(?P<task>.*)-(?P<pid>\d+)\s+\[(?P<cpu>\d+)\]\s+(?P<timestamp>[\d.]+):\s+(?P<action>.*):\s+(?P<args>.*)')
 
     def parse_one_event(self, match):
         timestamp = TimeStampTran().get_utc_timestamp(match.group('timestamp'))
@@ -300,6 +292,137 @@ class SchedFtraceParse(FtraceParse):
         args = match.group('args')
         result = {"task": task, "pid": pid, "cpu": cpu, "timestamp": timestamp, "action": action, "args": args}
         self.trans_to_trace_event(result)
+    
+    @abstractmethod
+    def trans_to_trace_event(self, event):
+        return
+
+    @abstractmethod
+    def belong(self, event: str):
+        return None
+
+    @abstractmethod
+    def get_result(self):
+        return
+    
+    def parse_base_param(self, string: str):
+        kv = string.split(' ')
+        result = [kv[0]]
+        for i in range(1, len(kv)):
+            if '=' in kv[i]:
+                result.append(kv[i])
+            else:
+                result[-1] += " " + kv[i]
+        kv_dic = {}
+        for item in result:
+            if item == '==>':
+                continue
+            k, v = item.split("=")
+            kv_dic[k] = v
+
+        # 需要做 pid 映射的字段
+        pid_keys = ("pid", "prev_pid", "next_pid")
+
+        for k in pid_keys:
+            if k in kv_dic and kv_dic[k]:
+                kv_dic[k] = PidTran().get_ns_pid(kv_dic[k])
+
+        return kv_dic
+    
+
+class InterruptFtraceParse(FtraceParse):
+    def __init__(self, file_type='dat'):
+        super().__init__(file_type=file_type)
+        self.parse_softirq_pattern = re.compile(r'vec=(?P<vec>\d+)\s+\[action=(?P<action>.+)\]')
+        self.interrupt_events_res = []
+        self.interrupt_events: Dict[int, Deque[InterruptEvent]] = {}
+
+    def belong(self, event: str):
+        if "irq" not in event and "softirq" not in event:
+            return None
+        return self.ftrace_pattern_for_dat.search(event.strip()) if self.file_type == 'dat' else self.ftrace_pattern.search(event.strip())
+
+    def trans_to_trace_event(self, event):
+        action = event['action']
+        if action  in ['irq_handler_entry', 'irq_handler_exit']:
+            self.parse_irq_event(event)
+        if action in ['softirq_raise', 'softirq_entry', 'softirq_exit']:
+            self.parse_softirq_event(event)
+
+    def parse_irq_event(self, entry: dict):
+        cpu = entry['cpu']
+        pid = entry['pid']
+        timestamp = entry['timestamp']
+        kwargs = self.parse_base_param(entry['args'])
+        kwargs['task'] = entry['task'] + ":" + pid
+        if entry['action'] == 'irq_handler_entry':
+            if cpu not in self.interrupt_events:
+                self.interrupt_events[cpu] = deque()
+            self.interrupt_events[cpu].append(InterruptEvent("irq", timestamp, cpu, **kwargs))
+        elif entry['action'] == 'irq_handler_exit':
+            if cpu not in self.interrupt_events or len(self.interrupt_events[cpu]) == 0:
+                logging.warning("IRQ exit event without matching entry event on CPU %s", cpu)
+                return
+            event = self.interrupt_events[cpu].pop()
+            event.dur = timestamp - event.st
+            event.kwargs.update(kwargs)
+            self.interrupt_events_res.append(event.to_event_json())
+
+    def parse_softirq_event(self, entry: dict):
+        cpu = entry['cpu']
+        pid = entry['pid']
+        task = entry['task']
+        timestamp = entry['timestamp']
+        kwargs = self.parse_softirq_param(entry['args'])
+        kwargs['task'] = task + ":" + pid
+        if entry['action'] == 'softirq_raise':
+            self.interrupt_events_res.append(InterruptEvent("softirq_raise", timestamp, cpu, **kwargs).to_event_json())
+        elif entry['action'] == 'softirq_entry':
+            if cpu not in self.interrupt_events:
+                self.interrupt_events[cpu] = deque()
+            self.interrupt_events[cpu].append(InterruptEvent("softirq", timestamp, cpu, **kwargs))
+        elif entry['action'] == 'softirq_exit':
+            if cpu not in self.interrupt_events or len(self.interrupt_events[cpu]) == 0:
+                logging.warning("Softirq exit event without matching entry event on CPU %s", cpu)
+                return
+            event = self.interrupt_events[cpu].pop()
+            event.dur = timestamp - event.st
+            self.interrupt_events_res.append(event.to_event_json())
+
+
+    def parse_softirq_param(self, string: str):
+        match = self.parse_softirq_pattern.search(string.strip())
+        if match is None:
+            logging.debug("Not match regex:{}", string)
+            return
+        vec = match.group('vec')
+        action = match.group('action')
+        result = {"vec": vec, "action": action}
+        return result
+
+    def get_result(self):
+        return self.interrupt_events_res
+
+
+class SchedFtraceParse(FtraceParse):
+    def __init__(self, file_type='dat'):
+        super().__init__(file_type=file_type)
+        self.cpu_stats = dict()
+        self.cpu_set = set()
+        self.process_state = {}
+        self.process_set = set()
+        self.parse_sched_switch_pattern = re.compile(
+            r'(?P<prev_comm>.+):(?P<prev_pid>\d+)\s+\[(?P<prev_prio>\d+)\]\s+(?P<prev_state>\w+)\s+==>\s+(?P<next_comm>.+):(?P<next_pid>\d+)\s+\[(?P<next_prio>\d+)\]')
+        self.parse_sched_wakeup_pattern = re.compile(r'(?P<comm>.+):(?P<pid>\d+)\s+\[(?P<prio>\d+)\]\s+CPU:(?P<cpu>\d+)')
+        self.parse_softirq_pattern = re.compile(r'vec=(?P<vec_id>\d+)\s+\[action=(?P<action>.+)\]')
+
+        self.trace_event = []
+
+    def belong(self, event: str):
+        if "sched" not in event:
+            return None
+
+        return self.ftrace_pattern_for_dat.search(event.strip()) if self.file_type == 'dat' else self.ftrace_pattern.search(event.strip())
 
     def trans_to_trace_event(self, event):
         if 'action' not in event.keys():
@@ -330,7 +453,7 @@ class SchedFtraceParse(FtraceParse):
         # draw kernel part
         cpu = entry['cpu']
         timestamp = entry['timestamp']
-        kwargs = self.parse_sched_param(entry['args'])
+        kwargs = self.parse_switch_sched_param(entry['args']) if self.file_type == 'dat' else self.parse_base_param(entry['args'])
         prev_comm = kwargs['prev_comm'] + ':' + kwargs['prev_pid']
         if prev_comm in self.cpu_stats[cpu].keys():
             self.cpu_stats[cpu][prev_comm].end(timestamp, kwargs['prev_state'], kwargs['prev_prio'])
@@ -350,7 +473,7 @@ class SchedFtraceParse(FtraceParse):
 
     def parse_sched_wakeup(self, entry):
         timestamp = entry['timestamp']
-        args_dict = self.parse_sched_param(entry['args'])
+        args_dict = self.parse_weakup_sched_param(entry['args']) if self.file_type == 'dat' else self.parse_base_param(entry['args'])
         comm = args_dict['comm'] + ':' + args_dict['pid']
         if comm in self.process_state.keys():
             self.process_state[comm].wakeup(timestamp)
@@ -358,7 +481,7 @@ class SchedFtraceParse(FtraceParse):
             self.process_state[comm] = Process(args_dict['comm'], args_dict['pid'], timestamp)
 
     def parse_sched_free(self, entry):
-        args_dict = self.parse_sched_param(entry['args'])
+        args_dict = self.parse_base_param(entry['args'])
         timestamp = entry['timestamp']
         comm = args_dict['comm'] + ':' + args_dict['pid']
         if comm in self.process_state.keys():
@@ -368,7 +491,7 @@ class SchedFtraceParse(FtraceParse):
     def parse_sched_process_exec(self, entry):
         ts = entry['timestamp']
         cpu = entry['cpu']
-        kwargs = self.parse_sched_param(entry['args'])
+        kwargs = self.parse_base_param(entry['args'])
         pid = kwargs['pid']
         filename = kwargs['filename'].split('/')[-1]
         process = filename + ':' + PidTran().get_ns_pid(pid)
@@ -389,29 +512,33 @@ class SchedFtraceParse(FtraceParse):
         else:
             self.cpu_stats[cpu][process] = CompleteEvent(comm, pid, ts, cpu, "unknown")
 
-    def parse_sched_param(self, string: str):
-        kv = string.split(' ')
-        result = [kv[0]]
-        for i in range(1, len(kv)):
-            if '=' in kv[i]:
-                result.append(kv[i])
-            else:
-                result[-1] += " " + kv[i]
-        kv_dic = {}
-        for item in result:
-            if item == '==>':
-                continue
-            k, v = item.split("=")
-            kv_dic[k] = v
+    def parse_switch_sched_param(self, string: str):
+        match = self.parse_sched_switch_pattern.search(string.strip())
+        if match is None:
+            logging.debug("Not match regex:{}", string)
+            return
+        prev_comm = match.group('prev_comm')
+        prev_pid = PidTran().get_ns_pid(match.group('prev_pid'))
+        prev_prio = match.group('prev_prio')
+        prev_state = match.group('prev_state')
+        next_comm = match.group('next_comm')
+        next_pid = PidTran().get_ns_pid(match.group('next_pid'))
+        next_prio = match.group('next_prio')
+        result = {"prev_comm": prev_comm, "prev_pid": prev_pid, "prev_prio": prev_prio, "prev_state": prev_state,
+                  "next_comm": next_comm, "next_pid": next_pid, "next_prio": next_prio}
+        return result
 
-        # 需要做 pid 映射的字段
-        pid_keys = ("pid", "prev_pid", "next_pid")
-
-        for k in pid_keys:
-            if k in kv_dic and kv_dic[k]:
-                kv_dic[k] = PidTran().get_ns_pid(kv_dic[k])
-
-        return kv_dic
+    def parse_weakup_sched_param(self, string: str):
+        match = self.parse_sched_wakeup_pattern.search(string.strip())
+        if match is None:
+            logging.debug("Not match regex:{}", string)
+            return
+        comm = match.group('comm')
+        pid = PidTran().get_ns_pid(match.group('pid'))
+        prio = match.group('prio')
+        cpu = match.group('cpu')
+        result = {"comm": comm, "pid": pid, "prio": prio, "cpu": cpu}
+        return result
 
     def add_trace_event(self, event):
         # swapper进程为内核的特殊进程，忽略
@@ -437,15 +564,17 @@ class SchedFtraceParse(FtraceParse):
 class TraceConverter:
     def __init__(self, trace_file_path, profiling_data=None, pid_mapping=None):
         self.trace_file_path = trace_file_path
+        self.file_type = 'dat' if trace_file_path.endswith('.dat') else 'txt'
         self.parse_func_map = []
         self.pid_status = PidTran()
         self.pid_status.initialize(pid_mapping)
         self.time_tran = TimeStampTran()
         self.time_tran.initialize(profiling_data)
-        self.register_parser()
+        self.register_parser(self.file_type)
 
-    def register_parser(self):
-        self.parse_func_map.append(SchedFtraceParse())
+    def register_parser(self, file_type='dat'):
+        self.parse_func_map.append(SchedFtraceParse(file_type=file_type))
+        self.parse_func_map.append(InterruptFtraceParse(file_type=file_type))
 
     def parse(self):
         self.parse_trace_file()
@@ -453,32 +582,45 @@ class TraceConverter:
         for parser in self.parse_func_map:
             result.extend(parser.get_result())
         return result
+    
+    def get_lines_from_trace_cmd(self):
+        cmd = ["trace-cmd", "report", "-i", self.trace_file_path]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logging.error(f"error: {result.stderr}")
+            return []
+        logging.info("Finish reading trace file, start parsing...")
+        lines = result.stdout.splitlines()
+        return lines
+    
+    def get_lines_from_file(self):
+        with open(self.trace_file_path, 'r') as file:	 
+            lines = file.readlines()
+        return lines
 
     def parse_trace_file(self):
+        logging.info(f"start parse ftrace file: {self.trace_file_path}")
         # check whether file exist
         if not os.path.exists(self.trace_file_path):
             logging.critical(f"File not exists: {self.trace_file_path}")
             return False
-        file = open(self.trace_file_path, 'r')
-        lines = file.readlines()
+        lines = self.get_lines_from_trace_cmd() if self.file_type == 'dat' else self.get_lines_from_file()
         for line in tqdm.tqdm(lines, desc="Parsing trace file", unit="line"):
             for parser in self.parse_func_map:
                 match = parser.belong(line)
                 if match:
                     parser.parse_one_event(match)
-                    break
-        file.close()
         return True
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', type=str, default='ftrace.txt')
+    parser.add_argument('--input', type=str, default='trace.dat')
     parser.add_argument('--output', type=str, default='output.json')
     parser.add_argument('--profiling_data', type=str, help='use profiling data to adjust start time')
     parser.add_argument('--pid_mapping', type=str, help='container pid map file')
     args = parser.parse_args()
-    
+
     t_start = time.perf_counter()
     con = TraceConverter(args.input, args.profiling_data, args.pid_mapping)
     trace_event = con.parse()

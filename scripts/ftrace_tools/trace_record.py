@@ -45,7 +45,7 @@ FUTEX_EVENT_LIST = {
     "syscalls:sys_enter_futex", "syscalls:sys_exit_futex",
 }
 
-def ftrace_record_start(cpu_mask=None, bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: Optional["TraceEventConfig"]=None,
+def ftrace_record_start(cpu_mask=None, output="ftrace.dat", record_time=60, bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: Optional["TraceEventConfig"]=None,
                         args=None):
     if os.getuid() != 0:
         logging.critical('Please run this script as root')
@@ -60,16 +60,15 @@ def ftrace_record_start(cpu_mask=None, bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_
         event_cfg.futex = args.futex
 
     TraceRecord.trace_clear()
-    TraceRecord.trace_start(cpu_mask, event_cfg=event_cfg, buffer_size=bf_size)
+    TraceRecord.trace_start(cpu_mask, output, record_time, event_cfg=event_cfg, buffer_size=bf_size)
     return True
 
 def ftrace_record_stop(output = "ftrace.txt"):
-    logging.info("Ending record, writing result to file...")
+    logging.info("Ending record, cleaning up...")
     TraceRecord.trace_stop()
-    TraceRecord.trace_show(output)
     TraceRecord.trace_clear()
     TraceRecord.trace_reset()
-    logging.info("Write finish")
+    logging.info("Cleanup finished")
 
 def on_exit():
     TraceRecord.trace_stop()
@@ -191,8 +190,8 @@ class TraceRecord:
         TraceRecord.__run(['/usr/bin/trace-cmd', 'reset'])
 
     @staticmethod
-    def trace_start(cpu_mask, event_cfg, buffer_size=DEFAULT_TRACE_BUFFER_SIZE):
-        start_command = ['/usr/bin/trace-cmd', 'start', '-b', str(buffer_size), '-C', 'mono_raw']
+    def trace_start(cpu_mask, output, record_time, event_cfg, buffer_size=DEFAULT_TRACE_BUFFER_SIZE, ):
+        start_command = ['/usr/bin/trace-cmd', 'record', '-b', str(buffer_size), '-C', 'mono_raw']
 
         if event_cfg.sched:
             for event in SCHED_EVENT_LIST:
@@ -207,6 +206,11 @@ class TraceRecord:
         if cpu_mask is not None:
             start_command.append('-M')
             start_command.append(CPUParser.cpus_to_cpumask(cpu_mask))
+
+        start_command.extend(['-o', output])
+
+        if record_time > 0:
+            start_command.extend(['sleep', str(record_time)])
         TraceRecord.__run(start_command)
 
     @staticmethod
@@ -229,22 +233,12 @@ class TraceRecord:
 def normal_mode(args):
     signal.signal(signal.SIGTERM, on_exit)
     try:
-        ftrace_record_start(args.cpu, args.bf_size, args)
         if args.NSpid:
             nspid_recorder = ContainerPidMapper()
             nspid_recorder.start(None)
+        ftrace_record_start(args.cpu, args.output, args.record_time, args.bf_size, args)
     except KeyboardInterrupt:
-        ftrace_record_stop(args.output)
-    logging.info("Start recording")
-    if args.record_time <= 0:
-        logging.warning('Record time equals -1, start long term record')
-        while True:
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                break
-    else:
-        time.sleep(args.record_time)
+        logging.info("User Interrupt Service Routine‌.")
     ftrace_record_stop(args.output)
 
 
@@ -451,7 +445,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--cpu', type=str, default=None,
                         help="Specify CPU cores to collect. Supports single numbers, commas, and hyphen ranges. e.g., '0,1,4' or '0-3,8'. Default: collect all CPUs.")
-    parser.add_argument('--output', type=str, default='ftrace.txt')
+    parser.add_argument('--output', type=str, default='trace.dat')
     parser.add_argument('--record_time', type=int, default=30,
                         help='record time, if pass <=0 will start long term record that user should attention the disk space')
     parser.add_argument('--bf_size', type=int, default=DEFAULT_TRACE_BUFFER_SIZE,
