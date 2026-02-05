@@ -111,6 +111,12 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
             metadataList,
             ...paramsOfDepth,
         };
+
+        // 这里判断必要入参，如隐藏的泳道无rankId，则不发起请求
+        if (params.rankId === undefined) {
+            return;
+        }
+
         const raw = await window.request(metadata.dataSource, { command: 'unit/threads', params });
         const res = raw.data;
 
