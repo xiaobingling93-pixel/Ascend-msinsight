@@ -715,27 +715,51 @@ bool ProjectParserJson::ExistJsonFormatFile(const std::string &file)
 
 bool ProjectParserJson::IsACLGraphDebugJSON(const std::string& filePath)
 {
-    if (filePath.empty()) {
+    if (filePath.empty()) { return false; }
+
+    std::ifstream file(filePath, std::ios::binary); // 二进制模式避免换行转换
+    if (!file.is_open() || file.fail()) { return false; }
+
+    // =============== 阶段1: 定位根数组后的首个对象起始 ===============
+    bool foundRootArray = false;
+    char c;
+    // 跳过空白，寻找根数组 '['
+    while (file.get(c)) {
+        if (std::isspace(static_cast<unsigned char>(c))) { continue; }
+        if (c == '[') { foundRootArray = true; break; }
+        return false; // 非数组根结构，不符合预期
+    }
+    if (!foundRootArray || file.eof()) { return false; }
+
+    // 跳过 '[' 后的空白，寻找首个 '{'（第一个元素必须是对象）
+    while (file.get(c)) {
+        if (std::isspace(static_cast<unsigned char>(c))) { continue; }
+        if (c == '{') { break; } // 找到目标对象起点
+        // 其他字符均视为无效
         return false;
     }
+    if (file.eof()) return false;
 
-    std::ifstream file(filePath);
-    if (!file.is_open() || file.fail()) {
-        return false;
-    }
+    // =============== 阶段2: 状态机提取完整首个对象（含嵌套） ===============
+    std::string firstObject;
+    firstObject += c; // 加入起始 '{'
 
-    // 严格匹配小写 "aclGraph"（移除 icase 标志）
-    static const std::regex pattern(R"("pid":\s*"[^"]*aclGraph")", std::regex_constants::optimize); // 仅 optimize，不忽略大小写
+    int braceCount = 1;      // 花括号嵌套深度（已含起始{）
 
-    std::string line;
-    constexpr uint8_t LINE_NUM = 3;
-    for (int i = 0; i < LINE_NUM && std::getline(file, line); ++i) {
-        if (line.find_first_not_of(" \t\r\n") == std::string::npos) continue;
-        if (std::regex_search(line, pattern)) {
-            return true;
+    while (braceCount > 0 && file.get(c)) {
+        firstObject += c;
+        if (c == '{') {
+            ++braceCount;
+        } else if (c == '}') {
+            if (--braceCount == 0) { break; } // 首对象完整结束
         }
     }
-    return false;
+    // 对象未闭合（文件截断/格式错误）
+    if (braceCount != 0) { return false; }
+    // =============== 阶段3: 仅在提取的对象内正则匹配 ===============
+    // 严格匹配小写 "aclGraph"（移除 icase 标志）
+    static const std::regex pattern(R"("pid":\s*"[^"]*aclGraph")", std::regex_constants::optimize); // 仅 optimize，不忽略大小写
+    return std::regex_search(firstObject, pattern);
 }
 
 std::tuple<bool, bool, bool> ProjectParserJson::CheckHasJsonMemoryDataOperatorData(

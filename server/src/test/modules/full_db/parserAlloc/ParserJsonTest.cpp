@@ -319,8 +319,8 @@ protected:
 // ===== 正向测试：严格小写 aclgraph =====
 TEST_F(ACLGraphDebugJSONTest, Valid_ExactLowercaseAclgraph) {
     std::vector<std::string> valid_cases = {
-        R"({"pid": "aclGraph"})",               // 精确匹配
-        R"({"pid": "xxx aclGraph"})",           // 需求示例
+        R"([{"pid": "aclGraph"})",               // 精确匹配
+        R"([{"pid": "xxx aclGraph"})",           // 需求示例
     };
     for (const auto& content : valid_cases) {
         std::string path = CreateTempFile(content);
@@ -334,20 +334,20 @@ TEST_F(ACLGraphDebugJSONTest, Valid_ExactLowercaseAclgraph) {
 // ===== 负向测试：大小写变体应拒绝 =====
 TEST_F(ACLGraphDebugJSONTest, Invalid_UppercaseVariantsRejected) {
     std::vector<std::string> invalid_cases = {
-        R"({"pid": "ACLGRAPH"})",      // 全大写
-        R"({"pid": "AclGraph"})",      // 驼峰（首字母大写）
-        R"({"pid": "ACLgraph"})",      // 前缀大写
-        R"({"pid": "aclgrAph"})",      // A 大写
-        R"({"pid": "Aclgraph"})",      // A 大写
-        R"({"pid": "aclGRAPH"})",      // 后缀大写
-        R"({"pid": "Ascend ACLGraph"})", // 混合大小写
-        R"({"pid": "xxx aclGraph debug"})", // 需求示例但带后缀
-        R"({"pid": "xxx ACLgraph"})",      // 需求示例但 ACL 大写
-        R"({"pid": "xxx aclgrAPh"})",      // 部分大写
-        R"({"pid": "xxx ACLGRAPH"})",      // 全大写
-        R"({"pid": "xxx acl-graph"})",     // 连字符（非 aclgraph）
-        R"({"pid": "xxx aclgrph"})",       // 拼写错误（缺 a）
-        R"({"pid": "xxx aclgrap"})",       // 拼写错误（缺 h）
+        R"([{"pid": "ACLGRAPH"})",      // 全大写
+        R"([{"pid": "AclGraph"})",      // 驼峰（首字母大写）
+        R"([{"pid": "ACLgraph"})",      // 前缀大写
+        R"([{"pid": "aclgrAph"})",      // A 大写
+        R"([{"pid": "Aclgraph"})",      // A 大写
+        R"([{"pid": "aclGRAPH"})",      // 后缀大写
+        R"([{"pid": "Ascend ACLGraph"})", // 混合大小写
+        R"([{"pid": "xxx aclGraph debug"})", // 需求示例但带后缀
+        R"([{"pid": "xxx ACLgraph"})",      // 需求示例但 ACL 大写
+        R"([{"pid": "xxx aclgrAPh"})",      // 部分大写
+        R"([{"pid": "xxx ACLGRAPH"})",      // 全大写
+        R"([{"pid": "xxx acl-graph"})",     // 连字符（非 aclgraph）
+        R"([{"pid": "xxx aclgrph"})",       // 拼写错误（缺 a）
+        R"([{"pid": "xxx aclgrap"})",       // 拼写错误（缺 h）
     };
     for (const auto& content : invalid_cases) {
         std::string path = CreateTempFile(content);
@@ -359,13 +359,13 @@ TEST_F(ACLGraphDebugJSONTest, Invalid_UppercaseVariantsRejected) {
 }
 
 TEST_F(ACLGraphDebugJSONTest, Invalid_SomeWordsAfterAclgraph) {
-    std::string content = R"({"pid": "xxx_aclGraph_core", "name": "test"})";
+    std::string content = R"([{"pid": "xxx_aclGraph_core", "name": "test"}])";
     std::string path = CreateTempFile(content);
     ASSERT_FALSE(path.empty());
     EXPECT_FALSE(ProjectParserJson::IsACLGraphDebugJSON(path));
 }
 
-TEST_F(ACLGraphDebugJSONTest, Invalid_MatchOnlyInFourthLine) {
+TEST_F(ACLGraphDebugJSONTest, Invalid_MatchOnlyNotArrayRoot) {
     std::string content =
         "{}\n{}\n{}\n{\"pid\": \"xxx aclGraph\"}";
     std::string path = CreateTempFile(content);
