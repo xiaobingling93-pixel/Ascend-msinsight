@@ -764,6 +764,54 @@ std::optional<document_t> ToResponseJson<SystemViewOverallResponse>(const System
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
+
+json_t MemcpyOverallResToJson(const MemcpyOverallRes &res,
+                                  RAPIDJSON_DEFAULT_ALLOCATOR &allocator, uint64_t depth = 1)
+{
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "key", res.key, allocator);
+    JsonUtil::AddMember(json, "name", res.name, allocator);
+    JsonUtil::AddMember(json, "totalSize", res.totalSize, allocator);
+    JsonUtil::AddMember(json, "totalTime", res.totalTime, allocator);
+    JsonUtil::AddMember(json, "number", res.number, allocator);
+    JsonUtil::AddMember(json, "avgSize", res.avgSize, allocator);
+    JsonUtil::AddMember(json, "minSize", res.minSize, allocator);
+    JsonUtil::AddMember(json, "maxSize", res.maxSize, allocator);
+    JsonUtil::AddMember(json, "avgTime", res.avgTime, allocator);
+    JsonUtil::AddMember(json, "minTime", res.minTime, allocator);
+    JsonUtil::AddMember(json, "maxTime", res.maxTime, allocator);
+    JsonUtil::AddMember(json, "level", res.level, allocator);
+    json_t children(kArrayType);
+    if (depth < 5) { // No more than 5 layers
+        for (const auto &child : res.children) {
+            children.PushBack(MemcpyOverallResToJson(child, allocator, depth + 1), allocator);
+        }
+    }
+    if (!children.Empty()) {
+        JsonUtil::AddMember(json, "children", children, allocator);
+    }
+    return json;
+}
+
+template <>
+std::optional<document_t> ToResponseJson<MemcpyOverallResponse>(const MemcpyOverallResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t data(kArrayType);
+    for (const auto& item : response.details) {
+        data.PushBack(MemcpyOverallResToJson(item, allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(body, "count", response.pageParam.total, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.pageParam.pageSize, allocator);
+    JsonUtil::AddMember(body, "current", response.pageParam.current, allocator);
+    JsonUtil::AddMember(body, "isLoading", response.isLoading, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
 #pragma endregion
 
 #pragma region << Event to json>>

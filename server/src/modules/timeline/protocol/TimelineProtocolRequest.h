@@ -535,6 +535,18 @@ struct TableDataDetailRequest : public Request {
     TableDataDetailRequest() : Request(REQ_RES_TABLE_DATA_DETAIL){};
     TableDataDetailParams params;
 };
+
+struct MemcpyOverallRequest : public Request {
+    MemcpyOverallRequest() : Request(REQ_RES_MEMCPY_OVERALL){};
+    struct Params {
+        std::string rankId;
+        std::string deviceId;
+        PageParam page{};
+        uint64_t startTime = 0; // time range analysis mode while startTime not equal to endTime
+        uint64_t endTime = 0; // time range analysis mode while startTime not equal to endTime
+        bool CheckParams(uint64_t minTime, std::string &errMsg) const;
+    } params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

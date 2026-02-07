@@ -576,6 +576,28 @@ struct TableDataDetailResponse : public Response {
     TableDataDetailResponse() : Response(REQ_RES_TABLE_DATA_DETAIL) {}
     TableDataDatail body;
 };
+
+struct MemcpyOverallRes {
+    std::string key;          // 唯一标识符
+    std::string name;         // 显示名称 (threadId 或 memcpy type)
+    uint64_t totalSize;       // 总大小
+    double totalTime;         // 总时间
+    uint32_t number;          // 数量
+    double avgSize;           // 平均大小
+    uint64_t minSize;         // 最小大小
+    uint64_t maxSize;         // 最大大小
+    double avgTime;           // 平均时间
+    double minTime;           // 最小时间
+    double maxTime;           // 最大时间
+    int level;                // 层级 (1: thread, 2: memcpy type)
+    std::vector<MemcpyOverallRes> children;  // 子项 (memcpy types for thread)
+};
+
+struct MemcpyOverallResponse : public Response {
+    std::vector<MemcpyOverallRes> details;
+    PageParam pageParam;
+    bool isLoading = false;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

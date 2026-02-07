@@ -178,5 +178,26 @@ bool UnitThreadsOperatorsParams::CheckParams(uint64_t minTime, std::string &warn
     }
     return CheckUnsignPageValid(pageSize, current, warnMsg);
 }
+
+bool MemcpyOverallRequest::Params::CheckParams(uint64_t minTime, std::string &errMsg) const
+{
+    if (page.pageSize == 0) {
+        errMsg = "Failed to check page parameter. Page size cannot be zero.";
+        return false;
+    }
+    if (page.current == 0) {
+        errMsg = "Failed to check page parameter. Current cannot be zero.";
+        return false;
+    }
+    if (startTime > endTime) {
+        errMsg = "memcpy overall start time is bigger than end time";
+        return false;
+    }
+    if (endTime > UINT64_MAX - minTime) {
+        errMsg = "memcpy overall end time is invalid";
+        return false;
+    }
+    return true;
+}
 } // namespace Protocol
 } // namespace Dic
