@@ -71,10 +71,10 @@ class InterruptEvent(object):
         self.dur = 0
         self.et = 0
         self.kwargs = kwargs
-    
+
     def to_event_json(self):
         return get_trace_event(self.comm, CPU_SCHED_PID, self.cpu, tran(self.st), tran(self.dur), args=self.kwargs)
-    
+
 
 class CompleteEvent(object):
     def __init__(self, comm, pid, st, cpu, prio):
@@ -84,7 +84,7 @@ class CompleteEvent(object):
         self.cpu = "CPU " + cpu
         self.total_runtime = 0
         self.vruntime = 0
-        self.end_state = ""
+        self.end_state = "unknown"
         self.prio = prio
 
     def update_runtime(self, runtime, vruntime):
@@ -93,10 +93,12 @@ class CompleteEvent(object):
         if vruntime is not None:
             self.vruntime = vruntime
 
-    def end(self, ts, end_state, prio):
+    def end(self, ts, end_state=None, prio=None):
         self.dur = ts - self.st
-        self.end_state = end_state
-        self.prio = prio
+        if end_state is not None:
+            self.end_state = end_state
+        if prio is not None:
+            self.prio = prio
 
     def to_event_json(self):
         return get_trace_event(self.comm + ":" + self.pid, CPU_SCHED_PID, self.cpu, self.st, self.dur,
@@ -124,6 +126,8 @@ class Process(object):
             return 'Runnable'
         elif self.state == 'R':
             return 'Running'
+        elif self.state == 'S':
+            return 'Sleeping'
         return 'Unknown'
 
     def add_event(self, ts):
@@ -214,6 +218,11 @@ class TimeStampTran:
         pass
 
     def initialize(self, profiling_data):
+        if profiling_data is None:
+            logging.warning("No profiling data path detected. Time alignment will be skipped.")
+            self.mono_raw_start = 0
+            self.utc_start_timestamp = 0
+            return
         start_info = self.__get_profiling_time_info(profiling_data, "start_info")
         if start_info is None:
             logging.error("Can't find profiling start time info")
@@ -233,8 +242,6 @@ class TimeStampTran:
         info_name: "start_info" or "end_info"
         return: dict or None
         """
-        if profiling_data is None:
-            return {'clockMonotonicRaw': 0, 'collectionTimeBegin': 0} if info_name == "start_info" else None
         if not os.path.exists(profiling_data):
             logging.error("Profiling data path not exist")
             # 递归查找time_info
@@ -253,13 +260,14 @@ class TimeStampTran:
 
         # Filter events before profiling started
         if self.mono_raw_start is not None and timestamp < self.mono_raw_start:
-            return None
+            return None, TimeFilterResult.BEFORE_START
 
         # Filter events after profiling ended
         if self.mono_raw_end is not None and timestamp > self.mono_raw_end:
-            return None
+            return None, TimeFilterResult.AFTER_END
 
-        return (timestamp - self.mono_raw_start) + self.utc_start_timestamp
+        utc_ts = (timestamp - self.mono_raw_start) + self.utc_start_timestamp
+        return utc_ts, TimeFilterResult.OK
 
     def __str_to_int(self, num_str):
         if not all((c.isdigit() or c == '.') for c in num_str) or num_str.count('.') > 1:
@@ -270,6 +278,10 @@ class TimeStampTran:
             return int(num_str) * 1000000
         return (int(num_str[:pos]) * 1000000 + int(num_str[pos + 1:])) * 1000
 
+class TimeFilterResult:
+     OK = 0 # ftrace时间范围在profiling的起止区间内
+     BEFORE_START = 1
+     AFTER_END = 2
 
 class FtraceParse:
     def __init__(self, file_type='dat'):
@@ -280,9 +292,13 @@ class FtraceParse:
             r'(?P<task>.*)-(?P<pid>\d+)\s+\[(?P<cpu>\d+)\]\s+(?P<timestamp>[\d.]+):\s+(?P<action>.*):\s+(?P<args>.*)')
 
     def parse_one_event(self, match):
-        timestamp = TimeStampTran().get_utc_timestamp(match.group('timestamp'))
-        if timestamp is None:
-            return
+        timestamp, status = TimeStampTran().get_utc_timestamp(match.group('timestamp'))
+
+        if status == TimeFilterResult.BEFORE_START:
+            return True  # 跳过当前事件，继续解析
+
+        if status == TimeFilterResult.AFTER_END:
+            return False  # 超出profiling时间范畴，终止解析
 
         task = match.group('task')
         pid = match.group('pid')
@@ -292,7 +308,8 @@ class FtraceParse:
         args = match.group('args')
         result = {"task": task, "pid": pid, "cpu": cpu, "timestamp": timestamp, "action": action, "args": args}
         self.trans_to_trace_event(result)
-    
+        return True
+
     @abstractmethod
     def trans_to_trace_event(self, event):
         return
@@ -304,7 +321,7 @@ class FtraceParse:
     @abstractmethod
     def get_result(self):
         return
-    
+
     def parse_base_param(self, string: str):
         kv = string.split(' ')
         result = [kv[0]]
@@ -328,7 +345,7 @@ class FtraceParse:
                 kv_dic[k] = PidTran().get_ns_pid(kv_dic[k])
 
         return kv_dic
-    
+
 
 class InterruptFtraceParse(FtraceParse):
     def __init__(self, file_type='dat'):
@@ -344,7 +361,7 @@ class InterruptFtraceParse(FtraceParse):
 
     def trans_to_trace_event(self, event):
         action = event['action']
-        if action  in ['irq_handler_entry', 'irq_handler_exit']:
+        if action in ['irq_handler_entry', 'irq_handler_exit']:
             self.parse_irq_event(event)
         if action in ['softirq_raise', 'softirq_entry', 'softirq_exit']:
             self.parse_softirq_event(event)
@@ -389,7 +406,6 @@ class InterruptFtraceParse(FtraceParse):
             event.dur = timestamp - event.st
             self.interrupt_events_res.append(event.to_event_json())
 
-
     def parse_softirq_param(self, string: str):
         match = self.parse_softirq_pattern.search(string.strip())
         if match is None:
@@ -403,6 +419,10 @@ class InterruptFtraceParse(FtraceParse):
     def get_result(self):
         return self.interrupt_events_res
 
+class TimeFilterResult:
+    OK = 0 # ftrace时间范围在profiling的起止区间内
+    BEFORE_START = 1
+    AFTER_END = 2
 
 class SchedFtraceParse(FtraceParse):
     def __init__(self, file_type='dat'):
@@ -414,7 +434,6 @@ class SchedFtraceParse(FtraceParse):
         self.parse_sched_switch_pattern = re.compile(
             r'(?P<prev_comm>.+):(?P<prev_pid>\d+)\s+\[(?P<prev_prio>\d+)\]\s+(?P<prev_state>\w+)\s+==>\s+(?P<next_comm>.+):(?P<next_pid>\d+)\s+\[(?P<next_prio>\d+)\]')
         self.parse_sched_wakeup_pattern = re.compile(r'(?P<comm>.+):(?P<pid>\d+)\s+\[(?P<prio>\d+)\]\s+CPU:(?P<cpu>\d+)')
-        self.parse_softirq_pattern = re.compile(r'vec=(?P<vec_id>\d+)\s+\[action=(?P<action>.+)\]')
 
         self.trace_event = []
 
@@ -442,8 +461,8 @@ class SchedFtraceParse(FtraceParse):
             self.parse_sched_switch(sched_event)
         if sched_event['action'] == 'sched_wakeup' or sched_event['action'] == 'sched_wakeup_new':
             self.parse_sched_wakeup(sched_event)
-        if sched_event['action'] == 'sched_process_free':
-            self.parse_sched_free(sched_event)
+        if sched_event['action'] == 'sched_process_exit':
+            self.parse_sched_process_exit(sched_event)
         if sched_event['action'] == 'sched_process_exec':
             self.parse_sched_process_exec(sched_event)
         if sched_event['action'] == 'sched_stat_runtime':
@@ -480,7 +499,7 @@ class SchedFtraceParse(FtraceParse):
         else:
             self.process_state[comm] = Process(args_dict['comm'], args_dict['pid'], timestamp)
 
-    def parse_sched_free(self, entry):
+    def parse_sched_process_exit(self, entry):
         args_dict = self.parse_base_param(entry['args'])
         timestamp = entry['timestamp']
         comm = args_dict['comm'] + ':' + args_dict['pid']
@@ -493,19 +512,40 @@ class SchedFtraceParse(FtraceParse):
         cpu = entry['cpu']
         kwargs = self.parse_base_param(entry['args'])
         pid = kwargs['pid']
-        filename = kwargs['filename'].split('/')[-1]
-        process = filename + ':' + PidTran().get_ns_pid(pid)
-        self.cpu_stats[cpu][process] = CompleteEvent(filename, pid, ts, cpu, "unkown")
-        self.process_state[process] = Process(filename, pid, ts)
-        self.process_state[process].run(ts)
+        old_key = entry['task'] + ':' + pid
+        new_comm = kwargs['filename'].split('/')[-1]
+        new_key = new_comm + ':' + pid
+
+        if old_key == new_key:
+            if new_key not in self.cpu_stats[cpu].keys():
+                self.cpu_stats[cpu][new_key] = CompleteEvent(new_comm, pid, ts, cpu, "unknown")
+            if new_key not in self.process_state:
+                self.process_state[new_key] = Process(new_comm, pid, ts)
+                self.process_state[new_key].run(ts)
+            return
+
+        # old key != new key, update cpu_stats and process_state
+        # ---------- cpu_stats ----------
+        if old_key in self.cpu_stats[cpu].keys():
+            self.cpu_stats[cpu][old_key].end(ts)
+            self.add_trace_event(self.cpu_stats[cpu][old_key].to_event_json())
+            del self.cpu_stats[cpu][old_key]
+        self.cpu_stats[cpu][new_key] = CompleteEvent(new_comm, pid, ts, cpu, "unknown")
+
+        # ---------- process_state ----------
+        if old_key in self.process_state:
+            self.process_state[old_key].exit(ts)
+            del self.process_state[old_key]
+        self.process_state[new_key] = Process(new_comm, pid, ts)
+        self.process_state[new_key].run(ts)
 
     def parse_sched_stat_runtime(self, entry):
         ts = entry['timestamp']
         cpu = entry['cpu']
-        kwargs = self.parse_sched_param(entry['args'])
+        kwargs = self.parse_base_param(entry['args'])
         comm = kwargs['comm']
         pid = kwargs['pid']
-        process = comm + ':' + PidTran().get_ns_pid(pid)
+        process = comm + ':' + pid
         # 当前进程已存在，更新运行时间
         if process in self.cpu_stats[cpu]:
             self.cpu_stats[cpu][process].update_runtime(kwargs.get('runtime'), kwargs.get('vruntime', None))
@@ -582,21 +622,29 @@ class TraceConverter:
         for parser in self.parse_func_map:
             result.extend(parser.get_result())
         return result
-    
+
     def get_lines_from_trace_cmd(self):
         cmd = ["trace-cmd", "report", "-i", self.trace_file_path]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0:
-            logging.error(f"error: {result.stderr}")
-            return []
-        logging.info("Finish reading trace file, start parsing...")
-        lines = result.stdout.splitlines()
-        return lines
-    
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
+
+        for line in proc.stdout:
+            yield line.rstrip("\n")
+
+        proc.wait()
+
+        if proc.returncode != 0:
+            err = proc.stderr.read()
+            logging.error(f"trace-cmd failed: {err}")
+
+    def get_lines(self):
+        if self.file_type == 'dat':
+            return self.get_lines_from_trace_cmd()
+        return self.get_lines_from_file()
+
     def get_lines_from_file(self):
-        with open(self.trace_file_path, 'r') as file:	 
-            lines = file.readlines()
-        return lines
+        with open(self.trace_file_path, 'r') as file:
+            for line in file:
+                yield line.rstrip("\n")
 
     def parse_trace_file(self):
         logging.info(f"start parse ftrace file: {self.trace_file_path}")
@@ -604,12 +652,18 @@ class TraceConverter:
         if not os.path.exists(self.trace_file_path):
             logging.critical(f"File not exists: {self.trace_file_path}")
             return False
-        lines = self.get_lines_from_trace_cmd() if self.file_type == 'dat' else self.get_lines_from_file()
+        lines = self.get_lines()
         for line in tqdm.tqdm(lines, desc="Parsing trace file", unit="line"):
             for parser in self.parse_func_map:
                 match = parser.belong(line)
-                if match:
-                    parser.parse_one_event(match)
+                if not match:
+                    continue
+                # parse_one_event 返回 False =>AFTER_END，直接结束解析
+                keep_parsing = parser.parse_one_event(match)
+                if keep_parsing is False:
+                    return True
+                # 当前行已经被某个parser消费，不再匹配其他parser
+                break
         return True
 
 
@@ -627,7 +681,7 @@ if __name__ == "__main__":
     logging.info("Parse End, Start Write to file....")
 
     with open(args.output, 'w') as f:
-        json.dump(trace_event, f)
+        json.dump(trace_event, f, indent=2)
 
     t_end = time.perf_counter()
     logging.info(f"Total convert time: {t_end - t_start:.3f}s")

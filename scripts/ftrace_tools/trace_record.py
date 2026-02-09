@@ -27,12 +27,13 @@ from typing import Optional
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s]:%(message)s')
 
-DEFAULT_TRACE_BUFFER_SIZE = 282000 # 单位: KB(trace-cmd环形缓冲区大小默认值)
+DEFAULT_TRACE_BUFFER_SIZE = 2820 # 单位: KB(trace-cmd环形缓冲区大小默认值)
+DEFAULT_TRACE_RECORD_TIME = 30 # 单位: 秒（trace-cmd采集时长默认值）
 
 # trace-cmd 事件白名单
 # cpu调度
 SCHED_EVENT_LIST = {
-    "sched_switch", "sched_wakeup", "sched_waking", "sched_wakeup_new", "sched_migrate_task",
+    "sched_switch", "sched_wakeup", "sched_waking", "sched_wakeup_new", "sched_migrate_task", "sched_stat_runtime",
     "sched_process_fork", "sched_process_exec", "sched_process_exit"
 }
 # 中断
@@ -45,7 +46,7 @@ FUTEX_EVENT_LIST = {
     "syscalls:sys_enter_futex", "syscalls:sys_exit_futex",
 }
 
-def ftrace_record_start(cpu_mask=None, output="ftrace.dat", bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: Optional["TraceEventConfig"]=None,
+def ftrace_record_start(cpu_mask=None, output="trace.dat", bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: Optional["TraceEventConfig"]=None,
                         args=None):
     if os.getuid() != 0:
         logging.critical('Please run this script as root')
@@ -490,7 +491,7 @@ if __name__ == "__main__":
     parser.add_argument('--cpu', type=str, default=None,
                         help="Specify CPU cores to collect. Supports single numbers, commas, and hyphen ranges. e.g., '0,1,4' or '0-3,8'. Default: collect all CPUs.")
     parser.add_argument('--output', type=str, default='trace.dat')
-    parser.add_argument('--record_time', type=int, default=30,
+    parser.add_argument('--record_time', type=int, default=DEFAULT_TRACE_RECORD_TIME,
                         help='record time, if pass <=0 will start long term record that user should attention the disk space')
     parser.add_argument('--bf_size', type=int, default=DEFAULT_TRACE_BUFFER_SIZE,
                         help = 'trace-cmd ring buffer size in KB, used to store ftrace events during tracing. '
