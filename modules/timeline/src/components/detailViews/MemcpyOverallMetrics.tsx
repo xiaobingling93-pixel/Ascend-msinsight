@@ -1,7 +1,7 @@
 /*
  * -------------------------------------------------------------------------
  * This file is part of the MindStudio project.
- * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co.,Ltd.
  *
  * MindStudio is licensed under Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -16,52 +16,50 @@
  * -------------------------------------------------------------------------
  */
 
-import { observer } from 'mobx-react';
-import { fetchColumnFilterProps, ResizeTable } from '@insight/lib/resize';
-import type { ColumnsType } from 'antd/es/table';
-import { DragDirection, useDraggableContainer } from '@insight/lib';
 import React, { useEffect, useRef, useState } from 'react';
+import { observer } from 'mobx-react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import type { ColumnsType } from 'antd/es/table';
+import type { FilterValue, SorterResult } from 'antd/lib/table/interface';
+import _ from 'lodash';
+import { ResizeTable } from '@insight/lib/resize';
+import { DragDirection, useDraggableContainer } from '@insight/lib';
+import { StyledEmpty } from '@insight/lib/utils';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { MoreContainer, StyledMoreCard } from '../BottomPanel';
 import { store } from '../../store';
-import { getOverallMetrics, getOverallMetricsMoreList } from '../../api/request';
+import { getMemcpyOverallMetrics, getMemcpyOverallMetricsMoreList } from '../../api/request';
 import type {
     GetOverallMetricsMoreListResultItem,
-    GetOverallMetricsResultItem,
+    GetMemcpyOverallResultItem,
 } from '../../api/interface';
-import type { FilterValue, SorterResult } from 'antd/lib/table/interface';
 import { Session } from '../../entity/session';
 import { getDefaultColumData, getPageData, PageType, queryOneKernel } from './Common';
 import type { CardMetaData } from '../../entity/data';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
-import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
-import { StyledEmpty } from '@insight/lib/utils';
 import type { SelectContentViewProps } from './SystemView';
 import { getTimeOffset } from '../../insight/units/utils';
 
-export const overallMetricsColumns = (t: TFunction): ColumnsType<GetOverallMetricsResultItem> => [
-    { title: t('Category'), dataIndex: 'name', ellipsis: true },
+export const memcpyOverallColumns = (t: TFunction): ColumnsType<GetMemcpyOverallResultItem> => [
+    { title: t('Category'), dataIndex: 'name', ellipsis: true, width: 120 },
     { title: t('Total Time(us)'), dataIndex: 'totalTime' },
-    {
-        title: t('Time Ratio'),
-        dataIndex: 'ratio',
-        render: (text) => text !== null ? `${text}%` : text,
-    },
-    { title: t('Number'), dataIndex: 'nums' },
-    { title: t('Avg(us)'), dataIndex: 'avg' },
-    { title: t('Min(us)'), dataIndex: 'min' },
-    { title: t('Max(us)'), dataIndex: 'max' },
+    { title: t('Total Size(B)'), dataIndex: 'totalSize' },
+    { title: t('Number'), dataIndex: 'number' },
+    { title: t('Avg Time(us)'), dataIndex: 'avgTime' },
+    { title: t('Min Time(us)'), dataIndex: 'minTime' },
+    { title: t('Max Time(us)'), dataIndex: 'maxTime' },
+    { title: t('Avg Size(B)'), dataIndex: 'avgSize' },
+    { title: t('Min Size(B)'), dataIndex: 'minSize' },
+    { title: t('Max Size(B)'), dataIndex: 'maxSize' },
 ];
 
-const overallMetricsMoreColumns = (t: TFunction): ColumnsType<GetOverallMetricsMoreListResultItem> => [
+const memcpyOverallMetricsMoreColumns = (t: TFunction): ColumnsType<GetOverallMetricsMoreListResultItem> => [
     {
         title: t('Name'),
         dataIndex: 'name',
         ellipsis: true,
-        ...fetchColumnFilterProps('name', 'Name'),
-        onFilter: undefined,
     },
     {
         title: t('Start Time'),
@@ -73,68 +71,99 @@ const overallMetricsMoreColumns = (t: TFunction): ColumnsType<GetOverallMetricsM
         dataIndex: 'duration',
         ...getDefaultColumData('duration'),
     },
+    {
+        title: t('Size(B)'),
+        dataIndex: 'size',
+        ...getDefaultColumData('size'),
+    },
 ];
 
-interface OverallMetricsTableProps extends SelectContentViewProps {
+interface MemcpyOverallMetricsTableProps extends SelectContentViewProps {
     session: Session;
-    selectedRow?: GetOverallMetricsResultItem | null;
-    setSelectedRow: (row: GetOverallMetricsResultItem | null) => void;
+    selectedRow?: GetMemcpyOverallResultItem | null;
+    setSelectedRow: (row: GetMemcpyOverallResultItem | null) => void;
 }
 
-const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow, setSelectedRow }: OverallMetricsTableProps) => {
-    const defaultPage = { current: 1, pageSize: 10, total: 0 };
-    const [tableData, setTableData] = useState<GetOverallMetricsResultItem[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [page, setPage] = useState(defaultPage);
-    const cardPhase = session.units.find((unit) => (unit.metadata as CardMetaData).cardId === card.cardId)?.phase;
+const DEFAULT_PAGE = { current: 1, pageSize: 10, total: 0 };
+const MemcpyOverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow, setSelectedRow }: MemcpyOverallMetricsTableProps) => {
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
+    const [tableData, setTableData] = useState<GetMemcpyOverallResultItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState<PageType>(DEFAULT_PAGE);
+    const cardPhase = React.useMemo(() => {
+        return session.units.find((unit) => (unit.metadata as CardMetaData).cardId === card.cardId)?.phase;
+    }, [session.units, card.cardId]);
 
-    async function getOverallMetricsData(): Promise<void> {
+    const getMemcpyOverallMetricsData = React.useCallback(async ({
+        startTime, endTime, timestampoffset,
+    }: { startTime: number; endTime: number; timestampoffset: number }): Promise<void> => {
         if (!card || card.cardId === '') {
             return;
         }
         setLoading(true);
         try {
-            const rankId = card.cardId;
-            const dbPath = card.dbPath;
-            let startTime = session.timeAnalysisRange?.[0] ?? 0;
-            startTime = startTime < 0 ? 0 : startTime;
-            let endTime = session.timeAnalysisRange?.[1] ?? 0;
-            endTime = endTime < 0 ? 0 : endTime;
-            const timestampoffset = getTimeOffset(session, card);
-            const { data, count: total } = await getOverallMetrics({
-                rankId,
-                dbPath,
+            const params = {
+                rankId: card.cardId,
+                dbPath: card.dbPath,
                 pageSize: page.pageSize,
                 current: page.current,
                 startTime: Math.floor(startTime + timestampoffset),
                 endTime: Math.ceil(endTime + timestampoffset),
-            });
-            setPage({ ...page, total });
-            setTableData(data ?? []);
-            setLoading(false);
+            };
+            const res = await getMemcpyOverallMetrics(params);
+            if (res !== undefined) {
+                const { data, count: total } = res;
+                setPage({ ...page, total });
+                setTableData(data ?? []);
+            }
         } catch (e) {
-            setLoading(false);
             setTableData([]);
-            setPage(defaultPage);
+            setPage(DEFAULT_PAGE);
+        } finally {
+            setLoading(false);
         }
-    }
+    }, [card.cardId, card.dbPath, page.pageSize, page.current]);
 
     useEffect(() => {
-        getOverallMetricsData();
         setSelectedRow(null);
-    }, [card.cardId, session.timeAnalysisRange]);
+    }, [card.cardId]);
 
+    // 1. 保存最新请求函数引用（解决闭包过期问题）
+    const latestFetchRef = useRef(getMemcpyOverallMetricsData);
     useEffect(() => {
-        if (cardPhase === 'download') {
-            getOverallMetricsData();
+        latestFetchRef.current = getMemcpyOverallMetricsData;
+    }, [getMemcpyOverallMetricsData]);
+
+    // 2. 创建稳定防抖函数（useMemo + cancel 清理）
+    const debouncedFetch = React.useMemo(() => {
+        return _.debounce((params: Parameters<typeof getMemcpyOverallMetricsData>[0]) => {
+            latestFetchRef.current(params);
+        }, 100);
+    }, []);
+
+    // 3. 触发请求 + 组件卸载/条件变化时清理
+    useEffect(() => {
+        if (cardPhase !== 'download') {
+            debouncedFetch.cancel(); // 非 download 状态立即取消待执行请求
+            return;
         }
-    }, [cardPhase, session.timeAnalysisRange]);
+
+        // 参数计算（保持原逻辑）
+        const startTime = Math.max(session.timeAnalysisRange?.[0] ?? 0, 0);
+        const endTime = Math.max(session.timeAnalysisRange?.[1] ?? 0, 0);
+        const timestampoffset = getTimeOffset(session, card);
+
+        debouncedFetch({ startTime, endTime, timestampoffset });
+
+        return () => {
+            debouncedFetch.cancel(); // 清理：取消待执行请求，避免内存泄漏/无效 setState
+        };
+    }, [cardPhase, session.timeAnalysisRange, debouncedFetch, card]);
 
     return <ResizeTable
-        rowKey={'id'}
+        rowKey={'key'}
         dataSource={tableData}
-        columns={overallMetricsColumns(t)}
+        columns={memcpyOverallColumns(t)}
         loading={loading}
         scroll={{ y: bottomHeight - 146 }}
         pagination={getPageData(page, setPage)}
@@ -150,16 +179,16 @@ const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow
         })}
         // 给表格添加类名
         rowClassName={(record): string => {
-            // 检查selectedRow的id是否与当前记录的id相同
-            return selectedRow?.id === record.id ? 'selected-row' : '';
+            // 检查selectedRow的key是否与当前记录的key相同
+            return selectedRow?.key === record.key ? 'selected-row' : '';
         }}
     ></ResizeTable>;
 });
 
-interface OverallMetricsMoreProps extends SelectContentViewProps {
-    selectedRow?: GetOverallMetricsResultItem | null;
+interface MemcpyOverallMetricsMoreProps extends SelectContentViewProps {
+    selectedRow?: GetMemcpyOverallResultItem | null;
 }
-const OverallMetricsMoreTable = observer(({ card, session, selectedRow, bottomHeight }: OverallMetricsMoreProps) => {
+const MemcpyOverallMetricsMoreTable = observer(({ card, session, selectedRow, bottomHeight }: MemcpyOverallMetricsMoreProps) => {
     const [selectedRowId, setSelectedRowId] = useState<string>();
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
@@ -191,7 +220,7 @@ const OverallMetricsMoreTable = observer(({ card, session, selectedRow, bottomHe
     return <ResizeTable
         rowKey={'id'}
         dataSource={tableData}
-        columns={overallMetricsMoreColumns(t)}
+        columns={memcpyOverallMetricsMoreColumns(t)}
         scroll={{ y: bottomHeight !== undefined ? bottomHeight - 200 : undefined }}
         loading={loading}
         pagination={getPageData(page, setPage)}
@@ -210,7 +239,7 @@ const OverallMetricsMoreTable = observer(({ card, session, selectedRow, bottomHe
     ></ResizeTable>;
 });
 
-export type MetricsMoreUpdaterType = ({ session, card, selectedRow }: Pick<OverallMetricsMoreProps, 'session' | 'card' | 'selectedRow'>) => ({
+export type MetricsMoreUpdaterType = ({ session, card, selectedRow }: Pick<MemcpyOverallMetricsMoreProps, 'session' | 'card' | 'selectedRow'>) => ({
     page: PageType;
     setPage: (args: PageType) => void;
     sorter: SorterResult<GetOverallMetricsMoreListResultItem>;
@@ -240,7 +269,7 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
         let endTime = session.timeAnalysisRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
         const timestampoffset = getTimeOffset(session, card);
-        const { sameOperatorsDetails, count: total, pageSize, currentPage: current } = await getOverallMetricsMoreList({
+        const { sameOperatorsDetails, count: total, pageSize, currentPage: current } = await getMemcpyOverallMetricsMoreList({
             rankId: card.cardId,
             dbPath: card.dbPath,
             name: filters.name?.[0] as string | undefined,
@@ -276,31 +305,31 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
     useEffect(() => {
         setPage(defaultPage);
         requestTrigger.current = !requestTrigger.current;
-    }, [card?.cardId, selectedRow?.id]);
+    }, [card?.cardId, selectedRow?.key]);
 
     return { page, setPage, sorter, setSorter, setFilters, loading, tableData };
 };
 
 /**
- * OverallMetrics组件，用于展示总体指标信息。
+ * MemcpyOverallMetrics组件，用于展示内存拷贝总体指标信息。
  *
  * @param {SelectContentViewProps} props - 组件的属性，包含卡片信息等
  * @returns {JSX.Element} 返回一个React元素，根据条件渲染总体指标表格或空状态
  */
-export const OverallMetrics = observer((props: SelectContentViewProps) => {
+export const MemcpyOverallMetrics = observer((props: SelectContentViewProps) => {
     const { sessionStore } = store;
     // 获取当前活跃的session
     const session = sessionStore.activeSession;
     // 使用拖拽容器，设置拖拽方向为向右，宽度为400
     const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: 400 });
     // 定义并初始化selectedRow状态，用于存储选中的行数据
-    const [selectedRow, setSelectedRow] = useState<GetOverallMetricsResultItem | null>();
+    const [selectedRow, setSelectedRow] = useState<GetMemcpyOverallResultItem | null>();
     const { t } = useTranslation();
 
     return props.card !== undefined && props.card.cardId !== ''
         ? view({
             mainContainer: session !== undefined
-                ? <OverallMetricsTable {...props} selectedRow={selectedRow} setSelectedRow={setSelectedRow}
+                ? <MemcpyOverallMetricsTable {...props} selectedRow={selectedRow} setSelectedRow={setSelectedRow}
                     session={session}/>
                 : <></>,
             draggableContainer: <StyledMoreCard
@@ -309,7 +338,7 @@ export const OverallMetrics = observer((props: SelectContentViewProps) => {
                 bordered={false}>
                 <ChartErrorBoundary className={'more-error'}>
                     <MoreContainer>
-                        {session && <OverallMetricsMoreTable {...props} session={session} selectedRow={selectedRow}/>}
+                        {session && <MemcpyOverallMetricsMoreTable {...props} session={session} selectedRow={selectedRow}/>}
                     </MoreContainer>
                 </ChartErrorBoundary>
             </StyledMoreCard>,

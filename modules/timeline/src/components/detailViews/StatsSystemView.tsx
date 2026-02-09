@@ -38,6 +38,7 @@ import { DETAIL_HEADER_HEIGHT_ETC_PX, BaseSummary, SelectContentViewProps } from
 import { OverallMetrics } from './OverallMetrics';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import { ProjectType } from '../../entity/insight';
+import { MemcpyOverallMetrics } from './MemcpyOverallMetrics';
 
 const filterColumn = [
     'name', 'type', 'acceleratorCore', 'taskId', 'inputShapes', 'inputDataTypes',
@@ -190,7 +191,7 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
     );
 });
 
-export const StatsSystemView = [OverallMetrics, ...layerTypes.map((type) => {
+export const StatsSystemView = [OverallMetrics, MemcpyOverallMetrics, ...layerTypes.map((type) => {
     return observer((props: SelectContentViewProps) => {
         return (
             <BaseSummary

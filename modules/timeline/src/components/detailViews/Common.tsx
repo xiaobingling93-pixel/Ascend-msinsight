@@ -198,6 +198,7 @@ export interface SystemViewItem {
 }
 export const statsSystemViewItems: SystemViewItem[] = [
     { name: 'Overall Metrics', tips: 'OverallMetricsTips' },
+    { name: 'Memcpy Overall' },
     { name: 'Python API Summary', tips: 'PythonAPISummaryTips' },
     { name: 'CANN API Summary', tips: 'CANNAPISummaryTips' },
     { name: 'Ascend HardWare Task Summary', tips: 'AscendHardWareTaskSummaryTips' },

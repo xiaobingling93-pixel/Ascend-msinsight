@@ -24,6 +24,8 @@ import {
     GetOverallMetricsParams,
     GetOverallMetricsResult,
     GetOverallMetricsResultItem,
+    GetMemcpyOverallResult,
+    GetMemcpyOverallResultItem,
     ParseCardsParam,
     SetCardAliasParams,
     QueryOperatorDispatchParams,
@@ -33,6 +35,8 @@ import {
     QueryCommunicationKernelDetailParams,
     QueryCommunicationKernelDetailResult,
     CreateCurveParams, CreateCurveResult, GetUnitFlowsParams, GetUnitFlowsResult,
+    GetOverallMetricsMoreListResultItem,
+    GetMemcpyOverallMetricsMoreListResultItem,
 } from './interface';
 import connector from '../connection';
 
@@ -76,8 +80,39 @@ export const getOverallMetrics = async (params: GetOverallMetricsParams): Promis
 };
 
 // 获取system view综合指标详细算子列表
-export const getOverallMetricsMoreList = async (params: GetOverallMetricsMoreListParams): Promise<GetOverallMetricsMoreListResult> => {
+export const getOverallMetricsMoreList = async (params: GetOverallMetricsMoreListParams): Promise<
+GetOverallMetricsMoreListResult<GetOverallMetricsMoreListResultItem>> => {
     return window.requestData('systemView/overall/more/details', params, 'timeline');
+};
+
+// 获取system view内存拷贝综合指标列表
+export const getMemcpyOverallMetrics = async (params: GetOverallMetricsParams): Promise<GetMemcpyOverallResult> => {
+    const res = await window.requestData('memcpy/total/list', params, 'timeline', { silent: true });
+    // 递归设置 categoryList 字段
+    const maxDepth = 10;
+    const addCatField = (data: GetMemcpyOverallResultItem[], parentCat: string[] = [], depth = 1): void => {
+        if (depth > maxDepth) {
+            return;
+        }
+        data?.forEach(item => {
+            item.categoryList = [...parentCat, item.key];
+
+            if (item.children && item.children.length > 0) {
+                addCatField(item.children, item.categoryList, depth + 1);
+            }
+        });
+    };
+
+    if (res.data.length !== 0) {
+        addCatField(res.data);
+    }
+    return res;
+};
+
+// 获取system view内存拷贝综合指标详细算子列表
+export const getMemcpyOverallMetricsMoreList = async (params: GetOverallMetricsMoreListParams): Promise<
+GetOverallMetricsMoreListResult<GetMemcpyOverallMetricsMoreListResultItem>> => {
+    return window.requestData('memcpy/detail/list', params, 'timeline');
 };
 
 // 设置卡级别别名

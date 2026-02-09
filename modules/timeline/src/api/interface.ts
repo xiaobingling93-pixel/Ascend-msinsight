@@ -104,6 +104,7 @@ export interface GetOverallMetricsMoreListParams extends PaginationParams {
     endTime: number;
 }
 
+// 综合指标详细算子列表项
 export interface GetOverallMetricsMoreListResultItem {
     id: string;
     opId?: number; // 算子id，用于算子跳转获取后获取算子详情信息
@@ -112,12 +113,30 @@ export interface GetOverallMetricsMoreListResultItem {
     name: string;
 }
 
-export interface GetOverallMetricsMoreListResult extends PaginationModel {
-    sameOperatorsDetails: GetOverallMetricsMoreListResultItem[];
+// 内存拷贝详细算子列表项
+export interface GetMemcpyOverallMetricsMoreListResultItem extends Omit<GetOverallMetricsMoreListResultItem, 'opId'> {
+    size: number; // 内存拷贝大小
+}
+
+export interface GetOverallMetricsMoreListResult<T> extends PaginationModel {
+    sameOperatorsDetails: T[];
     rankId: number;
     count: number;
     pageSize: number;
     currentPage: number;
+}
+
+// getMemcpyOverallMetrics
+export interface GetMemcpyOverallResult extends PaginationModel {
+    data: GetMemcpyOverallResultItem[];
+}
+
+export interface GetMemcpyOverallResultItem {
+    key: string;
+    name: string;
+    level: number;
+    categoryList: string[];
+    children: GetMemcpyOverallResultItem[] | null;
 }
 
 export interface SetCardAliasParams {
