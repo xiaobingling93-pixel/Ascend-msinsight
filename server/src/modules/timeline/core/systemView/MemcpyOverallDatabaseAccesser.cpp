@@ -109,8 +109,9 @@ bool MemcpyOverallDatabaseAccesser::GetMemcpyRecordsFromDb(uint64_t startTime, u
 
     try {
         // 构造SQL查询语句，关联task表和memcpy_info表，使用参数化查询
-        std::string sql = "SELECT t.globalPid, mi.memcpyOperation, mi.size, t.startNs, t.endNs "
+        std::string sql = "SELECT t.globalPid, emo.name AS memcpyOperation, mi.size, t.startNs, t.endNs "
                           "FROM task t JOIN memcpy_info mi ON t.globalTaskId = mi.globalTaskId "
+                          "LEFT JOIN ENUM_MEMCPY_OPERATION emo ON mi.memcpyOperation = emo.id "
                           "WHERE t.startNs >= ? AND t.endNs <= ?";
 
         auto stmt = database_->CreatPreparedStatement(sql);
