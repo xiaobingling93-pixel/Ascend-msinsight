@@ -88,7 +88,7 @@ export class FrameworkPage {
 
     async clickTab(tabName: TabName): Promise<void> {
         const tab = this.page.getByRole('menuitem', { name: tabName });
-        await expect(tab).toBeVisible();
+        await tab.waitFor({ state: 'visible', timeout: 20000 });
         await tab.click();
     }
 

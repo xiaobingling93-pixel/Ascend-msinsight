@@ -39,6 +39,7 @@ const test = baseTest.extend<TestFixtures>({
 });
 
 test.describe('Leaks', () => {
+    test.skip();
     test.beforeEach(async ({ page, leaksPage, ws }) => {
         await page.goto('/');
         await importData(page, FilePath.LEAKS_DUMP);

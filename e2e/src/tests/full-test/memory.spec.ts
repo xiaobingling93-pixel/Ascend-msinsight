@@ -395,6 +395,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         expect(selectedText).toBe('2');
         // 等待 echarts 动画结束
         await page.waitForTimeout(1000);
+        await page.mouse.move(0,0);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-db-to-text.png', {
             maxDiffPixels: 500,
         });
