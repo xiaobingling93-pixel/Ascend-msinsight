@@ -184,9 +184,6 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
                 }}>
                     {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, fileType: layerType, filePath: data.path, rankId: data.rankId })}
                 </span>
-                {data.type === 'CLUSTER' || (<div className={`btn-box ${isLeaf ? 'leaf' : ''}`} onClick={(e): void => e.stopPropagation()}>
-                    <DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path} session={session} projectName={projectName} />
-                </div>)}
             </span>
         </Tooltip>,
     };
