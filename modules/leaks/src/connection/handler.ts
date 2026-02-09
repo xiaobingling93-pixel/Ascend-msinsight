@@ -128,6 +128,7 @@ const restore = (session: any): void => {
 };
 export const parseCompletedHandler = (data: any): void => {
     const session = store.sessionStore.activeSession;
+    workerDestroy();
     if (session) {
         runInAction(() => {
             session.deviceIds = data.deviceIds;

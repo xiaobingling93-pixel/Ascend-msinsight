@@ -108,6 +108,7 @@ export class MainThreadRender {
                 minSize: 0,
             };
             this.session.leaksWorkerInfo.renderOptions.zoom = this.zoom;
+            this.session.leaksWorkerInfo.clickItem = null;
         });
         this.renderer?.setData([]).setTransform(this.transform).setZoom(this.zoom);
     };

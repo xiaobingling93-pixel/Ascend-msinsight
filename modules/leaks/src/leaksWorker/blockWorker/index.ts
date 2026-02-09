@@ -98,6 +98,7 @@ const destroyHandler = (): void => {
         },
         zoom,
     });
+    self.postMessage({ type: 'clickItemResult', result: null });
     renderer?.setData([]).setTransform(transform).setZoom(zoom);
 };
 
