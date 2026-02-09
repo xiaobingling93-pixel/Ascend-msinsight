@@ -18,51 +18,11 @@
 #include <algorithm>
 #include <stack>
 #include "DataBaseManager.h"
-#include "MemScopeProtocolEvent.h"
 #include "MemScopeService.h"
 
 namespace Dic {
 namespace Module {
 namespace MemScope {
-void MemScopeService::ParserEnd(const std::string &rankId, bool result)
-{
-    if (!result) {
-        return;
-    }
-    Server::ServerLog::Info("[Memory]memscope Dumps Parser ends, filepath: ", rankId);
-}
-
-void MemScopeService::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
-{
-    auto event = std::make_unique<Protocol::MemScopeParseSuccessEvent>();
-    event->moduleName = Protocol::MODULE_MEM_SCOPE;
-    if (fileId.empty()) {
-        event->result = true;
-        SendEvent(std::move(event));
-    } else {
-        event->result = result;
-        Protocol::MemScopeParseSuccessEventBody body;
-        if (event->result) {
-            auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
-            if (memoryDatabase == nullptr) {
-                Server::ServerLog::Error("Cannot get memscope db connections from database manager");
-                event->errMsg = "Failed parse memscope dump data.";
-                event->result = false;
-                SendEvent(std::move(event));
-                return;
-            }
-            memoryDatabase->QueryMallocOrFreeEventTypeWithDeviceId(body.deviceIds);
-            memoryDatabase->QueryThreadIds(body.threadIds);
-            memoryDatabase->SetDataBaseVersion();
-        } else {
-            event->errMsg = msg;
-        }
-        body.fileId = fileId;
-        event->body = body;
-        SendEvent(std::move(event));
-    }
-}
-
 std::optional<ParseContext> MemScopeService::BuildContext(std::shared_ptr<FullDb::MemScopeDatabase>& db)
 {
     if (db == nullptr) {
@@ -87,7 +47,7 @@ bool MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces(const std::st
         Server::ServerLog::Error("Cannot get memscope db connections from database manager");
         return false;
     }
-    if (database->CheckTablesExist() && database->HasFinishedParseLastTime()) {
+    if (database->CheckAllTableExist() && database->HasFinishedParseLastTime()) {
         Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
         return true;
     }

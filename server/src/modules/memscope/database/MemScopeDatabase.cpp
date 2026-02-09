@@ -46,6 +46,10 @@ void MemScopeDatabase::Reset()
 
 bool MemScopeDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
+    if (isOpen) {
+        ServerLog::Warn("[MemScope] The database connection has been opened. Nonthing to do.");
+        return true;
+    }
     if (!Database::OpenDb(dbPath, clearAllTable)) {
         ServerLog::Error("[MemScope] Failed to open MemScope memory db with path: %.", dbPath);
         return false;
@@ -554,10 +558,10 @@ sqlite3_stmt* MemScopeDatabase::GetInsertBlocksStmt(uint64_t blocksLen)
     return stmt;
 }
 
-bool MemScopeDatabase::CheckTablesExist()
+bool MemScopeDatabase::CheckAllTableExist()
 {
     return Database::CheckTablesExist({memScopeDumpTable, memoryBlockTable,
-                                       memoryAllocationTable, pythonTraceTablePrefix});
+                                       memoryAllocationTable });
 }
 
 void MemScopeDatabase::FlushMemoryBlocksCache()

@@ -82,6 +82,7 @@ include_directories(${SRC_HOME_DIR}/modules/memscope/entity)
 include_directories(${SRC_HOME_DIR}/modules/memscope/handler)
 include_directories(${SRC_HOME_DIR}/modules/memscope/protocol)
 include_directories(${SRC_HOME_DIR}/modules/memscope/service)
+include_directories(${SRC_HOME_DIR}/modules/memscope/parser)
 # Operator
 include_directories(${SRC_HOME_DIR}/modules/operator)
 include_directories(${SRC_HOME_DIR}/modules/operator/database)
@@ -207,6 +208,7 @@ aux_source_directory(${SRC_HOME_DIR}/modules/memscope/handler DIC_MODULES_MEM_SC
 aux_source_directory(${SRC_HOME_DIR}/modules/memscope/service DIC_MODULES_MEM_SCOPE_SVC_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memscope/protocol DIC_MODULES_MEM_SCOPE_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memscope/entity DIC_MODULES_MEM_SCOPE_ENTITY_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memscope/parser DIC_MODULES_MEM_SCOPE_PARSER_SRC)
 
 # Reinforcement Learning
 aux_source_directory(${SRC_HOME_DIR}/modules/rl DIC_MODULES_RL_SRC)
@@ -292,6 +294,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_MEM_SCOPE_HANDLER_SRC}
         ${DIC_MODULES_MEM_SCOPE_PROTOCOL_SRC}
         ${DIC_MODULES_MEM_SCOPE_ENTITY_SRC}
+        ${DIC_MODULES_MEM_SCOPE_PARSER_SRC}
         ${DIC_MODULES_IE_REPO_SRC}
         ${DIC_MODULES_RL_SRC}
         ${DIC_MODULES_RL_CORE_SRC}

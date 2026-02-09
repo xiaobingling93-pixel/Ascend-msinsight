@@ -47,10 +47,13 @@ namespace Dic {
     const std::string pytorchDBReg = R"((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1}\.db$)";
     const std::string memScopeDbReg = R"(^(memscope|leaks)_dump_\d+\.db$)";
     const std::string mindsporeDBReg = R"((ascend_mindspore_profiler)(_[0-9]{1,16}){0,1}\.db$)";
+    const std::string memSnapshotDbReg = R"(\.(pkl|pickle).db$))";
     const std::string npumonitorDBReg = R"(msmonitor_\d+_\d+_(-1|\d+)\.db)";
     const std::string clusterDBReg = R"(cluster_analysis\.db$)";
     const std::string computeBinSuffix = ".bin";
     const std::string ipynbSuffix = ".ipynb";
+    const std::string pickleSuffix = ".pickle";
+    const std::string pickleAbbreviationSuffix = ".pkl";
 
     const static std::vector<std::string> CANN_APIS = {"acl", "runtime", "model", "node", "hccl", "communication"};
     const static std::vector<std::string> OVERLAP_TYPES = {"Computing", "Communication ",

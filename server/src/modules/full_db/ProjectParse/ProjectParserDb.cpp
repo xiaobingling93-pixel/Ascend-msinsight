@@ -59,7 +59,6 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     response.body.isCluster = CheckIsOpenClusterTag(request.params.projectAction, curProjectTypeEnum,
                                                     projectInfos[0].projectName);
 
-    response.body.isLeaks = DataBaseManager::Instance().GetFileTypeByRankId(projectInfos[0].subParseFileInfo[0]->rankId) == FileType::MEM_SCOPE;
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
     MergeFileTree(response.body.projectFileTree, projectInfos[0].projectFileTree);
@@ -242,10 +241,6 @@ ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
     if (dataPath.empty()) {
         return ProjectTypeEnum::DB;
     }
-    std::vector<std::string> memScopeFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(memScopeDbReg));
-    if (!memScopeFiles.empty()) {
-        return ProjectTypeEnum::DB;
-    }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
         frameworkFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(mindsporeDBReg));
@@ -258,38 +253,9 @@ ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
     return isCluster ? ProjectTypeEnum::DB_CLUSTER : ProjectTypeEnum::DB;
 }
 
-static bool IsSingleMemScopeDbFile(const std::string &importFile)
-{
-    if (FileUtil::IsFolder(importFile)) {
-        return false;
-    }
-    return std::regex_match(FileUtil::GetFileName(importFile), std::regex(memScopeDbReg));
-}
-
-bool TryGetMemScopeFilesByImportFolderOrFile(const std::string &importFile, std::vector<std::string> &memScopeFiles)
-{
-    memScopeFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(memScopeDbReg));
-    if (IsSingleMemScopeDbFile(importFile) || !memScopeFiles.empty()) {
-        if (memScopeFiles.empty()) {
-            memScopeFiles.push_back(importFile);
-        }
-        return true;
-    }
-    return false;
-}
-
 std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::string &importFile, std::string &error)
 {
     DataBaseManager::Instance().SetDataType(DataType::DB, importFile);
-    std::vector<std::string> memScopeFiles;
-    if (TryGetMemScopeFilesByImportFolderOrFile(importFile, memScopeFiles) && !memScopeFiles.empty()) {
-        std::for_each(memScopeFiles.begin(), memScopeFiles.end(), [](const auto &memScopeFile) {
-            DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, memScopeFile);
-            DataBaseManager::Instance().SetDataType(DataType::DB, memScopeFile);
-        });
-        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, importFile);
-        return memScopeFiles;
-    }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
         frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(mindsporeDBReg));
@@ -507,9 +473,7 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
     std::vector<std::string> dbFiles;
     if (!FileUtil::IsFolder(filePath)) {
         dbFiles.emplace_back(filePath);
-        if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(memScopeDbReg))) {
-            DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, filePath);
-        } else if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(npumonitorDBReg))) {
+        if (std::regex_match(FileUtil::GetFileName(filePath), std::regex(npumonitorDBReg))) {
             DataBaseManager::Instance().SetFileType(FileType::PYTORCH, filePath);
         }
         DataBaseManager::Instance().SetDataType(DataType::DB, filePath);
@@ -517,7 +481,7 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
     }
     // 静态初始化，避免重复调用时正则编译开销
     static std::unordered_multimap<FileType, std::regex> dbRegex = {
-        {FileType::MEM_SCOPE, std::regex{memScopeDbReg}}, {FileType::PYTORCH, std::regex{pytorchDBReg}},
+        {FileType::PYTORCH, std::regex{pytorchDBReg}},
         {FileType::PYTORCH, std::regex{mindsporeDBReg}}, {FileType::MS_PROF, std::regex{msprofDBReg}}};
     for (const auto &pair: dbRegex) {
         FileType type = pair.first;

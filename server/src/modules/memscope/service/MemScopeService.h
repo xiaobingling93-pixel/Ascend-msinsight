@@ -46,8 +46,7 @@ class MemScopeService {
 public:
     static void ParseEventsToBlockAndAllocations(ParseContext &context);
     static bool ParseMemoryMemScopeDumpEventsAndPythonTraces(const std::string &fileId);
-    static void ParserEnd(const std::string &rankId, bool result);
-    static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
+
     static bool ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId,
                                                       const uint64_t &timestamp,
                                                       const std::string &eventType,

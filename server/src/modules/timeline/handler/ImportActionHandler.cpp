@@ -202,8 +202,9 @@ std::optional<ProjectExplorerInfo> ImportActionHandler::BuildProjectInfo(ParserT
         warnMsg = "";
     }
     bool isNotCluster = parseFileList.size() == 1 && !ClusterFileParser::CheckIsCluster(parseFileList[0]);
-    // 如果没有找到文件（warnMag不为空），并且不是集群数据，则需要发送错误提示给前端
+    // 如果未发生异常（warnMsg为空）或集群数据（容忍异常），进行错误重置，否则返回前端
     if (warnMsg.empty() || !isNotCluster) {
+        // 重置（清空）
         SetTimelineError(ErrorCode::RESET_ERROR);
     }
     ProjectExplorerInfo project;

@@ -45,7 +45,6 @@ private:
     const int maxThreadNum = 4;
 
     static void InitMemory(const std::vector<std::string> &rankIds, const std::string &path);
-    static void InitMemScope(const std::vector<std::string> &rankIds, const std::string &path);
     static void InitSummary(const std::vector<std::string> &rankIds, const std::string &path);
 
     static void ParserCallBack(std::string rankId, const std::string &fileId, bool result);

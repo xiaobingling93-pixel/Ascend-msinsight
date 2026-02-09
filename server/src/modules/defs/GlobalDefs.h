@@ -41,6 +41,8 @@ enum class ParserType {
     IE = 4,
     DB_NPUMONITOR = 5,
     ACLGRPAH_DEBUG_JSON = 6,
+    DB_MEMSCOPE = 7,
+    PKL_MEM_SNAPSHOT = 8,
     OTHER = 20
 };
 
@@ -71,6 +73,8 @@ enum class ProjectTypeEnum {
     IE = 7,
     DB_NPUMONITOR = 8,
     ACLGRAPH_DEBUG = 9,
+    DB_MEMSCOPE = 10,
+    PKL_MEM_SNAPSHOT = 11,
     OTHER = 100
 };
 
@@ -118,6 +122,8 @@ static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTyp
             return ParserType::IE;
         case ProjectTypeEnum::ACLGRAPH_DEBUG:
             return ParserType::ACLGRPAH_DEBUG_JSON;
+        case ProjectTypeEnum::DB_MEMSCOPE:
+            return ParserType::DB_MEMSCOPE;
         default:
             return ParserType::JSON;
     }

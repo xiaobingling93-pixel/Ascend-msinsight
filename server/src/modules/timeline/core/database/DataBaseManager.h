@@ -47,8 +47,7 @@ enum class DataType {
 };
 enum class FileType {
     MS_PROF,
-    PYTORCH,
-    MEM_SCOPE
+    PYTORCH
 };
 class DataBaseManager {
 public:
