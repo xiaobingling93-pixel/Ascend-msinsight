@@ -520,7 +520,8 @@ std::shared_ptr<FullDb::MemScopeDatabase> DataBaseManager::GetMemScopeDatabase(c
     if (fileId.empty() && !memScopeDatabaseMap.empty()) {
         return memScopeDatabaseMap.begin()->second;
     }
-    if (memScopeDatabaseMap.count(fileId) == 0) {
+    // 未找到时默认创建新db
+    if (memScopeDatabaseMap.find(fileId) == memScopeDatabaseMap.end()) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         memScopeDatabaseMap.emplace(fileId, std::make_unique<FullDb::MemScopeDatabase>(dbMutex));
     }

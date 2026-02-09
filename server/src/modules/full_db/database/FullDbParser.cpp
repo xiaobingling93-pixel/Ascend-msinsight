@@ -26,8 +26,6 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "BaselineManager.h"
 #include "CollectionTimeService.h"
-#include "MemScopeDatabase.h"
-#include "MemScopeService.h"
 #include "TrackInfoManager.h"
 #include "CacheManager.h"
 #include "ParseUnitManager.h"
@@ -85,7 +83,6 @@ void FullDbParser::Reset()
     FullDb::DbMemoryDataBase::Reset();
     FullDb::DbSummaryDataBase::Reset();
     FullDb::DbTraceDataBase::Reset();
-    FullDb::MemScopeDatabase::Reset();
     ServerLog::Info("End Reset trace Parser");
     CollectionTimeService::Instance().Reset();
 }
@@ -113,13 +110,11 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     auto &threadPool = FullDbParser::Instance().threadPool;
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
-    if (type != FileType::MEM_SCOPE) {
-        for (const auto &item: rankIds) {
-            database->UpdateStartTime(item);
-        }
-        database->InitStringsCache();
-        BuildProfilingInitTask(futures, dbId, threadPool);
+    for (const auto &item: rankIds) {
+        database->UpdateStartTime(item);
     }
+    database->InitStringsCache();
+    BuildProfilingInitTask(futures, dbId, threadPool);
     // EndParseTask中会等待所有future执行完成，然后发送parse/success事件，最后在执行一些需要异步完成的解析任务
     threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankIds, filePath, futures, start);
 
@@ -130,13 +125,6 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
             FullDb::DbMemoryDataBase::ParseCallBack(rankId, filePath, false, "");
         }
         ServerLog::Error("There is no Memory Data in this db file");
-    } else if (type == FileType::MEM_SCOPE && !database->CheckTableDataInvalid(TABLE_LEAKS_DUMP) &&
-               !database->CheckTableDataInvalid(TABLE_MEM_SCOPE_DUMP)) {
-        for (const auto& rankId: rankIds) {
-            MemScope::MemScopeService::ParserEnd(rankId, false);
-            MemScope::MemScopeService::ParseCallBack(rankId, false, "There is no MemScope data in this db file");
-        }
-        ServerLog::Error("There is no MemScope data in this db file");
     } else {
         InitMemory(rankIds, filePath);
     }
@@ -220,11 +208,6 @@ void FullDbParser::InitSummary(const std::vector<std::string> &rankIds, const st
 
 void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std::string &path)
 {
-    FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
-    if (type == FileType::MEM_SCOPE) {
-        InitMemScope(rankIds, path);
-        return;
-    }
     for (const std::string& id : rankIds) {
         bool result = false;
         auto memoryDatabase = std::dynamic_pointer_cast<FullDb::DbMemoryDataBase, Memory::VirtualMemoryDataBase>(
@@ -249,31 +232,5 @@ bool FullDbParser::Parse(const std::vector<std::string> &fileIds,
                          const std::string &fileId)
 {
     return false;
-}
-
-void FullDbParser::InitMemScope(const std::vector<std::string> &rankIds, const std::string &path)
-{
-    for (const std::string& id : rankIds) {
-        auto memScopeDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
-        if (memScopeDatabase != nullptr && memScopeDatabase->OpenDb(path, false)) {
-            if (MemScope::MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces(id)) {
-                MemScope::MemScopeService::ParserEnd(id, true);
-                MemScope::MemScopeService::ParseCallBack(id, true, "");
-            } else {
-                MemScope::MemScopeService::ParserEnd(id, false);
-                MemScope::MemScopeService::ParseCallBack(id, false,
-                                                         "An exception occurred while parsing the DB data: "
-                                                         "Please check the logs for details.");
-                ServerLog::Error("Failed to connect or open memscope memory database.");
-            }
-        } else {
-            MemScope::MemScopeService::ParserEnd(id, false);
-            MemScope::MemScopeService::ParseCallBack(id, false,
-                                                     "An exception occurred while parsing the DB data: "
-                                                     "The database failed to open properly.");
-            ServerLog::Error("Failed to connect or open memscope memory database.");
-        }
-        Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::FINISH_ALL);
-    }
 }
 }

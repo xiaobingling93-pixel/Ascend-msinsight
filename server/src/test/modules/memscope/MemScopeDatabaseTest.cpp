@@ -34,8 +34,6 @@ public:
     static void SetUpTestSuite()
     {
         std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/leaks_dump_20250806.dat)";
-        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
-        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, dbPath);
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());

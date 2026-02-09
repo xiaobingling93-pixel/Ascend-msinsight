@@ -22,6 +22,7 @@
 #include "ProjectParserJson.h"
 #include "ProjectParserDb.h"
 #include "ProjectParserDbNPUMonitor.h"
+#include "ProjectParserMemScope.h"
 #include "ParserIE.h"
 #include "DataBaseManager.h"
 #include "ClusterFileParser.h"
@@ -41,6 +42,8 @@
 #include "RenderEngine.h"
 #include "TrackInfoManager.h"
 #include "JsonParseMemPool.h"
+#include "MemScopeParser.h"
+
 namespace Dic::Module {
 using namespace Dic;
 using namespace Dic::Server;
@@ -50,13 +53,13 @@ using namespace Dic::Module::Global;
 std::mutex ParserFactory::mutex;
 std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::string &path)
 {
-    // 判别顺序是优先判别只支持单个文件导入的memscope(leaks) bin ipynb npumonitor aclGraph_debug文件，然后判别服务化调优数据，最后判别系统调优数据
+    // 判别顺序是优先判别只支持单个文件导入的memscope(leaks)/pickle bin ipynb npumonitor aclGraph_debug文件，然后判别服务化调优数据，最后判别系统调优数据
     // 判别系统调优数据时，优先db，然后text，都没有再寻找npumonitor数据
-    if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path),
-                                                      std::regex(memScopeDbReg))) {
-        return std::make_pair(path, ParserType::DB);
+    const std::string filename = FileUtil::GetFileName(path);
+    if (!FileUtil::IsFolder(path) && ProjectParserMemScope::IsMemScopeDbFile(filename)) {
+        return std::make_pair(path, ParserType::DB_MEMSCOPE);
     }
-    if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path), std::regex(npumonitorDBReg))) {
+    if (!FileUtil::IsFolder(path) && std::regex_match(filename, std::regex(npumonitorDBReg))) {
         return std::make_pair(path, ParserType::DB_NPUMONITOR);
     }
     if (StringUtil::EndWith(path, computeBinSuffix)) {
@@ -99,6 +102,9 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
         case ParserType::DB_NPUMONITOR:
             alloc = std::make_shared<ProjectParserDbNPUMonitor>();
             break;
+        case ParserType::DB_MEMSCOPE:
+            alloc = std::make_shared<ProjectParserMemScope>();
+            break;
         default:
             alloc = std::make_shared<ProjectParserBase>();
             break;
@@ -116,6 +122,7 @@ void ParserFactory::Reset()
     Memory::MemoryParse::Instance().Reset();
     FullDb::FullDbParser::Instance().Reset();
     MetaDataCacheManager::Instance().Clear();
+    MemScopeParser::Instance().Reset();
 }
 
 void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response,

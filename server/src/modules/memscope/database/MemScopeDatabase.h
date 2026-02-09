@@ -40,7 +40,7 @@ class MemScopeDatabase : public Database {
 public:
     explicit MemScopeDatabase(std::recursive_mutex& sqlMutex) : Database(sqlMutex) {};
     ~MemScopeDatabase() override;
-    bool CheckTablesExist();
+    bool CheckAllTableExist();
     static void Reset();
     bool OpenDb(const std::string& dbPath, bool clearAllTable) override;
     bool HasFinishedParseLastTime();

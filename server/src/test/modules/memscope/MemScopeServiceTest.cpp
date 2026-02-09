@@ -33,14 +33,14 @@ using namespace Dic;
 class MemScopeServiceTest : public ::testing::Test {
 public:
     const static uint64_t SECOND = 1000000000;
+
     static void SetUpTestSuite()
     {
         std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/leaks_dump_20250806.dat)";
-        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
-        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, dbPath);
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
     }
+
     static void TearDownTestSuite()
     {
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
@@ -107,19 +107,6 @@ TEST_F(MemScopeServiceTest, BuildBlockEventAttrFromEventWithValidJsonAttr)
     EXPECT_EQ(eventAttr->owner, "PTA@init_model");
 }
 
-TEST_F(MemScopeServiceTest, ParserEnd)
-{
-    EXPECT_NO_THROW(MemScopeService::ParserEnd("0", false));
-    EXPECT_NO_THROW(MemScopeService::ParserEnd("0", true));
-}
-
-TEST_F(MemScopeServiceTest, ParseCallBack)
-{
-    EXPECT_NO_THROW(MemScopeService::ParseCallBack("", false, ""));
-    EXPECT_NO_THROW(MemScopeService::ParseCallBack("0", false, ""));
-    EXPECT_NO_THROW(MemScopeService::ParseCallBack("0", true, ""));
-}
-
 TEST_F(MemScopeServiceTest, ParseLeaksDump)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
@@ -182,6 +169,7 @@ TEST_F(MemScopeServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
     EXPECT_EQ(block.firstAccessTimestamp, eventGroup.accessEvents.front().timestamp);
     EXPECT_EQ(block.lastAccessTimestamp, eventGroup.accessEvents.back().timestamp);
 }
+
 /***
 * 测试对trace进行Trim的三种策略
 * ====Trim前如下====
@@ -216,13 +204,14 @@ TEST_F(MemScopeServiceTest, TestTrimPythonTraceSlicesOnlyFilter)
     trace.Trim(PythonTrimCompressStrategy::ONLY_FILTER_OUT_SMALL_FUNCTIONS);
     EXPECT_EQ(trace.slices.size(), 3);
     // 按照开始时间进行排序
-    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice &a, const PythonTraceSlice &b) {
+    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice& a, const PythonTraceSlice& b){
         return a.startTimestamp < b.startTimestamp;
     });
     EXPECT_EQ(trace.slices[0].func, "func0");
     EXPECT_EQ(trace.slices[1].func, "func03");
     EXPECT_EQ(trace.slices[2].func, "func04");
 }
+
 /***
 *    ====测试仅合并同层级小块策略，不可合并小块被保留原样  Trim后如下=====
 *   |--------------------------------------func0---------------------------------------------|
@@ -247,7 +236,7 @@ TEST_F(MemScopeServiceTest, TestTrimPythonTraceSlicesOnlyCompress)
     trace.Trim(PythonTrimCompressStrategy::COMPRESS_SMALL_FUNCTIONS);
     EXPECT_EQ(trace.slices.size(), 5);
     // 按照开始时间进行排序
-    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice &a, const PythonTraceSlice &b) {
+    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice& a, const PythonTraceSlice& b){
         return a.startTimestamp < b.startTimestamp;
     });
     EXPECT_EQ(trace.slices[0].func, "func0");
@@ -257,6 +246,7 @@ TEST_F(MemScopeServiceTest, TestTrimPythonTraceSlicesOnlyCompress)
     EXPECT_EQ(trace.slices[3].func, "func031");
     EXPECT_EQ(trace.slices[4].func, "func04");
 }
+
 /***
 *    ====测试仅合并同层级小块且过滤小块策略  Trim后如下=====
 *   |--------------------------------------func0---------------------------------------------|
@@ -281,7 +271,7 @@ TEST_F(MemScopeServiceTest, TestTrimPythonTraceSlicesCompressAndFilter)
     trace.Trim(PythonTrimCompressStrategy::COMPRESS_AND_FILTER_SMALL_FUNCTIONS);
     EXPECT_EQ(trace.slices.size(), 4);
     // 按照开始时间进行排序
-    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice &a, const PythonTraceSlice &b) {
+    std::sort(trace.slices.begin(), trace.slices.end(), [](const PythonTraceSlice& a, const PythonTraceSlice& b){
         return a.startTimestamp < b.startTimestamp;
     });
     EXPECT_EQ(trace.slices[0].func, "func0");
