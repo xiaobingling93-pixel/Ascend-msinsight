@@ -533,8 +533,11 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     uint64_t timestamp = params.timestamp + minTimestamp;
-    resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp, params.name, timestamp,
-        params.name, timestamp, params.name, timestamp, params.name, timestamp, params.name, timestamp);
+    constexpr uint8_t QUERY_KERNEL_SQL_UNION_TABLE_NUM = 8; // 这个值需要等于 QUERY_KERNEL_SQL 联合的表数
+    for (uint8_t i = 0; i < QUERY_KERNEL_SQL_UNION_TABLE_NUM; ++i) {
+        stmt->BindParams(params.name, timestamp);
+    }
+    resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
         return false;

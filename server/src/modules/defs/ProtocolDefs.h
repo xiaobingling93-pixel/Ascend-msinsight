@@ -106,6 +106,7 @@ const std::string REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ = "expertAnalysis/AICoreFr
 const std::string REQ_RES_TABLE_DATA_NAME_LIST = "tableData/nameList";
 const std::string REQ_RES_TABLE_DATA_DETAIL = "tableData/detail";
 const std::string REQ_RES_MEMCPY_OVERALL = "memcpy/total/list";
+const std::string REQ_RES_MEMCPY_DETAIL = "memcpy/detail/list";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";

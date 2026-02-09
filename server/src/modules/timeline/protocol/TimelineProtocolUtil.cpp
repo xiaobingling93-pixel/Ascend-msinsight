@@ -812,6 +812,40 @@ std::optional<document_t> ToResponseJson<MemcpyOverallResponse>(const MemcpyOver
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }
+
+template <>
+std::optional<document_t> ToResponseJson<MemcpyDetailResponse>(const MemcpyDetailResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t sameOperatorsDetails(kArrayType);
+    uint64_t index = 0;
+    for (const SameMemcpyDetails &sameOperators : response.body.sameOperatorsDetails) {
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "timestamp", sameOperators.timestamp, allocator);
+        JsonUtil::AddMember(itemJson, "duration", sameOperators.duration, allocator);
+        JsonUtil::AddMember(itemJson, "size", sameOperators.size, allocator);
+        if (!sameOperators.id.empty()) { // depth用于支持选中列表功能
+            JsonUtil::AddMember(itemJson, "id", sameOperators.id, allocator);
+        } else {
+            JsonUtil::AddMember(itemJson, "id", index++, allocator);
+        }
+        // name、rankId用于支持overall metric more details列表
+        JsonUtil::AddMember(itemJson, "name", sameOperators.name, allocator);
+        sameOperatorsDetails.PushBack(itemJson, allocator);
+    }
+    JsonUtil::AddMember(body, "sameOperatorsDetails", sameOperatorsDetails, allocator);
+    if (!response.body.rankId.empty()) {
+        JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
+    }
+    JsonUtil::AddMember(body, "count", response.body.count, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
+    JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
 #pragma endregion
 
 #pragma region << Event to json>>

@@ -56,6 +56,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToSystemViewOverallMoreDetailsRequest);
     jsonToReqFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMCPY_OVERALL, ToMemcpyOverallRequest);
+    jsonToReqFactory.emplace(REQ_RES_MEMCPY_DETAIL, ToSystemViewOverallMoreDetailsRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -90,6 +91,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqResponseJson);
     resToJsonFactory.emplace(REQ_RES_CREATE_CURVE, ToCreateCurveResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMCPY_OVERALL, ToMemcpyOverallListResponseJson);
+    resToJsonFactory.emplace(REQ_RES_MEMCPY_DETAIL, ToMemcpyDetailListResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -875,6 +877,11 @@ std::optional<document_t> TimelineProtocol::ToParseCardsResponseJson(const Respo
 std::optional<document_t> TimelineProtocol::ToMemcpyOverallListResponseJson(const Response &response)
 {
     return ToResponseJson<MemcpyOverallResponse>(dynamic_cast<const MemcpyOverallResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToMemcpyDetailListResponseJson(const Response &response)
+{
+    return ToResponseJson<MemcpyDetailResponse>(dynamic_cast<const MemcpyDetailResponse &>(response));
 }
 #pragma endregion
 

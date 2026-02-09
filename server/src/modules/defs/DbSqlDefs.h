@@ -41,6 +41,8 @@ const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
                  " opType INTEGER, inputFormats INTEGER, inputDataTypes INTEGER, inputShapes INTEGER, "
                  " outputFormats INTEGER, outputDataTypes INTEGER, outputShapes INTEGER, attrInfo INTEGER, "
                  " waitNs INTEGER);  "},
+    {TABLE_MEMCPY_INFO, "create TEMPORARY table if not exists MEMCPY_INFO(globalTaskId NUMERIC, size NUMERIC,"
+                 " memcpyOperation NUMERIC);"},
     {TABLE_CONNECTION_IDS, "create TEMPORARY table if not exists CONNECTION_IDS( id INTEGER, connectionId INTEGER);  "},
     {TABLE_ENUM_API_TYPE, "create TEMPORARY table if not exists ENUM_API_TYPE( id INTEGER primary key, name TEXT);  "},
     {TABLE_API, "create TEMPORARY table if not exists PYTORCH_API(startNs TEXT, endNs TEXT,globalTid INTEGER, "

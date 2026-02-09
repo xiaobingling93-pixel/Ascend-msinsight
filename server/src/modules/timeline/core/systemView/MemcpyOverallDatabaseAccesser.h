@@ -65,7 +65,10 @@ namespace Dic::Module::Timeline {
          * @param tid 线程ID（字符串，空表示不过滤）
          * @param memcpyType 拷贝类型（如"H2D", "D2H"，空表示不过滤）
          * @param current: 页码（从1开始）
-         * @param pageSize: 每页大小（建议上限1000）
+         * @param pageSize: 每页大小
+         * @param orderParam:
+         *      orderParam.orderBy: 按什么值排序，可选：timestamp/duration/size
+         *      orderParam.orderType: 排序方式 ASC/DESC
          * @param[out] records: 当前页的Memcpy详细记录列表
          * @param[out] total 总记录数
          * @return 是否成功获取数据。当 startTime == endTime 时，查找全部数据
@@ -73,9 +76,67 @@ namespace Dic::Module::Timeline {
         bool GetMemcpyDetailRecordsPaged(uint64_t startTime, uint64_t endTime,
                                     const std::string& tid, const std::string& memcpyType,
                                     uint32_t current, uint32_t pageSize,
+                                    const OrderParam &orderParam,
                                     std::vector<MemcpyDetailRecord>& records, uint64_t& total) const;
 
     private:
+        // ====== 排序枚举（类作用域内，私有封装） ======
+        enum class SortField { TIMESTAMP, SIZE, DURATION };
+        enum class SortDirection { ASC, DESC };
+
+        // ====== 内联辅助函数 ======
+        [[nodiscard]] std::pair<SortField, SortDirection> ParseSortParams(const std::string& orderBy,
+            const std::string& order) const
+        {
+            // 字段白名单校验
+            SortField field = SortField::TIMESTAMP;
+            if (orderBy == "size") field = SortField::SIZE;
+            else if (orderBy == "duration") field = SortField::DURATION;
+            else if (!orderBy.empty() && orderBy != "timestamp") {
+                Server::ServerLog::Warn("Invalid orderBy field: " + orderBy + ", using default 'timestamp'");
+            }
+
+            // 方向校验
+            SortDirection dir = (order == "DESC" || order == "desc")
+                              ? SortDirection::DESC
+                              : SortDirection::ASC;
+            if (order != "ASC" && order != "asc" && order != "DESC" && order != "desc") {
+                Server::ServerLog::Warn("Invalid order direction: " + order + ", using default 'ASC'");
+            }
+            return {field, dir};
+        }
+
+        // 内存排序
+        void SortRecordsInMemory(std::vector<MemcpyDetailRecord>& records, SortField field, SortDirection dir) const
+        {
+            if (records.empty()) return;
+
+            auto getComparator = [field, dir]()
+            {
+                switch (field) {
+                    case SortField::SIZE:
+                        return dir == SortDirection::ASC
+                            ? [](const MemcpyDetailRecord& a, const MemcpyDetailRecord& b) { return a.size < b.size; }
+                            : [](const MemcpyDetailRecord& a, const MemcpyDetailRecord& b) { return a.size > b.size; };
+                    case SortField::DURATION:
+                        return dir == SortDirection::ASC
+                            ? [](const MemcpyDetailRecord& a, const MemcpyDetailRecord& b)
+                            { return a.duration < b.duration; }
+                            : [](const MemcpyDetailRecord& a, const MemcpyDetailRecord& b)
+                            { return a.duration > b.duration; };
+                    case SortField::TIMESTAMP:
+                    default:
+                        return dir == SortDirection::ASC
+                            ? [](const MemcpyDetailRecord& a, const MemcpyDetailRecord& b)
+                            { return a.timestamp < b.timestamp; }
+                            : [](const MemcpyDetailRecord& a, const MemcpyDetailRecord& b)
+                            { return a.timestamp > b.timestamp; };
+                }
+            };
+
+            std::sort(records.begin(), records.end(), getComparator());
+        }
+
         /**
          * @brief 通过DataBaseManager获取当前数据库的数据类型
          * @return 数据库类型
@@ -108,6 +169,8 @@ namespace Dic::Module::Timeline {
          * @param memcpyType 拷贝类型（如"H2D", "D2H"，空表示不过滤）
          * @param current: 页码（从1开始）
          * @param pageSize: 每页大小（建议上限1000）
+         * @param orderByField: 排序属性
+         * @param orderDir: 排序方向
          * @param[out] records: 当前页的Memcpy详细记录列表
          * @param[out] total 总记录数
          * @return 是否成功获取数据
@@ -115,6 +178,7 @@ namespace Dic::Module::Timeline {
         bool GetMemcpyDetailRecordsPagedFromText(uint64_t startTime, uint64_t endTime,
                                             const std::string& tid, const std::string& memcpyType,
                                             uint32_t current, uint32_t pageSize,
+                                            SortField orderByField, SortDirection orderDir,
                                             std::vector<MemcpyDetailRecord>& records, uint64_t& total) const;
 
         /**
@@ -125,13 +189,13 @@ namespace Dic::Module::Timeline {
          * @param memcpyType 拷贝类型（如"H2D", "D2H"，空表示不过滤）
          * @param current: 页码（从1开始）
          * @param pageSize: 每页大小（建议上限1000）
-         * @param[out] records: 当前页的Memcpy详细记录列表
-         * @param[out] total 总记录数
+         * @param orderSql: 排序语句
          * @return 是否成功获取数据
          */
         bool GetMemcpyDetailRecordsPagedFromDb(uint64_t startTime, uint64_t endTime,
                                           const std::string& tid, const std::string& memcpyType,
                                           uint32_t current, uint32_t pageSize,
+                                          std::string orderSql,
                                           std::vector<MemcpyDetailRecord>& records, uint64_t& total) const;
 
         /**

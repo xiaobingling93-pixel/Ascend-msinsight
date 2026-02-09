@@ -598,6 +598,11 @@ struct MemcpyOverallResponse : public Response {
     PageParam pageParam;
     bool isLoading = false;
 };
+
+struct MemcpyDetailResponse : public Response {
+    MemcpyDetailResponse() : Response(REQ_RES_MEMCPY_DETAIL) {}
+    MemcpyDetailsBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

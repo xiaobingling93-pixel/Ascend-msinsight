@@ -93,6 +93,7 @@ private:
     static std::optional<document_t> ToTableDataDetailResponseJson(const Response &response);
     static std::optional<document_t> ToParseCardsResponseJson(const Response &response);
     static std::optional<document_t> ToMemcpyOverallListResponseJson(const Response &response);
+    static std::optional<document_t> ToMemcpyDetailListResponseJson(const Response &response);
     // event to json
     static std::optional<document_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<document_t> ToParseFailEventJson(const Event &event);

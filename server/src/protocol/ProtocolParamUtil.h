@@ -35,6 +35,11 @@ struct OrderParam {
         }
     }
 
+    std::string GetNormalizeOrderType() const
+    {
+        return NormalizeOrderType(orderType);
+    }
+
     bool CheckOrderByInjection() const
     {
         return false;
@@ -44,7 +49,7 @@ struct OrderParam {
     {
         std::string sql = " ";
         if (!orderBy.empty() && !orderType.empty()) {
-            sql = " ORDER BY " + orderBy + " " + orderType + " ";
+            sql = " ORDER BY " + orderBy + " " + GetNormalizeOrderType() + " ";
         }
         return sql;
     }

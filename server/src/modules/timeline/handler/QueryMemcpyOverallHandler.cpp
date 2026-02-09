@@ -45,6 +45,14 @@ bool QueryMemcpyOverallHandler::HandleRequest(std::unique_ptr<Protocol::Request>
         return false;
     }
 
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
+    if (deviceId.empty()) {
+        error = "Failed to get deviceId for memcpy view overall statistics.";
+        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
+        return false;
+    }
+    request.params.deviceId = deviceId;
+
     if (!CalMemcpyData(request, response, error, database)) {
         SetTimelineError(ErrorCode::QUERY_MEMCPY_OVERALL_FAILED);
         SendResponse(std::move(responsePtr), false);
@@ -114,13 +122,6 @@ void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOv
 bool QueryMemcpyOverallHandler::CalMemcpyData(MemcpyOverallRequest &request, MemcpyOverallResponse &response,
                       std::string &error, const std::shared_ptr<VirtualTraceDatabase> &database)
 {
-    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
-    if (deviceId.empty()) {
-        error = "Failed to get deviceId for memcpy view overall statistics.";
-        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
-        return false;
-    }
-    request.params.deviceId = deviceId;
     const MemcpyOverallDatabaseAccesser accesser(database, request.fileId);
 
     std::vector<MemcpyRecord> records;

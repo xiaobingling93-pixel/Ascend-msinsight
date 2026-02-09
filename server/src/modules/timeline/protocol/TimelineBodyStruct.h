@@ -59,6 +59,15 @@ struct SearchAllSlicesBody {
     uint64_t currentPage{};
 };
 
+template<typename RecordType>
+struct PaginatedBody {
+    std::vector<RecordType> sameOperatorsDetails; // 记录
+    std::string rankId;
+    uint64_t count{};                // 记录总数
+    uint64_t pageSize{};
+    uint64_t currentPage{};
+};
+
 struct SameOperatorsDetails {
     uint64_t timestamp{};
     uint64_t duration{};
@@ -71,13 +80,16 @@ struct SameOperatorsDetails {
     std::string pid;
 };
 
-struct UnitThreadsOperatorsBody {
-    std::vector<SameOperatorsDetails> sameOperatorsDetails;
-    std::string rankId;
-    uint64_t count{};
-    uint64_t pageSize{};
-    uint64_t currentPage{};
+struct SameMemcpyDetails {
+    uint64_t timestamp{};
+    uint64_t duration{};
+    uint64_t size{};
+    std::string id;
+    std::string name;
 };
+
+using UnitThreadsOperatorsBody = PaginatedBody<SameOperatorsDetails>;
+using MemcpyDetailsBody = PaginatedBody<SameMemcpyDetails>;
 
 struct ThreadDetail {
     uint64_t selfTime = 0;
