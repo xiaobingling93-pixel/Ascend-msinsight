@@ -36,6 +36,7 @@ import { errorCenter, getRankInfoKey, WsError, ErrorCode } from '@insight/lib/ut
 import { RankInfo } from '../api/interface';
 import { queryOneKernel } from '../components/detailViews/Common';
 import { TIME_MAKER_DEFAULT } from '../entity/timeMaker';
+import { MAX_INITIAL_DURATION } from '../entity/domain';
 
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const MAX_PARSE_SIZE = 32;
@@ -172,7 +173,11 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 session.simpleCache.clear();
             }
             // 设置会话的域范围
-            session.setDomainWithoutHistory({ domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration });
+            let domainEnd = session.endTimeAll ?? session.domain.defaultDuration;
+            if (domainEnd > MAX_INITIAL_DURATION) {
+                domainEnd = MAX_INITIAL_DURATION;
+            }
+            session.setDomainWithoutHistory({ domainStart: 0, domainEnd });
             // 检查所有卡是否解析完成
             const parseCompleted = !(session.units.find(item => item.phase === 'analyzing'));
             if (parseCompleted) {

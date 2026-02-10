@@ -181,23 +181,23 @@ public:
     /**
      * 由sliceQuery获取算子缓存分页参数slicePagedQuery, 区别主要是[startTime, endTime]所对应时间区间不同
      * @param sliceQuery 前端传回起止区间，用于从缓存中查询算子信息, 其起止时间区间通常小于slicePagedQuery
-     * @return slicePagedQuery 用于从数据库中查询算子信息，更新分页缓存, 时长3min
+     * @return slicePagedQuery 用于从数据库中查询算子信息，更新分页缓存, 时长5min
      */
     static SliceQuery GetSlicePagedQueryForDb(const SliceQuery &sliceQuery)
     {
-        const uint64_t threshold = 3 * MINUTE_NS;        // 3 minutes
-        const uint64_t halfThreshold = threshold / 2;    // 1.5 minutes
+        const uint64_t threshold = 5 * MINUTE_NS;        // 5 minutes
+        const uint64_t halfThreshold = threshold / 2;    // 2.5 minutes
         SliceQuery result = sliceQuery;
 
         // 取离区间中点最近且合法的3min
         uint64_t mid = (sliceQuery.startTime + sliceQuery.endTime) / 2;
         if (mid < halfThreshold) {
             result.startTime = 0;
-            result.endTime = threshold;
+            result.endTime = std::max(threshold, sliceQuery.endTime);
             return result;
         }
-        result.startTime = mid - halfThreshold;
-        result.endTime = mid + halfThreshold;
+        result.startTime = std::min(mid - halfThreshold, sliceQuery.startTime);
+        result.endTime = std::max(mid + halfThreshold, sliceQuery.endTime);
         return result;
     }
 

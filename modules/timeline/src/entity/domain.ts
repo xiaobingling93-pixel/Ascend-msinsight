@@ -21,7 +21,8 @@ import type { TimeStamp } from './common';
 
 export const GOLDEN_RATE = 0.1236;
 export const PAN_RATE = 0.05; // 平移倍率
-export const MAX_ZOOM_DURATION = 3 * 60 * 1e9; // 最大缩放范围 3分钟
+export const MAX_INITIAL_DURATION = 5 * 60 * 1e9; // 最大初始时间范围 5分钟
+export const MAX_ZOOM_DURATION = 30 * 60 * 1e9; // 最大缩放时间范围 30分钟
 
 export interface DomainRange {
     domainStart: TimeStamp;
