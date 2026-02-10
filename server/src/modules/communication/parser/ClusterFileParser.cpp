@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include "pch.h"
+#include "PythonUtil.h"
 #include "CommunicationMatrixRapidHandler.h"
 #include "CommunicationRapidSaxHandler.h"
 #include "ConstantDefs.h"
@@ -431,49 +432,21 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
         ServerLog::Warn("validate string select path failed! select path", selectedPath);
         return false;
     }
-    std::string currPath = FileUtil::GetCurrPath();
-    std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath);
 
-#ifdef _WIN32
-    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis.exe");
-    // windows 下数据和安装目录不在一个磁盘需要切换磁盘
-    std::string switchCommand = "";
-    if (std::strcmp(currPath.substr(0, 1).c_str(), selectedPath.substr(0, 1).c_str()) != 0) {
-        switchCommand = " && " + selectedPath.substr(0, INT_TWO);
+    const std::string scriptPath = std::string("msprof_analyze") + FILE_SEPARATOR + "cluster_analyse" +
+        FILE_SEPARATOR + "cluster_analysis.py";
+    std::vector<std::string> arguments{"-d", selectedPath};
+    if (!mode.empty()) {
+        arguments.emplace_back("-m");
+        arguments.emplace_back(mode);
     }
-    command += "\"" + switchCommand + " && \"" + FileUtil::PathPreprocess(analysisPath) + "\" -d .";
-#else
-    #ifdef __APPLE__
-    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis");
-    command += "\" && \"" + analysisPath + "\" -d .";
-    #else
-    std::string analysisPath = currPath + FILE_SEPARATOR + "msprof_analyze";
-    analysisPath = analysisPath + FILE_SEPARATOR + "cluster_analyse" + FILE_SEPARATOR + "cluster_analysis.py";
-    command += "\" && python3 \"" + analysisPath + "\" -d .";
-    #endif
-#endif
-
-    if (!FileUtil::CheckFilePathExist(analysisPath) || !StringUtil::ValidateCommandFilePathParam(analysisPath)) {
-        ServerLog::Error("Can not find cluster analysis execute file: % or"
-            " path of cluster analysis contains illegal character.", analysisPath);
+    ServerLog::Info("Start execute command, selected path:", selectedPath, " ,mode: ", mode);
+    if (PythonUtil::ExecuteScript(scriptPath, arguments) != 0) {
+        ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, selected path:",
+            selectedPath, " ,mode: ", mode);
         return false;
-    } else {
-        if (!mode.empty()) {
-            command.append(" -m ").append(mode);
-        }
-        // Db类型的数据需要开启字段精简功能
-        if (dataType == AttDataType::DB) {
-            command.append(" --data_simplification");
-        }
-        ServerLog::Info("Start execute command, selected path:", selectedPath, " ,mode: ", mode);
-        int result = std::system(command.c_str());
-        if (result != 0) {
-            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, selected path:",
-                            selectedPath, " ,mode: ", mode);
-            return false;
-        }
-        ServerLog::Info("Execute cluster analysis success, selected path:", selectedPath, " ,mode: ", mode);
     }
+    ServerLog::Info("Execute cluster analysis succeeded, selected path: ", selectedPath, ",mode: ", mode);
     return true;
 }
 // LCOV_EXCL_BR_STOP

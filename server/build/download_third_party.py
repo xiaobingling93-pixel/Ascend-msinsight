@@ -69,9 +69,9 @@ OPEN_SOURCE = [
         'https://gitcode.com/gh_mirrors/sq/sqlite.git'
     ],
     [
-        'att',
-        'tag_MindStudio_8.2.RC1.B090_001',
-        'https://gitcode.com/Ascend/mstt.git'
+        'msprof-analyze',
+        'tag_MindStudio_26.0.0-alpha.1',
+        'https://gitcode.com/Ascend/msprof-analyze.git'
     ]
 ]
 
