@@ -130,10 +130,9 @@ def download_dependency_background() -> bool:
 def traverse_folder_and_chmod(path, dir_mode, file_mode):
     os.chmod(path, dir_mode)
     for root, dirs, files in os.walk(path):
-        for one in dirs:
-            traverse_folder_and_chmod(os.path.join(root, one), dir_mode, file_mode)
         for one in files:
             os.chmod(os.path.join(root, one), file_mode)
+        os.chmod(root, dir_mode)
 
 
 def build_server():
@@ -462,6 +461,11 @@ def package_mac(dst_file: str, package_name: str, is_cluster_source: bool) -> bo
     os.chmod(os.path.join(app_bin_file_dir, bin_file), 0o550)  # 4、app内二进制文件 ascend_insight 550
     shutil.copytree(os.path.join(Const.PLATFORM_PREVIEW_DIR, 'resources'),
                     os.path.join(app_bin_file_dir, 'resources'))
+    python_src_dir = os.path.join(app_bin_file_dir, 'resources', 'profiler', 'server', 'python')
+    python_dst_dir = os.path.join(app_dir, 'Contents', 'Resources', 'python')
+    if os.path.exists(python_dst_dir):
+        shutil.rmtree(python_dst_dir)
+    shutil.move(python_src_dir, python_dst_dir)
     shutil.move(app_dir, preview_app)
     # 签名app
     if "aarch64" in package_name and not resign_mac_app(preview_app, is_cluster_source):

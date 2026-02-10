@@ -963,7 +963,11 @@ pyinstaller
 
 1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
 
-2.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
+2.如果是在Windows系统或者macOS系统，MindStudio Insight会集成Python解释器，用户需要在构建环境上手动安装可移植的Python解释器（同时包含pip），并将Python解释器的路径添加到环境变量MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER，建议Python版本3.12.10
+* 在Windows上，环境变量所在目录需要包含解释器python.exe，Python三方库会安装到拷贝后的Lib\site-packages目录下
+* 在macOS上，环境变量所在目录需要包含解释器bin/python3，Python三方库会安装到拷贝后的lib/python3.12/site-packages目录下，如果用户安装的Python解释器版本不为3.12，需手动修改server/build/build.py中变量version的值
+
+3.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
 
 ### windows环境依赖安装附录
 

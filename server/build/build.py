@@ -47,11 +47,9 @@ HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 SRC_DIR = os.path.join(HOME_DIR, 'src')
 CLUSTER_ANALYSE = 'cluster_analyse'
-ADVISOR = 'advisor'
 PROF_COMMON = 'prof_common'
-CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'msprof_analyze', CLUSTER_ANALYSE)
-ADVISOR_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'msprof_analyze', ADVISOR)
-PROF_COMMON_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'msprof_analyze', PROF_COMMON)
+CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'msprof-analyze', 'msprof_analyze', CLUSTER_ANALYSE)
+PROF_COMMON_DIR = os.path.join(THIRD_PARTY_DIR, 'msprof-analyze', 'msprof_analyze', PROF_COMMON)
 PROTO_DIR = os.path.join(SRC_DIR, 'protos')
 
 OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
@@ -130,36 +128,92 @@ def build():
 
     att_dir = os.path.join(OUTPUT_DIR, gxx_type)
     att_bin_dir = os.path.join(att_dir, 'bin')
-    if IS_LINUX:
-        script_path = os.path.join(att_bin_dir, 'msprof_analyze')
-        if os.path.exists(script_path):
-            shutil.rmtree(script_path)
-        shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(script_path, CLUSTER_ANALYSE), copy_function=shutil.copy2)
-        shutil.copytree(PROF_COMMON_DIR, os.path.join(script_path, PROF_COMMON), copy_function=shutil.copy2)
-    else:
-        cluster_analysis_py = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
-        cluster_analysis_patch_py = os.path.join(BUILD_DIR, 'cluster_analysis_patch.py')
-        result = patch_cluster_analysis_source_for_pyinstaller(cluster_analysis_py, cluster_analysis_patch_py)
-        if not result:
-            build_log('Failed to patch cluster_analysis.py')
+
+    script_path = os.path.join(att_bin_dir, 'msprof_analyze')
+    if os.path.exists(script_path):
+        shutil.rmtree(script_path)
+    shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(script_path, CLUSTER_ANALYSE), copy_function=shutil.copy2)
+    shutil.copytree(PROF_COMMON_DIR, os.path.join(script_path, PROF_COMMON), copy_function=shutil.copy2)
+
+    if IS_WINDOWS or IS_DARWIN:
+        if copy_python_interpreter() != 0:
+            build_log('Failed to copy python interpreter.')
             return -1
-        build_att = [
-            'pyinstaller', '--distpath=' + att_bin_dir, Spec_Path
-        ]
-        result = execute_cmd(build_att, BUILD_DIR)
-        if result != 0:
-            build_log('Failed to execute build att command.')
-            return result
+        if pip_install_third_party_for_cluster_analysis() != 0:
+            build_log('Failed to pip install third party for cluster analysis.')
+            return -1
 
     build_log('end build.\n')
-
     return 0
 
+def copy_python_interpreter():
+    python_interpreter_dir = os.getenv("MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER")
+    if not python_interpreter_dir:
+        build_log('Environment variable MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER does not exist.')
+        return -1
+    if not os.path.exists(python_interpreter_dir):
+        build_log('Environment variable MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER is not a valid path.')
+        return -1
+    if not os.path.isdir(python_interpreter_dir):
+        build_log('Environment variable MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER is not a valid folder.')
+        return -1
 
-def patch_cluster_analysis_source_for_pyinstaller(cluster_analysis_py: str, patch_source_path: str):
-    from patch_source_for_build import patch_source
-    return patch_source(cluster_analysis_py, patch_source_path)
+    gxx_type = get_gxx_type()
+    att_dir = os.path.join(OUTPUT_DIR, gxx_type)
+    att_bin_dir = os.path.join(att_dir, 'bin')
+    att_bin_python_dir = os.path.join(att_bin_dir, 'python')
+    try:
+        if os.path.exists(att_bin_python_dir):
+            shutil.rmtree(att_bin_python_dir)
+        # symlinks参数设置为True，macOS上Python解释器目录存在符号链接，如果设置为False会拷贝符号链接指向的对象，浪费磁盘空间
+        shutil.copytree(python_interpreter_dir, att_bin_python_dir, symlinks=True)
+    except Exception as e:
+        build_log(f"Failed to copy Python interpreter to {att_bin_python_dir}. Error: {str(e)}")
+        return -1
+    build_log(f"Python interpreter was successfully copied to {att_bin_python_dir}.")
+    return 0
 
+def pip_install_third_party_for_cluster_analysis():
+    gxx_type = get_gxx_type()
+    server_output_dir = os.path.join(OUTPUT_DIR, gxx_type)
+    server_output_bin_dir = os.path.join(server_output_dir, 'bin')
+    server_output_bin_python_dir = os.path.join(server_output_bin_dir, 'python')
+
+    if IS_WINDOWS:
+        python_interpreter_path = os.path.join(server_output_bin_python_dir, 'python.exe')
+        pip_site_packages_path = os.path.join(server_output_bin_python_dir, 'Lib', 'site-packages')
+    if IS_DARWIN:
+        python_interpreter_path = os.path.join(server_output_bin_python_dir, 'bin', 'python3')
+        version = '3.12'
+        pip_site_packages_path = os.path.join(server_output_bin_python_dir, 'lib', 'python' + version, 'site-packages')
+
+    # 集群分析工具依赖的三方库在Windows系统和macOS系统上需要安装到构建产物里
+    # 以下三方库通过import *显式导入，必须安装，同时这些三方库也会安装自己的依赖
+    # 依赖关系：
+    # tqdm->colorama
+    # pandas->numpy, python-dateutil, pytz, tzdata
+    # python-dateutil->six
+    # Python解释器使用绝对路径，三方库安装到指定目录
+    pip_install_cmds = [python_interpreter_path, '-m', 'pip', 'install',
+                        'pandas<=2.3.2', 'numpy<=1.26.4', 'PyYaml', 'tqdm',
+                        '--target', pip_site_packages_path]
+    result = execute_cmd(pip_install_cmds, None)
+    if result != 0:
+        build_log('Failed to pip install necessary third party packages for cluster analysis.')
+        return result
+    build_log('Successfully pip install necessary third party packages for cluster analysis.')
+    # 以下三方库为pandas的可选三方库，集群分析脚本中使用到，同时这些三方库也会安装自己的依赖
+    # 依赖关系：
+    # sqlalchemy->greenlet, typing-extensions
+    pip_install_cmds = [python_interpreter_path, '-m', 'pip', 'install',
+                        'sqlalchemy', 'xlsxwriter>=3.0.6',
+                        '--target', pip_site_packages_path]
+    result = execute_cmd(pip_install_cmds, None)
+    if result != 0:
+        build_log('Failed to pip install optional third party packages for cluster analysis.')
+        return result
+    build_log('Successfully pip install optional third party packages for cluster analysis.')
+    return 0
 
 def init_log(name):
     """init log config"""
