@@ -43,8 +43,7 @@ def load_pickle_to_dict(pickle_file: Path) -> dict:
         with open(pickle_file, "rb") as f:
             data = pickle.load(f)
     except Exception:
-        import pandas as pd
-        data = pd.read_pickle(pickle_file).to_dict()
+        raise pickle.UnpicklingError(f"Cannot load pickle file: {pickle_file}")
 
     if not isinstance(data, dict):
         raise ValueError(f"The content of the pickle file is not of type dict, actual type: {type(data).__name__}")

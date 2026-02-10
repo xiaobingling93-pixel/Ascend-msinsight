@@ -96,6 +96,9 @@ def clean():
     out = os.path.join(PROJECT_PATH, Const.OUT_DIR)
     if os.path.exists(out):
         shutil.rmtree(out)
+    script_memsnap_dump_test_dir = os.path.join(PROJECT_PATH, Const.SCRIPT_DIR, 'MemSnapDump', 'test')
+    if os.path.exists(script_memsnap_dump_test_dir):
+        shutil.rmtree(script_memsnap_dump_test_dir)
     ascend_insight = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR)
     if os.path.exists(ascend_insight):
         shutil.rmtree(ascend_insight)

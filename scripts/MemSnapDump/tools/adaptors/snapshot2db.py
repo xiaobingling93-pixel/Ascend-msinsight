@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details.
 -------------------------------------------------------------------------
 """
 import os
+import sys
 import argparse
 from pathlib import Path
 from simulate import SimulateHooker, SimulateDeviceSnapshot, AllocatorHooker
@@ -115,13 +116,17 @@ class DumpEventHooker(SimulateHooker, AllocatorHooker):
         self.db_handler.flush()
 
 
-def dump(pickle_file: str, dump_file: str):
-    data = load_pickle_to_dict(Path(pickle_file))
+def dump(pickle_file: str, dump_file: str) -> bool:
+    try:
+        data = load_pickle_to_dict(Path(pickle_file))
+    except Exception as e:
+        dump_logger.error("Failed to load pickle file: {}".format(e))
+        return False
     snapshot = SimulateDeviceSnapshot(data, 0)
     hooker = DumpEventHooker(dump_file)
     snapshot.register_hooker(hooker)
     snapshot.register_allocator_hooker(hooker)
-    snapshot.replay()
+    return snapshot.replay()
 
 
 def get_args():
@@ -151,10 +156,17 @@ def get_args():
     return args
 
 
+class ExistCode:
+    SUCCESS = 0
+    FAILED = -1
+
 @timer(name="Dump snapshot to database.", logger=dump_logger)
 def main():
     args = get_args()
-    dump(args.snapshot_file, Path(args.dump_dir) / f"{Path(args.snapshot_file).name}.db")
+    if not dump(args.snapshot_file, Path(args.dump_dir) / f"{Path(args.snapshot_file).name}.db"):
+        dump_logger.error("Failed to dump the snapshot to database.")
+        sys.exit(ExistCode.FAILED)
+    sys.exit(ExistCode.SUCCESS)
 
 
 if __name__ == '__main__':

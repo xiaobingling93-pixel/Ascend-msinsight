@@ -124,6 +124,8 @@ static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTyp
             return ParserType::ACLGRPAH_DEBUG_JSON;
         case ProjectTypeEnum::DB_MEMSCOPE:
             return ParserType::DB_MEMSCOPE;
+        case ProjectTypeEnum::PKL_MEM_SNAPSHOT:
+            return ParserType::PKL_MEM_SNAPSHOT;
         default:
             return ParserType::JSON;
     }

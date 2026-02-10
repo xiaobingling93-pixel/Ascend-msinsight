@@ -23,6 +23,7 @@
 #include "ProjectParserDb.h"
 #include "ProjectParserDbNPUMonitor.h"
 #include "ProjectParserMemScope.h"
+#include "ProjectParserMemSnapshot.h"
 #include "ParserIE.h"
 #include "DataBaseManager.h"
 #include "ClusterFileParser.h"
@@ -43,6 +44,7 @@
 #include "TrackInfoManager.h"
 #include "JsonParseMemPool.h"
 #include "MemScopeParser.h"
+#include "MemSnapshotParser.h"
 
 namespace Dic::Module {
 using namespace Dic;
@@ -58,6 +60,9 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::strin
     const std::string filename = FileUtil::GetFileName(path);
     if (!FileUtil::IsFolder(path) && ProjectParserMemScope::IsMemScopeDbFile(filename)) {
         return std::make_pair(path, ParserType::DB_MEMSCOPE);
+    }
+    if (!FileUtil::IsFolder(path) && ProjectParserMemSnapshot::IsSnapshotPickleFile(filename)) {
+        return std::make_pair(path, ParserType::PKL_MEM_SNAPSHOT);
     }
     if (!FileUtil::IsFolder(path) && std::regex_match(filename, std::regex(npumonitorDBReg))) {
         return std::make_pair(path, ParserType::DB_NPUMONITOR);
@@ -105,6 +110,9 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
         case ParserType::DB_MEMSCOPE:
             alloc = std::make_shared<ProjectParserMemScope>();
             break;
+        case ParserType::PKL_MEM_SNAPSHOT:
+            alloc = std::make_shared<ProjectParserMemSnapshot>();
+            break;
         default:
             alloc = std::make_shared<ProjectParserBase>();
             break;
@@ -123,6 +131,7 @@ void ParserFactory::Reset()
     FullDb::FullDbParser::Instance().Reset();
     MetaDataCacheManager::Instance().Clear();
     MemScopeParser::Instance().Reset();
+    MemSnapshotParser::Instance().Reset();
 }
 
 void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response,

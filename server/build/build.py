@@ -103,6 +103,12 @@ def get_gxx_type():
         gxx_type = 'linux-' + FRAMEWORK
     return gxx_type
 
+def build_snapshot_dump2db(spec_path: str, dst_path: str):
+    build_dump = [
+        'pyinstaller','--distpath=' + dst_path, spec_path
+    ]
+    return execute_cmd(build_dump, BUILD_DIR)
+
 
 def build():
     build_log('begin build...\n')
@@ -142,7 +148,10 @@ def build():
         if pip_install_third_party_for_cluster_analysis() != 0:
             build_log('Failed to pip install third party for cluster analysis.')
             return -1
-
+        result = build_snapshot_dump2db(spec_path=os.path.join(BUILD_DIR, 'dump2db.spec'), dst_path=att_bin_dir)
+        if result != 0:
+            build_log('Failed to execute build snapshot dump command.')
+            return result
     build_log('end build.\n')
     return 0
 
@@ -214,6 +223,7 @@ def pip_install_third_party_for_cluster_analysis():
         return result
     build_log('Successfully pip install optional third party packages for cluster analysis.')
     return 0
+
 
 def init_log(name):
     """init log config"""

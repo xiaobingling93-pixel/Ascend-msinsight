@@ -20,6 +20,7 @@ import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import i18n from '@insight/lib/i18n';
 import { workerDestroy } from '@/leaksWorker/blockWorker/worker';
+import { errorCenter, ErrorCode, WsError } from '@insight/lib';
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
@@ -147,4 +148,8 @@ export const removeRemoteHandler: NotificationHandler = (data): void => {
             restore(session);
         });
     }
+};
+
+export const parseFailHandler: NotificationHandler = (data): void => {
+    errorCenter.handleError(new WsError(ErrorCode.PARSE_FAIL, data.error as string));
 };

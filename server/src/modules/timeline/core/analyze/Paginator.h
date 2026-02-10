@@ -42,7 +42,7 @@ public:
         uint64_t startIdx = NumberSafe::Muls(pageNumber - 1,  pageSize_);
         if (startIdx >= records_.size()) return {}; // 超出范围
 
-        uint32_t endIdx = std::min(startIdx + static_cast<uint64_t>(pageSize_), records_.size());
+        uint32_t endIdx = std::min(startIdx + static_cast<uint64_t>(pageSize_), static_cast<uint64_t>(records_.size()));
         return RecordList(records_.begin() + startIdx, records_.begin() + endIdx);
     }
 
