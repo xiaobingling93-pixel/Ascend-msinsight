@@ -182,9 +182,9 @@ class CPUParser:
         return cpumask_str
 
 class TraceRecord:
-    _INT_RETRY_COUNT = 3
-    _INT_INTERVAL_SEC = 0.5
-    _WAIT_TIMEOUT_SEC = 10
+    _INT_RETRY_COUNT = 5
+    _INT_INTERVAL_SEC = 1
+    _WAIT_TIMEOUT_SEC = 20
     # Holds the running trace-cmd record subprocess (if any)
     _record_process = None
     @staticmethod
@@ -233,7 +233,8 @@ class TraceRecord:
                 for i in range(TraceRecord._INT_RETRY_COUNT):
                     try:
                         os.kill(proc.pid, signal.SIGINT)
-                    except Exception:
+                    except Exception as e:
+                        logging.exception(f"Failed to send SIGINT to kill trace-cmd record process: {e}")
                         pass
                     time.sleep(TraceRecord._INT_INTERVAL_SEC)
                     if proc.poll() is not None:
@@ -243,9 +244,12 @@ class TraceRecord:
             except subprocess.TimeoutExpired:
                 try:
                     proc.terminate()
-                except Exception:
-                    pass
-                logging.warning("Force stopped trace-cmd record process")
+                except Exception as terminate_exception:
+                    logging.exception(f"Failed to terminate trace-cmd record process: {terminate_exception}")
+                logging.error(
+                    f"Forcefully stopped trace-cmd record process due to timeout after waiting for {TraceRecord._WAIT_TIMEOUT_SEC} seconds. "
+                    "This might indicate that the process is taking longer than expected to finish. "
+                    "Consider increasing the _WAIT_TIMEOUT_SEC value or investigating the cause of delay.")
             finally:
                 TraceRecord._record_process = None
         else:
