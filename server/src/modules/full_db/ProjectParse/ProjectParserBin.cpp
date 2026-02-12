@@ -169,15 +169,16 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
     }
     std::string filePath = projectInfo.subParseFileInfo[0]->parseFilePath;
     std::string fileId = FileUtil::GetSingleFileIdWithDb(filePath);
-    std::string rankId = filePath;
-    baselineInfo.rankId = rankId;
+    std::string originalRankId = filePath;
+    std::string rankId = "Baseline_" + originalRankId;
+    baselineInfo.rankId =  rankId;
     baselineInfo.cardName = "Baseline_" + rankId;
     baselineInfo.fileId = fileId;
     Timeline::TrackInfoManager::Instance().SetRankListByFileId(fileId, {"", "", rankId, rankId, rankId});
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
     // 如果文件已经被解析则直接返回
-    if (sourceFileParser.IsBaselineParsed(rankId)) {
+    if (sourceFileParser.IsBaselineParsed(originalRankId)) {
         baselineInfo.errorMessage = "Can't set oneself as baseline.";
         sourceFileParser.SynchronizeBaselineInfo();
         return;
