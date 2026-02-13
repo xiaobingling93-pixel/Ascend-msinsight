@@ -18,6 +18,7 @@
 
 import React, { ReactNode } from 'react';
 import { type TableColumnsType } from 'antd';
+import type { TFunction } from 'i18next';
 import styled from '@emotion/styled';
 import { Button, MITooltipHelp } from '@insight/lib/components';
 import { ResizeTable } from '@insight/lib/resize';
@@ -56,9 +57,7 @@ const ColumnTitle = (props: { name: string; tooltip: string }): JSX.Element => {
 };
 
 // 外层表格列配置
-const useRankColumns = (): TableColumnsType<SlowRankListItem> => {
-    const { t } = useTranslation('communication', { keyPrefix: 'slowRankList' });
-
+const useRankColumns = (t: TFunction<'communication', 'slowRankList'>): TableColumnsType<SlowRankListItem> => {
     return [
         {
             title: t('Rank ID'),
@@ -81,9 +80,7 @@ const useRankColumns = (): TableColumnsType<SlowRankListItem> => {
 };
 
 // 子表格列配置
-const useOpColumns = (): TableColumnsType<ExpandedDataType> => {
-    const { t } = useTranslation('communication', { keyPrefix: 'slowRankList' });
-
+const useOpColumns = (t: TFunction<'communication', 'slowRankList'>): TableColumnsType<ExpandedDataType> => {
     return [
         {
             title: t('Index'),
@@ -135,9 +132,9 @@ const useOpColumns = (): TableColumnsType<ExpandedDataType> => {
 };
 
 const DiffTimeTable: React.FC<DiffTimeTableProps> = ({ data, fastTotalElapseTime, fastRankId, loading }) => {
-    const rankColumns = useRankColumns();
-    const opColumns = useOpColumns();
     const { t } = useTranslation('communication', { keyPrefix: 'slowRankList' });
+    const rankColumns = useRankColumns(t);
+    const opColumns = useOpColumns(t);
 
     // 展开行渲染子表格
     const expandedRowRender = (record: SlowRankListItem): ReactNode => {
