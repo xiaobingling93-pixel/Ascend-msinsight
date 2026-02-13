@@ -320,7 +320,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
     useEffect(() => {
         updateData();
         setExpandedKeys([]);
-    }, [props.rankId, props.step, session.selectedClusterPath]);
+    }, [props.rankId, props.dbPath, props.step, session.selectedClusterPath]);
     const updateData = async (): Promise<void> => {
         try {
             const res = await querySummaryStatistics(
