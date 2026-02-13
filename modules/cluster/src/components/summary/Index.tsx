@@ -309,11 +309,12 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
                             </div>
                             {
                                 generateConditions.dimension === 'ep-dp-pp-cp-tp' && !session.isCompare &&
+                                session.rankDbPathMap.get(activeRankId) !== undefined &&
                                 <StatisticsTable
                                     session={session}
                                     step={performanceChartConditions.step}
                                     rankId={activeRankId}
-                                    dbPath={session.rankDbPathMap.get(activeRankId) ?? ''}
+                                    dbPath={session.rankDbPathMap.get(activeRankId) as string}
                                 />
                             }
                         </>
