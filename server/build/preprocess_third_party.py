@@ -24,6 +24,7 @@ import os
 import platform
 import shutil
 import stat
+import sys
 import tarfile
 import urllib.request
 import subprocess
@@ -81,9 +82,49 @@ def exec_command(command, path):
     return process.returncode
 
 
-def prepare_sqlite_src():
+def is_mingw_available():
+    """
+   检查系统是否安装了 MinGW（通过 g++ 是否存在且标识为 MinGW）
+   返回: (bool, str) -> (是否可用, 详细信息)
+   """
+    # Step 1: 检查 g++ 是否在 PATH 中
+    gpp_path = shutil.which("g++")
+    if not gpp_path:
+        return False, "g++ not found in PATH"
+
+    try:
+        # Step 2: 运行 g++ --version 获取版本信息
+        result = subprocess.run(
+            [gpp_path, "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=5
+        )
+        if result.returncode != 0:
+            return False, f"g++ failed: {result.stderr.strip()}"
+
+        version_output = result.stdout.lower()
+
+        # Step 3: 检查输出是否包含 mingw 关键字
+        if "mingw" in version_output:
+            return True, f"MinGW detected via g++ at {gpp_path}"
+        else:
+            return False, f"g++ found but not MinGW (output: {version_output[:100]}...)"
+
+    except Exception as e:
+        return False, f"Error checking g++: {e}"
+
+
+def prepare_sqlite_src() -> bool:
     log('start to prepare sqlite src')
     if platform.system() == "Windows":
+        check_mingw_result, msg = is_mingw_available()
+        log(msg)
+        if not check_mingw_result:
+            LOG.error('MinGW environment check failed. Please ensure that MinGW is properly installed '
+                      'and the environment variables are correctly configured.')
+            return False
         if not os.path.exists(os.path.join(THIRD_PARTY_DIR, SQLITE3_AUTOCONF_DIR)):
             tar_path = os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_TAR)
             urllib.request.urlretrieve(SQLITE3_SOURCE_URL, tar_path)
@@ -91,6 +132,7 @@ def prepare_sqlite_src():
             tar.extractall(THIRD_PARTY_DIR)
             tar.close()
             os.remove(tar_path)
+            return True
     else:
         build_path = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR, 'build')
         if os.path.exists(build_path):
@@ -102,11 +144,14 @@ def prepare_sqlite_src():
         ret = exec_command(["../configure"], build_path)
         if ret != 0:
             LOG.error('Failed to configure parameter for sqlite')
+            return False
         ret = exec_command(["make", "sqlite3.c"], build_path)
         if ret != 0:
             LOG.error('Failed to make sqlite3.c')
+            return False
 
     log('finish to prepare sqlite3 src')
+    return True
 
 
 def reorganize_3rd_party():
@@ -125,5 +170,7 @@ def reorganize_3rd_party():
 
 if __name__ == '__main__':
     LOG = init_log('root')
-    prepare_sqlite_src()
+    if not prepare_sqlite_src():
+        LOG.error('Failed to prepare sqlite src.')
+        sys.exit(-1)
     reorganize_3rd_party()
