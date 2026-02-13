@@ -323,7 +323,15 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
             }
         </CollapsiblePanel>
 
-        <CollapsiblePanel title={t('MoE Expert Load Balancing Analysis')} testId="panel-moe-balancing">
+        <CollapsiblePanel title={<>
+            {t('MoE Expert Load Balancing Analysis')}
+            <Tooltip
+                title={<div style={{ padding: '1rem' }}>
+                    {t('MoE Expert Load Balancing Analysis Tooltip')}
+                </div>}>
+                <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
+            </Tooltip>
+        </>} testId="panel-moe-balancing">
             <ExpertLoadBalancingBox />
         </CollapsiblePanel>
     </Layout>;

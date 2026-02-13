@@ -137,6 +137,8 @@
     "Maximum": "Maximum",
     "Pipeline Parallelism Chart": "Pipeline Parallelism Chart",
     "MoE Expert Load Balancing Analysis": "MoE Expert Load Balancing Analysis",
+    "MoE Expert Load Balancing Analysis Tooltip": "This feature is specifically designed for optimizing large model inference performance. The system automatically identifies GroupedMatmul operators in profiling data, visualizes their latency as a heat map, and facilitates MoE load balancing analysis. Additionally, it supports importing MindIE-collected Dump data for in-depth expert hotspot analysis.",
+    "Profiling Expert Data Parsing": "Profiling Expert Data Parsing...",
     "Model Layer Num": "Model Layer Num",
     "Dense Layer List": "Dense Layer List",
     "Expert Num": "Expert Num",

@@ -137,6 +137,8 @@
     "Maximum": "最大值",
     "Pipeline Parallelism Chart": "流水并行图",
     "MoE Expert Load Balancing Analysis": "MoE大模型专家负载均衡分析",
+    "MoE Expert Load Balancing Analysis Tooltip": "该功能专为大模型推理性能优化设计。系统自动识别Profiling数据中的GroupedMatmul算子，统计其耗时以可视化热力图，助力分析MoE负载均衡情况。此外，支持导入MindIE采集的Dump数据，用于专家热点深度分析。",
+    "Profiling Expert Data Parsing": "Profiling 专家数据解析中……",
     "Model Layer Num": "模型层数",
     "Dense Layer List": "非MoE层列表",
     "Expert Num": "专家数",

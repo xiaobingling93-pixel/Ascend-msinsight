@@ -16,14 +16,16 @@
  * -------------------------------------------------------------------------
  */
 
+import React, { useCallback, useEffect, useState } from 'react';
+import { observer } from 'mobx-react';
+import { useTranslation } from 'react-i18next';
+import { StyledEmpty } from '@insight/lib';
 import { ExpertLoadBalancingForm } from './Form';
 import { ExpertLoadBalancingChart } from './Chart';
-import React, { useCallback, useEffect, useState } from 'react';
 import connector from '../../../connection';
 import { importExpertData, queryModelInfo, queryExpertHotspot } from '../../../utils/RequestUtils';
 import { QueryExpertHotspotItem } from '../../../utils/interface';
 import { useRootStore } from '../../../context/context';
-import { observer } from 'mobx-react';
 
 export interface FormData {
     layerNum: number | null;
@@ -45,15 +47,17 @@ export const ExpertLoadBalancingBox = observer((): React.ReactElement => {
     const [chartLoading, setChartLoading] = useState(false);
     const { sessionStore } = useRootStore();
     const session = sessionStore.activeSession;
+    const { t } = useTranslation('summary');
 
     // 请求图表热点数据
-    const fetchChatData = async (params?: FormData): Promise<void> => {
+    // @return 获得的数据是否是有内容的
+    const fetchChatData = async (params?: FormData): Promise<boolean> => {
         const { layerNum, expertNum, modelStage, version, denseLayerList } = params ?? formData;
 
         try {
             if (layerNum === null || expertNum === null) {
                 setChartData([]);
-                return;
+                return false;
             }
             setChartLoading(true);
             const { hotspotInfos } = await queryExpertHotspot({
@@ -66,8 +70,10 @@ export const ExpertLoadBalancingBox = observer((): React.ReactElement => {
 
             setChartLoading(false);
             setChartData(hotspotInfos);
+            return Array.isArray(hotspotInfos) && hotspotInfos.length > 0;
         } catch (error) {
             setChartLoading(false);
+            return false;
         }
     };
 
@@ -138,22 +144,26 @@ export const ExpertLoadBalancingBox = observer((): React.ReactElement => {
     }, [handleExpertDataImport]);
 
     useEffect(() => {
+        if (session.profilingExpertDataParsed == null) { return; }
         if (session.profilingExpertDataParsed && formData.version === 'profiling') {
             initLoad();
         }
     }, [session.profilingExpertDataParsed, session.renderId]);
 
     return <>
-        <ExpertLoadBalancingForm
-            loading={chartLoading}
-            data={formData}
-            onFormChange={handleFormChange}
-            onFormSubmit={handleFormSubmit}
-            onImport={handleImport}
-        />
-        <ExpertLoadBalancingChart
-            loading={chartLoading}
-            data={chartData}
-        />
+        { session.profilingExpertDataParsed == null
+            ? <p style={{ textAlign: 'center' }}>{t('Profiling Expert Data Parsing')}</p>
+            : <><ExpertLoadBalancingForm
+                loading={chartLoading}
+                data={formData}
+                onFormChange={handleFormChange}
+                onFormSubmit={handleFormSubmit}
+                onImport={handleImport}
+            />
+            { Array.isArray(chartData) && chartData.length > 0
+                ? <ExpertLoadBalancingChart loading={chartLoading} data={chartData} />
+                : <StyledEmpty /> }
+            </>
+        }
     </>;
 });
