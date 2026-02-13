@@ -49,8 +49,7 @@ type TableDataItem = DataItem & {
     source: Source;
 };
 
-const useCommonColumns = (): ColumnsType<DataType> => {
-    const { t } = useTranslation('communication');
+const useCommonColumns = (t: TFunction<'communication'>): ColumnsType<DataType> => {
     return [
         { title: `${t('tableHead.Elapse Time')}(ms)`, dataIndex: 'elapseTime', sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime, ellipsis: true, showSorterTooltip: { title: `${t('tableHeadTooltip.Elapse Time')}` } },
         {
@@ -203,7 +202,7 @@ const OperatorsTable = ({ record: parentRow, conditions }: any): JSX.Element => 
         setPage({ ..._page, total: res?.count ?? 0 });
     };
 
-    const commonColumns = useCommonColumns().map(item => ({ ...item, sorter: true }));
+    const commonColumns = useCommonColumns(t).map(item => ({ ...item, sorter: true }));
     const columns: TableColumnsType<DataType> = useMemo(() => [
         { title: t('tableHead.Operator Name'), dataIndex: 'operatorName', key: 'operatorName', sorter: true, ellipsis: true },
         ...commonColumns,
@@ -289,7 +288,7 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: ConditionDataT
                 {i18n.t(data.source)} </div>),
             display: [TableLevel.DIFF, TableLevel.DIFF_SOURCE].includes(tableLevel),
         },
-        ...useCommonColumns().map(commonCol => ({
+        ...useCommonColumns(t).map(commonCol => ({
             ...commonCol,
             render: (data: string | number) => tableLevel === TableLevel.DIFF ? <CompareNumber data={data}/> : data,
         })),

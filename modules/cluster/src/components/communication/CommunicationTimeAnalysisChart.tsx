@@ -20,6 +20,7 @@ import * as echarts from 'echarts';
 import type { Session } from '../../entity/session';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { getBaselineName, getCompareName, Loading } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
@@ -318,40 +319,107 @@ interface OpDetail {
 }
 let selectedOpDetail: OpDetail | null;
 
+interface ChartInstance {
+    chart: echarts.ECharts;
+    resizeObserver: ResizeObserver;
+    cleanup: () => void;
+}
+
+// 全局存储（按容器隔离，支持多图表）
+const chartInstanceMap: WeakMap<HTMLElement, ChartInstance> = new WeakMap<HTMLElement, ChartInstance>();
+
 /**
- * 初始化图表并设置相关事件监听
- * @param dataSource 分析图表数据源
- * @param session 会话信息
+ * 初始化图表
+ * @param chartDom 图表实例
  * @param setDropDownVisible 设置下拉菜单可见性的函数
- * @returns 返回初始化的ECharts实例或null
+ * @return 初始化的ECharts实例或 null
  */
-function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDownVisible: (_: boolean) => void): echarts.ECharts | null {
-    const chartDom = document.getElementById('hccl');
-    if (chartDom === null) {
+function initChartInstance(chartDom: HTMLElement, setDropDownVisible: (_: boolean) => void): echarts.ECharts | null {
+    if (chartInstanceMap.has(chartDom)) {
+        return chartInstanceMap.get(chartDom)?.chart ?? null;
+    }
+    const chart = getAdaptiveEchart(chartDom, option);
+    if (!chart) {
         return null;
     }
-    // 释放已存在的自适应ECharts实例
-    disposeAdaptiveEchart(chartDom);
-    // 获取新的自适应ECharts实例
-    const myChart = getAdaptiveEchart(chartDom);
-    const rankDbPathMap: Map<string, string> = new Map();
-    dataSource?.data?.forEach((item) => rankDbPathMap.set(item.rankId, item.dbPath));
-    myChart.on('contextmenu', { element: 'op' }, (e: echarts.ECElementEvent): void => {
+    // 绑定尺寸监听
+    let resizeObserverTimer: number | null = null;
+    const resizeObserver = new ResizeObserver((): void => {
+        if (resizeObserverTimer) {
+            clearTimeout(resizeObserverTimer);
+        }
+        resizeObserverTimer = window.setTimeout((): void => {
+            if (!chart.isDisposed() && chartDom.offsetHeight > 0 && chartDom.offsetWidth > 0) {
+                chart.resize();
+            }
+            resizeObserverTimer = null;
+        }, 100);
+    });
+    resizeObserver.observe(chartDom);
+
+    // 绑定 contextmenu 事件
+    // 通过闭包引用最新 dataSource 更新的 _currentRankMap
+    const contextMenuHandler = (e: echarts.ECElementEvent): void => {
         setDropDownVisible(true);
         const [rankId, timestamp, , duration, , operatorName] = e.value as RectItemValues;
+        // 从实例属性动态读取最新映射
+        const rankMap = (chart as any)._currentRankMap || new Map();
         selectedOpDetail = {
             name: operatorName,
             rankId,
-            dbPath: rankDbPathMap.get(rankId.toString()) ?? '',
+            dbPath: rankMap.get(rankId.toString()) || '',
             timestamp: msToNs(timestamp),
             duration: msToNs(duration),
         };
-    });
-    if (dataSource !== undefined) {
-        myChart.setOption(wrapData(dataSource, session.isCompare, session.communicationChartZoomData));
-    }
+    };
+    chart.on('contextmenu', { element: 'op' }, contextMenuHandler);
 
-    return myChart;
+    // 注册清理函数
+    const cleanup = (): void => {
+        resizeObserver.disconnect();
+        chart.off('contextmenu', contextMenuHandler);
+        disposeAdaptiveEchart(chartDom);
+        chartInstanceMap.delete(chartDom);
+    };
+
+    chartInstanceMap.set(chartDom, { chart, resizeObserver, cleanup });
+    return chart;
+}
+
+/**
+ * 更新图表数据，轻量级，高频调用
+ * @param chart 图表实例
+ * @param dataSource 数据源
+ * @param session 会话
+ */
+function updateChartData(chartDom: HTMLElement, dataSource: AnalysisChartData, session: Session): boolean {
+    const instance = chartInstanceMap.get(chartDom);
+    if (!instance || instance.chart.isDisposed()) {
+        return false;
+    }
+    const { chart } = instance;
+
+    // 更新动态数据映射（供 contextmenu 事件使用）
+    const rankDbPathMap = new Map<string, string>();
+    dataSource?.data?.forEach(item => rankDbPathMap.set(item.rankId, item.dbPath));
+    (chart as any)._currentRankMap = rankDbPathMap; // 通过实例属性存储当前映射，供事件处理器访问
+
+    // 更新图表数据
+    if (dataSource !== undefined) {
+        chart.setOption(wrapData(dataSource, session.isCompare, session.communicationChartZoomData), { notMerge: true });
+    }
+    return true;
+}
+
+/**
+ * 清理资源，组件卸载时调用
+ * @param chartDom 图表实例
+ */
+function disposeChartInstance(chartDom: HTMLElement): void {
+    const instance = chartInstanceMap.get(chartDom);
+    if (instance) {
+        instance.cleanup();
+    }
 }
 
 /**
@@ -527,8 +595,6 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
     const [dropDownVisible, setDropDownVisible] = useState(false);
     // 图表容器的引用
     const chartRef = useRef<HTMLDivElement>(null);
-    // 页面内容滚动容器
-    const scrollContainer = document.querySelector('.mi-page-content');
     // 图表实例的引用
     const chartInst = useRef<echarts.ECharts | null>(null);
     // 获取菜单项
@@ -547,9 +613,35 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
 
         // 如果没有按下Ctrl或Shift键，则滚动页面
         if (!e.ctrlKey && !e.shiftKey) {
+            // 页面内容滚动容器
+            const scrollContainer = document.querySelector('.mi-page-content');
             scrollContainer?.scrollBy(0, e.deltaY);
         }
     };
+
+    const updateData = React.useCallback((dataSource: AnalysisChartData): void => {
+        const chartDom = chartRef.current;
+        if (chartDom && chartInst.current && dataSource) {
+            runInAction(() => {
+                // 重置通信图表缩放数据
+                session.communicationChartZoomData = undefined;
+                updateChartData(chartDom, dataSource, session);
+            });
+            setTimeout(() => {
+                // 设置图表高度
+                setChartHeight(getChartHeight(dataSource));
+            });
+        }
+    }, [chartRef.current, chartInst.current, session]);
+
+    /**
+     * 使用useEffect更新图表数据
+     * @param
+     * @returns void
+     */
+    useEffect(() => {
+        updateData(dataSource);
+    }, [updateData, dataSource]);
 
     /**
      * 使用useEffect初始化图表
@@ -557,22 +649,49 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
      * @returns void
      */
     useEffect(() => {
-        setTimeout(() => {
-            // 设置图表高度
-            setChartHeight(getChartHeight(dataSource));
-            // 初始化图表实例
-            chartInst.current = InitCharts(dataSource, session, setDropDownVisible);
+        const dom = chartRef.current;
+        if (!dom) {
+            return;
+        }
+        const firstInitChart = (): void => {
+            chartInst.current = initChartInstance(dom, setDropDownVisible);
             // 添加滚轮事件监听
             chartRef.current?.addEventListener('wheel', syncScroll, true);
-            // 重置通信图表缩放数据
-            session.communicationChartZoomData = undefined;
+            updateData(dataSource);
+        };
+
+        // 创建初始化 EChart 监听器，等待 DOM 元素准备就绪
+        let resizeObserverTimer: number | null = null;
+        const resizeObserver = new ResizeObserver((): void => {
+            if (resizeObserverTimer) {
+                clearTimeout(resizeObserverTimer);
+            }
+            resizeObserverTimer = window.setTimeout((): void => {
+                // 仅当尺寸有效时“尝试”初始化
+                if (dom.clientHeight > 0 && dom.clientWidth > 0) {
+                    // 尺寸有效后停止监听
+                    resizeObserver.disconnect();
+                    firstInitChart();
+                }
+                resizeObserverTimer = null;
+            }, 20); // 设置 delay 防止 Error: ResizeObserver loop completed with undelivered notifications.
         });
+        resizeObserver.observe(dom);
+
+        // 首次尝试
+        if (dom.clientHeight > 0 && dom.clientWidth > 0) {
+            // 尺寸有效后停止监听
+            resizeObserver.disconnect();
+            firstInitChart();
+        }
 
         // 清理函数，移除滚轮事件监听
         return (): void => {
+            resizeObserver.disconnect();
+            disposeChartInstance(dom); // 清理全局实例记录
             chartRef.current?.removeEventListener('wheel', syncScroll, true);
         };
-    }, [dataSource]);
+    }, [updateData]);
 
     /**
      * 监听并处理慢算子点击事件的函数。

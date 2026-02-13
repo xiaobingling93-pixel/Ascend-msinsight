@@ -27,6 +27,7 @@ import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
 import { CaretRightIcon, CopyOutlinedIcon } from '../icon/Icon';
 import type { JSX } from '@emotion/react/jsx-runtime';
 import type { FilterValue } from 'antd/lib/table/interface';
+import { safeStringify } from '../utils/safeStringify';
 
 export interface ResizeTableRef {
     clearAllFilters: () => void;
@@ -463,7 +464,7 @@ export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, re
     const [sortState, setSortState] = useState<SortState>({});
 
     // ============================ Resize ============================
-    useEffect(() => { setColumns(propColumns ?? []); }, [JSON.stringify(propColumns)]);
+    useEffect(() => { setColumns(propColumns ?? []); }, [safeStringify(propColumns)]);
 
     const mergeColumns: any = useMemo(() => columns.map((col, index) => ({
         ...col,
