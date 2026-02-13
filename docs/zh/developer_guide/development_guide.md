@@ -78,7 +78,8 @@ python preprocess_third_party.py
 ![edit_options](./figures/edit_options.png)
 
 - 选择profiler_server选项，并且将参数修改为 --wsPort=9000 后点击确定保存
-注：端口可以设置为其他端口，以避免和其他端口冲突
+  - 提示：端口可以设置为其他端口，以避免和其他端口冲突
+  - 警告：如果您的开发机器中已打开了Insight桌面端应用，请确认设置`wsPort`不会与已开启的insight产生端口冲突（Insight应用默认为`9000`, 但多开时将从`9000`端口逐个+1绑定占用，建议设置为`9050`~`9099`），否则可能导致前后端连接问题或其他未预期的异常，建议本地开发调试时，关闭所有已开启的Insight应用。
 ![add_port](./figures/add_port.png)
 
 #### 3.3.2 启动构建profiler_server
