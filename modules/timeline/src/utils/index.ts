@@ -16,6 +16,7 @@
  * -------------------------------------------------------------------------
  */
 
+import { type ThreadMetaData } from '../entity/data';
 import { type InsightUnit } from '../entity/insight';
 import { forEach } from 'lodash';
 
@@ -45,4 +46,14 @@ export const getRootUnit = (units: InsightUnit[]): InsightUnit[] => {
         }
     });
     return result;
+};
+
+export const isStreamUnit = (unit: InsightUnit): boolean => {
+    const metaData = unit.metadata as ThreadMetaData;
+
+    if (!metaData.processName || !metaData.threadName) {
+        return false;
+    }
+
+    return metaData.processName.startsWith('Ascend Hardware') && metaData.threadName.startsWith('Stream');
 };

@@ -1772,3 +1772,67 @@ TEST_F(DbTraceDatabaseTest2, TestBuildOverlapInfoListWithFreeTimeAfterComputingA
     EXPECT_EQ(overlapInfoList[0].endNs, 30); // 30
     EXPECT_EQ(overlapInfoList[0].type, 3); // 3
 }
+
+TEST_F(DbTraceDatabaseTest2, TestQueryGroupedAscendHardwareThreads_InvalidModelId)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_MSTX_EVENTS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    database.SetDbPtr(db);
+    std::string taskTableInsert =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
+        "(20, 30, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, 0),"
+        "(20, 30, 7, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 1, 0);";
+    std::string mstxTableInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 65535, 4000000001, 0)";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert);
+
+    std::vector<Dic::Protocol::ThreadGroup> groups;
+    const bool result = database.QueryGroupedAscendHardwareThreadsByModelId(groups);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(groups.size(), 0);
+}
+
+TEST_F(DbTraceDatabaseTest2, TestQueryGroupedAscendHardwareThreads_ValidModelId)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_TASK, TableName::DB_MSTX_EVENTS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    database.SetDbPtr(db);
+    std::string taskTableInsert =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
+        "(20, 30, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 1, 0),"
+        "(20, 30, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 1, 0),"
+        "(20, 30, 7, 4294967295, 82550, 511284, 221, 4294967295, 3, 40, 2, 0),"
+        "(20, 30, 7, 4294967295, 82550, 511284, 221, 4294967295, 4, 40, 2, 0),"
+        "(20, 30, 7, 4000000001, 82550, 511284, 221, 4294967295, 5, 40, 3, 0);";
+    std::string mstxTableInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 65535, 4000000001, 0)";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert);
+
+    std::vector<Dic::Protocol::ThreadGroup> groups;
+    const bool result = database.QueryGroupedAscendHardwareThreadsByModelId(groups);
+    EXPECT_EQ(result, true);
+    ASSERT_EQ(groups.size(), 2);
+    EXPECT_EQ(groups[0].threadIds.size(), 1);
+    EXPECT_EQ(groups[0].threadIds[0], "2");
+    EXPECT_EQ(groups[1].threadIds.size(), 2);
+    EXPECT_EQ(groups[1].threadIds[0], "3");
+    EXPECT_EQ(groups[1].threadIds[1], "4");
+}

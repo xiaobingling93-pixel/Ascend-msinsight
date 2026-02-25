@@ -72,6 +72,7 @@ public:
 
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                       uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) override;
+    std::map<std::string, std::string> QueryAllModelIdOfAscendHardwareThreads() override;
     bool QueryUnitsMetadata(const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;

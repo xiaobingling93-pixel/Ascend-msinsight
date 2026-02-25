@@ -67,6 +67,12 @@ public:
                               uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) = 0;
     virtual bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) = 0;
+    virtual bool QueryGroupedAscendHardwareThreadsByModelId(std::vector<ThreadGroup> &threadGroupList);
+    /**
+     * 查询 Ascend Hardware 中 tid 到 modelId 的映射
+     * @return [tid -> modelId]
+     */
+    virtual std::map<std::string, std::string> QueryAllModelIdOfAscendHardwareThreads() = 0;
     virtual bool QueryUnitsMetadata(const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) = 0;
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;

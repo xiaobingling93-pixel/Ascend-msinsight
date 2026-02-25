@@ -26,7 +26,11 @@ export function savePageSetting(): void {
         return;
     }
     const units = new UnitTreeTool().getSetting(session.units);
-    session.pageSetting[session.projectName] = { units, domainRange: session.domainRange, pinnedUnits: session.pinnedUnits };
+    session.pageSetting[session.projectName] = {
+        units,
+        domainRange: session.domainRange,
+        pinnedUnits: session.pinnedUnits,
+    };
 }
 
 export interface InsightUnitSet {

@@ -117,6 +117,9 @@ protected:
     std::unique_ptr<IFileReader> fileReader = nullptr;
 
     static void ParseClusterEndProcess(std::string result, bool isShowCluster, const std::string &clusterId);
+    static void SearchGroupedAscendHardwareThreads(const std::string &fileId,
+                                                   const Unit &unit,
+                                                   std::vector<ThreadGroup> &groupedThreads);
     static void SearchMetaData(const std::string &rankId, const std::string &fileId,
                                std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static void ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> &metaData);

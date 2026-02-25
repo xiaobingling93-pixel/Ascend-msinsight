@@ -26,6 +26,8 @@ import { message } from 'antd';
 import type { StackStatusConfig } from '../entity/chart';
 import i18n from '@insight/lib/i18n';
 import { checkIsSliceMode } from '../components/charts/ChartInteractor/draw';
+import { isStreamUnit } from '../utils';
+import { ThreadGroup } from '../entity/mergedThreadData';
 
 const clearSelectedUnits = (session: Session): void => {
     session.selectedUnits = [];
@@ -40,7 +42,7 @@ const findInsertIndex = (allUnits: InsightUnit[], selectedUnits: InsightUnit[]):
         const indexInAllUnits = allUnits.findIndex(aUnit => {
             const aMetaData = aUnit.metadata as ThreadMetaData;
 
-            return aMetaData.threadId === sMetaData.threadId;
+            return sMetaData.threadId !== '' ? aMetaData.threadId === sMetaData.threadId : aMetaData.threadIdList === sMetaData.threadIdList;
         });
         if (indexInAllUnits !== -1 && indexInAllUnits < minIndex) {
             minIndex = indexInAllUnits;
@@ -48,16 +50,6 @@ const findInsertIndex = (allUnits: InsightUnit[], selectedUnits: InsightUnit[]):
     }
 
     return minIndex === Infinity ? 0 : minIndex;
-};
-
-const isStreamUnit = (unit: InsightUnit): boolean => {
-    const metaData = unit.metadata as ThreadMetaData;
-
-    if (!metaData.processName || !metaData.threadName) {
-        return false;
-    }
-
-    return metaData.processName.startsWith('Ascend Hardware') && metaData.threadName.startsWith('Stream');
 };
 
 const extractThreadIds = (units: InsightUnit[]): string[] => {
@@ -131,6 +123,10 @@ const createMergedUnit = (mergedMeta: ThreadMetaData): InsightUnit => {
     return threadUnit;
 };
 
+/**
+ * 合并泳道，用户操作情况，需要 addMergedGroup
+ * @param session
+ */
 const mergeUnits = (session: Session): void => {
     const selectedUnits = session.selectedUnits;
     if (selectedUnits.length === 0) { return; }
@@ -173,6 +169,45 @@ const mergeUnits = (session: Session): void => {
 
         markMergedUnits(selectedUnits, unitParent.children);
         clearSelectedUnits(session);
+        // 5. 更新 session.mergedThreadData
+        const addedGroup: ThreadGroup = {
+            cardId: mergedMeta.cardId ?? '',
+            processId: mergedMeta.processId ?? '',
+            threadIds: mergedMeta.threadIdList ?? [],
+        };
+        session.mergedThreadData.addMergedGroup(addedGroup);
+        session.renderTrigger = !session.renderTrigger;
+    });
+};
+
+/**
+ * 合并泳道，自动更新情况，根据 session.mergedThreadData 合并，不需要 addMergedGroup
+ * @param session
+ */
+export const mergeUnitsWhenLoadProject = (session: Session): void => {
+    const needMergeThreadLists = session.mergedThreadData.getNeedMergeThreadLists(session);
+
+    runInAction(() => {
+        needMergeThreadLists.forEach((needMergeThreadList) => {
+            if (needMergeThreadList.length <= 0) { return; }
+
+            const unitParent = needMergeThreadList[0].parent;
+            if (!unitParent?.children) { return; }
+
+            // 1. 构建合并泳道的 metadata
+            const mergedMeta = getMergedUnitMetaData(needMergeThreadList);
+            if (!mergedMeta) { return; }
+
+            // 2. 创建 ThreadUnit 类型的合并泳道
+            const threadUnit = createMergedUnit(mergedMeta);
+
+            // 3. 插入合并泳道 & 更新原始泳道状态
+            const insertIndex = findInsertIndex(unitParent.children, needMergeThreadList);
+
+            unitParent.children.splice(insertIndex, 0, threadUnit);
+
+            markMergedUnits(needMergeThreadList, unitParent.children);
+        });
         session.renderTrigger = !session.renderTrigger;
     });
 };

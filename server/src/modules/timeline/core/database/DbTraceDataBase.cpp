@@ -78,6 +78,37 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
     return true;
 }
 
+std::map<std::string, std::string> DbTraceDataBase::QueryAllModelIdOfAscendHardwareThreads()
+{
+    std::map<std::string, std::string> res;
+    // Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
+    // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+    // 非MSTX事件查询时必须使用connectionId NOT IN显式排除MSTX事件，否则会将MSTX事件同时查询
+    // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
+    // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
+    const std::string sql =
+        "select main.streamId as tid, main.modelId as modelId from " + TABLE_TASK + " main "
+        " where main.connectionId not in (select connectionId from " + TABLE_MSTX_EVENTS + ")"
+        " group by main.streamId;";
+    const auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query all model id of ascend hardware thread failed!.");
+        return res;
+    }
+    const auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query all model id of ascend hardware thread failed to get result set.",
+            stmt->GetErrorMessage());
+        return res;
+    }
+    while (resultSet->Next()) {
+        const auto tid = resultSet->GetString("tid");
+        const auto modelId = resultSet->GetString("modelId");
+        res[tid] = modelId;
+    }
+    return res;
+}
+
 bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
