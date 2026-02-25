@@ -37,6 +37,7 @@ import { RankInfo } from '../api/interface';
 import { queryOneKernel } from '../components/detailViews/Common';
 import { TIME_MAKER_DEFAULT } from '../entity/timeMaker';
 import { MAX_INITIAL_DURATION } from '../entity/domain';
+import { mergeUnitsWhenLoadProject } from '../actions/actionMergeUnits';
 
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const MAX_PARSE_SIZE = 32;
@@ -178,6 +179,9 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 domainEnd = MAX_INITIAL_DURATION;
             }
             session.setDomainWithoutHistory({ domainStart: 0, domainEnd });
+            // 设置各卡的默认合并泳道
+            session.mergedThreadData.concatThreadGroupList(unitData.threadGroupList);
+
             // 检查所有卡是否解析完成
             const parseCompleted = !(session.units.find(item => item.phase === 'analyzing'));
             if (parseCompleted) {
@@ -190,8 +194,10 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 isGlobal && setObserveAction(session);
                 // 发送更新会话通知
                 connector.send({ event: 'updateSession', body: { parseCompleted, isFullDb: session.isFullDb } });
-                // 恢复上次页面设置
+                // 恢复上次页面设置，包括历史合并泳道
                 recoverPageSetting();
+                // 初始化合并泳道
+                mergeUnitsWhenLoadProject(session);
             }
         });
     } catch (error) {
@@ -257,6 +263,7 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
     if (!session) { return; }
     if (result.reset as boolean) { resetPage({ dataSource }); }
     initUnitSessionInfo(session, result, dataSource);
+    // 更新 units
     const hostInfo = groupBy(result.result, (item: ImportCardInfo) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {
         const unit = getRootUnit(session, host, dataSource);
@@ -291,6 +298,7 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             unit.children = cardUnits;
         }
     });
+    session.mergedThreadData.clear(); // units 完全刷新，清空合并数据
 
     if (session?.units?.[0]) {
         session.units[0].isExpanded = true;
@@ -523,7 +531,7 @@ export const resetRemoteHandler: NotificationHandler = async (): Promise<void> =
 };
 
 /**
- * 清除会话中的单位信息的函数
+ * 清除会话中的泳道信息的函数
  * @param session
  * @param data
  * @returns 无返回值
@@ -558,6 +566,7 @@ const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
         session.remoteAttrs.clear();
         session.units = [];
         session.pinnedUnits = [];
+        session.mergedThreadData.clear(); // 当 session.units 清空时，触发 clear
     }
     if (session.isNeedResetRankId) {
         session.rankCardInfoMap.clear();

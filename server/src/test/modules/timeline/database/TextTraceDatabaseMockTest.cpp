@@ -1408,6 +1408,67 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryStepDurationWhenDbOpen)
     EXPECT_EQ(result, true);
 }
 
+TEST_F(TextTraceDatabaseMockTest, TestQueryGroupedAscendHardwareThreads_InvalidModelId)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (54, '2', '3513236896', 'Stream 2', 2), (55, '6', '3513236896', 'Stream 6', 6),"
+        " (56, '3', '3513236896', 'Stream 3', 3);";
+    std::string sliceData = "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\","
+        " \"track_id\", \"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES"
+        " (26553, 1764246877086724740, 10160, 'aclnnMuls_MulAiCore_Mul', NULL, 54, NULL, "
+        "'{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_VECTOR_CORE\"}', '', 1764246877084183180, ''),"
+        " (26494, 1764246877076775260, 20, 'EVENT_WAIT', NULL, 55, NULL, "
+        "'{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_VECTOR_CORE\"}', '', 1764246877084183180, ''),"
+        " (26537, 1764246877083361500, 821680, 'EVENT_WAIT', NULL, 56, NULL, "
+        "'{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_VECTOR_CORE\"}', '', 1764246877084183180, '');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
+    const std::string fileId = "9";
+    std::vector<Dic::Protocol::ThreadGroup> groups;
+    const bool result = database.QueryGroupedAscendHardwareThreadsByModelId(groups);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(groups.size(), 0);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryGroupedAscendHardwareThreads_ValidModelId)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (54, '2', '3513236896', 'Stream 2', 2), (55, '6', '3513236896', 'Stream 6', 6),"
+        " (56, '3', '3513236896', 'Stream 3', 3);";
+    std::string sliceData = "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\","
+        " \"track_id\", \"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES"
+        " (26553, 1764246877086724740, 10160, 'aclnnMuls_MulAiCore_Mul', NULL, 54, NULL, "
+        "'{\"Model Id\":\"1\",\"Task Type\":\"AI_VECTOR_CORE\"}', '', 1764246877084183180, ''),"
+        " (26494, 1764246877076775260, 20, 'EVENT_WAIT', NULL, 55, NULL, "
+        "'{\"Model Id\":\"1\",\"Task Type\":\"AI_VECTOR_CORE\"}', '', 1764246877084183180, ''),"
+        " (26537, 1764246877083361500, 821680, 'EVENT_WAIT', NULL, 56, NULL, "
+        "'{\"Model Id\":\"2\",\"Task Type\":\"AI_VECTOR_CORE\"}', '', 1764246877084183180, '');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
+    const std::string fileId = "9";
+    std::vector<Dic::Protocol::ThreadGroup> groups;
+    const bool result = database.QueryGroupedAscendHardwareThreadsByModelId(groups);
+    EXPECT_EQ(result, true);
+    ASSERT_EQ(groups.size(), 2);
+    EXPECT_EQ(groups[0].threadIds.size(), 2);
+    EXPECT_EQ(groups[0].threadIds[0], "2");
+    EXPECT_EQ(groups[0].threadIds[1], "6");
+    EXPECT_EQ(groups[1].threadIds.size(), 1);
+    EXPECT_EQ(groups[1].threadIds[0], "3");
+}
+
 TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadatanWhenDbNotOpen)
 {
     std::recursive_mutex sqlMutex;

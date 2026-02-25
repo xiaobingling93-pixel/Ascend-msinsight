@@ -36,6 +36,7 @@ import { CardRankInfo } from '../api/interface';
 import { getRootUnit } from '../utils';
 import { getAutoKey } from '../utils/dataAutoKey';
 import type { FlowPoint } from '../insight/units/AscendUnit';
+import { MergedThreadData } from './mergedThreadData';
 
 export const MAX_ZOOM_COUNT = 10000;
 
@@ -257,6 +258,7 @@ export class Session {
     doReset: boolean = false;
     eventUnits: InsightUnit[] = [];
     projectName?: string;
+    mergedThreadData: MergedThreadData;
     pageSetting: Record<string, {
         domainRange: DomainRange;
         units: InsightUnitSet[];
@@ -329,6 +331,7 @@ export class Session {
         }
         this.debouncedSetZoomingHistory = debounce(this.setZoomingHistory.bind(this), 300);
         this._domain = new Domain(this.isNsMode, this.endTimeAll, this.debouncedSetZoomingHistory);
+        this.mergedThreadData = new MergedThreadData();
         this.buttons = conf?.buttons ?? [];
         this.simpleCache = new SimpleCache();
         // 录制时长大于等于5min，建议结束录制

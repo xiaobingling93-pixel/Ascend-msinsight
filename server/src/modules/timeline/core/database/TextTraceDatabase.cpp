@@ -906,6 +906,44 @@ std::map<std::string, std::vector<Thread>> TextTraceDatabase::QueryAllThreadInfo
     return res;
 }
 
+std::map<std::string, std::string> TextTraceDatabase::QueryAllModelIdOfAscendHardwareThreads()
+{
+    std::map<std::string, std::string> res;
+    // INSTR: 比 like 语句更快的子字符串搜索方法
+    const std::string sql = "select thread.tid, thread.track_id, slice.args from slice join thread on "
+        "slice.track_id = thread.track_id where INSTR(LOWER(slice.args), 'model id') > 0 "
+        "and thread.thread_name like 'Stream%' group by thread.track_id;";
+    const auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query all model id of ascend hardware thread failed!.");
+        return res;
+    }
+    const auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query all model id of ascend hardware thread failed to get result set.",
+            stmt->GetErrorMessage());
+        return res;
+    }
+    while (resultSet->Next()) {
+        const auto tid = resultSet->GetString("tid");
+        auto args = resultSet->GetString("args");
+        std::string error;
+        auto json = JsonUtil::TryParse(args, error);
+        if (!json.has_value() || !error.empty()) {
+            continue;
+        }
+        std::string modelId;
+        if (JsonUtil::IsJsonKeyValid(json.value(), "Model Id")) {
+            modelId = JsonUtil::GetString(json.value(), "Model Id");
+        }
+        if (JsonUtil::IsJsonKeyValid(json.value(), "model id")) {
+            modelId = JsonUtil::GetString(json.value(), "model id");
+        }
+        res[tid] = modelId;
+    }
+    return res;
+}
+
 std::map<std::pair<std::string, std::string>, std::string> TextTraceDatabase::QueryAllCounterInfo()
 {
     std::map<std::pair<std::string, std::string>, std::string> res;

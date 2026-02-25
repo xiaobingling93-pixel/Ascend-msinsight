@@ -59,8 +59,32 @@ struct Unit {
     std::vector<std::unique_ptr<UnitTrack>> children;
 };
 
+struct ThreadGroup {
+    std::string cardId;
+    std::string processId;
+    std::vector<std::string> threadIds;
+
+    void push(const std::string &threadId) {
+        threadIds.push_back(threadId);
+    }
+
+    json_t SerializationToJson(RAPIDJSON_DEFAULT_ALLOCATOR &allocator) const
+    {
+        json_t group(kObjectType);
+        JsonUtil::AddMember(group, "cardId", cardId, allocator);
+        JsonUtil::AddMember(group, "processId", processId, allocator);
+        json_t list(kArrayType) ;
+        for (const auto &thread : threadIds) {
+            list.PushBack(json_t().SetString(thread.c_str(), allocator), allocator);
+        }
+        JsonUtil::AddMember(group, "threadIds", list, allocator);
+        return group;
+    }
+};
+
 struct ParseSuccessEventBody {
     Unit unit;
+    std::vector<ThreadGroup> threadGroupList;
     bool startTimeUpdated = false;
     bool isFullDb = false;
     bool isRl = false;

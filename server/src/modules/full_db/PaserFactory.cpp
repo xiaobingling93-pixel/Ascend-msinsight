@@ -234,6 +234,7 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
     event->body.isRl = !mstxSliceList.empty();
     event->body.rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
     SearchMetaData(rankId, fileId, event->body.unit.children);
+    SearchGroupedAscendHardwareThreads(fileId, event->body.unit, event->body.threadGroupList);
     SendEvent(std::move(event));
 }
 
@@ -262,6 +263,45 @@ bool ProjectParserBase::IsNeedReset(const ImportActionRequest &request)
         return true;
     }
     return false;
+}
+
+void ProjectParserBase::SearchGroupedAscendHardwareThreads(const std::string &fileId,
+    const Unit &unit, std::vector<ThreadGroup> &groupedThreads)
+{
+    const auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
+    database->QueryGroupedAscendHardwareThreadsByModelId(groupedThreads);
+    // 循环获取 ThreadGroup 的 cardId processId
+    uint8_t updatedGroupNum = 0;
+    for (const auto &item : unit.children) {
+        if (updatedGroupNum >= groupedThreads.size()) {
+            break;
+        }
+        std::unordered_set<std::string> threadIdSet;
+        // 预分配空间，避免多次rehash，提升性能
+        threadIdSet.reserve(item->children.size());
+        for (const auto& threadPtr : item->children) {
+            // 直接插入提取出的 threadId
+            threadIdSet.insert(threadPtr->metaData.threadId);
+        }
+
+        for (auto &groupedThread : groupedThreads) {
+            if (!groupedThread.processId.empty()) {
+                continue;
+            }
+            const bool matched = std::any_of(groupedThread.threadIds.begin(), groupedThread.threadIds.end(),
+                [&](const std::string& id) { return threadIdSet.find(id) != threadIdSet.end(); });
+            if (matched) {
+                groupedThread.processId = item->metaData.processId;
+                groupedThread.cardId = unit.metadata.cardId;
+                updatedGroupNum++;
+                break;
+            }
+        }
+    }
 }
 
 void ProjectParserBase::SearchMetaData(const std::string &rankId, const std::string &fileId,

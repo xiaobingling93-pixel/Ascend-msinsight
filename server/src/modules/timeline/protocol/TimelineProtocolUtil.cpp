@@ -899,6 +899,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     JsonUtil::AddMember(body, "startTimeUpdated", event.body.startTimeUpdated, allocator);
     JsonUtil::AddMember(body, "isFullDb", event.body.isFullDb, allocator);
     JsonUtil::AddMember(body, "isRl", event.body.isRl, allocator);
+    // 创建 unit 开始
     json_t unit(kObjectType);
     JsonUtil::AddMember(unit, "type", event.body.unit.type, allocator);
     json_t metadata(kObjectType);
@@ -909,13 +910,19 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     for (const auto &track : event.body.unit.children) {
         children.PushBack(UnitTrackToJson(*track, allocator, 0), allocator); // 限制最大递归次数，起始为0
     }
+    JsonUtil::AddMember(unit, "children", children, allocator);
+    JsonUtil::AddMember(body, "unit", unit, allocator);
+    // 创建 unit 结束
     json_t rankList(kArrayType);
     for (const auto& rank : event.body.rankList) {
         rankList.PushBack(rank.SerializationToJson(allocator), allocator);
     }
     JsonUtil::AddMember(body, "rankList", rankList, allocator);
-    JsonUtil::AddMember(unit, "children", children, allocator);
-    JsonUtil::AddMember(body, "unit", unit, allocator);
+    json_t threadGroupList(kArrayType);
+    for (const auto& threads : event.body.threadGroupList) {
+        threadGroupList.PushBack(threads.SerializationToJson(allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "threadGroupList", threadGroupList, allocator);
     JsonUtil::AddMember(body, "dbPath", event.body.fileId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};

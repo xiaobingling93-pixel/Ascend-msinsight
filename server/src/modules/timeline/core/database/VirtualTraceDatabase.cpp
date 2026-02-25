@@ -30,6 +30,49 @@
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
+bool VirtualTraceDatabase::QueryGroupedAscendHardwareThreadsByModelId(std::vector<ThreadGroup> &threadGroupList)
+{
+    std::map<std::string, std::string> tId2ModelIdMap = QueryAllModelIdOfAscendHardwareThreads();
+    // 检查是否有数据
+    if (tId2ModelIdMap.empty()) {
+        threadGroupList.clear();
+        return false; // 没有数据，返回失败
+    }
+
+    // 创建一个临时映射：ModelID -> 线程ID列表
+    std::map<std::string, ThreadGroup> modelIdToThreadsMap;
+    // 定义需要跳过的特殊值
+    const std::string emptyModelId = "";
+    const std::string uintMaxModelId = std::to_string(UINT_MAX); // 通常为"4294967295"
+
+    // 遍历所有线程，按ModelID分组
+    for (const auto&[threadId, modelId] : tId2ModelIdMap) {
+        if (modelId == emptyModelId || modelId == uintMaxModelId) {
+            ServerLog::Warn("Invalid ModelId when querying grouped ascend hardware threads.");
+            continue;
+        }
+        // 如果这个modelId还没有对应的ThreadGroup，创建一个新的
+        if (modelIdToThreadsMap.find(modelId) == modelIdToThreadsMap.end()) {
+            const ThreadGroup group;
+            modelIdToThreadsMap[modelId] = group;
+        }
+
+        // 将线程ID转换为字符串并添加到对应ModelID的组中
+        modelIdToThreadsMap[modelId].push(threadId);
+    }
+
+    // 清空输出参数
+    threadGroupList.clear();
+    threadGroupList.reserve(modelIdToThreadsMap.size());
+
+    // 将map中的所有ThreadGroup添加到输出列表
+    for (const auto&[modelId, threadGroup] : modelIdToThreadsMap) {
+        threadGroupList.push_back(threadGroup);
+    }
+
+    return true; // 操作成功
+}
+
 uint64_t VirtualTraceDatabase::CalculateUncoveredTime(const std::vector<Protocol::ThreadTraces> &uncovered,
     size_t &index, const ThreadTraces &element)
 {
