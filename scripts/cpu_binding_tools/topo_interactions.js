@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     if (!network) return;
 
+    var NPU_NODE_PREFIX = "NPU_";
     // 存储原始状态
     var originalEdges = {};
     var originalNodes = {};
@@ -61,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         var allNodes = network.body.data.nodes.get();
         allNodes.forEach(function(node) {
-            if (node.id.toString().startsWith('NPU_')) {
+            if (node.id.toString().startsWith(NPU_NODE_PREFIX)) {
                 originalNodes[node.id] = {
                     color: node.color?.background || '#FF5722',
                     size: node.size || 20
@@ -74,8 +75,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // 判断是否为 NPU-NPU 边
     function isNpuEdge(edge) {
         return edge.from && edge.to && 
-            edge.from.toString().startsWith('NPU_') && 
-            edge.to.toString().startsWith('NPU_');
+            edge.from.toString().startsWith(NPU_NODE_PREFIX) && 
+            edge.to.toString().startsWith(NPU_NODE_PREFIX);
     }
 
     // 显示指定节点的关联边和节点
@@ -163,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function() {
     network.on("hoverNode", function(params) {
         if (fixedHighlightedNode) return; // 已有固定高亮时禁用悬停
         var nodeId = params.node;
-        if (nodeId && nodeId.toString().startsWith('NPU_')) {
+        if (nodeId && nodeId.toString().startsWith(NPU_NODE_PREFIX)) {
             showConnections(nodeId, false);
         }
     });
@@ -171,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function() {
     network.on("blurNode", function(params) {
         if (fixedHighlightedNode) return;
         var nodeId = params.node;
-        if (nodeId && nodeId.toString().startsWith('NPU_')) {
+        if (nodeId && nodeId.toString().startsWith(NPU_NODE_PREFIX)) {
             hideConnections(nodeId);
         }
     });
@@ -188,7 +189,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         var clickedNode = params.nodes[0];
-        if (!clickedNode.toString().startsWith('NPU_')) return;
+        if (!clickedNode.toString().startsWith(NPU_NODE_PREFIX)) return;
 
         // 如果点击已固定的节点，取消高亮
         if (fixedHighlightedNode === clickedNode) {
