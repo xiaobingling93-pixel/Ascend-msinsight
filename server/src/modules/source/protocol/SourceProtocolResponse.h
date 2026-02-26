@@ -68,6 +68,7 @@ struct SourceColumnValueMap {
     std::unordered_map<std::string, int> intMap;
     std::unordered_map<std::string, float> floatMap;
     std::unordered_map<std::string, std::string> stringMap;
+    std::unordered_map<std::string, Dic::Module::Source::PercentageAndDetails> percentAndDetailsColumnMap;
 };
 
 struct SourceApiInstrRes {

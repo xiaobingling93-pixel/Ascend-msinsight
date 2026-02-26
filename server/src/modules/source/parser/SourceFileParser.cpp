@@ -90,7 +90,10 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths,
         return false;
     }
     file.close();
+
+    // 解析代码文件 源码行信息 指令信息
     ConvertToData();
+
     Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::INIT);
     threadPool->AddTask(PreParseTask, TraceIdManager::GetTraceId(), rankId, fileId);
     return true;

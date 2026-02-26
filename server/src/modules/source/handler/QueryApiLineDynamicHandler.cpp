@@ -76,6 +76,7 @@ void QueryApiLineDynamicHandler::SetResponseBody(SourceApiLineDynamicResponse &r
         TransformColumnData(item.floatColumnMap, line.columnValueMap.floatMap);
         TransformColumnData(item.intColumnMap, line.columnValueMap.intMap);
         TransformColumnData(item.stringColumnMap, line.columnValueMap.stringMap);
+        line.columnValueMap.percentAndDetailsColumnMap = item.percentAndDetailsColumnMap;
         response.body.sourceFileLines.emplace_back(line);
     }
 }

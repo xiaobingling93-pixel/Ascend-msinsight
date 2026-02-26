@@ -52,10 +52,12 @@ struct DynamicColumn {
 };
 
 struct SourceFileInstructionDynamicCol : public DynamicColumn {
+    std::unordered_map<std::string, PercentageAndDetails> percentAndDetailsColumnMap;
 };
 
 struct SourceFileLineDynamicCol : public DynamicColumn {
     std::vector<std::pair<std::string, std::string>> addressRange;
+    std::unordered_map<std::string, PercentageAndDetails> percentAndDetailsColumnMap;
 };
 
 class GRPStatusHelper {
@@ -99,6 +101,7 @@ protected:
     void ProcessColumnDataArray(const Value& value, std::vector<T>& columnDataList);
     template <typename T>
     void ProcessColumnData(const Value& value, std::vector<T>& columnDataList);
+    void ProcessColumnDataTypePercentageAndDetails(const Value& value, PercentageAndDetails &item);
     void ConvertApiFile(const std::string &jsonStr);
     void ConvertApiFileDynamic(const std::string &jsonStr);
     void ParseFile(rapidjson::Value &file);

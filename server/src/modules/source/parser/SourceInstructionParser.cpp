@@ -149,15 +149,27 @@ void SourceInstructionParser::ParseInstruction(Value &instr)
             continue;
         }
         // 处理不同数据类型的列
-        auto &columData = instr[columnName.c_str()];
-        if (type == ColumDataType::STRING) {
-            ProcessColumnDataArray<std::string>(columData, sourceFileInstruction.stringColumnMap[columnName]);
-        } else if (type == ColumDataType::INT) {
-            ProcessColumnDataArray<int>(columData, sourceFileInstruction.intColumnMap[columnName]);
-        } else if (type == ColumDataType::FLOAT || type == ColumDataType::PERCENTAGE) {
-            ProcessColumnDataArray<float>(columData, sourceFileInstruction.floatColumnMap[columnName]);
-        } else if (type == ColumDataType::JSON_STR) {
-            sourceFileInstruction.jsonStringColumnMap[columnName].push_back(JsonUtil::JsonDump(columData));
+        auto &columnData = instr[columnName.c_str()];
+        switch (type) {
+            case ColumnDataType::STRING:
+                ProcessColumnDataArray<std::string>(columnData, sourceFileInstruction.stringColumnMap[columnName]);
+                break;
+            case ColumnDataType::INT:
+                ProcessColumnDataArray<int>(columnData, sourceFileInstruction.intColumnMap[columnName]);
+                break;
+            case ColumnDataType::FLOAT:
+            case ColumnDataType::PERCENTAGE:
+                ProcessColumnDataArray<float>(columnData, sourceFileInstruction.floatColumnMap[columnName]);
+                break;
+            case ColumnDataType::JSON_STR:
+                sourceFileInstruction.jsonStringColumnMap[columnName].push_back(JsonUtil::JsonDump(columnData));
+                break;
+            case ColumnDataType::PERCENTAGEANDDETAIL:
+                ProcessColumnDataTypePercentageAndDetails(columnData,
+                    sourceFileInstruction.percentAndDetailsColumnMap[columnName]);
+                break;
+            default:
+                break;
         }
     }
     instructionList.emplace_back(std::move(sourceFileInstruction));
@@ -186,6 +198,24 @@ void SourceInstructionParser::ProcessColumnData(const Value& value, std::vector<
         columnDataList.emplace_back(value.IsInt() ? value.GetInt() : 0);
     } else if constexpr (std::is_same<T, float>::value) {
         columnDataList.emplace_back(value.IsFloat() ? value.GetFloat() : 0.0f);
+    }
+}
+
+void SourceInstructionParser::ProcessColumnDataTypePercentageAndDetails(const Value &value, PercentageAndDetails &item)
+{
+    if (!value.IsObject()) {
+        return;
+    }
+
+    item.percentage = JsonUtil::GetFloat(value, "Percent");
+    if (!value.HasMember("Details") || !value["Details"].IsObject()) {
+        return;
+    }
+    for (auto it = value["Details"].MemberBegin(); it != value["Details"].MemberEnd(); ++it) {
+        std::pair<std::string, int> detail;
+        detail.first = JsonUtil::GetStringWithoutKey(it->name);
+        detail.second = JsonUtil::GetIntWithoutKey(it->value);
+        item.details.emplace_back(detail);
     }
 }
 
@@ -366,13 +396,24 @@ void SourceInstructionParser::ParseFile(Value &file)
                 continue;
             }
             // 处理不同数据类型的列
-            auto &columData = line[columnName.c_str()];
-            if (type == ColumDataType::STRING) {
-                ProcessColumnDataArray<std::string>(columData, sourceFileLine.stringColumnMap[columnName]);
-            } else if (type == ColumDataType::INT) {
-                ProcessColumnDataArray<int>(columData, sourceFileLine.intColumnMap[columnName]);
-            } else if (type == ColumDataType::FLOAT || type == ColumDataType::PERCENTAGE) {
-                ProcessColumnDataArray<float>(columData, sourceFileLine.floatColumnMap[columnName]);
+            auto &columnData = line[columnName.c_str()];
+            switch (type) {
+                case ColumnDataType::STRING:
+                    ProcessColumnDataArray<std::string>(columnData, sourceFileLine.stringColumnMap[columnName]);
+                    break;
+                case ColumnDataType::INT:
+                    ProcessColumnDataArray<int>(columnData, sourceFileLine.intColumnMap[columnName]);
+                    break;
+                case ColumnDataType::FLOAT:
+                case ColumnDataType::PERCENTAGE:
+                    ProcessColumnDataArray<float>(columnData, sourceFileLine.floatColumnMap[columnName]);
+                    break;
+                case ColumnDataType::PERCENTAGEANDDETAIL:
+                    ProcessColumnDataTypePercentageAndDetails(columnData,
+                        sourceFileLine.percentAndDetailsColumnMap[columnName]);
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -720,6 +761,7 @@ std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDy
         GetValueInTargetCore(item.floatColumnMap, col.floatColumnMap, index);
         GetValueInTargetCore(item.stringColumnMap, col.stringColumnMap, index);
         GetValueInTargetCore(item.jsonStringColumnMap, col.jsonStringColumnMap, index);
+        col.percentAndDetailsColumnMap = item.percentAndDetailsColumnMap;
         list.emplace_back(col);
     }
 
@@ -757,6 +799,7 @@ std::vector<SourceFileLineDynamicCol> SourceInstructionParser::GetApiLinesDynami
         GetValueInTargetCore(item.intColumnMap, col.intColumnMap, index);
         GetValueInTargetCore(item.floatColumnMap, col.floatColumnMap, index);
         col.addressRange = item.addressRange;
+        col.percentAndDetailsColumnMap = item.percentAndDetailsColumnMap;
         list.emplace_back(col);
     }
 

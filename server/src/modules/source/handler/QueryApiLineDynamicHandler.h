@@ -30,7 +30,7 @@ class QueryApiLineDynamicHandler : public SourceRequestHandler {
 public:
     QueryApiLineDynamicHandler()
     {
-        command = Protocol::REQ_RES_SOURCE_API_LINE;
+        command = Protocol::REQ_RES_SOURCE_API_LINE_DYNAMIC;
     }
 
     ~QueryApiLineDynamicHandler() override = default;
