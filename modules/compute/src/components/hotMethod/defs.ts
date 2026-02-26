@@ -53,15 +53,22 @@ export interface Ilinetable {
     [ADDRESS_RANGE]?: string[][];
     cycles?: number;
     instructionsExecuted?: number;
+    // Stall Sampling包含阻塞分析相关信息，Percent字段表示该行指令阻塞占总体的百分比，Details字段展示具体阻塞原因及数量
+    'Stall Sampling(All Samples)'?: { Percent: number; Details: Record<string, number> };
+    'Stall Sampling(Not Issue)'?: { Percent: number; Details: Record<string, number> };
 };
 
 export interface InstrsColumnType {
+    [prop: string]: React.Key | React.Key[] | any;
     [ASCENDC_INNER_CODE]: string;
     [ADDESS]: string;
     [SOURCE]: string;
     [PIPE]: string ;
     [REAL_STALL_CYCLES]: number;
     [THEORETICAL_STALL_CYCLES]: number;
+    // Stall Sampling包含阻塞分析相关信息，Percent字段表示该行指令阻塞占总体的百分比，Details字段展示具体阻塞原因及数量
+    'Stall Sampling(All Samples)'?: { Percent: number; Details: Record<string, number> };
+    'Stall Sampling(Not Issue)'?: { Percent: number; Details: Record<string, number> };
     maxCycles: number;
     cycles: number;
     Cycles: number;
