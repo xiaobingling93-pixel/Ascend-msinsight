@@ -80,6 +80,7 @@ void QueryApiInstructionsDynamicHandler::SetResponseBody(SourceApiInstrDynamicRe
         TransformColumnData(item.intColumnMap, col.intMap);
         TransformColumnData(item.stringColumnMap, col.stringMap);
         TransformColumnData(item.jsonStringColumnMap, col.stringMap); // json_str 复用string map即可
+        col.percentAndDetailsColumnMap = item.percentAndDetailsColumnMap;
         response.body.columnValues.emplace_back(col);
     }
 }

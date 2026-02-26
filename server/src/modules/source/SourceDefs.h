@@ -22,17 +22,17 @@
 namespace Dic {
 namespace Module {
 namespace Source {
-struct ColumDataType {
+struct ColumnDataType {
     enum Type : int {
         SKIP = 0,
         INT,
         FLOAT,
         STRING,
         PERCENTAGE,
-        JSON_STR
+        JSON_STR,
+        PERCENTAGEANDDETAIL = 100,
     };
 };
-
 
 enum class GRPStatus{
     SPACE = 0,
@@ -62,6 +62,11 @@ struct GRPInfo {
     GRPStatus status{GRPStatus::SPACE};
     GRPProgress progress;
     int index; // 当前寄存器已经经历的指令周期，用于内部排序，不对外返回
+};
+
+struct PercentageAndDetails {
+    float percentage;
+    std::vector<std::pair<std::string, int>> details;
 };
 }
 } // end of namespace Module

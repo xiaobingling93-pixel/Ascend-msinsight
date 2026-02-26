@@ -114,6 +114,10 @@ std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const Sou
             ranges.PushBack(range, allocator);
         }
         JsonUtil::AddMember(jsonLine, "Address Range", ranges, allocator);
+        for (const auto &percentageAndDetailsItem: sourceFileLine.columnValueMap.percentAndDetailsColumnMap) {
+            std::optional<document_t> jsonItem = PercentageAndDetailsToJson(percentageAndDetailsItem.second, allocator);
+            JsonUtil::AddMember(jsonLine, percentageAndDetailsItem.first, jsonItem.value(), allocator);
+        }
         lines.PushBack(jsonLine, allocator);
     }
     JsonUtil::AddMember(body, "Lines", lines, allocator);
@@ -206,6 +210,10 @@ std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const So
         for (const auto &floatItem: item.floatMap) {
             JsonUtil::AddMember(jsonInstruction, floatItem.first, floatItem.second, allocator);
         }
+        for (const auto &percentageAndDetailsItem: item.percentAndDetailsColumnMap) {
+            std::optional<document_t> jsonItem = PercentageAndDetailsToJson(percentageAndDetailsItem.second, allocator);
+            JsonUtil::AddMember(jsonInstruction, percentageAndDetailsItem.first, jsonItem.value(), allocator);
+        }
         jsonInstructions.PushBack(jsonInstruction, allocator);
     }
     JsonUtil::AddMember(body, "Instructions", jsonInstructions, allocator);
@@ -215,6 +223,19 @@ std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const So
     JsonUtil::AddMember(json, "body", body, allocator);
 
     return std::optional<document_t>{std::move(json)};
+}
+
+std::optional<document_t> PercentageAndDetailsToJson(const Dic::Module::Source::PercentageAndDetails &item,
+    Document::AllocatorType &allocator)
+{
+    document_t percentageAndDetailsJson(kObjectType);
+    JsonUtil::AddMember(percentageAndDetailsJson, "Percent", item.percentage, allocator);
+    json_t detailsJson(kObjectType);
+    for (const auto &detail: item.details) {
+        JsonUtil::AddMember(detailsJson, detail.first, detail.second, allocator);
+    }
+    JsonUtil::AddMember(percentageAndDetailsJson, "Details", detailsJson, allocator);
+    return std::optional<document_t>(std::move(percentageAndDetailsJson));
 }
 
 template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(const DetailsBaseInfoResponse &response)

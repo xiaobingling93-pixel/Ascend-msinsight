@@ -66,6 +66,8 @@ std::optional<document_t> MemoryUnitToJson(const MemoryUnit &memoryUnit, Documen
 std::optional<document_t> L2CacheToJson(const L2Cache &l2Cache, Document::AllocatorType &allocator);
 std::optional<document_t> CompareTableRowToJson(const std::vector<CompareData<TableRow>> &rows,
                                                 Document::AllocatorType &allocator);
+std::optional<document_t> PercentageAndDetailsToJson(const Module::Source::PercentageAndDetails &item,
+    Document::AllocatorType &allocator);
 void SetSourceApiLineResponseBody(const std::vector<SourceFileLineRes> &lines, json_t &body,
                                   Document::AllocatorType &allocator);
 } // end of namespace Protocol
