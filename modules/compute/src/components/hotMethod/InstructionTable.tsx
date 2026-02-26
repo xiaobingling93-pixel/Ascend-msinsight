@@ -24,6 +24,7 @@ import { FieldType, NOT_APPLICABLE } from './defs';
 import { Tooltip } from '@insight/lib/components';
 import Bar, { BarType, StallBar } from './Bar';
 import { limitInput } from '@insight/lib/utils';
+import { RegisterDependency } from '@/components/hotMethod/RegisterDependency';
 
 const onFilterDropdownOpenChange = (open: boolean): void => {
     if (open) {
@@ -46,7 +47,7 @@ const getFilterText = (item: any, dataIndex?: string): any => {
 };
 
 const getFilters = (curInstrData: InstrsColumnType[], dataIndex: string): any[] => {
-    const items = [...new Set(curInstrData.map(item => item[dataIndex]))];
+    const items = [...new Set(curInstrData.map(item => item[dataIndex as keyof InstrsColumnType]))];
     let hasNegative = false;
     return items.reduce<any[]>((pre, cur) => {
         const text = getFilterText(cur, dataIndex);
@@ -66,7 +67,7 @@ const getFilters = (curInstrData: InstrsColumnType[], dataIndex: string): any[] 
 export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[]): ColumnsType<InstrsColumnType> => {
     const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields, curInstrData);
     // 没有有筛选功能的列
-    const unfilterableCols = ['index', 'RealStallCycles'];
+    const unfilterableCols = ['index', 'RealStallCycles', 'Register Dependencies'];
     columns.forEach((col: ColumnType<InstrsColumnType>) => {
         if (col.dataIndex !== undefined && !unfilterableCols.includes(String(col.dataIndex))) {
             const filters = getFilters(curInstrData, String(col.dataIndex));
@@ -115,6 +116,17 @@ const instrsColsConfig = [
         width: 115,
         render: (realStallCycles: number | string, record: InstrsColumnType): string | React.ReactElement =>
             <StallBar real={record.RealStallCycles as number} theoretical={record.TheoreticalStallCycles as number}/>,
+        className: 'height20',
+    },
+    {
+        title: 'GPR Status',
+        ellipsis: true,
+        width: 115,
+        render: (record: InstrsColumnType): string | React.ReactElement => {
+            return <RegisterDependency
+                tracks={record['GPR Status']}
+                cellPadding={6} />;
+        },
         className: 'height20',
     },
 ];
@@ -176,6 +188,7 @@ const headerCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed'];
 const endCols = ['Cycles', 'StallCycles'];
 // 不显示的列
 const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles'];
+const noSortCols = ['GPR Status'];
 
 export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}, curInstrData: InstrsColumnType[] = []):
 ColumnsType<InstrsColumnType> => {
@@ -190,5 +203,5 @@ ColumnsType<InstrsColumnType> => {
         ...endCols.filter(colName => allCols.includes(colName)),
     ];
     return cols.map(colName => getColConfig<InstrsColumnType>(
-        { colName, fieldType: dynamicFields[colName], presetCols: instrsColsConfig, t }));
+        { colName, fieldType: dynamicFields[colName], presetCols: instrsColsConfig, t, defaultSort: !noSortCols.includes(colName) }));
 };

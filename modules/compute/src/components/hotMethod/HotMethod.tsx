@@ -20,7 +20,7 @@ import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import { Checkbox, Layout } from '@insight/lib/components';
 import { ResizeTable } from '@insight/lib/resize';
-import { formatDecimal } from '@insight/lib/utils';
+import { formatDecimal, safeJSONParse } from '@insight/lib/utils';
 import type { ColumnsType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import Filter from './Filter';
@@ -251,11 +251,13 @@ async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumn
         percentageFields.forEach(fieldName => {
             formatData[fieldName] = formatDecimal(item[fieldName] as number);
         });
+        const GPRStatus = safeJSONParse(item['GPR Status'], []);
         return {
             ...item,
             ...formatData,
             index: index + 1,
             maxCycles: 0,
+            'GPR Status': GPRStatus,
         };
     });
     // Cycles

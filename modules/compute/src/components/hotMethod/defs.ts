@@ -15,6 +15,8 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
+import { RegisterTrack } from '@/components/hotMethod/RegisterDependency';
+
 const ADDESS = 'Address';
 const SOURCE = 'Source';
 const PIPE = 'Pipe';
@@ -25,6 +27,7 @@ const ADDRESS_RANGE = 'Address Range';
 const REAL_STALL_CYCLES = 'RealStallCycles';
 const THEORETICAL_STALL_CYCLES = 'TheoreticalStallCycles';
 const REGISTER_NUM = 'RegisterNum';
+const GPR_STATUS = 'GPR Status';
 export const ASCENDC_INNER_CODE = 'AscendC Inner Code';
 export interface JsonInstructionType {
     [prop: string]: React.Key | React.Key[] | undefined;
@@ -53,15 +56,16 @@ export interface Ilinetable {
 };
 
 export interface InstrsColumnType {
-    [prop: string]: React.Key | React.Key[] ;
     [ASCENDC_INNER_CODE]: string;
-    [ADDESS]: string ;
-    [SOURCE]: string ;
+    [ADDESS]: string;
+    [SOURCE]: string;
     [PIPE]: string ;
     [REAL_STALL_CYCLES]: number;
     [THEORETICAL_STALL_CYCLES]: number;
     maxCycles: number;
     cycles: number;
+    Cycles: number;
+    [GPR_STATUS]: RegisterTrack[];
 };
 
 export enum FieldType {
