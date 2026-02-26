@@ -24,7 +24,7 @@ import { formatDecimal } from '@insight/lib/utils';
 import { type ColumnsType } from 'antd/es/table';
 import { type TFunction } from 'i18next';
 import { ThContainer } from './TableHead';
-import { getColConfig } from './InstructionTable';
+import { getColConfig, apiLinesColsConfig } from './InstructionTable';
 import CodeTextSearch, { CODE_SEARCH_WINDOW_HEIGHT } from './CodeTextSearch';
 import { type ConditionType, recoverDefaultInstructionSource } from './HotMethod';
 import { type Iline, type Ilinetable, FieldType, LINE } from './defs';
@@ -116,7 +116,7 @@ function getCodeLines(code: string = '', loggedCodeLines: Ilinetable[] = []): Il
 
 // 动态列
 // 默认显示列
-const defaultCols = ['Instructions Executed', 'Cycles'];
+const defaultCols = ['Instructions Executed', 'Cycles', 'Stall Sampling(All Samples)', 'Stall Sampling(Not Issue)'];
 // 不显示的列
 const notDisplayedCols = ['Address Range', 'Line'];
 const getCodeColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}): ColumnsType<Ilinetable> => {
@@ -127,7 +127,7 @@ const getCodeColumns = (t: TFunction, dynamicFields: Record<string, FieldType> =
             ...dynamicCols.filter(colName => !defaultCols.includes(colName) && !notDisplayedCols.includes(colName)),
         ]
     ;
-    return cols.map(colName => getColConfig<Ilinetable>({ colName, fieldType: dynamicFields[colName], presetCols: [], defaultSort: false, t }));
+    return cols.map(colName => getColConfig<Ilinetable>({ colName, fieldType: dynamicFields[colName], presetCols: apiLinesColsConfig, defaultSort: false, t }));
 };
 
 interface IProps {

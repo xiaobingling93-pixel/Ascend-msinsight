@@ -16,6 +16,8 @@
  * -------------------------------------------------------------------------
  */
 import React from 'react';
+import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
 import type { TFunction } from 'i18next';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { AlignType } from 'rc-table/lib/interface';
@@ -23,7 +25,7 @@ import type { InstrsColumnType } from './defs';
 import { FieldType, NOT_APPLICABLE } from './defs';
 import { Tooltip } from '@insight/lib/components';
 import Bar, { BarType, StallBar } from './Bar';
-import { limitInput } from '@insight/lib/utils';
+import { limitInput, colorPalette } from '@insight/lib/utils';
 import { RegisterDependency } from '@/components/hotMethod/RegisterDependency';
 
 const onFilterDropdownOpenChange = (open: boolean): void => {
@@ -63,11 +65,91 @@ const getFilters = (curInstrData: InstrsColumnType[], dataIndex: string): any[] 
     }, []);
 };
 
+// 定义样式组件
+const Container = styled.div`
+    display: flex;
+    align-items: center;
+`;
+
+const PercentLabel = styled.div`
+    margin-right: 8px;
+    align-self: center;
+`;
+
+const BarContainer = styled.div<{ maxWidth: number }>`
+    display: flex;
+    align-items: center;
+    width: ${props => props.maxWidth}px;
+    overflow: hidden;
+    height: 10px;
+`;
+
+const BarItem = styled.div<{ widthPx: number; color: string }>`
+    display: block;
+    align-self: center;
+    height: 100%;
+    width: ${props => props.widthPx}px;
+    background: ${props => props.color};
+    border-radius: 0;
+    box-sizing: border-box;
+    cursor: default;
+`;
+
+const StallSamplingCell = ({ stallSampling, maxWidth = 120 }: { stallSampling: any; maxWidth?: number }): React.ReactNode => {
+    const theme = useTheme();
+    if (!stallSampling) {
+        return '';
+    }
+    const percent = stallSampling?.Percent ?? '';
+    const rawDetails = stallSampling?.Details;
+
+    // 缓存 detailsMap 和过滤结果
+    const detailsMap: Record<string, number> = {};
+    if (rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)) {
+        Object.keys(rawDetails).forEach(k => {
+            detailsMap[String(k)] = Number((rawDetails as any)[k]);
+        });
+    }
+
+    // 过滤掉值为 0 的条目
+    const filteredEntries = Object.entries(detailsMap).filter(([_, v]) => Number(v) > 0);
+
+    // 计算总和
+    const total = filteredEntries.reduce((sum, [_, v]) => sum + Number(v), 0);
+
+    // 构建 Tooltip 内容
+    const tooltipContent = (
+        <div>
+            <div>Total: {total}</div>
+            {filteredEntries.map(([k, v]) => (
+                <div key={k}>{`${k}: ${v}`}</div>
+            ))}
+        </div>
+    );
+
+    return (
+        <Container>
+            <PercentLabel>{`${(percent * 100).toFixed(2)}%`}</PercentLabel>
+            {/* 统一 Tooltip 包裹整个条形区域 */}
+            <Tooltip placement="top" title={tooltipContent}>
+                <BarContainer maxWidth={maxWidth}>
+                    {filteredEntries.map(([k, v], idx) => {
+                        const color = theme.colorPalette[colorPalette[idx % colorPalette.length]];
+                        const scale = maxWidth / (total || 1); // 防止除零
+                        const widthPx = Math.max(4, Math.round(Number(v) * scale));
+                        return <BarItem key={k} widthPx={widthPx} color={color} />;
+                    })}
+                </BarContainer>
+            </Tooltip>
+        </Container>
+    );
+};
+
 // 更新指令表的显示列
 export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[]): ColumnsType<InstrsColumnType> => {
     const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields, curInstrData);
     // 没有有筛选功能的列
-    const unfilterableCols = ['index', 'RealStallCycles', 'Register Dependencies'];
+    const unfilterableCols = ['index', 'RealStallCycles', 'Register Dependencies', 'Stall Sampling(All Samples)', 'Stall Sampling(Not Issue)'];
     columns.forEach((col: ColumnType<InstrsColumnType>) => {
         if (col.dataIndex !== undefined && !unfilterableCols.includes(String(col.dataIndex))) {
             const filters = getFilters(curInstrData, String(col.dataIndex));
@@ -111,6 +193,22 @@ const instrsColsConfig = [
         className: 'height20',
     },
     {
+        title: 'Stall Sampling(All Samples)',
+        dataIndex: 'Stall Sampling(All Samples)',
+        width: 150,
+        ellipsis: true,
+        render: (stallSampling: any): React.ReactNode => StallSamplingCell({ stallSampling, maxWidth: 120 }),
+        className: 'height20',
+    },
+    {
+        title: 'Stall Sampling(Not Issue)',
+        dataIndex: 'Stall Sampling(Not Issue)',
+        width: 150,
+        ellipsis: true,
+        render: (stallSampling: any): React.ReactNode => StallSamplingCell({ stallSampling, maxWidth: 120 }),
+        className: 'height20',
+    },
+    {
         title: 'StallCycles',
         ellipsis: true,
         width: 115,
@@ -127,6 +225,25 @@ const instrsColsConfig = [
                 tracks={record['GPR Status']}
                 cellPadding={6} />;
         },
+        className: 'height20',
+    },
+];
+
+export const apiLinesColsConfig = [
+    {
+        title: 'Stall Sampling(All Samples)',
+        dataIndex: 'Stall Sampling(All Samples)',
+        width: 150,
+        ellipsis: true,
+        render: (stallSampling: any): React.ReactNode => StallSamplingCell({ stallSampling, maxWidth: 120 }),
+        className: 'height20',
+    },
+    {
+        title: 'Stall Sampling(Not Issue)',
+        dataIndex: 'Stall Sampling(Not Issue)',
+        width: 150,
+        ellipsis: true,
+        render: (stallSampling: any): React.ReactNode => StallSamplingCell({ stallSampling, maxWidth: 120 }),
         className: 'height20',
     },
 ];
