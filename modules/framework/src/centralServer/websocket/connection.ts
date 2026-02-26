@@ -58,6 +58,7 @@ export class Connection {
     private readonly _host: ConnectHost;
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
+    private readonly _requestMsg: Map<number, Request> = new Map();
     private _fetchFlag: boolean = true;
 
     constructor(initHost: ConnectHost) {
@@ -173,8 +174,10 @@ export class Connection {
             if (this._responseHandlers.size > MAX_RESPONSE_HANDLERS) {
                 const firstKey = this._responseHandlers.keys().next().value;
                 this._responseHandlers.delete(firstKey);
+                this._requestMsg.delete(firstKey);
             }
             this._responseHandlers.set(id, reqCallback);
+            this._requestMsg.set(id, msg);
         });
     }
 
@@ -216,10 +219,22 @@ export class Connection {
         // handle response
         const reqId = msg.requestId;
         const callback = this._responseHandlers.get(reqId);
+        // 抛弃和当前激活项目不一致的请求结果
+        const requestMsg = this._requestMsg.get(reqId);
+        const currentProjectName = store.sessionStore.activeSession?.activeDataSource?.projectName ?? '';
+        const isOldRequest = requestMsg?.projectName !== undefined && requestMsg.projectName !== currentProjectName;
+        if (isOldRequest) {
+            console.warn(`request #${reqId} has been abandoned`);
+            this._requestMsg.delete(reqId);
+            this._responseHandlers.delete(reqId);
+            return;
+        }
+
         if (callback === undefined) {
             console.warn(`handler for msg #${reqId} not found`);
             return;
         }
+        this._requestMsg.delete(reqId);
         this._responseHandlers.delete(reqId);
         callback(msg);
     };
