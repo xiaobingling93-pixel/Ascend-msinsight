@@ -1,4 +1,9 @@
 networkx
 pyvis
 matplotlib
+pandas
+numpy
+plotly
+ipywidgets
+ipython
 psutil
