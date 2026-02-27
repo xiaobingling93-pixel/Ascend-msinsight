@@ -135,7 +135,8 @@ export interface GetMemcpyOverallResultItem {
     key: string;
     name: string;
     level: number;
-    categoryList: string[];
+    categoryList: string[]; // [tid, memcpyType]
+    rowKey: string; // 唯一的行标识，方便前端使用
     children: GetMemcpyOverallResultItem[] | null;
 }
 

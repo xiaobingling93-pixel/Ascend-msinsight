@@ -96,6 +96,7 @@ export const getMemcpyOverallMetrics = async (params: GetOverallMetricsParams): 
         }
         data?.forEach(item => {
             item.categoryList = [...parentCat, item.key];
+            item.rowKey = item.categoryList.join('-');
 
             if (item.children && item.children.length > 0) {
                 addCatField(item.children, item.categoryList, depth + 1);
