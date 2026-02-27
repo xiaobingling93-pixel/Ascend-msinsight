@@ -1,5 +1,5 @@
 /*
-* -------------------------------------------------------------------------
+ * -------------------------------------------------------------------------
  * This file is part of the MindStudio project.
  * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
  *
@@ -17,8 +17,7 @@
  */
 
 #include "FileUtil.h"
-#include "MemScopeProtocolEvent.h"
-#include "TimelineProtocolEvent.h"
+#include "DataBaseManager.h"
 #include "MemSnapshotParser.h"
 
 
@@ -30,6 +29,7 @@
 #endif
 
 namespace Dic::Module {
+using namespace Dic::Module::Timeline;
 void MemSnapshotParserContext::Reset(std::string nPicklePath,
                                      std::string nLogPath,
                                      std::string nOutputPath)
@@ -107,11 +107,48 @@ void MemSnapshotParser::AsyncParseMemSnapshotPickle(const std::string& pickleFil
     const std::string logPath = FileUtil::SplicePath(FileUtil::GetParentPath(pickleFilePath), logName);
     parseContext.Reset(pickleFilePath, logPath, outputDbPath);
     auto traceId = TraceIdManager::GenerateTraceId();
-    _threadPool->AddTask(ParseMemSnapshotTask, traceId);
-    _threadPool->AddTask(ParseDaemonTask, traceId);
+    if (CheckIfParsingNeed()) {
+        Server::ServerLog::Info("[Snapshot] Parsing pickle file: {}, log file: {}, output db file: {}.",
+            parseContext.GetPicklePath(), parseContext.GetLogPath(), parseContext.GetOutputDbPath());
+        _threadPool->AddTask(ParseMemSnapshotTask, traceId);
+        _threadPool->AddTask(ParseDaemonTask, traceId);
+        return;
+    }
+    // 不需要重新解析的场景，可以直接发送解析成功事件，且在上述CheckIf方法中已经打开db并纳管到了databaseManager中
+    auto event = Instance().BuildParseSuccessEventFromContext();
+    SendEvent(std::move(event));
 }
 
 MemSnapshotParserContext& MemSnapshotParser::GetParseContext() { return parseContext; }
+
+
+/***
+ * @brief 检查是否需要解析或重新解析pickle文件
+ * @return true 需要解析或重新解析
+ * @return false 不需要解析或重新解析
+ */
+bool MemSnapshotParser::CheckIfParsingNeed() const
+{
+    const auto& context = parseContext;
+    // 首先判断是否存在解析结果db文件，如果不存在则返回需要重新解析
+    if (!FileUtil::CheckFileValid(context.GetOutputDbPath())) {
+        Server::ServerLog::Info("[Snapshot] Parsing output db file cannot found or is not valid. Trying to re-parse.");
+        return true;
+    }
+    // 如果已经存在db，则检查db版本是否与当前版本匹配
+    auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(context.GetPicklePath());
+    if (snapshotDb == nullptr) {
+        Server::ServerLog::Warn("[Snapshot] Cannot get database connection by fileId: %, trying to re-parse.",
+            context.GetPicklePath());
+        return true;
+    }
+    // 可能为首次打开db
+    if (!snapshotDb->IsOpen() && !snapshotDb->OpenDbReadOnly(context.GetOutputDbPath())) {
+        Server::ServerLog::Warn("[Snapshot] Cannot open database file: %, trying to re-parse.", context.GetOutputDbPath());
+        return true;
+    }
+    return snapshotDb->IsDatabaseVersionChange();
+}
 
 MemSnapshotParser::MemSnapshotParser()
 {
@@ -237,7 +274,7 @@ void MemSnapshotParser::ParseDaemonTask()
     }
     if (Instance().parseContext.GetState() == ParserState::FINISH_SUCCESS) {
         std::ifstream file(Instance().parseContext.GetLogPath());
-        if (DoubleCheckSuccessInLogFile(file)) {
+        if (DoubleCheckSuccessInLogFile(file) && Instance().TryOpenParsingResultDbAndSetVersion()) {
             Server::ServerLog::Info("Parse thread has successfully finished with double check.");
         }
         else {
@@ -255,21 +292,54 @@ void MemSnapshotParser::ParseCallBack()
         const std::string error = StringUtil::FormatString("Failed to parse snapshot data. For details, please check "
                                                            "{}.", Instance().parseContext.GetLogPath());
         Server::ServerLog::Error(error);
-        auto event = std::make_unique<ParseFailEvent>();
-        event->moduleName = Protocol::MODULE_TIMELINE;
-        event->result = false;
-        event->body.rankId = filepath;
-        event->body.error = error;
-        event->body.dbPath = filepath;
+        auto event = Instance().BuildParseFailEventFromContext(error);
         SendEvent(std::move(event));
         return;
     }
+    auto event = Instance().BuildParseSuccessEventFromContext();
+    SendEvent(std::move(event));
+}
+
+bool MemSnapshotParser::TryOpenParsingResultDbAndSetVersion() const
+{
+    const std::string dbPath = parseContext.GetOutputDbPath();
+    if (!FileUtil::CheckFileValid(dbPath)) {
+        Server::ServerLog::Error("[Snapshot] Double Check failed to verify the validity of the result database and "
+                                 "establish a connection.");
+        return false;
+    }
+    const auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(dbPath);
+    if (!snapshotDb) {
+        Server::ServerLog::Error("[Snapshot] Double Check failed to get the snapshot database.");
+        return false;
+    }
+    if (!snapshotDb->IsOpen() && !snapshotDb->OpenDbReadOnly(dbPath)) {
+        Server::ServerLog::Warn("[Snapshot] Double Check failed to open database file: %.", dbPath);
+        return false;
+    }
+    // 缺省目标版本将设置为当前profiler_server编译时间
+    return snapshotDb->SetDataBaseVersion();
+}
+
+std::unique_ptr<MemScopeParseSuccessEvent> MemSnapshotParser::BuildParseSuccessEventFromContext() const
+{
     auto event = std::make_unique<Protocol::MemScopeParseSuccessEvent>();
     event->moduleName = Protocol::MODULE_MEM_SCOPE;
     event->result = true;
     Protocol::MemScopeParseSuccessEventBody body;
-    body.fileId = Instance().parseContext.GetOutputDbPath();
+    body.fileId = parseContext.GetPicklePath();
     event->body = body;
-    SendEvent(std::move(event));
+    return event;
 }
+
+std::unique_ptr<ParseFailEvent> MemSnapshotParser::BuildParseFailEventFromContext(const std::string& errMsg) const
+{
+    auto event = std::make_unique<ParseFailEvent>();
+    event->moduleName = Protocol::MODULE_TIMELINE;
+    event->result = false;
+    event->body.rankId = parseContext.GetPicklePath();
+    event->body.error = errMsg;
+    event->body.dbPath = parseContext.GetOutputDbPath();
+    return event;
 }
+} // namespace Dic::Module

@@ -1,5 +1,5 @@
 /*
-* -------------------------------------------------------------------------
+ * -------------------------------------------------------------------------
  * This file is part of the MindStudio project.
  * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
  *
@@ -18,9 +18,9 @@
 
 #ifndef PROFILER_SERVER_MEMSNAPSHOTPARSER_H
 #define PROFILER_SERVER_MEMSNAPSHOTPARSER_H
-#include <shared_mutex>
-#include <string>
-#include <utility>
+#include "pch.h"
+#include "TimelineProtocolEvent.h"
+#include "MemScopeProtocolEvent.h"
 #include "ThreadPool.h"
 
 namespace Dic::Module {
@@ -66,6 +66,8 @@ public:
     // 异步解析Pickle文件API
     void AsyncParseMemSnapshotPickle(const std::string& pickleFilePath);
     MemSnapshotParserContext& GetParseContext();
+    // 用于检查是否需要解析或重新解析pickle文件
+    bool CheckIfParsingNeed() const;
 private:
     MemSnapshotParser();
     ~MemSnapshotParser();
@@ -74,7 +76,11 @@ private:
     // 守护线程，实施读取解析进展
     static void ParseDaemonTask();
     static void ParseCallBack();
-
+    // 解析完成回调方法之一，用于二次检查db结果并设置解析结果db版本
+    bool TryOpenParsingResultDbAndSetVersion() const;
+    // 构造解析响应事件
+    std::unique_ptr<MemScopeParseSuccessEvent> BuildParseSuccessEventFromContext() const;
+    std::unique_ptr<ParseFailEvent> BuildParseFailEventFromContext(const std::string& errMsg) const;
     std::unique_ptr<ThreadPool> _threadPool;
     MemSnapshotParserContext parseContext = MemSnapshotParserContext();
 };

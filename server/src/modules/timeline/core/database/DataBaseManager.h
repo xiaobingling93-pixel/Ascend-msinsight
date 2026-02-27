@@ -29,6 +29,7 @@
 #include "TextClusterDatabase.h"
 #include "VirtualMemoryDataBase.h"
 #include "MemScopeDatabase.h"
+#include "MemSnapshotDatabase.h"
 #include "KernelParse.h"
 
 namespace Dic {
@@ -39,7 +40,8 @@ enum class DatabaseType {
     TRACE,
     SUMMARY,
     MEMORY,
-    MEM_SCOPE
+    MEM_SCOPE,
+    MEM_SNAPSHOT
 };
 enum class DataType {
     TEXT,
@@ -82,7 +84,9 @@ public:
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
 
     std::shared_ptr<FullDb::MemScopeDatabase> GetMemScopeDatabase(const std::string &fileId);
+    std::shared_ptr<FullDb::MemSnapshotDatabase> GetMemSnapshotDatabase(const std::string &fileId);
     std::vector<FullDb::MemScopeDatabase*> GetAllMemScopeDatabase();
+    std::vector<FullDb::MemSnapshotDatabase*> GetAllMemSnapshotDatabase();
     std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabaseByRankId(const std::string &rankId);
     std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabaseWithCluster(const std::string &cluster,
                                                                                    const std::string &rankId);
@@ -147,6 +151,7 @@ private:
     std::map<ClusterDbPath, std::shared_ptr<DBConnectionPool<VirtualClusterDatabase>>> clusterDatabaseMap;
     std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
     std::map<FileId, std::shared_ptr<FullDb::MemScopeDatabase>> memScopeDatabaseMap;
+    std::map<FileId, std::shared_ptr<FullDb::MemSnapshotDatabase>> memSnapshotDatabaseMap;
     std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
     FileType baselineFileType = FileType::PYTORCH;

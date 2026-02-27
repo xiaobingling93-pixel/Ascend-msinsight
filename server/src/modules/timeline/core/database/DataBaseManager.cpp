@@ -294,6 +294,9 @@ void DataBaseManager::Clear(DatabaseType type)
         case DatabaseType::MEM_SCOPE:
             memScopeDatabaseMap.clear();
             break;
+        case DatabaseType::MEM_SNAPSHOT:
+            memSnapshotDatabaseMap.clear();
+            break;
         default:
             break;
     }
@@ -528,14 +531,36 @@ std::shared_ptr<FullDb::MemScopeDatabase> DataBaseManager::GetMemScopeDatabase(c
     return memScopeDatabaseMap[fileId];
 }
 
+std::shared_ptr<FullDb::MemSnapshotDatabase> DataBaseManager::GetMemSnapshotDatabase(const std::string& fileId)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (fileId.empty() && !memSnapshotDatabaseMap.empty()) {
+        return memSnapshotDatabaseMap.begin()->second;
+    }
+    // 未找到时默认创建新实例
+    if (memSnapshotDatabaseMap.find(fileId) == memSnapshotDatabaseMap.end()) {
+        std::recursive_mutex &dbMutex = GetDbMutex(fileId);
+        memSnapshotDatabaseMap.emplace(fileId, std::make_unique<FullDb::MemSnapshotDatabase>(dbMutex));
+    }
+    return memSnapshotDatabaseMap[fileId];
+}
+
 std::vector<FullDb::MemScopeDatabase*> DataBaseManager::GetAllMemScopeDatabase()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::vector<FullDb::MemScopeDatabase*> memScopeDatabases;
-    for (auto &database : memScopeDatabaseMap) {
-        memScopeDatabases.emplace_back(database.second.get());
-    }
+    memScopeDatabases.reserve(memScopeDatabaseMap.size());
+    for (auto& database : memScopeDatabaseMap) { memScopeDatabases.emplace_back(database.second.get()); }
     return memScopeDatabases;
+}
+
+std::vector<FullDb::MemSnapshotDatabase*> DataBaseManager::GetAllMemSnapshotDatabase()
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::vector<FullDb::MemSnapshotDatabase*> memSnapshotDatabases;
+    memSnapshotDatabases.reserve(memSnapshotDatabaseMap.size());
+    for (auto& database : memSnapshotDatabaseMap) { memSnapshotDatabases.emplace_back(database.second.get()); }
+    return memSnapshotDatabases;
 }
 
 std::string DataBaseManager::GetAnyTraceDatabaseId()
