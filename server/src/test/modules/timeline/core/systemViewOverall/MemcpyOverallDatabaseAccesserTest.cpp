@@ -165,7 +165,6 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyRecords_ReturnsVal
             EXPECT_GE(rec.endTime, rec.startTime) << "结束时间应 >= 开始时间";
             EXPECT_DOUBLE_EQ(rec.duration, static_cast<double>(rec.endTime - rec.startTime))
                 << "持续时间计算应准确";
-            EXPECT_GT(rec.threadId, 0u) << "线程ID应有效";
         }
     }
 }
@@ -346,7 +345,7 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     if (baseRecords.empty()) GTEST_SKIP() << "无基础记录，跳过过滤测试";
 
     // 选取有效过滤值
-    std::string exampleTid = std::to_string(baseRecords[0].threadId);
+    std::string exampleTid = baseRecords[0].threadId;
     std::string exampleType = baseRecords[0].memcpyType;
     if (exampleType.empty()) GTEST_SKIP() << "示例记录memcpyType为空";
 

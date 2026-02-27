@@ -46,8 +46,8 @@ TEST(BuildMemcpyOverallResultTest, EmptyInputYieldsEmptyResult) {
 
 TEST(BuildMemcpyOverallResultTest, SingleThreadSingleMemcpyType) {
     std::vector<MemcpyRecord> records = {
-        {1, "A", "H2D", 100, 1.0},
-        {1, "A", "H2D", 200, 2.0}
+        {"1", "A", "H2D", 100, 1.0},
+        {"1", "A", "H2D", 200, 2.0}
     };
     MemcpyOverallResponse response;
     BuildMemcpyOverallResult(records, response, 1, 10);
@@ -66,10 +66,10 @@ TEST(BuildMemcpyOverallResultTest, SingleThreadSingleMemcpyType) {
 
 TEST(BuildMemcpyOverallResultTest, MultiThreadMultiTypeWithCorrectGrouping) {
     std::vector<MemcpyRecord> records = {
-        {2, "B", "D2H", 50, 0.5},   // Thread2
-        {1, "A", "H2D", 100, 1.0},  // Thread1
-        {1, "A", "D2H", 300, 3.0},  // Thread1
-        {1, "A", "H2D", 150, 1.5}   // Thread1
+        {"2", "B", "D2H", 50, 0.5},   // Thread2
+        {"1", "A", "H2D", 100, 1.0},  // Thread1
+        {"1", "A", "D2H", 300, 3.0},  // Thread1
+        {"1", "A", "H2D", 150, 1.5}   // Thread1
     };
     MemcpyOverallResponse response;
     BuildMemcpyOverallResult(records, response, 1, 10);
@@ -91,8 +91,8 @@ TEST(BuildMemcpyOverallResultTest, MultiThreadMultiTypeWithCorrectGrouping) {
 
 TEST(BuildMemcpyOverallResultTest, ZeroValuesHandledSafely) {
     std::vector<MemcpyRecord> records = {
-        {1, "A", "ZERO", 0, 0.0},
-        {1, "A", "ZERO", 0, 0.0}
+        {"1", "A", "ZERO", 0, 0.0},
+        {"1", "A", "ZERO", 0, 0.0}
     };
     MemcpyOverallResponse response;
     BuildMemcpyOverallResult(records, response, 1, 10);
@@ -107,8 +107,8 @@ TEST(BuildMemcpyOverallResultTest, ZeroValuesHandledSafely) {
 // ===== 边界测试：StatsAccumulator 安全性（补充）=====
 TEST(BuildMemcpyOverallResultTest, ExtremeValuesNoCrash) {
     std::vector<MemcpyRecord> records = {
-        {1, "A", "BIG", std::numeric_limits<uint64_t>::max(), 1e300},
-        {1, "A", "BIG", 1, 1e-300}
+        {"1", "A", "BIG", std::numeric_limits<uint64_t>::max(), 1e300},
+        {"1", "A", "BIG", 1, 1e-300}
     };
     MemcpyOverallResponse response;
     EXPECT_NO_THROW(BuildMemcpyOverallResult(records, response, 1, 10));

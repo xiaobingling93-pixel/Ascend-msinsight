@@ -67,9 +67,9 @@ void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOv
     uint32_t current, uint32_t pageSize)
 {
     // std::map 自带排序
-    std::map<uint32_t, StatsAccumulator> threadMap;
-    std::map<uint32_t, std::map<std::string, StatsAccumulator>> typeMap;
-    std::map<uint32_t, std::string> threadNameMap;
+    std::map<std::string, StatsAccumulator> threadMap;
+    std::map<std::string, std::map<std::string, StatsAccumulator>> typeMap;
+    std::map<std::string, std::string> threadNameMap;
 
     for (const auto& rec : records) {
         threadMap[rec.threadId].Update(rec.size, rec.duration);
@@ -82,8 +82,9 @@ void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOv
 
     for (auto& [tid, tStat] : threadMap) {
         MemcpyOverallRes ts;
-        ts.key = std::to_string(tid);
+        ts.key = tid;
         ts.name = threadNameMap.at(tid);
+        ts.level = 1;
         ts.totalSize = tStat.totalSize;
         ts.totalTime = tStat.totalTime;
         ts.number = tStat.count;
@@ -100,6 +101,7 @@ void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOv
                 MemcpyOverallRes tts;
                 tts.key = mtype;
                 tts.name = mtype;
+                tts.level = 2;
                 tts.totalSize = mStat.totalSize;
                 tts.totalTime = mStat.totalTime;
                 tts.number = mStat.count;

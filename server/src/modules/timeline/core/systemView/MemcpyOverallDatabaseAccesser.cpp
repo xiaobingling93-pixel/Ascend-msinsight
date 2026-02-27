@@ -151,7 +151,7 @@ bool MemcpyOverallDatabaseAccesser::GetMemcpyRecordsFromText(uint64_t startTime,
             MemcpyRecord record;
 
             // 获取tid
-            record.threadId = resultSet->GetUint32("tid");
+            record.threadId = resultSet->GetString("tid");
             record.threadName = resultSet->GetString("thread_name");
 
             // 获取args并解析operation
@@ -216,8 +216,8 @@ bool MemcpyOverallDatabaseAccesser::GetMemcpyRecordsFromDb(uint64_t startTime, u
             MemcpyRecord record;
 
             // 提取threadId
-            record.threadId = resultSet->GetUint64("tid");
-            record.threadName = "Stream " + std::to_string(record.threadId);
+            record.threadId = resultSet->GetString("tid");
+            record.threadName = "Stream " + record.threadId;
 
             // 获取memcpyOperation
             record.memcpyType = resultSet->GetString("memcpyOperation");
@@ -253,7 +253,7 @@ MemcpyOverallDatabaseAccesser::BuildMemcpyDetailBaseQueryText(uint64_t startTime
 
     // 时间过滤
     if (startTime != endTime) {
-        sql << "AND t.startNs >= ? AND t.endNs <= ? ";
+        sql << "AND s.timestamp >= ? AND s.end_time <= ? ";
         params.emplace_back(std::to_string(startTime));
         params.emplace_back(std::to_string(endTime));
     }
@@ -302,7 +302,7 @@ bool MemcpyOverallDatabaseAccesser::GetMemcpyDetailRecordsPagedFromText(
             std::string argsStr = resultSet->GetString("args");
             auto [operation, size] = ParseOperationAndSizeFromJson(argsStr);
 
-            if (!memcpyType.empty() && operation != memcpyType) {
+            if (operation != memcpyType) {
                 continue; // 跳过不匹配的类型
             }
 

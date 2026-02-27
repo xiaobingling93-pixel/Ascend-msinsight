@@ -25,13 +25,13 @@
 
 namespace Dic::Module::Timeline {
     struct MemcpyRecord {
-        uint32_t threadId;
+        std::string threadId; // threadId 可能是字符串
         std::string threadName;
         std::string memcpyType;
-        uint64_t size;
+        uint64_t size{};
         double duration;
-        uint64_t startTime;
-        uint64_t endTime;
+        uint64_t startTime{};
+        uint64_t endTime{};
     };
 
     struct MemcpyDetailRecord {
