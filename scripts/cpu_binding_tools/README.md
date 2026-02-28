@@ -110,6 +110,13 @@ python cpu_affinity_data_collection.py [--csv] [--npu-process kw1 kw2...] [--dat
 - 输出亲和信息到屏幕；加 `--csv` 写入 CSV。
 - 可指定关键字过滤线程名。
 
+```python
+from cpu_affinity_data_visualizer import run_notebook_app
+run_notebook_app("path/to/your/data.csv")
+```
+- 启动可视化应用
+- 参数：数据文件的路径 (str)
+
 Notebook 示例：
 
 ```python
