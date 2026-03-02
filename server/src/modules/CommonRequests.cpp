@@ -103,9 +103,14 @@ bool RangeFiltersParam::SetRangeFiltersFromJson(const json_t& json, const std::v
         errorMsg = "Failed to set range filters params from param json object: json is null or type invalid";
         return false;
     }
-    // 没有rangeFilters字段或rangeFilters为空代表不做范围过滤，合法
-    if (!json.HasMember("rangeFilters") || json["rangeFilters"].MemberCount() == 0) {
+    // 没有rangeFilters字段代表不做范围过滤，合法
+    if (!json.HasMember("rangeFilters")) {
         return true;
+    }
+    // 有rangeFilters字段，但不是对象，代表格式错误，返回false
+    if (!json["rangeFilters"].IsObject()) {
+        errorMsg = "Failed to set range filters params from param json object: filter json is null or type invalid";
+        return false;
     }
     const json_t& rangeFiltersJson = json["rangeFilters"];
     if (!rangeFiltersJson.IsObject()) {
@@ -139,6 +144,26 @@ bool RangeFiltersParam::SetRangeFiltersFromJson(const json_t& json, const std::v
             return false;
         }
         rangeFilters.emplace(StringUtil::FormatString("{}", columnIt->key), rangePair);
+    }
+    return true;
+}
+
+bool CommonTableParams::SetFromJson(const json_t& json,
+                                    const std::vector<TableViewColumn>& columns,
+                                    std::string& errorMsg)
+{
+    PaginationParam::SetPaginationParamFromJson(json);
+    if (!FiltersParam::SetFiltersFromJson(json, columns, errorMsg)) {
+        errorMsg = "Failed set filters from json param: " + errorMsg;
+        return false;
+    }
+    if (!OrderByParam::SetOrderFromJson(json, columns, errorMsg)) {
+        errorMsg = "Failed set order by json param: " + errorMsg;
+        return false;
+    }
+    if (!RangeFiltersParam::SetRangeFiltersFromJson(json, columns, errorMsg)) {
+        errorMsg = "Failed set range filters from json param: " + errorMsg;
+        return false;
     }
     return true;
 }

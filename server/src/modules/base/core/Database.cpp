@@ -1020,5 +1020,65 @@ std::string Database::QueryDatabaseVersion() const
     return version;
 }
 
+std::string Database::BuildQueryFiltersConditionSql(const std::unordered_map<std::string, std::string>& filters)
+{
+    std::string filtersSql;
+    for (auto &filterPair : filters) {
+        filtersSql.append(StringUtil::FormatString(" AND {} LIKE ? ", filterPair.first));
+    }
+    return filtersSql;
+}
+
+std::string Database::BuildQueryRangeFiltersConditionSql(
+const std::unordered_map<std::string, std::pair<double, double>>& rangeFilters)
+{
+    std::string sql;
+    for (const auto& [colName, rangePair] : rangeFilters) {
+        (void)(rangePair);
+        sql.append(StringUtil::FormatString(" AND ({} BETWEEN ? AND ?) ", colName));
+    }
+    return sql;
+}
+
+std::string Database::BuildQueryOrderSql(const std::string& orderBy, bool desc)
+{
+    return StringUtil::FormatString(" ORDER BY {} {} ", orderBy, desc ? "DESC" : "ASC");
+}
+
+void Database::CommonBindFiltersParams(const std::unordered_map<std::string, std::string>& filters,
+                                       sqlite3_stmt* stmt, int& bindIdx)
+{
+    for (auto& filterPair : filters) {
+        std::string filterPattern = StringUtil::FormatString("%{}%", filterPair.second);
+        sqlite3_bind_text(stmt, bindIdx++, filterPattern.c_str(),
+                          filterPattern.length(), SQLITE_TRANSIENT);
+    }
+}
+
+void Database::CommonBindRangeFiltersParams(
+    const std::unordered_map<std::string, std::pair<double, double>>& rangeFilters,
+    sqlite3_stmt* stmt,
+    int& bindIdx)
+{
+    for (const auto& [colName, rangePair] : rangeFilters) {
+        (void)(colName);
+        sqlite3_bind_double(stmt, bindIdx++, rangePair.first);
+        sqlite3_bind_double(stmt, bindIdx++, rangePair.second);
+    }
+}
+
+void Database::CommonBindPaginationParams(const int64_t pageSize, const int64_t currentPage,
+                                          sqlite3_stmt* stmt, int& bindIdx)
+{
+    int64_t limit = -1;
+    int64_t offset = 0;
+    if (pageSize > 0 && currentPage > 0) {
+        limit = pageSize;
+        offset = (currentPage - 1) * pageSize;
+    }
+    sqlite3_bind_int64(stmt, bindIdx++, limit);
+    sqlite3_bind_int64(stmt, bindIdx++, offset);
+}
+
 }  // end of namespace Module
 }  // end of namespace Dic

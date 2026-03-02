@@ -104,6 +104,13 @@ public:
                                  std::string &errorMsg);
 };
 
+class CommonTableParams : public PaginationParam, public FiltersParam, public OrderByParam, public RangeFiltersParam {
+public:
+    bool SetFromJson(const json_t& json,
+                     const std::vector<TableViewColumn>& columns,
+                     std::string& errorMsg);
+};
+
 inline std::vector<TableViewColumn>::const_iterator FindColumnByKey(std::string_view key,
                                                                     const std::vector<TableViewColumn> &columns)
 {
