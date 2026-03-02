@@ -143,6 +143,14 @@ protected:
     static std::string ComputeDataPageSql(const PageQuery &query, std::vector<std::string> &columnName) ;
 
     static std::string ComputeConditionSql(const PageQuery &query, std::vector<std::string> &columnName);
+    
+    // 通用表格查询SQL构建和参数绑定方法
+    static std::string BuildQueryFiltersConditionSql(const std::unordered_map<std::string, std::string>& filters);
+    static std::string BuildQueryRangeFiltersConditionSql(const std::unordered_map<std::string, std::pair<double, double>>& rangeFilters);
+    static std::string BuildQueryOrderSql(const std::string& orderBy, bool desc);
+    static void CommonBindFiltersParams(const std::unordered_map<std::string, std::string>& filters, sqlite3_stmt* stmt, int& bindIdx);
+    static void CommonBindRangeFiltersParams(const std::unordered_map<std::string, std::pair<double, double>>& rangeFilters, sqlite3_stmt* stmt, int& bindIdx);
+    static void CommonBindPaginationParams(int64_t pageSize, int64_t currentPage, sqlite3_stmt* stmt, int& bindIdx);
 private:
     size_t maxDbFileSize = 50ULL * 1024 * 1024 * 1024;
 };

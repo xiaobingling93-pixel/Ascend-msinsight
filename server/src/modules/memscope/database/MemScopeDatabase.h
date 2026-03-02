@@ -118,12 +118,6 @@ private:
                                                             const MemScopeMemoryBlockParams &queryParams,
                                                             const bool isTable);
 
-    static std::string BuildQueryFiltersConditionSqlByParams(const FiltersParam &filtersParam);
-    static std::string BuildQueryOrderSqlByParams(const OrderByParam &orderByParam);
-    static std::string BuildQueryRangeFiltersConditionSqlByParams(const RangeFiltersParam &rangeFiltersParam);
-    static void CommonBindFiltersParams(const FiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
-    static void CommonBindRangeFiltersParams(const RangeFiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
-    static void CommonBindPaginationParams(const PaginationParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
     bool QueryAndSetGlobalExtremumTimestamp();
     bool CheckGlobalExtremumTimestampValid() const;
     bool ExecuteQueryAndSetGlobalExtremumTimestamp(const std::string &sql);

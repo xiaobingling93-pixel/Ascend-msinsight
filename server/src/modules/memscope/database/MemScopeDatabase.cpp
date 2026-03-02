@@ -777,26 +777,16 @@ std::string MemScopeDatabase::BuildQueryEventsConditionSqlByParams(const MemScop
     // 构造过滤参数，此前filters已经过存在性校验，并已转换成列名
     if (!queryParams.filters.empty() || !queryParams.rangeFilters.empty()) {
         filtersCondition = true;
-        conditionSql.append(BuildQueryFiltersConditionSqlByParams(queryParams));
-        conditionSql.append(BuildQueryRangeFiltersConditionSqlByParams(queryParams));
+        conditionSql.append(Database::BuildQueryFiltersConditionSql(queryParams.filters));
+        conditionSql.append(Database::BuildQueryRangeFiltersConditionSql(queryParams.rangeFilters));
     }
     // 构造排序参数, 此前orderBy已经过存在性校验，并已转换成列名，列名无法通过参数化绑定
     if (!queryParams.orderBy.empty()) {
-        conditionSql.append(BuildQueryOrderSqlByParams(queryParams));
+        conditionSql.append(Database::BuildQueryOrderSql(queryParams.orderBy, queryParams.desc));
     }
     // 构造LIMIT OFFSET
     conditionSql.append(" LIMIT ? OFFSET ? ");
     return conditionSql;
-}
-
-std::string MemScopeDatabase::BuildQueryRangeFiltersConditionSqlByParams(const RangeFiltersParam& rangeFiltersParam)
-{
-    std::string sql;
-    for (const auto& [colName, rangePair] : rangeFiltersParam.rangeFilters) {
-        (void)(rangePair);
-        sql.append(StringUtil::FormatString(" AND ({} BETWEEN ? AND ?) ", colName));
-    }
-    return sql;
 }
 
 /***
@@ -840,8 +830,8 @@ std::string MemScopeDatabase::BuildQueryBlocksConditionSqlByParams(const MemScop
     // 构造过滤参数，此前filters已经过存在性校验，并已转换成列名
     if (!queryParams.filters.empty() || !queryParams.rangeFilters.empty()) {
         filtersCondition = true;
-        conditionSql.append(BuildQueryFiltersConditionSqlByParams(queryParams));
-        conditionSql.append(BuildQueryRangeFiltersConditionSqlByParams(queryParams));
+        conditionSql.append(Database::BuildQueryFiltersConditionSql(queryParams.filters));
+        conditionSql.append(Database::BuildQueryRangeFiltersConditionSql(queryParams.rangeFilters));
     }
     return conditionSql;
 }
@@ -870,11 +860,11 @@ sqlite3_stmt* MemScopeDatabase::BuildQueryEventsByQueryParamsAndBindParam(std::s
     }
     // 绑定filters参数
     if (filtersCondition) {
-        CommonBindFiltersParams(queryParams, stmt, bindIdx);
-        CommonBindRangeFiltersParams(queryParams, stmt, bindIdx);
+        Database::CommonBindFiltersParams(queryParams.filters, stmt, bindIdx);
+        Database::CommonBindRangeFiltersParams(queryParams.rangeFilters, stmt, bindIdx);
     }
     // 绑定分页参数
-    CommonBindPaginationParams(queryParams, stmt, bindIdx);
+    Database::CommonBindPaginationParams(queryParams.pageSize, queryParams.currentPage, stmt, bindIdx);
     return stmt;
 }
 
@@ -896,7 +886,7 @@ sqlite3_stmt* MemScopeDatabase::BuildQueryBlocksByQueryParamsAndBindParam(const 
     }
     // 构造排序参数, 此前orderBy已经过存在性校验，并已转换成列名，列名无法通过参数化绑定；如果不指定排序，默认根据startTimestamp排序
     if (!queryParams.orderBy.empty()) {
-        sql.append(BuildQueryOrderSqlByParams(queryParams));
+        sql.append(Database::BuildQueryOrderSql(queryParams.orderBy, queryParams.desc));
     }
     sql.append(" LIMIT ? OFFSET ? ");
     sqlite3_stmt *stmt = nullptr;
@@ -921,11 +911,11 @@ sqlite3_stmt* MemScopeDatabase::BuildQueryBlocksByQueryParamsAndBindParam(const 
     }
     // 绑定filters参数
     if (filtersCondition) {
-        CommonBindFiltersParams(queryParams, stmt, bindIdx);
-        CommonBindRangeFiltersParams(queryParams, stmt, bindIdx);
+        Database::CommonBindFiltersParams(queryParams.filters, stmt, bindIdx);
+        Database::CommonBindRangeFiltersParams(queryParams.rangeFilters, stmt, bindIdx);
     }
     // 绑定分页参数
-    CommonBindPaginationParams(queryParams, stmt, bindIdx);
+    Database::CommonBindPaginationParams(queryParams.pageSize, queryParams.currentPage, stmt, bindIdx);
     return stmt;
 }
 
@@ -1194,63 +1184,6 @@ void MemScopeDatabase::QueryThreadIdsByProcessId(uint64_t processId, std::vector
         }
     }
     sqlite3_finalize(stmt);
-}
-/***
- * 构造过滤sql，要求此前filters已经过存在性校验，并已转换成列名
- * @param filtersParam 过滤参数
- * @return 过滤sql
- */
-std::string MemScopeDatabase::BuildQueryFiltersConditionSqlByParams(const FiltersParam& filtersParam)
-{
-    std::string filtersSql;
-    for (auto &filterPair : filtersParam.filters) {
-        filtersSql.append(StringUtil::FormatString(" AND {} LIKE ? ", filterPair.first));
-    }
-    return filtersSql;
-}
-/***
- * 构造排序sql，此前orderBy已经过存在性校验，并已转换为列名
- * @param orderByParam 排序参数
- * @return 排序sql
- */
-std::string MemScopeDatabase::BuildQueryOrderSqlByParams(const OrderByParam& orderByParam)
-{
-    return StringUtil::FormatString(" ORDER BY {} {} ",
-                                    orderByParam.orderBy, orderByParam.desc ? "DESC" : "ASC");
-}
-
-void MemScopeDatabase::CommonBindFiltersParams(const FiltersParam& queryParams, sqlite3_stmt* stmt, int &bindIdx)
-{
-    for (auto &filterPair : queryParams.filters) {
-        std::string filterPattern = StringUtil::FormatString("%{}%", filterPair.second);
-        sqlite3_bind_text(stmt, bindIdx++, filterPattern.c_str(),
-                          filterPattern.length(), SQLITE_TRANSIENT);
-    }
-}
-
-void MemScopeDatabase::CommonBindRangeFiltersParams(const RangeFiltersParam& queryParams, sqlite3_stmt* stmt,
-                                                    int& bindIdx)
-{
-    for (const auto& [colName, rangePair] : queryParams.rangeFilters) {
-        (void)(colName);
-        sqlite3_bind_double(stmt, bindIdx++, rangePair.first);
-        sqlite3_bind_double(stmt, bindIdx++, rangePair.second);
-    }
-}
-
-void MemScopeDatabase::CommonBindPaginationParams(const PaginationParam& queryParams, sqlite3_stmt* stmt,
-                                                  int& bindIdx)
-{
-    // 绑定分页参数
-    int64_t limit = -1;
-    int64_t offset = 0;
-    if (queryParams.pageSize > 0 && queryParams.currentPage > 0) {
-        limit = queryParams.pageSize;
-        // 入口处CommonCheck已做了校验，此处无需校验溢出/翻转问题
-        offset = (queryParams.currentPage - 1) * queryParams.pageSize;
-    }
-    sqlite3_bind_int64(stmt, bindIdx++, limit);
-    sqlite3_bind_int64(stmt, bindIdx++, offset);
 }
 
 void MemScopeDatabase::QueryEventsByGroupId(const uint64_t groupId, const std::string &deviceId,
