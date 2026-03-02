@@ -160,6 +160,11 @@ const std::string REQ_RES_MEM_SCOPE_MEMORY_DETAILS = "Memory/leaks/details";
 const std::string REQ_RES_MEM_SCOPE_PYTHON_TRACES = "Memory/leaks/traces";
 const std::string REQ_RES_MEM_SCOPE_EVENTS = "Memory/leaks/events";
 
+// memsnapshot Request
+const std::string REQ_RES_MEM_SNAPSHOT_BLOCKS = "Memory/snapshot/blocks";
+const std::string REQ_RES_MEM_SNAPSHOT_ALLOCATIONS = "Memory/snapshot/allocations";
+const std::string REQ_RES_MEM_SNAPSHOT_EVENTS = "Memory/snapshot/events";
+
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";
 const std::string REQ_RES_OPERATOR_COMPUTE_UNIT_INFO = "operator/compute_unit";

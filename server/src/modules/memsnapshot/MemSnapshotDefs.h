@@ -54,6 +54,16 @@ struct Block {
     int64_t allocEventId{-1};
     int64_t freeEventId{-1};
 };
+struct MemoryRecord {
+    int64_t id{0};
+    uint64_t allocated{0};
+    uint64_t reserved{0};
+    uint64_t active{0};
+
+    MemoryRecord() = default;
+    MemoryRecord(int64_t id, uint64_t allocated, uint64_t reserved, uint64_t active)
+        : id(id), allocated(allocated), reserved(reserved), active(active) {}
+};
 struct Segment {
     uint64_t address{0};
     uint64_t totalSize{0};
