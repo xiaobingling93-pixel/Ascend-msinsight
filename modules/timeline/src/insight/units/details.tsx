@@ -90,7 +90,7 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
         const { rangeOfLevels } = session.sliceSelection;
         const isValidSliceMode = checkIsValidSlice(session);
         const selectedUnits = isValidSliceMode ? getSelectedUnitsOfSliceMode(session) : [...session.selectedUnits];
-        const paramsOfDepth = isValidSliceMode ? { startDepth: rangeOfLevels[0].toString(), endDepth: rangeOfLevels[1].toString() } : {};
+        const paramsOfDepth = isValidSliceMode ? { startDepth: Math.round(rangeOfLevels[0]).toString(), endDepth: Math.round(rangeOfLevels[1]).toString() } : {};
         session.sliceSelection.searchOfSlice = isValidSliceMode;
         const pythonFunctionConfig = session.unitsConfig.filterConfig.pythonFunction;
 
@@ -114,6 +114,9 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
 
         // 这里判断必要入参，如隐藏的泳道无rankId，则不发起请求
         if (params.rankId === undefined) {
+            return;
+        }
+        if (params.startDepth !== undefined && params.startDepth > params.endDepth) {
             return;
         }
 
