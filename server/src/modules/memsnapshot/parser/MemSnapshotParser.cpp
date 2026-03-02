@@ -328,6 +328,7 @@ std::unique_ptr<MemScopeParseSuccessEvent> MemSnapshotParser::BuildParseSuccessE
     event->result = true;
     Protocol::MemScopeParseSuccessEventBody body;
     body.fileId = parseContext.GetPicklePath();
+    body.deviceIds["0"] = {"BLOCK"};
     event->body = body;
     return event;
 }
