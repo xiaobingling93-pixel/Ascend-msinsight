@@ -19,6 +19,7 @@
 #include "ProtocolDefs.h"
 #include "TimelineProtocol.h"
 #include "MemScopeProtocolRequest.h"
+#include "MemSnapshotProtocolRequest.h"
 #include "MemScopeProtocol.h"
 
 namespace Dic::Protocol {
@@ -34,6 +35,12 @@ void MemScopeProtocolUtil::RegisterJsonToRequestFuncs()
                              ProtocolUtil::BuildRequestFromJson<MemScopePythonTraceRequest>);
     jsonToReqFactory.emplace(REQ_RES_MEM_SCOPE_EVENTS,
                              ProtocolUtil::BuildRequestFromJson<MemScopeEventRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SNAPSHOT_BLOCKS,
+                             ProtocolUtil::BuildRequestFromJson<MemSnapshotBlocksRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SNAPSHOT_ALLOCATIONS,
+                             ProtocolUtil::BuildRequestFromJson<MemSnapshotAllocationsRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SNAPSHOT_EVENTS,
+                             ProtocolUtil::BuildRequestFromJson<MemSnapshotEventsRequest>);
 }
 
 void MemScopeProtocolUtil::RegisterResponseToJsonFuncs()
@@ -43,6 +50,9 @@ void MemScopeProtocolUtil::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_MEMORY_DETAILS, ProtocolUtil::CommonResponseToJson);
     resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_PYTHON_TRACES, ProtocolUtil::CommonResponseToJson);
     resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_EVENTS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SNAPSHOT_BLOCKS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SNAPSHOT_ALLOCATIONS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SNAPSHOT_EVENTS, ProtocolUtil::CommonResponseToJson);
 }
 
 void MemScopeProtocolUtil::RegisterEventToJsonFuncs()
@@ -51,5 +61,4 @@ void MemScopeProtocolUtil::RegisterEventToJsonFuncs()
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, TimelineProtocol::ToModuleResetEventJson);
     eventToJsonFactory.emplace(EVENT_ALL_SUCCESS, TimelineProtocol::ToAllSuccessEventJson);
 }
-}  // end of namespace Protocol
- // end of namespace Dic
+} // end of namespace Dic::Protocol

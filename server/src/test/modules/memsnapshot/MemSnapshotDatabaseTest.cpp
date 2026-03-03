@@ -150,3 +150,241 @@ TEST_F(MemSnapshotDatabaseTest, Reset)
     ASSERT_TRUE(snapshotDb != nullptr);
     EXPECT_TRUE(snapshotDb->OpenDbReadOnly(testDbPath));
 }
+
+// 测试查询内存记录
+TEST_F(MemSnapshotDatabaseTest, QueryMemoryRecords)
+{
+    MemSnapshotAllocationParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    
+    std::vector<MemoryRecord> records;
+    snapshotDb->QueryMemoryRecords(params, records);
+    
+    EXPECT_EQ(records.size(), 8092);
+    
+    // 验证第一条记录的字段
+    if (!records.empty()) {
+        EXPECT_EQ(records[0].id, 0);
+        EXPECT_EQ(records[0].allocated, 94482944);
+        EXPECT_EQ(records[0].reserved, 113246208);
+        EXPECT_EQ(records[0].active, 94482944);
+    }
+
+    // 任意事件发生时刻，均满足allocated <= active <= reserved, 此处间隔1000个事件做一次验证
+    size_t checkIdx = 1000;
+    while (checkIdx < records.size()) {
+        EXPECT_LE(records[checkIdx].allocated, records[checkIdx].active);
+        EXPECT_LE(records[checkIdx].active, records[checkIdx].reserved);
+        checkIdx += 1000;
+    }
+}
+
+// 测试查询blocks表
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTable)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "id";
+    
+    std::vector<Block> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+    
+    EXPECT_EQ(totalCount, 3219);
+    EXPECT_EQ(blocks.size(), 10);
+
+    if (!blocks.empty()) {
+        // 验证第一条block的字段
+        EXPECT_EQ(blocks[0].id, -320);
+        EXPECT_EQ(blocks[0].address, 20697531023360);
+        EXPECT_EQ(blocks[0].size, 4194816);
+        EXPECT_EQ(blocks[0].requestedSize, 4194304);
+
+        // 验证最后一个block的字段
+        EXPECT_EQ(blocks[blocks.size() - 1].id, -311);
+        EXPECT_EQ(blocks[blocks.size() - 1].address, 20697475301376);
+        EXPECT_EQ(blocks[blocks.size() - 1].size, 2097664);
+        EXPECT_EQ(blocks[blocks.size() - 1].requestedSize, 2097152);
+    }
+}
+
+// 测试查询blocks表带事件索引范围
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithEventIdxRange)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.startEventIdx = 100;
+    params.endEventIdx = 1000;
+    params.orderBy = "allocEventId";
+    
+    std::vector<Block> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+    
+    EXPECT_EQ(totalCount, 764);
+    EXPECT_EQ(blocks.size(), 10);
+
+    for (const auto& block : blocks) {
+        EXPECT_TRUE((block.allocEventId < 0 || static_cast<uint64_t>(block.allocEventId) >= params.endEventIdx) &&
+            (block.freeEventId < 0 || static_cast<uint64_t>(block.freeEventId) >= params.startEventIdx));
+    }
+}
+
+// 测试查询blocks表带过滤条件
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithFilters)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "id";
+    params.filters["state"] = "allocated";
+    
+    std::vector<Block> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+    EXPECT_EQ(totalCount, 3219);
+    EXPECT_EQ(blocks.size(), params.pageSize);
+    
+    for (const auto& block : blocks) {
+        EXPECT_EQ(block.state, BLOCK_STATE_ACTIVE_ALLOC);
+    }
+}
+
+// 测试查询blocks表带降序排序
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithDescOrder)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = BlockTableColumn::ADDRESS;
+    params.desc = true;
+    
+    std::vector<Block> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+    
+    EXPECT_EQ(totalCount, 3219);
+    EXPECT_EQ(blocks.size(), params.pageSize);
+    
+    // 验证降序排序
+    for (size_t i = 1; i < blocks.size(); ++i) {
+        EXPECT_GE(blocks[i-1].address, blocks[i].address);
+    }
+}
+
+// 测试查询trace entries表
+TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTable)
+{
+    MemSnapshotEventParams params;
+    params.deviceId = "0";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = TraceEntryTableColumn::ID;
+    
+    std::vector<TraceEntry> entries;
+    int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
+    
+    EXPECT_EQ(totalCount, 8092);
+    EXPECT_EQ(entries.size(), params.pageSize);
+    
+    // 验证第一条entry的字段
+    if (!entries.empty()) {
+        EXPECT_EQ(entries[0].id, 0);
+        EXPECT_EQ(entries[0].action, TRACE_ENTRY_ACTION_SEG_MAP);
+        EXPECT_EQ(entries[0].address, 20697552257024);
+    }
+}
+
+// 测试查询trace entries表带事件索引范围
+TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithEventIdxRange)
+{
+    MemSnapshotEventParams params;
+    params.deviceId = "0";
+    params.currentPage = 1;
+    params.pageSize = 15;
+    params.startEventIdx = 100;
+    params.endEventIdx = 500;
+    params.orderBy = TraceEntryTableColumn::ID;
+    
+    std::vector<TraceEntry> entries;
+    int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
+    
+    EXPECT_EQ(totalCount, 401);
+    EXPECT_EQ(entries.size(), params.pageSize);
+    
+    // 验证所有返回的entry都在指定事件索引范围内
+    for (const auto& entry : entries) {
+        EXPECT_GE(entry.id, params.startEventIdx);
+        EXPECT_LE(entry.id, params.endEventIdx);
+    }
+}
+
+// 测试查询trace entries表带过滤条件
+TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithFilters)
+{
+    MemSnapshotEventParams params;
+    params.deviceId = "0";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "id";
+    params.filters["action"] = "alloc";
+    
+    std::vector<TraceEntry> entries;
+    int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
+    
+    EXPECT_EQ(totalCount, 2899);
+    EXPECT_EQ(entries.size(), params.pageSize);
+    for (const auto& entry : entries) {
+        EXPECT_EQ(entry.action, TRACE_ENTRY_ACTION_ALLOC);
+    }
+}
+
+// 测试查询trace entries表带升序排序
+TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithAscOrder)
+{
+    MemSnapshotEventParams params;
+    params.deviceId = "0";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = TraceEntryTableColumn::ADDRESS;
+    params.desc = false;
+    
+    std::vector<TraceEntry> entries;
+    int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
+    
+    EXPECT_EQ(totalCount, 8092);
+    EXPECT_EQ(entries.size(), params.pageSize);
+    
+    // 验证升序排序
+    for (size_t i = 1; i < entries.size(); ++i) {
+        EXPECT_LE(entries[i-1].address, entries[i].address);
+    }
+}
+
+// 测试查询trace entries表第10页
+TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableSecondPage)
+{
+    MemSnapshotEventParams params;
+    params.deviceId = "0";
+    params.currentPage = 10;
+    params.pageSize = 100;
+    params.orderBy = TraceEntryTableColumn::RESERVED;
+
+    std::vector<TraceEntry> entries;
+    int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
+
+    EXPECT_EQ(totalCount, 8092);
+    EXPECT_EQ(entries.size(), params.pageSize);
+
+    // 验证升序排序
+    for (size_t i = 1; i < entries.size(); ++i) {
+        EXPECT_LE(entries[i-1].reserved, entries[i].reserved);
+    }
+}

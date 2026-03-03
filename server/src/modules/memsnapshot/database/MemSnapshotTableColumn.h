@@ -33,15 +33,15 @@ constexpr std::string_view RESERVED = "reserved";
 constexpr std::string_view CALLSTACK = "callstack";
 
 inline const std::vector<Dic::Protocol::TableViewColumn> FIELD_FULL_COLUMNS = {
-    {ID, "id", true, true, false, true}, // ID, 事件索引
-    {ACTION, "action", true, true, true, false}, // 事件类型
-    {ADDRESS, "address", true, true, true, false}, // 事件地址
-    {SIZE, "size", true, true, false, true}, // 事件关联内存大小，单位bytes
-    {STREAM, "stream", true, true, true, false}, // 事件所属流ptr
-    {ALLOCATED, "allocated", true, true, false, true}, // 事件发生时刻allocated内存
-    {ACTIVE, "active", true, true, false, true}, // 事件发生时刻active内存
-    {RESERVED, "reserved", true, true, false, true}, // 事件发生时刻预留内存大小
-    {CALLSTACK, "callstack", true, false, true, false} // 事件发生的调用栈
+    {"ID", ID, true, true, false, true}, // ID, 事件索引
+    {"Action", ACTION, true, true, true, false}, // 事件类型
+    {"Address", ADDRESS, true, true, true, false}, // 事件地址
+    {"Size(bytes)", SIZE, true, true, false, true}, // 事件关联内存大小，单位bytes
+    {"Stream", STREAM, true, true, true, false}, // 事件所属流ptr
+    {"Allocated(bytes)", ALLOCATED, true, true, false, true}, // 事件发生时刻allocated内存
+    {"Active(bytes)", ACTIVE, true, true, false, true}, // 事件发生时刻active内存
+    {"Reserved(bytes)", RESERVED, true, true, false, true}, // 事件发生时刻预留内存大小
+    {"CallStack", CALLSTACK, true, false, true, false} // 事件发生的调用栈
 };
 }
 
@@ -54,13 +54,13 @@ constexpr std::string_view STATE = "state";
 constexpr std::string_view ALLOC_EVENT_ID = "allocEventId";
 constexpr std::string_view FREE_EVENT_ID = "freeEventId";
 inline const std::vector<Dic::Protocol::TableViewColumn> FIELD_FULL_COLUMNS = {
-    {ID, "id", true, true, false, true},
-    {ADDRESS, "address", true, true, true, false},
-    {SIZE, "size", true, true, false, true},
-    {REQUESTED_SIZE, "requestedSize", true, true, false, true},
-    {STATE, "state", true, true, true, false},
-    {ALLOC_EVENT_ID, "allocEventId", true, true, true, false},
-    {FREE_EVENT_ID, "freeEventId", true, true, true, false}
+    {"ID", ID, true, true, false, true},
+    {"Address", ADDRESS, true, true, true, false},
+    {"Size(bytes)", SIZE, true, true, false, true},
+    {"Requested Size(bytes)", REQUESTED_SIZE, true, true, false, true},
+    {"State", STATE, true, true, true, false},
+    {"Alloc Event ID", ALLOC_EVENT_ID, true, true, true, false},
+    {"Free Event ID", FREE_EVENT_ID, true, true, true, false}
 };
 }
 }

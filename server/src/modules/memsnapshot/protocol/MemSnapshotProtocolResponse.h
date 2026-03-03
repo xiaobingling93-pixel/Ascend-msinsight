@@ -31,14 +31,15 @@ using namespace Dic::Module;
 using namespace Dic::Module::MemSnapshot;
 
 static document_t ToMemSnapshotBlockViewJson(const Block& block,
-                                             Document::AllocatorType& allocator)
+                                             Document::AllocatorType& allocator,
+                                             const uint64_t maxTimestamp)
 {
     document_t json(kObjectType);
     JsonUtil::AddMember(json, "id", block.id, allocator);
     JsonUtil::AddMember(json, "addr", std::to_string(block.address), allocator);
     JsonUtil::AddMember(json, "size", block.size, allocator);
-    JsonUtil::AddMember(json, "_startTimestamp", block.allocEventId, allocator);
-    JsonUtil::AddMember(json, "_endTimestamp", block.freeEventId, allocator);
+    JsonUtil::AddMember(json, "_startTimestamp", block.allocEventId < 0 ? 0 : block.allocEventId, allocator);
+    JsonUtil::AddMember(json, "_endTimestamp", block.freeEventId < 0 ? maxTimestamp : block.freeEventId, allocator);
     return json;
 }
 
@@ -89,7 +90,7 @@ struct MemSnapshotBlocksResponse : public JsonResponse {
             }
         } else {
             for (const auto& block : blocks) {
-                auto blockJson = ToMemSnapshotBlockViewJson(block, allocator);
+                auto blockJson = ToMemSnapshotBlockViewJson(block, allocator, maxTimestamp);
                 jsonBlocks.PushBack(blockJson, allocator);
             }
         }
