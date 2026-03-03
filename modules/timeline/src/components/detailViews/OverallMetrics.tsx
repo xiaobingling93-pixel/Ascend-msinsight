@@ -40,6 +40,7 @@ import type { TFunction } from 'i18next';
 import { StyledEmpty } from '@insight/lib/utils';
 import type { SelectContentViewProps } from './SystemView';
 import { getTimeOffset } from '../../insight/units/utils';
+import { ResponseValidator } from '../../utils/response-validator';
 
 export const overallMetricsColumns = (t: TFunction): ColumnsType<GetOverallMetricsResultItem> => [
     { title: t('Category'), dataIndex: 'name', ellipsis: true },
@@ -228,11 +229,14 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
     const [filters, setFilters] = useState<Record<string, FilterValue | null>>({});
     const [loading, setLoading] = useState(false);
     const [tableData, setTableData] = useState<GetOverallMetricsMoreListResultItem[]>([]);
-    const requestTrigger = useRef(true);
+    const validatorRef = useRef(new ResponseValidator());
+    const isMountedRef = useRef(true); // 防止卸载后 setState
 
-    async function getMoreListData(): Promise<void> {
+    const getMoreListData = React.useCallback(async (selectedRow: GetOverallMetricsResultItem | null): Promise<{
+        page: PageType; data: GetOverallMetricsMoreListResultItem[];
+    } | null> => {
         if (!card || card.cardId === '') {
-            return;
+            return null;
         }
         setLoading(true);
         let startTime = session.timeAnalysisRange?.[0] ?? 0;
@@ -255,28 +259,43 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
             setLoading(false);
             setTableData([]);
         });
-        const data = sameOperatorsDetails.map(item => {
-            return {
-                ...item,
-                startTime: getDetailTimeDisplay(item.timestamp),
-            };
-        });
-        setPage({ ...page, pageSize, current, total });
-        setTableData(data ?? []);
-    }
+        return {
+            page: { ...page, pageSize, current, total },
+            data: sameOperatorsDetails.map(item => ({ ...item, startTime: getDetailTimeDisplay(item.timestamp) })) ?? [],
+        };
+    }, [card?.cardId, card?.dbPath, filters.name, sorter.order, sorter.field, page.pageSize, page.current, session.timeAnalysisRange]);
 
     useEffect(() => {
-        if (selectedRow) {
-            getMoreListData();
-        } else {
+        isMountedRef.current = true;
+        const validator = validatorRef.current;
+
+        // 更新版本号
+        const requestVersion = validator.markUpdate();
+        // 情况1：selectedRow 为空 -> 立即清空数据
+        if (!selectedRow) {
             setTableData([]);
+            return () => {
+                isMountedRef.current = false;
+            };
         }
-    }, [sorter.field, sorter.order, page.current, page.pageSize, filters.name, requestTrigger.current, session.timeAnalysisRange]);
+        getMoreListData(selectedRow).then(res => {
+            if (res && isMountedRef.current && validator.isValid(requestVersion)) {
+                setPage(res.page);
+                setTableData(res.data);
+            }
+        });
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, [getMoreListData, selectedRow]);
 
     useEffect(() => {
         setPage(defaultPage);
-        requestTrigger.current = !requestTrigger.current;
     }, [card?.cardId, selectedRow?.id]);
+
+    useEffect(() => () => {
+        validatorRef.current.reset(); // 组件卸载时重置版本号，确保后续请求无效
+    }, []);
 
     return { page, setPage, sorter, setSorter, setFilters, loading, tableData };
 };

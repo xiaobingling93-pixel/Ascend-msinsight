@@ -41,6 +41,7 @@ import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import type { SelectContentViewProps } from './SystemView';
 import { getTimeOffset } from '../../insight/units/utils';
+import { ResponseValidator } from '../../utils/response-validator';
 
 export const memcpyOverallColumns = (t: TFunction): ColumnsType<GetMemcpyOverallResultItem> => [
     { title: t('Category'), dataIndex: 'name', ellipsis: true, width: 120 },
@@ -258,11 +259,14 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
     const [filters, setFilters] = useState<Record<string, FilterValue | null>>({});
     const [loading, setLoading] = useState(false);
     const [tableData, setTableData] = useState<GetOverallMetricsMoreListResultItem[]>([]);
-    const requestTrigger = useRef(true);
+    const validatorRef = useRef(new ResponseValidator());
+    const isMountedRef = useRef(true); // 防止卸载后 setState
 
-    async function getMoreListData(): Promise<void> {
+    const getMoreListData = React.useCallback(async (selectedRow: GetMemcpyOverallResultItem | null): Promise<{
+        page: PageType; data: GetOverallMetricsMoreListResultItem[];
+    } | null> => {
         if (!card || card.cardId === '') {
-            return;
+            return null;
         }
         setLoading(true);
         let startTime = session.timeAnalysisRange?.[0] ?? 0;
@@ -285,27 +289,46 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
             setLoading(false);
             setTableData([]);
         });
-        const data = sameOperatorsDetails.map(item => {
-            return {
-                ...item,
-                startTime: getDetailTimeDisplay(item.timestamp),
-            };
-        });
-        setPage({ ...page, pageSize, current, total });
-        setTableData(data ?? []);
-    }
+        return {
+            page: { ...page, pageSize, current, total },
+            data: sameOperatorsDetails.map(item => ({ ...item, startTime: getDetailTimeDisplay(item.timestamp) })) ?? [],
+        };
+    }, [card?.cardId, card?.dbPath, filters.name, sorter.order, sorter.field, page.pageSize, page.current, session.timeAnalysisRange]);
 
-    useEffect(() => {
-        if (selectedRow) {
-            getMoreListData();
-        } else {
+    useEffect((): () => void => {
+        isMountedRef.current = true;
+        const validator = validatorRef.current;
+
+        // 更新版本号
+        const requestVersion = validator.markUpdate();
+        // 情况1：selectedRow 为空 -> 立即清空数据
+        if (!selectedRow) {
             setTableData([]);
+            return () => {
+                isMountedRef.current = false;
+            };
         }
-    }, [sorter.field, sorter.order, page.current, page.pageSize, filters.name, requestTrigger.current, session.timeAnalysisRange]);
+
+        // 情况2：selectedRow 有值 -> 发请求获取数据
+        getMoreListData(selectedRow).then(res => {
+            if (res && validator.isValid(requestVersion) && isMountedRef.current) { // 仅在版本号有效且组件仍挂载时更新状态
+                setPage(res.page);
+                setTableData(res.data);
+            }
+        }).catch((err) => {
+            console.error('Failed to get more list data:', err);
+        });
+        return () => {
+            isMountedRef.current = false; // 组件卸载时标记为不可用
+        };
+    }, [getMoreListData, selectedRow]);
+
+    useEffect(() => () => {
+        validatorRef.current.reset(); // 组件卸载时重置版本号，确保后续请求无效
+    }, []);
 
     useEffect(() => {
         setPage(defaultPage);
-        requestTrigger.current = !requestTrigger.current;
     }, [card?.cardId, selectedRow?.rowKey]);
 
     return { page, setPage, sorter, setSorter, setFilters, loading, tableData };
