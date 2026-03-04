@@ -20,7 +20,7 @@
 #define DATA_INSIGHT_CORE_CONSTANTS_DEFS_H
 
 #include <string>
-#include <list>
+#include <vector>
 #include <stdint.h>
 
 namespace Dic {
@@ -37,7 +37,12 @@ static const std::string PARSE_RESULT_FAIL = "fail";
 static const std::string OVERLAP_ANALYSIS_UNIT = "OVERLAP_ANALYSIS";
 static const std::string WAIT_TIME_UNIT = "WAIT_TIME";
 static const std::string CONNECTION_UNIT = "CONNECTION_CATEGORY";
-static std::list<std::string> DB_STATUS_LIST =  { OVERLAP_ANALYSIS_UNIT, WAIT_TIME_UNIT, CONNECTION_UNIT };
+static const std::string FTRACE_TIME_STATISTICS_UNIT = "FTRACE_TIME_STATISTICS";
+static const std::string FTRACE_IRQ_STATISTICS_UNIT = "FTRACE_IRQ_STATISTICS";
+static const std::string FTRACE_SCHED_STATISTICS_UNIT = "FTRACE_SCHED_STATISTICS";
+static std::vector<std::string> DB_STATUS_LIST =  { OVERLAP_ANALYSIS_UNIT, WAIT_TIME_UNIT, CONNECTION_UNIT };
+static std::vector<std::string> FTRACE_STATUS_LIST = { FTRACE_TIME_STATISTICS_UNIT, FTRACE_IRQ_STATISTICS_UNIT,
+    FTRACE_SCHED_STATISTICS_UNIT };
 
 // att model
 static const std::string ATT_MODEL_DEFAULT = "all";

@@ -18,6 +18,7 @@
 #include "OverlapAnalysisParseUnit.h"
 #include "ParseUnitManager.h"
 #include "ConstantDefs.h"
+#include "DbTraceDataBase.h"
 #include "TableDefs.h"
 
 namespace Dic::Module::FullDb {

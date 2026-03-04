@@ -24,7 +24,7 @@
 namespace Dic::Module::FullDb {
 class ParseUnitManager {
 public:
-    using Creator = std::function<std::unique_ptr<AbstractParseUnit>()>;
+    using Creator = std::function<std::unique_ptr<IAbstractParseUnit>()>;
     static ParseUnitManager &Instance();
 
     ParseUnitManager(const ParseUnitManager &) = delete;
@@ -32,7 +32,7 @@ public:
     ParseUnitManager(ParseUnitManager &&) = delete;
     ParseUnitManager &operator=(ParseUnitManager &&) = delete;
 
-    void ExecuteAll(const ParseUnitParams &params);
+    void ExecuteUnitList(const ParseUnitParams &params, const std::vector<std::string> &unitNameList);
     void RegisterUnit(const std::string& name, Creator unit);
 
 private:

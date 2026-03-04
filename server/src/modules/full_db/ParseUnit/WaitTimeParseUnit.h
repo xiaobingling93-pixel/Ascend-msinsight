@@ -19,8 +19,9 @@
 #ifndef PROFILER_SERVER_WAITTIMEPARSEUNIT_H
 #define PROFILER_SERVER_WAITTIMEPARSEUNIT_H
 #include "AbstractParseUnit.h"
+#include "DbTraceDataBase.h"
 namespace Dic::Module::FullDb {
-class WaitTimeParseUnit : public AbstractParseUnit {
+class WaitTimeParseUnit : public AbstractParseUnit<DbTraceDataBase> {
 protected:
     std::string GetUnitName() override;
     bool PreCheck(const ParseUnitParams &params, const std::shared_ptr<DbTraceDataBase> &database,

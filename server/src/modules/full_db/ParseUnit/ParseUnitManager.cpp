@@ -30,12 +30,17 @@ namespace Dic::Module::FullDb {
         unitMap[name] = unit;
     }
 
-    void ParseUnitManager::ExecuteAll(const ParseUnitParams &params)
+    void ParseUnitManager::ExecuteUnitList(const ParseUnitParams &params, const std::vector<std::string> &unitNameList)
     {
-        for (const auto &item: unitMap) {
-            Server::ServerLog::Info("Start execute parse unit, unit name:", item.first);
-            bool res = item.second()->Handle(params);
-            Server::ServerLog::Info("End execute parse unit, unit name:", item.first, ", result:", res);
+        for (const auto& unit_name : unitNameList)
+        {
+            auto it = unitMap.find(unit_name);
+            if (it != unitMap.end())
+            {
+                Server::ServerLog::Info("Start execute parse unit, unit name:", it->first);
+                bool res = it->second()->Handle(params);
+                Server::ServerLog::Info("End execute parse unit, unit name:", it->first, ", result:", res);
+            }
         }
     }
 }

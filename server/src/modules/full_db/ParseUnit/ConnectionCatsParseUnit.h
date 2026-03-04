@@ -19,8 +19,9 @@
 #ifndef PROFILER_SERVER_CONNECTIONCATSPARSEUNIT_H
 #define PROFILER_SERVER_CONNECTIONCATSPARSEUNIT_H
 #include "AbstractParseUnit.h"
+#include "DbTraceDataBase.h"
 namespace Dic::Module::FullDb {
-    class ConnectionCatsParseUnit : public AbstractParseUnit {
+    class ConnectionCatsParseUnit : public AbstractParseUnit<DbTraceDataBase> {
     protected:
         std::string GetUnitName() override;
         bool PreCheck(const ParseUnitParams &params, const std::shared_ptr<DbTraceDataBase> &database,

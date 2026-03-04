@@ -19,27 +19,39 @@
 #ifndef PROFILER_SERVER_ABSTRACTPARSEUNIT_H
 #define PROFILER_SERVER_ABSTRACTPARSEUNIT_H
 #include <string>
+
 #include "DbTraceDataBase.h"
+#include "TextTraceDatabase.h"
+#include "VirtualTraceDatabase.h"
 
 namespace Dic::Module::FullDb {
 struct ParseUnitParams {
     std::string dbId;
 };
 
-class AbstractParseUnit {
+// 非模板的基类接口，用于注册和管理
+class IAbstractParseUnit {
+public:
+    virtual ~IAbstractParseUnit() = default;
+    virtual bool Handle(const ParseUnitParams &params) = 0;
+    virtual std::string GetUnitName() = 0;
+};
+
+template<typename DatabaseType = Timeline::VirtualTraceDatabase>
+class AbstractParseUnit : public IAbstractParseUnit {
 public:
     AbstractParseUnit() = default;
     virtual ~AbstractParseUnit() = default;
-    bool Handle(const ParseUnitParams &params);
+    bool Handle(const ParseUnitParams &params) override;
 
 protected:
     // 获取解析单元名称
-    virtual std::string GetUnitName() = 0;
+    std::string GetUnitName() override = 0;
     // 前置校验
-    virtual bool PreCheck(const ParseUnitParams &params, const std::shared_ptr<DbTraceDataBase> &database,
+    virtual bool PreCheck(const ParseUnitParams &params, const std::shared_ptr<DatabaseType> &database,
                           std::string &error) = 0;
     // 处理解析流程
-    virtual bool HandleParseProcess(const ParseUnitParams &params, const std::shared_ptr<DbTraceDataBase> &database,
+    virtual bool HandleParseProcess(const ParseUnitParams &params, const std::shared_ptr<DatabaseType> &database,
                                     std::string &error) = 0;
     // 发送通知:默认实现 有特殊要求 请在子类进行覆盖
     virtual void SendNotify(const ParseUnitParams &params, bool parseRes,
@@ -48,5 +60,8 @@ protected:
 private:
     bool Parse(const ParseUnitParams &params, std::string &error);
 };
+extern template class AbstractParseUnit<Timeline::VirtualTraceDatabase>;
+extern template class AbstractParseUnit<DbTraceDataBase>;
+extern template class AbstractParseUnit<TextTraceDatabase>;
 }
 #endif // PROFILER_SERVER_ABSTRACTPARSEUNIT_H

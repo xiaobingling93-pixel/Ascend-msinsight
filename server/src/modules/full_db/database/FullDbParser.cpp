@@ -177,7 +177,7 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
         db->SetDataBaseVersion();
     }
     // 保证下面任务的执行在发送了parse/success之后
-    ParseUnitManager::Instance().ExecuteAll({dbId});
+    ParseUnitManager::Instance().ExecuteUnitList({dbId}, DB_STATUS_LIST);
 }
 
 void FullDbParser::ParserCallBack(std::string rankId, const std::string &fileId, bool result)
