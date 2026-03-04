@@ -332,6 +332,42 @@ public:
         }
     }
 
+    static inline std::string MapToJsonStr(const std::unordered_map<std::string, std::string> &data)
+    {
+        document_t doc;
+        auto &allocator = doc.GetAllocator();
+        doc.SetObject();
+
+        for (const auto &kv : data) {
+            AddMember(doc, kv.first.c_str(), kv.second, allocator);
+        }
+
+        StringBuffer buffer;
+        Writer<StringBuffer> writer(buffer);
+        doc.Accept(writer);
+        return buffer.GetString();
+    }
+
+    static inline std::unordered_map<std::string, std::string> JsonStrToMap(const std::string &jsonStr)
+    {
+        if (jsonStr.empty()) {
+            return {};
+        }
+
+        document_t doc;
+        if (doc.Parse(jsonStr.c_str()).HasParseError()) {
+            return {};
+        }
+        std::unordered_map<std::string, std::string> data;
+        for (auto &member : doc.GetObj()) {
+            std::string key = member.name.GetString();
+            std::string value = member.value.GetString();
+            data[key] = value;
+        }
+
+        return data;
+    }
+
     static std::vector<std::string> JsonToVector(const std::string& jsonStr)
     {
         rapidjson::Document document;

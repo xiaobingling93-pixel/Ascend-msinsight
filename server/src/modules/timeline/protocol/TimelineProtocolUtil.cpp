@@ -765,6 +765,37 @@ std::optional<document_t> ToResponseJson<SystemViewOverallResponse>(const System
     return std::optional<document_t>{std::move(json)};
 }
 
+template<>
+std::optional<document_t> ToResponseJson<SystemViewFtraceStatResponse>(const SystemViewFtraceStatResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+
+    // headers
+    JsonUtil::AddMember(body, "headers", response.headers, allocator);
+
+    // data
+    json_t data(kArrayType);
+    for (const auto &row : response.data) {
+        json_t rowJson(kObjectType);
+        for (const auto &kv : row) {
+            JsonUtil::AddMember(rowJson, kv.first, kv.second, allocator);
+        }
+        data.PushBack(rowJson, allocator);
+    }
+    JsonUtil::AddMember(body, "data", data, allocator);
+
+    // pageParam
+    JsonUtil::AddMember(body, "current", response.pageParam.current, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.pageParam.pageSize, allocator);
+    JsonUtil::AddMember(body, "count", response.pageParam.total, allocator);
+
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
 json_t MemcpyOverallResToJson(const MemcpyOverallRes &res,
                                   RAPIDJSON_DEFAULT_ALLOCATOR &allocator, uint64_t depth = 1)
 {

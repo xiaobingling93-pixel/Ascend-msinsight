@@ -94,6 +94,31 @@ export const pythonApiSummaryColumns: ColumData[] = [
     { title: 'Max(us)', dataIndex: 'max', ...getDefaultColumData('max') },
 ];
 
+export const ftraceTimeSummaryColumns: ColumData[] = [
+    { title: 'process', dataIndex: 'process', ...getDefaultColumData('process', false) },
+    { title: 'thread', dataIndex: 'thread', ...getDefaultColumData('thread', false) },
+    { title: 'runnable', dataIndex: 'runnable', ...getDefaultColumData('runnable', false) },
+    { title: 'running', dataIndex: 'running', ...getDefaultColumData('running', false) },
+    { title: 'sleeping', dataIndex: 'sleeping', ...getDefaultColumData('sleeping', false) },
+    { title: 'uninterruptible_sleep', dataIndex: 'uninterruptible_sleep', ...getDefaultColumData('uninterruptible_sleep', false) },
+];
+
+export const ftraceIrqSummaryColumns: ColumData[] = [
+    { title: 'process', dataIndex: 'process', ...getDefaultColumData('process', false) },
+    { title: 'thread', dataIndex: 'thread', ...getDefaultColumData('thread', false) },
+    { title: 'soft_irq_count', dataIndex: 'soft_irq_count', ...getDefaultColumData('soft_irq_count', false) },
+    { title: 'soft_irq_duration', dataIndex: 'soft_irq_duration', ...getDefaultColumData('soft_irq_duration', false) },
+    { title: 'soft_irq_count', dataIndex: 'soft_irq_count', ...getDefaultColumData('hard_irq_count', false) },
+    { title: 'soft_irq_duration', dataIndex: 'soft_irq_duration', ...getDefaultColumData('hard_irq_duration', false) },
+];
+
+export const ftraceSchedSummaryColumns: ColumData[] = [
+    { title: 'process', dataIndex: 'process', ...getDefaultColumData('process', false) },
+    { title: 'thread', dataIndex: 'thread', ...getDefaultColumData('thread', false) },
+    { title: 'context_switch_count', dataIndex: 'context_switch_count', ...getDefaultColumData('context_switch_count', false) },
+    { title: 'context_switch_duration', dataIndex: 'context_switch_duration', ...getDefaultColumData('context_switch_duration', false) },
+];
+
 export const useKernelDetails = (): TableColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
@@ -208,6 +233,7 @@ export const statsSystemViewItems: SystemViewItem[] = [
 ];
 
 export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'HCCL', 'Overlap Analysis'];
+export const ftraceTypes: string[] = [];
 
 export const expertSystemViewItems: SystemViewItem[] = [
     { name: 'Expert Analysis', tips: 'ExpertAnalysisTips' },
@@ -241,6 +267,12 @@ export const querySystemViewDetails = async (param: {
     startTime: number; endTime: number; layer: string; searchName: string;
 }): Promise<{ systemViewDetails: BaseSummaryRowItemType[] }> => {
     return window.requestData('unit/systemView', param, 'timeline');
+};
+
+export const queryFtraceStat = async (param: {
+    rankId: string; dbPath: string; dataType: number; current: number; pageSize: number;
+}): Promise<{ headers: string[]; data: Array<Record<string, string>>; pageParam: { current: number; pageSize: number; total: number } }> => {
+    return window.requestData('systemView/systemViewFtraceStat', param, 'timeline');
 };
 
 export const queryTableDataNameList = async (param: { rankId: string; dbPath: string }): Promise<any> => {

@@ -25,8 +25,13 @@ import {
     queryOneKernel,
     getPageData,
     querySystemViewDetails,
+    queryFtraceStat,
+    ftraceTimeSummaryColumns,
+    ftraceIrqSummaryColumns,
+    ftraceSchedSummaryColumns,
     pythonApiSummaryColumns,
     layerTypes,
+    ftraceTypes,
 } from './Common';
 import type { CardMetaData } from '../../entity/data';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
@@ -191,7 +196,27 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
     );
 });
 
-export const StatsSystemView = [OverallMetrics, MemcpyOverallMetrics, ...layerTypes.map((type) => {
+const ftraceColumnsMap: Record<string, typeof ftraceTimeSummaryColumns> = {
+    'Ftrace Time Consuming': ftraceTimeSummaryColumns,
+    'Ftrace IRQ': ftraceIrqSummaryColumns,
+    'Ftrace Sched': ftraceSchedSummaryColumns,
+};
+
+export const StatsSystemView = [OverallMetrics, MemcpyOverallMetrics, ...ftraceTypes.map((type) => {
+    return observer((props: SelectContentViewProps) => {
+        const ftraceColumns = ftraceColumnsMap[type] || ftraceTimeSummaryColumns;
+        return (
+            <BaseSummary
+                layerType={type}
+                request={queryFtraceStat}
+                isStats={false}
+                isFtrace={true}
+                columns={ftraceColumns}
+                {...props}
+            />
+        );
+    });
+}), ...layerTypes.map((type) => {
     return observer((props: SelectContentViewProps) => {
         return (
             <BaseSummary

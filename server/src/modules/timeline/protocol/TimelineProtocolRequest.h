@@ -23,6 +23,7 @@
 #include <optional>
 #include <vector>
 #include <set>
+#include "DomainObject.h"
 #include "FileUtil.h"
 #include "ProtocolDefs.h"
 #include "ProtocolParamUtil.h"
@@ -32,6 +33,7 @@
 
 namespace Dic {
 namespace Protocol {
+using namespace Dic::Module::Timeline;
 enum class ProjectActionEnum {
     TRANSFER_PROJECT = 0,
     ADD_FILE,
@@ -388,6 +390,31 @@ struct SystemViewOverallRequest : public Request {
 struct SystemViewOverallMoreDetailsRequest : public Request {
     SystemViewOverallMoreDetailsRequest() : Request(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS) {};
     SystemViewOverallReqParam params;
+};
+
+struct SystemViewFtraceStatParams {
+    std::string layer;  // 前端传递的layer字符串
+    FtraceDataType dataType = FtraceDataType::UNKOWN;
+    uint64_t current = 0;
+    uint64_t pageSize = 0;
+
+    void SetDataType()
+    {
+        static const std::unordered_map<std::string, FtraceDataType> layerToDataType = {
+            {"Ftrace Time Consuming", FtraceDataType::TIME},
+            {"Ftrace IRQ", FtraceDataType::IRQ},
+            {"Ftrace Sched", FtraceDataType::SCHED},
+        };
+        auto it = layerToDataType.find(layer);
+        if (it != layerToDataType.end()) {
+            this->dataType = it->second;
+        }
+    }
+};
+
+struct SystemViewFtraceStatRequest : public Request {
+    SystemViewFtraceStatRequest() : Request(REQ_RES_SYSTEM_VIEW_FTRACE_STAT) {}
+    SystemViewFtraceStatParams params;
 };
 
 struct SystemViewParams {

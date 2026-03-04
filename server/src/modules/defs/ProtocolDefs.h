@@ -102,6 +102,7 @@ const std::string REQ_RES_SAME_OPERATORS_DURATION = "query/all/same/operators/du
 const std::string REQ_RES_SYSTEM_VIEW_OVERALL = "systemView/overall";
 const std::string REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS = "systemView/overall/more/details";
 const std::string REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ = "expertAnalysis/AICoreFreq";
+const std::string REQ_RES_SYSTEM_VIEW_FTRACE_STAT = "systemView/systemViewFtraceStat";
 const std::string REQ_RES_TABLE_DATA_NAME_LIST = "tableData/nameList";
 const std::string REQ_RES_TABLE_DATA_DETAIL = "tableData/detail";
 const std::string REQ_RES_MEMCPY_OVERALL = "memcpy/total/list";

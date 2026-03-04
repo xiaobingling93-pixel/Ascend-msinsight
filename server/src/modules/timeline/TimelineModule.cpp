@@ -52,6 +52,7 @@
 
 #include "QueryMemcpyDetailHandler.h"
 #include "QueryMemcpyOverallHandler.h"
+#include "QuerySystemViewFtraceStatHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -118,6 +119,7 @@ void TimelineModule::RegisterRequestHandlers()
                               std::make_unique<CreateCurveHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMCPY_OVERALL, std::make_unique<QueryMemcpyOverallHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMCPY_DETAIL, std::make_unique<QueryMemcpyDetailHandler>());
+    requestHandlerMap.emplace(REQ_RES_SYSTEM_VIEW_FTRACE_STAT, std::make_unique<QuerySystemViewFtraceStatHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

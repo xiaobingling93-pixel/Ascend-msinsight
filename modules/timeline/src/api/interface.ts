@@ -186,6 +186,13 @@ export interface OperatorDispatchResult extends OperatorDispatchResultItem {
     count: number;
 };
 
+export const queryFtraceStat = async (param: {
+    rankId: string; dbPath: string; dataType: number; current: number; pageSize: number;
+}): Promise<{ headers: string[]; data: Record<string, number>[]; pageParam: { current: number; pageSize: number; total: number } }> => {
+    return window.requestData('systemView/systemViewFtraceStat', param, 'timeline');
+};
+
+
 export interface EventViewParams {
     currentPage: number;
     pageSize: number;

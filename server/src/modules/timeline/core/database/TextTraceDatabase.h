@@ -19,6 +19,7 @@
 #ifndef PROFILER_SERVER_JSON_TRACE_DATABASE_H
 #define PROFILER_SERVER_JSON_TRACE_DATABASE_H
 
+#include <unordered_map>
 #include "ClusterDef.h"
 #include "VirtualTraceDatabase.h"
 #include "SliceCacheManager.h"
@@ -26,6 +27,7 @@
 #include "FlowAnalyzer.h"
 #include "TextSqlConstant.h"
 #include "TimelineProtocolRequest.h"
+#include "GlobalDefs.h"
 
 
 namespace Dic::Module::Timeline {
@@ -158,6 +160,9 @@ public:
                                                         std::vector<std::pair<std::string, std::string>> rawData);
 
     virtual bool QuerySliceDtoList(std::vector<SliceDto> &sliceDtoList);
+    void CreateFtraceTable();
+    bool InsertOrUpdateFtraceStat(const std::vector<FtraceStatisticsData> &dataList);
+    FtraceStatistics QueryFtraceStatistics(FtraceDataType dataType, uint64_t offset, uint64_t limit);
 
 private:
     const std::string sliceTable = "slice";

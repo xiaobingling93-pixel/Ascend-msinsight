@@ -64,6 +64,7 @@ private:
     static std::unique_ptr<Request> ToCommunicationKernelRequest(const Dic::json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSystemViewOverallRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSystemViewOverallMoreDetailsRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToSystemViewFtraceStatRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMemcpyOverallRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<document_t> ToImportActionResponseJson(const Response &response);
@@ -103,6 +104,7 @@ private:
     static std::optional<document_t> ToParseProgressEventJson(const Event &event);
     static std::optional<document_t> ToSystemViewOverallResponseJson(const Response &response);
     static std::optional<document_t> ToOverallMoreDetailsResponseJson(const Response &response);
+    static std::optional<document_t> ToSystemViewFtraceStatResponseJson(const Response &response);
     static std::optional<document_t> ToParseHeatmapCompletedEventJson(const Event &event);
     static std::optional<document_t> ToParseUnitCompletedEventJson(const Event &event);
 };

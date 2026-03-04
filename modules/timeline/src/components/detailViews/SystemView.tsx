@@ -389,12 +389,14 @@ export interface BaseSummaryProps extends SelectContentViewProps {
     layerType?: string;
     request: (...rest: any[]) => any;
     isStats?: boolean;
+    isFtrace?: boolean;
     columns: any;
 }
 
 // eslint-disable-next-line max-lines-per-function
 export const BaseSummary = observer((props: BaseSummaryProps) => {
     const isStats = props.isStats as boolean;
+    const isFtrace = props.isFtrace as boolean;
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = isStats ? { field: 'totalTime', order: 'descend' } : { field: 'duration', order: 'descend' };
     const [dataSource, setDataSource] = useState<any[]>([]);
@@ -418,7 +420,7 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
             ...getDefaultColumData('name'),
             ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
         }, ...columns];
-    } else {
+    } else if (!isFtrace) {
         columns = [...columns, {
             title: t('Click To Timeline'),
             dataIndex: 'click',
@@ -432,6 +434,7 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
     }
     const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: BaseSummaryProps): Promise<void> => {
         const _isStats = prop.isStats as boolean;
+        const _isFtrace = prop.isFtrace as boolean;
         const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card?.cardId);
         if (props.card === undefined || props.card.cardId === '' || targetInfo?.projectType === ProjectType.IE) {
             setDataSource([]);
@@ -457,6 +460,9 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
         };
         if (_isStats) {
             params = { isQueryTotal: true, layer: prop.layerType, searchName, ...params };
+        }
+        if (_isFtrace) {
+            params = { layer: prop.layerType, ...params };
         }
 
         try {

@@ -54,6 +54,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesRequest);
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallRequest);
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToSystemViewOverallMoreDetailsRequest);
+    jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_FTRACE_STAT, ToSystemViewFtraceStatRequest);
     jsonToReqFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMCPY_OVERALL, ToMemcpyOverallRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMCPY_DETAIL, ToSystemViewOverallMoreDetailsRequest);
@@ -88,6 +89,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsResponseJson);
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallResponseJson);
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToOverallMoreDetailsResponseJson);
+    resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_FTRACE_STAT, ToSystemViewFtraceStatResponseJson);
     resToJsonFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqResponseJson);
     resToJsonFactory.emplace(REQ_RES_CREATE_CURVE, ToCreateCurveResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMCPY_OVERALL, ToMemcpyOverallListResponseJson);
@@ -722,6 +724,20 @@ std::unique_ptr<Request>TimelineProtocol::ToSystemViewOverallMoreDetailsRequest(
     return reqPtr;
 }
 
+std::unique_ptr<Request> TimelineProtocol::ToSystemViewFtraceStatRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<SystemViewFtraceStatRequest> reqPtr = std::make_unique<SystemViewFtraceStatRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info for system view ftrace stat command.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.layer, json["params"], "layer");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    reqPtr->params.SetDataType();
+    return reqPtr;
+}
+
 std::unique_ptr<Request> TimelineProtocol::ToMemcpyOverallRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<MemcpyOverallRequest> reqPtr = std::make_unique<MemcpyOverallRequest>();
@@ -944,6 +960,11 @@ std::optional<document_t> TimelineProtocol::ToSystemViewOverallResponseJson(cons
 std::optional<document_t> TimelineProtocol::ToOverallMoreDetailsResponseJson(const Response &response)
 {
     return ToResponseJson<UnitThreadsOperatorsResponse>(dynamic_cast<const UnitThreadsOperatorsResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToSystemViewFtraceStatResponseJson(const Response &response)
+{
+    return ToResponseJson<SystemViewFtraceStatResponse>(dynamic_cast<const SystemViewFtraceStatResponse &>(response));
 }
 #pragma endregion
 } // namespace Protocol
