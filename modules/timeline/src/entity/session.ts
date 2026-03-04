@@ -205,6 +205,9 @@ export class Session {
     linkLines: LinkLines = {};
     drawLineMode: 'all' | 'single' = 'all';
     mapOfLinkLines: Map<string, MapValueOfLinkLines> = new Map();
+    shouldRefetchLines: boolean = false;
+    // 记录泳道第一次展开时Thread类型的子泳道
+    threadsToFetch: Map<string, InsightUnit> = new Map();
 
     totalHeight: number = 0;
     renderTrigger: boolean = true;
@@ -321,6 +324,7 @@ export class Session {
             mapOfLinkLines: false,
             singleLinkLine: false,
             resetOfSliceSelection: false,
+            threadsToFetch: false,
         });
         this._name = conf?.name ?? this.id;
         this._interval = 100;

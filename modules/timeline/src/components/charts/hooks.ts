@@ -25,11 +25,14 @@ import type { InsightUnit } from '../../entity/insight';
 import { useTheme } from '@emotion/react';
 import { getTimeOffset } from '../../insight/units/utils';
 import type { ThreadTraceRequest } from '../../entity/data';
+import { getUnitUniqueId } from '../../utils';
 
 export interface Pos {
     x: number;
     y: number;
 };
+
+const THREAD_FETCH_TIMEOUT = 600;
 
 export type DataProcessor<T extends ChartType> = (data: ChartData<T>, width: number, domainStart: number, domainEnd: number) => ChartData<T>;
 const CLICK_TOLERANCE = 1;
@@ -41,6 +44,40 @@ interface UseDataParams<T extends ChartType> {
     metadata: unknown;
     width: number;
     processor?: DataProcessor<T>;
+}
+
+let timer: NodeJS.Timeout | null = null;
+
+/**
+ * 自动获取连线数据
+ * @param session
+ * @param unit
+ */
+function onAutoFetchLines(session: Session, unit: InsightUnit): void {
+    // 不存在未请求过的泳道或泳道类型不是Thread，则不需要自动获取连线数据
+    if (session.threadsToFetch.size === 0 || unit.name !== 'Thread') return;
+    const unitKey = getUnitUniqueId(unit);
+    const _unit = session.threadsToFetch.get(unitKey);
+    // session.threadsToFetch中不包含当前unit（当前泳道已经请求过），则不需要自动获取连线数据
+    if (!_unit) return;
+    // 设置当前unit为已展开过
+    _unit.hasExpanded = true;
+    session.threadsToFetch.delete(unitKey);
+    const currentNum = session.threadsToFetch.size;
+    // 所有响应结束，更新连线数据
+    if (currentNum === 0) {
+        timer && clearTimeout(timer);
+        runInAction(() => { session.shouldRefetchLines = !session.shouldRefetchLines; });
+        return;
+    }
+    timer && clearTimeout(timer);
+    // 在虚拟滚动时，不在可视窗口的泳道不会请求算子信息。此时需判断请求是否已停止且未请求过的泳道是否大于0，若满足此条件需手动
+    timer = setTimeout(() => {
+        const nextNum = session.threadsToFetch.size;
+        if (nextNum === currentNum && nextNum > 0) {
+            runInAction(() => { session.shouldRefetchLines = !session.shouldRefetchLines; });
+        }
+    }, THREAD_FETCH_TIMEOUT);
 }
 
 /**
@@ -66,6 +103,8 @@ export const useData = <T extends ChartType>({ session, mapFunc, unit, metadata,
         }
         requestedWidth.current = width;
         mapFunc(session, metadata, unit, theme).then(datas => {
+            // 展开泳道时须泳道的所有子项的算子查询结束才触发session.shouldRefetchLines变更。（场景：先按类型连线，再展开从未展开过的泳道）
+            onAutoFetchLines(session, unit);
             if (requestedWidth.current !== width) {
                 // drop the data if width has been changed since when request was made
                 return;

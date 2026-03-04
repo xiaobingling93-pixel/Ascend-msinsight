@@ -262,6 +262,9 @@ const initUnitSessionInfo = (session: Session, result: ImportResult, dataSource:
 const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSource: DataSource, isNeedResetRankId: boolean): void => {
     if (!session) { return; }
     if (result.reset as boolean) { resetPage({ dataSource }); }
+    if (!session.units.length) {
+        session.threadsToFetch.clear();
+    }
     initUnitSessionInfo(session, result, dataSource);
     // 更新 units
     const hostInfo = groupBy(result.result, (item: ImportCardInfo) => item.host ?? '');
@@ -303,7 +306,9 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
     if (session?.units?.[0]) {
         session.units[0].isExpanded = true;
         const rootUnit = getRootUnit(session, session.units[0].metadata.cardId as string, dataSource);
-        rootUnit && (rootUnit.isExpanded = true);
+        if (rootUnit) {
+            rootUnit.isExpanded = true;
+        }
     }
     session.updateUnitsForMultiDevice();
 };

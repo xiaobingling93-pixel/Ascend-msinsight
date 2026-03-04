@@ -500,6 +500,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
         session.viewedExpandedCardIdSet,
         session.ridLineType,
         session.drawLineMode,
+        session.shouldRefetchLines,
     ];
     React.useEffect(() => {
         if (session.drawLineMode !== 'single') {

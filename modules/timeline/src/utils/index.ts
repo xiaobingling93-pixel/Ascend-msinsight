@@ -48,6 +48,11 @@ export const getRootUnit = (units: InsightUnit[]): InsightUnit[] => {
     return result;
 };
 
+export const getUnitUniqueId = (unit: InsightUnit): string => {
+    const { cardId = '', processId = '', threadId = '' } = unit.metadata ?? {};
+    return `${cardId}_${processId}_${threadId}`;
+};
+
 export const isStreamUnit = (unit: InsightUnit): boolean => {
     const metaData = unit.metadata as ThreadMetaData;
 

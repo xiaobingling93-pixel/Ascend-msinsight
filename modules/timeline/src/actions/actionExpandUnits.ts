@@ -21,19 +21,47 @@ import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
 import type { ChartDesc, InsightUnit } from '../entity/insight';
 import type { StackStatusConfig } from '../entity/chart';
+import { getUnitUniqueId } from '../utils';
 
-const expandUnits = (_unit: InsightUnit, shouldExpand: boolean): void => {
-    if (_unit.children && _unit.children?.length > 0) {
-        _unit?.children?.forEach(childUnit => {
-            expandUnits(childUnit, shouldExpand);
-            childUnit.isExpanded = shouldExpand;
-            if (childUnit.name === 'Thread' && childUnit.collapsible) {
-                const chart = childUnit.chart as ChartDesc<'stackStatus'>;
-                (chart.config as StackStatusConfig).isCollapse = shouldExpand;
-                childUnit.collapseAction?.(childUnit);
+export function updateThreadsToFetch(session: Session, isExpand: boolean, unitOrFetchMap: InsightUnit | Map<string, InsightUnit>): void {
+    if (unitOrFetchMap instanceof Map) {
+        if (isExpand) {
+            for (const [key, value] of unitOrFetchMap) {
+                session.threadsToFetch.set(key, value);
             }
-        });
+        } else {
+            for (const key of unitOrFetchMap.keys()) {
+                session.threadsToFetch.delete(key);
+            }
+        }
+    } else {
+        const unitKey = getUnitUniqueId(unitOrFetchMap);
+        const isExisted = session.threadsToFetch.has(unitKey);
+        if (isExpand) {
+            !isExisted && session.threadsToFetch.set(unitKey, unitOrFetchMap);
+        } else {
+            isExisted && session.threadsToFetch.delete(unitKey);
+        }
     }
+}
+
+const expandUnits = (_unit: InsightUnit, shouldExpand: boolean, session: Session, _threadsToFetch: Map<string, InsightUnit>): void => {
+    const subUnits = _unit.children ?? [];
+    if (!subUnits.length) return;
+    subUnits.forEach(unit => {
+        expandUnits(unit, shouldExpand, session, _threadsToFetch);
+        unit.isExpanded = shouldExpand;
+        const isThread = unit.name === 'Thread';
+        if (isThread && !unit.hasExpanded) {
+            const unitKey = getUnitUniqueId(unit);
+            _threadsToFetch.set(unitKey, unit);
+        }
+        if (isThread && unit.collapsible) {
+            const chart = unit.chart as ChartDesc<'stackStatus'>;
+            (chart.config as StackStatusConfig).isCollapse = shouldExpand;
+            unit.collapseAction?.(unit);
+        }
+    });
 };
 
 const collapseOrExpandAll = (session: Session, shouldExpand: boolean): void => {
@@ -43,11 +71,15 @@ const collapseOrExpandAll = (session: Session, shouldExpand: boolean): void => {
     }
     const selectedUnit = session.selectedUnits[0];
     runInAction(() => {
+        const _threadsToFetchMap: Map<string, InsightUnit> = new Map();
         if (selectedUnit !== undefined) {
-            expandUnits(selectedUnit, shouldExpand);
+            expandUnits(selectedUnit, shouldExpand, session, _threadsToFetchMap);
             selectedUnit.isExpanded = true;
         }
         session.renderTrigger = !session.renderTrigger;
+        if (_threadsToFetchMap.size > 0) {
+            updateThreadsToFetch(session, shouldExpand, _threadsToFetchMap);
+        }
     });
 };
 

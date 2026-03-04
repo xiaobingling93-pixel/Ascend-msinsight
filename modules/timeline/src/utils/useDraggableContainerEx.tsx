@@ -19,6 +19,8 @@ import styled from '@emotion/styled';
 import { clamp } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useWatchResize } from './useWatchDomResize';
+import type { Session } from '../entity/session';
+import { runInAction } from 'mobx';
 
 interface CssProps {
     column: boolean;
@@ -52,6 +54,7 @@ interface DCProps {
     draggableWH: number;
     open?: boolean;
     splitLineRef: React.RefObject<HTMLDivElement>;
+    session: Session;
 }
 
 const MIN_HORIZONTAL_WH = 14;
@@ -492,7 +495,7 @@ const switchOpen = (params: Iswitch): void => {
  * handleSwitchOpen：显示/隐藏可拖动容器；
  */
 export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen: boolean) => void) ] => {
-    const { draggableWH, dragDirection, splitLineRef, open = true } = props;
+    const { draggableWH, dragDirection, splitLineRef, open = true, session } = props;
     const [containerHeight, container] = useWatchResize<HTMLDivElement>('height');
     const draggable = useRef<HTMLDivElement>(null);
     const [dragWh, setDragWh] = useState(String(draggableWH));
@@ -502,6 +505,7 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
     const MIN_DRAG_WH = useMemo(() => dragDirection <= 1 ? MIN_VERTICAL_WH : MIN_HORIZONTAL_WH, [dragDirection]);
     const [dragTranslate, setDragTranslate] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
     const isOpen = useRef(open);
+    const isDragging = useRef(false);
 
     useEffect(() => {
         const dom = container.current;
@@ -516,10 +520,42 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
             setContainerOffsetTop(offsetTop);
         }
     }, [setContainerOffsetTop]);
+    useEffect(() => {
+        const element = draggable.current;
+        if (!element) return;
+        const throttledResize = (() => {
+            return () => {
+                requestAnimationFrame(() => {
+                    // 仅执行由固定泳道区域拖动导致height变化的canvas重绘，其他间接导致height变化不执行，避免重复绘制
+                    if (isDragging.current) {
+                        session.renderTrigger = !session.renderTrigger;
+                    }
+                });
+            };
+        })();
+        const observerResize = new ResizeObserver(() => {
+            throttledResize();
+        });
+        observerResize.observe(element);
+        return () => {
+            observerResize.disconnect();
+        };
+    }, []);
     const movingState = useRef<MovingState>({ stat: 'idle', startX: 0, startY: 0, screenY: 0, screenX: 0 });
     const onMousedown = getHandleMouseDown(dragDirection, draggable, movingState, isOpen);
     const onMousemove = handleMouseMove({ container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop });
     const onMouseup = handleMouseUp({ container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop });
+
+    const onDragMouseDown = (): void => {
+        isDragging.current = true;
+    };
+    const onDragMouseUp = (): void => {
+        isDragging.current = false;
+        // 光标松开后执行最终绘制
+        runInAction(() => {
+            session.renderTrigger = !session.renderTrigger;
+        });
+    };
     const handleSwitchOpen = (needOpen: boolean): void => {
         switchOpen({
             dragDirection,
@@ -540,7 +576,7 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
             onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
             <div className={'topC'} ref={draggable}>
                 <div className={'dragContainer'} aria-disabled={isOpen.current}>{vProps.draggableContainer}</div>
-                <div className={'splitLine'} aria-disabled={isOpen.current} ref={splitLineRef} />
+                <div className={'splitLine'} aria-disabled={isOpen.current} ref={splitLineRef} onMouseDown={onDragMouseDown} onMouseUp={onDragMouseUp} />
             </div>
             <div className={'bottomC'}> {vProps.mainContainer} </div>
             {vProps.slot}

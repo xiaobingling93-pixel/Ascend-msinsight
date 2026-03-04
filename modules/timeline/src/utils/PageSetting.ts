@@ -18,6 +18,16 @@
 import type { InsightUnit } from '../entity/insight';
 import { store } from '../store';
 import { switchPinned } from '../components/ChartContainer/unitPin';
+import { Session } from '../entity/session';
+import { updateThreadsToFetch } from '../actions/actionExpandUnits';
+
+interface RecoverSettingLimitedItem {
+    units: InsightUnit[];
+    unitsSetting: InsightUnitSet[];
+    pinnedUnits: InsightUnit[];
+    session: Session;
+    iteration?: number;
+}
 
 // 保留当前页面（时间范围、卡等）
 export function savePageSetting(): void {
@@ -45,8 +55,8 @@ class UnitTreeTool {
         return this.getSettingLimited(units);
     }
 
-    recoverSetting(units: InsightUnit[], unitsSetting: InsightUnitSet[], pinnedUnits: InsightUnit[] = []): void {
-        this.recoverSettingLimited(units, unitsSetting, pinnedUnits);
+    recoverSetting(units: InsightUnit[], unitsSetting: InsightUnitSet[], pinnedUnits: InsightUnit[] = [], session: Session): void {
+        this.recoverSettingLimited({ units, unitsSetting, pinnedUnits, session });
     }
 
     private stopIteration(index: number): boolean {
@@ -63,7 +73,7 @@ class UnitTreeTool {
         }));
     }
 
-    private recoverSettingLimited(units: InsightUnit[], unitsSetting: InsightUnitSet[], pinnedUnits: InsightUnit[] = [], iteration = 0): void {
+    private recoverSettingLimited({ units, unitsSetting, pinnedUnits = [], session, iteration = 0 }: RecoverSettingLimitedItem): void {
         if (this.stopIteration(iteration)) {
             return;
         }
@@ -71,6 +81,10 @@ class UnitTreeTool {
             const settingUnit = unitsSetting[index];
             unit.isExpanded = settingUnit?.isExpanded ?? false;
             unit.onceExpand = settingUnit?.isExpanded ?? false;
+            if (unit.name === 'Thread' && unit.isExpanded) {
+                updateThreadsToFetch(session, unit.isExpanded, unit);
+            }
+
             // 校验次unit在上一次是否被置顶
             const pinnedUnitIdx = pinnedUnits.findIndex(item => {
                 const { cardId, processId, threadId, label } = item.metadata || {};
@@ -85,7 +99,7 @@ class UnitTreeTool {
             }
             // 泳道未展开不进行子泳道的展开恢复，但需要恢复子泳道的置顶状态
             if (unit.children?.length && settingUnit?.children?.length) {
-                this.recoverSettingLimited(unit.children, settingUnit.children, pinnedUnits, iteration + 1);
+                this.recoverSettingLimited({ units: unit.children, unitsSetting: settingUnit.children, pinnedUnits, session, iteration: iteration + 1 });
             }
         });
     }
@@ -107,7 +121,7 @@ export function recoverPageSetting(): void {
         session.domainRange = domainRange;
         session.pinnedUnits = [...pinnedUnits];
         // 卡展开
-        new UnitTreeTool().recoverSetting(session.units, units, session.pinnedUnits);
+        new UnitTreeTool().recoverSetting(session.units, units, session.pinnedUnits, session);
     }
 }
 

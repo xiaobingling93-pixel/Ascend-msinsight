@@ -113,7 +113,7 @@ const ChartBody = observer((props: ChartBodyProps) => {
     const [pinnedHeight, pinnedRef] = useWatchResize<HTMLDivElement>('height');
     const splitLineRef = React.useRef<HTMLDivElement>(null);
     const [view, handleSwitchOpen] = useDraggableContainerEx(
-        { draggableWH: 100, dragDirection: DragDirection.TOP, splitLineRef, open: session.pinnedUnits.length > 0 });
+        { draggableWH: 100, dragDirection: DragDirection.TOP, splitLineRef, open: session.pinnedUnits.length > 0, session });
 
     useEffect(() => {
         if (session.pinnedUnits.length > 0) {

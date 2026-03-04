@@ -256,6 +256,7 @@ export enum UnitHeight {
 export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>> {
     expandable: boolean;
     isExpanded: boolean;
+    hasExpanded: boolean;
     height: () => number;
     isMultiDeviceHidden: boolean; // 判断是否是单 Host 多 Device 中需要隐藏的泳道
     isDisplay: boolean;
@@ -353,6 +354,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
 
         expandable = false;
         isExpanded = false;
+        hasExpanded = false;
         isOverlapAnalysisLoading = true;
         isDisplay = true;
         detail = transformDetail(params.detail);
@@ -369,7 +371,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         havePythonFunction: boolean = false; // 是否采集了调用栈信息
         projectType?: ProjectType;
         constructor(metadata: T, projectType?: ProjectType) {
-            const excludeAttrs = ['searchConfig', 'parent', 'renderInfo', 'height', 'type', 'configBar', 'projectType'];
+            const excludeAttrs = ['searchConfig', 'parent', 'renderInfo', 'height', 'type', 'configBar', 'projectType', 'hasExpanded'];
             makeAutoObservable(this, { _children: observable.shallow, ...Object.fromEntries(excludeAttrs.map(k => [k, false])) });
             this.metadata = metadata;
             if (projectType !== undefined) {

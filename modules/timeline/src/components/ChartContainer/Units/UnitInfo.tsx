@@ -54,6 +54,8 @@ import { CardMetaData, ThreadMetaData } from '../../../entity/data';
 import { getTimeOffset, bigSubtract } from '../../../insight/units/utils';
 import connector from '../../../connection/index';
 import { useEffect } from 'react';
+import { updateThreadsToFetch } from '../../../actions/actionExpandUnits';
+import { getUnitUniqueId } from '../../../utils';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -570,6 +572,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         }
         runInAction(() => {
             _unit.isExpanded = !_unit.isExpanded;
+            const _threadsToFetchMap: Map<string, InsightUnit> = new Map();
             if (_unit.isExpanded) {
                 platform.trace(`unfold${_unit.name.replace(/\s*/g, '')}`, {});
                 _unit.children?.forEach(item => {
@@ -577,9 +580,16 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
                         item.collapseAction?.(item);
                         item.isExpanded = true;
                     }
+                    if (item.name === 'Thread' && !item.hasExpanded) {
+                        const unitKey = getUnitUniqueId(item);
+                        _threadsToFetchMap.set(unitKey, item);
+                    }
                 });
             }
             session.renderTrigger = !session.renderTrigger;
+            if (_threadsToFetchMap.size > 0) {
+                updateThreadsToFetch(session, _unit.isExpanded, _threadsToFetchMap);
+            }
         });
         _unit.collapseAction?.(_unit);
     }, [session, expandable]);
