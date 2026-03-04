@@ -388,3 +388,139 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableSecondPage)
         EXPECT_LE(entries[i-1].reserved, entries[i].reserved);
     }
 }
+
+// 测试根据ID查询trace entry
+TEST_F(MemSnapshotDatabaseTest, QueryTraceEntryById)
+{
+    const auto expectEntryId = 1;
+    const auto entry = snapshotDb->QueryTraceEntryById(expectEntryId);
+    
+    EXPECT_TRUE(entry.has_value());
+    EXPECT_EQ(entry->id, expectEntryId);
+    
+    // 测试查询不存在的ID
+    auto nonExistentEntry = snapshotDb->QueryTraceEntryById(-1000);
+    EXPECT_FALSE(nonExistentEntry.has_value());
+}
+
+// 测试查询内存块的freeRequested事件
+TEST_F(MemSnapshotDatabaseTest, QueryFreeRequestedTraceEntryByBlock)
+{
+    // 先查询一个有freeEventId的block
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 100;
+    params.orderBy = "id";
+    
+    std::vector<Block> blocks;
+    snapshotDb->QueryBlocksTable(params, blocks);
+    
+    // 找一个有freeEventId的block
+    bool foundBlockWithFree = false;
+    for (const auto& block : blocks) {
+        if (block.freeEventId > 0) {
+            foundBlockWithFree = true;
+            auto freeRequestedEntry = snapshotDb->QueryFreeRequestedTraceEntryByBlock(block);
+            // 如果存在freeRequested事件，验证其属性
+            if (freeRequestedEntry.has_value()) {
+                EXPECT_GT(freeRequestedEntry->id, block.allocEventId);
+                EXPECT_EQ(freeRequestedEntry->address, block.address);
+            }
+            break;
+        }
+    }
+    EXPECT_TRUE(foundBlockWithFree || !blocks.empty());
+}
+
+// 测试查询blocks表带Size范围过滤
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithSizeRange)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "size";
+    params.minSize = 1024;
+    params.maxSize = 1048576;
+    
+    std::vector<Block> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+    
+    EXPECT_GT(totalCount, 0);
+    EXPECT_LE(blocks.size(), params.pageSize);
+    
+    for (const auto& block : blocks) {
+        EXPECT_GE(block.size, params.minSize);
+        EXPECT_LE(block.size, params.maxSize);
+    }
+}
+
+// 测试查询blocks表带rangeFilters
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithRangeFilters)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "id";
+    params.rangeFilters["size"] = {1024, 1048576};
+    
+    std::vector<Block> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+    
+    EXPECT_GT(totalCount, 0);
+    for (const auto& block : blocks) {
+        EXPECT_GE(block.size, 1024);
+        EXPECT_LE(block.size, 1048576);
+    }
+}
+
+// 测试查询trace entries表带rangeFilters
+TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithRangeFilters)
+{
+    MemSnapshotEventParams params;
+    params.deviceId = "0";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "id";
+    params.rangeFilters["size"] = {1024, 1048576};
+    
+    std::vector<TraceEntry> entries;
+    int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
+    
+    EXPECT_GT(totalCount, 0);
+    for (const auto& entry : entries) {
+        EXPECT_GE(entry.size, 1024);
+        EXPECT_LE(entry.size, 1048576);
+    }
+}
+
+// 测试查询blocks表带多个过滤条件
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithMultipleFiltersCombined)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "id";
+    params.startEventIdx = 100;
+    params.endEventIdx = 5000;
+    params.minSize = 1024;
+    params.maxSize = 10485760;
+    params.filters["state"] = "allocated";
+    
+    std::vector<Block> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+    
+    EXPECT_GE(totalCount, 0);
+    for (const auto& block : blocks) {
+        EXPECT_GE(block.size, params.minSize);
+        EXPECT_LE(block.size, params.maxSize);
+        EXPECT_EQ(block.state, BLOCK_STATE_ACTIVE_ALLOC);
+    }
+}

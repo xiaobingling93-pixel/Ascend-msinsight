@@ -25,6 +25,7 @@
 #include "QueryMemSnapshotBlockHandler.h"
 #include "QueryMemSnapshotAllocationHandler.h"
 #include "QueryMemSnapshotEventHandler.h"
+#include "QueryMemSnapshotDetailHandler.h"
 #include "MemScopeModule.h"
 
 using namespace Dic::Module::MemScope;
@@ -51,6 +52,7 @@ void MemScopeModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_MEM_SNAPSHOT_BLOCKS, std::make_unique<QueryMemSnapshotBlockHandler>());
     requestHandlerMap.emplace(REQ_RES_MEM_SNAPSHOT_ALLOCATIONS, std::make_unique<QueryMemSnapshotAllocationHandler>());
     requestHandlerMap.emplace(REQ_RES_MEM_SNAPSHOT_EVENTS, std::make_unique<QueryMemSnapshotEventHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEM_SNAPSHOT_DETAIL, std::make_unique<QueryMemSnapshotDetailHandler>());
 }
 
 void MemScopeModule::OnRequest(std::unique_ptr<Protocol::Request> request)

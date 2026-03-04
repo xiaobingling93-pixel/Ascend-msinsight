@@ -41,6 +41,8 @@ void MemScopeProtocolUtil::RegisterJsonToRequestFuncs()
                              ProtocolUtil::BuildRequestFromJson<MemSnapshotAllocationsRequest>);
     jsonToReqFactory.emplace(REQ_RES_MEM_SNAPSHOT_EVENTS,
                              ProtocolUtil::BuildRequestFromJson<MemSnapshotEventsRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SNAPSHOT_DETAIL,
+                             ProtocolUtil::BuildRequestFromJson<MemSnapshotDetailRequest>);
 }
 
 void MemScopeProtocolUtil::RegisterResponseToJsonFuncs()
@@ -53,6 +55,7 @@ void MemScopeProtocolUtil::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_MEM_SNAPSHOT_BLOCKS, ProtocolUtil::CommonResponseToJson);
     resToJsonFactory.emplace(REQ_RES_MEM_SNAPSHOT_ALLOCATIONS, ProtocolUtil::CommonResponseToJson);
     resToJsonFactory.emplace(REQ_RES_MEM_SNAPSHOT_EVENTS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SNAPSHOT_DETAIL, ProtocolUtil::CommonResponseToJson);
 }
 
 void MemScopeProtocolUtil::RegisterEventToJsonFuncs()

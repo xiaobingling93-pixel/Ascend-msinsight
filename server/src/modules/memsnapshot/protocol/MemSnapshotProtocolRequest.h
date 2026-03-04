@@ -20,6 +20,7 @@
 #define PROFILER_SERVER_MEM_SNAPSHOT_PROTOCOL_REQUEST_H
 
 #include "MemSnapshotTableColumn.h"
+#include "MemSnapshotDefs.h"
 #include "CommonRequests.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
@@ -203,6 +204,43 @@ struct MemSnapshotAllocationsRequest : Request {
         const json_t& param_json = json["params"];
         JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.eventType, param_json, "eventType");
+        return reqPtr;
+    }
+};
+
+struct MemSnapshotDetailParams {
+    std::string type;
+    int64_t id{0};
+
+    bool CommonCheck(std::string& errorMsg) const
+    {
+        if (VALID_DETAIL_TYPES.find(type) == VALID_DETAIL_TYPES.end()) {
+            errorMsg = "Invalid type";
+            return false;
+        }
+        return true;
+    }
+};
+
+struct MemSnapshotDetailRequest : Request {
+    MemSnapshotDetailRequest() : Request(REQ_RES_MEM_SNAPSHOT_DETAIL) {}
+    MemSnapshotDetailParams params;
+
+    static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
+    {
+        std::unique_ptr<MemSnapshotDetailRequest> reqPtr = std::make_unique<MemSnapshotDetailRequest>();
+        if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+            error = "Failed to set request base info, command is: " + reqPtr->command;
+            return nullptr;
+        }
+        if (!json.HasMember("params") || !json["params"].HasMember("type") || !json["params"].HasMember("id")) {
+            error = "Request[requestId=" + std::to_string(reqPtr->id) +
+                    "] json lacks member params or type or id.";
+            return nullptr;
+        }
+        const json_t& param_json = json["params"];
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.type, param_json, "type");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.id, param_json, "id");
         return reqPtr;
     }
 };

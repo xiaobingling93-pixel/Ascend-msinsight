@@ -34,7 +34,7 @@ bool QueryMemSnapshotBlockHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetMemSnapshotDatabase(request.projectName);
+    const auto database = GetMemSnapshotDatabaseByRequest(request);
     if (database == nullptr || !database->IsOpen()) {
         errMsg = LOG_TAG + "Failed to query blocks: get database connection failed";
         SendResponse(std::move(responsePtr), false, errMsg);

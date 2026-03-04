@@ -431,3 +431,191 @@ TEST_F(MemSnapshotProtocolTest, QueryBlocksTableWithMultipleFilters)
     EXPECT_EQ(request.params.filters.size(), 1);
     EXPECT_EQ(request.params.orderBy, "allocEventId");
 }
+
+TEST_F(MemSnapshotProtocolTest, BuildDetailRequestBlockFromJson)
+{
+    std::string jsonStr = "{"
+                          "  \"id\": 34, "
+                          "  \"moduleName\": \"leaks\", "
+                          "  \"type\": \"request\", "
+                          "  \"command\": \"Memory/snapshot/detail\", "
+                          "  \"fileId\": \"\", "
+                          "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
+                          "  \"params\": { "
+                          "    \"type\": \"block\", "
+                          "    \"id\": 123 "
+                          "  } "
+                          "}";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = Dic::Protocol::MemSnapshotDetailRequest::FromJson(json.value(), errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    auto &request = dynamic_cast<Dic::Protocol::MemSnapshotDetailRequest &>(*requestPtr);
+    EXPECT_TRUE(request.params.CommonCheck(errMsg));
+    EXPECT_EQ(request.params.type, "block");
+    EXPECT_EQ(request.params.id, 123);
+}
+
+TEST_F(MemSnapshotProtocolTest, BuildDetailRequestEventFromJson)
+{
+    std::string jsonStr = "{"
+                          "  \"id\": 35, "
+                          "  \"moduleName\": \"leaks\", "
+                          "  \"type\": \"request\", "
+                          "  \"command\": \"Memory/snapshot/detail\", "
+                          "  \"fileId\": \"\", "
+                          "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
+                          "  \"params\": { "
+                          "    \"type\": \"event\", "
+                          "    \"id\": 456 "
+                          "  } "
+                          "}";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = Dic::Protocol::MemSnapshotDetailRequest::FromJson(json.value(), errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    auto &request = dynamic_cast<Dic::Protocol::MemSnapshotDetailRequest &>(*requestPtr);
+    EXPECT_TRUE(request.params.CommonCheck(errMsg));
+    EXPECT_EQ(request.params.type, "event");
+    EXPECT_EQ(request.params.id, 456);
+}
+
+TEST_F(MemSnapshotProtocolTest, DetailRequestInvalidType)
+{
+    std::string jsonStr = "{"
+                          "  \"id\": 36, "
+                          "  \"moduleName\": \"leaks\", "
+                          "  \"type\": \"request\", "
+                          "  \"command\": \"Memory/snapshot/detail\", "
+                          "  \"fileId\": \"\", "
+                          "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
+                          "  \"params\": { "
+                          "    \"type\": \"invalid_type\", "
+                          "    \"id\": 123 "
+                          "  } "
+                          "}";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = Dic::Protocol::MemSnapshotDetailRequest::FromJson(json.value(), errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    auto &request = dynamic_cast<Dic::Protocol::MemSnapshotDetailRequest &>(*requestPtr);
+    EXPECT_FALSE(request.params.CommonCheck(errMsg));
+    EXPECT_FALSE(errMsg.empty());
+}
+
+TEST_F(MemSnapshotProtocolTest, DetailRequestMissingParams)
+{
+    std::string jsonStr = "{"
+                          "  \"id\": 37, "
+                          "  \"moduleName\": \"leaks\", "
+                          "  \"type\": \"request\", "
+                          "  \"command\": \"Memory/snapshot/detail\", "
+                          "  \"fileId\": \"\", "
+                          "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
+                          "  \"params\": { "
+                          "    \"type\": \"block\" "
+                          "  } "
+                          "}";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = Dic::Protocol::MemSnapshotDetailRequest::FromJson(json.value(), errMsg);
+    EXPECT_FALSE(errMsg.empty());
+    EXPECT_TRUE(errMsg.find("id") != std::string::npos);
+}
+
+TEST_F(MemSnapshotProtocolTest, BlocksRequestWithRangeFilters)
+{
+    std::string jsonStr = "{"
+                          "  \"id\": 38, "
+                          "  \"moduleName\": \"leaks\", "
+                          "  \"type\": \"request\", "
+                          "  \"command\": \"Memory/snapshot/blocks\", "
+                          "  \"fileId\": \"\", "
+                          "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
+                          "  \"params\": { "
+                          "    \"deviceId\": \"1\", "
+                          "    \"eventType\": \"PTA\", "
+                          "    \"isTable\": true, "
+                          "    \"currentPage\": 1, "
+                          "    \"pageSize\": 10, "
+                          "    \"orderBy\": \"id\", "
+                          "    \"rangeFilters\": { "
+                          "      \"size\": [1024, 1048576] "
+                          "    } "
+                          "  } "
+                          "}";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = Dic::Protocol::MemSnapshotBlocksRequest::FromJson(json.value(), errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    auto &request = dynamic_cast<Dic::Protocol::MemSnapshotBlocksRequest &>(*requestPtr);
+    EXPECT_TRUE(request.params.CommonCheck(errMsg));
+    EXPECT_EQ(request.params.rangeFilters.size(), 1);
+}
+
+TEST_F(MemSnapshotProtocolTest, EventsRequestWithRangeFilters)
+{
+    std::string jsonStr = "{"
+                          "  \"id\": 39, "
+                          "  \"moduleName\": \"leaks\", "
+                          "  \"type\": \"request\", "
+                          "  \"command\": \"Memory/snapshot/events\", "
+                          "  \"fileId\": \"\", "
+                          "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
+                          "  \"params\": { "
+                          "    \"deviceId\": \"1\", "
+                          "    \"isTable\": true, "
+                          "    \"currentPage\": 1, "
+                          "    \"pageSize\": 10, "
+                          "    \"orderBy\": \"id\", "
+                          "    \"rangeFilters\": { "
+                          "      \"size\": [512, 2048] "
+                          "    } "
+                          "  } "
+                          "}";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = Dic::Protocol::MemSnapshotEventsRequest::FromJson(json.value(), errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    auto &request = dynamic_cast<Dic::Protocol::MemSnapshotEventsRequest &>(*requestPtr);
+    EXPECT_TRUE(request.params.CommonCheck(errMsg));
+    EXPECT_EQ(request.params.rangeFilters.size(), 1);
+}
+
+TEST_F(MemSnapshotProtocolTest, BlocksRequestInvalidEndIdx)
+{
+    std::string jsonStr = "{"
+                          "  \"id\": 40, "
+                          "  \"moduleName\": \"leaks\", "
+                          "  \"type\": \"request\", "
+                          "  \"command\": \"Memory/snapshot/blocks\", "
+                          "  \"fileId\": \"\", "
+                          "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
+                          "  \"params\": { "
+                          "    \"deviceId\": \"1\", "
+                          "    \"eventType\": \"PTA\", "
+                          "    \"endTimestamp\": 9223372036854775808 "
+                          "  } "
+                          "}";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = Dic::Protocol::MemSnapshotBlocksRequest::FromJson(json.value(), errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    auto &request = dynamic_cast<Dic::Protocol::MemSnapshotBlocksRequest &>(*requestPtr);
+    EXPECT_FALSE(request.params.CommonCheck(errMsg));
+    EXPECT_FALSE(errMsg.empty());
+}
