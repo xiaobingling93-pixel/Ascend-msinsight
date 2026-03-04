@@ -160,8 +160,10 @@ public:
                                                         std::vector<std::pair<std::string, std::string>> rawData);
 
     virtual bool QuerySliceDtoList(std::vector<SliceDto> &sliceDtoList);
-    void CreateFtraceTable();
-    bool InsertOrUpdateFtraceStat(const std::vector<FtraceStatisticsData> &dataList);
+    bool CreateFtraceTable();
+    bool InsertFtraceStat(const FtraceStatisticsData &event);
+    bool InsertFtraceStatList(const std::vector<FtraceStatisticsData> &dataList);
+    std::unique_ptr<SqlitePreparedStatement> GetFtraceStmt(uint64_t paramLen);
     FtraceStatistics QueryFtraceStatistics(FtraceDataType dataType, uint64_t offset, uint64_t limit);
 
 private:
@@ -184,6 +186,7 @@ private:
     std::unique_ptr<SqlitePreparedStatement> insertCounterStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> simulationInsertThreadNameStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> simulationInsertProcessNameStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> insertFtraceStatStmt = nullptr;
 
     std::vector<Trace::Slice> sliceCache;
     std::list<Protocol::SimpleSlice> sliceDepthHelper;
@@ -191,6 +194,7 @@ private:
     std::vector<Trace::Counter> counterCache;
     std::set<Trace::ThreadEvent> simulationThreadInfoCache;
     std::set<Trace::ProcessEvent> simulationProcessInfoCache;
+    std::vector<FtraceStatisticsData> ftraceStatCache;
     std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = nullptr;
     std::unique_ptr<FlowAnalyzer> flowAnalyzerPtr = nullptr;
 

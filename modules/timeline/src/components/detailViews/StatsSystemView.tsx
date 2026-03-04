@@ -205,6 +205,11 @@ const ftraceColumnsMap: Record<string, typeof ftraceTimeSummaryColumns> = {
 export const StatsSystemView = [OverallMetrics, MemcpyOverallMetrics, ...ftraceTypes.map((type) => {
     return observer((props: SelectContentViewProps) => {
         const ftraceColumns = ftraceColumnsMap[type] || ftraceTimeSummaryColumns;
+        if (props.session.isFullDb) {
+            return <div style={{ display: 'flex', height: '100%' }}>
+                <StyledEmpty style={{ margin: 'auto' }}/>
+            </div>;
+        }
         return (
             <BaseSummary
                 layerType={type}

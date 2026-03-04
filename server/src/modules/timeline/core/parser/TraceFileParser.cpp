@@ -28,6 +28,9 @@
 #include "BaselineManager.h"
 #include "TraceFileParser.h"
 #include <algorithm>
+
+#include "ParseUnitManager.h"
+
 namespace Dic {
 namespace Module {
 namespace Timeline {
@@ -110,6 +113,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
             database->UpdateValueIntoStatusInfoTable(item, FINISH_STATUS);
             ProjectParserBase::SendUnitFinishNotify(fileId, true, item);
         }
+        ParseUnitManager::Instance().ExecuteUnitList({rankId}, FTRACE_STATUS_LIST);
         return true;
     }
     if (!database->DropTable() || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
@@ -228,6 +232,7 @@ void TraceFileParser::EndParseTask(const std::string &rankId, const std::vector<
         ProjectParserBase::SendUnitFinishNotify(fileId, true, item);
     }
     ServerLog::Info("Update depth completed. ID:", rankId);
+    ParseUnitManager::Instance().ExecuteUnitList({rankId}, FTRACE_STATUS_LIST);
     ParseEndCallBack(rankId, database->GetDbPath(), true, "");
     if (PostParse(database)) {
         ParserStatusManager::Instance().SetFinishStatus(rankId);

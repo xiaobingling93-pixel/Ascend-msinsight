@@ -291,8 +291,9 @@ bool TextRepository::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &
     // 根据track id和算子名查询结果数据
     SliceTable sliceTable;
     std::vector<SlicePO> slicePOVec;
-    sliceTable.Select(SliceColumn::TIMESTAMP, SliceColumn::DURATION, SliceColumn::NAME, SliceColumn::ENDTIME)
-        .In(SliceColumn::TRACKID, trackIdList).In(SliceColumn::NAME, params.nameList);
+    sliceTable.Select(SliceColumn::TIMESTAMP, SliceColumn::DURATION, SliceColumn::NAME, SliceColumn::ENDTIME,
+        SliceColumn::TRACKID, SliceColumn::ARGS).In(SliceColumn::TRACKID, trackIdList)
+        .In(SliceColumn::NAME, params.nameList);
     if (params.startTime < params.endTime) {
         sliceTable.GreaterEq(SliceColumn::TIMESTAMP, params.startTime).LessEq(SliceColumn::ENDTIME, params.endTime);
     }
@@ -304,6 +305,8 @@ bool TextRepository::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &
         domain.name = item.name;
         domain.duration = item.duration;
         domain.endTime = item.endTime;
+        domain.args = item.args;
+        domain.trackId = item.trackId;
         res.push_back(domain);
     }
     return true;

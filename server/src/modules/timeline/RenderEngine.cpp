@@ -232,8 +232,21 @@ std::vector<CompeteSliceDomain> RenderEngine::QueryMstxRLDetail(const std::strin
     return res;
 }
 
+std::unordered_map<uint64_t, std::pair<std::string, std::string>> RenderEngine::GetAllThreadInfo(
+    const ThreadQuery& query)
+{
+    if (query.metaType != PROCESS_TYPE::TEXT)
+    {
+        ServerLog::Warn("GetAllThreadInfo only implemented for text process type");
+        return {};
+    }
+    std::unordered_map<uint64_t, std::pair<std::string, std::string>> res;
+    dataEngine->QueryAllThreadInfo(query, res);
+    return res;
+}
+
 void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, UnitThreadDetailBody &responseBody,
-    uint64_t trackId)
+                                     uint64_t trackId)
 {
     CompeteSliceDomain competeSliceDomain;
     SliceQuery sliceQuery;

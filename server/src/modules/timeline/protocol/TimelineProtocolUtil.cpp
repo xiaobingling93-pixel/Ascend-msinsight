@@ -773,9 +773,6 @@ std::optional<document_t> ToResponseJson<SystemViewFtraceStatResponse>(const Sys
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
 
-    // headers
-    JsonUtil::AddMember(body, "headers", response.headers, allocator);
-
     // data
     json_t data(kArrayType);
     for (const auto &row : response.data) {

@@ -37,9 +37,6 @@ public:
     ~QuerySystemViewFtraceStatHandler() override = default;
 
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-
-private:
-    static std::vector<std::string> GetHeadersByDataType(FtraceDataType dataType);
 };
 
 } // end of namespace Timeline

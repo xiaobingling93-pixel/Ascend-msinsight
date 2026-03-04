@@ -33,6 +33,7 @@
 #include "TimeUtil.h"
 #include "ProjectAnalyze.h"
 #include "KernelParse.h"
+#include "ParseUnitManager.h"
 #include "TrackInfoManager.h"
 
 namespace Dic::Module {

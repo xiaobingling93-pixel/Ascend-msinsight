@@ -17,28 +17,9 @@
  */
 #include "QuerySystemViewFtraceStatHandler.h"
 
+#include "RenderEngine.h"
+
 namespace Dic::Module::Timeline {
-
-std::vector<std::string> QuerySystemViewFtraceStatHandler::GetHeadersByDataType(FtraceDataType dataType)
-{
-    std::vector<std::string> headers;
-    switch (dataType) {
-        case FtraceDataType::TIME:
-            headers = {"track_id", "running", "sleeping", "runnable", "uninterruptible_sleep"};
-            break;
-        case FtraceDataType::IRQ:
-            headers = {"track_id", "soft_irq_count", "soft_irq_duration", "hard_irq_count", "hard_irq_duration"};
-            break;
-        case FtraceDataType::SCHED:
-            headers = {"track_id", "context_switch_count", "context_switch_duration"};
-            break;
-        default:
-            headers = {"track_id"};
-            break;
-    }
-    return headers;
-}
-
 bool QuerySystemViewFtraceStatHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SystemViewFtraceStatRequest &>(*requestPtr);
@@ -67,14 +48,15 @@ bool QuerySystemViewFtraceStatHandler::HandleRequest(std::unique_ptr<Protocol::R
     // 查询数据
     auto ftraceStat = textDb->QueryFtraceStatistics(
         request.params.dataType, offset, request.params.pageSize);
-
-    // 设置响应头
-    response.headers = GetHeadersByDataType(request.params.dataType);
-
+    auto threadInfoMap = RenderEngine::Instance()->GetAllThreadInfo({request.projectName, PROCESS_TYPE::TEXT});
     // 转换数据为map格式
     for (const auto &item : ftraceStat.data) {
         std::unordered_map<std::string, std::string> row;
-        row["track_id"] = item.trackId;
+        row["track_id"] = std::to_string(item.trackId);
+        auto it = threadInfoMap.find(item.trackId);
+        if (it == threadInfoMap.end()) { continue; }
+        row["process"] = it->second.first;
+        row["thread"] = it->second.second;
         for (const auto &kv : item.data) {
             row[kv.first] = kv.second;
         }

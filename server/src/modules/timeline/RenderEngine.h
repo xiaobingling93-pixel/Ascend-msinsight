@@ -48,6 +48,7 @@ public:
         const DataType &type, const std::string &processName, const std::vector<std::string> &nameList);
     std::vector<CompeteSliceDomain> QueryMstxRLDetail(const std::string &rankId, const DataType &type,
         const std::vector<std::string> &nameList, uint64_t startTime = UINT64_MAX, uint64_t endTime = 0);
+    std::unordered_map<uint64_t, std::pair<std::string, std::string>> GetAllThreadInfo(const ThreadQuery &query);
 
 private:
     std::shared_ptr<DataEngineInterface> dataEngine = nullptr;

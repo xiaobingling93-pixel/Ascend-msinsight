@@ -19,6 +19,7 @@
 #include "FtraceTimeStatisticsParseUnit.h"
 #include "ConstantDefs.h"
 #include "ParseUnitManager.h"
+#include "RenderEngine.h"
 
 namespace Dic::Module::FullDb {
 
@@ -31,13 +32,56 @@ bool FtraceTimeStatisticsParseUnit::PreCheck(const ParseUnitParams &params,
                                               const std::shared_ptr<Timeline::TextTraceDatabase> &database,
                                               std::string &error)
 {
-    return true;
+    return database->CreateFtraceTable();
 }
 
 bool FtraceTimeStatisticsParseUnit::HandleParseProcess(const ParseUnitParams &params,
                                                         const std::shared_ptr<Timeline::TextTraceDatabase> &database,
                                                         std::string &error)
 {
+    std::vector<std::string> nameList = {"Sleeping", "Runnable", "Running"};
+    auto allTimeSlice = RenderEngine::Instance()->QuerySliceDetailByNameList(params.dbId, DataType::TEXT, "Process Scheduling", nameList);
+
+    auto initStatData = []() {
+        return std::unordered_map<std::string, uint64_t>{
+            {"runnable", 0}, {"running", 0}, {"sleeping", 0}
+        };
+    };
+
+    auto addTimeStat = [](std::unordered_map<std::string, uint64_t> &statData, const std::string &timeType, uint64_t duration) {
+        if (timeType == "Runnable") {
+            statData["runnable"] += duration;
+        } else if (timeType == "Running") {
+            statData["running"] += duration;
+        } else if (timeType == "Sleeping") {
+            statData["sleeping"] += duration;
+        }
+    };
+
+    std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> statsMap;
+
+    for (const auto &slice : allTimeSlice)
+    {
+        uint64_t trackId = slice.trackId;
+        std::string timeType = slice.name;
+        uint64_t duration = slice.duration;
+
+        if (statsMap.find(trackId) == statsMap.end()) {
+            statsMap[trackId] = initStatData();
+        }
+        addTimeStat(statsMap[trackId], timeType, duration);
+    }
+
+    for (auto &pair : statsMap) {
+        FtraceStatisticsData statData;
+        statData.trackId = pair.first;
+        statData.dataType = FtraceDataType::TIME;
+        for (auto &dataPair : pair.second) {
+            statData.data[dataPair.first] = std::to_string(dataPair.second);
+        }
+        database->InsertFtraceStat(statData);
+    }
+    database->CommitData();
     return true;
 }
 

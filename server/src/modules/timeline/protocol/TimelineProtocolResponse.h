@@ -435,7 +435,6 @@ struct SystemViewOverallResponse : public Response {
 
 struct SystemViewFtraceStatResponse : public Response {
     SystemViewFtraceStatResponse() : Response(REQ_RES_SYSTEM_VIEW_FTRACE_STAT) {}
-    std::vector<std::string> headers;  // 表格头列表
     std::vector<std::unordered_map<std::string, std::string>> data;  // 查询结果数据
     PageParam pageParam;
 };

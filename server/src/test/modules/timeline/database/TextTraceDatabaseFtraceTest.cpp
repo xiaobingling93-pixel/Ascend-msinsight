@@ -75,7 +75,7 @@ TEST_F(TextTraceDatabaseFtraceTest, InsertAndQueryFtraceTimeStatistics)
     timeData.data["runnable"] = "500";
     timeData.data["uninterruptibleSleep"] = "100";
 
-    bool insertResult = database.InsertOrUpdateFtraceStat({timeData});
+    bool insertResult = database.InsertFtraceStatList({timeData});
     EXPECT_EQ(insertResult, true);
 
     // 查询验证
@@ -99,7 +99,7 @@ TEST_F(TextTraceDatabaseFtraceTest, InsertAndQueryFtraceIrqStatistics)
     irqData.data["hardIrqCount"] = "5";
     irqData.data["hardIrqDuration"] = "2000";
 
-    bool insertResult = database.InsertOrUpdateFtraceStat({irqData});
+    bool insertResult = database.InsertFtraceStatList({irqData});
     EXPECT_EQ(insertResult, true);
 
     // 查询验证
@@ -121,7 +121,7 @@ TEST_F(TextTraceDatabaseFtraceTest, InsertAndQueryFtraceSchedStatistics)
     schedData.data["contextSwitchCount"] = "100";
     schedData.data["contextSwitchDuration"] = "50000";
 
-    bool insertResult = database.InsertOrUpdateFtraceStat({schedData});
+    bool insertResult = database.InsertFtraceStatList({schedData});
     EXPECT_EQ(insertResult, true);
 
     // 查询验证
@@ -150,7 +150,7 @@ TEST_F(TextTraceDatabaseFtraceTest, InsertMultipleDataTypesForSameTrackId)
     schedData.dataType = FtraceDataType::SCHED;
     schedData.data["contextSwitchCount"] = "200";
 
-    bool insertResult = database.InsertOrUpdateFtraceStat({timeData, irqData, schedData});
+    bool insertResult = database.InsertFtraceStatList({timeData, irqData, schedData});
     EXPECT_EQ(insertResult, true);
 
     // 分别查询每种类型
@@ -171,30 +171,6 @@ TEST_F(TextTraceDatabaseFtraceTest, InsertMultipleDataTypesForSameTrackId)
     EXPECT_EQ(schedResult.data[0].data["contextSwitchCount"], "200");
 }
 
-TEST_F(TextTraceDatabaseFtraceTest, UpdateExistingData)
-{
-    // 首次插入
-    FtraceStatisticsData data1;
-    data1.trackId = 100;
-    data1.dataType = FtraceDataType::TIME;
-    data1.data["running"] = "1000";
-    database.InsertOrUpdateFtraceStat({data1});
-
-    // 更新数据
-    FtraceStatisticsData data2;
-    data2.trackId = 100;
-    data2.dataType = FtraceDataType::TIME;
-    data2.data["running"] = "5000";
-    data2.data["sleeping"] = "3000";
-    database.InsertOrUpdateFtraceStat({data2});
-
-    // 验证更新成功
-    auto result = database.QueryFtraceStatistics(FtraceDataType::TIME, 0, 10);
-    EXPECT_EQ(result.totalCount, 1);
-    EXPECT_EQ(result.data[0].data["running"], "5000");
-    EXPECT_EQ(result.data[0].data["sleeping"], "3000");
-}
-
 TEST_F(TextTraceDatabaseFtraceTest, QueryWithPagination)
 {
     // 插入多条数据
@@ -203,7 +179,7 @@ TEST_F(TextTraceDatabaseFtraceTest, QueryWithPagination)
         data.trackId = i;
         data.dataType = FtraceDataType::TIME;
         data.data["running"] = std::to_string(i * 100);
-        database.InsertOrUpdateFtraceStat({data});
+        database.InsertFtraceStatList({data});
     }
 
     // 查询第一页 (0-9)
@@ -231,13 +207,6 @@ TEST_F(TextTraceDatabaseFtraceTest, QueryEmptyResult)
     EXPECT_EQ(result.totalCount, 0);
 }
 
-TEST_F(TextTraceDatabaseFtraceTest, InsertEmptyList)
-{
-    std::vector<FtraceStatisticsData> emptyList;
-    bool result = database.InsertOrUpdateFtraceStat(emptyList);
-    EXPECT_EQ(result, true);
-}
-
 TEST_F(TextTraceDatabaseFtraceTest, QueryDifferentDataTypes)
 {
     // 插入三种类型的数据
@@ -256,7 +225,7 @@ TEST_F(TextTraceDatabaseFtraceTest, QueryDifferentDataTypes)
     schedData.dataType = FtraceDataType::SCHED;
     schedData.data["contextSwitchCount"] = "100";
 
-    database.InsertOrUpdateFtraceStat({timeData, irqData, schedData});
+    database.InsertFtraceStatList({timeData, irqData, schedData});
 
     // TIME类型查询应该只有1条
     auto timeResult = database.QueryFtraceStatistics(FtraceDataType::TIME, 0, 10);

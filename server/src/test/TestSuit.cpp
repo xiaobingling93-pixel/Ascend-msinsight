@@ -29,6 +29,11 @@ std::string TestSuit::rootTestPath;
 std::string TestSuit::serverHome;
 void TestSuit::SetUpTestSuite()
 {
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
     const ParamsOption &option = ParamsParser::Instance().GetOption();
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
     std::string refPath0 = R"(test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";

@@ -100,7 +100,6 @@ export const ftraceTimeSummaryColumns: ColumData[] = [
     { title: 'runnable', dataIndex: 'runnable', ...getDefaultColumData('runnable', false) },
     { title: 'running', dataIndex: 'running', ...getDefaultColumData('running', false) },
     { title: 'sleeping', dataIndex: 'sleeping', ...getDefaultColumData('sleeping', false) },
-    { title: 'uninterruptible_sleep', dataIndex: 'uninterruptible_sleep', ...getDefaultColumData('uninterruptible_sleep', false) },
 ];
 
 export const ftraceIrqSummaryColumns: ColumData[] = [
@@ -108,15 +107,14 @@ export const ftraceIrqSummaryColumns: ColumData[] = [
     { title: 'thread', dataIndex: 'thread', ...getDefaultColumData('thread', false) },
     { title: 'soft_irq_count', dataIndex: 'soft_irq_count', ...getDefaultColumData('soft_irq_count', false) },
     { title: 'soft_irq_duration', dataIndex: 'soft_irq_duration', ...getDefaultColumData('soft_irq_duration', false) },
-    { title: 'soft_irq_count', dataIndex: 'soft_irq_count', ...getDefaultColumData('hard_irq_count', false) },
-    { title: 'soft_irq_duration', dataIndex: 'soft_irq_duration', ...getDefaultColumData('hard_irq_duration', false) },
+    { title: 'hard_irq_count', dataIndex: 'hard_irq_count', ...getDefaultColumData('hard_irq_count', false) },
+    { title: 'hard_irq_duration', dataIndex: 'hard_irq_duration', ...getDefaultColumData('hard_irq_duration', false) },
 ];
 
 export const ftraceSchedSummaryColumns: ColumData[] = [
     { title: 'process', dataIndex: 'process', ...getDefaultColumData('process', false) },
     { title: 'thread', dataIndex: 'thread', ...getDefaultColumData('thread', false) },
     { title: 'context_switch_count', dataIndex: 'context_switch_count', ...getDefaultColumData('context_switch_count', false) },
-    { title: 'context_switch_duration', dataIndex: 'context_switch_duration', ...getDefaultColumData('context_switch_duration', false) },
 ];
 
 export const useKernelDetails = (): TableColumnsType<any> => {
@@ -224,6 +222,9 @@ export interface SystemViewItem {
 export const statsSystemViewItems: SystemViewItem[] = [
     { name: 'Overall Metrics', tips: 'OverallMetricsTips' },
     { name: 'Memcpy Overall' },
+    { name: 'Ftrace Time Consuming' },
+    { name: 'Ftrace IRQ' },
+    { name: 'Ftrace Sched' },
     { name: 'Python API Summary', tips: 'PythonAPISummaryTips' },
     { name: 'CANN API Summary', tips: 'CANNAPISummaryTips' },
     { name: 'Ascend HardWare Task Summary', tips: 'AscendHardWareTaskSummaryTips' },
@@ -233,7 +234,7 @@ export const statsSystemViewItems: SystemViewItem[] = [
 ];
 
 export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'HCCL', 'Overlap Analysis'];
-export const ftraceTypes: string[] = [];
+export const ftraceTypes: string[] = ['Ftrace Time Consuming', 'Ftrace IRQ', 'Ftrace Sched'];
 
 export const expertSystemViewItems: SystemViewItem[] = [
     { name: 'Expert Analysis', tips: 'ExpertAnalysisTips' },

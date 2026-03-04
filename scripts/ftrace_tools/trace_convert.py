@@ -60,7 +60,7 @@ def get_trace_event(name, pid, tid, ts, dur, args=None):
 
 
 def get_meta_event(pid, tid):
-    return {"name": "process_name", 'ph': 'M', 'pid': pid, 'tid': tid}
+    return {"name": "process_name", 'ph': 'M', 'pid': pid, 'tid': tid, 'args': {'name': pid}}
 
 
 class InterruptEvent(object):
@@ -363,7 +363,7 @@ class InterruptFtraceParse(FtraceParse):
         action = event['action']
         if action in ['irq_handler_entry', 'irq_handler_exit']:
             self.parse_irq_event(event)
-        if action in ['softirq_raise', 'softirq_entry', 'softirq_exit']:
+        if action in ['softirq_entry', 'softirq_exit']:
             self.parse_softirq_event(event)
 
     def parse_irq_event(self, entry: dict):
@@ -392,9 +392,7 @@ class InterruptFtraceParse(FtraceParse):
         timestamp = entry['timestamp']
         kwargs = self.parse_softirq_param(entry['args'])
         kwargs['task'] = task + ":" + pid
-        if entry['action'] == 'softirq_raise':
-            self.interrupt_events_res.append(InterruptEvent("softirq_raise", timestamp, cpu, **kwargs).to_event_json())
-        elif entry['action'] == 'softirq_entry':
+        if entry['action'] == 'softirq_entry':
             if cpu not in self.interrupt_events:
                 self.interrupt_events[cpu] = deque()
             self.interrupt_events[cpu].append(InterruptEvent("softirq", timestamp, cpu, **kwargs))
@@ -473,6 +471,8 @@ class SchedFtraceParse(FtraceParse):
         cpu = entry['cpu']
         timestamp = entry['timestamp']
         kwargs = self.parse_switch_sched_param(entry['args']) if self.file_type == 'dat' else self.parse_base_param(entry['args'])
+        if not is_kernel_process(kwargs['prev_comm']) and not is_kernel_process(kwargs['next_comm']):
+            self.add_trace_event(get_trace_event("sched_switch", CPU_SCHED_PID, "CPU " + cpu, timestamp, 0, args=kwargs))
         prev_comm = kwargs['prev_comm'] + ':' + kwargs['prev_pid']
         if prev_comm in self.cpu_stats[cpu].keys():
             self.cpu_stats[cpu][prev_comm].end(timestamp, kwargs['prev_state'], kwargs['prev_prio'])

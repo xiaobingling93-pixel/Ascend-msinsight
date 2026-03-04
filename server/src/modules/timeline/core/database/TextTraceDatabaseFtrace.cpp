@@ -25,11 +25,11 @@ namespace Dic::Module::Timeline
 
     // ==================== TextTraceDatabase 方法实现 ====================
     
-    void TextTraceDatabase::CreateFtraceTable()
+    bool TextTraceDatabase::CreateFtraceTable()
     {
         if (!isOpen) {
             ServerLog::Error("Failed to create ftrace table. Database is not open.");
-            return;
+            return false;
         }
 
         std::string sql = R"(
@@ -42,52 +42,54 @@ namespace Dic::Module::Timeline
         )";
 
         std::unique_lock<std::recursive_mutex> lock(mutex);
-        ExecSql(sql);
+        return ExecSql(sql);
     }
 
-    bool TextTraceDatabase::InsertOrUpdateFtraceStat(const std::vector<FtraceStatisticsData> &dataList)
+    bool TextTraceDatabase::InsertFtraceStat(const FtraceStatisticsData &event)
     {
-        if (!isOpen) {
-            ServerLog::Error("Failed to insert/update ftrace statistics. Database is not open.");
-            return false;
+        ftraceStatCache.emplace_back(event);
+        if (ftraceStatCache.size() == CACHE_SIZE) {
+            InsertFtraceStatList(ftraceStatCache);
+            ftraceStatCache.clear();
         }
-        if (dataList.empty()) {
-            return true;
-        }
-        std::unique_lock<std::recursive_mutex> lock(mutex);
-        // 动态生成批量插入的VALUES占位符
+        return true;
+    }
+
+    std::unique_ptr<SqlitePreparedStatement> TextTraceDatabase::GetFtraceStmt(uint64_t paramLen)
+    {
         std::string valuePlaceholders;
-        for (size_t i = 0; i < dataList.size(); ++i) {
+        for (int i = 0; i < paramLen; ++i) {
             if (i > 0) {
                 valuePlaceholders += ", ";
             }
             valuePlaceholders += "(?, ?, ?)";
         }
+        std::string sql = "INSERT INTO ftrace_analysis (track_id, data_type, args) VALUES " + valuePlaceholders;
+        return CreatPreparedStatement(sql);
+    }
 
-        std::string sql = "INSERT INTO ftrace_analysis (track_id, data_type, args) VALUES " 
-            + valuePlaceholders 
-            + " ON CONFLICT(track_id, data_type) DO UPDATE SET args = excluded.args";
-
-        sqlite3_stmt *stmt = nullptr;
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare statement: ", sqlite3_errmsg(db));
-            return false;
+    bool TextTraceDatabase::InsertFtraceStatList(const std::vector<FtraceStatisticsData> &dataList)
+    {
+        std::unique_ptr<SqlitePreparedStatement> stmt = nullptr;
+        std::unique_ptr<SqlitePreparedStatement> &refStmt = dataList.size() == CACHE_SIZE ? insertFtraceStatStmt : stmt;
+        if (refStmt == nullptr) {
+            refStmt = GetFtraceStmt(dataList.size());
+        } else {
+            refStmt->Reset();
         }
 
-        // 批量绑定参数
         int bindIndex = bindStartIndex;
         for (const auto &data : dataList) {
-            sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(data.trackId));
-            sqlite3_bind_int64(stmt, bindIndex++, static_cast<int8_t>(data.dataType));
-            sqlite3_bind_text(stmt, bindIndex++, data.GetArgs().c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int64(refStmt->stmt, bindIndex++, static_cast<int64_t>(data.trackId));
+            sqlite3_bind_int64(refStmt->stmt, bindIndex++, static_cast<int8_t>(data.dataType));
+            sqlite3_bind_text(refStmt->stmt, bindIndex++, data.GetArgs().c_str(), -1, SQLITE_TRANSIENT);
         }
 
-        if (sqlite3_step(stmt) != SQLITE_DONE) {
-            ServerLog::Error("Failed to execute statement: ", sqlite3_errmsg(db));
-            sqlite3_finalize(stmt);
+        std::unique_lock<std::recursive_mutex> lock(mutex);
+        if (!refStmt->Execute()) {
+            ServerLog::Error("Insert ftrace stat data fail. ", refStmt->GetErrorMessage());
             return false;
         }
-        sqlite3_finalize(stmt);
         return true;
     }
 
