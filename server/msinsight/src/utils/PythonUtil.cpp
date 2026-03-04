@@ -109,10 +109,11 @@ int PythonUtil::ExecuteCommand(const std::string &executablePath, const std::vec
     ptrs.push_back(NULL);
     pid_t pid;
 #if defined(__linux__)
-    int result = posix_spawn(&pid, executablePath.c_str(), NULL, NULL, ptrs.data(), environ);
+    // Linux执行python3命令需要从PATH环境变量查找，所以统一使用posix_spawnp
+    int result = posix_spawnp(&pid, executablePath.c_str(), NULL, NULL, ptrs.data(), environ);
 #endif
 #if defined(__APPLE__)
-    int result = posix_spawn(&pid, executablePath.c_str(), NULL, NULL, ptrs.data(), *(_NSGetEnviron()));
+    int result = posix_spawnp(&pid, executablePath.c_str(), NULL, NULL, ptrs.data(), *(_NSGetEnviron()));
 #endif
     if (result != 0) {
         Server::ServerLog::Error("Failed to spawn a process in Linux or macOS. strerror: ", strerror(result));
