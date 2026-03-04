@@ -18,6 +18,7 @@
 
 #include "WaitTimeParseUnit.h"
 #include "ConstantDefs.h"
+#include "DbTraceDataBase.h"
 #include "ParseUnitManager.h"
 #include "TableDefs.h"
 
