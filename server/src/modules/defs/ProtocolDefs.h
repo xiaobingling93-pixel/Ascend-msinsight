@@ -42,6 +42,7 @@ const std::string MODULE_ADVISOR = "advisor";
 const std::string MODULE_JUPYTER = "jupyter";
 const std::string MODULE_IE = "IE";
 const std::string MODULE_MEM_SCOPE = "leaks";
+const std::string MODULE_TRITON = "triton";
 #pragma endregion
 
 #pragma region << Event Name>>
@@ -159,6 +160,11 @@ const std::string REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS = "Memory/leaks/allocatio
 const std::string REQ_RES_MEM_SCOPE_MEMORY_DETAILS = "Memory/leaks/details";
 const std::string REQ_RES_MEM_SCOPE_PYTHON_TRACES = "Memory/leaks/traces";
 const std::string REQ_RES_MEM_SCOPE_EVENTS = "Memory/leaks/events";
+
+// triton Request/Response
+const std::string REQ_RES_TRITON_MEMORY_BLOCKS = "Triton/memory/blocks";
+const std::string REQ_RES_TRITON_MEMORY_BASIC_INFO = "Triton/memory/basicInfo";
+const std::string REQ_RES_TRITON_MEMORY_USAGE = "Triton/memory/usage";
 
 // memsnapshot Request
 const std::string REQ_RES_MEM_SNAPSHOT_BLOCKS = "Memory/snapshot/blocks";
