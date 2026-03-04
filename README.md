@@ -26,11 +26,10 @@
 
 <table>
   <thead>
-    <tr><td style="width: 150px;">功能</td><td>演示</td></tr>
+    <tr><td>系统调优</td></tr>
   </thead>
   <tbody>
-    <tr><td>大文件导入</td><td><img style="height: 225px;" alt="大文件导入" src="./assets/large-file-input.gif" /></td></tr>
-    <tr><td>相同通信域一键置顶</td><td><img style="height: 225px;" alt="一键置顶" src="./assets/timeline-pin-onekey.gif" /></td></tr>
+    <tr><td><img style="height: 225px;" alt="大文件导入" src="./assets/demo-system.gif" /></td></tr>
   </tbody>
 </table>
 
