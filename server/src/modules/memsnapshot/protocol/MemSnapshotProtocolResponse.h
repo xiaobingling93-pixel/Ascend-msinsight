@@ -190,5 +190,72 @@ struct MemSnapshotAllocationsResponse : public JsonResponse {
         return std::optional<document_t>{std::move(json)};
     }
 };
+
+static json_t ToMemSnapshotTraceEntryDetailJson(const TraceEntry& entry, Document::AllocatorType& allocator)
+{
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "ID", entry.id, allocator);
+    JsonUtil::AddMember(json, "Action", entry.action, allocator);
+    JsonUtil::AddMember(json, "Address", NumberUtil::Uint64ToHexString(entry.address), allocator);
+    JsonUtil::AddMember(json, "Size(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.size), allocator);
+    JsonUtil::AddMember(json, "Stream", entry.stream, allocator);
+    JsonUtil::AddMember(json, "Caching Allocated(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.allocated), allocator);
+    JsonUtil::AddMember(json, "Caching Active(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.active), allocator);
+    JsonUtil::AddMember(json, "Caching Reserved(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.reserved), allocator);
+    JsonUtil::AddMember(json, "CallStack", entry.callstack, allocator);
+    return json;
+}
+
+static json_t ToMemSnapshotExtendedBlockJson(const ExtendedBlock& blk, Document::AllocatorType& allocator)
+{
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "ID", blk.id, allocator);
+    JsonUtil::AddMember(json, "Requested Size(MBytes)", NumberUtil::ConvertBytesToMBytes(blk.requestedSize), allocator);
+    JsonUtil::AddMember(json, "Size(MBytes)", NumberUtil::ConvertBytesToMBytes(blk.size), allocator);
+    JsonUtil::AddMember(json, "Address", std::to_string(blk.address), allocator);
+    json_t allocEventJson(kObjectType);
+    if (blk.allocEvent.has_value() && blk.allocEvent->id >= 0) {
+        allocEventJson = ToMemSnapshotTraceEntryDetailJson(blk.allocEvent.value(), allocator);
+    }
+    json.AddMember("Alloc Event", allocEventJson, allocator);
+
+    json_t freeRequestedEventJson(kObjectType);
+    if (blk.freeRequestedEvent.has_value() && blk.freeRequestedEvent->id >= 0) {
+        freeRequestedEventJson = ToMemSnapshotTraceEntryDetailJson(blk.freeRequestedEvent.value(), allocator);
+    }
+    JsonUtil::AddMember(json, "Free Requested Event", freeRequestedEventJson, allocator);
+
+    json_t freeCompletedEventJson(kObjectType);
+    if (blk.freeCompletedEvent.has_value() && blk.freeCompletedEvent->id >= 0) {
+        freeCompletedEventJson = ToMemSnapshotTraceEntryDetailJson(blk.freeCompletedEvent.value(), allocator);
+    }
+    JsonUtil::AddMember(json, "Free Completed Event", freeCompletedEventJson, allocator);
+    return json;
+}
+
+struct MemSnapshotDetailResponse : public JsonResponse {
+    MemSnapshotDetailResponse() : JsonResponse(REQ_RES_MEM_SNAPSHOT_DETAIL) {}
+    std::string type;
+    std::optional<ExtendedBlock> block;
+    std::optional<TraceEntry> event;
+
+    [[nodiscard]] std::optional<document_t> ToJson() const override
+    {
+        document_t json(kObjectType);
+        auto& allocator = json.GetAllocator();
+        ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
+        json_t body(kObjectType);
+        
+        if (type == DETAIL_TYPE_EVENT && event.has_value()) {
+            auto eventJson = ToMemSnapshotTraceEntryDetailJson(event.value(), allocator);
+            JsonUtil::AddMember(json, "body", eventJson, allocator);
+        } else if (type == DETAIL_TYPE_BLOCK && block.has_value()) {
+            const auto& blk = block.value();
+            auto blockJson = ToMemSnapshotExtendedBlockJson(blk, allocator);
+            JsonUtil::AddMember(json, "body", blockJson, allocator);
+        }
+        return std::optional<document_t>{std::move(json)};
+    }
+};
 }
 #endif  // PROFILER_SERVER_MEM_SNAPSHOT_PROTOCOL_RESPONSE_H

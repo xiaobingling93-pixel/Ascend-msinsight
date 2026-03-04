@@ -79,6 +79,14 @@ public:
         return ss.str();
     }
 
+    static inline double ConvertBytesToMBytes(const uint64_t bytes)
+    {
+        constexpr double factor = 1024.0 * 1024.0;
+        double mb = static_cast<double>(bytes) / factor;
+        mb = std::round(mb * 1000.0) / 1000.0;
+        return mb;
+    }
+
     static inline int HexadecimalStrToDecimalInt(const std::string &hexadecimalStr)
     {
         try {

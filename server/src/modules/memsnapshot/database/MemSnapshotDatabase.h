@@ -33,8 +33,6 @@ public:
     explicit MemSnapshotDatabase(std::recursive_mutex& sqlMutex) : Database(sqlMutex) {};
     bool CheckAllTableExist();
     bool OpenDbReadOnly(const std::string& dbPath);
-    std::string GetRealValueInTableDictionaryMap(const std::string& tableName, const std::string& colName, int intVal);
-
 
     // API
     // 查询所有的block，用于内存块生命周期图展示
@@ -52,6 +50,15 @@ public:
     void QueryMemoryRecords(const MemSnapshotAllocationParams& queryParams, std::vector<MemoryRecord>& records) const;
     // 查询trace_entry表格数据，支持分页、过滤、排序等
     int64_t QueryTraceEntriesTable(const MemSnapshotEventParams& queryParams, std::vector<TraceEntry>& entries);
+    // 基于id查询单个trace_entry的详细信息
+    std::optional<TraceEntry> QueryTraceEntryById(int64_t eventId);
+    // 查询内存块的freeRequested事件
+    std::optional<TraceEntry> QueryFreeRequestedTraceEntryByBlock(const Block& block);
+
+    // 字典表
+    static std::string GetTableColumnTag(const std::string& tableName, const std::string& colName);
+    std::string GetRealValueInTableDictionaryMap(const std::string& tableName, const std::string& colName, int intVal);
+    int GetKeyInTableDictionaryMap(const std::string& tableName, const std::string& colName, const std::string& realVal);
 private:
     static inline const std::string LOG_TAG = "[MemSnapshotDb] ";
     const std::string blockTable = "block";
@@ -63,7 +70,7 @@ private:
     bool InitContext();
     Block QueryBlockByStep(sqlite3_stmt* stmt, int startIdx = 0);
     TraceEntry QueryTraceEntryByStep(sqlite3_stmt* stmt, int startIdx = 0);
-    static std::string GetTableColumnTag(const std::string& tableName, const std::string& colName);
+
 
     std::string BuildMemSnapshotFiltersParamSql(FiltersParam& queryParams, const std::string& tableName);
 

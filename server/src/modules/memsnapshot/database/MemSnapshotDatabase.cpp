@@ -60,6 +60,25 @@ std::string MemSnapshotDatabase::GetRealValueInTableDictionaryMap(const std::str
     return tableDictionaryMap[colTag][intVal];
 }
 
+int MemSnapshotDatabase::GetKeyInTableDictionaryMap(const std::string& tableName, const std::string& colName,
+                                                    const std::string& realVal)
+{
+    std::string colTag = GetTableColumnTag(tableName, colName);
+    if (tableDictionaryMap.find(colTag) == tableDictionaryMap.end()) {
+        Server::ServerLog::Warn(LOG_TAG + "Failed to get key in table dictionary map, table: %s, col: %s",
+                                tableName.c_str(), colName.c_str());
+        return -1;
+    }
+    for (auto& [key, val] : tableDictionaryMap[colTag]) {
+        if (val == realVal) {
+            return key;
+        }
+    }
+    Server::ServerLog::Warn(LOG_TAG + "Failed to get key in table dictionary map, table: %s, col: %s, val: %s",
+                                tableName.c_str(), colName.c_str(), realVal.c_str());
+    return -1;
+}
+
 bool MemSnapshotDatabase::QueryAllBlocks(std::vector<Block>& blocks)
 {
     std::string querySql = "SELECT * FROM {} ORDER BY {}";
@@ -478,5 +497,61 @@ sqlite3_stmt* MemSnapshotDatabase::BuildQueryTraceEntriesTableByQueryParamsAndBi
     // 绑定分页参数
     Database::CommonBindPaginationParams(paramsCopy.pageSize, paramsCopy.currentPage, stmt, bindIdx);
     return stmt;
+}
+
+std::optional<TraceEntry> MemSnapshotDatabase::QueryTraceEntryById(const int64_t eventId)
+{
+    std::string querySql = "SELECT * FROM {} WHERE {} = ?;";
+    querySql = StringUtil::FormatString(querySql, traceEntryTable, TraceEntryTableColumn::ID);
+    sqlite3_stmt* stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        Server::ServerLog::Error(LOG_TAG + "Failed prepared query trace entry sql, error: ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return std::nullopt;
+    }
+    sqlite3_bind_int64(stmt, bindStartIndex, eventId);
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        TraceEntry entry = QueryTraceEntryByStep(stmt);
+        sqlite3_finalize(stmt);
+        return std::make_optional(entry);
+    }
+    sqlite3_finalize(stmt);
+    return std::nullopt;
+}
+
+std::optional<TraceEntry> MemSnapshotDatabase::QueryFreeRequestedTraceEntryByBlock(const Block& block)
+{
+    std::string querySql = StringUtil::FormatString("SELECT * FROM {} WHERE {} > ? AND {} = ? AND {} = ?;",
+                                                    traceEntryTable,
+                                                    TraceEntryTableColumn::ID,
+                                                    TraceEntryTableColumn::ADDRESS,
+                                                    TraceEntryTableColumn::ACTION);
+    sqlite3_stmt* stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        Server::ServerLog::Error(LOG_TAG + "Failed prepared query trace entry sql, error: ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return std::nullopt;
+    }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_int64(stmt, bindIdx++, block.allocEventId);
+    sqlite3_bind_int64(stmt, bindIdx++, block.address);
+    int freeRequestedActionKey = GetKeyInTableDictionaryMap(traceEntryTable,
+                                                            std::string(TraceEntryTableColumn::ACTION),
+                                                            TRACE_ENTRY_ACTION_FREE_REQUESTED);
+    if (freeRequestedActionKey < 0) {
+        Server::ServerLog::Error(LOG_TAG + "Failed to get free requested action key.");
+        sqlite3_finalize(stmt);
+        return std::nullopt;
+    }
+    sqlite3_bind_int64(stmt, bindIdx++, freeRequestedActionKey);
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        TraceEntry entry = QueryTraceEntryByStep(stmt);
+        sqlite3_finalize(stmt);
+        return std::make_optional(entry);
+    }
+    sqlite3_finalize(stmt);
+    return std::nullopt;
 }
 } // namespace Dic::Module::FullDb

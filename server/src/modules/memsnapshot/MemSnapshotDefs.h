@@ -34,6 +34,11 @@ const std::string BLOCK_STATE_INACTIVE = "inactive";
 const std::string BLOCK_STATE_ACTIVE_ALLOC = "active_allocated";
 const std::string BLOCK_STATE_ACTIVE_PENDING_FREE = "active_pending_free";
 
+const std::string DETAIL_TYPE_BLOCK = "block";
+const std::string DETAIL_TYPE_EVENT = "event";
+
+const std::set<std::string> VALID_DETAIL_TYPES = {DETAIL_TYPE_BLOCK, DETAIL_TYPE_EVENT};
+
 struct TraceEntry {
     int64_t id{-1};
     std::string action;
@@ -53,6 +58,13 @@ struct Block {
     std::string state;
     int64_t allocEventId{-1};
     int64_t freeEventId{-1};
+};
+// 扩展Block，带有更加详细的信息
+struct ExtendedBlock : public Block {
+    explicit ExtendedBlock(Block &block) : Block(block) {};
+    std::optional<TraceEntry> allocEvent;
+    std::optional<TraceEntry> freeRequestedEvent;
+    std::optional<TraceEntry> freeCompletedEvent;
 };
 struct MemoryRecord {
     int64_t id{0};

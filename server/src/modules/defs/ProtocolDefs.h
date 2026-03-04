@@ -164,6 +164,7 @@ const std::string REQ_RES_MEM_SCOPE_EVENTS = "Memory/leaks/events";
 const std::string REQ_RES_MEM_SNAPSHOT_BLOCKS = "Memory/snapshot/blocks";
 const std::string REQ_RES_MEM_SNAPSHOT_ALLOCATIONS = "Memory/snapshot/allocations";
 const std::string REQ_RES_MEM_SNAPSHOT_EVENTS = "Memory/snapshot/events";
+const std::string REQ_RES_MEM_SNAPSHOT_DETAIL = "Memory/snapshot/detail";
 
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";

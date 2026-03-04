@@ -32,7 +32,7 @@ bool QueryMemSnapshotAllocationHandler::HandleRequest(std::unique_ptr<Protocol::
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemSnapshotDatabase(request.projectName);
+    const auto memoryDatabase = GetMemSnapshotDatabaseByRequest(request);
     if (memoryDatabase == nullptr) {
         errorMsg = "Get memsnapshot database failed when querying allocations.";
         Server::ServerLog::Error(errorMsg);
