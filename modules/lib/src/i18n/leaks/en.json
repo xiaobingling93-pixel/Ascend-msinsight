@@ -68,6 +68,32 @@
     "allowTrim":"Allow Trim",
     "sliceDetail": "Slice Detail",
     "systemView": "System View",
-    "stateDiagram": "Memory Pool State Diagram"
+    "stateDiagram": "Memory Pool State Diagram",
+    "slice": {
+        "id": "ID",
+        "addr": "Address",
+        "size": "Size(bytes)",
+        "_startTimestamp": "Malloc Timestamp(ns)",
+        "_endTimestamp": "Free Timestamp(ns)",
+        "owner": "Owner",
+        "attr": "Attr",
+        "processId": "Process ID",
+        "threadId": "Thread ID",
+        "deviceId": "Device ID",
+        "eventType": "Event Type",
+        "ID": "ID",
+        "Action": "Action",
+        "Address": "Address",
+        "Size(MBytes)": "Size(MBytes)",
+        "Stream": "Stream",
+        "Caching Allocated(MBytes)": "Caching Allocated(MBytes)",
+        "Caching Active(MBytes)": "Caching Active(MBytes)",
+        "Caching Reserved(MBytes)": "Caching Reserved(MBytes)",
+        "Callstack": "Callstack",
+        "Requested Size(MBytes)": "Requested Size(MBytes)",
+        "Alloc Event": "Alloc Event",
+        "Free Requested Event": "Free Requested Event",
+        "Free Completed Event": "Free Completed Event"
+    }
   }
 }

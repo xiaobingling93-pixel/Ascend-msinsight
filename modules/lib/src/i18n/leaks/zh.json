@@ -68,6 +68,32 @@
     "allowTrim":"允许压缩",
     "sliceDetail": "选中详情",
     "systemView": "系统视图",
-    "stateDiagram": "内存池状态图"
+    "stateDiagram": "内存池状态图",
+    "slice": {
+      "id": "ID",
+      "addr": "地址",
+      "size": "大小(bytes)",
+      "_startTimestamp": "申请时间(ns)",
+      "_endTimestamp": "释放时间(ns)",
+      "owner": "申请者",
+      "attr": "扩展属性",
+      "processId": "进程ID",
+      "threadId": "线程ID",
+      "deviceId": "设备ID",
+      "eventType": "事件子类型",
+      "ID": "ID",
+      "Action": "事件类型",
+      "Address": "地址",
+      "Size(MBytes)": "大小(MBytes)",
+      "Stream": "流ID",
+      "Caching Allocated(MBytes)": "总二次分配内存(MBytes)",
+      "Caching Active(MBytes)": "总活跃内存(MBytes)",
+      "Caching Reserved(MBytes)": "总预留内存(MBytes)",
+      "Callstack": "调用栈",
+      "Requested Size(MBytes)": "分配事件需求大小(MBytes)",
+      "Alloc Event": "分配事件",
+      "Free Requested Event": "释放申请事件",
+      "Free Completed Event": "释放完成事件"
+    }
   }
 }
