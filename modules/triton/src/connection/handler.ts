@@ -15,7 +15,7 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
-import { store } from '../store';
+import { store } from '@/store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import i18n from '@insight/lib/i18n';
@@ -54,52 +54,20 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
     }
     i18n.changeLanguage(lang);
 };
-const commonRestore = (session: any): void => {
-    session.maxTime = 0;
-    session.minTime = 0;
-    session.legendSelect = {};
-    session.synStartTime = 0;
-    session.synEndTime = 0;
-};
-const barRestore = (session: any): void => {
-    session.allocationData = { allocations: [], maxTimestamp: 0, minTimestamp: 0 };
-    session.blockData = { blocks: [], minSize: 0, maxSize: 0, minTimestamp: 0, maxTimestamp: 0 };
-    session.firstOffset = 0;
-    session.lastOffset = 0;
-    session.markLineshow = 'none';
-    session.contextMenu = { visible: false, xPos: 0, yPos: 0 };
-    session.allowMark = true;
-    session.menuItems = [];
-    session.firstLastStamps = { first: 0, last: 0 };
-};
-const detailsRestore = (session: any): void => {
-    session.tableType = 'blocks';
-    session.tableKey = (session.tableKey + 1) % 10;
-};
-const restore = (session: any): void => {
-    commonRestore(session);
-    barRestore(session);
-    detailsRestore(session);
-};
-export const parseCompletedHandler = (data: any): void => {
+
+export const parseCompletedHandler = (): void => {
     const session = store.sessionStore.activeSession;
     workerDestroy();
     if (session) {
         runInAction(() => {
-            restore(session);
+            session.renderId = ++session.renderId % 1000;
+            session.tritonParsed = true;
         });
     }
 };
-export const removeRemoteHandler: NotificationHandler = (data): void => {
-    const session = store.sessionStore.activeSession;
+export const removeRemoteHandler: NotificationHandler = (): void => {
     workerDestroy();
     stateWorkerDestroy();
-    if (session) {
-        runInAction(() => {
-            session.deviceIds = {};
-            restore(session);
-        });
-    }
 };
 
 export const parseFailHandler: NotificationHandler = (data): void => {

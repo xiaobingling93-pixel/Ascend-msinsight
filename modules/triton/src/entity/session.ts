@@ -22,10 +22,6 @@ interface ContextMenu {
     xPos: number;
     yPos: number;
 }
-interface MarkStamps {
-    first: number;
-    last: number;
-}
 
 const LEAKS_WORKER_INFO_DEFAULT = {
     sizeInfo: {
@@ -77,20 +73,10 @@ const STATE_WORKER_INFO_DEFAULT = {
 
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
-    deviceIds: any = {};
-    blockData: any = { blocks: [], minSize: 0, maxSize: 0, minTimestamp: 0, maxTimestamp: 0 }; // 内存块图数据源
-    allocationData: any = { allocations: [], maxTimestamp: 0, minTimestamp: 0 };// 内存折线图数据源
+    tritonParsed: boolean = false;
+    renderId: number = 1;
     maxTime: number = 0; // x轴最大值
     minTime: number = 0; // x轴最小值
-    legendSelect: any = {}; // 选择的图例
-    synStartTime: number = 0;
-    synEndTime: number = 0;
-    tableKey: number = 0;
-    firstOffset: number = 0;
-    lastOffset: number = 0;
-    firstLastStamps: MarkStamps = { first: 0, last: 0 };
-    markLineshow: 'none' | 'block' = 'none';
-    allowMark: boolean = true;
     contextMenu: ContextMenu = { visible: false, xPos: 0, yPos: 0 };
     menuItems: MenuItemModel[] = [];
 

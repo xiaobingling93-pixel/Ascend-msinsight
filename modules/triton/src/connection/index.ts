@@ -19,5 +19,5 @@ import { ClientConnector } from '@insight/lib/connection';
 
 export default new ClientConnector({
     getTargetWindow: (): any[] => [window.parent],
-    module: 'leaks',
+    module: 'triton',
 });

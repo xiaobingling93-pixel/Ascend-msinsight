@@ -24,15 +24,17 @@ import { MemoryBlockDiagram } from './leaks/MemoryBlockDiagram';
 import { MemoryStateDiagram } from '@/components/leaks/MemoryStateDiagram';
 
 const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
-    const { t } = useTranslation('leaks');
+    const { t } = useTranslation('triton');
 
     useEffect(() => {
-        getBarNewData(session);
-    }, []);
+        if (session.tritonParsed) {
+            getBarNewData(session);
+        }
+    }, [session.renderId, session.tritonParsed]);
 
     return (
         <>
-            <CollapsiblePanel title={t('LineBlockGraph')} style={{ minWidth: 1000 }}>
+            <CollapsiblePanel title={t('MemoryBlocks')} style={{ minWidth: 1000 }}>
                 <div id="barContent" style={{ overflow: 'hidden', padding: 0, position: 'relative' }}>
                     <MemoryBlockDiagram session={session} />
                 </div>

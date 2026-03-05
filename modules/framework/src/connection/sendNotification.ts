@@ -160,6 +160,7 @@ export const sendMap: Record<string, (to?: string) => void> = {
     memoryRankIds: (to) => sendSessionKey('memoryRankIds', to),
     operatorRankIds: (to) => sendSessionKey('operatorRankIds', to),
     deviceIds: (to) => sendSessionKey('deviceIds', to),
+    tritonParsed: (to) => sendSessionKey('tritonParsed', to),
     threadIds: (to) => sendSessionKey('threadIds', to),
     memoryCardInfos: (to) => sendSessionKey('memoryCardInfos', to),
     operatorCardInfos: (to) => sendSessionKey('operatorCardInfos', to),

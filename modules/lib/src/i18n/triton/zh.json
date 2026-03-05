@@ -1,0 +1,9 @@
+{
+  "triton": {
+    "MemoryBlocks": "内存块图",
+    "Current Time": "当前时间",
+    "sliceDetail": "选中详情",
+    "stateDiagram": "内存池状态图",
+    "EmptyTips": "请点击上方的内存块图查看内存状态"
+  }
+}

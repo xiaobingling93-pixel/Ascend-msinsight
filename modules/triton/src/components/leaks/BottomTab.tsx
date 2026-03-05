@@ -21,7 +21,7 @@ import { Tabs } from 'antd';
 import { DrawerButton, Resizer } from '@insight/lib';
 import { type Theme, useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
-import { Session } from '../../entity/session';
+import { Session } from '@/entity/session';
 import { observer } from 'mobx-react';
 import styled from '@emotion/styled/macro';
 
@@ -29,7 +29,7 @@ const MARGIN = 38;
 const HEIGHT_DEFAULT = 300;
 
 export const BottomTab = ({ session }: { session: Session }): JSX.Element => {
-    const { t } = useTranslation('leaks');
+    const { t } = useTranslation('triton');
     const [isExpand, setIsExpand] = useState(false);
     const [containerHeight, setContainerHeight] = useState(HEIGHT_DEFAULT);
     const theme: Theme = useTheme();
@@ -89,8 +89,12 @@ const SliceDetailItem = styled.div`
     display: flex;
     color: ${(props): string => props.theme.tableTextColor};
     .sliceDetailName {
-        width: 300px;
+        width: 200px;
         font-weight: bold;
+    }
+    .sliceDetailValue {
+        white-space: pre-wrap;
+        flex: 1;
     }
 `;
 const SliceDetail = observer(({ session }: { session: Session }): JSX.Element => {
@@ -106,16 +110,34 @@ const SliceDetail = observer(({ session }: { session: Session }): JSX.Element =>
             if (hiddenList.includes(key)) {
                 return;
             }
-            result.push({ key, value: JSON.stringify(value) });
+            result.push({ key, value });
         });
         setDetailList(result);
     }, [session.leaksWorkerInfo.clickItem]);
+
+    useEffect(() => {
+        if (session.stateWorkerInfo.clickItem === null) {
+            setDetailList([]);
+            return;
+        }
+        const { type, data: { blocks } } = session.stateWorkerInfo.clickItem;
+        if (type === 'block') {
+            const result: Array<{ key: string; value: string }> = [];
+            Object.entries(blocks[0]).forEach(([key, value]) => {
+                if (hiddenList.includes(key)) {
+                    return;
+                }
+                result.push({ key, value });
+            });
+            setDetailList(result);
+        }
+    }, [session.stateWorkerInfo.clickItem]);
 
     return <>
         {
             detailList.map(item => (<SliceDetailItem key={item.key} >
                 <div className="sliceDetailName">{item.key}</div>
-                <div>{item.value}</div>
+                <div className="sliceDetailValue">{item.value}</div>
             </SliceDetailItem>))
         }
     </>;

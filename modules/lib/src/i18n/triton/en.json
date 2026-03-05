@@ -1,0 +1,9 @@
+{
+  "triton": {
+    "MemoryBlocks": "Memory Block Graph",
+    "Current Time": "Current Time",
+    "sliceDetail": "Slice Detail",
+    "stateDiagram": "Memory Pool State Diagram",
+    "EmptyTips": "Please click on the chart above to view memory state"
+  }
+}

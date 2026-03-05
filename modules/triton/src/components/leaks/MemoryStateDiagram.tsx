@@ -51,16 +51,30 @@ const CanvasContainer = styled.div`
     background-color: ${(props): string => props.theme.bgColorDark};
 `;
 
+const EmptyState = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: ${(props): string => props.theme.textColorTertiary};
+    font-size: 14px;
+`;
+
 export const MemoryStateDiagram = observer(({ session }: { session: Session }): JSX.Element => {
-    const { t } = useTranslation('leaks');
+    const { t } = useTranslation('triton');
     const clickTimestamp = session.markLineInfo.clickTimestamp;
     return <Container>
-        {clickTimestamp >= 0 && (
-            <TimestampDisplay>
-                {t('Current Time')}: {formatTime(clickTimestamp)}
-            </TimestampDisplay>
-        )}
-        <StateDiagramCanvas session={session} />
+        {
+            clickTimestamp >= 0
+                ? <>
+                    <TimestampDisplay>
+                        {t('Current Time')}: {formatTime(clickTimestamp)}
+                    </TimestampDisplay>
+                    <StateDiagramCanvas session={session} />
+                </>
+                : <EmptyState>{t('EmptyTips')}</EmptyState>
+        }
     </Container>;
 });
 

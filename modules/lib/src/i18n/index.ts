@@ -44,6 +44,8 @@ import statisticEn from './statistic/en.json';
 import statisticZh from './statistic/zh.json';
 import rlEn from './reinforcement-learning/en.json';
 import rlZh from './reinforcement-learning/zh.json';
+import tritonEn from './triton/en.json';
+import tritonZh from './triton/zh.json';
 
 export const resources = {
     enUS: {
@@ -59,6 +61,7 @@ export const resources = {
         ...libEn,
         ...leaksEn,
         ...statisticEn,
+        ...tritonEn,
     },
     zhCN: {
         ...zh,
@@ -75,6 +78,7 @@ export const resources = {
         ...statisticZh,
         ...rlEn,
         ...rlZh,
+        ...tritonZh,
     },
 };
 

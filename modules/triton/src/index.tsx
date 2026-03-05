@@ -67,7 +67,7 @@ export function getInitStatus(): void {
         event: 'getParseStatus',
         body: {
             from: 'Triton',
-            requests: ['language', 'theme'],
+            requests: ['language', 'theme', 'tritonParsed'],
         },
     });
 }
