@@ -22,7 +22,7 @@ import { FilePath, WEBSOCKET_URL } from './constants';
 
 let iterationNum = 0;
 // 导入数据
-export async function importData(page: Page, filePath: FilePath = FilePath.TEXT): Promise<void> {
+export async function importData(page: Page, filePath: string = FilePath.TEXT): Promise<void> {
     if (iterationNum > 3) {
         return;
     }

@@ -9,5 +9,6 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/output/linux-aarch64/bin
 cd ../modules/build
 python3 build.py
 cd ../../e2e
+mkdir log
 npm ci
 npm run test:smoke
