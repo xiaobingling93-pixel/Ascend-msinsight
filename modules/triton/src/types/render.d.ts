@@ -56,6 +56,7 @@ interface Shader {
 }
 
 interface Segment {
+    size: number;
     totalSize: number;
     callstack: string;
     blocks: StateBlock[];

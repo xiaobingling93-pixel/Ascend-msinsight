@@ -59,3 +59,8 @@ export const getColorByIndex = (index: number, isHightlight: boolean = false, op
     const colorNum = colors.length;
     return hexToRgba(isHightlight ? highlightColors[index % colorNum] : colors[index % colorNum], opacity);
 };
+
+export const getColorStringByIndex = (index: number, isHightlight: boolean = false): string => {
+    const colorNum = colors.length;
+    return isHightlight ? highlightColors[index % colorNum] : colors[index % colorNum];
+};
