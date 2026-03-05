@@ -24,17 +24,16 @@ import {
     workerTransform,
     workerHoverItem,
     workerClickItem,
-    // workerSetMemoryStateData, 等待接口联调
+    workerSetMemoryStateData,
 } from '@/leaksWorker/stateWorker/worker';
 import { Session } from '@/entity/session';
 import { Input, ResizeTable, ResizeTableRef, SearchIcon } from '@insight/lib';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { type Theme, useTheme } from '@emotion/react';
 import { formatBytes } from '@/utils/utils';
-import { EvenItem } from '@/utils/RequestUtils';
-// 等待接口联调
-// import { getAllEventListData } from '../dataHandler';
-// import { getMemoryStateData } from '@/utils/RequestUtils';
+import { type EvenItem, getMemoryStateData } from '@/utils/RequestUtils';
+import { getAllEventListData } from '../dataHandler';
+import { observer } from 'mobx-react';
 
 export const MemoryStateDiagram = ({ session }: { session: Session }): JSX.Element => {
     return <div style={{ display: 'flex', height: 800 }}>
@@ -67,7 +66,7 @@ const EventItemRender = ({ record }: { record: EvenItem }): JSX.Element => {
     </div >;
 };
 
-const EventList = ({ session }: { session: Session }): JSX.Element => {
+const EventList = observer(({ session }: { session: Session }): JSX.Element => {
     const [searchValue, setSearchValue] = useState<string>('');
     const [searchIndexList, setSearchIndexList] = useState<number[]>([]);
     const [dataSource, setDataSource] = useState<EvenItem[]>([]);
@@ -96,13 +95,13 @@ const EventList = ({ session }: { session: Session }): JSX.Element => {
             return;
         }
         for (let i = 0; i < dataSource.length; i++) {
-            if (String(dataSource[i].id).includes(searchValue)) {
+            if (String(dataSource[i].address).includes(searchValue)) {
                 result.push(i);
             }
         }
         setSearchIndexList(result);
         if (result.length > 0) {
-            tableRef.current?.getVirtualBoxDom()?.scrollTo({ top: 48 * result[0] });
+            tableRef.current?.getVirtualBoxDom()?.scrollTo({ top: 32 * result[0] });
             setCurrentShowRow(0);
         } else {
             setCurrentShowRow(-1);
@@ -124,23 +123,40 @@ const EventList = ({ session }: { session: Session }): JSX.Element => {
             return;
         }
         const offset = type === 'up' ? -1 : 1;
-        tableRef.current?.getVirtualBoxDom()?.scrollTo({ top: 48 * searchIndexList[currentShowRow + offset] });
+        tableRef.current?.getVirtualBoxDom()?.scrollTo({ top: 32 * searchIndexList[currentShowRow + offset] });
         setCurrentShowRow(oVal => (oVal + offset));
     };
 
     useEffect(() => {
-        // 目前为mock数据，等待接口联调
-        // getAllEventListData(session).then(setDataSource);
-        setDataSource((new Array(100).fill(0)).map((_, index) => ({
-            index,
-            id: Math.round(Math.random() * 1000000),
-            blockId: Math.round(Math.random() * 1000000),
-            size: Math.round(Math.random() * 100000000),
-            action: 'free_requested',
-            address: '0x00000000_277',
-            stream: Math.round(Math.random() * 100),
-        })));
+        if (session.deviceId === '') return;
+        getAllEventListData(session).then((data) => {
+            setDataSource(data.map((item, index) => ({
+                ...item,
+                index,
+            })));
+            setCurrentSelectRow(0);
+        });
     }, [session.deviceId]);
+
+    useEffect(() => {
+        if (session.leaksWorkerInfo.clickItem === null) {
+            return;
+        }
+        const index = dataSource.findIndex(item => item.id === session.leaksWorkerInfo.clickItem?.id);
+        setCurrentSelectRow(index);
+        tableRef.current?.getVirtualBoxDom()?.scrollTo({ top: 32 * index });
+    }, [session.leaksWorkerInfo.clickItem]);
+
+    useEffect(() => {
+        if (session.deviceId === '') return;
+        const currentRow = dataSource[currentSelectRow];
+        if (currentRow === undefined) {
+            return;
+        }
+        getMemoryStateData({ eventId: currentRow.id }).then(data => {
+            workerSetMemoryStateData({ data: data.segments });
+        });
+    }, [currentSelectRow, dataSource]);
 
     return <div>
         <div style={{ display: 'flex', paddingBottom: 8 }}>
@@ -162,14 +178,15 @@ const EventList = ({ session }: { session: Session }): JSX.Element => {
             }}
             onRow={(row): React.HTMLAttributes<any> => ({
                 onClick: (): void => {
-                    // 等待接口联调
-                    // workerSetMemoryStateData(getMemoryStateData({ eventId: row.id }));
                     setCurrentSelectRow(row.index);
+                    runInAction(() => {
+                        session.clickEventItem = row;
+                    });
                 },
             })}
         />
     </div>;
-};
+});
 
 const StateDiagramCanvas = ({ session }: { session: Session }): JSX.Element => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -267,7 +284,6 @@ const StateDiagramCanvas = ({ session }: { session: Session }): JSX.Element => {
         const currentY = ev.clientY - rect.top;
         if (!isDragging.current) {
             workerHoverItem({ clientX: currentX, clientY: currentY });
-
             return;
         }
 
@@ -352,7 +368,7 @@ const StateDiagramCanvas = ({ session }: { session: Session }): JSX.Element => {
         };
     }, []);
 
-    return <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: 'gray' }}>
+    return <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
         <canvas
             ref={ref}
             style={{ position: 'absolute', top: 0, imageRendering: 'pixelated', touchAction: 'none' }}

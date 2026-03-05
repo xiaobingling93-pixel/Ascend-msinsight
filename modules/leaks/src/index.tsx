@@ -67,6 +67,7 @@ window.request = async (params): Promise<any> => {
 
     // 更新请求时间
     requestCache.set(requestKey, now);
+    params.params.dbPath = store.sessionStore.activeSession?.dbPath;
     const data = await connector.fetch({ args: params });
     // 移除缓存中的请求记录
     requestCache.delete(requestKey);
@@ -90,7 +91,7 @@ export function getInitStatus(): void {
         event: 'getParseStatus',
         body: {
             from: 'Leaks',
-            requests: ['language', 'theme', 'deviceIds', 'threadIds'],
+            requests: ['language', 'theme', 'module', 'dbPath', 'deviceIds', 'threadIds'],
         },
     });
 }

@@ -188,40 +188,40 @@ export const buildBlockViewPath = (blockView: SetMemoryBlocksDataPayload['data']
 let X_GAP = 20;
 const Y_GAP = 20;
 const LINE_HEIGHT = 40;
-export const getMemoryStateRenderData = (data: Segment[], canvas: OffscreenCanvas): Segment[] => {
+export const getMemoryStateRenderData = (data: Segment[]): Segment[] => {
     if (data.length < 1) {
         return [];
     }
     const lastSegment = data[data.length - 1];
-    X_GAP = Math.max(Math.round(lastSegment.totalSize / 100), 20); // segment间的间隔取最长行的1/100
-    const maxSizeX = lastSegment.totalSize + X_GAP * 2; // 额外增加宽度，避免定格绘制
+    X_GAP = Math.max(Math.round(lastSegment.size / 100), 20); // segment间的间隔取最长行的1/100
+    const maxSizeX = lastSegment.size + X_GAP * 2; // 额外增加宽度，避免定格绘制
     const stateRenderData: Segment[] = [];
     let currentRow = 0;
     let currentRowSum = X_GAP; // 当前行总长
     for (let i = 0; i < data.length; i++) {
         const segment = data[i];
-        if (segment.totalSize + currentRowSum + X_GAP <= maxSizeX) {
+        if (segment.size + currentRowSum + X_GAP <= maxSizeX) {
             segment.offsetX = currentRowSum;
             segment.offsetY = currentRow * (LINE_HEIGHT + Y_GAP) + Y_GAP;
             stateRenderData.push(segment);
-            currentRowSum += segment.totalSize + X_GAP;
+            currentRowSum += segment.size + X_GAP;
         } else {
             currentRow++;
             segment.offsetX = X_GAP;
             segment.offsetY = currentRow * (LINE_HEIGHT + Y_GAP) + Y_GAP;
             stateRenderData.push(segment);
-            currentRowSum = segment.totalSize + X_GAP * 2;
+            currentRowSum = segment.size + X_GAP * 2;
         }
     }
     return stateRenderData;
 };
 
-export const getMemoryStateZoom = (data: Segment[], canvas: OffscreenCanvas): RenderOptions['zoom'] => {
+export const getMemoryStateZoom = (data: Segment[], canvas: OffscreenCanvas | HTMLCanvasElement): RenderOptions['zoom'] => {
     if (data.length < 1) {
         return { x: 1, y: 1, offset: 0 };
     }
     const lastSegment = data[data.length - 1];
-    const maxSizeX = lastSegment.totalSize + X_GAP * 2; // 最长的行，额外增加宽度，避免定格绘制
+    const maxSizeX = lastSegment.size + X_GAP * 2; // 最长的行，额外增加宽度，避免定格绘制
 
     const maxSizeY = lastSegment.offsetY + LINE_HEIGHT + Y_GAP;
     return {
@@ -243,7 +243,7 @@ export const searchStateDataByPoint = (
 
     for (let i = 0; i < data.length; i++) {
         const segment = data[i];
-        if (x < segment.offsetX || x > segment.offsetX + segment.totalSize || y < segment.offsetY || y > segment.offsetY + LINE_HEIGHT) {
+        if (x < segment.offsetX || x > segment.offsetX + segment.size || y < segment.offsetY || y > segment.offsetY + LINE_HEIGHT) {
             continue;
         }
         for (let j = 0; j < segment.blocks.length; j++) {

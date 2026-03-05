@@ -29,6 +29,7 @@ import { convertNanoseconds } from '../utils/utils';
 import { MemoryBlockDiagram } from './leaks/MemoryBlockDiagram';
 import MemoryDataZoom from './MemoryDataZoom';
 import { workerTransform } from '@/leaksWorker/blockWorker/worker';
+import { MemoryStateDiagram } from './leaks/MemoryStateDiagram';
 
 const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
     const { t } = useTranslation('leaks');
@@ -171,7 +172,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                         selectedZoomChange={selectedZoomChange} />
                 </div>
             </CollapsiblePanel>
-            {session.memoryStamp
+            {session.memoryStamp && session.module === 'leaks'
                 ? (
                     <CollapsiblePanel title={t('DetailsDiagram')} collapsible style={{ minWidth: 1000 }}>
                         <div id="detailsContent" style={{ position: 'relative' }}>
@@ -183,6 +184,11 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                 : (
                     <></>
                 )
+            }
+            {session.module === 'memsnapshot' &&
+                <CollapsiblePanel title={t('stateDiagram')} style={{ minWidth: 1000 }}>
+                    <MemoryStateDiagram session={session} />
+                </CollapsiblePanel>
             }
         </>
     );

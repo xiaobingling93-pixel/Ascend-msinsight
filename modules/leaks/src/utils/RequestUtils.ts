@@ -96,6 +96,9 @@ export interface EventParam {
     pageSize?: number;
     filters?: { [key: string]: string };
     rangeFilters?: { [key: string]: number[] };
+    isTable?: boolean;
+    startEventIdx?: number;
+    endEventIdx?: number;
 }
 export interface DetailData {
     size: number;
@@ -148,9 +151,14 @@ export interface EventsTableData {
  * @param params 查询条件
  * @returns 查询结果
  */
-export const getBlocksGraphData = async (params: GraphParam): Promise<Omit<RenderData, 'block'>> => {
+export const getBlocksGraphData = async (params: BlockParam): Promise<RenderData> => {
     return window.request({ command: 'Memory/leaks/blocks', params: { ...params } });
 };
+
+export const getSnapshotBlocks = async (params: BlockParam): Promise<RenderData> => {
+    return window.request({ command: 'Memory/snapshot/blocks', params: { ...params } });
+};
+
 /**
  * 获取缩略轴数据
  * @param params 查询条件
@@ -159,6 +167,11 @@ export const getBlocksGraphData = async (params: GraphParam): Promise<Omit<Rende
 export const getLeaksAllocationsData = async (params: GraphParam): Promise<AllocationData> => {
     return window.request({ command: 'Memory/leaks/allocations', params: { ...params } });
 };
+
+export const getSnapshotAllocations = async (params: GraphParam): Promise<AllocationData> => {
+    return window.request({ command: 'Memory/snapshot/allocations', params: { ...params } });
+};
+
 /**
  * 获取内存拆解详情
  * @param params 查询条件
@@ -183,6 +196,11 @@ export const getFuncData = async (params: FuncParam): Promise<FuncData> => {
 export const getBlockDetails = async (params: BlockParam): Promise<BlocksTableData> => {
     return window.request({ command: 'Memory/leaks/blocks', params: { ...params } });
 };
+
+export const getSnapshotBlockTable = async (params: BlockParam): Promise<BlocksTableData> => {
+    return window.request({ command: 'Memory/snapshot/blocks', params: { ...params } });
+};
+
 /**
  * 获取内存详情表（内存事件视图）
  * @param params 查询条件
@@ -191,17 +209,6 @@ export const getBlockDetails = async (params: BlockParam): Promise<BlocksTableDa
 export const getEventDetails = async (params: EventParam): Promise<EventsTableData> => {
     return window.request({ command: 'Memory/leaks/events', params: { ...params } });
 };
-
-/**
- * 获取内存状态图事件列表
- * @param params 查询条件
- * @returns 查询结果
- */
-interface EventListParam {
-    deviceId: string;
-    currentPage: number;
-    pageSize: number;
-}
 
 export interface EvenItem {
     id: number;
@@ -217,10 +224,14 @@ export interface EventList {
     data: EvenItem[];
 }
 
-export const getEventList = async (params: EventListParam): Promise<EventList> => {
-    return window.request({ command: 'Memory/leaks/eventList', params: { ...params } });
+export const getSnapshotEvent = async (params: EventParam): Promise<EventsTableData> => {
+    return window.request({ command: 'Memory/snapshot/events', params: { ...params } });
 };
 
 export const getMemoryStateData = async (params: { eventId: number }): Promise<{ segments: Segment[] }> => {
-    return window.request({ command: 'Memory/leaks/memoryStateData', params: { ...params } });
+    return window.request({ command: 'Memory/snapshot/state', params: { ...params } });
+};
+
+export const getSnapshotDetail = async (params: { id: number; type: string }): Promise<{ [key: string]: any }> => {
+    return window.request({ command: 'Memory/snapshot/detail', params: { ...params } });
 };

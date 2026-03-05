@@ -41,10 +41,10 @@ const getTableColumns = (t: TFunction, session: Session): any => {
                 ? true
                 : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
             render: (text: string): React.ReactNode => (<Tooltip
-                title={col.key === 'attr' && text ? generateJsonShow(text) : text || ''}
+                title={col.key === 'attr' && text ? generateJsonShow(text) : text ?? ''}
                 placement="top"
             >
-                {text || ''}
+                {text ?? ''}
             </Tooltip>),
         };
         if (col.searchable) {

@@ -65,7 +65,7 @@ export const Axis = observer(({ session }: { session: Session }): JSX.Element =>
         if (minTimestamp === maxTimestamp) return [];
         const visibleRange = (maxTimestamp - minTimestamp) / transform.scale;
         const visibleMinSize = minTimestamp - transform.x / transform.scale / zoom.x;
-        const visibleMAxSize = visibleMinSize + visibleRange;
+        const visibleMaxSize = visibleMinSize + visibleRange;
 
         const ticks = [];
 
@@ -75,13 +75,13 @@ export const Axis = observer(({ session }: { session: Session }): JSX.Element =>
 
             ticks.push({
                 position,
-                value: formatTime(timeValue),
+                value: formatTime(timeValue, session.module),
             });
         }
 
         ticks.push({
             position: width,
-            value: formatTime(visibleMAxSize),
+            value: formatTime(visibleMaxSize, session.module),
         });
         return ticks;
     };
@@ -97,8 +97,8 @@ export const Axis = observer(({ session }: { session: Session }): JSX.Element =>
             pointerEvents: 'none',
             top: 0,
             left: 0,
-            width: session.leaksWorkerInfo.renderOptions.viewport.width ?? 0,
-            height: session.leaksWorkerInfo.renderOptions.viewport.height ?? 0,
+            width: viewport.width ?? 0,
+            height: viewport.height ?? 0,
         }}
     >
         <div
@@ -193,7 +193,7 @@ export const MarkLineBlock = observer(({ session }: { session: Session }): JSX.E
         const ratio = (currentTimestamp - visibleMinSize) / visibleRange;
         const offset = width * ratio;
         const position = offset > width || offset < 0 || (stack.x < 0 && block.x < 0) ? -1 : offset;
-        setCurrentTime({ position, value: formatTime(currentTimestamp) });
+        setCurrentTime({ position, value: formatTime(currentTimestamp, session.module) });
     }, [currentTimestamp]);
 
     return <MarkLineCommon left={currentTime.position} label={currentTime.value} />;
@@ -224,7 +224,7 @@ export const MarkLineStack = observer(({ session, width }: { session: Session; w
         const ratio = (currentTimestamp - minTime) / visibleRange;
         const offset = width * ratio;
         const position = offset > width || offset < 0 || (stack.x < 0 && block.x < 0) ? -1 : offset;
-        setCurrentTime({ position, value: formatTime(currentTimestamp) });
+        setCurrentTime({ position, value: formatTime(currentTimestamp, session.module) });
     }, [currentTimestamp]);
 
     return <MarkLineCommon left={currentTime.position} label={currentTime.value} />;
@@ -253,7 +253,7 @@ export const HoverItem = observer(({ session }: { session: Session }): JSX.Eleme
                 : <HoverItemContainer style={{ left, top }}>
                     <div>Addr: {hoverItem.addr}</div>
                     <div>Size: {formatBytes(hoverItem.size)}</div>
-                    <div>Life: {formatTime(hoverItem._endTimestamp - hoverItem._startTimestamp)}</div>
+                    <div>Life: {formatTime(hoverItem._endTimestamp - hoverItem._startTimestamp, session.module)}</div>
                 </HoverItemContainer>
         }
     </>;

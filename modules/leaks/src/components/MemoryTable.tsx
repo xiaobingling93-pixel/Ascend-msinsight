@@ -27,7 +27,7 @@ import EventsTable from './EventsTable';
 import ThresholdModal from './ThresholdModal';
 const MemoryTable = observer(({ session }: { session: Session }): React.ReactElement => {
     const { t } = useTranslation('leaks');
-    const { tableType } = session;
+    const { tableType, module } = session;
     const [open, setOpen] = useState(false);
     const radioChange = (e: RadioChangeEvent): void => {
         runInAction(() => {
@@ -70,7 +70,7 @@ const MemoryTable = observer(({ session }: { session: Session }): React.ReactEle
                     <Radio
                         data-testid={'eventViewRadio'} value={'events'}>{t('Event View')}</Radio>
                 </Radio.Group>
-                {tableType === 'blocks' ? <Button type="primary" onClick={() => { setOpen(true); }}>{t('setThreshold')}</Button> : <></>}
+                {tableType === 'blocks' && module === 'leaks' ? <Button type="primary" onClick={() => { setOpen(true); }}>{t('setThreshold')}</Button> : <></>}
             </div>
             {tableType === 'blocks' ? <><BlocksTable session={session} /><ThresholdModal session={session} open={open} setOpen={setOpen} /></> : <EventsTable session={session} />}
         </>

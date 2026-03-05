@@ -124,6 +124,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
             session.markLineInfo.block = { x: -1, y: -1 };
             session.markLineInfo.stack = { x: -1, y: -1 };
         });
+        workerHoverItem({ clientX: -1, clientY: -1 });
     };
 
     const handleMouseMove = (ev: MouseEvent): void => {

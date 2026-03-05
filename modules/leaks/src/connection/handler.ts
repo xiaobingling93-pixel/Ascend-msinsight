@@ -21,6 +21,8 @@ import type { NotificationHandler } from './defs';
 import i18n from '@insight/lib/i18n';
 import { workerDestroy } from '@/leaksWorker/blockWorker/worker';
 import { errorCenter, ErrorCode, WsError } from '@insight/lib';
+import { workerDestroy as stateWorkerDestroy } from '@/leaksWorker/stateWorker/worker';
+import { LEAKS_WORKER_INFO_DEFAULT, MARK_LINE_POSITION_DEFAULT, STATE_WORKER_INFO_DEFAULT } from '@/entity/session';
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
@@ -134,6 +136,8 @@ export const parseCompletedHandler = (data: any): void => {
         runInAction(() => {
             session.deviceIds = data.deviceIds;
             session.threadIds = data.threadIds;
+            session.dbPath = data.dbPath;
+            session.module = data.module;
             restore(session);
         });
     }
@@ -141,10 +145,17 @@ export const parseCompletedHandler = (data: any): void => {
 export const removeRemoteHandler: NotificationHandler = (data): void => {
     const session = store.sessionStore.activeSession;
     workerDestroy();
+    stateWorkerDestroy();
     if (session) {
         runInAction(() => {
             session.deviceIds = {};
             session.threadIds = [];
+            session.dbPath = '';
+            session.module = 'leaks';
+            session.clickEventItem = null;
+            session.leaksWorkerInfo = { ...LEAKS_WORKER_INFO_DEFAULT, renderOptions: { ...session.leaksWorkerInfo.renderOptions } };
+            session.stateWorkerInfo = STATE_WORKER_INFO_DEFAULT;
+            session.markLineInfo = MARK_LINE_POSITION_DEFAULT;
             restore(session);
         });
     }

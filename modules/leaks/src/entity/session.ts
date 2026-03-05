@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------------
  */
 import { makeAutoObservable } from 'mobx';
-import { type BlocksTableData, EventsTableData, ThreShold } from '../utils/RequestUtils';
+import { type BlocksTableData, EvenItem, EventsTableData, ThreShold } from '../utils/RequestUtils';
 import { type MenuItemModel } from '../components/ContextMenu';
 interface TypeOption {
     label: string | number;
@@ -32,7 +32,7 @@ interface MarkStamps {
     last: number;
 }
 
-const LEAKS_WORKER_INFO_DEFAULT = {
+export const LEAKS_WORKER_INFO_DEFAULT = {
     sizeInfo: {
         maxTimestamp: 0,
         minTimestamp: 0,
@@ -63,13 +63,13 @@ const LEAKS_WORKER_INFO_DEFAULT = {
     clickItem: null,
 };
 
-const MARK_LINE_POSITION_DEFAULT = {
+export const MARK_LINE_POSITION_DEFAULT = {
     block: { x: -1, y: -1 },
     stack: { x: -1, y: -1 },
     currentTimestamp: -1,
 };
 
-const STATE_WORKER_INFO_DEFAULT = {
+export const STATE_WORKER_INFO_DEFAULT = {
     renderOptions: {
         transform: { x: 0, y: 0, scale: 1 },
         viewport: { width: 0, height: 0 },
@@ -80,6 +80,8 @@ const STATE_WORKER_INFO_DEFAULT = {
 };
 
 export class Session {
+    module: 'memsnapshot' | 'leaks' = 'leaks';
+    dbPath: string = '';
     language: 'zhCN' | 'enUS' = 'enUS';
     deviceIds: any = {};
     threadIds: number[] = [];
@@ -155,6 +157,8 @@ export class Session {
         hoverItem: StateDataHoverResult | null;
         clickItem: StateDataHoverResult | null;
     } = STATE_WORKER_INFO_DEFAULT;
+
+    clickEventItem: EvenItem | null = null;
 
     constructor() {
         makeAutoObservable(this);

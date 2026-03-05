@@ -40,7 +40,10 @@ const initCanvasHandler = async (payload: InitCanvasPayload): Promise<void> => {
 };
 
 const setMemoryStateDataHandler = (payload: SetMemoryStateDataPayload): void => {
-    memoryStateData = getMemoryStateRenderData(payload.data, canvas);
+    clickItem = null;
+    hoverItem = null;
+    renderHighlintData();
+    memoryStateData = getMemoryStateRenderData(payload.data);
     zoom = getMemoryStateZoom(memoryStateData, canvas);
     renderer?.setZoom(zoom).setData(memoryStateData);
     renderer?.updateCanvasSize(viewport);
@@ -62,7 +65,7 @@ const transformHandler = (payload: TransformPayload): void => {
 };
 
 const debouncedSearchBlockData = debounce((payload: HoverItemPayload): void => {
-    if (memoryStateData.length > 0) {
+    if (memoryStateData?.length > 0) {
         hoverItem = searchStateDataByPoint(memoryStateData, payload, transform, zoom);
         renderHighlintData();
         self.postMessage({ type: 'hoverItemResult', result: hoverItem });
@@ -89,6 +92,9 @@ const destroyHandler = (): void => {
     memoryStateData = [];
     transform = { x: 0, y: 0, scale: 1 };
     zoom = { x: 1, y: 1, offset: 0 };
+    clickItem = null;
+    hoverItem = null;
+    renderHighlintData();
     renderer?.setData([]).setTransform(transform).setZoom(zoom);
 };
 

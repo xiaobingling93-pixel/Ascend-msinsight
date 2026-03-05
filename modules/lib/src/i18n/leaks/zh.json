@@ -54,7 +54,19 @@
       "size": "内存块大小(bytes)",
       "firstAccessTimestamp": "首次访问时间(ns)",
       "lastAccessTimestamp": "末次访问时间(ns)",
-      "maxAccessInterval": "最大访问时间间隔(ns)"
+      "maxAccessInterval": "最大访问时间间隔(ns)",
+      "Action": "事件类型",
+      "Address": "内存地址",
+      "Size(bytes)": "内存大小(bytes)",
+      "Stream": "流ID",
+      "Allocated(bytes)": "总二次分配内存(bytes)",
+      "Active(bytes)": "总活跃内存(bytes)",
+      "Reserved(bytes)": "总预留内存(bytes)",
+      "CallStack": "调用栈",
+      "Requested Size(bytes)": "分配事件需求大小(bytes)",
+      "State": "内存块状态",
+      "Alloc Event ID": "分配事件ID",
+      "Free Event ID": "释放事件ID"
     },
     "setThreshold": "过滤低效显存",
     "lazyUsedThreshold": "提前申请阈值",
@@ -93,7 +105,14 @@
       "Requested Size(MBytes)": "分配事件需求大小(MBytes)",
       "Alloc Event": "分配事件",
       "Free Requested Event": "释放申请事件",
-      "Free Completed Event": "释放完成事件"
+      "Free Completed Event": "释放完成事件",
+      "detail": "详情",
+      "noData": [
+        "此内存块/段没有对应的帧（frames）。潜在原因如下：",
+        "1） 该内存块/段是在启用 _record_memory_history 之前分配的。",
+        "2） 传递给 _record_memory_history 的上下文（context）或堆栈（stacks）设置未包含此内存块/段。建议将 context 参数更改为 'state'、'alloc' 或 'all'，或将 stacks 参数更改为 'all'。",
+        "3） 该事件发生在反向传播（backward）期间，此时不存在 Python 帧，且内存历史记录未包含 C++ 帧。请使用 stacks='all' 以同时记录 C++ 和 Python 帧。"
+      ]
     }
   }
 }

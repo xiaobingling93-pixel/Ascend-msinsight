@@ -88,7 +88,7 @@ export class MemoryStateBorderProgram extends Program {
             const segment = data[i];
             instanceData[offset++] = segment.offsetX;
             instanceData[offset++] = segment.offsetY;
-            instanceData[offset++] = segment.totalSize;
+            instanceData[offset++] = segment.size;
             instanceData[offset++] = borderColor[0];
             instanceData[offset++] = borderColor[1];
             instanceData[offset++] = borderColor[2];
@@ -125,7 +125,7 @@ export class MemoryStateBorderProgram extends Program {
             const segment = highlightData.data;
             instanceData[0] = segment.offsetX;
             instanceData[1] = segment.offsetY;
-            instanceData[2] = segment.totalSize;
+            instanceData[2] = segment.size;
         } else if (highlightData?.type === 'block') {
             const segment = highlightData.data;
             const block = segment.blocks[0]; // 内部数据，能走到这里，一定有一个block

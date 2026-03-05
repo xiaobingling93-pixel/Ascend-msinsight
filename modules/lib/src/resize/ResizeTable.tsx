@@ -117,7 +117,7 @@ const StyledTable = styled(Support)`
     }
 
     tr.ant-table-row.click-select > td.ant-table-cell {
-        background: ${(p): string => p.theme.majorColorLight1};
+        background: ${(p): string => p.theme.primaryColorLight6};
         color: ${(p): string => p.theme.textColorPrimary};
     }
 

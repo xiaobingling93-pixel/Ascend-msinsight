@@ -124,6 +124,8 @@ export class Session {
     iERankIds: string[] = [];
     deviceIds: any = {};
     threadIds: number[] = [];
+    dbPath: string = '';
+    module: string = '';
     // triton数据解析完成
     tritonParsed: boolean = false;
     // 模块数据-算子调优

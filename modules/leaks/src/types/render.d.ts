@@ -62,17 +62,16 @@ interface Shader {
 interface Segment {
     address: string;
     stream: number;
-    totalSize: number;
-    callstack: string;
-    allocatedSize: number;
+    size: number;
     blocks: StateBlock[];
     offsetX: number;
     offsetY: number;
+    allocOrMapEventId: number;
 }
 
 interface StateBlock {
     offset: number;
-    blockId: number;
+    id: number;
     size: number;
 }
 

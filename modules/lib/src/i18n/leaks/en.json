@@ -54,7 +54,19 @@
       "size": "Size(bytes)",
       "firstAccessTimestamp": "First Access Timestamp(ns)",
       "lastAccessTimestamp": "Last Access Timestamp(ns)",
-      "maxAccessInterval": "Max Access Interval(ns)"
+      "maxAccessInterval": "Max Access Interval(ns)",
+      "Action": "Action",
+      "Address": "Address",
+      "Size(bytes)": "Size(bytes)",
+      "Stream": "Stream",
+      "Allocated(bytes)": "Allocated(bytes)",
+      "Active(bytes)": "Active(bytes)",
+      "Reserved(bytes)": "Reserved(bytes)",
+      "CallStack": "Call Stack",
+      "Requested Size(bytes)": "Requested Size(bytes)",
+      "State": "State",
+      "Alloc Event ID": "Alloc Event ID",
+      "Free Event ID": "Free Event ID"
     },
     "setThreshold": "Filter Inefficient Memory Blocks",
     "lazyUsedThreshold": "Lazy Used Threshold",
@@ -93,7 +105,14 @@
         "Requested Size(MBytes)": "Requested Size(MBytes)",
         "Alloc Event": "Alloc Event",
         "Free Requested Event": "Free Requested Event",
-        "Free Completed Event": "Free Completed Event"
+        "Free Completed Event": "Free Completed Event",
+        "detail": "detail",
+        "noData": [
+          "This block/segment has no frames. Potential causes:",
+          "1) This block/segment was allocated before _record_memory_history was enabled.",
+          "2) The context or stacks passed to _record_memory_history does not include this block/segment. Consider changing context to 'state', 'alloc', or 'all', or changing stacks to 'all'.",
+          "3) This event occurred during backward, which has no python frames, and memory history did not include C++ frames. Use stacks='all' to record both C++ and python frames."
+        ]
     }
   }
 }

@@ -18,13 +18,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { Tabs } from 'antd';
-import { DrawerButton, Resizer } from '@insight/lib';
+import { DrawerButton, Resizer, Button } from '@insight/lib';
 import { type Theme, useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import MemoryTable from '../MemoryTable';
 import { Session } from '../../entity/session';
 import { observer } from 'mobx-react';
 import styled from '@emotion/styled/macro';
+import { getSnapshotDetail } from '@/utils/RequestUtils';
 
 const MARGIN = 38;
 const HEIGHT_DEFAULT = 300;
@@ -89,39 +90,129 @@ const TabContentWrapper = ({ children, height }: { children: React.ReactNode; he
     </div>;
 };
 
-const hiddenList = ['_firstAccessTimestamp', '_lastAccessTimestamp', 'maxAccessInterval', 'lazyUsed', 'delayedFree', 'longIdle', 'path'];
 const SliceDetailItem = styled.div`
     font-size: 14px;
     display: flex;
     color: ${(props): string => props.theme.tableTextColor};
     .sliceDetailName {
-        width: 300px;
+        width: 200px;
         font-weight: bold;
     }
+    .sliceDetailValue {
+        white-space: pre-wrap;
+        flex: 1;
+    }
 `;
+
+const NoData = styled.div`
+    font-size: 14px;
+    color: ${(props): string => props.theme.tableTextColor};
+`;
+const hiddenList = ['_firstAccessTimestamp', '_lastAccessTimestamp', '_startTimestamp', '_endTimestamp',
+    'maxAccessInterval', 'lazyUsed', 'delayedFree', 'longIdle', 'path'];
 const SliceDetail = observer(({ session }: { session: Session }): JSX.Element => {
-    const [detailList, setDetailList] = useState<Array<{ key: string; value: string }>>([]);
+    const { t } = useTranslation('leaks', { keyPrefix: 'slice' });
+    const [detailList, setDetailList] = useState<Array<{ key: string; value: any }>>([]);
+    const [noData, setNoData] = useState(false);
+
+    const getSnapshotDetailInfo = async (type: string, id: number): Promise<void> => {
+        const data = await getSnapshotDetail({ type, id });
+        const result: Array<{ key: string; value: any }> = [];
+        Object.entries(data).forEach(([key, value]) => {
+            if (typeof value === 'object') {
+                result.push({ key, value: <SliceDetailObjectItem data={value} /> });
+            } else {
+                result.push({ key, value });
+            }
+        });
+        setDetailList(result);
+    };
 
     useEffect(() => {
-        if (session.leaksWorkerInfo.clickItem === null) {
+        setNoData(false);
+        if (session.module === 'leaks') {
+            const result: Array<{ key: string; value: any }> = [];
+            if (session.leaksWorkerInfo.clickItem === null) {
+                return;
+            }
+            Object.entries(session.leaksWorkerInfo.clickItem).forEach(([key, value]) => {
+                if (hiddenList.includes(key)) {
+                    return;
+                }
+                result.push({ key, value });
+            });
+            setDetailList(result);
+        } else {
+            const id = session.leaksWorkerInfo.clickItem?.id;
+            if (id === undefined) {
+                setDetailList([]);
+                return;
+            }
+            getSnapshotDetailInfo('block', id);
+        }
+    }, [session.leaksWorkerInfo.clickItem]);
+
+    useEffect(() => {
+        setNoData(false);
+        if (session.stateWorkerInfo.clickItem === null) {
             setDetailList([]);
             return;
         }
-        const result: Array<{ key: string; value: string }> = [];
-        Object.entries(session.leaksWorkerInfo.clickItem).forEach(([key, value]) => {
-            if (hiddenList.includes(key)) {
-                return;
-            }
-            result.push({ key, value: JSON.stringify(value) });
-        });
-        setDetailList(result);
-    }, [session.leaksWorkerInfo.clickItem]);
+        const { type, data } = session.stateWorkerInfo.clickItem;
+        const id = type === 'segment' ? data.allocOrMapEventId : (data.blocks[0]?.id ?? -1);
+        if (id < 0) {
+            setDetailList([]);
+            setNoData(true);
+            return;
+        }
+        getSnapshotDetailInfo(type === 'segment' ? 'event' : 'block', id);
+    }, [session.stateWorkerInfo.clickItem]);
+
+    useEffect(() => {
+        setNoData(false);
+        if (session.clickEventItem === null) {
+            setDetailList([]);
+            return;
+        }
+        getSnapshotDetailInfo('event', session.clickEventItem.id);
+    }, [session.clickEventItem]);
+
+    useEffect(() => {
+        setNoData(false);
+        setDetailList([]);
+    }, [session.deviceId]);
 
     return <>
         {
-            detailList.map(item => (<SliceDetailItem key={item.key} >
-                <div className="sliceDetailName">{item.key}</div>
-                <div>{item.value}</div>
+            noData
+                ? <NoData>{(t('noData', { returnObjects: true }) as string[]).map((item, index) => <div key={index}>{item}</div>)}</NoData>
+                : detailList.map(item => (<SliceDetailItem key={item.key} >
+                    <div className="sliceDetailName">{t(item.key)}</div>
+                    <div className="sliceDetailValue">{item.value}</div>
+                </SliceDetailItem>))
+        }
+    </>;
+});
+const SliceDetailObjectItem = observer(({ data }: { data: { [key: string]: any } }): JSX.Element => {
+    const { t } = useTranslation('leaks', { keyPrefix: 'slice' });
+    const [isExpand, setIsExpand] = useState(false);
+    const dataList: Array<{ key: string; value: string }> = [];
+    Object.entries(data).forEach(([key, value]) => {
+        if (typeof value === 'object') {
+            dataList.push({ key, value: JSON.stringify(value) });
+        } else {
+            dataList.push({ key, value });
+        }
+    });
+
+    return <>
+        <Button onClick={() => setIsExpand(oVal => !oVal)} type="link" size="small" style={{ padding: 0, minWidth: 0 }}>
+            {`${isExpand ? '-' : '+'} ${t('detail')}`}
+        </Button>
+        {
+            isExpand && dataList.map(item => (<SliceDetailItem key={item.key} >
+                <div className="sliceDetailName">{t(item.key)}</div>
+                <div className="sliceDetailValue">{item.value}</div>
             </SliceDetailItem>))
         }
     </>;

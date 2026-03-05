@@ -48,8 +48,11 @@ export const convertNanoseconds = (totalNs: number): string => {
 };
 
 const BASE_TIME = 1000 * 1000;
-export const formatTime = (time: number): string => {
-    return (time / BASE_TIME).toFixed(3);
+export const formatTime = (time: number, module: string = 'leaks'): string => {
+    if (module === 'leaks') {
+        return (time / BASE_TIME).toFixed(3);
+    }
+    return time.toFixed(3);
 };
 
 // 单位定义（按 1024 进制）

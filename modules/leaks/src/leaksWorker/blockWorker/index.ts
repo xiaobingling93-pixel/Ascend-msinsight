@@ -59,6 +59,17 @@ const resizeCanvasHandler = (payload: ResizeCanvasPayload): void => {
         return;
     }
     zoom = getZoom(memoryBlockData, canvas);
+    const { maxTimestamp, minTimestamp, maxSize, minSize } = memoryBlockData;
+    self.postMessage({
+        type: 'dataInfo',
+        sizeInfo: {
+            maxTimestamp,
+            minTimestamp,
+            maxSize,
+            minSize,
+        },
+        zoom,
+    });
     renderer?.setZoom(zoom);
 };
 
