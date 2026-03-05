@@ -350,6 +350,7 @@ void MemScopeParser::ParseCallBack(const std::string& dbPath, bool result, const
         }
         else { event->errMsg = msg; }
         body.fileId = dbPath;
+        body.module = Protocol::MODULE_MEM_SCOPE;
         event->body = body;
         SendEvent(std::move(event));
     }

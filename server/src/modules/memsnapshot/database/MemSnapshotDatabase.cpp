@@ -554,4 +554,48 @@ std::optional<TraceEntry> MemSnapshotDatabase::QueryFreeRequestedTraceEntryByBlo
     sqlite3_finalize(stmt);
     return std::nullopt;
 }
+
+bool MemSnapshotDatabase::QuerySegmentEventsUntil(const int64_t eventId, std::vector<TraceEntry>& events)
+{
+    std::string querySql = "SELECT * FROM {} WHERE {} <= ? AND {} BETWEEN 0 AND 3;";
+    querySql = StringUtil::FormatString(querySql, traceEntryTable, 
+                                        TraceEntryTableColumn::ID, TraceEntryTableColumn::ACTION);
+    sqlite3_stmt* stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        Server::ServerLog::Error(LOG_TAG + "Failed to prepare query segment events sql, error: ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+    sqlite3_bind_int64(stmt, bindStartIndex, eventId);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        events.push_back(QueryTraceEntryByStep(stmt));
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool MemSnapshotDatabase::QueryActiveBlocksByEventId(const int64_t eventId, std::vector<Block>& blocks)
+{
+    std::string querySql = "SELECT * FROM {} WHERE {} <= ? AND ({} > ? OR {} < 0);";
+    querySql = StringUtil::FormatString(querySql, blockTable,
+                                        BlockTableColumn::ID,
+                                        BlockTableColumn::FREE_EVENT_ID,
+                                        BlockTableColumn::FREE_EVENT_ID);
+    sqlite3_stmt* stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        Server::ServerLog::Error(LOG_TAG + "Failed to prepare query blocks by event id sql, error: ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_int64(stmt, bindIdx++, eventId);
+    sqlite3_bind_int64(stmt, bindIdx++, eventId);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        blocks.push_back(QueryBlockByStep(stmt));
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
 } // namespace Dic::Module::FullDb

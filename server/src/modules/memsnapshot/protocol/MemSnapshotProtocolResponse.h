@@ -245,7 +245,7 @@ struct MemSnapshotDetailResponse : public JsonResponse {
         auto& allocator = json.GetAllocator();
         ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
         json_t body(kObjectType);
-        
+
         if (type == DETAIL_TYPE_EVENT && event.has_value()) {
             auto eventJson = ToMemSnapshotTraceEntryDetailJson(event.value(), allocator);
             JsonUtil::AddMember(json, "body", eventJson, allocator);
@@ -254,6 +254,72 @@ struct MemSnapshotDetailResponse : public JsonResponse {
             auto blockJson = ToMemSnapshotExtendedBlockJson(blk, allocator);
             JsonUtil::AddMember(json, "body", blockJson, allocator);
         }
+        return std::optional<document_t>{std::move(json)};
+    }
+};
+
+/**
+ * @brief Segment状态中的Block信息
+ */
+struct SegmentBlockInfo {
+    int64_t id{0};
+    uint64_t size{0};
+    uint64_t offset{0};
+};
+
+/**
+ * @brief Segment状态信息
+ */
+struct SegmentStateInfo {
+    uint64_t address{0};
+    uint64_t stream{0};
+    uint64_t size{0};
+    int64_t allocOrMapEventId{-1};
+    uint64_t allocated{0};
+    std::vector<SegmentBlockInfo> blocks;
+};
+
+static json_t ToSegmentBlockInfoJson(const SegmentBlockInfo& block, Document::AllocatorType& allocator)
+{
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "id", block.id, allocator);
+    JsonUtil::AddMember(json, "size", block.size, allocator);
+    JsonUtil::AddMember(json, "offset", block.offset, allocator);
+    return json;
+}
+
+static json_t ToSegmentStateInfoJson(const SegmentStateInfo& segment, Document::AllocatorType& allocator)
+{
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "address", NumberUtil::Uint64ToHexString(segment.address), allocator);
+    JsonUtil::AddMember(json, "stream", segment.stream, allocator);
+    JsonUtil::AddMember(json, "size", segment.size, allocator);
+    JsonUtil::AddMember(json, "allocOrMapEventId", segment.allocOrMapEventId, allocator);
+    JsonUtil::AddMember(json, "allocated", segment.allocated, allocator);
+    json_t blocksJson(kArrayType);
+    for (const auto& block : segment.blocks) {
+        blocksJson.PushBack(ToSegmentBlockInfoJson(block, allocator), allocator);
+    }
+    JsonUtil::AddMember(json, "blocks", blocksJson, allocator);
+    return json;
+}
+
+struct MemSnapshotStateResponse : public JsonResponse {
+    MemSnapshotStateResponse() : JsonResponse(REQ_RES_MEM_SNAPSHOT_STATE) {}
+    std::vector<SegmentStateInfo> segments;
+
+    [[nodiscard]] std::optional<document_t> ToJson() const override
+    {
+        document_t json(kObjectType);
+        auto& allocator = json.GetAllocator();
+        ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
+        json_t body(kObjectType);
+        json_t segmentsJson(kArrayType);
+        for (const auto& segment : segments) {
+            segmentsJson.PushBack(ToSegmentStateInfoJson(segment, allocator), allocator);
+        }
+        JsonUtil::AddMember(body, "segments", segmentsJson, allocator);
+        JsonUtil::AddMember(json, "body", body, allocator);
         return std::optional<document_t>{std::move(json)};
     }
 };

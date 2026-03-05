@@ -245,6 +245,41 @@ struct MemSnapshotDetailRequest : Request {
     }
 };
 
+struct MemSnapshotStateParams {
+    uint64_t eventId{0};
+
+    bool CommonCheck(std::string& errorMsg) const
+    {
+        if (eventId > INT64_MAX) {
+            errorMsg = "eventId exceeds INT64_MAX";
+            return false;
+        }
+        return true;
+    }
+};
+
+struct MemSnapshotStateRequest : Request {
+    MemSnapshotStateRequest() : Request(REQ_RES_MEM_SNAPSHOT_STATE) {}
+    MemSnapshotStateParams params;
+
+    static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
+    {
+        auto reqPtr = std::make_unique<MemSnapshotStateRequest>();
+        if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+            error = "Failed to set request base info, command is: " + reqPtr->command;
+            return nullptr;
+        }
+        if (!json.HasMember("params") || !json["params"].HasMember("eventId")) {
+            error = "Request[requestId=" + std::to_string(reqPtr->id) +
+                    "] json lacks member params or eventId.";
+            return nullptr;
+        }
+        const json_t& param_json = json["params"];
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.eventId, param_json, "eventId");
+        return reqPtr;
+    }
+};
+
 } // namespace Dic::Protocol
 
 #endif // PROFILER_SERVER_MEM_SNAPSHOT_PROTOCOL_REQUEST_H

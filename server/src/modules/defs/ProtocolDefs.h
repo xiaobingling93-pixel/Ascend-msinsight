@@ -43,6 +43,7 @@ const std::string MODULE_JUPYTER = "jupyter";
 const std::string MODULE_IE = "IE";
 const std::string MODULE_MEM_SCOPE = "leaks";
 const std::string MODULE_TRITON = "triton";
+const std::string MODULE_MEM_SNAPSHOT = "memsnapshot";
 #pragma endregion
 
 #pragma region << Event Name>>
@@ -171,6 +172,7 @@ const std::string REQ_RES_MEM_SNAPSHOT_BLOCKS = "Memory/snapshot/blocks";
 const std::string REQ_RES_MEM_SNAPSHOT_ALLOCATIONS = "Memory/snapshot/allocations";
 const std::string REQ_RES_MEM_SNAPSHOT_EVENTS = "Memory/snapshot/events";
 const std::string REQ_RES_MEM_SNAPSHOT_DETAIL = "Memory/snapshot/detail";
+const std::string REQ_RES_MEM_SNAPSHOT_STATE = "Memory/snapshot/state";
 
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";

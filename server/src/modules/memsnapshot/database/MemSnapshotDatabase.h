@@ -39,6 +39,8 @@ public:
     bool QueryAllBlocks(std::vector<Block> &blocks);
     // 基于id查询单个block的详细信息
     std::optional<Block> QueryBlockById(int64_t blockId);
+    // 查询指定事件ID时活跃的blocks
+    bool QueryActiveBlocksByEventId(int64_t eventId, std::vector<Block>& blocks);
     // 查询blocks表格数据，支持分页、过滤、排序等
     int64_t QueryBlocksTable(const MemSnapshotBlockParams& queryParams, std::vector<Block>& blocks);
 
@@ -54,6 +56,9 @@ public:
     std::optional<TraceEntry> QueryTraceEntryById(int64_t eventId);
     // 查询内存块的freeRequested事件
     std::optional<TraceEntry> QueryFreeRequestedTraceEntryByBlock(const Block& block);
+
+    // 查询指定事件ID之前的segment相关事件（segment_alloc, segment_free, segment_map, segment_unmap）
+    bool QuerySegmentEventsUntil(int64_t eventId, std::vector<TraceEntry>& events);
 
     // 字典表
     static std::string GetTableColumnTag(const std::string& tableName, const std::string& colName);

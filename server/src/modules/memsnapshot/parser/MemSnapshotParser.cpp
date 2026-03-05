@@ -308,7 +308,8 @@ bool MemSnapshotParser::TryOpenParsingResultDbAndSetVersion() const
                                  "establish a connection.");
         return false;
     }
-    const auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(dbPath);
+    // 从DatabaseManager中获取MemSnapshotDatabase时，应使用原文件路径作为fileId而不是解析后的Db路径
+    const auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(parseContext.GetPicklePath());
     if (!snapshotDb) {
         Server::ServerLog::Error("[Snapshot] Double Check failed to get the snapshot database.");
         return false;
@@ -324,11 +325,12 @@ bool MemSnapshotParser::TryOpenParsingResultDbAndSetVersion() const
 std::unique_ptr<MemScopeParseSuccessEvent> MemSnapshotParser::BuildParseSuccessEventFromContext() const
 {
     auto event = std::make_unique<Protocol::MemScopeParseSuccessEvent>();
-    event->moduleName = Protocol::MODULE_MEM_SCOPE;
+    event->moduleName = Protocol::MODULE_MEM_SCOPE; // moduleName设置为memscope以复用MemScope的事件/请求/响应路由
     event->result = true;
     Protocol::MemScopeParseSuccessEventBody body;
     body.fileId = parseContext.GetPicklePath();
     body.deviceIds["0"] = {"BLOCK"};
+    body.module = Protocol::MODULE_MEM_SNAPSHOT; // body.module设置为真实数据类型以适配前端区分模块类型
     event->body = body;
     return event;
 }

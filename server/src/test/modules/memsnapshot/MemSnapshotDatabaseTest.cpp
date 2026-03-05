@@ -1,18 +1,21 @@
 /*
- * ------------------------------------------------------------------------- * This file is part of the MindStudio project.
+* -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
  * Copyright (c) 2026 Huawei Technologies Co.,Ltd.
  *
  * MindStudio is licensed under Mulan PSL v2.
- * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan
+ * PSL v2.
  * You may obtain a copy of Mulan PSL v2 at:
  *
  *          http://license.coscl.org.cn/MulanPSL2
  *
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
- * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
- * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
- * See the Mulan PSL v2 for more details.
- * ------------------------------------------------------------------------- */
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+ * NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE. See the
+ * Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
 
 #include <gtest/gtest.h>
 #include "DataBaseManager.h"
@@ -522,5 +525,57 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithMultipleFiltersCombined)
         EXPECT_GE(block.size, params.minSize);
         EXPECT_LE(block.size, params.maxSize);
         EXPECT_EQ(block.state, BLOCK_STATE_ACTIVE_ALLOC);
+    }
+}
+
+// 测试查询segment事件直到指定事件ID
+TEST_F(MemSnapshotDatabaseTest, QuerySegmentEventsUntil)
+{
+    const int64_t eventId = 1000;
+    std::vector<TraceEntry> events;
+    
+    bool result = snapshotDb->QuerySegmentEventsUntil(eventId, events);
+    EXPECT_TRUE(result);
+    EXPECT_GT(events.size(), 0);
+
+    // action值: 0=segment_map, 1=segment_unmap, 2=segment_alloc, 3=segment_free
+    for (const auto& event : events) {
+        EXPECT_TRUE(event.action == TRACE_ENTRY_ACTION_SEG_MAP ||
+                    event.action == TRACE_ENTRY_ACTION_SEG_UNMAP ||
+                    event.action == TRACE_ENTRY_ACTION_SEG_ALLOC ||
+                    event.action == TRACE_ENTRY_ACTION_SEG_FREE);
+    }
+}
+
+// 测试查询segment事件直到最大事件ID
+TEST_F(MemSnapshotDatabaseTest, QuerySegmentEventsUntilMaxEventId)
+{
+    const int64_t maxEventId = snapshotDb->QueryMaxEntryId();
+    std::vector<TraceEntry> events;
+    
+    bool result = snapshotDb->QuerySegmentEventsUntil(maxEventId, events);
+    EXPECT_TRUE(result);
+    
+    // 验证所有事件ID都小于等于最大事件ID
+    for (const auto& event : events) {
+        EXPECT_LE(event.id, maxEventId);
+    }
+}
+
+// 测试查询活跃的内存块
+TEST_F(MemSnapshotDatabaseTest, QueryActiveBlocksByEventId)
+{
+    const int64_t eventId = 1000;
+    std::vector<Block> blocks;
+    
+    bool result = snapshotDb->QueryActiveBlocksByEventId(eventId, blocks);
+    EXPECT_TRUE(result);
+    EXPECT_GT(blocks.size(), 0);
+    
+    // 验证所有返回的块在指定事件ID时刻都是活跃的
+    // 活跃条件: allocEventId <= eventId 且 (freeEventId > eventId 或 freeEventId < 0)
+    for (const auto& block : blocks) {
+        EXPECT_LE(block.allocEventId, eventId);
+        EXPECT_TRUE(block.freeEventId > eventId || block.freeEventId < 0);
     }
 }

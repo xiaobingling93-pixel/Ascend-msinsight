@@ -88,6 +88,7 @@ include_directories(${SRC_HOME_DIR}/modules/memsnapshot/database)
 include_directories(${SRC_HOME_DIR}/modules/memsnapshot/handler)
 include_directories(${SRC_HOME_DIR}/modules/memsnapshot/protocol)
 include_directories(${SRC_HOME_DIR}/modules/memsnapshot/parser)
+include_directories(${SRC_HOME_DIR}/modules/memsnapshot/service)
 # Operator
 include_directories(${SRC_HOME_DIR}/modules/operator)
 include_directories(${SRC_HOME_DIR}/modules/operator/database)
@@ -221,6 +222,7 @@ aux_source_directory(${SRC_HOME_DIR}/modules/memsnapshot/database DIC_MODULES_ME
 aux_source_directory(${SRC_HOME_DIR}/modules/memsnapshot/handler DIC_MODULES_MEM_SNAPSHOT_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memsnapshot/protocol DIC_MODULES_MEM_SNAPSHOT_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memsnapshot/parser DIC_MODULES_MEM_SNAPSHOT_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memsnapshot/service DIC_MODULES_MEM_SNAPSHOT_SVC_SRC)
 
 # Reinforcement Learning
 aux_source_directory(${SRC_HOME_DIR}/modules/rl DIC_MODULES_RL_SRC)
@@ -323,6 +325,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_MEM_SNAPSHOT_HANDLER_SRC}
         ${DIC_MODULES_MEM_SNAPSHOT_PROTOCOL_SRC}
         ${DIC_MODULES_MEM_SNAPSHOT_PARSER_SRC}
+        ${DIC_MODULES_MEM_SNAPSHOT_SVC_SRC}
         ${DIC_MODULES_IE_REPO_SRC}
         ${DIC_MODULES_RL_SRC}
         ${DIC_MODULES_RL_CORE_SRC}
