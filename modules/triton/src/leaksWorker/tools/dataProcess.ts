@@ -189,7 +189,7 @@ export const buildBlockViewPath = (blockView: SetMemoryBlocksDataPayload['data']
 let X_GAP = 20;
 const Y_GAP = 20;
 const LINE_HEIGHT = 40;
-export const getMemoryStateRenderData = (data: Segment[], canvas: OffscreenCanvas): Segment[] => {
+export const getMemoryStateRenderData = (data: Segment[]): Segment[] => {
     if (data.length < 1) {
         return [];
     }
@@ -217,7 +217,7 @@ export const getMemoryStateRenderData = (data: Segment[], canvas: OffscreenCanva
     return stateRenderData;
 };
 
-export const getMemoryStateZoom = (data: Segment[], canvas: OffscreenCanvas): RenderOptions['zoom'] => {
+export const getMemoryStateZoom = (data: Segment[], canvas: OffscreenCanvas | HTMLCanvasElement): RenderOptions['zoom'] => {
     if (data.length < 1) {
         return { x: 1, y: 1, offset: 0 };
     }

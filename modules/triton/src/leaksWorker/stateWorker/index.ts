@@ -43,7 +43,7 @@ const setMemoryStateDataHandler = (payload: SetMemoryStateDataPayload): void => 
     clickItem = null;
     hoverItem = null;
     renderHighlintData();
-    memoryStateData = getMemoryStateRenderData(payload.data, canvas);
+    memoryStateData = getMemoryStateRenderData(payload.data);
     zoom = getMemoryStateZoom(memoryStateData, canvas);
     renderer?.setZoom(zoom).setData(memoryStateData);
     renderer?.updateCanvasSize(viewport);
