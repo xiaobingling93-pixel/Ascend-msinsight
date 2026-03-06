@@ -129,6 +129,8 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
 
     useEffect(() => {
         if (session.deviceId === '') return;
+        setDataSource([]);
+        workerSetMemoryStateData({ data: [] });
         getAllEventListData(session).then((data) => {
             setDataSource(data.map((item, index) => ({
                 ...item,
@@ -170,7 +172,7 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
             <div style={{ paddingLeft: 10 }} />
         </div>
         <ResizeTable className="table-slice-list" ref={tableRef} virtual scroll={{ y: 760 }} dataSource={dataSource} columns={columns} showHeader={false}
-            rowClassName={(row: any): string => {
+            loading={dataSource.length < 1} rowClassName={(row: any): string => {
                 if (currentSelectRow === row.index) {
                     return 'click-select';
                 }
