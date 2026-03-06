@@ -93,7 +93,7 @@ class TraceEntry:
     def get_callstack(self):
         if not self.frames:
             return ""
-        return "\n".join([f"{frame.filename}:{frame.line} {frame.name}" for frame in self.frames])[1:-1]
+        return "\n".join([f"{frame.filename}:{frame.line} {frame.name}" for frame in self.frames[::-1]])
 
     def to_dict(self):
         return self._origin if self._origin else dict(

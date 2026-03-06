@@ -75,13 +75,6 @@ class DumpEventHooker(SimulateHooker, AllocatorHooker):
         self.db_handler = SnapshotDbHandler(dump_dir, insert_cache_size=dump_cache_size)
 
     def post_undo_event(self, already_undo_event: TraceEntry, current_snapshot: DeviceSnapshot) -> bool:
-        # 每个事件回放后dump一次event
-        self.db_handler.insert_event(event2record(
-            event=already_undo_event,
-            allocated=current_snapshot.total_allocated,
-            active=current_snapshot.total_activated,
-            reserved=current_snapshot.total_reserved
-        ))
         # 回放完毕，dump剩余Segment及block数据, 注意应该先插入blocks
         if not current_snapshot.trace_entries:
             dump_logger.info("Finished ")
@@ -107,6 +100,13 @@ class DumpEventHooker(SimulateHooker, AllocatorHooker):
         return True
 
     def pre_undo_event(self, wait4undo_event: TraceEntry, current_snapshot: DeviceSnapshot) -> bool:
+        # 每个事件回放前dump一次event
+        self.db_handler.insert_event(event2record(
+            event=wait4undo_event,
+            allocated=current_snapshot.total_allocated,
+            active=current_snapshot.total_activated,
+            reserved=current_snapshot.total_reserved
+        ))
         return True
 
     def post_replay_free_block(self, released_block: Block, current_snapshot: DeviceSnapshot):
