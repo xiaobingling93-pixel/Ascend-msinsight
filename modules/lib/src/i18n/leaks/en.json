@@ -106,6 +106,7 @@
         "Alloc Event": "Alloc Event",
         "Free Requested Event": "Free Requested Event",
         "Free Completed Event": "Free Completed Event",
+        "CallStack": "Call Stack",
         "detail": "detail",
         "noData": [
           "This block/segment has no frames. Potential causes:",

@@ -106,6 +106,7 @@
       "Alloc Event": "分配事件",
       "Free Requested Event": "释放申请事件",
       "Free Completed Event": "释放完成事件",
+      "CallStack": "调用栈",
       "detail": "详情",
       "noData": [
         "此内存块/段没有对应的帧（frames）。潜在原因如下：",

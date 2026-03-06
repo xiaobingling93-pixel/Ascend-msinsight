@@ -95,7 +95,7 @@ const SliceDetailItem = styled.div`
     display: flex;
     color: ${(props): string => props.theme.tableTextColor};
     .sliceDetailName {
-        width: 200px;
+        width: 220px;
         font-weight: bold;
     }
     .sliceDetailValue {
@@ -206,7 +206,8 @@ const SliceDetailObjectItem = observer(({ data }: { data: { [key: string]: any }
     });
 
     return <>
-        <Button onClick={() => setIsExpand(oVal => !oVal)} type="link" size="small" style={{ padding: 0, minWidth: 0 }}>
+        <Button type="link" size="small" style={{ padding: 0, minWidth: 0 }}
+            disabled={dataList.length < 1} onClick={() => setIsExpand(oVal => !oVal)} >
             {`${isExpand ? '-' : '+'} ${t('detail')}`}
         </Button>
         {
