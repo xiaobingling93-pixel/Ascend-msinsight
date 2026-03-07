@@ -89,6 +89,11 @@
 
 MindStudio Insight工具支持在Windows、Linux，以及macOS系统中安装使用，并且支持通过插件方式安装，具体安装操作可参见[MindStudio Insight安装指南](./docs/zh/user_guide/mindstudio_insight_install_guide.md)。
 
+## 🚀 快速开始
+
+- [系统调优篇](./docs/zh/user_guide/quick_start/system_start.md)：学习如何使用概览、通信、时间线页签分析模型系统性能
+- [算子调优篇](./docs/zh/user_guide/quick_start/operator_start.md)：学习如何使用详情、时间线、源码页签分析算子性能
+
 ---
 
 ## 工具限制与注意事项
