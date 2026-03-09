@@ -34,6 +34,7 @@ import { formatBytes } from '@/utils/utils';
 import { type EvenItem, getMemoryStateData } from '@/utils/RequestUtils';
 import { getAllEventListData } from '../dataHandler';
 import { observer } from 'mobx-react';
+import { useTranslation } from 'react-i18next';
 
 export const MemoryStateDiagram = ({ session }: { session: Session }): JSX.Element => {
     return <div style={{ display: 'flex', height: 800 }}>
@@ -67,6 +68,7 @@ const EventItemRender = ({ record }: { record: EvenItem }): JSX.Element => {
 };
 
 const EventList = observer(({ session }: { session: Session }): JSX.Element => {
+    const { t } = useTranslation('leaks');
     const [searchValue, setSearchValue] = useState<string>('');
     const [searchIndexList, setSearchIndexList] = useState<number[]>([]);
     const [dataSource, setDataSource] = useState<EvenItem[]>([]);
@@ -82,7 +84,7 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         const inputContent = e.target.value;
-        if (/^\d*$/.test(inputContent)) {
+        if (/^[a-zA-Z0-9]*$/.test(inputContent)) {
             setSearchValue(inputContent);
         }
     };
@@ -162,7 +164,7 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
 
     return <div>
         <div style={{ display: 'flex', paddingBottom: 8 }}>
-            <Input allowClear style={{ flex: 1 }} value={searchValue} onChange={handleChange} onPressEnter={handleSearch} />
+            <Input allowClear style={{ flex: 1 }} value={searchValue} onChange={handleChange} onPressEnter={handleSearch} placeholder={t('placeholderEventList')} />
             <div style={{ padding: '0 10px', display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleSearch}>
                 <SearchIcon />
             </div>

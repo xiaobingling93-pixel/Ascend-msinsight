@@ -81,6 +81,7 @@
     "sliceDetail": "选中详情",
     "systemView": "系统视图",
     "stateDiagram": "内存池状态图",
+    "placeholderEventList": "请输入地址",
     "slice": {
       "id": "ID",
       "addr": "地址",
