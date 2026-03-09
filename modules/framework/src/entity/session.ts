@@ -282,6 +282,25 @@ export class Session {
 
     /**
      * 获取 cluster 类型的 path
+     * 导入：
+     * 1. 非集群
+     * 2. 单集群，无 cluster
+     *    - 导入        rank路径
+     *    - 点 project    rank路径
+     *    - 点 rank        rank路径
+     *    - 二次导入        project路径
+     * 3. 单集群，有 cluster
+     *    - 导入        rank路径
+     *    - 点 project    rank路径
+     *    - 点 cluster    cluster路径
+     *    - 点 rank        rank路径
+     *    - 二次导入        project路径
+     * 4. 多集群
+     *    - 导入        rank路径
+     *    - 点 project    rank路径
+     *    - 点 cluster    cluster路径
+     *    - 点 rank        rank路径
+     *    - 二次导入        project路径
      * @param selectedProject 选中的工程项目
      */
     getClusterPath(selectedProject: ActiveDataSource): string {
@@ -307,7 +326,21 @@ export class Session {
             }
             return '';
         };
-        return findClusterPath(selectedProject.children, 0);
+        const findFirstClusterPath = (children: FileOrDirectory[], depth: number): string => {
+            if (depth >= 5) { return ''; }
+            for (let i = 0; i < children.length; ++i) {
+                const item = children[i];
+                if (item.type === 'CLUSTER') {
+                    return item.path;
+                }
+                const childFindPath = findFirstClusterPath(item.children, depth + 1);
+                if (childFindPath !== '') {
+                    return childFindPath;
+                }
+            }
+            return '';
+        };
+        return (selectedProject.selectedFileType === 'PROJECT' ? findFirstClusterPath : findClusterPath)(selectedProject.children, 0);
     }
 
     private getClusterInfoByPath(path: string): ClusterInfo | undefined {
