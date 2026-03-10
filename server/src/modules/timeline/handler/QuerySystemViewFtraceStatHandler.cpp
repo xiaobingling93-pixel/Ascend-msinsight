@@ -48,7 +48,7 @@ bool QuerySystemViewFtraceStatHandler::HandleRequest(std::unique_ptr<Protocol::R
     // 查询数据
     auto ftraceStat = textDb->QueryFtraceStatistics(
         request.params.dataType, offset, request.params.pageSize);
-    auto threadInfoMap = RenderEngine::Instance()->GetAllThreadInfo({request.projectName, PROCESS_TYPE::TEXT});
+    auto threadInfoMap = RenderEngine::Instance()->GetAllThreadInfo({request.params.rankId, PROCESS_TYPE::TEXT});
     // 转换数据为map格式
     for (const auto &item : ftraceStat.data) {
         std::unordered_map<std::string, std::string> row;

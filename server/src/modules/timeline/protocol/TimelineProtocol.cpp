@@ -734,6 +734,7 @@ std::unique_ptr<Request> TimelineProtocol::ToSystemViewFtraceStatRequest(const D
     JsonUtil::SetByJsonKeyValue(reqPtr->params.layer, json["params"], "layer");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     reqPtr->params.SetDataType();
     return reqPtr;
 }

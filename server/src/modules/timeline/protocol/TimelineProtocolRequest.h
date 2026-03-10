@@ -397,6 +397,7 @@ struct SystemViewFtraceStatParams {
     FtraceDataType dataType = FtraceDataType::UNKOWN;
     uint64_t current = 0;
     uint64_t pageSize = 0;
+    std::string rankId;
 
     void SetDataType()
     {
