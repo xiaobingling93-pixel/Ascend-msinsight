@@ -39,7 +39,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     <MemoryBlockDiagram session={session} />
                 </div>
             </CollapsiblePanel>
-            <CollapsiblePanel title={t('stateDiagram')} style={{ minWidth: 1000 }}>
+            <CollapsiblePanel title={t('stateDiagram')} style={{ minWidth: 1000 }} collapsible>
                 <MemoryStateDiagram session={session} />
             </CollapsiblePanel>
         </>

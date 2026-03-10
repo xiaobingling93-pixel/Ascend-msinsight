@@ -61,8 +61,8 @@ export class NativeRenderer {
     }
 
     updateCanvasSize(viewport: RenderOptions['viewport']): this {
-        this.canvas.width = Math.max(1, Math.floor(viewport.width * this.devicePixelRatio));
-        this.canvas.height = Math.max(1, Math.floor(viewport.height * this.devicePixelRatio));
+        this.canvas.width = Math.max(1, Math.floor(viewport.width));
+        this.canvas.height = Math.max(1, Math.floor(viewport.height));
         this.requestRender();
         return this;
     }
@@ -79,7 +79,7 @@ export class NativeRenderer {
     }
 
     renderFrame(): void {
-        const viewport = { width: this.canvas.width / this.devicePixelRatio, height: this.canvas.height / this.devicePixelRatio };
+        const viewport = { width: this.canvas.width, height: this.canvas.height };
         this.painter.render({ transform: this.transform, viewport, zoom: this.zoom });
     }
 

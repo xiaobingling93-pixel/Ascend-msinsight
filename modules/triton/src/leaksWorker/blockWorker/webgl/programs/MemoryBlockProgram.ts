@@ -29,7 +29,7 @@ export class MemoryBlockProgram extends Program {
         if (this.instanceBuffer) {
             this.gl.deleteBuffer(this.instanceBuffer);
         }
-        this.instanceBuffer = this.createBuffer(9 * 4 * this.glInstanceDataSize);
+        this.instanceBuffer = this.createBuffer(4 * this.glInstanceDataSize);
         gl.bindVertexArray(this.vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
         const stride = 9 * 4;

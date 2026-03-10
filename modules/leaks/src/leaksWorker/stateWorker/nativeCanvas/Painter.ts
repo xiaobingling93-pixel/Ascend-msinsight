@@ -51,7 +51,7 @@ export class Painter {
         this.context.resetTransform();
         this.context.clearRect(0, 0, viewport.width, viewport.height);
         this.context.translate(transform.x, transform.y);
-        this.context.scale(this.devicePixelRatio * transform.scale, this.devicePixelRatio * transform.scale);
+        this.context.scale(transform.scale, transform.scale);
         this.context.save();
         this.renderData(this.data, options);
         this.renderHighlightData(this.highlightData, options);
