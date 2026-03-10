@@ -115,6 +115,11 @@
         "2) The context or stacks passed to _record_memory_history does not include this block/segment. Consider changing context to 'state', 'alloc', or 'all', or changing stacks to 'all'.",
         "3) This event occurred during backward, which has no python frames, and memory history did not include C++ frames. Use stacks='all' to record both C++ and python frames."
       ]
-    }
+    },
+    "noDisassemblyData": [
+      "No memory disassembly data was found. Memory disassembly requires the following conditions to be met when using memscope for collection:",
+      "1. Collecting events must include at least malloc and free events.",
+      "2. Enable memory analysis - analysis and specify - analysis=decode to enable."
+    ]
   }
 }

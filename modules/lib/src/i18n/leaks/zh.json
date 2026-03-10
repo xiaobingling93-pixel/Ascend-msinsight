@@ -115,6 +115,11 @@
         "2） 传递给 _record_memory_history 的上下文（context）或堆栈（stacks）设置未包含此内存块/段。建议将 context 参数更改为 'state'、'alloc' 或 'all'，或将 stacks 参数更改为 'all'。",
         "3） 该事件发生在反向传播（backward）期间，此时不存在 Python 帧，且内存历史记录未包含 C++ 帧。请使用 stacks='all' 以同时记录 C++ 和 Python 帧。"
       ]
-    }
+    },
+    "noDisassemblyData": [
+      "未查询到内存拆解数据，内存拆解要求使用memscope采集时满足以下条件：",
+      "1. 采集事件至少需要包含malloc、free事件",
+      "2. 启用内存分析--analysis，且指定--analysis=decompose启用"
+    ]
   }
 }

@@ -147,13 +147,18 @@ const MemorySliceChart: any = observer(({ session }: { session: Session }): Reac
     useEffect(() => {
         setChartData([transformData(session.memoryData, t, 0)]);
     }, [session.memoryData, t]);
-    return (
-        <MIChart
-            ref={chartRef}
-            height="350px"
-            loading={loading}
-            options={chartOptions}
-        />
-    );
+    return <>
+        {chartData.length === 1 && chartData[0].value === 0
+            ? <div style={{ position: 'relative', top: 40, paddingBottom: 30 }}>
+                {(t('noDisassemblyData', { returnObjects: true }) as string[]).map((item, index) => <div key={index}>{item}</div>)}
+            </div>
+            : <MIChart
+                ref={chartRef}
+                height="350px"
+                loading={loading}
+                options={chartOptions}
+            />
+        }
+    </>;
 });
 export default MemorySliceChart;
