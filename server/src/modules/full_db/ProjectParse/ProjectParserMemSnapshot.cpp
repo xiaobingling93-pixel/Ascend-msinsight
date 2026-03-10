@@ -38,7 +38,7 @@ void ProjectParserMemSnapshot::Parser(const std::vector<ProjectExplorerInfo>& pr
     response.body.reset = true;
     response.body.subParseFileInfo = projectInfos[0].subParseFileInfo;
     response.body.isLeaks = true;
-    if (MemSnapshotParser::Instance().GetParseContext().GetState() != ParserState::INIT) {
+    if (!MemSnapshotParser::Instance().GetParseContext().IsReadyToParse()) {
         response.result = false;
         return;
     }

@@ -46,7 +46,15 @@ void MemSnapshotParserContext::Reset(std::string nPicklePath,
 bool MemSnapshotParserContext::IsFinished() const
 {
     std::shared_lock<std::shared_mutex> lock(_mutex);
-    return state == ParserState::FINISH_FAILURE || state == ParserState::FINISH_SUCCESS;
+    return state == ParserState::FINISH_FAILURE ||
+        state == ParserState::FINISH_SUCCESS ||
+        state == ParserState::UP_TO_DATE;
+}
+
+bool MemSnapshotParserContext::IsReadyToParse() const
+{
+    std::shared_lock<std::shared_mutex> lock(_mutex);
+    return state != ParserState::Loading && state != ParserState::Processing;
 }
 
 std::string MemSnapshotParserContext::GetPicklePath() const { return picklePath; }
@@ -107,16 +115,10 @@ void MemSnapshotParser::AsyncParseMemSnapshotPickle(const std::string& pickleFil
     const std::string logPath = FileUtil::SplicePath(FileUtil::GetParentPath(pickleFilePath), logName);
     parseContext.Reset(pickleFilePath, logPath, outputDbPath);
     auto traceId = TraceIdManager::GenerateTraceId();
-    if (CheckIfParsingNeed()) {
-        Server::ServerLog::Info("[Snapshot] Parsing pickle file: {}, log file: {}, output db file: {}.",
-            parseContext.GetPicklePath(), parseContext.GetLogPath(), parseContext.GetOutputDbPath());
-        _threadPool->AddTask(ParseMemSnapshotTask, traceId);
-        _threadPool->AddTask(ParseDaemonTask, traceId);
-        return;
-    }
-    // 不需要重新解析的场景，可以直接发送解析成功事件，且在上述CheckIf方法中已经打开db并纳管到了databaseManager中
-    auto event = Instance().BuildParseSuccessEventFromContext();
-    SendEvent(std::move(event));
+    Server::ServerLog::Info("[Snapshot] Parsing pickle file: {}, log file: {}, output db file: {}.",
+                            parseContext.GetPicklePath(), parseContext.GetLogPath(), parseContext.GetOutputDbPath());
+    _threadPool->AddTask(ParseMemSnapshotTask, traceId);
+    _threadPool->AddTask(ParseDaemonTask, traceId);
 }
 
 MemSnapshotParserContext& MemSnapshotParser::GetParseContext() { return parseContext; }
@@ -127,9 +129,8 @@ MemSnapshotParserContext& MemSnapshotParser::GetParseContext() { return parseCon
  * @return true 需要解析或重新解析
  * @return false 不需要解析或重新解析
  */
-bool MemSnapshotParser::CheckIfParsingNeed() const
+bool MemSnapshotParser::CheckIfParsingNeed(const MemSnapshotParserContext& context)
 {
-    const auto& context = parseContext;
     // 首先判断是否存在解析结果db文件，如果不存在则返回需要重新解析
     if (!FileUtil::CheckFileValid(context.GetOutputDbPath())) {
         Server::ServerLog::Info("[Snapshot] Parsing output db file cannot found or is not valid. Trying to re-parse.");
@@ -161,6 +162,14 @@ MemSnapshotParser::~MemSnapshotParser() { _threadPool->ShutDown(); }
 void MemSnapshotParser::ParseMemSnapshotTask()
 {
     Server::ServerLog::Info("[Snapshot] Parse snapshot thread started.");
+    if (!CheckIfParsingNeed(Instance().parseContext)) {
+        // 不需要重新解析的场景，可以直接发送解析成功事件，且在上述CheckIf方法中已经打开db并纳管到了databaseManager中
+        Server::ServerLog::Info("[Snapshot] Parsing pickle file: %, output db file: % is up-to-date.",
+                                Instance().parseContext.GetPicklePath(), Instance().parseContext.GetOutputDbPath());
+        Instance().parseContext.SetProgress(100);
+        Instance().parseContext.SetState(ParserState::UP_TO_DATE);
+        return;
+    }
     std::string cmd;
 #ifdef __linux__
     // linux场景直接通过python3执行
@@ -288,7 +297,8 @@ void MemSnapshotParser::ParseDaemonTask()
 void MemSnapshotParser::ParseCallBack()
 {
     const std::string filepath = Instance().parseContext.GetPicklePath();
-    if (Instance().parseContext.GetState() != ParserState::FINISH_SUCCESS) {
+    const auto state = Instance().parseContext.GetState();
+    if (state != ParserState::FINISH_SUCCESS && state != ParserState::UP_TO_DATE) {
         const std::string error = StringUtil::FormatString("Failed to parse snapshot data. For details, please check "
                                                            "{}.", Instance().parseContext.GetLogPath());
         Server::ServerLog::Error(error);

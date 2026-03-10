@@ -30,6 +30,7 @@ enum class ParserState {
     Processing = 1,
     FINISH_SUCCESS = 2,
     FINISH_FAILURE = 3,
+    UP_TO_DATE = 4,
 };
 
 struct MemSnapshotParserContext {
@@ -37,6 +38,7 @@ public:
     MemSnapshotParserContext() = default;
     void Reset(std::string nPicklePath = "", std::string nLogPath = "", std::string nOutputPath = "");
     bool IsFinished() const;
+    bool IsReadyToParse() const;
     std::string GetPicklePath() const;
     std::string GetLogPath() const;
     std::string GetOutputDbPath() const;
@@ -67,7 +69,7 @@ public:
     void AsyncParseMemSnapshotPickle(const std::string& pickleFilePath);
     MemSnapshotParserContext& GetParseContext();
     // 用于检查是否需要解析或重新解析pickle文件
-    bool CheckIfParsingNeed() const;
+    static bool CheckIfParsingNeed(const MemSnapshotParserContext& context);
 private:
     MemSnapshotParser();
     ~MemSnapshotParser();

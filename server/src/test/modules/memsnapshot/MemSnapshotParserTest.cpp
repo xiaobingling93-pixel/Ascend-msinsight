@@ -128,7 +128,7 @@ TEST_F(MemSnapshotParserTest, CheckIfParsingNeed)
     parser->GetParseContext().Reset(testPicklePath, testLogPath, testOutputDbPath);
 
     // 由于输出数据库文件不存在，应该需要解析
-    bool needParse = parser->CheckIfParsingNeed();
+    bool needParse = parser->CheckIfParsingNeed(parser->GetParseContext());
     EXPECT_TRUE(needParse);
 
     // 创建一个空的输出数据库文件
@@ -136,7 +136,7 @@ TEST_F(MemSnapshotParserTest, CheckIfParsingNeed)
     dbFile.close();
 
     // 再次检查，由于数据库文件存在但未打开，仍需要解析
-    needParse = parser->CheckIfParsingNeed();
+    needParse = parser->CheckIfParsingNeed(parser->GetParseContext());
     EXPECT_TRUE(needParse);
 
     // 清理测试文件
