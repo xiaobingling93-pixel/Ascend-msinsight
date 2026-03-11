@@ -131,7 +131,7 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
                 setTimeout(() => {
                     const dom = document.getElementById(searchText)?.closest('div');
                     dom?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
-                });
+                }, 100);
                 onSearchReturnChange({ success: true });
                 return;
             } else {
