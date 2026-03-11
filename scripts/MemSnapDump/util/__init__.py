@@ -15,6 +15,6 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 -------------------------------------------------------------------------
 """
-from .logger import get_logger
+from .logger import get_logger, set_global_log_file
 
-__all__ = ['get_logger']
+__all__ = ['get_logger', 'set_global_log_file']
