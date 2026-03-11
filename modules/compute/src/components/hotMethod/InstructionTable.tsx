@@ -170,6 +170,7 @@ const instrsColsConfig = [
     {
         title: 'Source',
         dataIndex: 'Source',
+        width: 150,
         sorter: true,
         ellipsis: { showTitle: false },
         render: (source: string): React.ReactNode => (
@@ -264,6 +265,9 @@ interface IParams<T> {
     t: TFunction;
     defaultSort?: boolean;
 }
+
+// 列宽为 100px 的列名列表，其余为 150px
+const smallColumns = ['Pipe', 'Instructions Executed', 'GPR Count'];
 export const getColConfig = <T extends object>({ colName, fieldType, presetCols, t, defaultSort = true }: IParams<T>): ColumnType<T> => {
     const col = presetCols.find(colConfig => colConfig.title === colName);
     if (!col && (fieldType === FieldType.PERCENTAGE || colName === 'L2Cache Hit Rate')) {
@@ -281,6 +285,7 @@ export const getColConfig = <T extends object>({ colName, fieldType, presetCols,
             sorter: defaultSort,
             title: t(colName),
             dataIndex: colName,
+            width: smallColumns.includes(colName) ? 100 : 150,
             // 数据是int或者float时，数值为-1显示为NA
             render: (value: React.Key): React.ReactNode =>
                 [FieldType.INT, FieldType.FLOAT].includes(fieldType) && typeof value === 'number' && value < 0 ? NOT_APPLICABLE : value,

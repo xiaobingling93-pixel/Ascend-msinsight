@@ -297,7 +297,7 @@ interface ResizeTableProps<T> extends TableProps<T> {
     minThWidth?: number;
     style?: object;
     virtual?: boolean;
-    scroll?: { x?: number; y?: number; rowHeight?: number; scrollToFirstRowOnChange?: boolean };
+    scroll?: { x?: string | number | true; y?: number; rowHeight?: number; scrollToFirstRowOnChange?: boolean };
     rowHoverable?: boolean;
     allowCopy?: boolean;
 }
