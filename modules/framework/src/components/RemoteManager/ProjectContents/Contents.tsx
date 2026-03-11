@@ -339,6 +339,7 @@ const Contents = observer(({ session }: {session: Session}) => {
                 selectedFilePath: selectedPath,
                 selectedRankId,
             });
+            return;
         }
         // 如果点击的不是项目
         if (node.layerType !== 'PROJECT') {
