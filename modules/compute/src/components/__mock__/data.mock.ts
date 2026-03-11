@@ -54,6 +54,21 @@ for (let i = 0; i < 16; i++) {
                     }, //  L2cache命中率 (%)
                     level: 1,
                 },
+                simtVfInstructions: {
+                    value: {
+                        compare: 2629888,
+                        baseline: 0,
+                        diff: 0,
+                    },
+                    level: 0,
+                },
+                simtVfInstructionPerCycle: {
+                    value: {
+                        compare: 164663,
+                        baseline: 0,
+                        diff: 0,
+                    },
+                },
             },
             {
                 subCoreName: '<div>c</div>',
@@ -81,6 +96,21 @@ for (let i = 0; i < 16; i++) {
                     },
                     level: 1,
                 },
+                simtVfInstructions: {
+                    value: {
+                        compare: 2629888,
+                        baseline: 0,
+                        diff: 0,
+                    },
+                    level: 0,
+                },
+                simtVfInstructionPerCycle: {
+                    value: {
+                        compare: 164663,
+                        baseline: 0,
+                        diff: 0,
+                    },
+                },
             },
             {
                 subCoreName: 'Vector0',
@@ -107,6 +137,21 @@ for (let i = 0; i < 16; i++) {
                         diff: 0,
                     },
                     level: 1,
+                },
+                simtVfInstructions: {
+                    value: {
+                        compare: 2629888,
+                        baseline: 0,
+                        diff: 0,
+                    },
+                    level: 0,
+                },
+                simtVfInstructionPerCycle: {
+                    value: {
+                        compare: 164663,
+                        baseline: 0,
+                        diff: 0,
+                    },
                 },
             },
         ],

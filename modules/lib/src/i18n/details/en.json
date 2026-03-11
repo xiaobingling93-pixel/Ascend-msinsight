@@ -43,6 +43,7 @@
     "L2 Cache Hit Rate Formula": "L2 Cache Hit Rate = L2 Cache Total Hit / (L2 Cache Total Hit + L2 Cache Total Miss)",
     "Cube Ratio Formula": "Cube Ratio = Cube Cycle / Total Cycle",
     "Vector Ratio Formula": "Vector Ratio = Vector Cycle / Total Cycle",
-    "Active Bw(GB/s)": "Active Bw(GB/s)"
+    "Active Bw(GB/s)": "Active Bw(GB/s)",
+    "Instruction Per Cycle": "Instruction Per Cycle"
   }
 }

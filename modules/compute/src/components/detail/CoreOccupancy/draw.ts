@@ -176,6 +176,7 @@ function getSubCoreValue(showAs: ShowAs, value?: number): string | number {
         case 'cacheHitRate':
             return Number(Number(value).toFixed(2));
         case 'cycles':
+        case 'simtVfInstructions':
             return String(value);
         default:
             return '';
