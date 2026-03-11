@@ -26,7 +26,6 @@ import type { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
 import type { AscendSliceDetail } from '../entity/data';
 import { CaretDownIcon } from '@insight/lib/icon';
-import { Col, Row } from '@insight/lib/components';
 import { safeJSONParse } from '@insight/lib/utils';
 import { ResizeTable } from '@insight/lib/resize';
 import { getDefaultColumData, getPageData, queryTableDataDetails } from './detailViews/Common';
@@ -41,7 +40,7 @@ interface DetailProps<T extends Record<string, unknown>> {
     detail: SingleDataDesc<Record<string, unknown>, unknown>;
     children: React.FC<{data: T; session: Session}>;
     height: number;
-};
+}
 
 const StyledSliceDetailDiv = styled.div`
     width: 100%;
@@ -55,6 +54,22 @@ const StyledSliceArgsDiv = styled.div`
     color: ${(props): string => props.theme.tableTextColor};
     text-align: left;
     font-size: 12px;
+`;
+
+const StyledSliceArgsRow = styled.div`
+    display: flex;
+    margin-left: 24px;
+    padding: 8px 0;
+
+    .key {
+        flex: auto;
+        max-width: 200px;
+        margin-right: 10px;
+    }
+
+    .value {
+        word-break: break-all;
+    }
 `;
 
 const createContentWithBreaks = (content: string): React.ReactNode => {
@@ -180,7 +195,7 @@ const RidMoreTable = observer(({ card, value, bottomHeight }: RidMoreProps) => {
                 setSorter(newsorter as typeof sorter);
             }
         }}
-        rowClassName={(record: any): string => {
+        rowClassName={(): string => {
             return 'click-able';
         }}
         pagination={getPageData(page, setPage)} dataSource={dataSource} columns={column} size="small" loading={isLoading}
@@ -207,12 +222,12 @@ const ArgsData = observer(({ data, linkUpdater }: { data: AscendSliceDetail; lin
             <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>{t('Args')}</div>
             {!isHiddenArgs
                 ? Object.keys(args).map(key => {
-                    return <Row key={key} style={{ marginLeft: '24px', lineHeight: '32px' }} >
-                        <Col flex="150px" style={{ whiteSpace: 'nowrap' }}>{key}</Col>
-                        <Col flex="auto" style={{ wordBreak: 'break-all' }}>
+                    return <StyledSliceArgsRow key={key}>
+                        <div className="key">{key}</div>
+                        <div className="value">
                             { breakKeys.includes(key) ? createContentWithBreaks(args[key]) : createContentNormal(args[key], linkUpdater) }
-                        </Col>
-                    </Row>;
+                        </div>
+                    </StyledSliceArgsRow>;
                 })
                 : <></>}
         </StyledSliceArgsDiv>
