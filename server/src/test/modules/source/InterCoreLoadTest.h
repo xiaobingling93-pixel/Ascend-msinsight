@@ -102,5 +102,83 @@ const std::string INTER_CORE_LOAD_ANALYSIS_RESPONSE_JSON =
     R"("moduleName":"unknown","body":{"soc":"soc","opType":"optype","advice":"advice",)"
     R"("opDetails":[{"coreId":0,"subCoreDetails":[{"subCoreName":"cube0",)";
 
+// 测试场景：包含 simt_vf_instructions 字段的 JSON 数据
+// 注意：使用可被二进制精确表示的浮点数（如 2.5、1.25、2.0）避免精度问题
+const std::string INTER_CORE_LOAD_ANALYSIS_WITH_SIMT_JSON = R"(
+{
+    "advice": "\t0) Test advice with simt instructions.\n",
+    "op_detail": [
+        {
+            "core_detail": [
+                {
+                    "L2cache_hit_rate": "85.5",
+                    "cycles": "10000",
+                    "subcore_id": "0",
+                    "subcore_type": "vector",
+                    "throughput": "512",
+                    "simt_vf_instructions": {
+                        "instructions": "25600",
+                        "instructions_per_cycle": "2.5"
+                    }
+                },
+                {
+                    "L2cache_hit_rate": "90.25",
+                    "cycles": "12000",
+                    "subcore_id": "1",
+                    "subcore_type": "vector",
+                    "throughput": "256",
+                    "simt_vf_instructions": {
+                        "instructions": "19200",
+                        "instructions_per_cycle": "1.25"
+                    }
+                }
+            ],
+            "core_id": 0
+        },
+        {
+            "core_detail": [
+                {
+                    "L2cache_hit_rate": "88.0",
+                    "cycles": "11000",
+                    "subcore_id": "0",
+                    "subcore_type": "vector",
+                    "throughput": "400",
+                    "simt_vf_instructions": {
+                        "instructions": "22000",
+                        "instructions_per_cycle": "2.0"
+                    }
+                }
+            ],
+            "core_id": 1
+        }
+    ],
+    "op_type": "vector",
+    "soc": "Ascend910B4"
+}
+)";
+
+// 测试场景：不包含 simt_vf_instructions 字段的 JSON 数据（向后兼容）
+const std::string INTER_CORE_LOAD_ANALYSIS_WITHOUT_SIMT_JSON = R"(
+{
+    "advice": "\t0) Test advice without simt instructions.\n",
+    "op_detail": [
+        {
+            "core_detail": [
+                {
+                    "L2cache_hit_rate": "75.0",
+                    "cycles": "8000",
+                    "subcore_id": "0",
+                    "subcore_type": "cube",
+                    "throughput": "256"
+                }
+            ],
+            "core_id": 0
+        }
+    ],
+    "op_type": "cube",
+    "soc": "Ascend910B4"
+}
+)";
+
 }
 #endif // PROFILER_SERVER_INTERCORELOADTEST_H

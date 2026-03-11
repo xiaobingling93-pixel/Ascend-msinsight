@@ -23,7 +23,7 @@
 namespace Dic {
 class SpinLock {
 public:
-    SpinLock() : flag(ATOMIC_FLAG_INIT) {}
+    SpinLock() : flag(false) {}
 
     void lock()
     {

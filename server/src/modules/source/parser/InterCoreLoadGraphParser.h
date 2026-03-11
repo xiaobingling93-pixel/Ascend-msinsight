@@ -35,6 +35,8 @@ struct InterCoreSubCoreDetail {
     uint64_t cycles = 0;
     uint64_t throughput = 0;
     float hitRate = 0;
+    int64_t simtVfInstructions{0};
+    float simtVfInstructionPerCycle{0.0};
 };
 
 struct InterCoreOpDetail {
@@ -143,8 +145,7 @@ private:
     std::unordered_map<std::string, SigmodStatHelper> cacheHitRatioSigmodStats;
     std::unordered_map<std::string , SigmodStatHelper> cyclesSigmodStats;
     std::unordered_map<std::string, SigmodStatHelper> throughputSigmodStats;
-    inline static const std::string SUBCORE_TYPE_VECTOR = "vector";
-    inline static const std::string SUBCORE_TYPE_CUBE = "cube";
+    std::unordered_map<std::string, SigmodStatHelper> simtVfInstructionSigmodStats;
 };
 
 } // Dic

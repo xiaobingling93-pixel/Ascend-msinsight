@@ -539,6 +539,16 @@ template<> std::optional<document_t> ToResponseJson<DetailsInterCoreLoadGraphRes
                                          subCoreDetail.throughput.level, allocator);
             TransformInterCoreLoadDetail(jSubCoreDetail, "cacheHitRate", subCoreDetail.cacheHitRate.value,
                                          subCoreDetail.cacheHitRate.level, allocator);
+            TransformInterCoreLoadDetail(jSubCoreDetail,
+                                         "simtVfInstructions",
+                                         subCoreDetail.simtVfInstructions.value,
+                                         subCoreDetail.simtVfInstructions.level,
+                                         allocator);
+            TransformInterCoreLoadDetail(jSubCoreDetail,
+                                         "simtVfInstructionPerCycle",
+                                         subCoreDetail.simtVfInstructionPerCycle.value,
+                                         subCoreDetail.simtVfInstructionPerCycle.level,
+                                         allocator);
             jSubCoreDetails.PushBack(jSubCoreDetail, allocator);
         }
         JsonUtil::AddMember(jOpDetail, "subCoreDetails", jSubCoreDetails, allocator);

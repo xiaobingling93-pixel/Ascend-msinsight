@@ -288,8 +288,10 @@ struct DetailsInterCoreLoadSubCoreDetail {
     DetailsInterCoreLoadDimension<uint64_t> cycles = {{0, 0, 0}};
     DetailsInterCoreLoadDimension<uint64_t> throughput = {{0, 0, 0}};
     DetailsInterCoreLoadDimension<float> cacheHitRate = {{0, 0, 0}};
+    DetailsInterCoreLoadDimension<uint64_t> simtVfInstructions = {{0, 0, 0}};
+    DetailsInterCoreLoadDimension<float> simtVfInstructionPerCycle = {{0, 0, 0}};
 
-    void SetCyclesDimension(int64_t curCycles, long double average, long double sigma)
+    void SetCyclesDimension(const int64_t curCycles, const long double average, long double sigma)
     {
         cycles.value.compare = curCycles;
         if (std::abs(sigma) < std::numeric_limits<long double>::epsilon()) {
@@ -331,6 +333,23 @@ struct DetailsInterCoreLoadSubCoreDetail {
     void SetSubCoreName(const std::string& type, uint8_t id)
     {
         subCoreName = type + std::to_string(id);
+    }
+
+    void SetSimtVfInstruction(uint64_t curSimtVfInstructions, long double averageSimtVfInstructions, long double sigmaSimtVfInstructions)
+    {
+        simtVfInstructions.value.compare = curSimtVfInstructions;
+        if (std::abs(sigmaSimtVfInstructions) < std::numeric_limits<long double>::epsilon()) {
+            simtVfInstructions.level = 0;
+            return;
+        }
+        const long double core = (static_cast<long double>(curSimtVfInstructions) - averageSimtVfInstructions) / sigmaSimtVfInstructions;
+        const long double sigmod = static_cast<long double>(1) / (static_cast<long double>(1) + std::exp(-core));
+        const int result = static_cast<int>(sigmod * 10);
+        simtVfInstructions.level = result;
+    }
+    void SetSimtVfInstructionPerCycle(float curSimtVfInstructionPerCycle)
+    {
+        simtVfInstructionPerCycle.value.compare = curSimtVfInstructionPerCycle;
     }
 };
 
