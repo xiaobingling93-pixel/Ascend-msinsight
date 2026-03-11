@@ -25,7 +25,7 @@ from util.file_util import check_dir_valid, load_pickle_to_dict
 
 from tools.adaptors.database import SnapshotDb, block2record, event2record
 
-from util.logger import get_logger
+from util.logger import get_logger, set_global_log_file
 from util.timer import timer
 
 dump_logger = get_logger("DatabaseDump")
@@ -140,6 +140,11 @@ def get_args():
                                        default='',
                                        help="Specify the directory to store the parsed database file. If not provided, "
                                             "the same directory as the specified snapshot file will be used by default.")
+    arg_log_file = parser.add_argument("--log", "-l",
+                                       required=False,
+                                       type=str,
+                                       default='',
+                                       help="Specify the log file path. If provided, all logs will be written to this file.")
     args = parser.parse_args()
     snapshot_path = Path(args.snapshot_file)
     # 校验snapshot path
@@ -153,6 +158,11 @@ def get_args():
         raise argparse.ArgumentError(arg_dump_dir,
                                      "The specified directory does not exist, or is not a directory, "
                                      "or is not writable")
+    if args.log:
+        try:
+            set_global_log_file(args.log)
+        except OSError as e:
+            raise argparse.ArgumentError(arg_log_file, str(e))
     return args
 
 
@@ -162,7 +172,11 @@ class ExistCode:
 
 @timer(name="Dump snapshot to database.", logger=dump_logger)
 def main():
-    args = get_args()
+    try:
+        args = get_args()
+    except argparse.ArgumentError as e:
+        dump_logger.error("Failed to parse arguments: {}".format(e))
+        sys.exit(ExistCode.FAILED)
     if not dump(args.snapshot_file, Path(args.dump_dir) / f"{Path(args.snapshot_file).name}.db"):
         dump_logger.error("Failed to dump the snapshot to database.")
         sys.exit(ExistCode.FAILED)
