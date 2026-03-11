@@ -31,6 +31,7 @@
     "Throughput(GB/s)": "吞吐量(GB/s)",
     "Cycle": "时钟周期",
     "Cycles": "时钟周期",
+    "SIMT VF Instructions": "SIMT VF指令条数",
     "Wait Cycles": "等待周期",
     "Active Rate(%)": "活跃率(%)",
     "Cube0 Duration (μs)": "Cube0时长(μs)",
@@ -69,6 +70,7 @@
     "L2 Cache Hit Rate Formula": "L2 Cache命中率 = L2 Cache总命中次数 / (L2 Cache总命中次数 + L2 Cache总未命中次数)",
     "Cube Ratio Formula": "Cube利用率 = Cube时钟周期 / 总时钟周期",
     "Vector Ratio Formula": "Vector利用率 = Vector时钟周期 / 总时钟周期",
-    "Active Bw(GB/s)": "活跃带宽(GB/s)"
+    "Active Bw(GB/s)": "活跃带宽(GB/s)",
+    "Instruction Per Cycle": "指令发射效率"
   }
 }

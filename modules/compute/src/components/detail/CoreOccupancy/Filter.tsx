@@ -23,7 +23,7 @@ import { CustomFormItem as FormItem, getUsableVal } from '@insight/lib/utils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import type { Session } from '../../../entity/session';
 
-export type ShowAs = 'cycles' | 'throughput' | 'cacheHitRate';
+export type ShowAs = 'cycles' | 'throughput' | 'cacheHitRate' | 'simtVfInstructions';
 export interface ICondition {
     showAs: ShowAs;
     isCompared: boolean;
@@ -44,6 +44,7 @@ const defaultOptionMap = {
         { label: 'Cycles', value: 'cycles' },
         { label: 'Throughput', value: 'throughput' },
         { label: 'Cache Hit Rate(%)', value: 'cacheHitRate' },
+        { label: 'SIMT VF Instructions', value: 'simtVfInstructions' },
     ],
 };
 

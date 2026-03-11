@@ -19,12 +19,13 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import { CollapsiblePanel } from '@insight/lib/components';
-import { type Session } from '../../../entity/session';
+import { type Session } from '@/entity/session';
 import Filter, { defaultCondition, type ICondition } from './Filter';
 import CoreChart from './CoreChart';
+import InstructionTable from './InstructionTable';
 import { queryCoreOccupancy } from '../../RequestUtils';
 import { Hit } from '@insight/lib/utils';
-import { CompareData } from '../../../utils/interface';
+import { CompareData } from '@/utils/interface';
 export interface ICoreOccupancy {
     soc: string; // 算子运行平台
     opType: string; // 算子类型：vector, cube, mix
@@ -41,6 +42,8 @@ export interface ISubCore {
     cycles: IData;
     throughput: IData;
     cacheHitRate: IData;
+    simtVfInstructions: IData;
+    simtVfInstructionPerCycle: Omit<IData, 'level'>;
 }
 
 export interface IData {
@@ -88,6 +91,9 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
         ? (<CollapsiblePanel title={tDetails('Core Occupancy')} collapsible id={'coreOccupancy'}>
             <Filter handleFilterChange={handleFilterChange} session={session}/>
             <CoreChart condition={condition} session={session} data={data}/>
+            {condition.showAs === 'simtVfInstructions' && (
+                <InstructionTable data={data}/>
+            )}
             {data?.advice?.length > 0 && (<Hit text={data.advice} style={{ marginTop: '10px' }} type={'alarm'}/>)}
         </CollapsiblePanel>)
         : <></>;
