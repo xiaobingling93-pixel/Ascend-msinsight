@@ -317,7 +317,7 @@ def build_jupyterlab(jupyterlab_version, os_name):
         return 1
 
     # copy jupyterlab plugin to out directory
-    plugin_name = 'msinsight_jupyterlab-' + jupyterlab_version + '-py3-none-' + get_os_platform() + '.whl'
+    plugin_name = 'mindstudio_insight_jupyterlab-' + jupyterlab_version + '-py3-none-' + get_os_platform() + '.whl'
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
     whl_source_path = os.path.join(plugin_path, 'output')
     for file in os.listdir(whl_source_path):
