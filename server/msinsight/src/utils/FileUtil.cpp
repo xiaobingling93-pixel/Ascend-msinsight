@@ -480,18 +480,11 @@ bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string>
 
 bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::string &path)
 {
-    if (!FileUtil::CheckDirValid(path)) {
-        errorMsg = path + "is invalid path";
-        return false;
-    }
-    if (!FileUtil::IsFolder(path) && !FileUtil::CheckFileValid(path)) {
-        errorMsg = path + "is invalid path";
-        return false;
-    }
+    // 通过上下文保证路径安全
     std::string realPath = GetRealPath(path);
     if (realPath.empty()) {
         errorMsg = "The conversion of the " + path +
-                   "test path to an absolute path has failed.";
+                   "path to an absolute path has failed.";
         return false;
     }
     path = realPath;

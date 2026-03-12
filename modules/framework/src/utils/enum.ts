@@ -25,6 +25,7 @@ export enum ProjectError {
     IMPORTED = 4,
     EXCEEDS_MXIMUN_LENGTH = 5,
     FILE_NOT_EXIST = 6,
+    IS_NOT_REGULAR_FILE = 7,
     OTHER = -1,
 }
 

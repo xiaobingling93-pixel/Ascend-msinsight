@@ -41,6 +41,7 @@ const TITLE_MAP = new Map([
     [ProjectError.IS_UNSAFE_PATH, 'FileUnsafe'],
     [ProjectError.EXISTING_LARGE_FILES, 'LargeFile'],
     [ProjectError.EXCEEDS_MXIMUN_LENGTH, 'PathLengthExceeded'],
+    [ProjectError.IS_NOT_REGULAR_FILE, 'NotRegularFile'],
 ]);
 
 const FileConflictDialog = ({ error, open, onConfrim, onCancel }: IProps): JSX.Element => {

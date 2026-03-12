@@ -33,6 +33,7 @@
     "LargeFileContent": "文件过大，可能存在加载速度过慢甚至OOM的情况，如果继续请点确认",
     "PathLengthExceeded": "路径长度超过限制",
     "PathLengthExceededContent": "路径长度超过操作系统最大限制，可能导致解析失败，请检查文件名或者文件深度，忽略并继续解析请点击确认",
+    "NotRegularFile": "当前文件不是普通文件",
     "Current Project": "当前工程",
     "Duplicate Project": "工程名已存在，修改工程名失败",
     "Update Project Name Failed": "更新工程名失败",

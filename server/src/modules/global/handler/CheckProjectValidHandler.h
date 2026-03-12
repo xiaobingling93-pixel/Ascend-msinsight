@@ -43,6 +43,7 @@ private:
     static bool CheckRequestParamsValid(ProjectCheckParams &params, ProjectErrorType &error);
     static bool CheckProjectFile(ProjectCheckParams &params, const fs::path &filePath, ProjectErrorType &error);
     static bool CheckFileSize(const fs::path &filePath);
+    static bool CheckPathSafety(const std::string &path, ProjectErrorType &error);
 };
 } // end of namespace Module
 } // Dic

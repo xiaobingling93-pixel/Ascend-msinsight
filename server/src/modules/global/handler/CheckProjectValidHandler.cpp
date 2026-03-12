@@ -59,6 +59,17 @@ bool Dic::Module::CheckProjectValidHandler::HandleRequest(std::unique_ptr<Reques
 bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheckParams &params, ProjectErrorType &error)
 {
     std::string errorMsg;
+    bool safe = std::any_of(params.dataPath.begin(),
+                            params.dataPath.end(),
+                            [&error](const std::string& p) {
+                                if (!CheckPathSafety(p, error)) {
+                                    return true;
+                                }
+                                return false;
+                            });
+    if (!safe) {
+        return false;
+    }
     if (!params.ConvertToRealPath(errorMsg)) {
         error = ProjectErrorType::IS_UNSAFE_PATH;
         return false;
@@ -104,6 +115,25 @@ bool Dic::Module::CheckProjectValidHandler::CheckProjectFile(ProjectCheckParams 
 bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const fs::path &filePath)
 {
     if (FileUtil::GetFileSize(filePath.u8string().c_str()) > FILE_MAX_SIZE[filePath.extension().string()]) {
+        return false;
+    }
+    return true;
+}
+bool CheckProjectValidHandler::CheckPathSafety(const std::string& path, ProjectErrorType& error)
+{
+    if (!FileUtil::CheckDirValid(path)) {
+        error = ProjectErrorType::IS_UNSAFE_PATH;
+        return false;
+    }
+    if (FileUtil::IsFolder(path)) {
+        return true;
+    }
+    if (!FileUtil::IsRegularFile(path)) {
+        error = ProjectErrorType::IS_NOT_REGULAR_FILE;
+        return false;
+    }
+    if (!CheckFileSize(path)) {
+        error = ProjectErrorType::EXISTING_LARGE_FILES;
         return false;
     }
     return true;
