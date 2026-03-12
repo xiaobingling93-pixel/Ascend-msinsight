@@ -44,6 +44,8 @@ BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 CMAKE_BUILD_DIR = os.path.join(BUILD_DIR, 'build')
 
 HOME_DIR = os.path.dirname(BUILD_DIR)
+PROJECT_DIR = os.path.dirname(HOME_DIR)
+SCRIPTS_DIR = os.path.join(PROJECT_DIR, 'scripts')
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 SRC_DIR = os.path.join(HOME_DIR, 'src')
 CLUSTER_ANALYSE = 'cluster_analyse'
@@ -103,12 +105,6 @@ def get_gxx_type():
         gxx_type = 'linux-' + FRAMEWORK
     return gxx_type
 
-def build_snapshot_dump2db(spec_path: str, dst_path: str):
-    build_dump = [
-        'pyinstaller','--distpath=' + dst_path, spec_path
-    ]
-    return execute_cmd(build_dump, BUILD_DIR)
-
 
 def build():
     build_log('begin build...\n')
@@ -131,8 +127,20 @@ def build():
     if result != 0:
         build_log('Failed to execute cmake build command.')
         return result
+    copy_msprof2server_dir()
+    move_snapdump2server_dir()
+    if IS_WINDOWS or IS_DARWIN:
+        if copy_python_interpreter() != 0:
+            build_log('Failed to copy python interpreter.')
+            return -1
+        if pip_install_third_party_for_cluster_analysis() != 0:
+            build_log('Failed to pip install third party for cluster analysis.')
+            return -1
+    build_log('end build.\n')
+    return 0
 
-    att_dir = os.path.join(OUTPUT_DIR, gxx_type)
+def copy_msprof2server_dir():
+    att_dir = os.path.join(OUTPUT_DIR, get_gxx_type())
     att_bin_dir = os.path.join(att_dir, 'bin')
 
     script_path = os.path.join(att_bin_dir, 'msprof_analyze')
@@ -141,19 +149,14 @@ def build():
     shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(script_path, CLUSTER_ANALYSE), copy_function=shutil.copy2)
     shutil.copytree(PROF_COMMON_DIR, os.path.join(script_path, PROF_COMMON), copy_function=shutil.copy2)
 
-    if IS_WINDOWS or IS_DARWIN:
-        if copy_python_interpreter() != 0:
-            build_log('Failed to copy python interpreter.')
-            return -1
-        if pip_install_third_party_for_cluster_analysis() != 0:
-            build_log('Failed to pip install third party for cluster analysis.')
-            return -1
-        result = build_snapshot_dump2db(spec_path=os.path.join(BUILD_DIR, 'dump2db.spec'), dst_path=att_bin_dir)
-        if result != 0:
-            build_log('Failed to execute build snapshot dump command.')
-            return result
-    build_log('end build.\n')
-    return 0
+
+def move_snapdump2server_dir():
+    bin_dir = os.path.join(OUTPUT_DIR, get_gxx_type(), 'bin')
+    script_target_path = os.path.join(bin_dir, 'mem_snap_dump')
+    if os.path.exists(script_target_path):
+        shutil.rmtree(script_target_path)
+    shutil.move(os.path.join(SCRIPTS_DIR, 'MemSnapDump'), script_target_path)
+
 
 def copy_python_interpreter():
     python_interpreter_dir = os.getenv("MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER")

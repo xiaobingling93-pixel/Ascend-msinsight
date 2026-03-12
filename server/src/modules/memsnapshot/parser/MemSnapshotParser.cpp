@@ -17,6 +17,7 @@
  */
 
 #include "FileUtil.h"
+#include "PythonUtil.h"
 #include "DataBaseManager.h"
 #include "MemSnapshotParser.h"
 
@@ -170,32 +171,14 @@ void MemSnapshotParser::ParseMemSnapshotTask()
         Instance().parseContext.SetState(ParserState::UP_TO_DATE);
         return;
     }
-    std::string cmd;
-#ifdef __linux__
-    // linux场景直接通过python3执行
-    const std::string basicScriptsDir = FileUtil::GetParentPath(Instance().parseContext.GetWorkDir());
-    const std::string memSnapDumpScriptsPath = FileUtil::SplicePath(basicScriptsDir, "scripts",
-        "MemSnapDump", "tools", "dump2db.py");
-    const std::string executable = StringUtil::StrJoin("python3 ", memSnapDumpScriptsPath);
-#else
-    #ifdef _WIN32
-    // windows场景需要切换到对应盘符
-    const std::string switchDriverLetter = "cd \"" + Instance().parseContext.GetWorkDir().substr(0, INT_TWO) + "\"";
-    const std::string dump2db = FileUtil::SplicePath(Instance().parseContext.GetWorkDir(), "dump2db.exe");
-    // 从工作路径中切取盘符
-    const std::string executable = StringUtil::FormatString("{} && \"{}\" ", switchDriverLetter, dump2db);
-    #else
-    // Mac场景直接绝对路径使用
-    const std::string executable = "\"" + FileUtil::SplicePath(Instance().parseContext.GetWorkDir(), "dump2db") + "\"";
-    #endif
-
-#endif
-    cmd = StringUtil::StrJoin(executable, " \"", Instance().parseContext.GetPicklePath(), "\" > \"",
-                              Instance().parseContext.GetLogPath(), "\" 2>&1");
-    Server::ServerLog::Info("[Snapshot] Start parsing.Cmd = ", cmd);
+    const std::string memSnapDumpScriptsPath = FileUtil::SplicePath("mem_snap_dump", "tools", "dump2db.py");
+    Server::ServerLog::Info("[Snapshot] Start parsing.");
+    std::vector<std::string> arguments{Instance().parseContext.GetPicklePath(), "--log", Instance().parseContext.GetLogPath()};
     Instance().parseContext.SetState(ParserState::Processing);
     try {
-        int result = std::system(cmd.c_str());
+        Server::ServerLog::Info("[Snapshot] Script: %, arguments: %", memSnapDumpScriptsPath,
+                                StringUtil::join(arguments, " "));
+        const int result = PythonUtil::ExecuteScript(memSnapDumpScriptsPath, arguments);
         Server::ServerLog::Info("[Snapshot] Parsing finished.result = ", result);
         Instance().parseContext.SetState(result == 0 ? ParserState::FINISH_SUCCESS : ParserState::FINISH_FAILURE);
     } catch (...) {
