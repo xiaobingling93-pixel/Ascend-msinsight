@@ -396,7 +396,7 @@ TEST(TestUtil, ConvertToRealPath)
     std::string errMsg;
     bool suc = FileUtil::ConvertToRealPath(errMsg, paths);
     EXPECT_EQ(suc, false);
-    EXPECT_EQ(errMsg, "is invalid path");
+    EXPECT_EQ(errMsg, "The conversion of the path to an absolute path has failed.");
     paths[0] = "/etc/hosts";
     errMsg.clear();
     EXPECT_EQ(FileUtil::ConvertToRealPath(errMsg, paths), true);

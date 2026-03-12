@@ -65,6 +65,19 @@ struct ImportActionParams {
             Dic::Module::Timeline::SetTimelineError(Dic::Module::Timeline::ErrorCode::FILE_PATH_IS_EMPTY);
             return false;
         }
+        bool isSafePath = std::all_of(path.begin(), path.end(), [](const std::string &p) {
+            if (FileUtil::IsFolder(p))
+            {
+                return FileUtil::CheckDirValid(p);
+            } else {
+                return FileUtil::CheckFileValid(p);
+            }
+        });
+        if (!isSafePath) {
+            errorMsg = "Import path is unsafe.";
+            Server::ServerLog::Error("Import path is not safe, please check log for more in");
+            return false;
+        }
         if (!FileUtil::ConvertToRealPath(errorMsg, this->path)) {
             return false;
         }

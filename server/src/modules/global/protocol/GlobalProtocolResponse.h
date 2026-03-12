@@ -40,6 +40,8 @@ enum class ProjectErrorType {
     EXISTING_LARGE_FILES = 3,
     TRANSFER_PROJECT = 4,
     EXCEEDS_MXIMUN_LENGTH = 5,
+    FILE_NOT_EXISTS = 6,
+    IS_NOT_REGULAR_FILE = 7,
     OTHER = -1
 };
 
