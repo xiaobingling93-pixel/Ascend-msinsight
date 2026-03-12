@@ -27,14 +27,14 @@ import {
     workerSetMemoryStateData,
 } from '@/leaksWorker/stateWorker/worker';
 import { Session } from '@/entity/session';
-import { Input, ResizeTable, ResizeTableRef, SearchIcon } from '@insight/lib';
+import { Input, Progress, ResizeTable, ResizeTableRef, SearchIcon } from '@insight/lib';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { type Theme, useTheme } from '@emotion/react';
 import { formatBytes } from '@/utils/utils';
-import { type EvenItem, getMemoryStateData } from '@/utils/RequestUtils';
-import { getAllEventListData } from '../dataHandler';
+import { type EvenItem, getMemoryStateData, getSnapshotEvent } from '@/utils/RequestUtils';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
+import styled from '@emotion/styled/macro';
 
 export const MemoryStateDiagram = ({ session }: { session: Session }): JSX.Element => {
     return <div style={{ display: 'flex', height: 800 }}>
@@ -67,11 +67,15 @@ const EventItemRender = ({ record }: { record: EvenItem }): JSX.Element => {
     </div >;
 };
 
+let currentRequestId = 0;
+const MIN_PAGE_SIZE = 1000;
+const MAX_PAGE_SIZE = 64000; // 分页逐步增加，配合逻辑，最大值必须是 1000 * 2^n
 const EventList = observer(({ session }: { session: Session }): JSX.Element => {
     const { t } = useTranslation('leaks');
     const [searchValue, setSearchValue] = useState<string>('');
     const [searchIndexList, setSearchIndexList] = useState<number[]>([]);
     const [dataSource, setDataSource] = useState<EvenItem[]>([]);
+    const [dataTotal, setDataTotal] = useState<number>(0);
     const [currentShowRow, setCurrentShowRow] = useState<number>(-1);
     const [currentSelectRow, setCurrentSelectRow] = useState<number>(-1);
     const tableRef = useRef<ResizeTableRef>(null);
@@ -129,17 +133,85 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
         setCurrentShowRow(oVal => (oVal + offset));
     };
 
+    const getAllEventListData = async (session: Session): Promise<void> => {
+        currentRequestId = ++currentRequestId % 1000;
+        const requestId = currentRequestId;
+
+        let currentDataCount = 0;
+        let currentPage = 1; // 初始页码设为 1
+        let total = 0;
+        let pageSize = MIN_PAGE_SIZE;
+        let hasSwitchedToLargePage = false; // 标志位，表示是否已经切换到大页模式
+
+        do {
+            if (requestId !== currentRequestId) {
+                return;
+            }
+
+            const res = await getSnapshotEvent({
+                deviceId: session.deviceId,
+                currentPage,
+                pageSize,
+            });
+
+            if (requestId !== currentRequestId) {
+                return;
+            }
+
+            const appendEventList = res.events.map((item, index) => ({
+                ...item,
+                index: currentDataCount + index,
+            }));
+
+            currentDataCount += appendEventList.length;
+            total = res.total;
+            setDataSource(prevData => prevData.concat(appendEventList as any));
+            setDataTotal(res.total);
+            // --- 核心逻辑 ---
+            if (!hasSwitchedToLargePage) {
+                if (currentPage === 1 && pageSize === MIN_PAGE_SIZE) { // 第一步：请求第一页 (1000:1)
+                    currentPage = 2; // 下一次请求第二页
+                } else if (currentPage === 2 && pageSize === MIN_PAGE_SIZE) { // 第二步：请求第二页 (1000:2)
+                    pageSize = pageSize * 2; // 保持在第二页，但将页大小翻倍
+                } else { // 第三步及以后：保持在第二页，持续翻倍页大小，直到达到上限或数据获取完毕
+                    if (pageSize < MAX_PAGE_SIZE) {
+                        pageSize = Math.min(pageSize * 2, MAX_PAGE_SIZE);
+                    } else {
+                        // 如果页大小已达到上限，就进入下一页
+                        currentPage++;
+                    }
+                }
+                // 如果当前页大小已达到最大值，说明后续应该切换到正常的翻页模式
+                if (pageSize >= MAX_PAGE_SIZE) {
+                    hasSwitchedToLargePage = true;
+                }
+            } else {
+                // 如果已经切换到大页模式，则按正常逻辑翻页
+                currentPage++;
+            }
+        } while (currentDataCount < total);
+    };
+
+    const setMemoryStateData = (): void => {
+        const currentRow = dataSource[currentSelectRow];
+        if (currentRow === undefined) {
+            workerSetMemoryStateData({ data: [] });
+            return;
+        }
+        getMemoryStateData({ eventId: currentRow.id }).then(data => {
+            workerSetMemoryStateData({ data: data.segments });
+        });
+    };
+
     useEffect(() => {
         if (session.deviceId === '') return;
         setDataSource([]);
+        setCurrentSelectRow(0);
+        setDataTotal(0);
+        // table使用了不自动恢复滚动条模式，需要手动恢复到0
+        tableRef.current?.getVirtualBoxDom()?.scrollTo({ top: 0 });
         workerSetMemoryStateData({ data: [] });
-        getAllEventListData(session).then((data) => {
-            setDataSource(data.map((item, index) => ({
-                ...item,
-                index,
-            })));
-            setCurrentSelectRow(0);
-        });
+        getAllEventListData(session);
     }, [session.deviceId]);
 
     useEffect(() => {
@@ -153,14 +225,15 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
 
     useEffect(() => {
         if (session.deviceId === '') return;
-        const currentRow = dataSource[currentSelectRow];
-        if (currentRow === undefined) {
-            return;
+        setMemoryStateData();
+    }, [currentSelectRow]);
+
+    useEffect(() => {
+        if (dataSource.length < 1001 && dataSource.length > 0) {
+            // 事件列表第一次变化时，设置内存状态数据
+            setMemoryStateData();
         }
-        getMemoryStateData({ eventId: currentRow.id }).then(data => {
-            workerSetMemoryStateData({ data: data.segments });
-        });
-    }, [currentSelectRow, dataSource]);
+    }, [dataSource]);
 
     return <div>
         <div style={{ display: 'flex', paddingBottom: 8 }}>
@@ -173,8 +246,9 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
             <RightOutlined style={{ color: theme.textColor, cursor: canDownRow ? 'pointer' : 'not-allowed' }} onClick={() => changeScroll('down')} />
             <div style={{ paddingLeft: 10 }} />
         </div>
+        <ProgressLine currentCount={dataSource.length} total={dataTotal} />
         <ResizeTable className="table-slice-list" ref={tableRef} virtual scroll={{ y: 760 }} dataSource={dataSource} columns={columns} showHeader={false}
-            loading={dataSource.length < 1} rowClassName={(row: any): string => {
+            resetScroll={false} loading={dataSource.length < 1} rowClassName={(row: any): string => {
                 if (currentSelectRow === row.index) {
                     return 'click-select';
                 }
@@ -191,6 +265,29 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
         />
     </div>;
 });
+
+const ProgressContainer = styled.div`
+    height: 30px;
+    .ant-progress.ant-progress-line {
+        width: 330px !important;
+    }
+`;
+const ProgressLine = ({ currentCount, total }: { currentCount: number; total: number }): JSX.Element => {
+    const formatPercent = (percent?: number): string => {
+        if (percent === undefined) {
+            return '';
+        } else {
+            return `${percent.toFixed(2)} %`;
+        }
+    };
+    return <>
+        {
+            (total !== 0 && currentCount !== total)
+                ? <ProgressContainer><Progress percent={currentCount / total * 100} format={formatPercent} /></ProgressContainer>
+                : <></>
+        }
+    </>;
+};
 
 const StateDiagramCanvas = ({ session }: { session: Session }): JSX.Element => {
     const containerRef = useRef<HTMLDivElement>(null);

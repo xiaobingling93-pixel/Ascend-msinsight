@@ -300,6 +300,7 @@ interface ResizeTableProps<T> extends TableProps<T> {
     scroll?: { x?: string | number | true; y?: number; rowHeight?: number; scrollToFirstRowOnChange?: boolean };
     rowHoverable?: boolean;
     allowCopy?: boolean;
+    resetScroll?: boolean;
 }
 type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
@@ -456,7 +457,7 @@ export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, re
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, rowHoverable = true,
-        className, locale, allowCopy = false, ...restProps
+        className, locale, allowCopy = false, resetScroll = true, ...restProps
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
     const marginY = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
@@ -480,7 +481,7 @@ export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, re
 
     // ============================ virtual ============================
     const innerTableRef = useRef(null);
-    const { data: renderList, boxRef, targetRef } = useWatchVirtualRender({ visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 32, dataSource: dataSource ?? [] });
+    const { data: renderList, boxRef, targetRef } = useWatchVirtualRender({ visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 32, dataSource: dataSource ?? [], resetScroll });
     useEffect(() => { if (virtual && innerTableRef.current !== null) { getVirtualElement(innerTableRef.current as Element, boxRef, targetRef); } }, []);
 
     // ============================ pagination ============================
