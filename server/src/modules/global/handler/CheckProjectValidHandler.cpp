@@ -132,7 +132,7 @@ bool CheckProjectValidHandler::CheckPathSafety(const std::string& path, ProjectE
         error = ProjectErrorType::IS_NOT_REGULAR_FILE;
         return false;
     }
-    if (!CheckFileSize(path)) {
+    if (!FileUtil::CheckFileSize(path)) {
         error = ProjectErrorType::EXISTING_LARGE_FILES;
         return false;
     }
