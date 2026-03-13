@@ -83,7 +83,7 @@ const TabContentWrapper = ({ children, height }: { children: React.ReactNode; he
     </div>;
 };
 
-const hiddenList = ['_firstAccessTimestamp', '_lastAccessTimestamp', 'maxAccessInterval', 'lazyUsed', 'delayedFree', 'longIdle', 'path'];
+const hiddenList = ['offset', 'addr', 'path'];
 const SliceDetailItem = styled.div`
     font-size: 14px;
     display: flex;
