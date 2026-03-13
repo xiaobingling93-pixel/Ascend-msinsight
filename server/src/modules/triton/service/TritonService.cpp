@@ -63,8 +63,8 @@ std::vector<TritonTensorBlock> TritonService::QueryBlocksContainRange(uint64_t s
     std::vector<TritonTensorBlock> result;
     auto tranSegmentToBlock = [](const TritonTensorSegment& item, std::vector<TritonTensorBlock>& blocks) {
         for (auto block : item.blocks) { // 复制语义循环，完成数据复制
-            block.sourceLocation = item.sourceLocation;
             block.buffer = item.buffer;
+            block.sourceLocation = item.sourceLocation;
             blocks.push_back(std::move(block));
         }
     };

@@ -56,6 +56,8 @@ public:
         start = segment.start;
         end = segment.end;
         tmpBuf = segment.tmpBuf;
+        buffer = segment.buffer;
+        sourceLocation = segment.sourceLocation;
     }
     std::string GetAttrStr() const
     {
