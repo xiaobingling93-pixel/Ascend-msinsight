@@ -76,7 +76,8 @@
       "CacheFrameTooltip": "可视化呈现用户程序Kernel函数内的L2Cache访问信息，来源为bin文件",
       "StatisticTooltip": "以图表形式展示服务化调优的具体数据变化，来源为profiler.db文件",
       "MemScopeTooltip": "展示内存调优过程中内存变化详情，来源为memscope_dump_*.db(或旧版本leaks_dump_*.db)",
-      "RLTooltip": "基于采集数据进行高层次抽象，可视化展示控制流的时序关系，帮助快速定位耗时任务与空泡，并支持进一步的性能分析"
+      "RLTooltip": "基于采集数据进行高层次抽象，可视化展示控制流的时序关系，帮助快速定位耗时任务与空泡，并支持进一步的性能分析",
+      "TritonTooltip": "展示Triton算子调优过程中内存变化详情"
     },
     "Keyboard shortcuts": "键盘快捷键",
     "Show Log in Explorer": "在资源管理器中显示日志",
