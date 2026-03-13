@@ -1104,7 +1104,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
 
 - 算子类型
 
-  5种算子类型包括Python API 汇总（Python API Summary）、CANN API 汇总（CANN API Summary）、Ascend HardWare Task 汇总（Ascend HardWare Task Summary）、通信汇总（Communication Summary）、覆盖分析（Overlap Analysis），算子信息如[**图 7** 算子汇总页签](#算子汇总页签)所示，字段解释如[**表 6** 统计系统视图字段说明](#统计系统视图字段说明)所示。
+  算子类型包括Python API 汇总（Python API Summary）、CANN API 汇总（CANN API Summary）、Ascend HardWare Task 汇总（Ascend HardWare Task Summary）、通信汇总（Communication Summary）、覆盖分析（Overlap Analysis），算子信息如[**图 7** 算子汇总页签](#算子汇总页签)所示，字段解释如[**表 6** 统计系统视图字段说明](#统计系统视图字段说明)所示。
 
   **图 7** 算子汇总页签<a id="算子汇总页签"></a>
 
@@ -1149,6 +1149,56 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
   |输出数据类型|Output Data Types|算子输出数据类型。|
   |输出格式|Output Formats|算子输出数据格式。|
   |点击跳转Timeline|Click To Timeline|单击“点击”，跳转到算子在时间线视图上的具体位置，并且在区域四（数据窗格）展示该算子的详情。|
+
+- ftrace耗时统计
+
+  ftrace耗时统计（Ftrace Time Consuming）通过slice表中获取所有进程的算子数据，根据算子名runnable、running、sleeping统计算子的耗时情况，如[**图 9** ftrace耗时统计](#ftrace耗时统计)所示。
+
+  **图 9** ftrace耗时统计<a id="ftrace耗时统计"></a>
+  ![](./figures/system_tuning/ftrace_time_consuming_1.png "ftrace耗时统计")
+
+  **表 8** ftrace耗时统计字段说明<a id="ftrace耗时统计字段说明"></a>  
+
+  |中文字段|英文字段|说明|
+  |--|--|--|
+  |甬道类型|Process|甬道的类型。|
+  |cpu/进程甬道|Thread|cpu/进程的名称。|
+  |可运行时长（ns）|Runnable(ns)|进程处于可运行（Runnable）的总耗时统计。|
+  |运行中时长（ns）|Running(ns)|进程处于运行中（Running）的总耗时统计。|
+  |睡眠时长（ns）|Sleeping(ns)|进程处于休眠中（Sleeping）的总耗时统计。|
+
+- ftrace中断统计
+
+  ftrace中断统计（Ftrace IRQ）通过slice表中获取所有cpu的irq和softirq的数据，根据以上数据中断的扩展信息，判断中断发生进程位置，进而统计每一个cpu进程的硬中断、软中断的总耗时和次数，如[**图 9** ftrace中断统计](#ftrace中断统计)所示。
+
+  **图 10** ftrace中断统计<a id="ftrace中断统计"></a>
+  ![](./figures/system_tuning/ftrace_irq_1.png "ftrace中断统计")
+
+  **表 9** ftrace中断统计字段说明<a id="ftrace中断统计字段说明"></a>  
+
+  |中文字段|英文字段|说明|
+  |--|--|--|
+  |甬道类型|Process|甬道的类型。|
+  |cpu/进程甬道|Thread|cpu/进程的名称。|
+  |软中断次数|Soft IRQ Count|进程发生软中断的次数。|
+  |软中断时长（ns）|Soft IRQ Duration(ns)|进程进行软中断执行的总耗时。|
+  |硬中断次数|Hard IRQ Count|进程发生硬中断的次数。|
+  |硬中断时长（ns）|Hard IRQ Duration(ns)|进程进行硬中断执行的总耗时。|
+
+- ftrace上下文切换统计
+
+  ftrace上下文切换统计（Ftrace Sched）通过Slice中cpu进程中发生的上下文切换事件的次数，将部分内容落库到db中的跟踪分析（ftrace_analysis）中，并发送消息通知前端已经完成的数据解析，如[**图 11** ftrace上下文切换统计](#ftrace上下文切换统计)所示。
+
+  **图 11** ftrace上下文切换统计<a id="ftrace上下文切换统计"></a>
+  ![](./figures/system_tuning/ftrace_sched_1.png "ftrace上下文切换统计")
+
+  **表 10** ftrace上下文切换统计字段说明<a id="ftrace上下文切换统计字段说明"></a>  
+
+  |中文字段|英文字段|说明|
+  |--|--|--|
+  |甬道类型|Process|甬道的类型。|
+  |cpu/进程甬道|Thread|cpu/进程的名称。|
+  |上下文切换次数|Context Switch Count|上下文切换的次数。|
 
 **专家系统视图**
 

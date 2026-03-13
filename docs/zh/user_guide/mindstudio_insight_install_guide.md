@@ -714,7 +714,7 @@ vncserver -localhost -geometry 1920x1080
         1. 安装Jupyter代理服务插件。
 
             ```shell
-            pipll jupyter-server-proxy
+            pip install jupyter-server-proxy
             ```
 
         2. 参见[3](#jupyter_3)重新启动JupyterLab服务并打开MindStudio Insight工具。

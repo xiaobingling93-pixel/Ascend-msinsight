@@ -114,6 +114,7 @@ python cpu_affinity_data_collection.py [--csv] [--npu-process kw1 kw2...] [--dat
 from cpu_affinity_data_visualizer import run_notebook_app
 run_notebook_app("path/to/your/data.csv")
 ```
+
 - 启动可视化应用
 - 参数：数据文件的路径 (str)
 
@@ -139,13 +140,13 @@ if os.path.exists(OUTPUT_FILE) and os.path.getsize(OUTPUT_FILE) > 0:
 
 A：确认 Ascend 驱动/工具已安装并在 `$PATH` 中，用 `which npu-smi` 验证，手动运行 `npu-smi info`。
 
+**Q：可视化导入 CSV 时报错有关表头。**
+
+A：采集脚本输出**不含表头**。请删除任何额外表头行，或重新运行时注意不要通过 `>` 重定向添加行号。
+
 **Q：在 Jupyter 中显示为空白或报错。**
 
 A：确保安装了所有依赖（`pyvis`、`plotly`、`ipywidgets` 等）。若控件无效，执行 `jupyter nbextension enable --py widgetsnbextension`。
-
-**Q：第一次启动Jupyter Notebook时，运行完pip install -r requirements.txt后，还是无法渲染出图表**
-
-A：请刷新网页重新运行Cell，如果仍然无法渲染出图表，请重新启动Jupyter Notebook。
 
 **Q：拓扑 HTML 无交互效果。**
 
