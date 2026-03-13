@@ -66,8 +66,15 @@ export const parseCompletedHandler = (): void => {
     }
 };
 export const removeRemoteHandler: NotificationHandler = (): void => {
+    const session = store.sessionStore.activeSession;
+
     workerDestroy();
     stateWorkerDestroy();
+    if (session) {
+        runInAction(() => {
+            session.markLineInfo.clickTimestamp = -1;
+        });
+    }
 };
 
 export const parseFailHandler: NotificationHandler = (data): void => {
