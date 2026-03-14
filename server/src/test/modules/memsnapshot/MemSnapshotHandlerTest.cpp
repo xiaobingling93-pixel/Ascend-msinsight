@@ -137,6 +137,8 @@ TEST_F(MemSnapshotHandlerTest, QueryEventsViewWithValidParams)
     requestPtr->moduleName = MODULE_MEM_SCOPE;
     requestPtr->projectName = testDbPath;
     requestPtr->isTable = false;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.currentPage = 1;
     requestPtr->params.deviceId = "0";
 
     bool result = handler.HandleRequest(std::move(requestPtr));

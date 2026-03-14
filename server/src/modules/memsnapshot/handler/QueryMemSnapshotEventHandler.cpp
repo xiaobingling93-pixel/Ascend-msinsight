@@ -30,7 +30,13 @@ bool QueryMemSnapshotEventHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     response.isTable = request.isTable;
     SetBaseResponse(request, response);
     std::string errMsg;
-    if (!request.params.CommonCheck(errMsg)) {
+    // 表格参数校验
+    if (request.isTable && !request.params.CommonCheck(errMsg)) {
+        SendResponse(std::move(responsePtr), false, errMsg);
+        return false;
+    }
+    // 非表格请求，仅校验分页参数是否可能溢出
+    if (!request.isTable && !CheckEventsPaginationParamsOnListRequest(request.params, errMsg)) {
         SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
@@ -40,7 +46,8 @@ bool QueryMemSnapshotEventHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
-    const int64_t total = database->QueryTraceEntriesTable(request.params, response.entries);
+    const int64_t total = request.isTable ? database->QueryTraceEntriesTable(request.params, response.entries)
+                              : database->QueryTraceEntriesWithPagination(request.params, response.entries);
     if (total < 0) {
         errMsg = LOG_TAG + "Failed to query events: query db failed.";
         SendResponse(std::move(responsePtr), false, errMsg);
@@ -49,6 +56,24 @@ bool QueryMemSnapshotEventHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     response.total = static_cast<uint64_t>(total);
     response.maxTimestamp = database->QueryMaxEntryId();
     SendResponse(std::move(responsePtr), true);
+    return true;
+}
+
+bool QueryMemSnapshotEventHandler::CheckEventsPaginationParamsOnListRequest(const PaginationParam& params,
+                                                                             std::string& errorMsg) const
+{
+    if (params.currentPage < 0 || params.pageSize <=0) {
+        errorMsg = LOG_TAG + "Invalid params: pageSize and currentPage must be greater than 0";
+        return false;
+    }
+    if (params.pageSize > 100000) {
+        errorMsg = LOG_TAG + "Invalid params: pageSize must be less than 100000";
+        return false;
+    }
+    if (INT64_MAX / params.pageSize < params.currentPage) {
+        errorMsg = LOG_TAG + "Invalid params: currentPage exceeds the maximum value";
+        return false;
+    }
     return true;
 }
 } // namespace Dic::Module::MemSnapshot

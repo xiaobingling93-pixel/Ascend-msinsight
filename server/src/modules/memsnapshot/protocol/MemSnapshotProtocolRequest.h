@@ -167,18 +167,19 @@ struct MemSnapshotEventsRequest : Request {
         }
         const json_t& param_json = json["params"];
         JsonUtil::SetByJsonKeyValue(reqPtr->isTable, param_json, "isTable");
-        JsonUtil::SetByJsonKeyValue(reqPtr->params.startEventIdx, param_json, "startTimestamp");
-        JsonUtil::SetByJsonKeyValue(reqPtr->params.endEventIdx, param_json, "endTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
+        // 仅在table场景下
         if (reqPtr->isTable) {
+            // 为兼容memscope数据请求的开始、结束时间戳，此处api仍然接收为startTimestamp、endTimestamp，但内部转换为事件索引
+            JsonUtil::SetByJsonKeyValue(reqPtr->params.startEventIdx, param_json, "startTimestamp");
+            JsonUtil::SetByJsonKeyValue(reqPtr->params.endEventIdx, param_json, "endTimestamp");
             if (!reqPtr->params.SetFromJson(param_json, TraceEntryTableColumn::FIELD_FULL_COLUMNS, error)) {
                 Server::ServerLog::Error("Failed set common table params from json param: %", error);
                 return nullptr;
             }
         } else {
-            // 展示事件图时，固定只接收分页参数、且仅根据id排序
-            reqPtr->params.SetPaginationParamFromJson(json);
-            reqPtr->params.orderBy = std::string(TraceEntryTableColumn::ID);
+            // 展示事件列表时，固定只接收分页参数、且仅根据id排序（primary key，默认）
+            reqPtr->params.SetPaginationParamFromJson(param_json);
         }
         return reqPtr;
     }

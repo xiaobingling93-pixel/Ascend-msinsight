@@ -37,6 +37,8 @@ public:
     // API
     // 查询所有的block，用于内存块生命周期图展示
     bool QueryAllBlocks(std::vector<Block> &blocks);
+    // 分片查询trace_entry，用于事件生命周期图展示
+    int64_t QueryTraceEntriesWithPagination(const PaginationParam& paginationParam, std::vector<TraceEntry> &entries);
     // 基于id查询单个block的详细信息
     std::optional<Block> QueryBlockById(int64_t blockId);
     // 查询指定事件ID时活跃的blocks
@@ -80,19 +82,21 @@ private:
     std::string BuildMemSnapshotFiltersParamSql(FiltersParam& queryParams, const std::string& tableName);
 
     // Blocks table query helpers
-    int64_t QueryBlocksTableByStep(sqlite3_stmt* stmt, std::vector<Block>& blocks, bool withExtraCountCol);
+    int64_t QueryBlocksTableCount(const MemSnapshotBlockParams& queryParams);
     static std::string GetSelectBlocksTableFullColumns();
     std::string BuildQueryBlocksTableConditionSqlByParams(MemSnapshotBlockParams& queryParams,
                                                           bool& eventIdxRangeCondition, bool& filtersCondition);
     [[nodiscard]] sqlite3_stmt* BuildQueryBlocksTableByQueryParamsAndBindParam(const std::string& selectColumns,
-                                                                               const MemSnapshotBlockParams& queryParams);
+                                                                               const MemSnapshotBlockParams& queryParams,
+                                                                               bool withPagination = true);
     // TraceEntry table query helpers
-    int64_t QueryTraceEntriesTableByStep(sqlite3_stmt* stmt, std::vector<TraceEntry>& entries, bool withExtraCountCol);
+    int64_t QueryTraceEntriesTableCount(const MemSnapshotEventParams& queryParams);
     static std::string GetSelectTraceEntriesTableFullColumns();
     std::string BuildQueryTraceEntriesTableConditionSqlByParams(MemSnapshotEventParams& queryParams,
                                                                 bool& eventIdxRangeCondition, bool& filtersCondition);
     [[nodiscard]] sqlite3_stmt* BuildQueryTraceEntriesTableByQueryParamsAndBindParam(const std::string& selectColumns,
-                                                                                   const MemSnapshotEventParams& queryParams);
+                                                                                     const MemSnapshotEventParams& queryParams,
+                                                                                     bool withPagination = true);
 };
 }
 

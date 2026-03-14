@@ -149,7 +149,7 @@ TEST_F(MemSnapshotProtocolTest, BuildEventsTableRequestFromJson)
     EXPECT_TRUE(request.isTable);
 }
 
-TEST_F(MemSnapshotProtocolTest, BuildEventsViewRequestFromJson)
+TEST_F(MemSnapshotProtocolTest, BuildEventsListRequestFromJson)
 {
     std::string jsonStr = "{"
                           "  \"id\": 24, "
@@ -164,7 +164,8 @@ TEST_F(MemSnapshotProtocolTest, BuildEventsViewRequestFromJson)
                           "    \"startTimestamp\": 1000, "
                           "    \"endTimestamp\": 50000, "
                           "    \"currentPage\": 1, "
-                          "    \"pageSize\": 10 "
+                          "    \"pageSize\": 10 , "
+                          "    \"orderBy\": \"action\" "
                           "  } "
                           "}";
     std::string errMsg;
@@ -178,7 +179,11 @@ TEST_F(MemSnapshotProtocolTest, BuildEventsViewRequestFromJson)
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.deviceId, "1");
     EXPECT_FALSE(request.isTable);
-    EXPECT_EQ(request.params.orderBy, "id");
+    EXPECT_EQ(request.params.orderBy, ""); // 验证list场景下，orderby是无效的，限制内部仅可按照id排序
+    EXPECT_EQ(request.params.currentPage, 1);
+    EXPECT_EQ(request.params.pageSize, 10);
+    EXPECT_EQ(request.params.startEventIdx, 0); // 验证list场景下 start end是无效的
+    EXPECT_EQ(request.params.endEventIdx, 0);
 }
 
 TEST_F(MemSnapshotProtocolTest, BuildAllocationsRequestFromJson)

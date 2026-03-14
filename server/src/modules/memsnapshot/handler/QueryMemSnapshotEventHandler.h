@@ -29,6 +29,8 @@ public:
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
+    // 分片请求全量事件列表时，校验请求参数是否存在溢出风险
+    bool CheckEventsPaginationParamsOnListRequest(const PaginationParam& params, std::string& errorMsg) const;
     const std::string LOG_TAG = "[MemSnapshotHandler] ";
 };
 } // namespace Dic::Module::MemSnapshot

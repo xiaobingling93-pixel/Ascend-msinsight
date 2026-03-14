@@ -205,7 +205,8 @@ int ReadProgressInLogFile(std::ifstream& file, std::string& err)
     // 如果有新内容
     if (!lastProgressLine.empty()) {
         std::smatch match;
-        if (std::regex_search(lastProgressLine, match, progressReg) && match.size() == 1) {
+        // match[0]是整个匹配，match[1]是第一个捕获组。
+        if (std::regex_search(lastProgressLine, match, progressReg) && match.size() == 2) {
             return NumberUtil::StringToInt(match[1].str());
         }
     }
