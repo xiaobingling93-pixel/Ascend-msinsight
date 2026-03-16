@@ -301,15 +301,6 @@ public:
         return std::remove(path.c_str()) == 0;
     }
 
-    static inline bool RemoveFileExDb(const std::string &path)
-    {
-        std::string fineName = GetFileName(path);
-        bool isDbFile = std::regex_match(path, std::regex(DB_REG));
-        if (isDbFile) {
-            return true;
-        }
-        return RemoveFile(path);
-    }
     /**
      * 根据文件路径复制文件。
      * @param sourceFilePath 源文件路径

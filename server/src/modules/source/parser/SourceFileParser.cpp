@@ -338,11 +338,7 @@ void SourceFileParser::Reset()
     ServerLog::Info("Task completed.");
     auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {
-        std::string path = conn->GetDbPath();
         conn->Stop();
-        if (!FileUtil::RemoveFileExDb(path)) {
-            ServerLog::Error("Failed to remove file. ", path);
-        }
     }
     trackIdMap.clear();
     simulationPidMap.clear();

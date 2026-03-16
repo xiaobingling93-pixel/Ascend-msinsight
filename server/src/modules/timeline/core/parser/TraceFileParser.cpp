@@ -281,7 +281,6 @@ void TraceFileParser::Reset()
     ServerLog::Info("Task completed.");
     auto connList = DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {
-        std::string path = conn->GetDbPath();
         conn->Stop();
     }
     DataBaseManager::Instance().ClearClusterDb();
@@ -295,18 +294,6 @@ void TraceFileParser::Reset()
     CacheManager::Instance().ClearAll();
     ServerLog::Info("End Reset trace Parser");
 }
-
-void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
-{
-    ServerLog::Info("Delete file. id:", fileId);
-    ParserStatusManager::Instance().ClearParserStatus(fileId);
-    std::string path = DataBaseManager::Instance().GetDbPathByRankId(fileId);
-    DataBaseManager::Instance().ReleaseDatabaseByRankId(fileId);
-    if (!path.empty()) {
-        FileUtil::RemoveFileExDb(path);
-    }
-}
-
 
 void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
 {

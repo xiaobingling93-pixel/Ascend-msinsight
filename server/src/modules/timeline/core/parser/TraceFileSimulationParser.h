@@ -66,7 +66,6 @@ private:
                                  const std::string &fileId,
                                  bool result,
                                  const std::string &message);
-    static void DeleteParseFileFromDisk(const std::string &fileId);
 
     std::mutex trackMutex;
     std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, int64_t>> trackIdMap;

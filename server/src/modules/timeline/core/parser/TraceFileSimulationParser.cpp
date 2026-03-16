@@ -219,11 +219,7 @@ void TraceFileSimulationParser::Reset()
     ServerLog::Info("Task completed.");
     auto connList = DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {
-        std::string path = conn->GetDbPath();
         conn->Stop();
-        if (!FileUtil::RemoveFileExDb(path)) {
-            ServerLog::Error("Failed to remove file. ", path);
-        }
     }
     trackIdMap.clear();
     trackId = 0;
@@ -234,18 +230,6 @@ void TraceFileSimulationParser::Reset()
     CacheManager::Instance().ClearAll();
     ServerLog::Info("End Reset trace Parser");
 }
-
-void TraceFileSimulationParser::DeleteParseFileFromDisk(const std::string &fileId)
-{
-    ServerLog::Info("Delete file. id:", fileId);
-    ParserStatusManager::Instance().ClearParserStatus(fileId);
-    std::string path = DataBaseManager::Instance().GetDbPathByRankId(fileId);
-    DataBaseManager::Instance().ReleaseDatabaseByRankId(fileId);
-    if (!path.empty()) {
-        FileUtil::RemoveFileExDb(path);
-    }
-}
-
 
 void TraceFileSimulationParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
 {

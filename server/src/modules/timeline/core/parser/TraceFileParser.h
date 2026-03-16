@@ -72,7 +72,6 @@ private:
     void EndParseTask(const std::string &rankId, const std::vector<std::string> &filePathArr,
                              std::shared_ptr<std::vector<std::future<void>>> futures,
                              std::chrono::time_point<std::chrono::high_resolution_clock> start);
-    static void DeleteParseFileFromDisk(const std::string &fileId);
 
     std::mutex trackMutex;
     std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, uint64_t>> trackIdMap;
