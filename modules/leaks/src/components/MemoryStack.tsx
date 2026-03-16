@@ -131,7 +131,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     <MemoryFunctionCall session={session} />
                 </div>
             </CollapsiblePanel >
-            <CollapsiblePanel title={t('LineBlockGraph')} style={{ minWidth: 1000 }}>
+            <CollapsiblePanel title={t('BlockGraph')} style={{ minWidth: 1000 }}>
                 <Label name={t('DeviceID')} />
                 <Select
                     id={'select-deviceId'}

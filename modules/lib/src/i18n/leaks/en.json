@@ -19,7 +19,7 @@
     "Gradient": "Gradient",
     "Current Time": "Current Time",
     "FlameGraph": "Function Stack Flame Graph",
-    "LineBlockGraph": "Memory Request/Release Line Graph & Memory Block Graph",
+    "BlockGraph": "Active Memory Block Timeline Graph",
     "DetailsDiagram": "Memory Details Disassembly Diagram",
     "DetailsTable": "Memory Details Table",
     "Search": "Search",

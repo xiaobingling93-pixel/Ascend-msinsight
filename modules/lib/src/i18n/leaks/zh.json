@@ -19,7 +19,7 @@
     "Gradient": "梯度",
     "Current Time": "当前时间",
     "FlameGraph": "调用栈火焰图",
-    "LineBlockGraph": "内存申请/释放折线图&内存块图",
+    "BlockGraph": "内存块生命周期图",
     "DetailsDiagram": "内存详情拆解图",
     "DetailsTable": "内存详情表",
     "Search": "搜索",
