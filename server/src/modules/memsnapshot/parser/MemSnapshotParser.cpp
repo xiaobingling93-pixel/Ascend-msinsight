@@ -117,7 +117,7 @@ void MemSnapshotParser::AsyncParseMemSnapshotPickle(const std::string& pickleFil
     const std::string logPath = FileUtil::SplicePath(FileUtil::GetParentPath(pickleFilePath), logName);
     parseContext.Reset(pickleFilePath, logPath, outputDbPath);
     auto traceId = TraceIdManager::GenerateTraceId();
-    Server::ServerLog::Info("[Snapshot] Parsing pickle file: {}, log file: {}, output db file: {}.",
+    Server::ServerLog::Info("[Snapshot] Parsing pickle file: %, log file: %, output db file: %.",
                             parseContext.GetPicklePath(), parseContext.GetLogPath(), parseContext.GetOutputDbPath());
     _threadPool->AddTask(ParseMemSnapshotTask, traceId);
     _threadPool->AddTask(ParseDaemonTask, traceId);
@@ -127,30 +127,36 @@ MemSnapshotParserContext& MemSnapshotParser::GetParseContext() { return parseCon
 
 
 /***
+ * 在满足以下任意条件之一（按顺序检查）时，需要重新解析pickle文件：
+ * 1. 数据库连接打开失败或db初始化失败
+ * 2. 通过2的校验，但数据库版本与当前版本不一致
+ *
  * @brief 检查是否需要解析或重新解析pickle文件
- * @return true 需要解析或重新解析
- * @return false 不需要解析或重新解析
+ * @return true 需要解析或重新解析，此时会关闭已打开的连接并清空DatabaseManager纳管实例。
+ * @return false 不需要解析或重新解析。此时将不会清空DatabaseManager及纳管实例，可以不需要重复打开。
  */
 bool MemSnapshotParser::CheckIfParsingNeed(const MemSnapshotParserContext& context)
 {
-    // 首先判断是否存在解析结果db文件，如果不存在则返回需要重新解析
-    if (!FileUtil::CheckPathSecurity(context.GetOutputDbPath(), CHECK_FILE_READ)) {
-        Server::ServerLog::Info("[Snapshot] Parsing output db file cannot found or is not valid. Trying to re-parse.");
-        return true;
-    }
-    // 如果已经存在db，则检查db版本是否与当前版本匹配
     auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(context.GetPicklePath());
     if (snapshotDb == nullptr) {
         Server::ServerLog::Warn("[Snapshot] Cannot get database connection by fileId: %, trying to re-parse.",
-            context.GetPicklePath());
+                                context.GetPicklePath());
         return true;
     }
     // 可能为首次打开db
     if (!snapshotDb->IsOpen() && !snapshotDb->OpenDbReadOnly(context.GetOutputDbPath())) {
         Server::ServerLog::Warn("[Snapshot] Cannot open database file: %, trying to re-parse.", context.GetOutputDbPath());
+        // 此处返回需要重新解析时，必须关闭数据库连接并清空db缓存，否则可能导致后续解析完成后，从DataBaseManager获取到旧的db连接而未正确重新初始化
+        MemSnapshotDatabase::Reset();
         return true;
     }
-    return snapshotDb->IsDatabaseVersionChange();
+    if (snapshotDb->IsDatabaseVersionChange()) {
+        Server::ServerLog::Info("[Snapshot] Database version changed. The pickle file need to re-parse.");
+        // 同上述，必须关闭数据库连接并清空db缓存
+        MemSnapshotDatabase::Reset();
+        return true;
+    }
+    return false;
 }
 
 MemSnapshotParser::MemSnapshotParser()
@@ -164,14 +170,27 @@ MemSnapshotParser::~MemSnapshotParser() { _threadPool->ShutDown(); }
 void MemSnapshotParser::ParseMemSnapshotTask()
 {
     Server::ServerLog::Info("[Snapshot] Parse snapshot thread started.");
-    if (!CheckIfParsingNeed(Instance().parseContext)) {
-        // 不需要重新解析的场景，可以直接发送解析成功事件，且在上述CheckIf方法中已经打开db并纳管到了databaseManager中
-        Server::ServerLog::Info("[Snapshot] Parsing pickle file: %, output db file: % is up-to-date.",
-                                Instance().parseContext.GetPicklePath(), Instance().parseContext.GetOutputDbPath());
-        Instance().parseContext.SetProgress(100);
-        Instance().parseContext.SetState(ParserState::UP_TO_DATE);
-        return;
+    const auto dbPath = Instance().parseContext.GetOutputDbPath();
+    // 如果解析db已存在
+    if (FileUtil::CheckFilePathExist(dbPath)) {
+        // 检查db是否可写，为后续重新解析做准备
+        if (!FileUtil::CheckPathSecurity(dbPath, CHECK_FILE_WRITE)) {
+            Server::ServerLog::Error("[Snapshot] Existing output db file: % "
+                                     "is not writable, parse interrupted. ", dbPath);
+            Instance().parseContext.SetState(ParserState::FINISH_FAILURE);
+            return;
+        }
+        // 通过存在性及权限检查，判断是否需要重新解析
+        if (!CheckIfParsingNeed(Instance().parseContext)) {
+            // 不需要重新解析的场景，可以直接发送解析成功事件，且在上述CheckIf方法中已经打开db并纳管到了databaseManager中
+            Server::ServerLog::Info("[Snapshot] Parsing pickle file: %, output db file: % is up-to-date.",
+                                    Instance().parseContext.GetPicklePath(), Instance().parseContext.GetOutputDbPath());
+            Instance().parseContext.SetProgress(100);
+            Instance().parseContext.SetState(ParserState::UP_TO_DATE);
+            return;
+        }
     }
+    // 需要首次解析或重新解析的场景
     const std::string memSnapDumpScriptsPath = FileUtil::SplicePath("mem_snap_dump", "tools", "dump2db.py");
     Server::ServerLog::Info("[Snapshot] Start parsing.");
     std::vector<std::string> arguments{Instance().parseContext.GetPicklePath(), "--log", Instance().parseContext.GetLogPath()};
