@@ -264,10 +264,13 @@ class DeviceSnapshot:
     total_reserved: int  # 内存池总量
     total_activated: int  # 活跃内存总量
 
+    device: int
+
     @classmethod
-    def from_dict(cls, device_snapshot_dict: dict, device: int = 0):
-        segments_dict = device_snapshot_dict["segments"]
-        device_trace_list = device_snapshot_dict["device_traces"][device]
+    def from_dict(cls, snapshot_dict: dict, device: int):
+        segments_dict = snapshot_dict.get("segments", [])
+        device_traces = snapshot_dict.get("device_traces", [])
+        device_trace_list = device_traces[device] if 0 <= device <= len(device_traces) else []
         snapshot = cls()
         snapshot.segments = []
         snapshot.trace_entries = []
@@ -276,6 +279,10 @@ class DeviceSnapshot:
         snapshot.total_activated = 0
         # 读取dump_snapshot时内存状态
         for segment_dict in segments_dict:
+            # 当segment原始数据中缺少device字段明确指向其所属设备时，默认其归属为device0
+            # 此时如果from_dict指定device为0或未指定而缺省为0，则未知归属的device也会纳入分析
+            if segment_dict.get("device", 0) != device:
+                continue
             _segment = Segment.from_dict(segment_dict)
             snapshot.segments.append(_segment)
             snapshot.total_allocated += _segment.allocated_size
@@ -287,12 +294,14 @@ class DeviceSnapshot:
             trace_entry = TraceEntry.from_dict(trace_entry_dict)
             trace_entry.idx = idx
             snapshot.trace_entries.append(trace_entry)
+        snapshot.device = device
         return snapshot
 
     def to_dict(self):
         return {
             'segments': [segment.to_dict() for segment in self.segments],
-            'device_traces': [[trace.to_dict() for trace in self.trace_entries]]
+            # 需要根据deviceId，将事件列表填入，如果deviceId不为0，前序还要padding空事件列表
+            'device_traces': [[] for _ in range(self.device)] + [[trace.to_dict() for trace in self.trace_entries]]
         }
 
     def find_segment_idx_by_addr(self, addr: int) -> int:

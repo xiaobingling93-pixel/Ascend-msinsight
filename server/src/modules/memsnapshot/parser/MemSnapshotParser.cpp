@@ -103,6 +103,7 @@ void MemSnapshotParser::Reset()
     Server::ServerLog::Info("[Snapshot] Parser Reset.");
     _threadPool->Reset();
     parseContext.Reset();
+    MemSnapshotDatabase::Reset();
 }
 
 void MemSnapshotParser::AsyncParseMemSnapshotPickle(const std::string& pickleFilePath)
@@ -216,7 +217,7 @@ int ReadProgressInLogFile(std::ifstream& file, std::string& err)
 bool DoubleCheckSuccessInLogFile(std::ifstream& file)
 {
     // 最后读取一次successfully关键字 进行二次确认
-    const std::string successKeyword = "successfully";
+    const std::string successKeyword = "Successfully dump the snapshot to database for devices";
     if (!file.is_open()) {
         Server::ServerLog::Warn("An exception occurred while re-verifying the parsing results; the output log "
                                 "file % could not be opened.",
@@ -262,8 +263,8 @@ void MemSnapshotParser::ParseDaemonTask()
             break;
         }
         Instance().parseContext.SetProgress(newProgress);
-        SLEEP(checkIntervalMs); // 每1s检查一次
-        checkIntervalMs = std::min(checkIntervalMs * 2, 1000);
+        SLEEP(checkIntervalMs); // 从100ms开始2倍增长，最大5s
+        checkIntervalMs = std::min(checkIntervalMs * 2, 5000);
     }
     if (Instance().parseContext.GetState() == ParserState::FINISH_SUCCESS) {
         std::ifstream file(Instance().parseContext.GetLogPath());
@@ -291,6 +292,13 @@ void MemSnapshotParser::ParseCallBack()
         return;
     }
     auto event = Instance().BuildParseSuccessEventFromContext();
+    if (event == nullptr) {
+        const std::string error = StringUtil::FormatString("Failed to build success event for snapshot data {}.", filepath);
+        Server::ServerLog::Error(error);
+        auto failedEvent = Instance().BuildParseFailEventFromContext(error);
+        SendEvent(std::move(failedEvent));
+        return;
+    }
     SendEvent(std::move(event));
 }
 
@@ -318,12 +326,27 @@ bool MemSnapshotParser::TryOpenParsingResultDbAndSetVersion() const
 
 std::unique_ptr<MemScopeParseSuccessEvent> MemSnapshotParser::BuildParseSuccessEventFromContext() const
 {
+    // 从DatabaseManager中获取MemSnapshotDatabase时，应使用原文件路径作为fileId而不是解析后的Db路径
+    const auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(parseContext.GetPicklePath());
+    if (!snapshotDb) {
+        Server::ServerLog::Error("[Snapshot] Failed to build success event: get the snapshot database failed.");
+        return nullptr;
+    }
+    if (!snapshotDb->IsOpen() && !snapshotDb->OpenDbReadOnly(parseContext.GetOutputDbPath())) {
+        Server::ServerLog::Error("[Snapshot] Failed to build success event: open database file failed: %.",
+                                 parseContext.GetOutputDbPath());
+        return nullptr;
+    }
     auto event = std::make_unique<Protocol::MemScopeParseSuccessEvent>();
     event->moduleName = Protocol::MODULE_MEM_SCOPE; // moduleName设置为memscope以复用MemScope的事件/请求/响应路由
     event->result = true;
     Protocol::MemScopeParseSuccessEventBody body;
     body.fileId = parseContext.GetPicklePath();
-    body.deviceIds["0"] = {"BLOCK"};
+    auto const devices = snapshotDb->GetDeviceIds();
+    Server::ServerLog::Info("[Snapshot] Reconized devices: %", StringUtil::join(devices, ", "));
+    for (const auto& deviceId : devices) {
+        body.deviceIds[deviceId] = {"BLOCK"};
+    }
     body.module = Protocol::MODULE_MEM_SNAPSHOT; // body.module设置为真实数据类型以适配前端区分模块类型
     event->body = body;
     return event;

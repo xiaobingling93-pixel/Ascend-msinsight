@@ -838,6 +838,24 @@ std::vector<LinkInfo> Database::QueryTableNameAndCol(const std::string& linkName
     return res;
 }
 
+std::vector<std::string> Database::QueryTableNamesByPrefix(const std::string& prefix)
+{
+    const std::string sql = "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (!TryOpt(stmt, "Query tables name by prefix failed to prepare sql!")) {
+        return {};
+    }
+    auto result = stmt->ExecuteQuery(prefix + "%");
+    if (!TryOpt(result, "Query tables name by prefix failed to get result!")) {
+        return {};
+    }
+    std::vector<std::string> res;
+    while (result->Next()) {
+        res.emplace_back(result->GetString("name"));
+    }
+    return res;
+}
+
 uint64_t Database::QueryCountByTableName(const PageQuery& query,
                                          const std::vector<ColumnAtt>& columns)
 {

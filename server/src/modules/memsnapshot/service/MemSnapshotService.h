@@ -41,11 +41,13 @@ public:
      * 4. 将blocks分配到segments中
      * 
      * @param eventId 事件ID，表示要查询的时间点
+     * @param deviceId 设备ID
      * @param database 内存快照数据库实例
      * @return 构建完成的segments列表，失败时返回空列表
      */
     static std::vector<Segment> GetSegmentsByEventId(const uint64_t eventId,
-                                                     const std::shared_ptr<FullDb::MemSnapshotDatabase> &database);
+                                                     const std::string& deviceId,
+                                                     const std::shared_ptr<FullDb::MemSnapshotDatabase>& database);
 
 private:
     static inline std::string LOG_TAG = "[MemSnapshotService] ";

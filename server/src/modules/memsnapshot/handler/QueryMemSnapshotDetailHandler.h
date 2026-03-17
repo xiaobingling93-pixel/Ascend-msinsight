@@ -31,6 +31,7 @@ public:
 private:
     const std::string LOG_TAG = "[MemSnapshotDetailHandler] ";
     static void BuildExtendedBlock(ExtendedBlock& extendedBlock,
+                                   const std::string& deviceId,
                                    const std::shared_ptr<FullDb::MemSnapshotDatabase>& database);
 };
 } // namespace Dic::Module::MemSnapshot

@@ -210,11 +210,16 @@ struct MemSnapshotAllocationsRequest : Request {
 };
 
 struct MemSnapshotDetailParams {
+    std::string deviceId;
     std::string type;
     int64_t id{0};
 
     bool CommonCheck(std::string& errorMsg) const
     {
+        if (!CheckStrParamValid(deviceId, errorMsg)) {
+            errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
         if (VALID_DETAIL_TYPES.find(type) == VALID_DETAIL_TYPES.end()) {
             errorMsg = "Invalid type";
             return false;
@@ -234,12 +239,14 @@ struct MemSnapshotDetailRequest : Request {
             error = "Failed to set request base info, command is: " + reqPtr->command;
             return nullptr;
         }
-        if (!json.HasMember("params") || !json["params"].HasMember("type") || !json["params"].HasMember("id")) {
+        if (!json.HasMember("params") || !json["params"].HasMember("deviceId") || !json["params"].HasMember("type") 
+            || !json["params"].HasMember("id")) {
             error = "Request[requestId=" + std::to_string(reqPtr->id) +
-                    "] json lacks member params or type or id.";
+                    "] json lacks member params deviceId, type or id.";
             return nullptr;
         }
         const json_t& param_json = json["params"];
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.type, param_json, "type");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.id, param_json, "id");
         return reqPtr;
@@ -248,9 +255,14 @@ struct MemSnapshotDetailRequest : Request {
 
 struct MemSnapshotStateParams {
     uint64_t eventId{0};
+    std::string deviceId;
 
     bool CommonCheck(std::string& errorMsg) const
     {
+        if (!CheckStrParamValid(deviceId, errorMsg)) {
+            errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
         if (eventId > INT64_MAX) {
             errorMsg = "eventId exceeds INT64_MAX";
             return false;
@@ -270,13 +282,15 @@ struct MemSnapshotStateRequest : Request {
             error = "Failed to set request base info, command is: " + reqPtr->command;
             return nullptr;
         }
-        if (!json.HasMember("params") || !json["params"].HasMember("eventId")) {
+        if (!json.HasMember("params") || !json["params"].HasMember("deviceId")  ||
+            !json["params"].HasMember("eventId")) {
             error = "Request[requestId=" + std::to_string(reqPtr->id) +
-                    "] json lacks member params or eventId.";
+                    "] json lacks member params, deviceId or eventId.";
             return nullptr;
         }
         const json_t& param_json = json["params"];
         JsonUtil::SetByJsonKeyValue(reqPtr->params.eventId, param_json, "eventId");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
         return reqPtr;
     }
 };

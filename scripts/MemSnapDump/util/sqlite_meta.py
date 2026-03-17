@@ -190,6 +190,16 @@ class SqliteTable:
         conn.executescript(sql)  # 支持多条 SQL（如 DROP + CREATE）
         conn.commit()
 
+    def create_index(self, conn: sqlite3.Connection, column_name: str):
+        """
+        创建索引
+        :param conn: sqlite3.Connection 对象
+        :param column_name: 列名
+        :return:
+        """
+        conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{self.name}_{column_name} ON {self.name} ({column_name});")
+        conn.commit()
+
     def insert_record(self, conn: sqlite3.Connection, record: Dict[str, Any]):
         """插入单条记录"""
         self.insert_records(conn, [record])
@@ -253,6 +263,10 @@ class SqliteDB:
                     key=value,
                     value=key
                 ))
+        self.conn.commit()
+
+    def delete_table(self, table_name: str):
+        self.conn.execute(f"DROP TABLE IF EXISTS {table_name};")
         self.conn.commit()
 
     def _create_dictionary_table(self):

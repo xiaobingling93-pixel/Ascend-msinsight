@@ -44,16 +44,16 @@ bool QueryMemSnapshotDetailHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     }
     
     if (request.params.type == DETAIL_TYPE_BLOCK) {
-        auto block = database->QueryBlockById(request.params.id);
+        auto block = database->QueryBlockById(request.params.id, request.params.deviceId);
         if (!block.has_value()) {
             errMsg = LOG_TAG + "Failed to query block detail: block not found with id " + std::to_string(request.params.id);
             SendResponse(std::move(responsePtr), false, errMsg);
             return false;
         }
         response.block = std::make_optional(ExtendedBlock(block.value()));
-        BuildExtendedBlock(response.block.value(), database);
+        BuildExtendedBlock(response.block.value(), request.params.deviceId, database);
     } else if (request.params.type == DETAIL_TYPE_EVENT) {
-        auto event = database->QueryTraceEntryById(request.params.id);
+        auto event = database->QueryTraceEntryById(request.params.id, request.params.deviceId);
         if (!event.has_value()) {
             errMsg = LOG_TAG + "Failed to query event detail: event not found with id " + std::to_string(request.params.id);
             SendResponse(std::move(responsePtr), false, errMsg);
@@ -67,14 +67,15 @@ bool QueryMemSnapshotDetailHandler::HandleRequest(std::unique_ptr<Protocol::Requ
 }
 
 void QueryMemSnapshotDetailHandler::BuildExtendedBlock(ExtendedBlock& extendedBlock,
-                                                     const std::shared_ptr<FullDb::MemSnapshotDatabase>& database)
+                                                       const std::string& deviceId,
+                                                       const std::shared_ptr<FullDb::MemSnapshotDatabase>& database)
 {
     if (extendedBlock.allocEventId > 0) {
-        extendedBlock.allocEvent = database->QueryTraceEntryById(extendedBlock.allocEventId);
+        extendedBlock.allocEvent = database->QueryTraceEntryById(extendedBlock.allocEventId, deviceId);
     }
     if (extendedBlock.freeEventId > 0) {
-        extendedBlock.freeCompletedEvent = database->QueryTraceEntryById(extendedBlock.freeEventId);
+        extendedBlock.freeCompletedEvent = database->QueryTraceEntryById(extendedBlock.freeEventId, deviceId);
     }
-    extendedBlock.freeRequestedEvent = database->QueryFreeRequestedTraceEntryByBlock(extendedBlock);
+    extendedBlock.freeRequestedEvent = database->QueryFreeRequestedTraceEntryByBlock(extendedBlock, deviceId);
 }
 } // namespace Dic::Module::MemSnapshot

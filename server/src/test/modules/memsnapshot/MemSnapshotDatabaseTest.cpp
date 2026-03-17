@@ -37,7 +37,7 @@ public:
     static void SetUpTestSuite()
     {
         // 准备测试数据
-        testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/snapshot/snapshot_expandable.pkl.db)";
+        testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/snapshot/snapshot_with_multi_devices.pkl.db)";
 
         // 获取数据库实例
         snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(testDbPath);
@@ -86,14 +86,29 @@ TEST_F(MemSnapshotDatabaseTest, CheckAllTableExist)
     EXPECT_TRUE(snapshotDb->CheckAllTableExist());
 }
 
+// 测试devices初始化信息
+TEST_F(MemSnapshotDatabaseTest, CheckInitDevices)
+{
+    const auto deviceIds = snapshotDb->GetDeviceIds();
+    EXPECT_EQ(deviceIds.size(), 2);
+    if (deviceIds.size() == 2) {
+        EXPECT_EQ(deviceIds[0], "0");
+        EXPECT_EQ(deviceIds[1], "1");
+    }
+    EXPECT_EQ(snapshotDb->GetDeviceMaxEntryId("0"), 8131);
+    EXPECT_EQ(snapshotDb->GetDeviceMaxEntryId("1"), 9699);
+}
+
 // 测试查询所有内存块
 TEST_F(MemSnapshotDatabaseTest, QueryAllBlocks)
 {
     std::vector<Block> blocks;
-    bool result = snapshotDb->QueryAllBlocks(blocks);
+    bool result = snapshotDb->QueryAllBlocks(blocks, "0");
     EXPECT_TRUE(result);
-
     EXPECT_EQ(blocks.size(), 3219);
+    result = snapshotDb->QueryAllBlocks(blocks, "1");
+    EXPECT_TRUE(result);
+    EXPECT_EQ(blocks.size(), 6435);
 }
 
 // 测试根据ID查询内存块
@@ -101,22 +116,25 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlockById)
 {
     // 先查询所有块获取一个有效的ID
     const auto expectBlockId = 1;
-    const auto block = snapshotDb->QueryBlockById(expectBlockId);
+    auto block = snapshotDb->QueryBlockById(expectBlockId, "0");
 
     EXPECT_TRUE(block.has_value());
     EXPECT_EQ(block->id, expectBlockId);
+    EXPECT_EQ(block->size, 41943552);
+    EXPECT_EQ(block->state, BLOCK_STATE_ACTIVE_ALLOC);
+
+    block = snapshotDb->QueryBlockById(expectBlockId, "1");
+
+    EXPECT_TRUE(block.has_value());
+    EXPECT_EQ(block->id, expectBlockId);
+    EXPECT_EQ(block->size, 37888);
     EXPECT_EQ(block->state, BLOCK_STATE_ACTIVE_ALLOC);
 
     // 测试查询不存在的ID
-    auto nonExistentBlock = snapshotDb->QueryBlockById(-1000);
+    auto nonExistentBlock = snapshotDb->QueryBlockById(-1000, "0");
     EXPECT_FALSE(nonExistentBlock.has_value());
-}
-
-// 测试查询最大事件ID
-TEST_F(MemSnapshotDatabaseTest, QueryMaxEntryId)
-{
-    int64_t maxId = snapshotDb->QueryMaxEntryId();
-    EXPECT_EQ(maxId, 8091);
+    nonExistentBlock = snapshotDb->QueryBlockById(-1000, "1");
+    EXPECT_FALSE(nonExistentBlock.has_value());
 }
 
 // 测试字典映射功能
@@ -164,13 +182,13 @@ TEST_F(MemSnapshotDatabaseTest, QueryMemoryRecords)
     std::vector<MemoryRecord> records;
     snapshotDb->QueryMemoryRecords(params, records);
     
-    EXPECT_EQ(records.size(), 8092);
+    EXPECT_EQ(records.size(), 8132);
     
     // 验证第一条记录的字段
     if (!records.empty()) {
         EXPECT_EQ(records[0].id, 0);
         EXPECT_EQ(records[0].allocated, 94482944);
-        EXPECT_EQ(records[0].reserved, 113246208);
+        EXPECT_EQ(records[0].reserved, 155189248);
         EXPECT_EQ(records[0].active, 94482944);
     }
 
@@ -294,7 +312,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTable)
     std::vector<TraceEntry> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
     
-    EXPECT_EQ(totalCount, 8092);
+    EXPECT_EQ(totalCount, 8132);
     EXPECT_EQ(entries.size(), params.pageSize);
     
     // 验证第一条entry的字段
@@ -362,7 +380,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithAscOrder)
     std::vector<TraceEntry> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
     
-    EXPECT_EQ(totalCount, 8092);
+    EXPECT_EQ(totalCount, 8132);
     EXPECT_EQ(entries.size(), params.pageSize);
     
     // 验证升序排序
@@ -383,7 +401,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableSecondPage)
     std::vector<TraceEntry> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
 
-    EXPECT_EQ(totalCount, 8092);
+    EXPECT_EQ(totalCount, 8132);
     EXPECT_EQ(entries.size(), params.pageSize);
 
     // 验证升序排序
@@ -396,13 +414,15 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableSecondPage)
 TEST_F(MemSnapshotDatabaseTest, QueryTraceEntryById)
 {
     const auto expectEntryId = 1;
-    const auto entry = snapshotDb->QueryTraceEntryById(expectEntryId);
+    const auto entry = snapshotDb->QueryTraceEntryById(expectEntryId, "0");
     
     EXPECT_TRUE(entry.has_value());
     EXPECT_EQ(entry->id, expectEntryId);
     
     // 测试查询不存在的ID
-    auto nonExistentEntry = snapshotDb->QueryTraceEntryById(-1000);
+    auto nonExistentEntry = snapshotDb->QueryTraceEntryById(-1000, "0");
+    EXPECT_FALSE(nonExistentEntry.has_value());
+    nonExistentEntry = snapshotDb->QueryTraceEntryById(-1000, "1");
     EXPECT_FALSE(nonExistentEntry.has_value());
 }
 
@@ -425,7 +445,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryFreeRequestedTraceEntryByBlock)
     for (const auto& block : blocks) {
         if (block.freeEventId > 0) {
             foundBlockWithFree = true;
-            auto freeRequestedEntry = snapshotDb->QueryFreeRequestedTraceEntryByBlock(block);
+            auto freeRequestedEntry = snapshotDb->QueryFreeRequestedTraceEntryByBlock(block, "0");
             // 如果存在freeRequested事件，验证其属性
             if (freeRequestedEntry.has_value()) {
                 EXPECT_GT(freeRequestedEntry->id, block.allocEventId);
@@ -534,7 +554,7 @@ TEST_F(MemSnapshotDatabaseTest, QuerySegmentEventsUntil)
     const int64_t eventId = 1000;
     std::vector<TraceEntry> events;
     
-    bool result = snapshotDb->QuerySegmentEventsUntil(eventId, events);
+    bool result = snapshotDb->QuerySegmentEventsUntil(eventId, "0", events);
     EXPECT_TRUE(result);
     EXPECT_GT(events.size(), 0);
 
@@ -550,10 +570,10 @@ TEST_F(MemSnapshotDatabaseTest, QuerySegmentEventsUntil)
 // 测试查询segment事件直到最大事件ID
 TEST_F(MemSnapshotDatabaseTest, QuerySegmentEventsUntilMaxEventId)
 {
-    const int64_t maxEventId = snapshotDb->QueryMaxEntryId();
+    const int64_t maxEventId = snapshotDb->GetDeviceMaxEntryId("0");
     std::vector<TraceEntry> events;
     
-    bool result = snapshotDb->QuerySegmentEventsUntil(maxEventId, events);
+    bool result = snapshotDb->QuerySegmentEventsUntil(maxEventId, "0", events);
     EXPECT_TRUE(result);
     
     // 验证所有事件ID都小于等于最大事件ID
@@ -568,7 +588,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryActiveBlocksByEventId)
     const int64_t eventId = 1000;
     std::vector<Block> blocks;
     
-    bool result = snapshotDb->QueryActiveBlocksByEventId(eventId, blocks);
+    bool result = snapshotDb->QueryActiveBlocksByEventId(eventId, "0", blocks);
     EXPECT_TRUE(result);
     EXPECT_GT(blocks.size(), 0);
     

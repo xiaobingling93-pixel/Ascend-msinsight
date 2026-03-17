@@ -52,7 +52,7 @@ bool QueryMemSnapshotStateHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         return false;
     }
     
-    auto segments = MemSnapshotService::GetSegmentsByEventId(request.params.eventId, database);
+    auto segments = MemSnapshotService::GetSegmentsByEventId(request.params.eventId, request.params.deviceId, database);
     BuildSegmentsStateInfoFromSegments(segments, response.segments);
     SendResponse(std::move(responsePtr), true);
     return true;

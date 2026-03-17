@@ -48,15 +48,15 @@ bool QueryMemSnapshotBlockHandler::HandleRequest(std::unique_ptr<Protocol::Reque
             return false;
         }
         response.total = static_cast<uint64_t>(total);
-        response.maxTimestamp = database->QueryMaxEntryId();
+        response.maxTimestamp = database->GetDeviceMaxEntryId(request.params.deviceId);
     } else {
-        if (!database->QueryAllBlocks(response.blocks)) {
+        if (!database->QueryAllBlocks(response.blocks, request.params.deviceId)) {
             errMsg = LOG_TAG + "Failed to query blocks: query db failed.";
             SendResponse(std::move(responsePtr), false, errMsg);
             return false;
         }
         response.total = response.blocks.size();
-        response.maxTimestamp = database->QueryMaxEntryId();
+        response.maxTimestamp = database->GetDeviceMaxEntryId(request.params.deviceId);
     }
     SendResponse(std::move(responsePtr), true);
     return true;

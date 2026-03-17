@@ -448,7 +448,8 @@ TEST_F(MemSnapshotProtocolTest, BuildDetailRequestBlockFromJson)
                           "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
                           "  \"params\": { "
                           "    \"type\": \"block\", "
-                          "    \"id\": 123 "
+                          "    \"id\": 123,"
+                          "    \"deviceId\": \"1\" "
                           "  } "
                           "}";
     std::string errMsg;
@@ -460,6 +461,7 @@ TEST_F(MemSnapshotProtocolTest, BuildDetailRequestBlockFromJson)
     auto &request = dynamic_cast<Dic::Protocol::MemSnapshotDetailRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.type, "block");
+    EXPECT_EQ(request.params.deviceId, "1");
     EXPECT_EQ(request.params.id, 123);
 }
 
@@ -474,7 +476,8 @@ TEST_F(MemSnapshotProtocolTest, BuildDetailRequestEventFromJson)
                           "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
                           "  \"params\": { "
                           "    \"type\": \"event\", "
-                          "    \"id\": 456 "
+                          "    \"id\": 456, "
+                          "    \"deviceId\": \"1\" "
                           "  } "
                           "}";
     std::string errMsg;
@@ -486,6 +489,7 @@ TEST_F(MemSnapshotProtocolTest, BuildDetailRequestEventFromJson)
     auto &request = dynamic_cast<Dic::Protocol::MemSnapshotDetailRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.type, "event");
+    EXPECT_EQ(request.params.deviceId, "1");
     EXPECT_EQ(request.params.id, 456);
 }
 
@@ -500,7 +504,8 @@ TEST_F(MemSnapshotProtocolTest, DetailRequestInvalidType)
                           "  \"projectName\": \"/home/test/data/memsnapshot/test.db\", "
                           "  \"params\": { "
                           "    \"type\": \"invalid_type\", "
-                          "    \"id\": 123 "
+                          "    \"id\": 123, "
+                          "    \"deviceId\": \"1\" "
                           "  } "
                           "}";
     std::string errMsg;

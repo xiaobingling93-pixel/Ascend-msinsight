@@ -31,14 +31,15 @@ namespace Dic::Module::MemSnapshot {
  * 5. 将blocks分配到segments中并更新统计信息
  */
 std::vector<Segment> MemSnapshotService::GetSegmentsByEventId(const uint64_t eventId,
-                                                              const std::shared_ptr<FullDb::MemSnapshotDatabase> &database)
+                                                              const std::string& deviceId,
+                                                              const std::shared_ptr<FullDb::MemSnapshotDatabase>& database)
 {
     if (database == nullptr || !database->IsOpen()) {
         Server::ServerLog::Error(LOG_TAG + "Failed to get segments by event id: Database is null");
         return {};
     }
     std::vector<TraceEntry> segmentEvents;
-    if (!database->QuerySegmentEventsUntil(eventId, segmentEvents)) {
+    if (!database->QuerySegmentEventsUntil(eventId, deviceId, segmentEvents)) {
         Server::ServerLog::Error(LOG_TAG + "Failed to query segment events for event id: " + std::to_string(eventId));
         return {};
     }
@@ -46,7 +47,7 @@ std::vector<Segment> MemSnapshotService::GetSegmentsByEventId(const uint64_t eve
     auto segments = BuildSegmentsByEvents(segmentEvents);
 
     std::vector<Block> blocks;
-    if (!database->QueryActiveBlocksByEventId(eventId, blocks)) {
+    if (!database->QueryActiveBlocksByEventId(eventId, deviceId, blocks)) {
         Server::ServerLog::Error(LOG_TAG + "Failed to query blocks for event id: " + std::to_string(eventId));
         return {};
     }

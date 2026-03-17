@@ -115,8 +115,8 @@ const SliceDetail = observer(({ session }: { session: Session }): JSX.Element =>
     const [detailList, setDetailList] = useState<Array<{ key: string; value: any }>>([]);
     const [noData, setNoData] = useState(false);
 
-    const getSnapshotDetailInfo = async (type: string, id: number): Promise<void> => {
-        const data = await getSnapshotDetail({ type, id });
+    const getSnapshotDetailInfo = async (type: string, id: number, deviceId: string): Promise<void> => {
+        const data = await getSnapshotDetail({ type, id, deviceId });
         const result: Array<{ key: string; value: any }> = [];
         Object.entries(data).forEach(([key, value]) => {
             if (typeof value === 'object') {
@@ -151,7 +151,7 @@ const SliceDetail = observer(({ session }: { session: Session }): JSX.Element =>
                 setDetailList([]);
                 return;
             }
-            getSnapshotDetailInfo('block', id);
+            getSnapshotDetailInfo('block', id, session.deviceId);
         }
     }, [session.leaksWorkerInfo.clickItem]);
 
@@ -168,7 +168,7 @@ const SliceDetail = observer(({ session }: { session: Session }): JSX.Element =>
             setNoData(true);
             return;
         }
-        getSnapshotDetailInfo(type === 'segment' ? 'event' : 'block', id);
+        getSnapshotDetailInfo(type === 'segment' ? 'event' : 'block', id, session.deviceId);
     }, [session.stateWorkerInfo.clickItem]);
 
     useEffect(() => {
@@ -177,7 +177,7 @@ const SliceDetail = observer(({ session }: { session: Session }): JSX.Element =>
             setDetailList([]);
             return;
         }
-        getSnapshotDetailInfo('event', session.clickEventItem.id);
+        getSnapshotDetailInfo('event', session.clickEventItem.id, session.deviceId);
     }, [session.clickEventItem]);
 
     useEffect(() => {

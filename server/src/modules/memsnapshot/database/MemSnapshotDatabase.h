@@ -36,44 +36,61 @@ public:
 
     // API
     // 查询所有的block，用于内存块生命周期图展示
-    bool QueryAllBlocks(std::vector<Block> &blocks);
-    // 分片查询trace_entry，用于事件生命周期图展示
-    int64_t QueryTraceEntriesWithPagination(const PaginationParam& paginationParam, std::vector<TraceEntry> &entries);
+    bool QueryAllBlocks(std::vector<Block> &blocks, const std::string& deviceId);
     // 基于id查询单个block的详细信息
-    std::optional<Block> QueryBlockById(int64_t blockId);
+    std::optional<Block> QueryBlockById(int64_t blockId, const std::string& deviceId);
     // 查询指定事件ID时活跃的blocks
-    bool QueryActiveBlocksByEventId(int64_t eventId, std::vector<Block>& blocks);
+    bool QueryActiveBlocksByEventId(int64_t eventId, const std::string& deviceId, std::vector<Block>& blocks);
     // 查询blocks表格数据，支持分页、过滤、排序等
-    int64_t QueryBlocksTable(const MemSnapshotBlockParams& queryParams, std::vector<Block>& blocks);
+    int64_t QueryBlocksTable(const MemSnapshotBlockParams& queryParams,
+                             std::vector<Block>& blocks);
 
-    // 查询最大事件id
-    [[nodiscard]] int64_t QueryMaxEntryId() const;
     static void Reset();
 
     // 查询内存记录（allocated/reserved/active）用于内存总量曲线
-    void QueryMemoryRecords(const MemSnapshotAllocationParams& queryParams, std::vector<MemoryRecord>& records) const;
+    void QueryMemoryRecords(const MemSnapshotAllocationParams& queryParams,
+                            std::vector<MemoryRecord>& records);
     // 查询trace_entry表格数据，支持分页、过滤、排序等
     int64_t QueryTraceEntriesTable(const MemSnapshotEventParams& queryParams, std::vector<TraceEntry>& entries);
+    // 分片查询trace_entry，用于事件生命周期图展示
+    int64_t QueryTraceEntriesWithPagination(const PaginationParam& paginationParam,
+                                            const std::string& deviceId,
+                                            std::vector<TraceEntry>& entries);
     // 基于id查询单个trace_entry的详细信息
-    std::optional<TraceEntry> QueryTraceEntryById(int64_t eventId);
+    std::optional<TraceEntry> QueryTraceEntryById(const int64_t eventId, const std::string& deviceId);
     // 查询内存块的freeRequested事件
-    std::optional<TraceEntry> QueryFreeRequestedTraceEntryByBlock(const Block& block);
+    std::optional<TraceEntry> QueryFreeRequestedTraceEntryByBlock(const Block& block, const std::string& deviceId);
 
     // 查询指定事件ID之前的segment相关事件（segment_alloc, segment_free, segment_map, segment_unmap）
-    bool QuerySegmentEventsUntil(int64_t eventId, std::vector<TraceEntry>& events);
+    bool QuerySegmentEventsUntil(const int64_t eventId,
+                                 const std::string& deviceId,
+                                 std::vector<TraceEntry>& events);
 
     // 字典表
     static std::string GetTableColumnTag(const std::string& tableName, const std::string& colName);
     std::string GetRealValueInTableDictionaryMap(const std::string& tableName, const std::string& colName, int intVal);
     int GetKeyInTableDictionaryMap(const std::string& tableName, const std::string& colName, const std::string& realVal);
+
+    // 获取当前实例中的device_id列表
+    bool IsDeviceIdValid(const std::string& deviceId);
+    std::vector<std::string> GetDeviceIds();
+    std::string GetBlockTableNameByDeviceId(const std::string& deviceId);
+    std::string GetTraceEntryTableNameByDeviceId(const std::string& deviceId);
+    // 查询最大事件id
+    [[nodiscard]] int64_t GetDeviceMaxEntryId(const std::string& deviceId) const;
+
 private:
     static inline const std::string LOG_TAG = "[MemSnapshotDb] ";
-    const std::string blockTable = "block";
-    const std::string traceEntryTable = "trace_entry";
+    // issue #116中，为支持多device的场景，block和trace_entry表的table_name需要增加deviceId后缀
+    const std::string blockTablePrefix = "block_";
+    std::vector<std::string> blockTableNames;
+    const std::string traceEntryTablePrefix = "trace_entry_";
+    std::vector<std::string> traceEntryTableNames;
     const std::string dictionaryTable = "dictionary";
-    int64_t maxEntryId = 0;
+    std::map<std::string, int64_t> deviceMaxEntryIdMap;
     std::map<std::string, std::map<int, std::string>> tableDictionaryMap;
     bool InitTableDictionaryMap();
+    bool InitDeviceIdsAndMaxEntryIdMap();
     bool InitContext();
     Block QueryBlockByStep(sqlite3_stmt* stmt, int startIdx = 0);
     TraceEntry QueryTraceEntryByStep(sqlite3_stmt* stmt, int startIdx = 0);

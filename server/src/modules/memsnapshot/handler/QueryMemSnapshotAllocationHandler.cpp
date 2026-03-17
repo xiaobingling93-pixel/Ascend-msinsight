@@ -47,7 +47,7 @@ bool QueryMemSnapshotAllocationHandler::HandleRequest(std::unique_ptr<Protocol::
         return true;
     }
     responsePtr->minEventId = 0;
-    responsePtr->maxEventId = memoryDatabase->QueryMaxEntryId();
+    responsePtr->maxEventId = memoryDatabase->GetDeviceMaxEntryId(request.params.deviceId);
     responsePtr->records = std::move(records);
     SendResponse(std::move(responsePtr), true);
     return true;

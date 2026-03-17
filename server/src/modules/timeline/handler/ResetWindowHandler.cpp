@@ -23,6 +23,8 @@
 #include "FullDbParser.h"
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
+#include "MemSnapshotParser.h"
+#include "MemScopeParser.h"
 #include "ServitizationOpenApi.h"
 #include "BaselineManagerService.h"
 #include "ResetWindowHandler.h"
@@ -45,6 +47,8 @@ bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     Memory::MemoryParse::Instance().Reset();
     Source::SourceFileParser::Instance().Reset();
     FullDb::FullDbParser::Instance().Reset();
+    MemSnapshotParser::Instance().Reset();
+    MemScopeParser::Instance().Reset();
     BaselineManagerService::ResetBaseline(true);
     SetResponseResult(response, true);
     // add response to response queue in session

@@ -47,14 +47,14 @@ bool QueryMemSnapshotEventHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         return false;
     }
     const int64_t total = request.isTable ? database->QueryTraceEntriesTable(request.params, response.entries)
-                              : database->QueryTraceEntriesWithPagination(request.params, response.entries);
+                              : database->QueryTraceEntriesWithPagination(request.params, request.params.deviceId, response.entries);
     if (total < 0) {
         errMsg = LOG_TAG + "Failed to query events: query db failed.";
         SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
     response.total = static_cast<uint64_t>(total);
-    response.maxTimestamp = database->QueryMaxEntryId();
+    response.maxTimestamp = database->GetDeviceMaxEntryId(request.params.deviceId);
     SendResponse(std::move(responsePtr), true);
     return true;
 }

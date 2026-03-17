@@ -228,10 +228,10 @@ export const getSnapshotEvent = async (params: EventParam): Promise<EventsTableD
     return window.request({ command: 'Memory/snapshot/events', params: { ...params } });
 };
 
-export const getMemoryStateData = async (params: { eventId: number }): Promise<{ segments: Segment[] }> => {
+export const getMemoryStateData = async (params: { eventId: number; deviceId: string }): Promise<{ segments: Segment[] }> => {
     return window.request({ command: 'Memory/snapshot/state', params: { ...params } });
 };
 
-export const getSnapshotDetail = async (params: { id: number; type: string }): Promise<{ [key: string]: any }> => {
+export const getSnapshotDetail = async (params: { id: number; type: string; deviceId: string }): Promise<{ [key: string]: any }> => {
     return window.request({ command: 'Memory/snapshot/detail', params: { ...params } });
 };

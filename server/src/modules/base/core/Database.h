@@ -91,6 +91,13 @@ public:
     virtual std::vector<std::map<std::string, std::string>> QueryDataByPage(const PageQuery& query,
                                                                             const std::vector<ColumnAtt>& columns);
     std::vector<LinkInfo> QueryTableNameAndCol(const std::string &linkName);
+
+    /**
+     * 查询所有符合前缀的表名
+     * @param prefix 表名前缀
+     * @return 所有符合前缀的表名
+     */
+    std::vector<std::string> QueryTableNamesByPrefix(const std::string& prefix);
     bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
     bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
     std::unordered_map<std::string, std::string> QueryTranslate(bool isZh);

@@ -198,7 +198,7 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
             workerSetMemoryStateData({ data: [] });
             return;
         }
-        getMemoryStateData({ eventId: currentRow.id }).then(data => {
+        getMemoryStateData({ eventId: currentRow.id, deviceId: session.deviceId }).then(data => {
             workerSetMemoryStateData({ data: data.segments });
         });
     };

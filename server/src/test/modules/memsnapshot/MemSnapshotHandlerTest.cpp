@@ -40,7 +40,7 @@ public:
         std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
 
-        testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/snapshot/snapshot_expandable.pkl.db)";
+        testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/snapshot/snapshot_with_multi_devices.pkl.db)";
         auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(testDbPath);
         ASSERT_TRUE(snapshotDb != nullptr);
         ASSERT_TRUE(snapshotDb->OpenDbReadOnly(testDbPath));
@@ -198,6 +198,7 @@ TEST_F(MemSnapshotHandlerTest, QueryBlockDetailWithValidParams)
 {
     QueryMemSnapshotDetailHandler handler;
     std::unique_ptr<MemSnapshotDetailRequest> requestPtr = std::make_unique<MemSnapshotDetailRequest>();
+    requestPtr->params.deviceId = "0";
     requestPtr->moduleName = MODULE_MEM_SCOPE;
     requestPtr->projectName = testDbPath;
     requestPtr->params.type = "block";
@@ -215,7 +216,7 @@ TEST_F(MemSnapshotHandlerTest, QueryEventDetailWithValidParams)
     requestPtr->projectName = testDbPath;
     requestPtr->params.type = "event";
     requestPtr->params.id = 1;
-
+    requestPtr->params.deviceId = "0";
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_TRUE(result);
 }
