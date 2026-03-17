@@ -41,7 +41,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         getFuncNewData(session, range[0], range[1]);
 
         const { sizeInfo, renderOptions } = session.leaksWorkerInfo;
-        const newScale = (sizeInfo.maxTimestamp - sizeInfo.minTimestamp) / (range[1] - range[0]);
+        const newScale = range[1] - range[0] === 0 ? Number.MAX_SAFE_INTEGER : (sizeInfo.maxTimestamp - sizeInfo.minTimestamp) / (range[1] - range[0]);
         const newX = -(range[0] - sizeInfo.minTimestamp) * renderOptions.zoom.x * newScale;
         const transform = { x: newX, y: 0, scale: newScale };
 
@@ -164,6 +164,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                 <div id="barContent" style={{ overflow: 'hidden', padding: 0, position: 'relative' }}>
                     <MemoryBlockDiagram session={session} />
                     <MemoryDataZoom
+                        module={session.module}
                         offsetLeft={95}
                         offsetRight={105}
                         dataSource={zoomData}

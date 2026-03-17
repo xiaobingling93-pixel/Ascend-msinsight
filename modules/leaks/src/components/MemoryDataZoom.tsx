@@ -22,6 +22,7 @@ import type { EChartsOption, GridComponentOption as GridOption, YAXisComponentOp
 import { observer } from 'mobx-react';
 import { type Theme, useTheme } from '@emotion/react';
 import { debounce, type DebouncedFunc } from 'lodash';
+import { formatTime } from '@/utils/utils';
 
 /** 时间范围 */
 type Range = [number, number];
@@ -44,6 +45,7 @@ type DataZoomProps = {
     offsetLeft?: number; // dataZoom 左侧偏移量(与独立的主图左对齐)
     offsetRight?: number; // dataZoom 右侧偏移量(与独立的主图右对齐)
     selectedZoomChange?: (range: Range) => void; // dataZoom 选中范围改变回调
+    module: 'leaks' | 'memsnapshot'; // 数据类型，影响时间戳转化
 };
 
 type GetOptionParams = {
@@ -56,11 +58,11 @@ type GetOptionParams = {
     minTime: number;
     maxTime: number;
     theme: Theme;
+    module: string;
 };
 
 const DATA_ZOOM_HEIGHT = 30; // dataZoom默认高度
 const DATA_ZOOM_OFFSET = 6; // dataZoom偏移量（顶部滑块的高度）
-const BASE_TIME = 1000000;
 
 function getGridOption(offsetLeft?: number, offsetRight?: number): GridOption {
     const grid = { top: 0, bottom: 0 } as GridOption;
@@ -98,7 +100,7 @@ function getYAxisOption(isDataZoom: boolean, dataSource: Array<[number, number]>
     return yAxis;
 }
 
-function getDataZoomOption(dataZoomHeight?: number): DataZoomOption[] {
+function getDataZoomOption(module: string, dataZoomHeight?: number): DataZoomOption[] {
     return [
         {
             type: 'slider',
@@ -109,7 +111,8 @@ function getDataZoomOption(dataZoomHeight?: number): DataZoomOption[] {
             height: dataZoomHeight ?? DATA_ZOOM_HEIGHT,
             backgroundColor: 'transparent',
             moveOnMouseMove: false, // 禁止在非选中区域或滑块外拖动
-            labelFormatter: (val: number) => `${(val / BASE_TIME).toFixed(3)}`,
+            labelFormatter: (val: number) => formatTime(val, module),
+            minSpan: 1,
         },
         {
             type: 'inside',
@@ -120,7 +123,7 @@ function getDataZoomOption(dataZoomHeight?: number): DataZoomOption[] {
     ] as DataZoomOption[];
 }
 
-function getOptions({ dataSource, minTime, maxTime, isDataZoom, dataZoomHeight, offsetLeft, offsetRight, theme }: GetOptionParams): EChartsOption {
+function getOptions({ dataSource, minTime, maxTime, isDataZoom, dataZoomHeight, offsetLeft, offsetRight, theme, module }: GetOptionParams): EChartsOption {
     return {
         animation: false,
         grid: getGridOption(offsetLeft, offsetRight),
@@ -145,7 +148,7 @@ function getOptions({ dataSource, minTime, maxTime, isDataZoom, dataZoomHeight, 
                 data: dataSource,
             },
         ],
-        dataZoom: isDataZoom ? getDataZoomOption(dataZoomHeight) : undefined,
+        dataZoom: isDataZoom ? getDataZoomOption(module, dataZoomHeight) : undefined,
     } as EChartsOption;
 }
 
@@ -158,6 +161,7 @@ const MemoryDataZoom = observer(
         dataSource,
         minTime,
         maxTime,
+        module,
         selectedZoomChange,
     }: DataZoomProps): React.ReactElement => {
         const theme = useTheme();
@@ -182,15 +186,15 @@ const MemoryDataZoom = observer(
          * 趋势图配置项
          */
         const chartOptions: EChartsOption = useMemo(() => {
-            return getOptions({ dataSource, minTime, maxTime, isDataZoom: false, height: 0, dataZoomHeight, offsetLeft, offsetRight, theme });
-        }, [dataSource, dataZoomHeight, offsetLeft, offsetRight, maxTime, minTime, theme]);
+            return getOptions({ dataSource, minTime, maxTime, isDataZoom: false, height: 0, dataZoomHeight, offsetLeft, offsetRight, theme, module });
+        }, [dataSource, dataZoomHeight, offsetLeft, offsetRight, maxTime, minTime, theme, module]);
 
         /**
          * 缩略图配置项
          */
         const dataZoomOptions: EChartsOption = useMemo(() => {
-            return getOptions({ dataSource, minTime, maxTime, isDataZoom: true, height: 0, dataZoomHeight, offsetLeft, offsetRight, theme });
-        }, [dataSource, dataZoomHeight, offsetLeft, offsetRight, maxTime, minTime, theme]);
+            return getOptions({ dataSource, minTime, maxTime, isDataZoom: true, height: 0, dataZoomHeight, offsetLeft, offsetRight, theme, module });
+        }, [dataSource, dataZoomHeight, offsetLeft, offsetRight, maxTime, minTime, theme, module]);
 
         const handleDataZoom = (params: any): void => {
             const { start, end, batch } = params as DataZoomItem;
