@@ -205,7 +205,8 @@ public:
             if (fileName == ".." || fileName == "." || fileName.empty()) {
                 continue;
             }
-            if (!CheckPathComm(SplicePath(currentPath, fileName), TODO)) {
+
+            if (!CheckPathSecurity(SplicePath(currentPath, fileName))) {
                 continue;
             }
             if ((fileInfo.attrib & _A_SUBDIR) != 0) {
