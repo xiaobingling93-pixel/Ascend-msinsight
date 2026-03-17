@@ -39,6 +39,17 @@ protected:
     void
     QueryDatasByCols(const IEUsageViewParamsRequest &request, IEUsageViewResponse &response,
                      std::vector<ColumnAtt> &atts);
+
+private:
+    // 采样桶数量常量
+    static const uint16_t DEFAULT_SAMPLE_BUCKETS = 1000;
+
+    // 采样方法：参照 CurveContainer::ComputeCurve 的算法思想
+    void SampleLines(const std::vector<std::vector<std::string>>& lines,
+                     std::vector<std::vector<std::string>>& result);
+
+    // 辅助方法：将字符串转换为 double
+    static double StringToDouble(const std::string& str);
 };
 }
 #endif // PROFILER_SERVER_IECURVEHANDLER_H
