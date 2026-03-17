@@ -50,6 +50,7 @@ const setMemoryBlockDataHandler = (payload: SetMemoryBlocksDataPayload): void =>
     });
     renderer?.setZoom(zoom).setData(memoryBlockData.blocks);
     renderer?.updateCanvasSize(viewport);
+    self.postMessage({ type: 'renderCompleted' });
 };
 
 const resizeCanvasHandler = (payload: ResizeCanvasPayload): void => {

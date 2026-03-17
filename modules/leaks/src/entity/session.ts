@@ -160,6 +160,9 @@ export class Session {
 
     clickEventItem: EvenItem | null = null;
 
+    loadingBlocks: boolean = false;
+    loadingState: boolean = false;
+
     constructor() {
         makeAutoObservable(this);
     }

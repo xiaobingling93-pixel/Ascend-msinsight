@@ -35,6 +35,7 @@ import { type EvenItem, getMemoryStateData, getSnapshotEvent } from '@/utils/Req
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled/macro';
+import { Loading } from './tools';
 
 export const MemoryStateDiagram = ({ session }: { session: Session }): JSX.Element => {
     return <div style={{ display: 'flex', height: 800 }}>
@@ -134,6 +135,9 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
     };
 
     const getAllEventListData = async (session: Session): Promise<void> => {
+        runInAction(() => {
+            session.loadingState = true;
+        });
         currentRequestId = ++currentRequestId % 1000;
         const requestId = currentRequestId;
 
@@ -200,6 +204,9 @@ const EventList = observer(({ session }: { session: Session }): JSX.Element => {
         }
         getMemoryStateData({ eventId: currentRow.id, deviceId: session.deviceId }).then(data => {
             workerSetMemoryStateData({ data: data.segments });
+            runInAction(() => {
+                session.loadingState = false; // 实际只有第一次获取数据时才需要显示loading
+            });
         });
     };
 
@@ -289,7 +296,7 @@ const ProgressLine = ({ currentCount, total }: { currentCount: number; total: nu
     </>;
 };
 
-const StateDiagramCanvas = ({ session }: { session: Session }): JSX.Element => {
+const StateDiagramCanvas = observer(({ session }: { session: Session }): JSX.Element => {
     const containerRef = useRef<HTMLDivElement>(null);
     const ref = useRef<HTMLCanvasElement>(null);
     const isDragging = useRef(false);
@@ -474,5 +481,6 @@ const StateDiagramCanvas = ({ session }: { session: Session }): JSX.Element => {
             ref={ref}
             style={{ position: 'absolute', top: 0, imageRendering: 'pixelated', touchAction: 'none' }}
         />
+        <Loading style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} loading={session.loadingState} />
     </div>;
-};
+});

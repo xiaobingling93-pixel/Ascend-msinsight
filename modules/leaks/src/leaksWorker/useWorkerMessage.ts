@@ -47,6 +47,11 @@ const useWorkerMessage = (): void => {
                         session.leaksWorkerInfo.clickItem = ev.data.result;
                     });
                     break;
+                case 'renderCompleted':
+                    runInAction(() => {
+                        session.loadingBlocks = false;
+                    });
+                    break;
                 default:
                     break;
             }

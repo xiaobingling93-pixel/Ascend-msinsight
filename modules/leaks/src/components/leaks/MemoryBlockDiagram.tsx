@@ -26,12 +26,13 @@ import {
 } from '@/leaksWorker/blockWorker/worker';
 import { Session } from '@/entity/session';
 import { runInAction } from 'mobx';
-import { Axis, HoverItem, MarkLineBlock } from './tools';
+import { Axis, HoverItem, Loading, MarkLineBlock } from './tools';
+import { observer } from 'mobx-react';
 
 const BASE_ZOOM_STEP = 0.1;
 const BASE_MOVE_STEP = 5;
 
-export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Element => {
+export const MemoryBlockDiagram = observer(({ session }: { session: Session }): JSX.Element => {
     const containerRef = useRef<HTMLDivElement>(null);
     const ref = useRef<HTMLCanvasElement>(null);
     const isDragging = useRef(false);
@@ -296,6 +297,7 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
             />
             <MarkLineBlock session={session} />
             <HoverItem session={session} />
+            <Loading style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} loading={session.loadingBlocks} />
         </div>
     </div>;
-};
+});

@@ -58,6 +58,9 @@ export class MainThreadRender {
         });
         this.renderer?.setZoom(this.zoom).setData(this.memoryBlockData.blocks);
         this.renderer?.updateCanvasSize(this.viewport);
+        runInAction(() => {
+            this.session.loadingBlocks = false;
+        });
     };
 
     resizeCanvasHandler(payload: Omit<ResizeCanvasPayload, 'type'>): void {

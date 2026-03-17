@@ -24,6 +24,7 @@ import { type Theme, useTheme } from '@emotion/react';
 import { runInAction } from 'mobx';
 import styled from '@emotion/styled/macro';
 import { formatBytes, formatTime } from '@/utils/utils';
+import { Spin } from '@insight/lib';
 
 interface AxisTick {
     position: number;
@@ -258,3 +259,21 @@ export const HoverItem = observer(({ session }: { session: Session }): JSX.Eleme
         }
     </>;
 });
+
+const LoadingContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: ${(props): string => props.theme.bgColor};
+`;
+export const Loading = ({ size = 'default', style = {}, loading }: { size?: 'small' | 'default' | 'large'; style?: React.CSSProperties; loading: boolean }): JSX.Element => {
+    return <>
+        {
+            loading
+                ? <LoadingContainer style={style}>
+                    <Spin size={size} />
+                </LoadingContainer>
+                : <></>
+        }
+    </>;
+};

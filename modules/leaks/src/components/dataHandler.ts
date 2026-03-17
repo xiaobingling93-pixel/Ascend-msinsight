@@ -60,6 +60,9 @@ export const getFuncNewData = async (session: any, startTimestamp?: number, endT
 export const getBarNewData = async (session: any, startTimestamp?: number, endTimestamp?: number): Promise<void> => {
     const getBlocksRequest = session.module === 'leaks' ? getBlocksGraphData : getSnapshotBlocks;
     const getAllocationRequest = session.module === 'leaks' ? getLeaksAllocationsData : getSnapshotAllocations;
+    runInAction(() => {
+        session.loadingBlocks = true;
+    });
     try {
         const param: BlockParam = { deviceId: session.deviceId, relativeTime: true, eventType: session.eventType, isTable: false };
         const blockDatas = await getBlocksRequest(param);

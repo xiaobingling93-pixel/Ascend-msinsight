@@ -156,6 +156,8 @@ export const removeRemoteHandler: NotificationHandler = (data): void => {
             session.leaksWorkerInfo = { ...LEAKS_WORKER_INFO_DEFAULT, renderOptions: { ...session.leaksWorkerInfo.renderOptions } };
             session.stateWorkerInfo = STATE_WORKER_INFO_DEFAULT;
             session.markLineInfo = MARK_LINE_POSITION_DEFAULT;
+            session.loadingBlocks = false;
+            session.loadingState = false;
             restore(session);
         });
     }
