@@ -801,6 +801,9 @@ bool FileUtil::CheckPathOwner(const std::string &filePath)
 
 bool FileUtil::CheckPathPermission(const std::string &filePath, fs::perms permission)
 {
+#ifdef _WIN32
+    return true;
+#endif
     if (filePath.empty()) {
         return false;
     }
