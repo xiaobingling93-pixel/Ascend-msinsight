@@ -33,13 +33,14 @@ DEFAULT_TRACE_RECORD_TIME = 30 # 单位: 秒（trace-cmd采集时长默认值）
 # trace-cmd 事件白名单
 # cpu调度
 SCHED_EVENT_LIST = {
-    "sched_switch", "sched_wakeup", "sched_waking", "sched_wakeup_new", "sched_migrate_task", "sched_stat_runtime",
-    "sched_process_fork", "sched_process_exec", "sched_process_exit"
+    "sched:sched_switch", "sched:sched_wakeup", "sched:sched_waking", "sched:sched_wakeup_new", 
+    "sched:sched_migrate_task", "sched:sched_stat_runtime",
+    "sched:sched_process_fork", "sched:sched_process_exec", "sched:sched_process_exit"
 }
 # 中断
 IRQ_EVENT_LIST = {
-    "irq_handler_entry", "irq_handler_exit",
-    "softirq_raise", "softirq_entry", "softirq_exit"
+    "irq:irq_handler_entry", "irq:irq_handler_exit",
+    "irq:softirq_raise", "irq:softirq_entry", "irq:softirq_exit"
 }
 # 锁竞争
 FUTEX_EVENT_LIST = {
