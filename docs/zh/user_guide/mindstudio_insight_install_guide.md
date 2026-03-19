@@ -10,7 +10,7 @@ MindStudio Insight支持在Windows、Linux和macOS系统上安装使用，并且
 
 **软件包下载**
 
-单击获取[软件包（商用版）](https://www.hiascend.com/developer/download/commercial/result?module=sto)或获取[软件包（社区版）](https://www.hiascend.com/developer/download/community/result?module=speed+ie+pt+sto+cann)，确认版本信息后获取如[**表 1**  软件包清单](#软件包清单)所示软件包。
+单击获取[软件包](https://gitcode.host/Ascend/msinsight/releases)，确认版本信息后获取如[**表 1**  软件包清单](#软件包清单)所示软件包。
 
 下载本软件即表示您同意[华为企业业务最终用户许可协议（EULA）](https://e.huawei.com/cn/about/eula)的条款和条件。
 
@@ -18,17 +18,11 @@ MindStudio Insight支持在Windows、Linux和macOS系统上安装使用，并且
 
 |软件包|说明|
 |--|--|
-|MindStudio-Insight_*{version}*_win.exe|适用于Windows系统的MindStudio Insight软件包，含有GUI的集成开发环境。|
-|MindStudio-Insight_*{version}*_linux-aarch64.zip|适用于Linux系统aarch64架构的MindStudio Insight软件包。|
-|MindStudio-Insight_*{version}*_linux-x86_64.zip|适用于Linux系统x86_64架构的MindStudio Insight软件包。|
-|MindStudio-Insight_*{version}*_darwin-*{arch}*.dmg|适用于macOS系统的MindStudio Insight软件包，含有GUI的集成开发环境。|
+|MindStudio-Insight_*{version}*_win.exe|适用于Windows系统的MindStudio Insight软件包，含有GUI的集成开发环境。|  
+|MindStudio-Insight_*{version}*_linux-aarch64.zip|适用于Linux系统aarch64架构的MindStudio Insight软件包。|  
+|MindStudio-Insight_*{version}*_linux-x86_64.zip|适用于Linux系统x86_64架构的MindStudio Insight软件包。|  
+|MindStudio-Insight_*{version}*_darwin-*{arch}*.dmg|适用于macOS系统的MindStudio Insight软件包，含有GUI的集成开发环境。|  
 |mindstudio_insight_jupyterlab-{*version*}-py3-none-{*platform*}.whl|基于JupyterLab安装的软件包。|
-
-**软件数字签名验证**
-
-为了防止软件包在传递过程或存储期间被恶意篡改，下载软件包时需下载对应的数字签名文件用于完整性验证。
-
-请单击[PGP数字签名工具包](https://support.huawei.com/enterprise/zh/tool/pgp-verify-TL1000000054)获取工具包，将工具包解压后，请参考文件夹中的《OpenPGP签名验证指南》，对下载的软件包进行PGP数字签名校验。如果校验失败，请不要使用该软件包，访问支持与服务在论坛求助或提交技术工单。
 
 ## 安装MindStudio Insight
 
