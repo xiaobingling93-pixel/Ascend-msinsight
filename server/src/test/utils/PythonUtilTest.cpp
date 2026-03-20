@@ -32,5 +32,5 @@ TEST_F(PythonUtilTest, ExecuteCommandListOnLinuxOrMac)
     std::vector<std::string> arguments{"-l"};
     int result = PythonUtil::ExecuteCommand(executablePath, arguments);
     EXPECT_EQ(result, 0);
-#endif
 }
+#endif

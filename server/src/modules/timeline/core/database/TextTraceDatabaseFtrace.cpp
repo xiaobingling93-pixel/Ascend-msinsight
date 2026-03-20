@@ -24,7 +24,7 @@ namespace Dic::Module::Timeline
     using namespace Dic::Protocol;
 
     // ==================== TextTraceDatabase 方法实现 ====================
-    
+
     bool TextTraceDatabase::CreateFtraceTable()
     {
         if (!isOpen) {
@@ -58,7 +58,7 @@ namespace Dic::Module::Timeline
     std::unique_ptr<SqlitePreparedStatement> TextTraceDatabase::GetFtraceStmt(uint64_t paramLen)
     {
         std::string valuePlaceholders;
-        for (int i = 0; i < paramLen; ++i) {
+        for (uint64_t i = 0; i < paramLen; ++i) {
             if (i > 0) {
                 valuePlaceholders += ", ";
             }
@@ -122,13 +122,13 @@ namespace Dic::Module::Timeline
             FtraceStatisticsData data;
             data.trackId = sqlite3_column_int64(stmt, 0);
             data.dataType = static_cast<FtraceDataType>(sqlite3_column_int(stmt, 1));
-            
+
             std::string argsStr = sqlite3_column_string(stmt, 2);
             if (!argsStr.empty()) {
                 data.SetArgs(argsStr);
             }
             result.totalCount = sqlite3_column_int64(stmt, 3);
-            
+
             result.data.push_back(data);
         }
 

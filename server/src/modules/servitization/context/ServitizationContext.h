@@ -23,6 +23,7 @@
 namespace Dic::Module::IE {
 class ServitizationContext {
 public:
+    virtual ~ServitizationContext() = default;
     virtual bool InitDataBase(const std::string& fileId, const std::string& dbPath);
     virtual std::string ComputeFileIdByFolder(const std::string& folder);
     virtual bool ExecuteScript(const std::string& fileId, const std::string& script);

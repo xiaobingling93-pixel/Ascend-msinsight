@@ -23,6 +23,7 @@
 namespace Dic::Module::IE {
 class CurveRepo {
 public:
+    virtual ~CurveRepo() = default;
     virtual std::vector<std::string> QueryAllViews(const std::string &fileId);
     virtual std::vector<ColumnAtt> QueryTableInfoByName(const std::string &fileId, const std::string &tableName);
     virtual std::string QueryTableNameDesc(const std::string &fileId, const std::string &tableName, bool isZh);

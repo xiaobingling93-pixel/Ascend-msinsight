@@ -31,7 +31,6 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
 
     std::unique_ptr<EventsViewResponse> responsePtr = std::make_unique<EventsViewResponse>();
     EventsViewResponse &response = *responsePtr.get();
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     SetBaseResponse(request, response);
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string warnMsg;

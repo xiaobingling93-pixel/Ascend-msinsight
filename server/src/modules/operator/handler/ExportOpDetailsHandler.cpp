@@ -134,14 +134,14 @@ namespace {
     // LCOV_EXCL_BR_STOP
 
     std::map<std::string, HeaderAndColConcatStatisticInfo> CsvHandleStatisticInfoMap = {
-        { "Operator Type",  { header: operatorTypeHeader, colConcatFunc: OperatorTypeColConcatFun } },
-        { "Input Shape",  { header: inputShapeHeader, colConcatFunc: InputShapeColConcatFun }},
-        { "Communication Operator Type",  { header: communicationOpTypeHeader,
-                                            colConcatFunc: CommunicationOpTypeColConcatFun }},
+        { "Operator Type",  { .header = operatorTypeHeader, .colConcatFunc= OperatorTypeColConcatFun } },
+        { "Input Shape",  { .header= inputShapeHeader, .colConcatFunc = InputShapeColConcatFun }},
+        { "Communication Operator Type",  { .header = communicationOpTypeHeader,
+                                            .colConcatFunc = CommunicationOpTypeColConcatFun }},
     };
     std::map<std::string, HeaderAndColConcatDetailInfo> CsvHandleDetailInfoMap = {
-        { "Operator",  { header: operatorHeader, colConcatFunc: OperatorColConcatFun }},
-        { "Communication Operator",  { header: CommunicationOpHeader, colConcatFunc: CommunicationOpColConcatFun }},
+        { "Operator",  { .header = operatorHeader, .colConcatFunc = OperatorColConcatFun }},
+        { "Communication Operator",  { .header = CommunicationOpHeader, .colConcatFunc = CommunicationOpColConcatFun }},
     };
 };
 
@@ -196,13 +196,13 @@ namespace Dic::Module::Operator {
         QueryOpStatisticInfoHandler handler;
         OperatorStatisticInfoRequest operatorStatisticCompareReq;
         operatorStatisticCompareReq.params = {
-                isCompare: request.params.isCompare,
-                rankId: request.params.rankId,
-                deviceId: request.params.deviceId,
-                group: request.params.group,
-                topK: request.params.topK,
-                current: 1,
-                pageSize: INT64_MAX,
+                .isCompare = request.params.isCompare,
+                .rankId = request.params.rankId,
+                .deviceId = request.params.deviceId,
+                .group = request.params.group,
+                .topK = request.params.topK,
+                .current = 1,
+                .pageSize = INT64_MAX,
         };
         OperatorStatisticInfoResponse operatorStatisticCompareResponse;
         if (!handler.HandleCompareDataRequest(operatorStatisticCompareReq, operatorStatisticCompareResponse)) {
@@ -238,13 +238,13 @@ namespace Dic::Module::Operator {
         QueryOpDetailInfoHandler handler;
         OperatorDetailInfoRequest operatorNotStatisticCompareReq;
         operatorNotStatisticCompareReq.params = {
-                isCompare: request.params.isCompare,
-                rankId: request.params.rankId,
-                deviceId: request.params.deviceId,
-                group: request.params.group,
-                topK: request.params.topK,
-                current: 1,
-                pageSize: INT64_MAX,
+                .isCompare = request.params.isCompare,
+                .rankId =  request.params.rankId,
+                .deviceId =  request.params.deviceId,
+                .group = request.params.group,
+                .topK = request.params.topK,
+                .current = 1,
+                .pageSize = INT64_MAX,
         };
         OperatorDetailInfoResponse operatorNotStatisticCompareResponse;
         if (!handler.HandleCompareDataRequest(operatorNotStatisticCompareReq, operatorNotStatisticCompareResponse)) {
@@ -302,13 +302,13 @@ namespace Dic::Module::Operator {
             return true;
         }
         OperatorStatisticReqParams statisticReqParams = {
-            isCompare: request.params.isCompare,
-            rankId: request.params.rankId,
-            deviceId: request.params.deviceId,
-            group: request.params.group,
-            topK: request.params.topK,
-            current: 0,
-            pageSize: 1000,
+            .isCompare = request.params.isCompare,
+            .rankId = request.params.rankId,
+            .deviceId = request.params.deviceId,
+            .group = request.params.group,
+            .topK = request.params.topK,
+            .current = 0,
+            .pageSize = 1000,
         };
         std::unique_ptr<OperatorStatisticInfoResponse> responsePtr = std::make_unique<OperatorStatisticInfoResponse>();
         OperatorStatisticInfoResponse &statisticReqResponse = *responsePtr;
@@ -359,13 +359,13 @@ namespace Dic::Module::Operator {
             return true;
         }
         OperatorStatisticReqParams statisticReqParams = {
-            isCompare: request.params.isCompare,
-            rankId: request.params.rankId,
-            deviceId: request.params.deviceId,
-            group: request.params.group,
-            topK: request.params.topK,
-            current: 0,
-            pageSize: 1000,
+            .isCompare = request.params.isCompare,
+            .rankId = request.params.rankId,
+            .deviceId =  request.params.deviceId,
+            .group = request.params.group,
+            .topK = request.params.topK,
+            .current = 0,
+            .pageSize = 1000,
         };
         std::unique_ptr<OperatorDetailInfoResponse> responsePtr = std::make_unique<OperatorDetailInfoResponse>();
         OperatorDetailInfoResponse &detailInfoReqResponse = *responsePtr;

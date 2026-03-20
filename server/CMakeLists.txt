@@ -29,8 +29,13 @@ set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-unknown-pragmas -Wno-unused-parameter 
 # set some compile warn as error which is not allow
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=implicit-fallthrough -Werror=switch")
 # Compiler Security Options
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIC")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
+endif()
 
 # 构建脚本中使用的是release
 if (CMAKE_BUILD_TYPE MATCHES "Release")

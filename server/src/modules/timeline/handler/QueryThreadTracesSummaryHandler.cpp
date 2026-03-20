@@ -27,7 +27,6 @@ using namespace Dic::Server;
 bool QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitThreadTracesSummaryRequest &request = dynamic_cast<UnitThreadTracesSummaryRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitThreadTracesSummaryResponse> responsePtr = std::make_unique<UnitThreadTracesSummaryResponse>();
     UnitThreadTracesSummaryResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

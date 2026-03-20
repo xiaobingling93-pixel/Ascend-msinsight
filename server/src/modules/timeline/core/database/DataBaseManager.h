@@ -154,7 +154,6 @@ private:
     std::map<FileId, std::shared_ptr<FullDb::MemSnapshotDatabase>> memSnapshotDatabaseMap;
     std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
-    FileType baselineFileType = FileType::PYTORCH;
     std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
     std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
 

@@ -35,9 +35,9 @@ IEModule::~IEModule()
 void IEModule::RegisterRequestHandlers()
 {
     requestHandlerMap.clear();
-    requestHandlerMap.emplace(REQ_RES_IE_VIEW, std::move(std::make_unique<IECurveHandler>()));
-    requestHandlerMap.emplace(REQ_RES_IE_TABLE_VIEW, std::move(std::make_unique<IECurveTableDatailHandler>()));
-    requestHandlerMap.emplace(REQ_RES_IE_DATA_GROUP, std::move(std::make_unique<CurveGroupHandler>()));
+    requestHandlerMap.emplace(REQ_RES_IE_VIEW, std::make_unique<IECurveHandler>());
+    requestHandlerMap.emplace(REQ_RES_IE_TABLE_VIEW, std::make_unique<IECurveTableDatailHandler>());
+    requestHandlerMap.emplace(REQ_RES_IE_DATA_GROUP, std::make_unique<CurveGroupHandler>());
 }
 
 void IEModule::OnRequest(std::unique_ptr<Protocol::Request> request)

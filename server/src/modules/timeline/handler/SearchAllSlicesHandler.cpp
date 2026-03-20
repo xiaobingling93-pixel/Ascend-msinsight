@@ -28,7 +28,6 @@ using namespace Dic::Server;
 bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SearchAllSlicesRequest &request = dynamic_cast<SearchAllSlicesRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SearchAllSlicesResponse> responsePtr = std::make_unique<SearchAllSlicesResponse>();
     SearchAllSlicesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

@@ -30,7 +30,6 @@ bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<KernelDetailsResponse> responsePtr = std::make_unique<KernelDetailsResponse>();
     KernelDetailsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);

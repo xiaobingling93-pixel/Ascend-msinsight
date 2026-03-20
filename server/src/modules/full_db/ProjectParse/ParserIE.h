@@ -31,7 +31,7 @@ public:
                 ImportActionRequest &request,
                 ImportActionResponse &response) final;
     ProjectTypeEnum GetProjectType(const std::string& dataPath) final;
-    std::vector<std::string> GetParseFileByImportFile(const std::string& importFile, std::string& error);
+    std::vector<std::string> GetParseFileByImportFile(const std::string& importFile, std::string& error) override;
     static void BuildProjectExploreInfo(ProjectExplorerInfo& projectInfo, const std::vector<std::string>& parsedFiles);
     bool ExistIEFile(const std::string& file);
 

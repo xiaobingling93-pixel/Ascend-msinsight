@@ -369,7 +369,7 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(Protocol::MemoryOper
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MemoryOperator operatorDto{};
-        int64_t totalNum = sqlite3_column_int64(stmt, col++);
+        sqlite3_column_int64(stmt, col++);
         operatorDto.id = std::to_string(sqlite3_column_int64(stmt, col++));
         operatorDto.name = sqlite3_column_string(stmt, col++);
         operatorDto.size = sqlite3_column_double(stmt, col++);

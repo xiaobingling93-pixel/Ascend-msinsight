@@ -169,7 +169,6 @@ void WsSessionImpl::SendBaseResponse(std::unique_ptr<Protocol::Response> respons
 {
     if (responsePtr != nullptr) {
         document_t json(kObjectType);
-        auto &allocator = json.GetAllocator();
         ProtocolUtil::SetResponseJsonBaseInfo(*responsePtr.get(), json);
         std::string responseStr = JsonUtil::JsonDump(json);
         responseStr = StringUtil::ToUtf8Str(responseStr);

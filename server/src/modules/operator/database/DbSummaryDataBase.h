@@ -54,7 +54,7 @@ public:
                           const std::string &msg);
     static void Reset();
 
-    bool QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res);
+    bool QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res) override;
 private:
     std::set<std::string> FetchPmuColumnNames();
     std::string GenerateQueryDetailSqlForOperator();

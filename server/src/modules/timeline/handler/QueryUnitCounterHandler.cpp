@@ -27,7 +27,6 @@ using namespace Dic::Server;
 bool QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitCounterRequest &request = dynamic_cast<UnitCounterRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitCounterResponse> responsePtr = std::make_unique<UnitCounterResponse>();
     UnitCounterResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

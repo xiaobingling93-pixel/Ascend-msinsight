@@ -27,7 +27,6 @@ using namespace Dic::Server;
 bool QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitFlowsRequest &request = dynamic_cast<UnitFlowsRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitFlowsResponse> responsePtr = std::make_unique<UnitFlowsResponse>();
     UnitFlowsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

@@ -269,15 +269,13 @@ std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::st
         return { importFile };
     }
     std::vector<std::string> reportFiles = {};
-    FileType fileType;
     if (!frameworkFiles.empty()) {
         reportFiles = frameworkFiles;
-        fileType = FileType::PYTORCH;
-    } else if (!msprofFiles.empty()) {
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH, importFile);
+    } else {
         reportFiles = msprofFiles;
-        fileType = FileType::MS_PROF;
+        DataBaseManager::Instance().SetFileType(FileType::MS_PROF, importFile);
     }
-    DataBaseManager::Instance().SetFileType(fileType, importFile);
     std::vector<std::string> res;
     for (const auto &item : reportFiles) {
         res.push_back(FileUtil::GetParentPath(item));

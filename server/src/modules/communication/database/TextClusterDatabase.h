@@ -108,7 +108,6 @@ private:
     sqlite3_stmt *stepStmt = nullptr;
     sqlite3_stmt *matrixStmt = nullptr;
     bool isInitStmt = false;
-    int reservedNumber = 4;
     // pp通信域
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;

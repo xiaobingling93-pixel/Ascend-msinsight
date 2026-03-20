@@ -27,9 +27,8 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
 {
     const uint64_t percentLimit = 5;
     ExpAnaAICoreFreqRequest &request = dynamic_cast<ExpAnaAICoreFreqRequest &>(*requestPtr.get());
- 
+
     std::unique_ptr<ExpAnaAICoreFreqResponse> responsePtr = std::make_unique<ExpAnaAICoreFreqResponse>();
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     ExpAnaAICoreFreqResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
@@ -66,7 +65,7 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     if (response.body.percent > percentLimit) { // 降频百分比超过5，需要提示用户关注
         response.body.hasProblem = true;
     }
- 
+
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
     return true;

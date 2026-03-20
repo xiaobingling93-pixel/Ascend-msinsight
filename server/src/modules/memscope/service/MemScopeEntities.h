@@ -84,6 +84,7 @@ inline const std::string ACCESS_EVENT_ATTR_TYPE = "type";
 inline const std::string ACCESS_EVENT_ATTR_DTYPE = "dtype";
 inline const std::string ACCESS_EVENT_ATTR_SHAPE = "shape";
 struct MemoryEventBaseAttrs {
+    virtual ~MemoryEventBaseAttrs()  = default;
     int64_t size{0}; // 对应内存事件涉及的内存大小, 如申请、释放大小；访问时tensor大小
     uint64_t groupId{0};
 

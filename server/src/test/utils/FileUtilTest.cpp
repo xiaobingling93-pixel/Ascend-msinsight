@@ -259,7 +259,7 @@ TEST(TestUtil, CheckPathValidFailedWhenFileIsExistedButPathIsTooLong)
 {
 #ifdef _WIN32
     std::string filePath(MAX_PATH, 'a');
-    EXPECT_EQ(FileUtil::CheckPathComm(filePath, TODO), false);
+    EXPECT_EQ(FileUtil::CheckPathComm(filePath), false);
 #else
     std::string filePath(PATH_MAX, 'a');
     EXPECT_FALSE(FileUtil::CheckPathSecurity(filePath));
@@ -283,7 +283,7 @@ TEST(TestUtil, CheckPathValidFailedWhenFileIsSoftlink)
     // 创建软链接
     DWORD flags = SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
     EXPECT_NE(CreateSymbolicLink(linkPath, srcPath, flags), 0);
-    EXPECT_EQ(FileUtil::CheckPathComm("te\\nst.text", TODO), false);
+    EXPECT_EQ(FileUtil::CheckPathComm("te\\nst.text"), false);
 #else
     // 创建软链接
     EXPECT_EQ(symlink(srcPath, linkPath), 0);
@@ -312,7 +312,7 @@ TEST(TestUtil, CheckPathValidSuccessWhenFileIsExistAndPathIsInChinese)
         std::cerr << "无法创建文件: " << GetLastError() << std::endl;
     }
     CloseHandle(hFile);
-    EXPECT_EQ(FileUtil::CheckPathComm(".\\测试001.txt", TODO), true);
+    EXPECT_EQ(FileUtil::CheckPathComm(".\\测试001.txt", CHECK_FILE_READ), true);
     EXPECT_NE(DeleteFileW(filePath), 0);
 #else
     // 源文件路径

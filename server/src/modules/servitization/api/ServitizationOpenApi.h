@@ -26,7 +26,7 @@ struct TaskInfo {
 class ServitizationOpenApi {
 public:
     ServitizationOpenApi() = default;
-    ~ServitizationOpenApi() = default;
+    virtual ~ServitizationOpenApi() = default;
     virtual bool Parse(const std::unordered_map<std::string, std::string>& inputs);
     /**
      * 广度优先找到所有有效的IE文件
