@@ -287,7 +287,6 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
             endTime: Math.ceil(endTime + timestampoffset),
         }).finally(() => {
             setLoading(false);
-            setTableData([]);
         });
         return {
             page: { ...page, pageSize, current, total },
@@ -301,9 +300,9 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ session, card, selected
 
         // 更新版本号
         const requestVersion = validator.markUpdate();
+        setTableData([]);
         // 情况1：selectedRow 为空 -> 立即清空数据
         if (!selectedRow) {
-            setTableData([]);
             return () => {
                 isMountedRef.current = false;
             };
