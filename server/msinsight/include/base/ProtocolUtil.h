@@ -79,6 +79,11 @@ struct JsonResponse : public Response {
     explicit JsonResponse(const std::string &command) : Response(command) {}
     [[nodiscard]] virtual std::optional<document_t> ToJson() const = 0;
 };
+struct JsonSerializable {
+public:
+    virtual ~JsonSerializable() = default;
+    [[nodiscard]] virtual json_t ToJson(RAPIDJSON_DEFAULT_ALLOCATOR &allocator) const = 0;
+};
 struct Event : public ProtocolMessage {
     explicit Event(const std::string &e) : event(e)
     {

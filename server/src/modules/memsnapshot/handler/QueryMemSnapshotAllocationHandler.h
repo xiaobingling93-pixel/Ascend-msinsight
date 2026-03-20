@@ -29,9 +29,6 @@ public:
     QueryMemSnapshotAllocationHandler() { command = Protocol::REQ_RES_MEM_SNAPSHOT_ALLOCATIONS; }
     ~QueryMemSnapshotAllocationHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-
-private:
-    void PaddingRecords(std::vector<MemoryRecord>& records, const MemSnapshotAllocationParams& queryParams);
 };
 
 }  // namespace MemSnapshot

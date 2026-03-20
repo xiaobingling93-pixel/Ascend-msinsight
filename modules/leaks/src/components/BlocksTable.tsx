@@ -62,7 +62,8 @@ const getTableColumns = (t: TFunction, session: Session): any => {
         if (col.searchable) {
             return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', '')) };
         } else if (col.rangeFilterable) {
-            return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', ''), true) };
+            const filterOptions = { min: col.min, max: col.max };
+            return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', ''), true, filterOptions) };
         } else {
             return item;
         }

@@ -211,7 +211,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTable)
     params.pageSize = 10;
     params.orderBy = "id";
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
     
     EXPECT_EQ(totalCount, 3219);
@@ -221,14 +221,14 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTable)
         // 验证第一条block的字段
         EXPECT_EQ(blocks[0].id, -320);
         EXPECT_EQ(blocks[0].address, 20697531023360);
-        EXPECT_EQ(blocks[0].size, 4194816);
-        EXPECT_EQ(blocks[0].requestedSize, 4194304);
+        EXPECT_EQ(blocks[0].size, 4096.5);
+        EXPECT_EQ(blocks[0].requestedSize, 4096);
 
         // 验证最后一个block的字段
         EXPECT_EQ(blocks[blocks.size() - 1].id, -311);
         EXPECT_EQ(blocks[blocks.size() - 1].address, 20697475301376);
-        EXPECT_EQ(blocks[blocks.size() - 1].size, 2097664);
-        EXPECT_EQ(blocks[blocks.size() - 1].requestedSize, 2097152);
+        EXPECT_EQ(blocks[blocks.size() - 1].size, 2048.5);
+        EXPECT_EQ(blocks[blocks.size() - 1].requestedSize, 2048);
     }
 }
 
@@ -244,7 +244,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithEventIdxRange)
     params.endEventIdx = 1000;
     params.orderBy = "allocEventId";
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
     
     EXPECT_EQ(totalCount, 764);
@@ -267,7 +267,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithFilters)
     params.orderBy = "id";
     params.filters["state"] = "allocated";
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
     EXPECT_EQ(totalCount, 3219);
     EXPECT_EQ(blocks.size(), params.pageSize);
@@ -288,7 +288,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithDescOrder)
     params.orderBy = BlockTableColumn::ADDRESS;
     params.desc = true;
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
     
     EXPECT_EQ(totalCount, 3219);
@@ -309,7 +309,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTable)
     params.pageSize = 10;
     params.orderBy = TraceEntryTableColumn::ID;
     
-    std::vector<TraceEntry> entries;
+    std::vector<TraceEntryTableItemDTO> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
     
     EXPECT_EQ(totalCount, 8132);
@@ -334,7 +334,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithEventIdxRange)
     params.endEventIdx = 500;
     params.orderBy = TraceEntryTableColumn::ID;
     
-    std::vector<TraceEntry> entries;
+    std::vector<TraceEntryTableItemDTO> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
     
     EXPECT_EQ(totalCount, 401);
@@ -357,7 +357,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithFilters)
     params.orderBy = "id";
     params.filters["action"] = "alloc";
     
-    std::vector<TraceEntry> entries;
+    std::vector<TraceEntryTableItemDTO> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
     
     EXPECT_EQ(totalCount, 2899);
@@ -377,7 +377,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithAscOrder)
     params.orderBy = TraceEntryTableColumn::ADDRESS;
     params.desc = false;
     
-    std::vector<TraceEntry> entries;
+    std::vector<TraceEntryTableItemDTO> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
     
     EXPECT_EQ(totalCount, 8132);
@@ -398,7 +398,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableSecondPage)
     params.pageSize = 100;
     params.orderBy = TraceEntryTableColumn::RESERVED;
 
-    std::vector<TraceEntry> entries;
+    std::vector<TraceEntryTableItemDTO> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
 
     EXPECT_EQ(totalCount, 8132);
@@ -437,7 +437,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryFreeRequestedTraceEntryByBlock)
     params.pageSize = 100;
     params.orderBy = "id";
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     snapshotDb->QueryBlocksTable(params, blocks);
     
     // 找一个有freeEventId的block
@@ -445,7 +445,8 @@ TEST_F(MemSnapshotDatabaseTest, QueryFreeRequestedTraceEntryByBlock)
     for (const auto& block : blocks) {
         if (block.freeEventId > 0) {
             foundBlockWithFree = true;
-            auto freeRequestedEntry = snapshotDb->QueryFreeRequestedTraceEntryByBlock(block, "0");
+            Block tmpBlock {.address = block.address, .allocEventId = block.allocEventId};
+            auto freeRequestedEntry = snapshotDb->QueryFreeRequestedTraceEntryByBlock(tmpBlock, "0");
             // 如果存在freeRequested事件，验证其属性
             if (freeRequestedEntry.has_value()) {
                 EXPECT_GT(freeRequestedEntry->id, block.allocEventId);
@@ -469,15 +470,15 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithSizeRange)
     params.minSize = 1024;
     params.maxSize = 1048576;
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
     
     EXPECT_GT(totalCount, 0);
     EXPECT_LE(blocks.size(), params.pageSize);
     
     for (const auto& block : blocks) {
-        EXPECT_GE(block.size, params.minSize);
-        EXPECT_LE(block.size, params.maxSize);
+        EXPECT_GE(block.size, params.minSize / 1024);
+        EXPECT_LE(block.size, params.maxSize / 1024);
     }
 }
 
@@ -492,7 +493,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithRangeFilters)
     params.orderBy = "id";
     params.rangeFilters["size"] = {1024, 1048576};
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
     
     EXPECT_GT(totalCount, 0);
@@ -512,7 +513,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithRangeFilters)
     params.orderBy = "id";
     params.rangeFilters["size"] = {1024, 1048576};
     
-    std::vector<TraceEntry> entries;
+    std::vector<TraceEntryTableItemDTO> entries;
     int64_t totalCount = snapshotDb->QueryTraceEntriesTable(params, entries);
     
     EXPECT_GT(totalCount, 0);
@@ -537,7 +538,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithMultipleFiltersCombined)
     params.maxSize = 10485760;
     params.filters["state"] = "allocated";
     
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> blocks;
     int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
     
     EXPECT_GE(totalCount, 0);

@@ -50,8 +50,9 @@ bool QueryMemSnapshotDetailHandler::HandleRequest(std::unique_ptr<Protocol::Requ
             SendResponse(std::move(responsePtr), false, errMsg);
             return false;
         }
-        response.block = std::make_optional(ExtendedBlock(block.value()));
-        BuildExtendedBlock(response.block.value(), request.params.deviceId, database);
+        auto blockDetail = std::make_unique<BlockDetailDTO>(block.value());
+        BuildBlockDetailDTO(*blockDetail, request.params.deviceId, database);
+        response.detail = std::move(blockDetail);
     } else if (request.params.type == DETAIL_TYPE_EVENT) {
         auto event = database->QueryTraceEntryById(request.params.id, request.params.deviceId);
         if (!event.has_value()) {
@@ -59,23 +60,32 @@ bool QueryMemSnapshotDetailHandler::HandleRequest(std::unique_ptr<Protocol::Requ
             SendResponse(std::move(responsePtr), false, errMsg);
             return false;
         }
-        response.event = event;
+        response.detail = std::make_unique<TraceEntryDetailDTO>(event.value());
     }
     
     SendResponse(std::move(responsePtr), true);
     return true;
 }
 
-void QueryMemSnapshotDetailHandler::BuildExtendedBlock(ExtendedBlock& extendedBlock,
-                                                       const std::string& deviceId,
-                                                       const std::shared_ptr<FullDb::MemSnapshotDatabase>& database)
+void QueryMemSnapshotDetailHandler::BuildBlockDetailDTO(BlockDetailDTO& blockDetail,
+                                                        const std::string& deviceId,
+                                                        const std::shared_ptr<FullDb::MemSnapshotDatabase>& database)
 {
-    if (extendedBlock.allocEventId > 0) {
-        extendedBlock.allocEvent = database->QueryTraceEntryById(extendedBlock.allocEventId, deviceId);
+    if (blockDetail.allocEventId > 0) {
+        if (auto allocEntry = database->QueryTraceEntryById(blockDetail.allocEventId, deviceId);
+            allocEntry.has_value()) {
+            blockDetail.allocEvent = std::make_optional<TraceEntryDetailDTO>(allocEntry.value());
+        }
     }
-    if (extendedBlock.freeEventId > 0) {
-        extendedBlock.freeCompletedEvent = database->QueryTraceEntryById(extendedBlock.freeEventId, deviceId);
+    if (blockDetail.freeEventId > 0) {
+        if (auto freeCompletedEntry = database->QueryTraceEntryById(blockDetail.freeEventId, deviceId);
+            freeCompletedEntry.has_value()) {
+            blockDetail.freeCompletedEvent = std::make_optional<TraceEntryDetailDTO>(freeCompletedEntry.value());
+        }
     }
-    extendedBlock.freeRequestedEvent = database->QueryFreeRequestedTraceEntryByBlock(extendedBlock, deviceId);
+    if (auto freeRequestEntry = database->QueryFreeRequestedTraceEntryByBlock(blockDetail, deviceId);
+        freeRequestEntry.has_value()) {
+        blockDetail.freeRequestedEvent = std::make_optional<TraceEntryDetailDTO>(freeRequestEntry.value());
+    }
 }
 } // namespace Dic::Module::MemSnapshot

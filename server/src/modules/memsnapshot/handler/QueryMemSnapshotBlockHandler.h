@@ -20,6 +20,7 @@
 #define PROFILER_SERVER_QUERY_MEM_SNAPSHOT_BLOCK_HANDLER_H
 
 #include "MemSnapshotRequestHandler.h"
+#include "MemSnapshotResponseDTO.h"
 
 namespace Dic::Module::MemSnapshot {
 class QueryMemSnapshotBlockHandler : public MemSnapshotRequestHandler {
@@ -30,6 +31,10 @@ public:
 
 private:
     const std::string LOG_TAG = "[MemSnapshotHandler] ";
+
+    static void BuildBlockTableResponseColumnsBounds(const std::string& deviceId,
+                                                     const std::shared_ptr<MemSnapshotDatabase>& database,
+                                                     Dic::Protocol::ColumnBounds& colBounds);
 };
 } // namespace Dic::Module::MemSnapshot
 

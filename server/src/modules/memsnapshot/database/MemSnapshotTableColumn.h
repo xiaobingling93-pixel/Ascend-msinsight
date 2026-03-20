@@ -36,11 +36,11 @@ inline const std::vector<Dic::Protocol::TableViewColumn> FIELD_FULL_COLUMNS = {
     {"ID", ID, true, true, false, true}, // ID, 事件索引
     {"Action", ACTION, true, true, true, false}, // 事件类型
     {"Address", ADDRESS, true, true, true, false}, // 事件地址
-    {"Size(bytes)", SIZE, true, true, false, true}, // 事件关联内存大小，单位bytes
+    {"Size(KBytes)", SIZE, true, true, false, true}, // 事件关联内存大小，单位KBytes
     {"Stream", STREAM, true, true, true, false}, // 事件所属流ptr
-    {"Allocated(bytes)", ALLOCATED, true, true, false, true}, // 事件发生时刻allocated内存
-    {"Active(bytes)", ACTIVE, true, true, false, true}, // 事件发生时刻active内存
-    {"Reserved(bytes)", RESERVED, true, true, false, true}, // 事件发生时刻预留内存大小
+    {"Allocated(KBytes)", ALLOCATED, true, true, false, true}, // 事件发生时刻allocated内存大小，单位KBytes
+    {"Active(KBytes)", ACTIVE, true, true, false, true}, // 事件发生时刻active内存大小，单位KBytes
+    {"Reserved(KBytes)", RESERVED, true, true, false, true}, // 事件发生时刻预留内存大小，单位KBytes
     {"CallStack", CALLSTACK, true, false, true, false} // 事件发生的调用栈
 };
 }
@@ -56,11 +56,11 @@ constexpr std::string_view FREE_EVENT_ID = "freeEventId";
 inline const std::vector<Dic::Protocol::TableViewColumn> FIELD_FULL_COLUMNS = {
     {"ID", ID, true, true, false, true},
     {"Address", ADDRESS, true, true, true, false},
-    {"Size(bytes)", SIZE, true, true, false, true},
-    {"Requested Size(bytes)", REQUESTED_SIZE, true, true, false, true},
+    {"Size(KBytes)", SIZE, true, true, false, true}, // 实际内存块大小，单位KBytes
+    {"Requested Size(KBytes)", REQUESTED_SIZE, true, true, false, true}, // 分配事件请求内存大小，单位KBytes
     {"State", STATE, true, true, true, false},
-    {"Alloc Event ID", ALLOC_EVENT_ID, true, true, true, false},
-    {"Free Event ID", FREE_EVENT_ID, true, true, true, false}
+    {"Alloc Event ID", ALLOC_EVENT_ID, true, true, false, true},
+    {"Free Event ID", FREE_EVENT_ID, true, true, false, true}
 };
 }
 }

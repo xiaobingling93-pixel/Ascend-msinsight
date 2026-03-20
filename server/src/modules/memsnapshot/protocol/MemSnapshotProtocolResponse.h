@@ -25,47 +25,25 @@
 #include "CommonRequests.h"
 #include "MemSnapshotDefs.h"
 #include "MemSnapshotTableColumn.h"
+#include "MemSnapshotResponseDTO.h"
 
 namespace Dic::Protocol {
 using namespace Dic::Module;
 using namespace Dic::Module::MemSnapshot;
-
-static document_t ToMemSnapshotBlockViewJson(const Block& block,
-                                             Document::AllocatorType& allocator,
-                                             const uint64_t maxTimestamp)
-{
-    document_t json(kObjectType);
-    JsonUtil::AddMember(json, "id", block.id, allocator);
-    JsonUtil::AddMember(json, "addr", std::to_string(block.address), allocator);
-    JsonUtil::AddMember(json, "size", block.size, allocator);
-    JsonUtil::AddMember(json, "_startTimestamp", block.allocEventId < 0 ? 0 : block.allocEventId, allocator);
-    JsonUtil::AddMember(json, "_endTimestamp", block.freeEventId < 0 ? maxTimestamp : block.freeEventId, allocator);
-    return json;
-}
-
-static document_t ToMemSnapshotBlockTableJson(const Block& block,
-                                              Document::AllocatorType& allocator)
-{
-    document_t json(kObjectType);
-    JsonUtil::AddMember(json, "id", block.id, allocator);
-    JsonUtil::AddMember(json, "address", std::to_string(block.address), allocator);
-    JsonUtil::AddMember(json, "size", block.size, allocator);
-    JsonUtil::AddMember(json, "requestedSize", block.requestedSize, allocator);
-    JsonUtil::AddMember(json, "state", block.state, allocator);
-    JsonUtil::AddMember(json, "allocEventId", block.allocEventId, allocator);
-    JsonUtil::AddMember(json, "freeEventId", block.freeEventId, allocator);
-    return json;
-}
+using ColumnBounds = std::unordered_map<std::string_view, std::pair<int64_t, int64_t>>;
 
 struct MemSnapshotBlocksResponse : public JsonResponse {
     MemSnapshotBlocksResponse() : JsonResponse(REQ_RES_MEM_SNAPSHOT_BLOCKS) {}
-    std::vector<Block> blocks;
+    std::vector<BlockTableItemDTO> tableBlocks;
+    std::vector<BlockViewItemDTO> viewBlocks;
     uint64_t minSize{0};
     uint64_t maxSize{0};
     uint64_t minTimestamp{0};
     uint64_t maxTimestamp{0};
     uint64_t total{0};
     bool isTable{false};
+
+    ColumnBounds rangeFiltersBoundsMap;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
@@ -79,50 +57,49 @@ struct MemSnapshotBlocksResponse : public JsonResponse {
         JsonUtil::AddMember(body, "minSize", minSize, allocator);
         JsonUtil::AddMember(body, "maxSize", maxSize, allocator);
         JsonUtil::AddMember(body, "total", total, allocator);
-        json_t jsonHeaders(kArrayType);
-        for (const auto& header : BlockTableColumn::FIELD_FULL_COLUMNS) {
-            if (header.visible) { jsonHeaders.PushBack(header.ToTableHeaderJson(allocator), allocator); }
-        }
         if (isTable) {
-            for (const auto& block : blocks) {
-                auto blockJson = ToMemSnapshotBlockTableJson(block, allocator);
+            json_t jsonHeaders(kArrayType);
+            for (const auto& header : BlockTableColumn::FIELD_FULL_COLUMNS) {
+                if (!header.visible) {
+                    continue;
+                }
+                auto headerJson = header.ToTableHeaderJson(allocator);
+                if (header.rangeFilterable && rangeFiltersBoundsMap.find(header.key) != rangeFiltersBoundsMap.end()) {
+                    JsonUtil::AddMember(headerJson, "min", rangeFiltersBoundsMap.at(header.key).first, allocator);
+                    JsonUtil::AddMember(headerJson, "max", rangeFiltersBoundsMap.at(header.key).second, allocator);
+                }
+                jsonHeaders.PushBack(headerJson, allocator);
+            }
+            JsonUtil::AddMember(body, "headers", jsonHeaders, allocator);
+            for (const auto& block : tableBlocks) {
+                auto blockJson = block.ToJson(allocator);
                 jsonBlocks.PushBack(blockJson, allocator);
             }
         } else {
-            for (const auto& block : blocks) {
-                auto blockJson = ToMemSnapshotBlockViewJson(block, allocator, maxTimestamp);
+            for (auto& block : viewBlocks) {
+                if (block.allocEventId >= 0 && block.freeEventId >= 0) {
+                    auto blockJson = block.ToJson(allocator);
+                    jsonBlocks.PushBack(blockJson, allocator);
+                    continue;
+                }
+                auto tmpBlock = BlockViewItemDTO(block);
+                tmpBlock.allocEventId = block.allocEventId < 0 ? 0 : block.allocEventId;
+                // maxTimestamp取自最大事件ID，不可能超过INT64_MAX，此处无溢出风险
+                tmpBlock.freeEventId = block.freeEventId < 0 ? static_cast<int64_t>(maxTimestamp) : block.freeEventId;
+                auto blockJson = tmpBlock.ToJson(allocator);
                 jsonBlocks.PushBack(blockJson, allocator);
             }
         }
         JsonUtil::AddMember(body, "blocks", jsonBlocks, allocator);
-        JsonUtil::AddMember(body, "headers", jsonHeaders, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
         return std::optional<document_t>{std::move(json)};
     }
 };
 
-static document_t ToMemSnapshotTraceEntryJson(const TraceEntry& entry,
-                                              Document::AllocatorType& allocator,
-                                              const bool isTable = false)
-{
-    document_t json(kObjectType);
-    JsonUtil::AddMember(json, "id", entry.id, allocator);
-    JsonUtil::AddMember(json, "action", entry.action, allocator);
-    JsonUtil::AddMember(json, "address", entry.address, allocator);
-    JsonUtil::AddMember(json, "size", entry.size, allocator);
-    JsonUtil::AddMember(json, "stream", entry.stream, allocator);
-    if (isTable) {
-        JsonUtil::AddMember(json, "allocated", entry.allocated, allocator);
-        JsonUtil::AddMember(json, "active", entry.active, allocator);
-        JsonUtil::AddMember(json, "reserved", entry.reserved, allocator);
-        JsonUtil::AddMember(json, "callstack", entry.callstack, allocator);
-    }
-    return json;
-}
-
 struct MemSnapshotEventsResponse : public JsonResponse {
     MemSnapshotEventsResponse() : JsonResponse(REQ_RES_MEM_SNAPSHOT_EVENTS) {}
-    std::vector<TraceEntry> entries;
+    std::vector<TraceEntryListItemDTO> listEntries;
+    std::vector<TraceEntryTableItemDTO> tableEntries;
     uint64_t total{0};
     uint64_t minTimestamp{0};
     uint64_t maxTimestamp{0};
@@ -140,15 +117,22 @@ struct MemSnapshotEventsResponse : public JsonResponse {
         JsonUtil::AddMember(body, "maxTimestamp", maxTimestamp, allocator);
         JsonUtil::AddMember(body, "total", total, allocator);
         json_t jsonHeaders(kArrayType);
-        for (const auto& header : TraceEntryTableColumn::FIELD_FULL_COLUMNS) {
-            if (header.visible) { jsonHeaders.PushBack(header.ToTableHeaderJson(allocator), allocator); }
-        }
-        for (const auto& entry : entries) {
-            auto entryJson = ToMemSnapshotTraceEntryJson(entry, allocator, isTable);
-            jsonEntries.PushBack(entryJson, allocator);
+        if (isTable) {
+            for (const auto& header : TraceEntryTableColumn::FIELD_FULL_COLUMNS) {
+                if (header.visible) { jsonHeaders.PushBack(header.ToTableHeaderJson(allocator), allocator); }
+            }
+            JsonUtil::AddMember(body, "headers", jsonHeaders, allocator);
+            for (const auto& entry : tableEntries) {
+                auto entryJson = entry.ToJson(allocator);
+                jsonEntries.PushBack(entryJson, allocator);
+            }
+        } else {
+            for (const auto& entry : listEntries) {
+                auto entryJson = entry.ToJson(allocator);
+                jsonEntries.PushBack(entryJson, allocator);
+            }
         }
         JsonUtil::AddMember(body, "events", jsonEntries, allocator);
-        JsonUtil::AddMember(body, "headers", jsonHeaders, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
         return std::optional<document_t>{std::move(json)};
     }
@@ -158,7 +142,7 @@ struct MemSnapshotAllocationsResponse : public JsonResponse {
     MemSnapshotAllocationsResponse() : JsonResponse(REQ_RES_MEM_SNAPSHOT_ALLOCATIONS) {}
     uint64_t minEventId{0};
     uint64_t maxEventId{0};
-    std::vector<MemoryRecord> records;
+    std::vector<AllocationRecordDTO> records;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
@@ -170,143 +154,36 @@ struct MemSnapshotAllocationsResponse : public JsonResponse {
         JsonUtil::AddMember(body, "minTimestamp", minEventId, allocator);
         JsonUtil::AddMember(body, "maxTimestamp", maxEventId, allocator);
         for (const auto& record : records) {
-            auto recordJson = ToMemSnapshotMemoryRecordJson(record, allocator);
-            if (recordJson.has_value()) {
-                recordsJson.PushBack(recordJson.value(), allocator);
-            }
+            auto recordJson = record.ToJson(allocator);
+            recordsJson.PushBack(recordJson, allocator);
         }
         JsonUtil::AddMember(body, "allocations", recordsJson, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
         return std::optional<document_t>{std::move(json)};
     }
-
-    static std::optional<document_t> ToMemSnapshotMemoryRecordJson(const MemoryRecord& record,
-                                                                  Document::AllocatorType& allocator)
-    {
-        document_t json(kObjectType);
-        JsonUtil::AddMember(json, "id", record.id, allocator);
-        JsonUtil::AddMember(json, "timestamp", record.id, allocator);
-        JsonUtil::AddMember(json, "totalSize", record.allocated, allocator);
-        return std::optional<document_t>{std::move(json)};
-    }
 };
-
-static json_t ToMemSnapshotTraceEntryDetailJson(const TraceEntry& entry, Document::AllocatorType& allocator)
-{
-    json_t json(kObjectType);
-    JsonUtil::AddMember(json, "ID", entry.id, allocator);
-    JsonUtil::AddMember(json, "Action", entry.action, allocator);
-    JsonUtil::AddMember(json, "Address", NumberUtil::Uint64ToHexString(entry.address), allocator);
-    JsonUtil::AddMember(json, "Size(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.size), allocator);
-    JsonUtil::AddMember(json, "Stream", entry.stream, allocator);
-    JsonUtil::AddMember(json, "Caching Allocated(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.allocated), allocator);
-    JsonUtil::AddMember(json, "Caching Active(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.active), allocator);
-    JsonUtil::AddMember(json, "Caching Reserved(MBytes)", NumberUtil::ConvertBytesToMBytes(entry.reserved), allocator);
-    JsonUtil::AddMember(json, "CallStack", entry.callstack, allocator);
-    return json;
-}
-
-static json_t ToMemSnapshotExtendedBlockJson(const ExtendedBlock& blk, Document::AllocatorType& allocator)
-{
-    json_t json(kObjectType);
-    JsonUtil::AddMember(json, "ID", blk.id, allocator);
-    JsonUtil::AddMember(json, "Requested Size(MBytes)", NumberUtil::ConvertBytesToMBytes(blk.requestedSize), allocator);
-    JsonUtil::AddMember(json, "Size(MBytes)", NumberUtil::ConvertBytesToMBytes(blk.size), allocator);
-    JsonUtil::AddMember(json, "Address", std::to_string(blk.address), allocator);
-    json_t allocEventJson(kObjectType);
-    if (blk.allocEvent.has_value() && blk.allocEvent->id >= 0) {
-        allocEventJson = ToMemSnapshotTraceEntryDetailJson(blk.allocEvent.value(), allocator);
-    }
-    json.AddMember("Alloc Event", allocEventJson, allocator);
-
-    json_t freeRequestedEventJson(kObjectType);
-    if (blk.freeRequestedEvent.has_value() && blk.freeRequestedEvent->id >= 0) {
-        freeRequestedEventJson = ToMemSnapshotTraceEntryDetailJson(blk.freeRequestedEvent.value(), allocator);
-    }
-    JsonUtil::AddMember(json, "Free Requested Event", freeRequestedEventJson, allocator);
-
-    json_t freeCompletedEventJson(kObjectType);
-    if (blk.freeCompletedEvent.has_value() && blk.freeCompletedEvent->id >= 0) {
-        freeCompletedEventJson = ToMemSnapshotTraceEntryDetailJson(blk.freeCompletedEvent.value(), allocator);
-    }
-    JsonUtil::AddMember(json, "Free Completed Event", freeCompletedEventJson, allocator);
-    return json;
-}
 
 struct MemSnapshotDetailResponse : public JsonResponse {
     MemSnapshotDetailResponse() : JsonResponse(REQ_RES_MEM_SNAPSHOT_DETAIL) {}
     std::string type;
-    std::optional<ExtendedBlock> block;
-    std::optional<TraceEntry> event;
+    std::optional<std::unique_ptr<JsonSerializable>> detail;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
         document_t json(kObjectType);
         auto& allocator = json.GetAllocator();
         ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
-        json_t body(kObjectType);
-
-        if (type == DETAIL_TYPE_EVENT && event.has_value()) {
-            auto eventJson = ToMemSnapshotTraceEntryDetailJson(event.value(), allocator);
-            JsonUtil::AddMember(json, "body", eventJson, allocator);
-        } else if (type == DETAIL_TYPE_BLOCK && block.has_value()) {
-            const auto& blk = block.value();
-            auto blockJson = ToMemSnapshotExtendedBlockJson(blk, allocator);
-            JsonUtil::AddMember(json, "body", blockJson, allocator);
+        if (detail.has_value()) {
+            auto detailJson = detail.value()->ToJson(allocator);
+            JsonUtil::AddMember(json, "body", detailJson, allocator);
         }
         return std::optional<document_t>{std::move(json)};
     }
 };
 
-/**
- * @brief Segment状态中的Block信息
- */
-struct SegmentBlockInfo {
-    int64_t id{0};
-    uint64_t size{0};
-    uint64_t offset{0};
-};
-
-/**
- * @brief Segment状态信息
- */
-struct SegmentStateInfo {
-    uint64_t address{0};
-    uint64_t stream{0};
-    uint64_t size{0};
-    int64_t allocOrMapEventId{-1};
-    uint64_t allocated{0};
-    std::vector<SegmentBlockInfo> blocks;
-};
-
-static json_t ToSegmentBlockInfoJson(const SegmentBlockInfo& block, Document::AllocatorType& allocator)
-{
-    json_t json(kObjectType);
-    JsonUtil::AddMember(json, "id", block.id, allocator);
-    JsonUtil::AddMember(json, "size", block.size, allocator);
-    JsonUtil::AddMember(json, "offset", block.offset, allocator);
-    return json;
-}
-
-static json_t ToSegmentStateInfoJson(const SegmentStateInfo& segment, Document::AllocatorType& allocator)
-{
-    json_t json(kObjectType);
-    JsonUtil::AddMember(json, "address", NumberUtil::Uint64ToHexString(segment.address), allocator);
-    JsonUtil::AddMember(json, "stream", segment.stream, allocator);
-    JsonUtil::AddMember(json, "size", segment.size, allocator);
-    JsonUtil::AddMember(json, "allocOrMapEventId", segment.allocOrMapEventId, allocator);
-    JsonUtil::AddMember(json, "allocated", segment.allocated, allocator);
-    json_t blocksJson(kArrayType);
-    for (const auto& block : segment.blocks) {
-        blocksJson.PushBack(ToSegmentBlockInfoJson(block, allocator), allocator);
-    }
-    JsonUtil::AddMember(json, "blocks", blocksJson, allocator);
-    return json;
-}
-
 struct MemSnapshotStateResponse : public JsonResponse {
     MemSnapshotStateResponse() : JsonResponse(REQ_RES_MEM_SNAPSHOT_STATE) {}
-    std::vector<SegmentStateInfo> segments;
+    std::vector<SegmentItemDTO> segments;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
@@ -316,7 +193,7 @@ struct MemSnapshotStateResponse : public JsonResponse {
         json_t body(kObjectType);
         json_t segmentsJson(kArrayType);
         for (const auto& segment : segments) {
-            segmentsJson.PushBack(ToSegmentStateInfoJson(segment, allocator), allocator);
+            segmentsJson.PushBack(segment.ToJson(allocator), allocator);
         }
         JsonUtil::AddMember(body, "segments", segmentsJson, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);

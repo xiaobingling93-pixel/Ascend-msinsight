@@ -46,8 +46,8 @@ bool QueryMemSnapshotEventHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
-    const int64_t total = request.isTable ? database->QueryTraceEntriesTable(request.params, response.entries)
-                              : database->QueryTraceEntriesWithPagination(request.params, request.params.deviceId, response.entries);
+    const int64_t total = request.isTable ? database->QueryTraceEntriesTable(request.params, response.tableEntries)
+                              : database->QueryTraceEntriesList(request.params, request.params.deviceId, response.listEntries);
     if (total < 0) {
         errMsg = LOG_TAG + "Failed to query events: query db failed.";
         SendResponse(std::move(responsePtr), false, errMsg);

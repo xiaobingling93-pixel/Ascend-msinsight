@@ -40,7 +40,7 @@ bool QueryMemSnapshotAllocationHandler::HandleRequest(std::unique_ptr<Protocol::
         return false;
     }
     std::vector<MemoryRecord> records;
-    memoryDatabase->QueryMemoryRecords(request.params, records);
+    memoryDatabase->QueryMemoryAllocations(request.params.deviceId, response.records);
     if (records.empty()) {
         Server::ServerLog::Warn("Query memory records: empty data.");
         SendResponse(std::move(responsePtr), true);
@@ -48,7 +48,6 @@ bool QueryMemSnapshotAllocationHandler::HandleRequest(std::unique_ptr<Protocol::
     }
     responsePtr->minEventId = 0;
     responsePtr->maxEventId = memoryDatabase->GetDeviceMaxEntryId(request.params.deviceId);
-    responsePtr->records = std::move(records);
     SendResponse(std::move(responsePtr), true);
     return true;
 }

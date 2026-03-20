@@ -41,7 +41,7 @@ bool QueryMemSnapshotBlockHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         return false;
     }
     if (request.isTable) {
-        const int64_t total = database->QueryBlocksTable(request.params, response.blocks);
+        const int64_t total = database->QueryBlocksTable(request.params, response.tableBlocks);
         if (total < 0) {
             errMsg = LOG_TAG + "Failed to query blocks: query db failed.";
             SendResponse(std::move(responsePtr), false, errMsg);
@@ -49,16 +49,33 @@ bool QueryMemSnapshotBlockHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         }
         response.total = static_cast<uint64_t>(total);
         response.maxTimestamp = database->GetDeviceMaxEntryId(request.params.deviceId);
+        BuildBlockTableResponseColumnsBounds(request.params.deviceId, database, response.rangeFiltersBoundsMap);
     } else {
-        if (!database->QueryAllBlocks(response.blocks, request.params.deviceId)) {
+        if (!database->QueryAllBlocks<Protocol::BlockViewItemDTO>(response.viewBlocks, request.params.deviceId)) {
             errMsg = LOG_TAG + "Failed to query blocks: query db failed.";
             SendResponse(std::move(responsePtr), false, errMsg);
             return false;
         }
-        response.total = response.blocks.size();
+        response.total = response.viewBlocks.size();
         response.maxTimestamp = database->GetDeviceMaxEntryId(request.params.deviceId);
     }
     SendResponse(std::move(responsePtr), true);
     return true;
+}
+
+void QueryMemSnapshotBlockHandler::BuildBlockTableResponseColumnsBounds(const std::string& deviceId,
+                                                                        const std::shared_ptr<MemSnapshotDatabase>& database,
+                                                                        Dic::Protocol::ColumnBounds& colBounds)
+{
+    if (database == nullptr || !database->IsOpen()) {
+        return;
+    }
+    auto minBlockId = INT64_MIN;
+    auto maxBlockId = INT64_MAX;
+    database->QueryBlockIdRangeByDeviceIdLazy(deviceId, minBlockId, maxBlockId);
+    auto maxDeviceEntryId = database->GetDeviceMaxEntryId(deviceId);
+    colBounds[BlockTableColumn::ID] = {minBlockId, maxBlockId};
+    colBounds[BlockTableColumn::ALLOC_EVENT_ID] = {-1, maxDeviceEntryId};
+    colBounds[BlockTableColumn::FREE_EVENT_ID] = {-1, maxDeviceEntryId};
 }
 } // namespace Dic::Module::MemSnapshot

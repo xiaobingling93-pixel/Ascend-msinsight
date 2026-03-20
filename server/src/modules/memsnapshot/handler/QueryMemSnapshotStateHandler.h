@@ -37,7 +37,7 @@ public:
 private:
     const std::string LOG_TAG = "[MemSnapshotStateHandler] ";
     static void BuildSegmentsStateInfoFromSegments(const std::vector<Segment>& segments,
-                                                   std::vector<SegmentStateInfo>& stateInfos);
+                                                   std::vector<SegmentItemDTO>& stateInfos);
 };
 } // namespace Dic::Module::MemSnapshot
 

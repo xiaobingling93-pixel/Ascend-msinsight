@@ -51,7 +51,6 @@ bool QueryMemSnapshotStateHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
-    
     auto segments = MemSnapshotService::GetSegmentsByEventId(request.params.eventId, request.params.deviceId, database);
     BuildSegmentsStateInfoFromSegments(segments, response.segments);
     SendResponse(std::move(responsePtr), true);
@@ -59,17 +58,17 @@ bool QueryMemSnapshotStateHandler::HandleRequest(std::unique_ptr<Protocol::Reque
 }
 
 void QueryMemSnapshotStateHandler::BuildSegmentsStateInfoFromSegments(const std::vector<Segment>& segments,
-                                                                      std::vector<SegmentStateInfo>& stateInfos)
+                                                                      std::vector<SegmentItemDTO>& stateInfos)
 {
     for (const auto& segment : segments) {
-        SegmentStateInfo stateInfo;
+        SegmentItemDTO stateInfo;
         stateInfo.address = segment.address;
         stateInfo.stream = segment.stream;
         stateInfo.size = segment.totalSize;
         stateInfo.allocated = segment.allocated;
         stateInfo.allocOrMapEventId = segment.allocOrMapEventId;
         for (const auto& block : segment.blocks) {
-            SegmentBlockInfo blockInfo;
+            SegmentBlockItemDTO blockInfo;
             blockInfo.id = block.id;
             blockInfo.size = block.size;
             blockInfo.offset = block.address - segment.address;

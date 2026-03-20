@@ -59,13 +59,6 @@ struct Block {
     int64_t allocEventId{-1};
     int64_t freeEventId{-1};
 };
-// 扩展Block，带有更加详细的信息
-struct ExtendedBlock : public Block {
-    explicit ExtendedBlock(Block &block) : Block(block) {};
-    std::optional<TraceEntry> allocEvent;
-    std::optional<TraceEntry> freeRequestedEvent;
-    std::optional<TraceEntry> freeCompletedEvent;
-};
 struct MemoryRecord {
     int64_t id{0};
     uint64_t allocated{0};
