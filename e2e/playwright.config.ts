@@ -60,7 +60,7 @@ export default defineConfig({
             command: isCI
                 /* Argument logPath should be an existing directory, otherwise importing data will fail. */
                 ? `../server/output/linux-aarch64/bin/profiler_server --wsPort=9000 --logPath=${path.resolve(__dirname, 'log/')}`
-                : `${path.resolve(__dirname, '../server/output/win_mingw64/bin/profiler_server.exe')} --wsPort=9000 --logPath=D:\\MindStudio-Insight_GUI_Test\\GUI\\Ascend-Insight`,
+                : `${path.resolve(__dirname, '../server/output/win_mingw64/bin/profiler_server.exe')} --wsPort=9000 --logPath=C:\\msinsight-log`,
             reuseExistingServer: !isCI,
         },
         {
