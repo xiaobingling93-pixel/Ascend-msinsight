@@ -18,6 +18,7 @@
 
 #ifndef PROFILER_SERVER_IEPROTOCOL_H
 #define PROFILER_SERVER_IEPROTOCOL_H
+#include "GlobalDefs.h"
 #include "ProtocolMessage.h"
 
 namespace Dic {

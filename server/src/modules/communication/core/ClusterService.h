@@ -19,6 +19,10 @@
 #ifndef PROFILER_SERVER_CLUSTERSERVICE_H
 #define PROFILER_SERVER_CLUSTERSERVICE_H
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 #include "ClusterDomainObject.h"
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"

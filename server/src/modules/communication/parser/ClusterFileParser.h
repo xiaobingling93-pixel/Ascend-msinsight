@@ -46,7 +46,7 @@ public:
     bool ParserClusterOfDb();
     std::string GetClusterDbPath();
     static bool CheckIsCluster(const std::string &filePath);
-    inline std::string GetClusterPath()
+    inline std::string GetClusterPath() const
     {
         return selectedFilePath;
     }

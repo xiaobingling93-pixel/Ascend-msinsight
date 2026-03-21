@@ -71,7 +71,7 @@ public:
 
     void InsertClusterBaseInfo(ClusterBaseInfo &baseInfo);
 
-    bool HasClusterBaseInfoTable();
+    bool HasClusterBaseInfoTable() const;
     void SetHasClusterBaseInfoTable();
     bool QueryDistributedArgs(ParallelStrategyConfig &config, std::string &level);
 

@@ -43,7 +43,7 @@ public:
     std::string GetLogPath() const;
     std::string GetOutputDbPath() const;
     ParserState GetState() const;
-    void SetState(ParserState newState);
+    void SetState(const ParserState& newState);
     uint8_t GetProgress() const;
     void SetProgress(uint8_t newProgress);
     std::string GetWorkDir() const;

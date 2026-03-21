@@ -497,7 +497,7 @@ bool DbClusterDataBase::QueryAllPerformanceDataByStep(const std::string &step,
     return ExecuteQueryAllPerformanceDataByStep(sql, step, data);
 }
 
-bool DbClusterDataBase::HasClusterBaseInfoTable()
+bool DbClusterDataBase::HasClusterBaseInfoTable() const
 {
     return hasClusterBaseInfoTable;
 }

@@ -70,7 +70,7 @@ ParserState MemSnapshotParserContext::GetState() const
     return state;
 }
 
-void MemSnapshotParserContext::SetState(const ParserState newState)
+void MemSnapshotParserContext::SetState(const ParserState& newState)
 {
     std::unique_lock<std::shared_mutex> lock(_mutex);
     state = newState;

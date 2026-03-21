@@ -707,7 +707,7 @@ bool TextClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::Communic
 }
 
 std::string TextClusterDatabase::GetAllOperatorsSql(const std::string &startTime, const std::string &bandwidthCondition,
-                                                    const std::string &timeCondition)
+                                                    const std::string &timeCondition) const
 {
     std::string sql =
         "SELECT t.op_name as operatorName, "
@@ -816,7 +816,7 @@ bool TextClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRank
 }
 
 std::string TextClusterDatabase::GetDurationListSql(const std::string &bandwidthCondition,
-                                                    const std::string &timeCondition)
+                                                    const std::string &timeCondition) const
 {
     std::string sql =
         "SELECT t.rank_id as rank_id, "

@@ -70,7 +70,7 @@ private:
     std::unordered_map<std::string, CommunicationMatrixInfo> matrixTotalOpInfoMap;
 
     void StatTotalOpInfo(const CommunicationMatrixInfo &matrixInfo);
-    std::string GenerateMatrixKey(const CommunicationMatrixInfo &matrixInfo);
+    std::string GenerateMatrixKey(const CommunicationMatrixInfo &matrixInfo) const;
 };
 
 } // end of namespace Timeline
