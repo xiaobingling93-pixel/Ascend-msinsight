@@ -158,7 +158,7 @@ bool CommunicationRapidSaxHandler::Key(const char *str, rapidjson::SizeType leng
     return true;
 }
 
-std::string CommunicationRapidSaxHandler::GenerateTimeInfoKey(const CommunicationTimeInfo &info)
+std::string CommunicationRapidSaxHandler::GenerateTimeInfoKey(const CommunicationTimeInfo &info) const
 {
     return StringUtil::FormatString("{}_{}_{}", info.iterationId, info.opSuffix, info.rankId);
 }
@@ -187,7 +187,7 @@ void CommunicationRapidSaxHandler::StatTimeTotalOpInfo(const CommunicationTimeIn
     }
 }
 
-std::string CommunicationRapidSaxHandler::GenerateBandwidthInfoKey(const CommunicationBandWidth &info)
+std::string CommunicationRapidSaxHandler::GenerateBandwidthInfoKey(const CommunicationBandWidth &info) const
 {
     return StringUtil::FormatString("{}_{}_{}_{}", info.iterationId, info.rankId, info.opSuffix,
                                     info.transportType);

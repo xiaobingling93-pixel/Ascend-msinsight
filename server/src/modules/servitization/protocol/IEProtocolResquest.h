@@ -43,7 +43,7 @@ struct IETableViewParams {
     std::string endTime;
     std::string order;
     std::string orderBy;
-    bool CommonCheck(std::string& errorMsg)
+    bool CommonCheck(std::string& errorMsg) const
     {
         static const uint64_t PAGE_LIMIT = 500;
         if (pageSize == 0 || pageSize > PAGE_LIMIT) {

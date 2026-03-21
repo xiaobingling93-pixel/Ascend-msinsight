@@ -464,7 +464,7 @@ struct RankDetailsForSlowRank {
     std::vector<OpDetailsForSlowRank> opDetails;
     bool operator<(const RankDetailsForSlowRank &other) const
     {
-        if (totalElapseTime != other.totalElapseTime) {
+        if (!NumberUtil::IsDoubleEqual(totalElapseTime, other.totalElapseTime)) {
             return totalElapseTime > other.totalElapseTime;
         }
         return rankId < other.rankId;

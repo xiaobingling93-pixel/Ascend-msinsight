@@ -606,7 +606,7 @@ void BaseParallelStrategyAlgorithm::GetPerformanceResponseDataWithDpDimension(
 
 double BaseParallelStrategyAlgorithm::Reserved3DecimalPlaces(double num)
 {
-    if (num == 0.0 || num == DBL_MAX) {
+    if (NumberUtil::IsDoubleEqual(num, 0.0) || NumberUtil::IsDoubleEqual(num, DBL_MAX)) {
         return 0.0;
     }
     return NumberUtil::DoubleReservedNDigits(num, reservedNum);
@@ -860,7 +860,7 @@ void BaseParallelStrategyAlgorithm::CalSynchronizeTime(const std::string& para, 
         }
         maxCommTime = maxCommTime > commInfoList[0].commTime ? maxCommTime : commInfoList[0].commTime;
     }
-    if (maxCommTime == 0.0) {
+    if (NumberUtil::IsDoubleEqual(maxCommTime, 0.0)) {
         return;
     }
     const std::vector<std::string> commTimeListForAdvice = {DP_PARA, CP_PARA};

@@ -117,9 +117,9 @@ private:
     std::string GetMatrixStmtSql(int len);
 
     std::string GetStageIdByGroupId(const std::string &groupId);
-    std::string GetDurationListSql(const std::string &bandwidthCondition, const std::string &timeCondition);
+    std::string GetDurationListSql(const std::string &bandwidthCondition, const std::string &timeCondition) const;
     std::string GetAllOperatorsSql(const std::string &startTime, const std::string &bandwidthCondition,
-                                   const std::string &timeCondition);
+                                   const std::string &timeCondition) const;
     std::string GetAllOperatorsSql(uint64_t &startTime, const Protocol::OperatorDetailsParam &param);
     void BindTextForClusterBaseInfo(ClusterBaseInfo &baseInfo, sqlite3_stmt *stmt);
 };

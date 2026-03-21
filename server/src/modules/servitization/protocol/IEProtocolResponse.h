@@ -19,6 +19,8 @@
 #ifndef PROFILER_SERVER_IEPROTOCOLRESPONSE_H
 #define PROFILER_SERVER_IEPROTOCOLRESPONSE_H
 #include <vector>
+#include <map>
+#include <string>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"

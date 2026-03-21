@@ -113,7 +113,7 @@ bool CommunicationMatrixRapidHandler::Key(const char *str, rapidjson::SizeType l
     return true;
 }
 
-std::string CommunicationMatrixRapidHandler::GenerateMatrixKey(const CommunicationMatrixInfo &matrixInfo)
+std::string CommunicationMatrixRapidHandler::GenerateMatrixKey(const CommunicationMatrixInfo &matrixInfo) const
 {
     return StringUtil::FormatString("{}_{}_{}_{}_{}", matrixInfo.iterationId, std::to_string(matrixInfo.srcRank),
                                     std::to_string(matrixInfo.dstRank), matrixInfo.transportType,
