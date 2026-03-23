@@ -39,9 +39,8 @@ bool QueryMemSnapshotAllocationHandler::HandleRequest(std::unique_ptr<Protocol::
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    std::vector<MemoryRecord> records;
     memoryDatabase->QueryMemoryAllocations(request.params.deviceId, response.records);
-    if (records.empty()) {
+    if (response.records.empty()) {
         Server::ServerLog::Warn("Query memory records: empty data.");
         SendResponse(std::move(responsePtr), true);
         return true;
