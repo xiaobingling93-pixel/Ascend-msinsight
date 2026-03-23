@@ -384,7 +384,7 @@ bool Database::DropAllTable()
     return ExecSql(dropSql);
 }
 
-bool Database::DropSomeTables(const std::vector<std::string> &tableNames)
+bool Database::DropSomeTables(const std::vector<std::string> &tableNames) const
 {
     if (!isOpen) {
         ServerLog::Error("The db file is not opened when drop specific tables.");

@@ -36,7 +36,7 @@ public:
         std::shared_ptr<TextTraceDatabase> textDatabase);
     ~EventParser() = default;
     bool Parse(int64_t startPosition, int64_t endPosition);
-    std::string GetError();
+    std::string GetError() const;
     void SetSimulationStatus(const bool &isSimulation);
 protected:
     std::unique_ptr<IFileReader> fileReader = nullptr;

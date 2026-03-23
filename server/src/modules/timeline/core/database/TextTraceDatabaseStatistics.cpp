@@ -16,12 +16,8 @@
  * -------------------------------------------------------------------------
  */
 
-#include "TrackInfoManager.h"
-#include "TraceTime.h"
-#include "TraceDatabaseSqlConst.h"
 #include "ServerLog.h"
 #include "TextTraceDatabase.h"
-
 
 namespace Dic::Module::Timeline {
     using namespace Dic::Server;

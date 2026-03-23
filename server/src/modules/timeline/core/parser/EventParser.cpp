@@ -354,7 +354,7 @@ uint64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
     return id;
 }
 
-std::string EventParser::GetError()
+std::string EventParser::GetError() const
 {
     return error;
 }

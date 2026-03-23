@@ -18,6 +18,10 @@
 
 #ifndef PROFILER_SERVER_HOSTFLOWREPO_H
 #define PROFILER_SERVER_HOSTFLOWREPO_H
+#include <memory>
+#include <vector>
+#include <string>
+#include <unordered_map>
 #include "PytorchApiTable.h"
 #include "ConnectionIdsTable.h"
 #include "StringIdsTable.h"

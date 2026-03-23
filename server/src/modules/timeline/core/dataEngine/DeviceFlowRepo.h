@@ -18,6 +18,11 @@
 
 #ifndef PROFILER_SERVER_DEVICEFLOWREPO_H
 #define PROFILER_SERVER_DEVICEFLOWREPO_H
+#include <memory>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include "CommucationOpTable.h"
 #include "TaskTable.h"
 #include "HostInfoTable.h"

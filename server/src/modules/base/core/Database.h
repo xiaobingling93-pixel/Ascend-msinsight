@@ -67,8 +67,8 @@ public:
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement();
-    bool ExecSql(const std::string &sql) const ;
-    bool DropSomeTables(const std::vector<std::string>& tableNames);
+    bool ExecSql(const std::string &sql) const;
+    bool DropSomeTables(const std::vector<std::string>& tableNames) const;
     bool DropAllTable();
     bool IsDatabaseVersionChange() const;
     bool QueryMetaVersion();

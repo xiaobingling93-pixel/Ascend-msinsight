@@ -18,6 +18,7 @@
 
 #ifndef PROFILER_SERVER_REPOSITORYFACTORYINTERFACE_H
 #define PROFILER_SERVER_REPOSITORYFACTORYINTERFACE_H
+#include <memory>
 #include "SliceRepoInterface.h"
 #include "CounterRepoInterface.h"
 #include "FlowRepoInterface.h"

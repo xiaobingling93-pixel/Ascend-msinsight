@@ -49,7 +49,7 @@ public:
 
     void SetMaxActiveCount(unsigned int count);
 
-    std::string GetDbPath();
+    std::string GetDbPath() const;
 
     void Stop();
 
@@ -122,7 +122,7 @@ void DBConnectionPool<T>::SetMaxActiveCount(unsigned int count)
 }
 
 template<typename T>
-std::string DBConnectionPool<T>::GetDbPath()
+std::string DBConnectionPool<T>::GetDbPath() const
 {
     return path;
 }

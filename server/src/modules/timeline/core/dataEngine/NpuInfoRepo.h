@@ -18,8 +18,9 @@
 
 #ifndef PROFILER_SERVER_NPUINFOREPO_H
 #define PROFILER_SERVER_NPUINFOREPO_H
+#include <memory>
 #include <vector>
-#include "string"
+#include <string>
 #include "NpuInfoTable.h"
 #include "MstxEventsTable.h"
 namespace Dic::Module::Timeline {

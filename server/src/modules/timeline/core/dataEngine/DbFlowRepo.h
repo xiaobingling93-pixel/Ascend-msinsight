@@ -18,6 +18,7 @@
 
 #ifndef PROFILER_SERVER_DBFLOWREPO_H
 #define PROFILER_SERVER_DBFLOWREPO_H
+#include <memory>
 #include "HostFlowRepo.h"
 #include "DeviceFlowRepo.h"
 namespace Dic::Module::Timeline {

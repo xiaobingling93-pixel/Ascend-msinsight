@@ -162,7 +162,7 @@ bool TextTraceDatabase::CreateTable()
     return ExecSql(sql);
 }
 
-bool TextTraceDatabase::DropTable()
+bool TextTraceDatabase::DropTable() const
 {
     std::vector<std::string> tables = { sliceTable, threadTable, processTable, flowTable, counterTable };
     std::unique_lock<std::recursive_mutex> lock(mutex);

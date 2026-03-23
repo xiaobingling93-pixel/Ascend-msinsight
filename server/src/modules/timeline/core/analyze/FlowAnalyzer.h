@@ -25,6 +25,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <memory>
 #include "FlowRepoInterface.h"
 #include "TimelineProtocolResponse.h"
 #include "TraceDatabaseDef.h"
