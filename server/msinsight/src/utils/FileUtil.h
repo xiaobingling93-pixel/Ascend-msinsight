@@ -100,7 +100,12 @@ public:
     static inline bool CheckDirAccess(const std::string &path, const int &mode = 0)
     {
 #ifdef _WIN32
-        std::wstring wPath = ConvertToLongPathW(path);
+        std::string normalizedPath = path;
+        // Handle drive root paths: "D:" should be treated as "D:\"
+        if (path.size() == 2 && isalpha(path[0]) && path[1] == ':') {
+            normalizedPath = path + "\\";
+        }
+        std::wstring wPath = ConvertToLongPathW(normalizedPath);
         if (_waccess(wPath.c_str(), mode) == -1) {
             return false;
         }
