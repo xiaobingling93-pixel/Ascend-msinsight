@@ -806,13 +806,13 @@ std::vector<SourceFileLineDynamicCol> SourceInstructionParser::GetApiLinesDynami
     return list;
 }
 
-std::string SourceInstructionParser::GetSourceByName(std::string &sourceName, std::string &filePath)
+std::string SourceInstructionParser::GetSourceByName(std::string &sourceName, const std::string &filePath) const
 {
     if (sourceFiles.count(sourceName) == 0) {
         ServerLog::Warn("Don't exist the specified file ", sourceName);
         return "";
     }
-    Position &pos = sourceFiles[sourceName];
+    const Position &pos = sourceFiles.at(sourceName);
 
     std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
     if (!file) {
@@ -853,9 +853,8 @@ GRPProgress GRPStatusHelper::UpdateGRPStatus(const std::string& grpName,
     return GRPProgress::BEGIN;
 }
 
-int GRPStatusHelper::GetRegisterLifeTime(const std::string& grpName, int lifeTime)
-{
-    return grpLifeTimeMap_.find(grpName) != grpLifeTimeMap_.end() ? grpLifeTimeMap_[grpName] : lifeTime;
+int GRPStatusHelper::GetRegisterLifeTime(const std::string& grpName, int lifeTime) const{
+    return grpLifeTimeMap_.find(grpName) != grpLifeTimeMap_.end() ? grpLifeTimeMap_.at(grpName) : lifeTime;
 }
 
 int GRPStatusHelper::GetIndex(const std::string& grpName)

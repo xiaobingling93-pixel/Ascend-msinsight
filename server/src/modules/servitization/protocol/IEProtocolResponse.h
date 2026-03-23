@@ -18,6 +18,8 @@
 
 #ifndef PROFILER_SERVER_IEPROTOCOLRESPONSE_H
 #define PROFILER_SERVER_IEPROTOCOLRESPONSE_H
+#include <map>
+#include <string>
 #include <vector>
 #include <map>
 #include <string>

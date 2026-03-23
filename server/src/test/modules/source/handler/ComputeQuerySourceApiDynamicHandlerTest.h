@@ -29,10 +29,10 @@
 #include "QueryCodeFileHandler.h"
 #include "WsSessionImpl.h"
 
+namespace Dic::Module::Source::Test {
 using namespace Dic::Server;
 using namespace Dic::Module;
 using namespace Dic::Module::Source;
-using namespace Dic::Module::Source::Test;
 
 class ComputeQuerySourceApiDynamicHandlerTest : public ::testing::Test {
 public:
@@ -77,5 +77,6 @@ public:
         }
     }
 };
+}
 
 #endif // PROFILER_SERVER_COMPUTEQUERYSOURCEAPIDYNAMICHANDLERTEST_H

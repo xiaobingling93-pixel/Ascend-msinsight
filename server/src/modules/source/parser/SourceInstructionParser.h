@@ -63,7 +63,7 @@ struct SourceFileLineDynamicCol : public DynamicColumn {
 class GRPStatusHelper {
 public:
     GRPProgress UpdateGRPStatus(const std::string& grpName, int lifeTime, GRPStatus status);
-    int GetRegisterLifeTime(const std::string& grpName, int lifeTime);
+    int GetRegisterLifeTime(const std::string& grpName, int lifeTime) const;
     int GetIndex(const std::string& grpName);
     void ResetGRP(const std::string& grpName);
     void Reset();
@@ -87,7 +87,7 @@ public:
     std::string GetInstr(std::string &filePath);
     std::vector<SourceApiInstruction> GetInstructions(std::string &coreName);
     std::vector<SourceFileInstructionDynamicCol> GetInstrDynamic(std::string &coreName);
-    std::string GetSourceByName(std::string &sourceName, std::string &filePath);
+    std::string GetSourceByName(std::string &sourceName, const std::string &filePath) const;
     std::map<std::string, int> GetInstructionColumnTypeMap() const;
     std::map<std::string, int> GetSourceLineColumnTypeMap() const;
 

@@ -18,7 +18,8 @@
 
 #ifndef PROFILER_SERVER_VIRTUALMEMORYDATABASE_H
 #define PROFILER_SERVER_VIRTUALMEMORYDATABASE_H
-
+#include <vector>
+#include <cstdint>
 #include "Database.h"
 #include "MemoryProtocolUtil.h"
 #include "MemoryProtocolRequest.h"

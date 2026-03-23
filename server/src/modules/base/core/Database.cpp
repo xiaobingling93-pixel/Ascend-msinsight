@@ -152,7 +152,7 @@ void Database::CloseDb()
     path.clear();
 }
 
-bool Database::ExecSql(const std::string &sql)
+bool Database::ExecSql(const std::string &sql) const
 {
     if (!isOpen) {
         ServerLog::Error("The db file is not opened.");

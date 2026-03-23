@@ -19,6 +19,9 @@
 #ifndef PROFILER_SERVER_OPERATORDISPATCHADVISOR_H
 #define PROFILER_SERVER_OPERATORDISPATCHADVISOR_H
 
+#include <cstdint>
+#include <string>
+#include <vector>
 #include "VirtualTraceDatabase.h"
 #include "AdvisorProtocolRequest.h"
 #include "AdvisorProtocolResponse.h"

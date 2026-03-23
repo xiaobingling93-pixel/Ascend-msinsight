@@ -19,6 +19,10 @@
 #ifndef BINFILEPARSEUTIL_H
 #define BINFILEPARSEUTIL_H
 
+#include <fstream>
+#include <map>
+#include <string>
+#include <vector>
 #include "SourceProtocol.h"
 
 namespace Dic::Module::Source {

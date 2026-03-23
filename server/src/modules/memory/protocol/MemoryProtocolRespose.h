@@ -19,6 +19,8 @@
 #ifndef PROFILER_SERVER_MEMORYPROTOCLRESPOSE_H
 #define PROFILER_SERVER_MEMORYPROTOCLRESPOSE_H
 
+#include <cstdint>
+#include <string>
 #include <vector>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"

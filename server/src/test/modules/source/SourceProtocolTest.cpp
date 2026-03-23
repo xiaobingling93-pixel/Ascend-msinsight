@@ -17,6 +17,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <cstdint>
 #include "ProtocolManager.h"
 #include "SourceProtocolResponse.h"
 #include "SourceProtocolTest.h"

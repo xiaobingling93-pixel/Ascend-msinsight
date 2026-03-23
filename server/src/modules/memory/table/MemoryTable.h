@@ -17,6 +17,9 @@
  */
 #ifndef PROFILER_SERVER_MEMORYTABLE_H
 #define PROFILER_SERVER_MEMORYTABLE_H
+#include <vector>
+#include <string>
+#include <cstdint>
 #include "Table.h"
 namespace Dic::Module::Memory {
 template <typename T> class MemoryTable : public Timeline::Table<T> {

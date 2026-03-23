@@ -19,6 +19,7 @@
 #ifndef PROFILER_SERVER_SOURCEFILEPARSER_H
 #define PROFILER_SERVER_SOURCEFILEPARSER_H
 
+#include <future>
 #include <map>
 #include <unordered_map>
 #include "document.h"
@@ -85,7 +86,7 @@ public:
     void ResetBaseline();
     std::vector<Position> GetPositionByType(DataTypeEnum type);
     bool HasCachelineRecords();
-    int8_t GetInstrVersion();
+    int8_t GetInstrVersion() const;
     std::string GetFilePath();
 private:
     std::string filePath;

@@ -19,6 +19,11 @@
 #ifndef INSTRUCTION_TIMELINE_PARSER_H
 #define INSTRUCTION_TIMELINE_PARSER_H
 
+#include <map>
+#include <optional>
+#include <string>
+#include <vector>
+#include <cstdint>
 #include "SourceProtocolResponse.h"
 #include "SourceProtocol.h"
 

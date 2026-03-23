@@ -19,6 +19,10 @@
 #ifndef PROFILER_SERVER_SOURCE_PROTOCOL_H
 #define PROFILER_SERVER_SOURCE_PROTOCOL_H
 
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
 #include "ProtocolMessage.h"
 
 namespace Dic {

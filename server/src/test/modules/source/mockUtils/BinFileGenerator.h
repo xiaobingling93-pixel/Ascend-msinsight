@@ -22,8 +22,6 @@
 #include <utility>
 
 #include <istream>
-#include <vector>
-#include <memory>
 #include "DataBlock.h"
 
 namespace Dic::Module::Source::Test {

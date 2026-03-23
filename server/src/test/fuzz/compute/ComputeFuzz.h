@@ -18,6 +18,8 @@
 
 #ifndef COMPUTE_FUZZ_H
 #define COMPUTE_FUZZ_H
+#include <cstdint>
+#include <string>
 
 struct BinaryBlockHeader {
     uint64_t contentSize = 0;

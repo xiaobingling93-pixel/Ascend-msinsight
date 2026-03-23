@@ -19,6 +19,11 @@
 #ifndef DIC_SOURCE_PROTOCOL_SOURCE_RESPONSE_H
 #define DIC_SOURCE_PROTOCOL_SOURCE_RESPONSE_H
 
+#include <cstdint>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 #include <cmath>
 #include "GlobalDefs.h"

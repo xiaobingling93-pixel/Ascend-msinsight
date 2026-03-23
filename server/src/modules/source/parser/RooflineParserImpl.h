@@ -18,6 +18,8 @@
 
 #ifndef PROFILER_SERVER_ROOFLINEPARSERIMPL_H
 #define PROFILER_SERVER_ROOFLINEPARSERIMPL_H
+#include <optional>
+#include <string>
 #include "SourceProtocolUtil.h"
 namespace Dic::Module::Source {
 class RooflineParserImpl {

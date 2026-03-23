@@ -49,10 +49,10 @@ class TritonParser {
 public:
     static TritonParser& Instance();
     void Parse(const std::string& parseDir);
-    bool IsParsed(const std::string& filePath);
+    bool IsParsed(const std::string& filePath) const;
 protected:
     void BeforeParse(const std::string& parsedDir);
-    void AfterParse(const ParseResult& result);
+    void AfterParse(const ParseResult& result) const;
     ParseResult ParseImpl(const std::string& parsedDir);
     bool CheckFileValid(const std::string& fileName, std::string& error);
     ParseResult ParseOneTriton(const std::string& memFile);

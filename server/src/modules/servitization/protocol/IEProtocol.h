@@ -18,6 +18,9 @@
 
 #ifndef PROFILER_SERVER_IEPROTOCOL_H
 #define PROFILER_SERVER_IEPROTOCOL_H
+#include <memory>
+#include <optional>
+#include <string>
 #include "GlobalDefs.h"
 #include "ProtocolMessage.h"
 

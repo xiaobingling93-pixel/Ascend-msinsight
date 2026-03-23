@@ -21,9 +21,7 @@
 #include <string>
 #include <climits>
 #include <cmath>
-#include <memory>
 #include <mutex>
-#include <algorithm>
 namespace Dic::Module::Memory {
 struct CurveView {
     std::vector<std::string> legends;

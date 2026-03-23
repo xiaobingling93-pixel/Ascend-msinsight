@@ -20,7 +20,6 @@
 #include <fstream>
 #include <unordered_set>
 #include "ServerLog.h"
-#include "rapidjson.h"
 #include "InterCoreLoadGraphParser.h"
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
@@ -558,7 +557,7 @@ bool SourceFileParser::HasCachelineRecords()
     return false;
 }
 
-int8_t SourceFileParser::GetInstrVersion()
+int8_t SourceFileParser::GetInstrVersion() const
 {
     return  instrVersion;
 }

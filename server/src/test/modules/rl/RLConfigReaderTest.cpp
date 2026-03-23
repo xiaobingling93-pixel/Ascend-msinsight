@@ -37,7 +37,7 @@ protected:
             FileUtil::SplicePath(testDataPath, "rl", "RLConfig_tmp_test.json");
     }
 
-    void WriteJsonIntoTestFile(const std::string &jsonStr)
+    void WriteJsonIntoTestFile(const std::string &jsonStr) const
     {
         auto file = std::ofstream(RLConfigReaderTest::tempConfigPath, std::ios::out);
         file.write(jsonStr.c_str(), jsonStr.size());

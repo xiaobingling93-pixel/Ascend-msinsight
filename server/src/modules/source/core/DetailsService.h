@@ -17,6 +17,8 @@
  */
 #ifndef PROFILER_SERVICE_DETAILSSERVICE_H
 #define PROFILER_SERVICE_DETAILSSERVICE_H
+#include <string>
+#include <vector>
 #include "SourceProtocolRequest.h"
 #include "SourceProtocolResponse.h"
 

@@ -60,7 +60,7 @@ void TritonParser::Parse(const std::string &parseDir)
     auto result = future.get();
     AfterParse(result);
 }
-bool TritonParser::IsParsed(const std::string &filePath)
+bool TritonParser::IsParsed(const std::string &filePath) const
 {
     if (filePath.empty()) {
         return false;
@@ -82,7 +82,7 @@ void TritonParser::BeforeParse(const std::string &parsedDir)
     parsedFiles.push_back(parsedDir);
 }
 
-void TritonParser::AfterParse(const ParseResult &result)
+void TritonParser::AfterParse(const ParseResult &result) const
 {
     if (!result) {
         auto event = std::make_unique<Protocol::ParseFailEvent>();

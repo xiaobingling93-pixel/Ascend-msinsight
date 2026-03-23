@@ -119,7 +119,7 @@ private:
      * @param count 结构体数组长度
      */
     template<typename T>
-    void WriteStructs2File(std::ofstream& file, const T* data, size_t count)
+    void WriteStructs2File(std::ofstream& file, const T* data, size_t count) const
     {
         file.write(reinterpret_cast<const char*>(data), sizeof(T) * count);
     }

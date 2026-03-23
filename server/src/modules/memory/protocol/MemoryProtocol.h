@@ -18,7 +18,8 @@
 
 #ifndef PROFILER_SERVER_MEMORYPROTOCOL_H
 #define PROFILER_SERVER_MEMORYPROTOCOL_H
-
+#include <memory>
+#include <optional>
 #include "ProtocolMessage.h"
 
 namespace Dic {

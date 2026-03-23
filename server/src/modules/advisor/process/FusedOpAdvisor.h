@@ -19,6 +19,9 @@
 #ifndef PROFILER_SERVER_FUSEDOPADVISOR_H
 #define PROFILER_SERVER_FUSEDOPADVISOR_H
 
+#include <memory>
+#include <string>
+#include <vector>
 #include "VirtualTraceDatabase.h"
 #include "AdvisorProtocolRequest.h"
 #include "AdvisorProtocolResponse.h"
