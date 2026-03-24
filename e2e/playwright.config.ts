@@ -18,8 +18,7 @@ const getProfilerServerCmd = (port: number = 9000) => {
     let logPath = path.resolve(__dirname, 'log/');
     if (platform === 'win32') {
         // windows平台当前固定使用mingw进行编译
-        serverBinDir += 'win_mingw64/bin/';
-        serverBinDir = path.resolve(__dirname, serverBinDir);
+        serverBinDir = path.join(__dirname, serverBinDir, 'win_mingw64/bin/');
         profilerServer += '.exe';
         logPath = 'C:\\msinsight-log';
     } else if (platform === 'darwin') {
