@@ -19,9 +19,9 @@
 #include "DataEngine.h"
 
 namespace Dic::Module::Timeline {
-void DataEngine::SetRepositoryFactory(std::shared_ptr<RepositoryFactoryInterface> respotoryFactoryInterface)
+void DataEngine::SetRepositoryFactory(std::shared_ptr<RepositoryFactoryInterface> repositoryFactoryInterface)
 {
-    respotoryFactory = std::move(respotoryFactoryInterface);
+    respotoryFactory = std::move(repositoryFactoryInterface);
 }
 
 /**
