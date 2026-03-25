@@ -69,7 +69,7 @@ std::unique_ptr<SqlitePreparedStatement> HardWareRepo::PrepareStmtForQuerySimple
         sql = "SELECT main.rowid AS id, main.startNs AS startNs, main.endNs AS endNs FROM " + TABLE_TASK +
             " AS main INNER JOIN " + TABLE_MSTX_EVENTS + " AS mstx ON main.connectionId = mstx.connectionId "
             " WHERE main.deviceId = ? AND main.streamId = ? AND mstx.domainId = ? "
-            " AND startNs <= ? AND endNs >= ? "
+            " AND main.startNs <= ? AND main.endNs >= ? "
             " ORDER BY main.startNs, main.rowid;";
     } else {
         sql = "SELECT rowid as id, startNs AS startNs, endNs AS endNs FROM " + TABLE_TASK +
