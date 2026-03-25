@@ -28,9 +28,9 @@ MindStudio Insight 支持导入 [msOpProf](https://gitcode.com/Ascend/msopprof) 
 
 ### 一、查看上板数据
 
-**导入 `msprof-op\details\visualize_data.bin` 上板数据文件，切换到 Details（详情）页签。**
+**导入 `msprof-op/details/visualize_data.bin` 上板数据文件，切换到 Details（详情）页签。**
 
-![bese info question](../figures/quick_start/operator_quick_start_base_info.png)
+![base info question](../figures/quick_start/operator_quick_start_base_info.png)
 
 在基础信息部分，发现算子用时 __90+μs__。
 
@@ -46,7 +46,7 @@ MindStudio Insight 支持导入 [msOpProf](https://gitcode.com/Ascend/msopprof) 
 
 ### 二、查看仿真数据
 
-**导入 `msprof-op-simulator\visualize_data.bin` 仿真板数据文件，切换到 Timeline（时间线）页签。**
+**导入 `msprof-op-simulator/visualize_data.bin` 仿真板数据文件，切换到 Timeline（时间线）页签。**
 
 ![timeline scalar unit](../figures/quick_start/operator_quick_start_timeline_scalar_unit.png)
 
