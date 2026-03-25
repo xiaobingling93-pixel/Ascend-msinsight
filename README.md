@@ -181,14 +181,17 @@ MindStudio Insight由华为公司的下列部门联合贡献：
 
 ## 关于MindStudio团队
 
-华为MindStuido全流程开发工具链团队致力于提供端到端的昇腾AI应用开发解决方案，使能开发者高效完成训练开发、推理开发和算子开发。您可以通过以下渠道更深入了解华为MindStudio团队：
+华为MindStudio全流程开发工具链团队致力于提供端到端的昇腾AI应用开发解决方案，使能开发者高效完成训练开发、推理开发和算子开发。您可以通过以下渠道更深入了解华为MindStudio团队：
 <div style="display: flex; align-items: center; gap: 10px;">
-    <span>昇腾论坛：</span>
-    <a href="https://www.hiascend.com/forum/" rel="nofollow">
-        <img src="https://camo.githubusercontent.com/dd0b7ef70793ab93ce46688c049386e0755a18faab780e519df5d7f61153655e/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f576562736974652d2532333165333766663f7374796c653d666f722d7468652d6261646765266c6f676f3d6279746564616e6365266c6f676f436f6c6f723d7768697465" data-canonical-src="https://img.shields.io/badge/Website-%231e37ff?style=for-the-badge&amp;logo=bytedance&amp;logoColor=white" style="max-width: 100%;">
-    </a>
+    <span>MindStudio公众号：</span>
+    <img width="100" src="./docs/zh/user_guide/figures/readme/officialAccount.jpg" />
     <span style="margin-left: 20px;">昇腾小助手：</span>
     <a href="https://gitcode.com/Ascend/msinsight/blob/master/docs/zh/user_guide/figures/readme/xiaozhushou.png">
         <img src="https://camo.githubusercontent.com/22bbaa8aaa1bd0d664b5374d133c565213636ae50831af284ef901724e420f8f/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5765436861742d3037433136303f7374796c653d666f722d7468652d6261646765266c6f676f3d776563686174266c6f676f436f6c6f723d7768697465" data-canonical-src="./docs/zh/user_guide/figures/readme/xiaozhushou.png" style="max-width: 100%;">
     </a>
+    <span style="margin-left: 20px;">昇腾论坛：</span>
+    <a href="https://www.hiascend.com/forum/" rel="nofollow">
+        <img src="https://camo.githubusercontent.com/dd0b7ef70793ab93ce46688c049386e0755a18faab780e519df5d7f61153655e/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f576562736974652d2532333165333766663f7374796c653d666f722d7468652d6261646765266c6f676f3d6279746564616e6365266c6f676f436f6c6f723d7768697465" data-canonical-src="https://img.shields.io/badge/Website-%231e37ff?style=for-the-badge&amp;logo=bytedance&amp;logoColor=white" style="max-width: 100%;">
+    </a>
 </div>
+在公众号中私信【交流群】，可以获取技术交流群二维码
