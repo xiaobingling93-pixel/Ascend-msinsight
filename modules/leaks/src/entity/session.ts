@@ -81,7 +81,6 @@ export const STATE_WORKER_INFO_DEFAULT = {
 
 export class Session {
     module: 'memsnapshot' | 'leaks' = 'leaks';
-    dbPath: string = '';
     language: 'zhCN' | 'enUS' = 'enUS';
     deviceIds: any = {};
     threadIds: number[] = [];

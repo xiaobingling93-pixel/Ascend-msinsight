@@ -125,7 +125,6 @@ export class Session {
     iERankIds: string[] = [];
     deviceIds: any = {};
     threadIds: number[] = [];
-    dbPath: string = '';
     module: string = '';
     // triton数据解析完成
     tritonParsed: boolean = false;
@@ -263,6 +262,9 @@ export class Session {
         };
         this.profilingExpertDataParsed = null;
         this.isHybridParse = false;
+        this.deviceIds = {};
+        this.threadIds = [];
+        this.module = '';
     }
 
     // 数据源管理
