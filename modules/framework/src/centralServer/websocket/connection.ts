@@ -33,12 +33,16 @@ const createRequestHead = function (
 ): Request {
     const params = {};
     Object.assign(params, args);
+    let fileId = (params as any).dbPath ?? '';
+    if (module === 'leaks') {
+        fileId = store.sessionStore.activeSession?.activeDataSource?.selectedFilePath ?? '';
+    }
     return {
         id,
         moduleName: module,
         type: 'request',
         command,
-        fileId: (params as any).dbPath ?? '',
+        fileId,
         projectName: store.sessionStore.activeSession?.activeDataSource?.projectName ?? '',
         params,
     };

@@ -136,7 +136,6 @@ export const parseCompletedHandler = (data: any): void => {
         runInAction(() => {
             session.deviceIds = data.deviceIds;
             session.threadIds = data.threadIds;
-            session.dbPath = data.dbPath;
             session.module = data.module;
             restore(session);
         });
@@ -150,7 +149,6 @@ export const removeRemoteHandler: NotificationHandler = (data): void => {
         runInAction(() => {
             session.deviceIds = {};
             session.threadIds = [];
-            session.dbPath = '';
             session.module = 'leaks';
             session.clickEventItem = null;
             session.leaksWorkerInfo = { ...LEAKS_WORKER_INFO_DEFAULT, renderOptions: { ...session.leaksWorkerInfo.renderOptions } };
