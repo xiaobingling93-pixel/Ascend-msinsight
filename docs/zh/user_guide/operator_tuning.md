@@ -622,8 +622,8 @@ Roofline模型图上会显示算力名称，用于描述计算最大算力的指
     |HBM Vector Core1|HBM Vector Core1|aicore内core1的vector单元的高带宽存储器单元。|
     |Scalar|Scalar|Scalar计算单元。|
     |Scalar Cube|Scalar Cube|cube单元的Scalar计算单元。|
-    |Scalar Vectore Core0|Scalar Vectore Core0|aicore内core0的vector单元的Scalar计算单元。|
-    |Scalar Vectore Core1|Scalar Vectore Core1|aicore内core1的vector单元的Scalar计算单元。|
+    |Scalar Vector Core0|Scalar Vector Core0|aicore内core0的vector单元的Scalar计算单元。|
+    |Scalar Vector Core1|Scalar Vector Core1|aicore内core1的vector单元的Scalar计算单元。|
     |L0A|L0A|L0A储存单元。|
     |L0B|L0B|L0B储存单元。|
     |L0C|L0C|L0C储存单元。|

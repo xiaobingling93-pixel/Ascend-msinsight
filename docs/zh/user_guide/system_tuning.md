@@ -1060,7 +1060,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
 
   **图 5** 综合指标<a id="综合指标"></a>
 
-  ![](./figures/system_tuning/comprehensive_metrics_1.png "综合指标")
+  ![](./figures/system_tuning/comprehensive_metrics_2.png "综合指标")
 
   **表 4** 综合指标字段说明<a id="综合指标字段说明"></a>
 
@@ -1084,7 +1084,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
 
   **图 6** 内存拷贝总览<a id="内存拷贝总览"></a>
 
-  ![](./figures/system_tuning/memory_copy_overview_1.png "内存拷贝总览")
+  ![](./figures/system_tuning/memory_copy_overview_2.png "内存拷贝总览")
 
   **表 5** 内存拷贝总览字段说明<a id="内存拷贝总览字段说明"></a>
 
@@ -1108,7 +1108,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
 
   **图 7** 算子汇总页签<a id="算子汇总页签"></a>
 
-  ![](./figures/system_tuning/operator_summary_tab_1.png "算子汇总页签")
+  ![](./figures/system_tuning/operator_summary_tab_2.png "算子汇总页签")
 
   **表 6** 统计系统视图字段说明<a id="统计系统视图字段说明"></a>
 
@@ -1128,7 +1128,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
 
   **图 8** 算子详情信息展示<a id="算子详情信息展示"></a>
 
-  ![](./figures/system_tuning/operator_detail_display_1.png "算子详情信息展示")
+  ![](./figures/system_tuning/operator_detail_display_2.png "算子详情信息展示")
 
   **表 7** 算子详情字段说明<a id="算子详情字段说明"></a>
 
@@ -1155,7 +1155,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
   ftrace耗时统计（Ftrace Time Consuming）通过slice表中获取所有进程的算子数据，根据算子名runnable、running、sleeping统计算子的耗时情况，如[**图 9** ftrace耗时统计](#ftrace耗时统计)所示。
 
   **图 9** ftrace耗时统计<a id="ftrace耗时统计"></a>
-  ![](./figures/system_tuning/ftrace_time_consuming_1.png "ftrace耗时统计")
+  ![](./figures/system_tuning/ftrace_time_consuming_2.png "ftrace耗时统计")
 
   **表 8** ftrace耗时统计字段说明<a id="ftrace耗时统计字段说明"></a>  
 
@@ -1172,7 +1172,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
   ftrace中断统计（Ftrace IRQ）通过slice表中获取所有cpu的irq和softirq的数据，根据以上数据中断的扩展信息，判断中断发生进程位置，进而统计每一个cpu进程的硬中断、软中断的总耗时和次数，如[**图 9** ftrace中断统计](#ftrace中断统计)所示。
 
   **图 10** ftrace中断统计<a id="ftrace中断统计"></a>
-  ![](./figures/system_tuning/ftrace_irq_1.png "ftrace中断统计")
+  ![](./figures/system_tuning/ftrace_irq_2.png "ftrace中断统计")
 
   **表 9** ftrace中断统计字段说明<a id="ftrace中断统计字段说明"></a>  
 
@@ -1190,7 +1190,7 @@ MindStudio Insight支持算子统计信息和单个算子详情信息查看。
   ftrace上下文切换统计（Ftrace Sched）通过Slice中cpu进程中发生的上下文切换事件的次数，将部分内容落库到db中的跟踪分析（ftrace_analysis）中，并发送消息通知前端已经完成的数据解析，如[**图 11** ftrace上下文切换统计](#ftrace上下文切换统计)所示。
 
   **图 11** ftrace上下文切换统计<a id="ftrace上下文切换统计"></a>
-  ![](./figures/system_tuning/ftrace_sched_1.png "ftrace上下文切换统计")
+  ![](./figures/system_tuning/ftrace_sched_2.png "ftrace上下文切换统计")
 
   **表 10** ftrace上下文切换统计字段说明<a id="ftrace上下文切换统计字段说明"></a>  
 
