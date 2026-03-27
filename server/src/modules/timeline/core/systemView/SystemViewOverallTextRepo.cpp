@@ -321,7 +321,7 @@ bool SystemViewOverallTextRepo::QueryCommunicationOpsTimeDataByGroupName(const S
         ServerLog::Error("Failed to prepare sql for query communication ops time data for text scene.");
         return false;
     }
-    ParamsForCOTData paramsForCotData = { groupId, offset, params.startTime, params.endTime };
+    ParamsForCOTData paramsForCotData = { groupId, offset, params.startTime, params.endTime,  params.name};
     if (!TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(stmt2, paramsForCotData, deviceId,
                                                                     notOverlapData, opsDetails)) {
         ServerLog::Error("Failed to Query Communication Ops Time Data due to incorrect sql execution.");

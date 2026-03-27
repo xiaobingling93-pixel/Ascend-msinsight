@@ -425,13 +425,13 @@ bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const Sys
                          params.categoryList[1]);
         return false;
     }
-
+    std::string testSql = TraceDatabaseSqlConst::GetCommunicationOpDbSqlByGroupId(params);
     auto stmt2 = database->CreatPreparedStatement(TraceDatabaseSqlConst::GetCommunicationOpDbSqlByGroupId(params));
     if (stmt2 == nullptr) {
         ServerLog::Error("Failed to prepare sql for query communication ops time data for db scene.");
         return false;
     }
-    ParamsForCOTData paramsForCotData = { groupId, offset, params.startTime, params.endTime };
+    ParamsForCOTData paramsForCotData = { groupId, offset, params.startTime, params.endTime ,params.name};
     if (!TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(stmt2, paramsForCotData, deviceId,
                                                                     notOverlapData, opsDetails)) {
         ServerLog::Error("Failed to query data for Query Communication Ops Time Data By Group Name: ",

@@ -281,12 +281,16 @@ public:
         if (params.startTime != params.endTime) { // time range analysis
             timeCondSql += " AND op.endNs >= ? AND op.startNs <= ? ";
         }
+        std::string nameCondSql;
+        if (!params.name.empty()) {
+            nameCondSql += " AND str.value LIKE ? ";
+        }
         return "SELECT DISTINCT op.opId as id, str.value as name, op.startNs - ? as startNs, "
             "op.endNs - op.startNs as duration, op.endNs - ? as endNs "
             "FROM " + TABLE_COMMUNICATION_OP + " op JOIN " + TABLE_STRING_IDS + " str ON op.opName = str.id "
             "JOIN " + TABLE_COMMUNICATION_TASK_INFO + " cti ON op.opId = cti.opId "
             "JOIN " + TABLE_TASK + " t ON cti.globalTaskId = t.globalTaskId "
-            "WHERE t.deviceId = ? AND op.groupName = ? " + timeCondSql + " ORDER BY op.startNs ASC";
+            "WHERE t.deviceId = ? AND op.groupName = ? " + nameCondSql + timeCondSql + " ORDER BY op.startNs ASC";
     }
 
     static std::string GenerateAffinityApiDbSql(const Protocol::KernelDetailsParams &params)

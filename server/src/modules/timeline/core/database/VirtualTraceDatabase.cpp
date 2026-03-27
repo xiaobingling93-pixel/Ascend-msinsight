@@ -198,7 +198,7 @@ SystemViewOverallRes VirtualTraceDatabase::CollectCommunicationGroupMetrics(
     std::vector<std::string> groupNameSplit = StringUtil::Split(groupNameValue, " ");
     std::string normalizedGroupNameValue = groupNameSplit.size() > 1 ? groupNameSplit[0] : groupNameValue;
     auto groupInfoOpt = MetaDataCacheManager::Instance().GetParallelGroupInfo(normalizedGroupNameValue);
-    if (groupInfoOpt.has_value()) {
+    if (groupInfoOpt.has_value() && !groupInfoOpt.value().groupName.empty()) {
         group.name = groupInfoOpt.value().groupName + ":" + data.groupName;
     }
     group.totalTime = NumberUtil::DoubleReservedNDigits(data.op.uncoveredTransmitTime * NS_TO_US, TWO);
