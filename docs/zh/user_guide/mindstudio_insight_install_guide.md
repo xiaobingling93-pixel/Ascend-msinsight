@@ -28,7 +28,30 @@ MindStudio Insight支持在Windows、Linux和macOS系统上安装使用，并且
 
 为了防止软件包在传递过程或存储期间被恶意篡改，下载软件包时需下载对应软件包的.sha256文件用于完整性验证。
 
-请单击[数字签名文件](https://gitcode.host/Ascend/msinsight/releases)获取对应软件包的sha256文件，对下载的软件包进行完整性校验。如果校验失败，请不要使用该软件包，访问支持与服务在论坛求助或提交技术工单。
+请单击[数字签名文件](https://gitcode.host/Ascend/msinsight/releases)获取对应软件包的.sha256文件，对下载的软件包进行完整性校验。如果校验失败，请不要使用该软件包，访问支持与服务在论坛求助或提交技术工单。
+具体校验方法如下：
+
+1. 在本地计算软件包的sha256值
+
+    Windows系统,使用如下命令获取对应软件包的sha256值
+
+    ```powershell
+    certutil -hashfile 软件包名 SHA256
+    ```
+
+    MacOS系统,使用如下命令获取对应软件包的sha256值
+
+    ```shell
+    shasum -a 256 软件包名
+    ```
+
+    Linux系统,使用如下命令获取对应软件包的sha256值
+
+    ```bash
+    sha256sum 软件包名
+    ```
+
+2. 将获取到的值和官方提供的.sha256文件中的值（不区分大小写）进行比较，如果一致，则说明软件包没有被篡改。
 
 ## 安装MindStudio Insight
 

@@ -117,7 +117,7 @@ MindStudio Insight由华为公司的下列部门联合贡献：
 华为MindStudio全流程开发工具链团队致力于提供端到端的昇腾AI应用开发解决方案，使能开发者高效完成训练开发、推理开发和算子开发。您可以通过以下渠道更深入了解华为MindStudio团队：
 <div style="display: flex; align-items: center; gap: 10px;">
     <span>MindStudio公众号：</span>
-    <img width="100" src="./zh/user_guide/figures/readme/officialAccount.jpg" />
+    <img width="100" src="https://gitcode.com/Ascend/msinsight/blob/master/docs/zh/user_guide/figures/readme/officialAccount.jpg" />
     <span style="margin-left: 20px;">昇腾小助手：</span>
     <a href="https://gitcode.com/Ascend/msinsight/blob/master/docs/zh/user_guide/figures/readme/xiaozhushou.png" target="_blank">
         <img src="https://camo.githubusercontent.com/22bbaa8aaa1bd0d664b5374d133c565213636ae50831af284ef901724e420f8f/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5765436861742d3037433136303f7374796c653d666f722d7468652d6261646765266c6f676f3d776563686174266c6f676f436f6c6f723d7768697465" data-canonical-src="./zh/user_guide/figures/readme/xiaozhushou.png" style="max-width: 100%;">
