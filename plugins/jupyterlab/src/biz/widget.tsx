@@ -30,9 +30,6 @@ export interface MindStudioInvokeOptions {
   app: JupyterFrontEnd;
 }
 
-/**
- * A Counter Lumino Widget that wraps a CounterComponent.
- */
 export class MindStudioReactWidget extends ReactWidget {
   mindstudioManager: MindStudioManager;
   app: JupyterFrontEnd;
@@ -41,9 +38,6 @@ export class MindStudioReactWidget extends ReactWidget {
   createdModelName?: string;
   profilerServerId: string | null;
 
-  /**
-   * Constructs a new CounterWidget.
-   */
   constructor(options: MindStudioInvokeOptions) {
     super();
     this.mindstudioManager = options.mindstudioManager;
