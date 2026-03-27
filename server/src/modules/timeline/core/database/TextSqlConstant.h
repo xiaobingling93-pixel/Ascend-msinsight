@@ -249,10 +249,14 @@ public:
         if (params.startTime != params.endTime) { // time range analysis
             timeCondSql += " AND s.end_time >= ? AND s.timestamp <= ? ";
         }
+        std::string nameCondSql;
+        if (!params.name.empty()) {
+            nameCondSql += " AND s.name LIKE ? ";
+        }
         return "SELECT id, name, timestamp - ? as startNs, duration, end_time - ? as endNs FROM " + SLICE_TABLE + " s"
             " JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id"
             " JOIN " + PROCESS_TABLE + " p ON p.pid = t.pid"
-            " WHERE (p.pid & 0x1f) = ? AND s.track_id = ? " + timeCondSql + " ORDER by s.timestamp ASC";
+            " WHERE (p.pid & 0x1f) = ? AND s.track_id = ? " + nameCondSql + timeCondSql + " ORDER by s.timestamp ASC";
     }
 
     static std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)

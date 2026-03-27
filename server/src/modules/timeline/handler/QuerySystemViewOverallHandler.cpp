@@ -53,6 +53,7 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     // query cache, while not time range analysis
     std::vector<SystemViewOverallRes> overallDetails =
         SystemViewOverallCacheManager::Instance().GetOverallData(request.fileId);
+    // startTime = endTime代表未开启按时间范围分析，不等则代表开启按时间范围分析
     if (!overallDetails.empty() && request.params.startTime == request.params.endTime) {
         response.details = overallDetails;
     } else if (CalOverallData(request, response, error, database)) {

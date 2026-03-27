@@ -30,6 +30,7 @@
 #include "ServerLog.h"
 #include "NpuInfoRepo.h"
 #include "DataBaseManager.h"
+#include "StringUtil.h"
 
 namespace Dic::Module::Timeline {
 using namespace Protocol;
@@ -75,6 +76,7 @@ struct ParamsForCOTData {
     uint64_t offset;
     uint64_t startTime;
     uint64_t endTime;
+    std::string name;
 };
 
 struct DbEventViewSqlParams {
@@ -240,7 +242,10 @@ static uint64_t QueryCommunicationGroupIdByName(std::unique_ptr<SqlitePreparedSt
     while (resultSet->Next()) {
         std::string tmpName = resultSet->GetString("groupName");
         uint64_t groupId = resultSet->GetUint64("groupId");
-        if (tmpName == name) {
+        auto splitResult = StringUtil::Split(tmpName, ":");
+        // 如果包含冒号(:)，使用冒号后的部分进行比较；否则使用整个字符串
+        std::string targetName = splitResult.size() > 1 ? splitResult[1] : splitResult[0];
+        if (targetName == name) {
             return groupId;
         }
     }
@@ -252,13 +257,16 @@ static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePrepared
     ParamsForCOTData paramsForCotData, T &deviceId, const std::vector<Protocol::ThreadTraces> &notOverlapData,
     std::vector<SameOperatorsDetails> &details)
 {
-    std::unique_ptr<SqliteResultSet> resultSet;
-    if (paramsForCotData.startTime != paramsForCotData.endTime) { // time range analysis
-        resultSet = stmt->ExecuteQuery(paramsForCotData.offset, paramsForCotData.offset, deviceId, paramsForCotData.groupId,
-            paramsForCotData.startTime + paramsForCotData.offset, paramsForCotData.endTime + paramsForCotData.offset);
-    } else {
-        resultSet = stmt->ExecuteQuery(paramsForCotData.offset, paramsForCotData.offset, deviceId, paramsForCotData.groupId);
+    stmt->BindParams(paramsForCotData.offset, paramsForCotData.offset, deviceId, paramsForCotData.groupId);
+    if (!paramsForCotData.name.empty()) {
+        std::string pattern = "%" + paramsForCotData.name + "%";
+        stmt->BindParams(pattern);
     }
+    if (paramsForCotData.startTime != paramsForCotData.endTime) { // time range analysis
+        stmt->BindParams(paramsForCotData.startTime + paramsForCotData.offset,
+            paramsForCotData.endTime + paramsForCotData.offset);
+    }
+    auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for query communication ops time data.",
                          stmt->GetErrorMessage());
