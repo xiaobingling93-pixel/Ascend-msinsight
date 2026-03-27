@@ -40,15 +40,19 @@ const CHEVRON_WIDTH = 12;
 
 const fontMetricsCache = new Map();
 
-const getYOffset = (ctx: CanvasRenderingContext2D, text: string): number => {
+const getYOffset = (ctx: CanvasRenderingContext2D): number => {
     const font = ctx.font;
     if (fontMetricsCache.has(font)) {
         return fontMetricsCache.get(font);
     }
 
-    const m = ctx.measureText(text);
-    const offset =
-        (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    // 使用代表性的大写字母进行精准度量，以获取在当前操作系统/字体下的真实视觉高度中心
+    const m = ctx.measureText('M');
+    // 注意：这里我们故意只用 actualBoundingBox，因为它反映的是像素渲染级的真实轮廓
+    // 不用 fontBoundingBox，因为 fontBoundingBox 在 Windows 的 Segoe UI 下通常偏高
+    const ascent = m.actualBoundingBoxAscent;
+    const descent = m.actualBoundingBoxDescent;
+    const offset = (ascent - descent) / 2;
 
     fontMetricsCache.set(font, offset);
     return offset;
@@ -194,11 +198,11 @@ const draw = ({ ctx, datas, xScale, yScale, theme, right, isSimulation, textConf
     if (height > UnitHeight.STANDARD - 1) {
         textToDraw.forEach(data => {
             const text = getMaxText(data.type, data.width - DFT_PADDING, ctx, overflow);
-            const yOffset = getYOffset(ctx, text);
+            const yOffset = getYOffset(ctx);
             const x = xScale(data.startTime) + data.width / 2;
             const y = yScale(data.depth) + height / 2 + yOffset;
 
-            ctx.fillText(text, x, Math.round(y) + 0.5);
+            ctx.fillText(text, x, y);
         });
     }
 };
