@@ -425,7 +425,6 @@ bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const Sys
                          params.categoryList[1]);
         return false;
     }
-    std::string testSql = TraceDatabaseSqlConst::GetCommunicationOpDbSqlByGroupId(params);
     auto stmt2 = database->CreatPreparedStatement(TraceDatabaseSqlConst::GetCommunicationOpDbSqlByGroupId(params));
     if (stmt2 == nullptr) {
         ServerLog::Error("Failed to prepare sql for query communication ops time data for db scene.");

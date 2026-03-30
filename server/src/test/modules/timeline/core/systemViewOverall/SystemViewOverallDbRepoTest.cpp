@@ -58,7 +58,7 @@ public:
         size_t index = currPath.rfind(subStr);
         currPath = currPath.substr(0, index - 1);
         std::string dbPath3 = currPath +
-            R"(/test/data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
+            R"(/test/st/level2/rank_0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath3);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath3);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath3);
@@ -84,9 +84,9 @@ public:
         ImportActionRequest request;
         ImportActionResponse response;
         factory->Parser(projectExplorerInfoList, request, response);
-        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", dbPath3, "ubuntu3538958389648580163_0");
-        Timeline::DataBaseManager::Instance().SetDbPathMapping("0", dbPath3, "ubuntu3538958389648580163_0");
-        while (ParserStatusManager::Instance().GetParserStatus("ubuntu3538958389648580163_0 0") !=
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", dbPath3, "localhost.localdomain2152938157304401006_0");
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("0", dbPath3, "localhost.localdomain2152938157304401006_0");
+        while (ParserStatusManager::Instance().GetParserStatus("localhost.localdomain2152938157304401006_0 0") !=
                ParserStatus::FINISH_ALL) {
         }
         auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
@@ -121,7 +121,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryOverlapAnalysisDataForOverallMetricTest
     ASSERT_EQ(overlapInfos.size(), 3);  // 3
     const double toleranceThreshold = 0.01;
     const std::vector<std::string> EXPECT_OVERLAP_NAME = {"Communication(Not Overlapped)", "Computing", "Free"};
-    const std::vector<double> EXPECT_OVERLAP_TINE = {98071.95, 8903.43, 30943.92};
+    const std::vector<double> EXPECT_OVERLAP_TINE = {420174.26, 231290.10, 158558.0};
     for (size_t index = 0; index < EXPECT_OVERLAP_TINE.size(); index++) {
         ASSERT_FALSE(overlapInfos[index].categoryList.empty());
         EXPECT_EQ(overlapInfos[index].categoryList[0], EXPECT_OVERLAP_NAME[index]);
@@ -157,19 +157,63 @@ TEST_F(SystemViewOverallDbRepoTest, QueryDataForComputingOverallMetricTestWithPm
     SystemViewOverallHelper computeHelper;
     bool result = repoPtr->QueryDataForComputingOverallMetric(requestParams, computeHelper, database);
     EXPECT_EQ(result, true);
-    EXPECT_EQ(computeHelper.cpuCubeOps.size(), 24);  // 24
-    EXPECT_EQ(computeHelper.kernelEvents.size(), 185);  // 185
-    EXPECT_EQ(computeHelper.bwdTrackId, 13471134862279280); // globalTid in PYTORCH_API = 13471134862279280
+    EXPECT_EQ(computeHelper.cpuCubeOps.size(), 392);  // 392
+    EXPECT_EQ(computeHelper.kernelEvents.size(), 2448);  // 2448
+    EXPECT_EQ(computeHelper.bwdTrackId, 14735581824444285); // globalTid in PYTORCH_API = 14735581824444285
     computeHelper.CategorizeComputingEvents();
     computeHelper.AggregateComputingOverallMetrics(details);
     EXPECT_EQ(details.size(), 4); // 4
-    EXPECT_EQ(details[0].children.size(), 5); // 5
-    // more details
-    std::vector<std::string> tempList = {"Conv"};
+    EXPECT_EQ(details[0].children.size(), 4); // 4
+    EXPECT_DOUBLE_EQ(details[0].children[0].totalTime, 87847.32); // 87847.32
+    EXPECT_EQ(details[0].children[0].name, "Flash Attention");
+    EXPECT_DOUBLE_EQ(details[0].children[1].totalTime, 58022.86); // 58022.86
+    EXPECT_EQ(details[0].children[1].name, "Matmul");
+    EXPECT_DOUBLE_EQ(details[0].children[2].totalTime, 84118.78); // 84118.78
+    EXPECT_EQ(details[0].children[2].name, "Other Vector");
+    EXPECT_DOUBLE_EQ(details[0].children[3].totalTime, 1301.14); // 1301.14
+    EXPECT_EQ(details[0].children[3].name, "SDMA");
+}
+
+// System View Overall: Computing拆解Flash Attention算子详情、按name过滤功能
+TEST_F(SystemViewOverallDbRepoTest, QueryComputingOverallMetricWithNameFilterTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
+    auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
+        DataBaseManager::Instance().GetDataType(database->GetDbPath()));
+    if (repoPtr == nullptr) {
+        // GetSystemViewOverallRepo中已有日志报错
+        return;
+    }
+    Dic::Protocol::SystemViewOverallReqParam requestParams;
+    std::vector<SystemViewOverallRes> details;
+    Protocol::SystemViewOverallRes tmpRes = { .totalTime = 8903.43, .ratio = 6.73, // Computing Time = 8903.43, 6.73%
+    .nums = 0, .avg = 0, .max = 0, .min = UINT32_MAX, .name = COMPUTING_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
+    tmpRes = { .totalTime = 98071.95, .ratio = 74.17, // Comm(Not Overlapped) = 98071.95, 74.17%
+        .nums = 0, .avg = 0, .max = 0, .min = 0, .name = COMMUNICATION_NOT_OVERLAP_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
+    tmpRes = { .totalTime = 25258.14, .ratio = 19.1, // Free = 25258.14, 19.1%
+        .nums = 0, .avg = 0, .max = 0, .min = 0, .name = FREE_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
+    tmpRes = { .totalTime = 132233.52, .ratio = 100, // E2E = 132233.52, 100%
+        .nums = 0, .avg = 0, .max = 0, .min = 0, .name = E2E_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
+    requestParams.rankId = "0";
+    SystemViewOverallHelper computeHelper;
+    bool result = repoPtr->QueryDataForComputingOverallMetric(requestParams, computeHelper, database);
+    computeHelper.CategorizeComputingEvents();
+    computeHelper.AggregateComputingOverallMetrics(details);
+
+    std::vector<std::string> tempList = {"Flash Attention"};
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::vector<SameOperatorsDetails> filteredEvents =
         computeHelper.FilterComputingEventsByCategory(tempList, minTimestamp, "");
-    EXPECT_EQ(filteredEvents.size(), 66); // 66个Conv类算子
+    EXPECT_EQ(filteredEvents.size(), 56); // 56个Flash Attention类算子
+    // 按照name过滤
+    std::vector<std::string> tempList2 = {"Other Vector"};
+    std::vector<SameOperatorsDetails> filteredEvents2 =
+    computeHelper.FilterComputingEventsByCategory(tempList2, minTimestamp, "add");
+    EXPECT_EQ(filteredEvents2.size(), 457); // 457个name包含add的Other Vector类算子
 }
 
 TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhenSuccess)
@@ -188,13 +232,13 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhe
     std::vector<Protocol::SystemViewOverallRes> responseBody;
     repoPtr->QueryCommunicationOverlapOverallInfos(requestParams, computeHelper, responseBody, database);
     EXPECT_EQ(responseBody.size(), 1);
-    EXPECT_DOUBLE_EQ(responseBody[0].totalTime, 98071.947); // 98071.947
-    EXPECT_DOUBLE_EQ(responseBody[0].ratio, 64.57); // 64.57
-    EXPECT_EQ(responseBody[0].children.size(), 1); // Group 0 Communication
-    EXPECT_DOUBLE_EQ(responseBody[0].children[0].totalTime, 98071.95); // 98071.95
+    EXPECT_DOUBLE_EQ(responseBody[0].totalTime, 420174.26); // 420174.26
+    EXPECT_DOUBLE_EQ(responseBody[0].ratio, 276.63); // 276.63
+    EXPECT_EQ(responseBody[0].children.size(), 5); // 5 Communication Groups
+    EXPECT_DOUBLE_EQ(responseBody[0].children[0].totalTime, 2232.44); // 2232.44
     EXPECT_EQ(responseBody[0].children[0].children.size(), 2); // 2 for "Wait Time" and "Transmit Time"
-    EXPECT_DOUBLE_EQ(responseBody[0].children[0].children[0].totalTime, 0); // 0 for Wait Time
-    EXPECT_DOUBLE_EQ(responseBody[0].children[0].children[1].totalTime, 98071.95); // 98071.95 for Transmit Time
+    EXPECT_DOUBLE_EQ(responseBody[0].children[0].children[0].totalTime, 0.04); // 0.04 for Wait Time
+    EXPECT_DOUBLE_EQ(responseBody[0].children[0].children[1].totalTime, 2232.4); // 2232.4 for Transmit Time
 }
 
 TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTestWhenSuccess)
@@ -223,14 +267,21 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTest
     ParamsForOAData paramsForOaData = { sql, type, minTimestamp };
     bool result = database->QueryOverlapAnalysisData(paramsForOaData, deviceIdInt, notOverlapData, totalTime);
     EXPECT_TRUE(result);
-    requestParams.categoryList = {"", "Group 0 Communication"};
+    requestParams.categoryList = {"", "default_group:Group group_name_0 Communication"};
     repoPtr->QueryCommunicationOpsTimeDataByGroupName(requestParams, minTimestamp, notOverlapData,
                                                       response.body.sameOperatorsDetails, database);
     EXPECT_EQ(response.body.sameOperatorsDetails.size(), 4); // 4
     int index = 0;
-    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_0_1");
-    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_1_1");
-    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_2_1");
-    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__210_3_1");
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__612_4_1");
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__612_5_1");
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allReduce__612_6_1");
+    EXPECT_EQ(response.body.sameOperatorsDetails[index++].name, "hcom_allGather__612_7_1");
+    // 按name过滤功能
+    requestParams.name = "allGather";
+    UnitThreadsOperatorsResponse response2;
+    repoPtr->QueryCommunicationOpsTimeDataByGroupName(requestParams, minTimestamp, notOverlapData,
+                                                      response2.body.sameOperatorsDetails, database);
+    EXPECT_EQ(response2.body.sameOperatorsDetails.size(), 1); // 1
+    EXPECT_EQ(response2.body.sameOperatorsDetails[0].name, "hcom_allGather__612_7_1");
 }
 }

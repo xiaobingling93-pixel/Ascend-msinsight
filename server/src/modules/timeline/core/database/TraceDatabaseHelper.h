@@ -242,10 +242,10 @@ static uint64_t QueryCommunicationGroupIdByName(std::unique_ptr<SqlitePreparedSt
     while (resultSet->Next()) {
         std::string tmpName = resultSet->GetString("groupName");
         uint64_t groupId = resultSet->GetUint64("groupId");
-        auto splitResult = StringUtil::Split(tmpName, ":");
+        auto splitResult = StringUtil::Split(name, ":");
         // 如果包含冒号(:)，使用冒号后的部分进行比较；否则使用整个字符串
         std::string targetName = splitResult.size() > 1 ? splitResult[1] : splitResult[0];
-        if (targetName == name) {
+        if (targetName == tmpName) {
             return groupId;
         }
     }
