@@ -88,6 +88,9 @@
 | ------- | --------------- | ------------- | ------------- |
 | 26.0.0-alpha.1 | 2026/02/04  | tag_MindStudio_26.0.0-alpha.1 | 兼容昇腾CANN 8.5.0及以前版本。请参考[CANN安装指南](https://www.hiascend.com/cann)获取CANN安装包。 |
 
+
+**[查看完整版本发布说明](./docs/zh/release_notes.md)**
+
 ## 🛠️ 安装
 
 MindStudio Insight工具支持在Windows、Linux，以及macOS系统中安装使用，并且支持通过插件方式安装，具体安装操作可参见[MindStudio Insight安装指南](./docs/zh/user_guide/mindstudio_insight_install_guide.md)。
