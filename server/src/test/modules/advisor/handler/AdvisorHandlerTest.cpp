@@ -37,8 +37,8 @@ class AdvisorHandlerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string dbPath = TestSuit::GetRootTestPath() +
-                R"(data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
+        std::string dbPath = FileUtil::SplicePath(TestSuit::GetRootTestPath(),
+                "data", "pytorch", "db", "level1", "rank0_ascend_pt", "ASCEND_PROFILER_OUTPUT", "ascend_pytorch_profiler_0.db");
         Dic::Server::WsChannel *ws;
         std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));

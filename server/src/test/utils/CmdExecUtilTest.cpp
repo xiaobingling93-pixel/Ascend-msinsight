@@ -28,6 +28,8 @@ class CmdExecUtilTest : public testing::Test {
 
 TEST_F(CmdExecUtilTest, CommandLs)
 {
+#ifdef _WIN32
+#else
     CmdUtil executor = CmdUtil("/bin/date");
     EXPECT_EQ(executor.Valid(), true);
     executor.Args("+%Y");
@@ -43,6 +45,7 @@ TEST_F(CmdExecUtilTest, CommandLs)
     constexpr int base = 10;
     int year = local->tm_year + yearStart;  // tm_year存储的是从1900年开始的年份
     EXPECT_EQ(std::stoi(output, nullptr, base), year);
+#endif
 }
 
 TEST_F(CmdExecUtilTest, InvalidCmd)

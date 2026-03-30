@@ -30,22 +30,18 @@ using namespace Dic::Server;
 bool QueryApiInstructionsDynamicHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceApiInstrDynamicRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SourceApiInstrDynamicResponse> responsePtr = std::make_unique<SourceApiInstrDynamicResponse>();
     SourceApiInstrDynamicResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     if (!request.params.coreName.empty()) { // 如果请求的coreName为空字符串，那么默认查找第一组
         if (auto [isValid, errMsg] = request.params.Valid(); !isValid) {
             ServerLog::Error("Parameter of command ", request.command, "is invalid, error:", errMsg);
-            SetResponseResult(response, false, errMsg, REQUEST_PARAMS_ERROR);
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, errMsg);
             return false;
         }
     }
     SetResponseBody(response, request);
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

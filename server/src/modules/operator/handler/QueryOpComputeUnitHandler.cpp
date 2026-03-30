@@ -26,45 +26,40 @@ namespace Dic::Module::Operator {
     using namespace Dic::Server;
 
     bool QueryOpComputeUnitHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
+    OperatorComputeUnitInfoRequest &request = dynamic_cast<OperatorComputeUnitInfoRequest &>(*requestPtr);
+    auto responsePtr = std::make_unique<OperatorComputeUnitInfoResponse>();
+    OperatorComputeUnitInfoResponse &response = *responsePtr;
+    SetBaseResponse(request, response);
+    if (!CheckRequestParam(request.params)) {
+        ServerLog::Warn("[Operator]Failed to check request parameter in Query Compute Unit Info.");
+        SendResponse(std::move(responsePtr), false);
+        return false;
+    }
+    std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+    if (!database)
     {
-        OperatorComputeUnitInfoRequest &request = dynamic_cast<OperatorComputeUnitInfoRequest &>(*requestPtr);
-        WsSession &session = *WsSessionManager::Instance().GetSession();
-        auto responsePtr = std::make_unique<OperatorComputeUnitInfoResponse>();
-        OperatorComputeUnitInfoResponse &response = *responsePtr;
-        SetBaseResponse(request, response);
-        if (!CheckRequestParam(request.params)) {
-            ServerLog::Warn("[Operator]Failed to check request parameter in Query Compute Unit Info.");
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
-            return false;
-        }
-        std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
-        if (!database)
-        {
-            ServerLog::Warn("[Operator]Not exist operator database. Fail to get op compute unit info.");
-            return true;
-        }
-        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
-        if (deviceId.empty()) {
-            ServerLog::Error("[Operator]Failed to query Compute Unit Info by empty deviceId.");
-            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
-            return false;
-        }
-        request.params.deviceId = deviceId;
-        if (!database->QueryOperatorDurationInfo(request.params, QueryType::COMPUTE_UNIT, response.datas)) {
-            ServerLog::Error("[Operator]Failed to query Compute Unit Info by rankId.");
-            SetOperatorError(ErrorCode::QUERY_DURATION_FAILED);
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
-            return false;
-        }
-        SetResponseResult(response, true);
-        session.OnResponse(std::move(responsePtr));
+        ServerLog::Warn("[Operator]Not exist operator database. Fail to get op compute unit info.");
         return true;
     }
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
+    if (deviceId.empty()) {
+        ServerLog::Error("[Operator]Failed to query Compute Unit Info by empty deviceId.");
+        SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
+        return false;
+    }
+    request.params.deviceId = deviceId;
+    if (!database->QueryOperatorDurationInfo(request.params, QueryType::COMPUTE_UNIT, response.datas)) {
+        ServerLog::Error("[Operator]Failed to query Compute Unit Info by rankId.");
+        SetOperatorError(ErrorCode::QUERY_DURATION_FAILED);
+        SendResponse(std::move(responsePtr), false);
+        return false;
+    }
+    SendResponse(std::move(responsePtr), true);
+    return true;
+}
 
     bool QueryOpComputeUnitHandler::CheckRequestParam(OperatorDurationReqParams params)
     {

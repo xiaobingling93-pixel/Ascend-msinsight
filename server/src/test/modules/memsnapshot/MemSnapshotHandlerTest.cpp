@@ -36,11 +36,7 @@ class MemSnapshotHandlerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        Dic::Server::WsChannel *ws;
-        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
-        Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
-
-        testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/snapshot/snapshot_with_multi_devices.pkl.db)";
+        testDbPath = TestSuit::GetTestDataFile("snapshot", "snapshot_with_multi_devices.pkl.db");
         auto snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(testDbPath);
         ASSERT_TRUE(snapshotDb != nullptr);
         ASSERT_TRUE(snapshotDb->OpenDbReadOnly(testDbPath));
@@ -48,12 +44,6 @@ public:
 
     static void TearDownTestSuite()
     {
-        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(Dic::Server::WsSession::Status::CLOSED);
-            session->WaitForExit();
-            Dic::Server::WsSessionManager::Instance().RemoveSession();
-        }
         DataBaseManager::Instance().Clear(DatabaseType::MEM_SNAPSHOT);
     }
 

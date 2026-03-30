@@ -17,10 +17,18 @@
  */
 #include <gtest/gtest.h>
 #include "FileUtil.h"
+#include "ParserStatusManager.h"
 #include "ServitizationOpenApi.h"
 #include "ServitizationContext.h"
 using namespace Dic::Module::IE;
-class ServitizationOpenApiTest : public ::testing::Test {};
+class ServitizationOpenApiTest : public ::testing::Test
+{
+public:
+    void SetUp() override
+    {
+        Dic::Module::Timeline::ParserStatusManager::Instance().NotifyStartParse();
+    }
+};
 
 TEST_F(ServitizationOpenApiTest, InitDataBaseTest)
 {

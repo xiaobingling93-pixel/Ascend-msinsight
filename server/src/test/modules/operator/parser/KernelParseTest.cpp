@@ -20,14 +20,16 @@
 #include "KernelParse.h"
 #include "DataBaseManager.h"
 #include "TestSuit.h"
+#include "FileUtil.h"
+#include "GlobalProtocolResponse.h"
 using namespace Dic::Module::Summary;
 using namespace Dic::Module::Timeline;
 
 static std::vector<std::string> tmpFiles = {
-    R"(/../../../src/test/test_data/msprof/normal/op_summary_20230919172304.csv)",
-    R"(/../../../src/test/test_data/msprof/normal/mindstudio_profiler_output/op_summary_20230919172304.csv)",
-    R"(/../../../src/test/test_data/msprof/slice/op_summary_slice_3_20230919172304.csv)",
-    R"(/../../../src/test/test_data/msprof/slice/mindstudio_profiler_output/memory_record_slic_2_20230919172305.csv)"
+    FileUtil::SplicePath(TestSuit::GetSrcTestPath(), "msprof", "normal", "op_summary_20230919172304.csv"),
+    FileUtil::SplicePath(TestSuit::GetSrcTestPath(), "msprof", "normal", "mindstudio_profiler_output", "op_summary_20230919172304.csv"),
+    FileUtil::SplicePath(TestSuit::GetSrcTestPath(), "msprof", "slice", "op_summary_slice_3_20230919172304.csv"),
+    FileUtil::SplicePath(TestSuit::GetSrcTestPath(), "msprof", "slice", "mindstudio_profiler_output", "memory_record_slic_2_20230919172305.csv")
 };
 class KernelParseTest : public KernelParse, public ::testing::Test {
 public:
@@ -35,21 +37,21 @@ public:
     {
         std::ofstream outfile;
         for (const auto& item : tmpFiles) {
-            outfile.open(Dic::FileUtil::GetCurrPath() + item, std::ios::out);
+            outfile.open(Dic::FileUtil::SplicePath(Dic::FileUtil::GetCurrPath(), item), std::ios::out);
             outfile.close();
         }
     }
     static void TearDownTestSuite()
     {
         for (const auto& item : tmpFiles) {
-            std::remove((Dic::FileUtil::GetCurrPath() + item).c_str());
+            std::remove(Dic::FileUtil::SplicePath(Dic::FileUtil::GetCurrPath(), item).c_str());
         }
     }
 
 protected:
     void SetUp() override
     {
-        testDataPath = TestSuit::GetSrcTestPath() + R"(test_data/)";
+        testDataPath = TestSuit::GetTestDataFile();
     }
 
     void TearDown() override
@@ -98,29 +100,29 @@ protected:
 
 TEST_F(KernelParseTest, GetPyTorchKernelFilesSuccess)
 {
-    std::vector<std::string> paths = {testDataPath + R"(test_rank_0)"};
+    std::vector<std::string> paths = {Dic::FileUtil::SplicePath(testDataPath, "test_rank_0")};
     auto result = KernelParse::GetKernelFiles(paths);
     EXPECT_EQ(result.size(), 1);
-    EXPECT_EQ(result.at(0), paths[0] + R"(/ASCEND_PROFILER_OUTPUT/kernel_details.csv)");
+    EXPECT_EQ(result.at(0), Dic::FileUtil::SplicePath(paths[0], "ASCEND_PROFILER_OUTPUT", "kernel_details.csv"));
 }
 
 TEST_F(KernelParseTest, GetMsProfKernelFilesSuccess)
 {
-    std::vector<std::string> paths = {testDataPath + R"(msprof/normal)"};
+    std::vector<std::string> paths = {Dic::FileUtil::SplicePath(testDataPath, "msprof", "normal")};
     auto result = KernelParse::GetKernelFiles(paths);
     EXPECT_EQ(result.size(), 1);
-    EXPECT_EQ(result.at(0), paths[0] + R"(/mindstudio_profiler_output/op_summary_20230919172305.csv)");
+    EXPECT_EQ(result.at(0), Dic::FileUtil::SplicePath(paths[0], "mindstudio_profiler_output", "op_summary_20230919172305.csv"));
 }
 
 TEST_F(KernelParseTest, GetMsProfSliceKernelFilesSuccess)
 {
-    std::vector<std::string> paths = {testDataPath + R"(msprof/slice)"};
+    std::vector<std::string> paths = {Dic::FileUtil::SplicePath(testDataPath, "msprof", "slice")};
     auto result = KernelParse::GetKernelFiles(paths);
     EXPECT_EQ(result.size(), 2); // 1
     EXPECT_EQ(result.at(0),
-              paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_1_20230919172305.csv)");
+              Dic::FileUtil::SplicePath(paths[0], "mindstudio_profiler_output", "op_summary_slice_1_20230919172305.csv"));
     EXPECT_EQ(result.at(1),
-              paths[0] + R"(/mindstudio_profiler_output/op_summary_slice_0_20230919172304.csv)");
+              Dic::FileUtil::SplicePath(paths[0], "mindstudio_profiler_output", "op_summary_slice_0_20230919172304.csv"));
 }
 
 TEST_F(KernelParseTest, CheckHeaderFieldAndFilterParseFuncFail)

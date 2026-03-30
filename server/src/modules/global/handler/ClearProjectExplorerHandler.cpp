@@ -30,7 +30,6 @@ using namespace Global;
 bool ClearProjectExplorerHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoClearRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ProjectExplorerInfoClearResponse> responsePtr =
             std::make_unique<ProjectExplorerInfoClearResponse>();
     ProjectExplorerInfoClearResponse &response = *responsePtr;
@@ -45,8 +44,7 @@ bool ClearProjectExplorerHandler::HandleRequest(std::unique_ptr<Request> request
     }
     // 清空db
     bool res = ProjectExplorerManager::Instance().ClearProjectExplorer(projectNameList);
-    SetResponseResult(response, res);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), res);
     return res;
 }
 } // end of namespace Module

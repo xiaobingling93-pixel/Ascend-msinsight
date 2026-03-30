@@ -29,7 +29,6 @@ using namespace Dic::Server;
 bool QueryOperatorDispatchHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<OperatorDispatchRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorDispatchResponse> responsePtr = std::make_unique<OperatorDispatchResponse>();
     OperatorDispatchResponse &response = *responsePtr;
     SetBaseResponse(request, response);
@@ -40,17 +39,15 @@ bool QueryOperatorDispatchHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     if (!std::empty(error)) {
         ServerLog::Error(error);
         SetAdvisorError(ErrorCode::PARAMS_ERROR);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!OperatorDispatchAdvisor::Process(request.params, response.body)) {
         ServerLog::Error("Failed to Query Operator Dispatch Advice for rank: ", request.params.rankId);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Dic::Module::Advisor

@@ -69,11 +69,6 @@ public:
         // init parser
         SourceFileParser::Instance().SetFilePath(BIN_FILE_PATH);
         SourceFileParser::Instance().Parse({BIN_FILE_PATH}, BIN_FILE_PATH, BIN_FILE_PATH, "");
-
-        // init ws session
-        WsChannel *ws;
-        std::unique_ptr<WsSessionImpl> session = std::make_unique<WsSessionImpl>(ws);
-        WsSessionManager::Instance().AddSession(std::move(session));
     }
 
     static void TearDownTestSuite()
@@ -83,14 +78,6 @@ public:
 
         // reset parser
         SourceFileParser::Instance().Reset();
-
-        // remove ws session
-        auto session = WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(WsSession::Status::CLOSED);
-            session->WaitForExit();
-            WsSessionManager::Instance().RemoveSession();
-        }
     }
 };
 

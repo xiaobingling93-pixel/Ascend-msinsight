@@ -37,8 +37,8 @@ protected:
 
     void SetUp() override
     {
-        filePath = TestSuit::GetSrcTestPath() + R"(test_data/cluster_analysis_output)";
-        baselineFilePath = TestSuit::GetSrcTestPath() + R"(test_data/baseline_cluster/cluster_analysis_output)";
+        filePath = TestSuit::GetTestDataFile("cluster_analysis_output");
+        baselineFilePath = TestSuit::GetTestDataFile("baseline_cluster", "cluster_analysis_output");
         dbPath = filePath + FILE_SEPARATOR + "cluster.db";
     }
 

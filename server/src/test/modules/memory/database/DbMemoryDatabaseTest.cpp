@@ -37,9 +37,7 @@ class DbMemoryDatabaseTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string srcTestPath = TestSuit::GetSrcTestPath();
-        std::string dbRelativePath = R"(test_data/full_db/ascend_pytorch_profiler.db)";
-        std::string dbPath = StringUtil::StrJoin(srcTestPath, dbRelativePath);
+        std::string dbPath = TestSuit::GetTestDataFile("full_db", "ascend_pytorch_profiler.db");
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath);
         auto memoryDatabase =

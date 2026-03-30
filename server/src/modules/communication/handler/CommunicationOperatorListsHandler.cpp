@@ -30,7 +30,6 @@ using namespace Dic::Server;
 bool CommunicationOperatorListsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto& request = dynamic_cast<DurationListRequest&>(*requestPtr);
-    WsSession& session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorListsResponse> responsePtr = std::make_unique<OperatorListsResponse>();
     OperatorListsResponse& response = *responsePtr;
     SetBaseResponse(request, response);
@@ -42,8 +41,7 @@ bool CommunicationOperatorListsHandler::HandleRequest(std::unique_ptr<Protocol::
         return false;
     }
     ClusterService::QueryOperatorList(request.params, response.body);
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 }  // namespace Communication

@@ -42,7 +42,6 @@ std::unordered_map<std::string, long long> FILE_MAX_SIZE = {
 bool Dic::Module::CheckProjectValidHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectCheckValidRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ProjectCheckValidResponse> responsePtr =
             std::make_unique<ProjectCheckValidResponse>();
     ProjectCheckValidResponse &response = *responsePtr;
@@ -51,8 +50,7 @@ bool Dic::Module::CheckProjectValidHandler::HandleRequest(std::unique_ptr<Reques
     if (!CheckRequestParamsValid(request.params, error)) {
         response.body.result = static_cast<int>(error);
     }
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

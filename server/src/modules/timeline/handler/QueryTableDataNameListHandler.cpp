@@ -24,7 +24,6 @@ bool QueryTableDataNameListHandler::HandleRequest(std::unique_ptr<Protocol::Requ
 {
     auto &request = dynamic_cast<TableDataNameListRequest &>(*requestPtr);
     std::unique_ptr<TableDataNameListResponse> responsePtr = std::make_unique<TableDataNameListResponse>();
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     TableDataNameListResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
@@ -48,8 +47,7 @@ bool QueryTableDataNameListHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     for (const auto &item: nameList) {
         response.body.layers.emplace_back(item.first, translate[item.first]);
     }
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 }

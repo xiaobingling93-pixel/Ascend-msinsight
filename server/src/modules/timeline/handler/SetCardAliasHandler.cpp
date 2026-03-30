@@ -33,7 +33,6 @@ bool SetCardAliasHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     std::string errMsg;
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     if (!request.params.CheckParams(request.params.cardAlias, errMsg)) {
         SetTimelineError(ErrorCode::PARAMS_ERROR);
         SendResponse(std::move(responsePtr), false);
@@ -51,8 +50,7 @@ bool SetCardAliasHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         SendResponse(std::move(responsePtr), false);
         return false;
     }
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

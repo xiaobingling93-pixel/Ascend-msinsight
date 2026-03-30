@@ -37,7 +37,7 @@ public:
     static void SetUpTestSuite()
     {
         // 准备测试数据
-        testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/snapshot/snapshot_with_multi_devices.pkl.db)";
+        testDbPath = TestSuit::GetTestDataFile("snapshot", "snapshot_with_multi_devices.pkl.db");
 
         // 获取数据库实例
         snapshotDb = DataBaseManager::Instance().GetMemSnapshotDatabase(testDbPath);

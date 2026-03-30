@@ -35,7 +35,6 @@ bool GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     MatrixGroupResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
@@ -44,7 +43,7 @@ bool GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         return false;
     }
     ClusterService::QueryGroupInfo(request, response);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Communication

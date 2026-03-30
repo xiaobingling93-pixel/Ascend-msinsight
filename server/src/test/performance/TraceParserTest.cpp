@@ -39,9 +39,9 @@ TEST_F(PerformanceTest, testTraceParser1P2GBTime)
     auto start = std::chrono::high_resolution_clock::now();
     DataBaseManager::Instance().SetDataType(DataType::TEXT, "");
     DataBaseManager::Instance().CreateTraceConnectionPool("0",
-        std::string(test1P2GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
+        FileUtil::SplicePath(test1P2GBRootPath, "ASCEND_PROFILER_OUTPUT", "mindstudio_insight_data.db"));
     JsonFileParserManager::GetTraceFileParser().Parse(
-        {std::string(test1P2GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"},
+        {FileUtil::SplicePath(test1P2GBRootPath, "ASCEND_PROFILER_OUTPUT", "trace_view.json")},
         "0", "", "");
     while (true) {
         ParserStatus status = ParserStatusManager::Instance().GetParserStatus("0");
@@ -66,9 +66,9 @@ TEST_F(PerformanceTest, testTraceParser1P5GBTime)
     auto start = std::chrono::high_resolution_clock::now();
     DataBaseManager::Instance().SetDataType(DataType::TEXT, "");
     DataBaseManager::Instance().CreateTraceConnectionPool("0",
-        std::string(test1P5GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
+        FileUtil::SplicePath(test1P5GBRootPath, "ASCEND_PROFILER_OUTPUT", "mindstudio_insight_data.db"));
     JsonFileParserManager::GetTraceFileParser().Parse(
-        {std::string(test1P5GBRootPath) + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"},
+        {FileUtil::SplicePath(test1P5GBRootPath, "ASCEND_PROFILER_OUTPUT", "trace_view.json")},
         "0", "", "");
     while (true) {
         ParserStatus status = ParserStatusManager::Instance().GetParserStatus("0");

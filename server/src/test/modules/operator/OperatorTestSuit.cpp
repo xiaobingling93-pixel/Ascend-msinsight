@@ -176,7 +176,6 @@ TEST_F(TestSuit, QueryBandwidthContentionMatMulDataTest)
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     std::vector<Dic::Module::BandwidthContentionMatMulInfo> res;
     bool result = db->QueryBandwidthContentionMatMulData(res);
-    size_t size = 0;
     ASSERT_EQ(result, true);
     ASSERT_EQ(res.size(), 0);
 }

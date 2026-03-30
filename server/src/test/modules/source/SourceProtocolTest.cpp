@@ -165,10 +165,7 @@ TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphResponse)
     float maxRate = 23.0f;
     subCoreDetail.SetCacheHitRateDimension(curRate, maxRate, 0);
     uint64_t curCycles = 100;
-    uint64_t minCycles = 10;
     subCoreDetail.SetCyclesDimension(curCycles, 0, 0);
-    uint64_t curPut = 200;
-    uint64_t minPut = 110;
     subCoreDetail.SetThroughputDimension(0, 0, 0);
     uint8_t subCoreIndex = 0;
     subCoreDetail.SetSubCoreName("cube", subCoreIndex);

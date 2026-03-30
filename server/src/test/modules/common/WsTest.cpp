@@ -17,7 +17,8 @@
  */
 
 #include "../../TestSuit.h"
-#include "../../TestSuit.h"#include "ServerLog.h"
+#include "../../TestSuit.h"
+#include "ServerLog.h"
 #include "JsonUtil.h"
 #include "ProtocolManager.h"
 #include "ModuleManager.h"
@@ -34,11 +35,8 @@ using namespace Dic;
 
 TEST_F(TestSuit, TestAllRequestHandler)
 {
-    WsChannel *ws;
-    std::unique_ptr<WsSessionImpl> session = std::make_unique<WsSessionImpl>(ws);
-    WsSessionManager::Instance().AddSession(std::move(session));
     std::string err = "";
-    std::ifstream file(TestSuit::GetSrcTestPath() + R"(test_data/request.csv)");
+    std::ifstream file(TestSuit::GetTestDataFile("request.csv"));
     std::string line;
     int count = 0;
     while (getline(file, line)) {
@@ -57,18 +55,12 @@ TEST_F(TestSuit, TestAllRequestHandler)
     file.close();
     int size = 106;
     EXPECT_EQ(count, size);
-    auto curSession = Server::WsSessionManager::Instance().GetSession();
-    if (curSession != nullptr) {
-        curSession->SetStatus(WsSession::Status::CLOSED);
-        curSession->WaitForExit();
-        Server::WsSessionManager::Instance().RemoveSession();
-    }
 }
 
 TEST_F(TestSuit, TestAllRequestSessionErr)
 {
     std::string err = "";
-    std::ifstream file(TestSuit::GetSrcTestPath() + R"(test_data/request.csv)");
+    std::ifstream file(TestSuit::GetTestDataFile("request.csv"));
     std::string line;
     int count = 0;
     while (getline(file, line)) {

@@ -52,8 +52,6 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
         ServerLog::Error(errorMsg);
         return false;
     }
-    // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data
     std::string type = request.params.queryType == "Comparison" ? request.params.clusterPath
                                                                 : BaselineManager::Instance().GetBaseLineClusterPath();
@@ -63,10 +61,10 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
         SetCommunicationError(ErrorCode::QUERY_COMMUNICATION_OPERATOR_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication operator data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Communication

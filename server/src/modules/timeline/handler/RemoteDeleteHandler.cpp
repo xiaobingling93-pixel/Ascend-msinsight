@@ -31,15 +31,13 @@ using namespace Dic::Server;
 bool RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     RemoteDeleteRequest &request = dynamic_cast<RemoteDeleteRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<RemoteDeleteResponse> responsePtr = std::make_unique<RemoteDeleteResponse>();
     RemoteDeleteResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     Timeline::JsonFileParserManager::GetTraceFileParser().DeleteParseFiles(request.params.rankId);
     TraceFileSimulationParser::Instance().DeleteParseFiles(request.params.rankId);
     GetUpdateTime(response.body);
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

@@ -20,6 +20,7 @@
 #include "Database.h"
 #include "DataBaseManager.h"
 #include "DbSummaryDataBase.h"
+#include "GlobalProtocolResponse.h"
 #include "TextSummaryDataBase.h"
 #include "OperatorProtocolDefs.h"
 #include "OperatorProtocolRequest.h"
@@ -47,9 +48,9 @@ class VirtualSummaryDatabaseTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string operatorDataPath = TestSuit::GetSrcTestPath() + "test_data/operator_st/";
-        std::string dbPathRank0 = operatorDataPath + "db_rank_0.dat";
-        std::string textPathRank0 = operatorDataPath + "text_rank_0.dat";
+        std::string operatorDataPath = TestSuit::GetTestDataFile("operator_st");
+        std::string dbPathRank0 = FileUtil::SplicePath(operatorDataPath, "db_rank_0.dat");
+        std::string textPathRank0 = FileUtil::SplicePath(operatorDataPath, "text_rank_0.dat");
         // 设置db版本避免被重置，该套件仅用于db/text场景查询ST，不考虑解析
         SetDatabaseVersion(dbPathRank0);
         SetDatabaseVersion(textPathRank0);

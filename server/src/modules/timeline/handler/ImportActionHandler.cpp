@@ -36,7 +36,6 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 {
     auto &request = dynamic_cast<ImportActionRequest &>(*requestPtr);
     ServerLog::Info("Import action request handler start");
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr;
     SetBaseResponse(request, response);
@@ -44,8 +43,7 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     if (!request.params.CommonCheck(warnMsg)) {
         ServerLog::Warn(warnMsg);
         SetTimelineError(ErrorCode::PARAMS_ERROR);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     // 清理当前的基线缓存
@@ -54,19 +52,16 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
         // ConvertToRealPath 调用 FileUtil::ConvertToRealPath 方法，其中 FileUtil::CheckDirValid 已做软链接检查
         if (!request.params.ConvertToRealPath(warnMsg)) {
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
         if (!ImportFile(request, warnMsg)) {
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
     } else if (request.params.projectAction == ProjectActionEnum::TRANSFER_PROJECT) {
         if (!TransferProject(request)) {
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
     }

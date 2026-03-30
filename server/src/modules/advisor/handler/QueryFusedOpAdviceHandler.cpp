@@ -28,7 +28,6 @@ using namespace Dic::Server;
 bool QueryFusedOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<OperatorFusionRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorFusionResponse> responsePtr = std::make_unique<OperatorFusionResponse>();
     OperatorFusionResponse &response = *responsePtr;
     SetBaseResponse(request, response);
@@ -39,17 +38,15 @@ bool QueryFusedOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     if (!std::empty(error)) {
         ServerLog::Error(error);
         SetAdvisorError(ErrorCode::PARAMS_ERROR);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!FusedOpAdvisor::Process(request.params, response.body)) {
         ServerLog::Error("Failed to Query Fused Operator Advice for rank: ", request.params.rankId);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Dic::Module::Advisor

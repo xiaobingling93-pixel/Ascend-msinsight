@@ -30,16 +30,13 @@ using namespace Dic::Server;
 bool QueryApiInstructionsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceApiInstrRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SourceApiInstrResponse> responsePtr = std::make_unique<SourceApiInstrResponse>();
     SourceApiInstrResponse &response = *responsePtr;
     SetBaseResponse(request, response);
 
     const std::string &instr = SourceFileParser::Instance().GetInstr();
     response.body.instructions = instr;
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

@@ -27,7 +27,6 @@ using namespace Global;
 bool GetProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoGetRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ProjectExplorerInfoGetResponse> responsePtr = std::make_unique<ProjectExplorerInfoGetResponse>();
     ProjectExplorerInfoGetResponse &response = *responsePtr;
     SetBaseResponse(request, response);
@@ -52,8 +51,7 @@ bool GetProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> reque
         response.body.projectDirectoryList.push_back(temp);
     }
 
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // end of namespace Module

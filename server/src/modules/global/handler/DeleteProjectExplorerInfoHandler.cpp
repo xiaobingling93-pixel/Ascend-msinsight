@@ -28,15 +28,13 @@ using namespace Global;
 bool DeleteProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoDeleteRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ProjectExplorerInfoDeleteResponse> responsePtr =
             std::make_unique<ProjectExplorerInfoDeleteResponse>();
     ProjectExplorerInfoDeleteResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     bool res = ProjectExplorerManager::Instance()
             .DeleteProjectAndFilePath(request.params.projectName, request.params.dataPath);
-    SetResponseResult(response, res);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), res);
     return res;
 }
 } // end of namespace Module

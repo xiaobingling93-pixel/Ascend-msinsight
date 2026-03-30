@@ -31,7 +31,6 @@ using namespace Dic::Server;
 bool IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<IterationsRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<IterationsOrRanksResponse> responsePtr = std::make_unique<IterationsOrRanksResponse>();
     IterationsOrRanksResponse &response = *responsePtr;
     std::string errMsg;
@@ -42,8 +41,7 @@ bool IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     }
     SetBaseResponse(request, response);
     ClusterService::QueryIterations(request, response);
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

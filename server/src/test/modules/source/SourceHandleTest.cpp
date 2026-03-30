@@ -37,18 +37,9 @@ class SourceHandleTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        Server::WsChannel *ws;
-        std::unique_ptr<Server::WsSessionImpl> session = std::make_unique<Server::WsSessionImpl>(ws);
-        Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
     static void TearDownTestSuite()
     {
-        auto session = Server::WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(WsSession::Status::CLOSED);
-            session->WaitForExit();
-            Server::WsSessionManager::Instance().RemoveSession();
-        }
     }
     static int Main(int argc, char** argv)
     {

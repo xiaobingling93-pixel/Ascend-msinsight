@@ -33,7 +33,7 @@ public:
         "startNs integer, endNs integer, type integer);";
     static void SetUpTestSuite()
     {
-        g_testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/test_overlap_database.db)";
+        g_testDbPath = TestSuit::GetTestDataFile("test_overlap_database.db");
         g_testDataBase.OpenDb(g_testDbPath, false);
         DataBaseManager::Instance().SetDataType(DataType::DB, g_testDbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", g_testDbPath);

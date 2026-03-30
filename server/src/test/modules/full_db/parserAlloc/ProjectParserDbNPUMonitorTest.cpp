@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include "DataBaseManager.h"
 #include "ProjectParserDbNPUMonitor.h"
+#include "FileUtil.h"
 
 using namespace Dic;
 using namespace Dic::Module;
@@ -39,7 +40,7 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestEmptyFolder)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "npumonitor");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
 
@@ -51,7 +52,7 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestEmptyFolder)
     EXPECT_EQ(npuMonitorFiles[0], folderPath);
 
     Timeline::DataBaseManager::Instance().Clear();
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string rmCommand = "rm -rf " + folderPath;
     system(rmCommand.c_str());
 #endif
 }
@@ -61,8 +62,8 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestFolderContaini
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/npumonitor";
-    const std::string dbPath = folderPath + "/msmonitor_99092_20250901114924883_0.db";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "npumonitor");
+    const std::string dbPath = Dic::FileUtil::SplicePath(folderPath, "msmonitor_99092_20250901114924883_0.db");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand = "touch " + dbPath;
@@ -76,7 +77,7 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestFolderContaini
     EXPECT_EQ(npuMonitorFiles[0], dbPath);
 
     Timeline::DataBaseManager::Instance().Clear();
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string rmCommand = "rm -rf " + folderPath;
     system(rmCommand.c_str());
 #endif
 }
@@ -86,10 +87,10 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestFolderContaini
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/npumonitor";
-    const std::string dbPath1 = folderPath + "/msmonitor_99092_20250901114924883_0.db";
-    const std::string dbPath2 = folderPath + "/msmonitor_99095_20250901114924895_1.db";
-    const std::string dbPath3 = folderPath + "/msmonitor_99098_20250901114924898_-1.db";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "npumonitor");
+    const std::string dbPath1 = Dic::FileUtil::SplicePath(folderPath, "msmonitor_99092_20250901114924883_0.db");
+    const std::string dbPath2 = Dic::FileUtil::SplicePath(folderPath, "msmonitor_99095_20250901114924895_1.db");
+    const std::string dbPath3 = Dic::FileUtil::SplicePath(folderPath, "msmonitor_99098_20250901114924898_-1.db");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand1 = "touch " + dbPath1;
@@ -110,7 +111,7 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestFolderContaini
     EXPECT_EQ(npuMonitorFiles[2], dbPath3); // 2
 
     Timeline::DataBaseManager::Instance().Clear();
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string rmCommand = "rm -rf " + folderPath;
     system(rmCommand.c_str());
 #endif
 }
@@ -120,11 +121,11 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestFolderContaini
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/npumonitor";
-    const std::string innerFolderPath = folderPath + "/data";
-    const std::string dbPath1 = innerFolderPath + "/msmonitor_99092_20250901114924883_0.db";
-    const std::string dbPath2 = innerFolderPath + "/msmonitor_99095_20250901114924895_1.db";
-    const std::string dbPath3 = innerFolderPath + "/msmonitor_99098_20250901114924898_-1.db";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "npumonitor");
+    const std::string innerFolderPath = Dic::FileUtil::SplicePath(folderPath, "data");
+    const std::string dbPath1 = Dic::FileUtil::SplicePath(innerFolderPath, "msmonitor_99092_20250901114924883_0.db");
+    const std::string dbPath2 = Dic::FileUtil::SplicePath(innerFolderPath, "msmonitor_99095_20250901114924895_1.db");
+    const std::string dbPath3 = Dic::FileUtil::SplicePath(innerFolderPath, "msmonitor_99098_20250901114924898_-1.db");
     const std::string mkdirCommand = "mkdir -p " + innerFolderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand1 = "touch " + dbPath1;
@@ -145,7 +146,7 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestFolderContaini
     EXPECT_EQ(npuMonitorFiles[2], dbPath3); // 2
 
     Timeline::DataBaseManager::Instance().Clear();
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string rmCommand = "rm -rf " + folderPath;
     system(rmCommand.c_str());
 #endif
 }
@@ -155,9 +156,9 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestSingleFile)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/npumonitor";
-    const std::string dbPath1 = folderPath + "/msmonitor_99092_20250901114924883_0.db";
-    const std::string dbPath2 = folderPath + "/msmonitor_99093_20250901114924895_-1.db";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "npumonitor");
+    const std::string dbPath1 = Dic::FileUtil::SplicePath(folderPath, "msmonitor_99092_20250901114924883_0.db");
+    const std::string dbPath2 = Dic::FileUtil::SplicePath(folderPath, "msmonitor_99093_20250901114924895_-1.db");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand1 = "touch " + dbPath1;
@@ -177,7 +178,7 @@ TEST_F(ProjectParserDbNPUMonitorTest, GetParseFileByImportFileTestSingleFile)
     EXPECT_EQ(npuMonitorFiles[0], dbPath2);
 
     Timeline::DataBaseManager::Instance().Clear();
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string rmCommand = "rm -rf " + folderPath;
     system(rmCommand.c_str());
 #endif
 }

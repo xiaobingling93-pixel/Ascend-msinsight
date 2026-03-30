@@ -41,10 +41,7 @@ public:
     static const uint64_t INT64MAX = INT64_MAX;
     static void SetUpTestSuite()
     {
-        Dic::Server::WsChannel *ws;
-        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
-        Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
-        std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/leaks_dump_20250806.dat)";
+        std::string dbPath = TestSuit::GetTestDataFile("full_db", "leaks_dump_20250806.dat");
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("");
         ASSERT_TRUE(memoryDatabase != nullptr);
         ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
@@ -53,12 +50,6 @@ public:
     }
     static void TearDownTestSuite()
     {
-        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(Dic::Server::WsSession::Status::CLOSED);
-            session->WaitForExit();
-            Dic::Server::WsSessionManager::Instance().RemoveSession();
-        }
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("");
         memoryDatabase->CloseDb();
         DataBaseManager::Instance().Clear();
@@ -328,7 +319,6 @@ TEST_F(MemScopeRequestHandlerTest, QueryMemoryTraceUseValidParams)
     std::unique_ptr<Dic::Protocol::MemScopePythonTraceRequest> requestPtr =
             std::make_unique<Dic::Protocol::MemScopePythonTraceRequest>();
     requestPtr->moduleName = Protocol::MODULE_MEMORY;
-    const uint64_t threadId = 3841316;
     requestPtr->params.deviceId = "1";
     requestPtr->params.threadId = 3841316;
     requestPtr->params.relativeTime = true;

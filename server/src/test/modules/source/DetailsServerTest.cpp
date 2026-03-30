@@ -34,7 +34,7 @@ protected:
     std::string filePath;
     void SetUp() override
     {
-        filePath = TestSuit::GetSrcTestPath() + R"(test_data/test_bin_mix/visualize_data.bin)";
+        filePath = TestSuit::GetTestDataFile("test_bin_mix", "visualize_data.bin");
     }
     static Dic::Module::Source::SourceFileParser &InitParser(const std::string &dataPath, const std::string &fileId)
     {

@@ -28,7 +28,6 @@ using namespace Dic::Server;
 bool SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SearchSliceRequest &request = dynamic_cast<SearchSliceRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SearchSliceResponse> responsePtr = std::make_unique<SearchSliceResponse>();
     SearchSliceResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -71,8 +70,7 @@ bool SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         return false;
     }
     response.body.dbPath = database->GetDbPath();
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

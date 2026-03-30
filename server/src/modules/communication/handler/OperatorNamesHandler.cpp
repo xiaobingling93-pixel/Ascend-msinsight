@@ -32,15 +32,13 @@ using namespace Dic::Server;
 bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<OperatorNamesRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorNamesResponse> responsePtr = std::make_unique<OperatorNamesResponse>();
     OperatorNamesResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // 若为集群比对状态，直接返回Total Op Info
     if (!BaselineManager::Instance().GetBaseLineClusterPath().empty()) {
         response.body.push_back({"Total Op Info"});
-        SetResponseResult(response, true);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), true);
         return true;
     }
     // check request parameters
@@ -55,11 +53,10 @@ bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
         SetCommunicationError(ErrorCode::QUERY_OPERATOR_NAMES_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get operator names response data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

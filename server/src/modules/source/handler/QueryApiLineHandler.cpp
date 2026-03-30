@@ -30,14 +30,12 @@ using namespace Dic::Server;
 bool QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceApiLineRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SourceApiLineResponse> responsePtr = std::make_unique<SourceApiLineResponse>();
     SourceApiLineResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     if (auto [isValid, errMsg] = request.params.Valid(); isValid == false) {
         ServerLog::Error("Parameter of command ", request.command, "is invalid, error:", errMsg);
-        SetResponseResult(response, false, errMsg, REQUEST_PARAMS_ERROR);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
     const std::vector<SourceFileLine> &lines = SourceFileParser::Instance().GetApiLinesByCoreAndSource(
@@ -59,8 +57,7 @@ bool QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         lineResArray.emplace_back(lineRes);
     }
     response.body.lines = lineResArray;
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

@@ -26,15 +26,13 @@ using namespace Dic::Server;
 bool CreateCurveHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     CreateCurveRequest& request = dynamic_cast<CreateCurveRequest&>(*requestPtr.get());
-    WsSession& session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<CreateCurveResponse> responsePtr = std::make_unique<CreateCurveResponse>();
     CreateCurveResponse& response = *responsePtr.get();
     SetBaseResponse(request, response);
     if (!request.params.x.empty() && !StringUtil::CheckSqlValid(request.params.x)) {
         ServerLog::Error("The current input does not support generating line graphs");
         SetTimelineError(ErrorCode::PARAMS_ERROR);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::string viewName;
@@ -44,8 +42,7 @@ bool CreateCurveHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         viewName = CreateBubbleCurve(request);
     }
     response.body.curveName = viewName;
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

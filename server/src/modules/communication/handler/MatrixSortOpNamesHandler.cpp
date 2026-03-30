@@ -32,15 +32,13 @@ using namespace Dic::Server;
 bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<MatrixSortOpNamesRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MatrixSortOpNamesResponse> responsePtr = std::make_unique<MatrixSortOpNamesResponse>();
     MatrixSortOpNamesResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // 若为集群比对状态，直接返回Total Op Info
     if (!BaselineManager::Instance().GetBaseLineClusterPath().empty()) {
         response.body.push_back({"Total Op Info"});
-        SetResponseResult(response, true);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), true);
         return true;
     }
     // check request parameters
@@ -53,19 +51,17 @@ bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr) {
         SetCommunicationError(ErrorCode::CLUSTER_ANALYSIS_FAILED);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!database->QueryMatrixSortOpNames(request.params, response.body)) {
         SetCommunicationError(ErrorCode::QUERY_MATRIX_SORT_OPERATOR_NAMES_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix sort op names response data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

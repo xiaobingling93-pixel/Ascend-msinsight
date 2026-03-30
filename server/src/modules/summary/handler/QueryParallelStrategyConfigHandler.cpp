@@ -41,13 +41,12 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
     QueryParallelStrategyResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryParallelStrategyConfig(response.config, response.level)) {
         SetSummaryError(ErrorCode::QUERY_PARALLEL_STATISTICS_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query parallel strategy config.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!response.IsValid()) {
@@ -66,7 +65,7 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
         SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 }

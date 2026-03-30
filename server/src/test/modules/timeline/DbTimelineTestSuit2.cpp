@@ -36,10 +36,7 @@ public:
         FullDb::FullDbParser::Instance().Reset();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(nullptr);
-        WsSessionManager::Instance().AddSession(std::move(session));
-        std::string dbPath = TestSuit::GetRootTestPath() +
-            R"(data/pytorch/db/level2/rank0_ascend_pt)";
+        std::string dbPath = FileUtil::SplicePath(TestSuit::GetRootTestPath(), "data", "pytorch","db", "level2", "rank0_ascend_pt");
 
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath, ParserType::DB);
@@ -77,12 +74,6 @@ public:
     static void TearDownTestSuite()
     {
         FullDbParser::Instance().Reset();
-        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(Dic::Server::WsSession::Status::CLOSED);
-            session->WaitForExit();
-            Dic::Server::WsSessionManager::Instance().RemoveSession();
-        }
     }
 
     static std::string cardId;

@@ -27,7 +27,6 @@ using namespace Dic::Server;
 bool QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     FlowCategoryEventsRequest &request = dynamic_cast<FlowCategoryEventsRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<FlowCategoryEventsResponse> responsePtr = std::make_unique<FlowCategoryEventsResponse>();
     FlowCategoryEventsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -46,8 +45,7 @@ bool QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
         return false;
     }
     bool result = renderEngine->QueryFlowCategoryEvents(request.params, minTimestamp, response.body.flowDetailList);
-    SetResponseResult(response, result);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), result);
     return result;
 }
 } // Timeline

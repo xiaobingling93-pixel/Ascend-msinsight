@@ -31,7 +31,6 @@ using namespace Dic::Server;
 bool DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     DurationListRequest &request = dynamic_cast<DurationListRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<DurationResponse> responsePtr = std::make_unique<DurationResponse>();
     DurationResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -43,8 +42,7 @@ bool DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return false;
     }
     ClusterService::QueryDurationList(request.params, response.body);
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

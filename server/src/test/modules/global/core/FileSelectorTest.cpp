@@ -28,7 +28,7 @@ using namespace Dic::Module::Global;
 using namespace Dic::Protocol;
 class FileSelectorTest : public ::testing::Test {
 protected:
-    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + "test_data";
+    inline static std::string testDataDir = TestSuit::GetTestDataFile();
 };
 
 TEST_F(FileSelectorTest, TestPathNotExist)
@@ -45,11 +45,7 @@ TEST_F(FileSelectorTest, TestPathNotExist)
 
 TEST_F(FileSelectorTest, TestContainFolder)
 {
-#ifdef _WIN32
-    std::string path =  testDataDir + R"(\msprof)";
-#else
-    std::string path =  testDataDir + R"(/msprof)";
-#endif
+    std::string path = Dic::FileUtil::SplicePath(testDataDir, "msprof");
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
@@ -63,7 +59,7 @@ TEST_F(FileSelectorTest, TestContainFolder)
     }
     FileSelector::GetFoldersAndFiles(path, childrenFolders, childrenFiles, exist);
     EXPECT_TRUE(exist);
-    for (auto i = 0; i < childrenFolders.size(); i++) {
+    for (size_t i = 0; i < childrenFolders.size(); i++) {
         ASSERT_EQ(childrenFolders[i]->name, realChildrenFolders[i]->name);
     }
     ASSERT_TRUE(childrenFiles.empty());
@@ -71,11 +67,7 @@ TEST_F(FileSelectorTest, TestContainFolder)
 
 TEST_F(FileSelectorTest, TestContainFiles)
 {
-#ifdef _WIN32
-    std::string path =  testDataDir + R"(\full_db)";
-#else
-    std::string path =  testDataDir + R"(/full_db)";
-#endif
+    std::string path = Dic::FileUtil::SplicePath(testDataDir, "full_db");
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
     std::vector<std::unique_ptr<File>> realChildrenFiles;
@@ -88,7 +80,7 @@ TEST_F(FileSelectorTest, TestContainFiles)
     }
     FileSelector::GetFoldersAndFiles(path, childrenFolders, childrenFiles, exist);
     EXPECT_TRUE(exist);
-    for (int i = 0; i < realChildrenFiles.size(); i++) {
+    for (size_t i = 0; i < realChildrenFiles.size(); i++) {
         ASSERT_EQ(realChildrenFiles[i]->name, childrenFiles[i]->name);
     }
     ASSERT_TRUE(childrenFolders.empty());
@@ -96,11 +88,7 @@ TEST_F(FileSelectorTest, TestContainFiles)
 
 TEST_F(FileSelectorTest, TestContainFolderandFiles)
 {
-#ifdef _WIN32
-    std::string path =  testDataDir + R"(\test_rank_0)";
-#else
-    std::string path =  testDataDir + R"(/test_rank_0)";
-#endif
+    std::string path = Dic::FileUtil::SplicePath(testDataDir, "test_rank_0");
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
@@ -120,10 +108,10 @@ TEST_F(FileSelectorTest, TestContainFolderandFiles)
     }
     FileSelector::GetFoldersAndFiles(path, childrenFolders, childrenFiles, exist);
     EXPECT_TRUE(exist);
-    for (auto i = 0; i < childrenFolders.size(); i++) {
+    for (size_t i = 0; i < childrenFolders.size(); i++) {
         ASSERT_EQ(childrenFolders[i]->name, realChildrenFolders[i]->name);
     }
-    for (int i = 0; i < realChildrenFiles.size(); i++) {
+    for (size_t i = 0; i < realChildrenFiles.size(); i++) {
         ASSERT_EQ(realChildrenFiles[i]->name, childrenFiles[i]->name);
     }
 }

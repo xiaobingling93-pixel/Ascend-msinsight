@@ -35,7 +35,7 @@ public:
     {
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/msprof_0.db)";
+        std::string dbPath = TestSuit::GetTestDataFile("full_db", "msprof_0.db");
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         auto summeryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(

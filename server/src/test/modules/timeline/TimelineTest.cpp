@@ -473,7 +473,6 @@ TEST_F(TestSuit, QueryThreadDetail)
     request.id = std::to_string(id);
     request.depth = DEPTH;
     request.startTime = STARTTIME;
-    uint64_t minTimestamp = 0;
     int64_t traceId = 41;
 
     // expected data
@@ -509,10 +508,6 @@ TEST_F(TestSuit, QueryThreadTraces)
 
     int expectSize = 25;
     std::string expectName = "AscendCL@aclDestroyTensorDesc";
-    uint64_t expectDuration = 1900;
-    uint64_t expectStartTime = 1695115378713851200;
-    uint64_t expectEndTime = expectStartTime + expectDuration;
-    int32_t expectDepth = 0;
     std::string expectThreadId = request.threadId;
     request.cardId = "0";
     request.metaType = "TEXT";
@@ -540,7 +535,6 @@ TEST_F(TestSuit, QueryThreadDetailWithShape)
     uint64_t id = 8;
     request.id = std::to_string(id);
     request.startTime = STARTTIME;
-    uint64_t minTimestamp = 0;
     int64_t traceId = 65;
     // expected data
     uint64_t selfTime = 469541;

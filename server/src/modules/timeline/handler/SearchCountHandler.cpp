@@ -29,7 +29,6 @@ using namespace Dic::Server;
 bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SearchCountRequest &request = dynamic_cast<SearchCountRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SearchCountResponse> responsePtr = std::make_unique<SearchCountResponse>();
     SearchCountResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -63,8 +62,7 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         response.body.countList.emplace_back(searchResult);
         response.body.totalCount = searchResult.count;
     }
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

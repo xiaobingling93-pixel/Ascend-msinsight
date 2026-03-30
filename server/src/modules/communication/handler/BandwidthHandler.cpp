@@ -44,16 +44,15 @@ bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     BandwidthDataResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(request.params.clusterPath);
     if (database == nullptr || !database->QueryBandwidthData(request.params, response.body)) {
         SetCommunicationError(ErrorCode::QUERY_COMMUNICATION_BANDWIDTH_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication bandwidth data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Communication

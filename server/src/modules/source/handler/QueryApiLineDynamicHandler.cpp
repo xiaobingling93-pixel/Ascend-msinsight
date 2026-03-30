@@ -28,19 +28,16 @@ using namespace Dic::Server;
 bool QueryApiLineDynamicHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceApiLineDynamicRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SourceApiLineDynamicResponse> responsePtr = std::make_unique<SourceApiLineDynamicResponse>();
     SourceApiLineDynamicResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     if (auto [isValid, errMsg] = request.params.Valid(); isValid == false) {
         ServerLog::Error("Parameter of command ", request.command, "is invalid, error:", errMsg);
-        SetResponseResult(response, false, errMsg, REQUEST_PARAMS_ERROR);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
     SetResponseBody(response, request);
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

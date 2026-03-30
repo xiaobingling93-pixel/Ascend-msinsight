@@ -29,7 +29,6 @@ bool QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     SystemViewRequest &request = dynamic_cast<SystemViewRequest &>(*requestPtr.get());
 
     std::unique_ptr<SystemViewResponse> responsePtr = std::make_unique<SystemViewResponse>();
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     SystemViewResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
@@ -73,8 +72,7 @@ bool QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             SetResponseResult(response, true);
         }
     }
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

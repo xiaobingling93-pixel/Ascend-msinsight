@@ -37,11 +37,9 @@ class DBAdvisorTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string dbPath = TestSuit::GetRootTestPath() +
-                             R"(data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
-        Dic::Server::WsChannel *ws;
-        std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
-        Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
+        std::string dbPath = FileUtil::SplicePath(TestSuit::GetRootTestPath(), "data", "pytorch", "db", "level1",
+                                                  "rank0_ascend_pt", "ASCEND_PROFILER_OUTPUT",
+                                                  "ascend_pytorch_profiler_0.db");
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath);
@@ -49,12 +47,6 @@ public:
 
     static void TearDownTestSuite()
     {
-        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(Dic::Server::WsSession::Status::CLOSED);
-            session->WaitForExit();
-            Dic::Server::WsSessionManager::Instance().RemoveSession();
-        }
         DataBaseManager::Instance().Clear();
     }
 };
@@ -65,8 +57,8 @@ TEST_F(DBAdvisorTest, QueryAffinityApiAdvisorSuccessInDb)
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
-    std::map<uint64_t, std::vector<Protocol::FlowLocation>> dataMap{};
-    std::map<uint64_t, std::vector<uint32_t>> indexMap{};
+    std::map<uint64_t, std::vector<Protocol::FlowLocation> > dataMap{};
+    std::map<uint64_t, std::vector<uint32_t> > indexMap{};
     auto result = db->QueryAffinityAPIData(params, {"aten::reshape"}, startTime, dataMap, indexMap);
     const uint64_t expectTrackId = 13471134862269421;
     EXPECT_TRUE(result);
@@ -108,8 +100,10 @@ TEST_F(DBAdvisorTest, QueryAICPUOperatorAdvisorSuccessDb)
     EXPECT_NE(db, nullptr);
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     std::vector<Protocol::KernelBaseInfo> data{};
-    Protocol::KernelDetailsParams params = {"duration", "DESC", 1,
-                                            10, 0, 0, "0", "0"}; // 1是第1页，10是每页10条数据
+    Protocol::KernelDetailsParams params = {
+        "duration", "DESC", 1,
+        10, 0, 0, "0", "0"
+    }; // 1是第1页，10是每页10条数据
     auto result = db->QueryAICpuOpCanBeOptimized(params,
                                                  AICPU_OP_EQUIVALENT_REPLACE, AICPU_OP_DATATYPE_RULE, data, startTime);
     EXPECT_TRUE(result);
