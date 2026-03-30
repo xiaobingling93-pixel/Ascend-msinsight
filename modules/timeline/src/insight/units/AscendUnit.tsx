@@ -677,12 +677,12 @@ const LabelSummaryChart = chart({
 
 export const ProcessUnit = unit<ProcessMetaData>({
     name: 'Process',
-    configBar: (session: Session, metadata: ProcessMetaData, onClick?: () => void) => {
+    configBar: (session: Session, metadata: ProcessMetaData, onClick?: () => void, isHovered?: boolean, isSelected?: boolean) => {
         // Host侧第三级泳道不显示offset
         if ((metadata as ThreadMetaData).threadId !== '') {
-            return <></>;
+            return null;
         }
-        return offsetConfig(session, metadata, onClick);
+        return offsetConfig(session, metadata, onClick, isHovered, isSelected);
     },
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',

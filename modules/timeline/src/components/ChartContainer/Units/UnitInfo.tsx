@@ -319,7 +319,7 @@ const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected
             }
             e.preventDefault();
         }}>
-            {(isHovered || isSelected) && unit.configBar?.(session, unit.metadata, onConfigBarClick)}
+            {unit.configBar?.(session, unit.metadata, onConfigBarClick, isHovered, isSelected)}
             <UnitInfoActionDiv
                 showCheckbox={session.phase === 'download' && (isHovered || isSelected)}
                 onMouseUp={onStopPropagation}>

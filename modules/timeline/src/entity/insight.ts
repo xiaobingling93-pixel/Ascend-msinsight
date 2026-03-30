@@ -218,7 +218,7 @@ export interface InsightUnitParams<
 > {
     name: string;
     pinType?: 'move' | 'copied';
-    configBar?: (session: Session, metadata: MetaData, onClick?: () => void) => JSX.Element;
+    configBar?: (session: Session, metadata: MetaData, onClick?: () => void, isHovered?: boolean, isSelected?: boolean) => JSX.Element | null;
     tag?: string | ((session: Session, metadata: MetaData) => string | null);
     description?: string;
     chart?: ChartDesc<ChartType> | Array<ChartDesc<ChartType>>;
@@ -346,7 +346,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         tag = params.tag as string | ((session: Session, metadata: unknown) => string | null);
         buttons = params.buttons ?? [];
         description = params.description;
-        configBar = params.configBar as ((session: Session, metadata: unknown) => JSX.Element);
+        configBar = params.configBar as ((session: Session, metadata: unknown, onClick?: () => void, isHovered?: boolean, isSelected?: boolean) => JSX.Element | null);
         metadata: T;
         chart = params.chart;
         tabState = params.tabState ?? undefined;

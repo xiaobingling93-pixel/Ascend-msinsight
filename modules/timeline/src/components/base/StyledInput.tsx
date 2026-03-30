@@ -27,6 +27,7 @@ const Support = React.forwardRef(
 );
 Support.displayName = 'Support';
 export const StyledInput = styled(Support)`
+    box-sizing: border-box;
     border-radius: 20px;
     min-width: ${(props): number => props.minwidth}px;
     width: ${(props): number => props.width as number}px;
@@ -36,6 +37,7 @@ export const StyledInput = styled(Support)`
     padding: 0 8px;
     margin: 0 5px;
     display: ${(props): string => props.isshow === 1 ? 'inline-flex' : 'none'};
+    align-items: center;
     color: ${(props): string => props.theme.fontColor};
 
     .ant-input {
@@ -43,14 +45,27 @@ export const StyledInput = styled(Support)`
         font-size: 14px;
         caret-color: ${(props): string => props.theme.searchInputCaretColor};
         color: ${(props): string => props.theme.fontColor};
+        padding: 0;
+        height: 100%;
+        border: none;
+        outline: none;
+        box-shadow: none;
+        &:focus {
+            box-shadow: none;
+        }
     }
 
     .ant-input-suffix {
-        height: 16px;
+        height: 100%;
         color: ${(props): string => props.theme.svgBackgroundColor};
         font-size: 12px;
-        margin-top: 5px;
+        display: flex;
+        align-items: center;
         margin-right: -4px;
+
+        .ant-input-clear-icon, .anticon.ant-input-clear-icon {
+            color: ${(props): string => props.theme.textColorTertiary};
+        }
     }
 
     input[type=number]::-webkit-outer-spin-button,

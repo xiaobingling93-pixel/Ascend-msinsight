@@ -45,6 +45,26 @@ const invalidBorderShadow = '0 0 0 2px rgba(255, 0, 0, 0.2)';
 const OffsetButton = styled.div`
     color: ${(props): string => props.theme.primaryColor};
     cursor: pointer;
+    min-width: 44px;
+    text-align: center;
+    line-height: 20px;
+`;
+
+const OffsetIndicatorWrapper = styled.div`
+    min-width: 44px;
+    padding-right: 40px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+`;
+
+const OffsetIndicatorDot = styled.div`
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: ${(props): string => props.theme.primaryColor || '#1890ff'};
 `;
 
 // Changing the border color of the input box when the input value is invalid
@@ -129,6 +149,7 @@ const onBlur = (e: ChangeEvent<HTMLInputElement>, session: Session, setValue: Re
     setVisible: React.Dispatch<React.SetStateAction<boolean>>, metaData: any): void => {
     runInAction(() => {
         checkValue(e.target, session, setValue, setVisible, metaData);
+        session.renderTrigger = !session.renderTrigger;
     });
 };
 
@@ -155,7 +176,7 @@ const InputContainer = styled.div`
 `;
 
 const InputDiv = styled.div`
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     display: flex;
     .ant-input-disabled {
@@ -173,7 +194,7 @@ function handleAlignStart(inputRef: RefObject<InputRef>, session: Session, setVa
     inputRef?.current?.focus();
 }
 
-export const InputOption = observer(({ session, metaData, onClick }: { session: Session; metaData: any; onClick?: () => void }): JSX.Element => {
+export const InputOption = observer(({ session, metaData, onClick, isHovered, isSelected }: { session: Session; metaData: any; onClick?: () => void; isHovered?: boolean; isSelected?: boolean }): JSX.Element | null => {
     const timestampOffsetKey = getTimeOffsetKey(session, metaData as ThreadTraceRequest);
     const timestampOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[timestampOffsetKey] ?? 0;
     const [offset, setOffset] = useState(String(timestampOffset));
@@ -190,6 +211,13 @@ export const InputOption = observer(({ session, metaData, onClick }: { session: 
             handleTimestampOffsetReassignment(session, metaData, timestampOffset);
         }
     }, [session.isTimeAnalysisMode]);
+
+    const hasOffset = timestampOffset !== 0;
+
+    if (!hasOffset && !isHovered && !isSelected) {
+        return null;
+    }
+
     return <Tooltip
         trigger={'click'}
         placement={'bottom'}
@@ -203,6 +231,7 @@ export const InputOption = observer(({ session, metaData, onClick }: { session: 
                             onBlur={(e): void => onBlur(e, session, setOffset, setVisible, metaData)}
                             onFocus={onFocus}
                             onPressEnter={(e): void => onPressEnter(session, setOffset, setVisible, e, metaData)}
+                            allowClear
                         />
                         {visible && <div>{title}</div>}
                     </div>
@@ -210,11 +239,19 @@ export const InputOption = observer(({ session, metaData, onClick }: { session: 
                 </InputDiv>
             </InputContainer>}
         overlayInnerStyle={{ borderRadius: 2 }}>
-        <OffsetButton data-testid={'offset-btn'} onClick={onClick}>{t('Offset', { ns: 'timeline' })}</OffsetButton>
+        {(!isHovered && !isSelected && hasOffset)
+            ? (
+                <OffsetIndicatorWrapper data-testid={'offset-btn'} onClick={onClick}>
+                    <OffsetIndicatorDot title={t('Offset set', { ns: 'timeline' })} />
+                </OffsetIndicatorWrapper>
+            )
+            : (
+                <OffsetButton data-testid={'offset-btn'} onClick={onClick}>{t('Offset', { ns: 'timeline' })}</OffsetButton>
+            )}
     </Tooltip>
     ;
 });
 
-export const offsetConfig = (session: Session, metadata: any, onClick?: () => void): JSX.Element => {
-    return <InputOption session={session} metaData={metadata} onClick={onClick} />;
+export const offsetConfig = (session: Session, metadata: any, onClick?: () => void, isHovered?: boolean, isSelected?: boolean): JSX.Element | null => {
+    return <InputOption session={session} metaData={metadata} onClick={onClick} isHovered={isHovered} isSelected={isSelected} />;
 };
