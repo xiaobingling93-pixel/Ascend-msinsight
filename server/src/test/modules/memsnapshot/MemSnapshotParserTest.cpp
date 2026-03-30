@@ -28,7 +28,7 @@ public:
     static void SetUpTestSuite()
     {
         // 创建临时测试目录
-        testDir = TestSuit::GetSrcTestPath() + R"(test_data/snapshot/)";
+        testDir = TestSuit::GetTestDataFile("snapshot");
 
         // 创建测试pickle文件路径
         testPicklePath = testDir + "snapshot_invalid.pkl";

@@ -26,7 +26,6 @@ using namespace Dic::Server;
 bool QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     FlowCategoryListRequest &request = dynamic_cast<FlowCategoryListRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<FlowCategoryListResponse> responsePtr = std::make_unique<FlowCategoryListResponse>();
     FlowCategoryListResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -47,8 +46,7 @@ bool QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     if (!result) {
         SetTimelineError(ErrorCode::QUERY_FLOW_CATEGORY_FAILED);
     }
-    SetResponseResult(response, result);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), result);
     return result;
 }
 

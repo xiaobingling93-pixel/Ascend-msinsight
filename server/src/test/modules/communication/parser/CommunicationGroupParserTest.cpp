@@ -29,7 +29,7 @@ protected:
 
     void SetUp() override
     {
-        filePath = TestSuit::GetSrcTestPath() + R"(test_data/communication_group/)";
+        filePath = TestSuit::GetTestDataFile("communication_group");
     }
 };
 
@@ -38,7 +38,7 @@ protected:
  */
 TEST_F(CommunicationGroupParserTest, TestNewCommunicationGroup)
 {
-    std::string file = filePath + R"(communication_group.json)";
+    std::string file = FileUtil::SplicePath(filePath, "communication_group.json");
     std::vector<CommGroupParallelInfo> res = CommunicationGroupParser::ParseCommunicationGroup(file);
     const int exceptSize = 22;
     EXPECT_EQ(res.size(), exceptSize);
@@ -49,7 +49,7 @@ TEST_F(CommunicationGroupParserTest, TestNewCommunicationGroup)
  */
 TEST_F(CommunicationGroupParserTest, TestOldCommunicationGroup)
 {
-    std::string file = filePath + R"(communication_group_old.json)";
+    std::string file = FileUtil::SplicePath(filePath, "communication_group_old.json");
     std::vector<CommGroupParallelInfo> res = CommunicationGroupParser::ParseCommunicationGroup(file);
     const int exceptSize = 20;
     EXPECT_EQ(res.size(), exceptSize);

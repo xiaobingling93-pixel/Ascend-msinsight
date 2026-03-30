@@ -36,10 +36,11 @@ void TestSuit::SetUpTestSuite()
     renderEngine->SetDataEngineInterface(dataEngine);
     const ParamsOption &option = ParamsParser::Instance().GetOption();
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-    std::string refPath0 = R"(test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";
-    std::string refPath1 = R"(test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
-    std::string dbPath0 = GetSrcTestPath() + refPath0 + "mindstudio_insight_data.db";
-    std::string dbPath1 = GetSrcTestPath() + refPath1 + "mindstudio_insight_data.db";
+    std::string testData = DtFramework::GetTestDataDirPath(Dic::DT::Framework::TestPathType::SRC_TEST_DATA);
+    std::string refPath0 = FileUtil::SplicePath(testData, "test_rank_0", "ASCEND_PROFILER_OUTPUT");
+    std::string refPath1 = FileUtil::SplicePath(testData, "test_rank_1", "ASCEND_PROFILER_OUTPUT");
+    std::string dbPath0 = FileUtil::SplicePath(refPath0, "mindstudio_insight_data.db");
+    std::string dbPath1 = FileUtil::SplicePath(refPath1, "mindstudio_insight_data.db");
     DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath0);
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath0);
     DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath1);
@@ -48,22 +49,20 @@ void TestSuit::SetUpTestSuite()
     DataBaseManager::Instance().CreateTraceConnectionPool("1", dbPath1);
     DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath0, "0", "0");
     DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath1, "1", "1");
-    JsonFileParserManager::GetTraceFileParser().Parse({GetSrcTestPath() + refPath0 + "trace_view.json"},
+    JsonFileParserManager::GetTraceFileParser().Parse({FileUtil::SplicePath(refPath0, "trace_view.json")},
         "0", "", dbPath0);
     WaitParseEnd({"0"});
-    JsonFileParserManager::GetTraceFileParser().Parse({GetSrcTestPath() + refPath1 + "trace_view.json"},
+    JsonFileParserManager::GetTraceFileParser().Parse({FileUtil::SplicePath(refPath1, "trace_view.json")},
         "1", "", dbPath1);
     WaitParseEnd({"1"});
-    std::string testDataPath = GetSrcTestPath() + R"(test_data)";
-    KernelParse::Instance().Parse({dbPath0, "0", GetSrcTestPath() + refPath0});
-    KernelParse::Instance().Parse({dbPath1, "1", GetSrcTestPath() + refPath1});
+    KernelParse::Instance().Parse({dbPath0, "0", refPath0});
+    KernelParse::Instance().Parse({dbPath1, "1", refPath1});
     WaitParseEnd({KERNEL_PREFIX + "0", KERNEL_PREFIX + "1"});
-    MemoryParse::Instance().Parse({dbPath0, "0", GetSrcTestPath() + refPath0});
-    MemoryParse::Instance().Parse({dbPath1, "1", GetSrcTestPath() + refPath1});
+    MemoryParse::Instance().Parse({dbPath0, "0", refPath0});
+    MemoryParse::Instance().Parse({dbPath1, "1", refPath1});
     WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
-    clusterPath = testDataPath + R"(/cluster_analysis_output)";
-    // database先传空指针，等完成mstt分析之后再对该指针赋值
+    clusterPath = FileUtil::SplicePath(testData, "cluster_analysis_output");
     ClusterFileParser clusterFileParser(clusterPath, nullptr, COMPARE + TimeUtil::Instance().NowStr());
     clusterFileParser.ParseClusterFiles();
     clusterFileParser.ParseClusterStep2Files();
@@ -74,7 +73,7 @@ void TestSuit::SetUpTestSuite()
 void TestSuit::WaitParseEnd(std::vector<std::string> statusList)
 {
     while (true) {
-        int i = 0;
+        size_t i = 0;
         for (const auto& tmp : statusList) {
             if (ParserStatusManager::Instance().GetParserStatus(tmp) != ParserStatus::FINISH) {
                 break;
@@ -96,8 +95,9 @@ void TestSuit::TearDownTestSuite()
     KernelParse::Instance().Reset();
     TraceFileParser::DeleteParseFiles({"0", "1"});
     DataBaseManager::Instance().EraseClusterDb(COMPARE);
-    std::string tempPath = GetSrcTestPath();
-    if (std::remove((tempPath + R"(test_data/cluster.db)").c_str()) != 0) {
+    std::string testData = DtFramework::GetTestDataDirPath(Dic::DT::Framework::TestPathType::SRC_TEST_DATA);
+    std::string clusterDbPath = FileUtil::SplicePath(testData, "cluster.db");
+    if (std::remove(clusterDbPath.c_str()) != 0) {
         Dic::Server::ServerLog::Info("Delete file failed");
     } else {
         Dic::Server::ServerLog::Info("Delete file success");
@@ -123,10 +123,8 @@ std::shared_ptr<RenderEngine> TestSuit::GetRenderEngine()
 std::string TestSuit::GetServerHome()
 {
     if (serverHome.empty()) {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        const std::string serverDir = "server";
-        const int index = currPath.rfind(serverDir);
-        serverHome = currPath.substr(0, index + serverDir.size());
+        std::string srcTestData = DtFramework::GetTestDataDirPath(Dic::DT::Framework::TestPathType::SRC_TEST_DATA);
+        serverHome = srcTestData.substr(0, srcTestData.find("server") + 6);
     }
     return serverHome;
 }
@@ -134,7 +132,8 @@ std::string TestSuit::GetServerHome()
 std::string TestSuit::GetSrcTestPath()
 {
     if (srcTestPath.empty()) {
-        srcTestPath = StringUtil::StrJoin(GetServerHome(), R"(/src/test/)");
+        std::string srcTestData = DtFramework::GetTestDataDirPath(Dic::DT::Framework::TestPathType::SRC_TEST_DATA);
+        srcTestPath = srcTestData.substr(0, srcTestData.rfind("test_data"));
     }
     return srcTestPath;
 }
@@ -142,7 +141,8 @@ std::string TestSuit::GetSrcTestPath()
 std::string TestSuit::GetRootTestPath()
 {
     if (rootTestPath.empty()) {
-        rootTestPath = StringUtil::StrJoin(FileUtil::GetParentPath(GetServerHome()), R"(/test/)");
+        rootTestPath = DtFramework::GetTestDataDirPath(Dic::DT::Framework::TestPathType::ROOT_TEST);
     }
     return rootTestPath;
 }
+

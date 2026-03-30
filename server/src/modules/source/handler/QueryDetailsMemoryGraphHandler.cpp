@@ -30,20 +30,16 @@ using namespace Dic::Server;
 bool QueryDetailsMemoryGraphHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<DetailsMemoryGraphRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<DetailsMemoryGraphResponse> responsePtr = std::make_unique<DetailsMemoryGraphResponse>();
     DetailsMemoryGraphResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     if (auto [isVaild, errMsg] = request.params.Vaild(); isVaild == false) {
         ServerLog::Error("Parameter of command ", request.command, " is invaild, error:", errMsg);
-        SetResponseResult(response, false, errMsg, REQUEST_PARAMS_ERROR);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
     bool result = DetailsService::QueryMemoryGraph(request, response);
-    SetResponseResult(response, result);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), result);
     return result;
 }
 }

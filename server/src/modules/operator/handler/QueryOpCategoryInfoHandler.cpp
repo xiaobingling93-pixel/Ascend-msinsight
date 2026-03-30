@@ -26,45 +26,40 @@ namespace Dic::Module::Operator {
     using namespace Dic::Server;
 
     bool QueryOpCategoryInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
+    OperatorCategoryInfoRequest &request = dynamic_cast<OperatorCategoryInfoRequest &>(*requestPtr);
+    std::unique_ptr<OperatorCategoryInfoResponse> responsePtr = std::make_unique<OperatorCategoryInfoResponse>();
+    OperatorCategoryInfoResponse &response = *responsePtr;
+    SetBaseResponse(request, response);
+    if (!CheckRequestParam(request.params)) {
+        ServerLog::Warn("[Operator]Failed to check request parameter in Query Category Info.");
+        SendResponse(std::move(responsePtr), false);
+        return false;
+    }
+    std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
+    auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+    if (!database)
     {
-        OperatorCategoryInfoRequest &request = dynamic_cast<OperatorCategoryInfoRequest &>(*requestPtr);
-        WsSession &session = *WsSessionManager::Instance().GetSession();
-        std::unique_ptr<OperatorCategoryInfoResponse> responsePtr = std::make_unique<OperatorCategoryInfoResponse>();
-        OperatorCategoryInfoResponse &response = *responsePtr;
-        SetBaseResponse(request, response);
-        if (!CheckRequestParam(request.params)) {
-            ServerLog::Warn("[Operator]Failed to check request parameter in Query Category Info.");
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
-            return false;
-        }
-        std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
-        if (!database)
-        {
-            ServerLog::Warn("[Operator]Not exist operator database. Fail to get op category info.");
-            return true;
-        }
-        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
-        if (deviceId.empty()) {
-            ServerLog::Error("[Operator]Failed to query Category Info by empty deviceId.");
-            SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
-            return false;
-        }
-        request.params.deviceId = deviceId;
-        if (!database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
-            ServerLog::Error("[Operator]Failed to query Category Info by rankId.");
-            SetOperatorError(ErrorCode::QUERY_DURATION_FAILED);
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
-            return false;
-        }
-        SetResponseResult(response, true);
-        session.OnResponse(std::move(responsePtr));
+        ServerLog::Warn("[Operator]Not exist operator database. Fail to get op category info.");
         return true;
     }
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
+    if (deviceId.empty()) {
+        ServerLog::Error("[Operator]Failed to query Category Info by empty deviceId.");
+        SetOperatorError(ErrorCode::GET_DEVICE_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
+        return false;
+    }
+    request.params.deviceId = deviceId;
+    if (!database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
+        ServerLog::Error("[Operator]Failed to query Category Info by rankId.");
+        SetOperatorError(ErrorCode::QUERY_DURATION_FAILED);
+        SendResponse(std::move(responsePtr), false);
+        return false;
+    }
+    SendResponse(std::move(responsePtr), true);
+    return true;
+}
 
     bool QueryOpCategoryInfoHandler::CheckRequestParam(OperatorDurationReqParams params)
     {

@@ -34,7 +34,7 @@ class TextSummaryDatabaseTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        g_testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/test_text_database.db)";
+        g_testDbPath = TestSuit::GetTestDataFile("test_text_database.db");
         g_testDataBase.SetDbPath(g_testDbPath);
         g_testDataBase.OpenDb(g_testDbPath, false);
     }

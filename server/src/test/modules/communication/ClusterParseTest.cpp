@@ -39,7 +39,7 @@ TEST_F(ClusterParseTest, ParserDbClusterFailWithEmptyPath)
 TEST_F(ClusterParseTest, MatrixRapidHandlerTest)
 {
     CommunicationMatrixRapidHandler handler(nullptr, "TEST");
-    rapidjson::SizeType elementCount;
+    constexpr rapidjson::SizeType elementCount{};
     EXPECT_EQ(handler.Null(), true);
     EXPECT_EQ(handler.Bool(true), true);
     EXPECT_EQ(handler.Int(0), true);

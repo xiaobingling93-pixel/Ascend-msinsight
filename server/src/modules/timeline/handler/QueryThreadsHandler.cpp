@@ -28,7 +28,6 @@ using namespace Dic::Server;
 bool QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitThreadsRequest &request = dynamic_cast<UnitThreadsRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitThreadsResponse> responsePtr = std::make_unique<UnitThreadsResponse>();
     UnitThreadsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -58,9 +57,7 @@ bool QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     if (!result) {
         SetTimelineError(ErrorCode::QUERY_THREAD_FAILED);
     }
-    SetResponseResult(response, result);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), result);
     return result;
 }
 } // Timeline

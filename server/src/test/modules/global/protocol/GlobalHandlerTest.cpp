@@ -32,6 +32,7 @@
 #include "TestSuit.h"
 #include "WsSessionManager.h"
 #include "WsSessionImpl.h"
+#include "FileUtil.h"
 
 using namespace Dic::Server;
 using namespace Dic::Module::Global;
@@ -41,21 +42,12 @@ class GlobalHandlerTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
     {
-        Dic::Server::WsChannel *ws;
-        std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
-        Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
     static void TearDownTestCase()
     {
-        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(WsSession::Status::CLOSED);
-            session->WaitForExit();
-            Dic::Server::WsSessionManager::Instance().RemoveSession();
-        }
     }
 protected:
-    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + R"(test_data\)";
+    inline static std::string testDataDir = TestSuit::GetTestDataFile();
 };
 
 TEST_F(GlobalHandlerTest, TestCancelBaselineHandler)
@@ -69,7 +61,7 @@ TEST_F(GlobalHandlerTest, TestCheckProjectValidHandler)
 {
     auto requestPtr = std::make_unique<ProjectCheckValidRequest>();
     requestPtr->params.projectName = "";
-    std::string path = testDataDir + R"(test_rank_0)";
+    std::string path = Dic::FileUtil::SplicePath(testDataDir, "test_rank_0");
     requestPtr->params.dataPath = {path};
     CheckProjectValidHandler checkProjectValidHandler;
     ASSERT_TRUE(checkProjectValidHandler.HandleRequest(std::move(requestPtr)));
@@ -79,7 +71,7 @@ TEST_F(GlobalHandlerTest, TestDeleteProjectExplorerHandler)
 {
     auto requestPtr = std::make_unique<ProjectExplorerInfoDeleteRequest>();
     requestPtr->params.projectName = "";
-    std::string path =  testDataDir + R"(test_rank_0)";
+    std::string path = Dic::FileUtil::SplicePath(testDataDir, "test_rank_0");
     requestPtr->params.dataPath = {path};
     DeleteProjectExplorerInfoHandler deleteProjectExplorerInfoHandler;
     ASSERT_TRUE(deleteProjectExplorerInfoHandler.HandleRequest(std::move(requestPtr)));
@@ -96,7 +88,7 @@ TEST_F(GlobalHandlerTest, TestFilesNotExistGetHandler)
 TEST_F(GlobalHandlerTest, TestCheckfilesGetHandler)
 {
     auto requestPtr = std::make_unique<FilesGetRequest>();
-    std::string path =  testDataDir + R"(test_rank_0)";
+    std::string path = Dic::FileUtil::SplicePath(testDataDir, "test_rank_0");
     requestPtr->params.path = path;
     FilesGetHandler filesGetHandler;
     ASSERT_TRUE(filesGetHandler.HandleRequest(std::move(requestPtr)));

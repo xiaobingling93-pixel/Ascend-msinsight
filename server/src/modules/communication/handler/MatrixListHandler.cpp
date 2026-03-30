@@ -37,8 +37,6 @@ bool MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     MatrixListResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
@@ -48,7 +46,7 @@ bool MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     }
     // query data
     ClusterService::QueryMatrixInfo(request.params, response.body);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Communication

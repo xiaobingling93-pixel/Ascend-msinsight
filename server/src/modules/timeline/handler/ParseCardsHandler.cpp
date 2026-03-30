@@ -51,9 +51,7 @@ bool Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Pro
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     response.body.isContinueParse = true;
-    WsSession &session = *WsSessionManager::Instance().GetSession();
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 }

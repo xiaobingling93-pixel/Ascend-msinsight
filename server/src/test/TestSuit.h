@@ -33,11 +33,13 @@
 #include "RepositoryFactory.h"
 #include "DataEngine.h"
 #include "RenderEngine.h"
+#include "DtFramework.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Summary;
 using namespace Dic::Module::Memory;
 using namespace Dic;
+using namespace Dic::DT::Framework;
 
 class TestSuit : public ::testing::Test {
 public:
@@ -64,10 +66,13 @@ public:
 
     // 获取server(.../server)
     static std::string GetServerHome();
-    // 获取server/src下的测试目录.../server/src/test)
     static std::string GetSrcTestPath();
-    // 获取根目录下的测试目录
     static std::string GetRootTestPath();
+    template<typename... Args>
+    static std::string GetTestDataFile(Args... paths)
+    {
+        return FileUtil::SplicePath(DtFramework::GetTestDataDirPath(TestPathType::SRC_TEST_DATA), paths...);
+    }
 private:
     // 禁止拷贝构造和赋值操作
     TestSuit(const TestSuit&) = delete;

@@ -34,9 +34,8 @@ bool QueryCachelineRecordHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     CachelineRecordResponse &response = *responsePtr;
     SetBaseResponse(*requestPtr, response);
     response.body.cachelineRecords = QueryCachelineRecord(SourceFileParser::Instance().GetFilePath());
-    SetResponseResult(response, true);
     // add response to response queue in session
-    Server::WsSessionManager::Instance().GetSession()->OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

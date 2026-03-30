@@ -42,10 +42,8 @@ bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         SendResponse(std::move(responsePtr), false);
         return true;
     }
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Timeline

@@ -24,7 +24,6 @@ bool QueryTableDataDetailHandler::HandleRequest(std::unique_ptr<Dic::Protocol::R
 {
     auto& request = dynamic_cast<TableDataDetailRequest&>(*requestPtr);
     std::unique_ptr<TableDataDetailResponse> responsePtr = std::make_unique<TableDataDetailResponse>();
-    WsSession& session = *WsSessionManager::Instance().GetSession();
     TableDataDetailResponse& response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
@@ -40,7 +39,7 @@ bool QueryTableDataDetailHandler::HandleRequest(std::unique_ptr<Dic::Protocol::R
     } else if (request.params.type == "1") {
         ComputeLinkPageDetail(request, response, database);
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

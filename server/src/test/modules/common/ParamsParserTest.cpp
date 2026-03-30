@@ -59,14 +59,14 @@ TEST_F(ParamsParserTest, testParamsParserErr)
 
 TEST_F(ParamsParserTest, testWsSession)
 {
-    Dic::Server::WsChannel *ws;
+    Dic::Server::WsChannel *ws = nullptr;
     std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
     int waitTime = 10;
     session->WaitForExit(waitTime);
-    session->GetChannel();
-    session->GetCreateTime();
-    session->GetStartTime();
-    session->GetStopTime();
+    EXPECT_EQ(session->GetChannel(), nullptr);
+    EXPECT_NE(session->GetCreateTime(), 0);
+    EXPECT_EQ(session->GetStartTime(), 0);
+    EXPECT_EQ(session->GetStopTime(), 0);
     uint32_t deadTime = 100;
     session->SetDeadTime(deadTime);
     EXPECT_EQ(session->GetDeadTime(), deadTime);

@@ -21,19 +21,16 @@
 #include <string>
 namespace Dic::DT::Framework
 {
-/**
- * @brief  This class used to provide public func to DT write
- */
+enum class TestPathType {
+    SRC_TEST_DATA = 0,
+    ROOT_TEST = 1
+};
+
 class DtFramework
 {
 public:
-    /**
-     *
-     * @param version 0- {projectRootPath}/server/src/test/test_data,  1-{projectRootPath}/test
-     * @return string
-     */
-    static std::string GetTestDataDirPath(int version=0);
-
+    static std::string GetTestDataDirPath(TestPathType type = TestPathType::SRC_TEST_DATA);
+    static std::string GetTestDataDirPath(int version);
 };
 }
 

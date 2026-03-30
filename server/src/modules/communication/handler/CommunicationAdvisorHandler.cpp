@@ -47,8 +47,7 @@ bool CommunicationAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     CommunicationAdvisor advisor;
     advisor.Register();
     advisor.GenerateAdvisor(response.body.items, request.params.clusterPath);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Communication

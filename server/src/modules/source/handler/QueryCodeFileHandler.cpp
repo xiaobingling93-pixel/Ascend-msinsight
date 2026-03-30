@@ -30,21 +30,17 @@ using namespace Dic::Server;
 bool QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceCodeFileRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SourceCodeFileResponse> responsePtr = std::make_unique<SourceCodeFileResponse>();
     SourceCodeFileResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     if (auto [isVaild, errMsg] = request.params.Valid(); isVaild == false) {
         ServerLog::Error("Parameter of command ", request.command, "is invaild, error:", errMsg);
-        SetResponseResult(response, false, errMsg, REQUEST_PARAMS_ERROR);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
     const std::string &fileContent = SourceFileParser::Instance().GetSourceByName(request.params.sourceName);
     response.body.fileContent = fileContent;
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

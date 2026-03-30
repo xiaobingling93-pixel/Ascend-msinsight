@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include "GlobalDefs.h"
 #include "ProjectParserFactory.h"
+#include "FileUtil.h"
 
 using namespace Dic;
 using namespace Dic::Module;
@@ -38,24 +39,24 @@ TEST_F(ParserFactoryTest, GetImportTypeDbTest)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt/ASCEND_PROFILER_OUTPUT";
-    const std::string dbPath = folderPath + "/ascend_pytorch_profiler_0.db";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "test", "ubuntu_ascend_pt", "ASCEND_PROFILER_OUTPUT");
+    const std::string dbPath = Dic::FileUtil::SplicePath(folderPath, "ascend_pytorch_profiler_0.db");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::string pathList1{currPath.substr(0, index) + "test/data/test"};
+    std::string pathList1{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "test")};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
     std::pair<std::string, ParserType> expect1{pathList1, ParserType::DB};
     EXPECT_EQ(result1, expect1);
 
-    std::string pathList2{currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt"};
+    std::string pathList2{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "test", "ubuntu_ascend_pt")};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
     std::pair<std::string, ParserType> expect2{pathList2, ParserType::DB};
     EXPECT_EQ(result2, expect2);
 
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/test";
+    const std::string rmCommand = "rm -rf " + pathList1;
     system(rmCommand.c_str());
 #endif
 }
@@ -65,23 +66,23 @@ TEST_F(ParserFactoryTest, GetImportTypeDbClusterTest)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output";
-    const std::string dbPath = folderPath + "/cluster_analysis.db";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "cluster", "cluster_analysis_output");
+    const std::string dbPath = Dic::FileUtil::SplicePath(folderPath, "cluster_analysis.db");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::string pathList1{currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output"};
+    std::string pathList1{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "cluster", "cluster_analysis_output")};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
     std::pair<std::string, ParserType> expect1{pathList1, ParserType::DB};
     EXPECT_EQ(result1, expect1);
-    std::string pathList2{currPath.substr(0, index) + "test/data/cluster"};
+    std::string pathList2{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "cluster")};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
     std::pair<std::string, ParserType> expect2{pathList2, ParserType::DB};
     EXPECT_EQ(result2, expect2);
 
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/cluster";
+    const std::string rmCommand = "rm -rf " + pathList2;
     system(rmCommand.c_str());
 #endif
 }
@@ -91,19 +92,19 @@ TEST_F(ParserFactoryTest, GetImportTypeDbNPUMonitorTest)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/npumonitor";
-    const std::string dbPath = folderPath + "/msmonitor_99092_20250901114924883_0.db";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "npumonitor");
+    const std::string dbPath = Dic::FileUtil::SplicePath(folderPath, "msmonitor_99092_20250901114924883_0.db");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::string pathList1{currPath.substr(0, index) + "test/data/npumonitor"};
+    std::string pathList1{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "npumonitor")};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
     std::pair<std::string, ParserType> expect1{pathList1, ParserType::DB_NPUMONITOR};
     EXPECT_EQ(result1, expect1);
 
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string rmCommand = "rm -rf " + pathList1;
     system(rmCommand.c_str());
 #endif
 }
@@ -112,7 +113,7 @@ TEST_F(ParserFactoryTest, GetImportTypeACLGraphDebugTextTest)
 {
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    std::string pathList1{currPath.substr(0, index) + "test/data/aclgraph_debug/graph_debug.json"};
+    std::string pathList1{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "aclgraph_debug", "graph_debug.json")};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
     std::pair<std::string, ParserType> expect1{pathList1, ParserType::ACLGRPAH_DEBUG_JSON};
     EXPECT_EQ(result1, expect1);
@@ -123,24 +124,24 @@ TEST_F(ParserFactoryTest, GetImportTypeTextTest)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt/ASCEND_PROFILER_OUTPUT";
-    const std::string dbPath = folderPath + "/trace_view.json";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "test", "ubuntu_ascend_pt", "ASCEND_PROFILER_OUTPUT");
+    const std::string dbPath = Dic::FileUtil::SplicePath(folderPath, "trace_view.json");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::string pathList1{currPath.substr(0, index) + "test/data/test"};
+    std::string pathList1{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "test")};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
     std::pair<std::string, ParserType> expect1{pathList1, ParserType::JSON};
     EXPECT_EQ(result1, expect1);
 
-    std::string pathList2{currPath.substr(0, index) + "test/data/test/ubuntu_ascend_pt"};
+    std::string pathList2{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "test", "ubuntu_ascend_pt")};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
     std::pair<std::string, ParserType> expect2{pathList2, ParserType::JSON};
     EXPECT_EQ(result2, expect2);
 
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/test";
+    const std::string rmCommand = "rm -rf " + pathList1;
     system(rmCommand.c_str());
 #endif
 }
@@ -150,24 +151,24 @@ TEST_F(ParserFactoryTest, GetImportTypeTextClusterTest)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output";
-    const std::string dbPath = folderPath + "/cluster_communication.json";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "cluster", "cluster_analysis_output");
+    const std::string dbPath = Dic::FileUtil::SplicePath(folderPath, "cluster_communication.json");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::string pathList1{currPath.substr(0, index) + "test/data/cluster/cluster_analysis_output"};
+    std::string pathList1{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "cluster", "cluster_analysis_output")};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
     std::pair<std::string, ParserType> expect1{pathList1, ParserType::JSON};
     EXPECT_EQ(result1, expect1);
 
-    std::string pathList2{currPath.substr(0, index) + "test/data/cluster"};
+    std::string pathList2{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "cluster")};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
     std::pair<std::string, ParserType> expect2{pathList2, ParserType::JSON};
     EXPECT_EQ(result2, expect2);
 
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/cluster";
+    const std::string rmCommand = "rm -rf " + pathList2;
     system(rmCommand.c_str());
 #endif
 }
@@ -177,24 +178,24 @@ TEST_F(ParserFactoryTest, GetImportTypeOtherTest)
 #ifdef __linux__
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find("server");
-    const std::string folderPath = currPath.substr(0, index) + "test/data/scalar/scalar_data";
-    const std::string dbPath = folderPath + "/tf.event.out.1";
+    const std::string folderPath = Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "scalar", "scalar_data");
+    const std::string dbPath = Dic::FileUtil::SplicePath(folderPath, "tf.event.out.1");
     const std::string mkdirCommand = "mkdir -p " + folderPath;
     system(mkdirCommand.c_str());
     const std::string touchCommand = "touch " + dbPath;
     system(touchCommand.c_str());
 
-    std::string pathList1{currPath.substr(0, index) + "test/data/scalar"};
+    std::string pathList1{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "scalar")};
     std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
     std::pair<std::string, ParserType> expect1{pathList1, ParserType::OTHER};
     EXPECT_EQ(result1, expect1);
 
-    std::string pathList2{currPath.substr(0, index) + "test/data/scalar_data"};
+    std::string pathList2{Dic::FileUtil::SplicePath(currPath.substr(0, index), "test", "data", "scalar_data")};
     std::pair<std::string, ParserType> result2 = ParserFactory::GetImportType(pathList2);
     std::pair<std::string, ParserType> expect2{pathList2, ParserType::OTHER};
     EXPECT_EQ(result2, expect2);
 
-    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/scalar";
+    const std::string rmCommand = "rm -rf " + pathList1;
     system(rmCommand.c_str());
 #endif
 }

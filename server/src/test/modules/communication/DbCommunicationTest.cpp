@@ -37,11 +37,11 @@ public:
     {
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        std::string dataDir = TestSuit::GetSrcTestPath() + R"(test_data/full_db/)";
-        std::string dbFilePath = dataDir + "cluster_analysis.db";
+        std::string dataDir = TestSuit::GetTestDataFile("full_db");
+        std::string dbFilePath = FileUtil::SplicePath(dataDir, "cluster_analysis.db");
         DataBaseManager::Instance().SetDataType(DataType::DB, dbFilePath);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbFilePath);
-        std::string clusterDbPath = dataDir + "cluster_analysis.db";
+        std::string clusterDbPath = FileUtil::SplicePath(dataDir, "cluster_analysis.db");
         Dic::Module::FullDb::DataBaseManager::Instance().CreateClusterConnectionPool(COMPARE, clusterDbPath,
             Dic::Module::Timeline::DataType::DB);
         auto clusterDatabase = Dic::Module::FullDb::DataBaseManager::Instance().GetClusterDatabase(COMPARE);

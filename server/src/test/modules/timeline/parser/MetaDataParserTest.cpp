@@ -30,7 +30,7 @@ protected:
         std::string currPath = Dic::FileUtil::GetCurrPath();
         int index = currPath.find("server");
         currPath = currPath.substr(0, index);
-        filePath = currPath + R"(server/src/test/test_data/metadata/profiler_metadata.json)";
+        filePath = Dic::FileUtil::SplicePath(currPath, "server", "src", "test", "test_data", "metadata", "profiler_metadata.json");
     }
 };
 

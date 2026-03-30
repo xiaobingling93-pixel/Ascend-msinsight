@@ -21,6 +21,7 @@
 #include "HcclRepo.h"
 #include "TrackInfoManager.h"
 #include "DominQuery.h"
+#include "FileUtil.h"
 
 using namespace Dic::Module::Timeline;
 class DataEngineTest : public ::testing::Test {
@@ -37,11 +38,7 @@ public:
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const u_long index = currPath.find("server");
         currPath = currPath.substr(0, index + std::strlen("server"));
-#ifdef _WIN32
-        g_testDbPath = currPath + R"(\src\test\test_data\test_data_engine.db)";
-#else
-        g_testDbPath = currPath + R"(/src/test/test_data/test_data_engine.db)";
-#endif
+        g_testDbPath = Dic::FileUtil::SplicePath(currPath, "src", "test", "test_data", "test_data_engine.db");
         g_testDataBase.OpenDb(g_testDbPath, true);
         DataBaseManager::Instance().SetDataType(DataType::DB, g_testDbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", g_testDbPath);

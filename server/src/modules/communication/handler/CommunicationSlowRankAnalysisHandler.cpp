@@ -27,7 +27,6 @@ using namespace Dic::Server;
 bool CommunicationSlowRankAnalysisHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<DurationListRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<CommunicationSlowRankAnalysisResponse> responsePtr =
         std::make_unique<CommunicationSlowRankAnalysisResponse>();
     CommunicationSlowRankAnalysisResponse &response = *responsePtr;
@@ -43,8 +42,7 @@ bool CommunicationSlowRankAnalysisHandler::HandleRequest(std::unique_ptr<Protoco
         SendResponse(std::move(responsePtr), false);
         return false;
     }
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 }

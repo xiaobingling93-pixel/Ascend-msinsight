@@ -28,29 +28,25 @@ using namespace Dic::Server;
 bool QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ThreadDetailRequest &request = dynamic_cast<ThreadDetailRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitThreadDetailResponse> responsePtr = std::make_unique<UnitThreadDetailResponse>();
     UnitThreadDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     if (std::string errMsg; !request.params.CheckParams(errMsg)) {
         ServerLog::Error("Query thread detail failed: " + errMsg);
         SetTimelineError(ErrorCode::PARAMS_ERROR);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query thread detail failed to get connection.");
         SetTimelineError(ErrorCode::QUERY_THREAD_DETAIL_FAILED);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     uint64_t trackId =
         TrackInfoManager::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     renderEngine->QueryThreadDetail(request.params, response.body, trackId);
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Timeline

@@ -47,18 +47,9 @@ class OperatorRequestHandlerTest : public TestSuit {
 public:
     static void SetUpTestSuite()
     {
-        Dic::Server::WsChannel *ws;
-        std::unique_ptr<WsSessionImpl> session = std::make_unique<WsSessionImpl>(ws);
-        Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
     static void TearDownTestSuite()
     {
-        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
-        if (session != nullptr) {
-            session->SetStatus(Dic::Server::WsSession::Status::CLOSED);
-            session->WaitForExit();
-            Dic::Server::WsSessionManager::Instance().RemoveSession();
-        }
         DataBaseManager::Instance().Clear();
         BaselineManagerService::ResetBaseline(true);
     }
@@ -68,7 +59,7 @@ public:
         DataBaseManager::Instance().Clear();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        std::string fullDbPath = testDataDir + R"(full_db/msprof_0.db)";
+        std::string fullDbPath = Dic::FileUtil::SplicePath(testDataDir, "full_db", "msprof_0.db");
         DataBaseManager::Instance().SetDataType(DataType::DB, fullDbPath);
         auto summeryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
@@ -89,7 +80,7 @@ public:
     {
         InitBaseLineManager();
         // 创建DB场景的baseline基线manager
-        std::string filePathText = testDataDir + R"(test_rank_0/ASCEND_PROFILER_OUTPUT)";
+        std::string filePathText = Dic::FileUtil::SplicePath(testDataDir, "test_rank_0", "ASCEND_PROFILER_OUTPUT");
         BaselineInfo baselineInfo;
         baselineInfo.parsedFilePath = filePathText;
         BaselineSettingRequest request;
@@ -117,7 +108,7 @@ public:
     }
 
 protected:
-    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + "test_data/";
+    inline static std::string testDataDir = TestSuit::GetTestDataFile();
     inline static int retry = 2;
     static ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
                                                  const std::string &importType, Dic::ProjectTypeEnum projectType,
@@ -140,8 +131,8 @@ protected:
 
     static void InitProjectExplorerData()
     {
-        std::string filePathText = testDataDir + R"(test_rank_0/ASCEND_PROFILER_OUTPUT)";
-        std::string filePathDb = testDataDir + R"(full_db/ascend_pytorch_profiler.db)";
+        std::string filePathText = Dic::FileUtil::SplicePath(testDataDir, "test_rank_0", "ASCEND_PROFILER_OUTPUT");
+        std::string filePathDb = Dic::FileUtil::SplicePath(testDataDir, "full_db", "ascend_pytorch_profiler.db");
         std::vector<ProjectExplorerInfo> infos;
         std::vector<std::string> parseFileList {filePathText};
         ProjectExplorerInfo info = CreateProjectData("testProject", "projectFilePath",

@@ -37,7 +37,6 @@ bool DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     DistributionResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
@@ -50,10 +49,10 @@ bool DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         SetCommunicationError(ErrorCode::QUERY_COMMUNICATION_DISTRIBUTION_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication distribution data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Communication

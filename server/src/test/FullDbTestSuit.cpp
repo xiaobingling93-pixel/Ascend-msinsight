@@ -49,8 +49,7 @@ public:
         dataEngine->SetRepositoryFactory(respotoryFactory);
         auto renderEngine = RenderEngine::Instance();
         renderEngine->SetDataEngineInterface(dataEngine);
-        const std::string srcTestPath = TestSuit::GetSrcTestPath(); // 取 server 前的文件路径
-        std::string dbPath3 = srcTestPath + R"(test_data/full_db/msprof_0.db)";
+        std::string dbPath3 = TestSuit::GetTestDataFile("full_db", "msprof_0.db");
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath3);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbPath3);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);

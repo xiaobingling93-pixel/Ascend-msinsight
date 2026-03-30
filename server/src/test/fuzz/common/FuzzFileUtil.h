@@ -58,7 +58,7 @@ public:
             return false;
         }
         try {
-            std::string fullPath = baseDir + "/" + filename;
+            std::string fullPath = FileUtil::SplicePath(baseDir, filename);
             if (isFile) {
                 std::ofstream file(fullPath);
                 if (!file.is_open()) {
@@ -88,7 +88,7 @@ public:
             return false;
         }
         try {
-            fs::create_symlink(baseDir, baseDir + "/" + symlinkName);
+            fs::create_symlink(baseDir, FileUtil::SplicePath(baseDir, symlinkName));
             return true;
         } catch (const std::exception& e) {
             std::cerr << "Caught runtime_error: " << e.what() << std::endl;
@@ -99,7 +99,7 @@ public:
     inline bool CreateCircularSymlink(const std::string& symlinkName) const
     {
         try {
-            fs::create_symlink(baseDir + "/" + symlinkName, baseDir + "/" + symlinkName);
+            fs::create_symlink(FileUtil::SplicePath(baseDir, symlinkName), FileUtil::SplicePath(baseDir, symlinkName));
             return true;
         } catch (std::exception& e) {
             std::cerr << "Caught runtime_error: " << e.what() << std::endl;
@@ -157,7 +157,7 @@ public:
     // 创建权限异常文件/目录
     inline bool CreateInsecurityPermissionFileOrDir(const std::string& filename, bool isFile)
     {
-        std::string fullPath = baseDir + "/" + filename;
+        std::string fullPath = FileUtil::SplicePath(baseDir, filename);
         if (!CreateRegularFileOrDir(filename, isFile)) {
             return false;
         }

@@ -16,6 +16,7 @@
  * -------------------------------------------------------------------------
  */
 #include <gtest/gtest.h>
+#include <algorithm>
 #include "TraceTime.h"
 
 using namespace Dic::Module::Timeline;

@@ -28,15 +28,13 @@ using namespace Global;
 bool UpdateProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoUpdateRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ProjectExplorerInfoUpdateResponse> responsePtr =
             std::make_unique<ProjectExplorerInfoUpdateResponse>();
     ProjectExplorerInfoUpdateResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     bool res = ProjectExplorerManager::Instance().UpdateProjectName(request.params.oldProjectName,
                                                                     request.params.newProjectName);
-    SetResponseResult(response, res);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), res);
     return res;
 }
 } // end of namespace Module

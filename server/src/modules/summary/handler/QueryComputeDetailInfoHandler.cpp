@@ -26,7 +26,6 @@ using namespace Dic::Server;
 bool QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<ComputeDetailRequest &>(*requestPtr);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ComputeDetailResponse> responsePtr = std::make_unique<ComputeDetailResponse>();
     ComputeDetailResponse &response = *responsePtr;
     SetBaseResponse(request, response);
@@ -42,13 +41,10 @@ bool QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         !database->QueryTotalNumByAcceleratorCore(request.params.timeFlag, response.totalNum)) {
         ServerLog::Warn("Failed to query compute detail or query total num.");
         SetSummaryError(ErrorCode::QUERY_COMPUTE_DETAIL_FAILED);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

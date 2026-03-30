@@ -42,11 +42,11 @@ protected:
     std::string heatMapProfilingPath;
     void SetUp() override
     {
-        filePath = TestSuit::GetSrcTestPath() + R"(test_data/cluster_analysis_output)";
-        baselineFilePath = TestSuit::GetSrcTestPath() + R"(test_data/baseline_cluster/cluster_analysis_output)";
-        hotspotPath = TestSuit::GetSrcTestPath() + R"(test_data/expert_hotspot)";
-        deploymentPath = TestSuit::GetSrcTestPath() + R"(test_data/expert_deployment)";
-        heatMapProfilingPath = TestSuit::GetSrcTestPath() + R"(test_data/heatMap/)";
+        filePath = TestSuit::GetTestDataFile("cluster_analysis_output");
+        baselineFilePath = TestSuit::GetTestDataFile("baseline_cluster", "cluster_analysis_output");
+        hotspotPath = TestSuit::GetTestDataFile("expert_hotspot");
+        deploymentPath = TestSuit::GetTestDataFile("expert_deployment");
+        heatMapProfilingPath = TestSuit::GetTestDataFile("heatMap");
     }
 
     void InitParser(const std::string &dataPath)
@@ -62,7 +62,7 @@ protected:
     static void WaitParseEnd(std::vector<std::string> statusList)
     {
         while (true) {
-            int i = 0;
+            size_t i = 0;
             for (const auto& tmp : statusList) {
                 if (ParserStatusManager::Instance().GetParserStatus(tmp) != ParserStatus::FINISH) {
                     break;

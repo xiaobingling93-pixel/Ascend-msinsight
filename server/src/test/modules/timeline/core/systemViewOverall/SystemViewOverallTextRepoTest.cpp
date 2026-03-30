@@ -43,10 +43,10 @@ public:
         std::string subStr = "server";
         size_t index = currPath.rfind(subStr);
         currPath = currPath.substr(0, index - 1);
-        std::string refPath0 = R"(/test/data/pytorch/text/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/)";
-        std::string refPathWithoutPMU = R"(/test/data/pytorch/text/level0/rank1_ascend_pt/ASCEND_PROFILER_OUTPUT/)";
-        std::string refPath0Db = currPath + refPath0 + "mindstudio_insight_data.db";
-        std::string refPathWithoutPMUDb = currPath + refPathWithoutPMU + "mindstudio_insight_data.db";
+        std::string refPath0 = FileUtil::SplicePath("test", "data", "pytorch", "text", "level1","rank0_ascend_pt","ASCEND_PROFILER_OUTPUT");
+        std::string refPathWithoutPMU = FileUtil::SplicePath("test","data","pytorch","text","level0","rank1_ascend_pt","ASCEND_PROFILER_OUTPUT");
+        std::string refPath0Db = Dic::FileUtil::SplicePath(currPath, refPath0, "mindstudio_insight_data.db");
+        std::string refPathWithoutPMUDb = Dic::FileUtil::SplicePath(currPath, refPathWithoutPMU, "mindstudio_insight_data.db");
         DataBaseManager::Instance().SetDataType(DataType::TEXT, refPath0Db);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH, refPath0Db);
         DataBaseManager::Instance().SetDataType(DataType::TEXT, refPathWithoutPMUDb);
@@ -55,17 +55,17 @@ public:
         DataBaseManager::Instance().CreateTraceConnectionPool("1", refPathWithoutPMUDb);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(refPath0Db, "0", "0");
         DataBaseManager::Instance().UpdateRankIdToDeviceId(refPathWithoutPMUDb, "1", "1");
-        JsonFileParserManager::GetTraceFileParser().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",
+        JsonFileParserManager::GetTraceFileParser().Parse({Dic::FileUtil::SplicePath(currPath, refPath0, "trace_view.json")}, "0", "",
                                           refPath0Db);
         WaitParseEnd({"0"});
-        JsonFileParserManager::GetTraceFileParser().Parse({currPath + refPathWithoutPMU + "trace_view.json"}, "1", "",
+        JsonFileParserManager::GetTraceFileParser().Parse({Dic::FileUtil::SplicePath(currPath, refPathWithoutPMU, "trace_view.json")}, "1", "",
                                           refPathWithoutPMUDb);
         WaitParseEnd({"1"});
-        std::string testDataPath0 = currPath + R"(/test/data/pytorch/text/level1/rank0_ascend_pt)";
+        std::string testDataPath0 = Dic::FileUtil::SplicePath(currPath, "test", "data", "pytorch", "text", "level1", "rank0_ascend_pt");
         KernelParse::Instance().Parse(
             {refPath0Db, "0", testDataPath0});
         WaitParseEnd({KERNEL_PREFIX + "0"});
-        std::string testDataPathWithoutPmu = currPath + R"(/test/data/pytorch/text/level0/rank1_ascend_pt)";
+        std::string testDataPathWithoutPmu = Dic::FileUtil::SplicePath(currPath, "test", "data", "pytorch", "text", "level0", "rank1_ascend_pt");
         KernelParse::Instance().Parse(
             {refPathWithoutPMUDb, "1", testDataPathWithoutPmu});
         WaitParseEnd({KERNEL_PREFIX + "1"});
@@ -74,7 +74,7 @@ public:
     static void WaitParseEnd(std::vector<std::string> statusList)
     {
         while (true) {
-            int i = 0;
+            size_t i = 0;
             for (const auto& tmp : statusList) {
                 if (ParserStatusManager::Instance().GetParserStatus(tmp) != ParserStatus::FINISH) {
                     break;

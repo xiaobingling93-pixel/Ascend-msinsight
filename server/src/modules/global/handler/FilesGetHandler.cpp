@@ -28,7 +28,6 @@ bool FilesGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     FilesGetRequest &request = dynamic_cast<FilesGetRequest &>(*requestPtr.get());
     ServerLog::Info("Files get start");
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<FilesGetResponse> responsePtr = std::make_unique<FilesGetResponse>();
     FilesGetResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -37,8 +36,7 @@ bool FilesGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
                                      response.body.childrenFolders,
                                      response.body.childrenFiles,
                                      response.body.exist);
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Global

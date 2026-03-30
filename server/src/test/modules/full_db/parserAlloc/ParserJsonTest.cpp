@@ -20,13 +20,14 @@
 #include "ParserJson_mock_data.h"
 #include "ProjectParserJson.h"
 #include "TestSuit.h"
+#include "FileUtil.h"
 using namespace Dic::Module;
 using namespace Dic::Module::ParserJsonMock;
 class ParserJsonTest : public ::testing::Test {
 protected:
     inline std::string GetTestDataDir()
     {
-        return TestSuit::GetSrcTestPath() + R"(test_data)";
+        return TestSuit::GetTestDataFile();
     }
 };
 
@@ -209,7 +210,7 @@ TEST_F(ParserJsonTest, TestCheckHasTraceJsonMemoryDataOperatorData)
 TEST_F(ParserJsonTest, BuildProjectInfoWithSingleFile)
 {
     ProjectExplorerInfo projectInfo;
-    std::string projectPath = GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)";
+    std::string projectPath = Dic::FileUtil::SplicePath(GetTestDataDir(), "test_rank_0", "ASCEND_PROFILER_OUTPUT", "trace_view.json");
     projectInfo.fileName = projectPath;
     Dic::Module::ProjectParserJson::BuildProjectExploreInfo(projectInfo, {projectPath});
     EXPECT_EQ(projectInfo.projectFileTree.size(), 1);
@@ -227,7 +228,7 @@ TEST_F(ParserJsonTest, BuildProjectInfoWithSingleFile)
 TEST_F(ParserJsonTest, BuildProjectInfoWithAscendProfilerOutputDir)
 {
     ProjectExplorerInfo projectInfo;
-    std::string projectPath = GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT)";
+    std::string projectPath = Dic::FileUtil::SplicePath(GetTestDataDir(), "test_rank_0", "ASCEND_PROFILER_OUTPUT");
     projectInfo.fileName = projectPath;
     Dic::Module::ProjectParserJson::BuildProjectExploreInfo(projectInfo, {projectPath});
     EXPECT_EQ(projectInfo.projectFileTree.size(), 1);
@@ -247,10 +248,10 @@ TEST_F(ParserJsonTest, GetParseFileByImportFile)
     ProjectParserJson parser(JsonFileParserManager::GetTraceFileParser());
     std::string msg;
     auto files = parser.GetParseFileByImportFile(
-        GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)", msg);
+        Dic::FileUtil::SplicePath(GetTestDataDir(), "test_rank_0", "ASCEND_PROFILER_OUTPUT", "trace_view.json"), msg);
     EXPECT_EQ(files.size(), 1);
-    EXPECT_EQ(files[0], GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)");
-    auto files2 = parser.GetParseFileByImportFile(GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT)", msg);
+    EXPECT_EQ(files[0], Dic::FileUtil::SplicePath(GetTestDataDir(), "test_rank_0", "ASCEND_PROFILER_OUTPUT", "trace_view.json"));
+    auto files2 = parser.GetParseFileByImportFile(Dic::FileUtil::SplicePath(GetTestDataDir(), "test_rank_0", "ASCEND_PROFILER_OUTPUT"), msg);
     EXPECT_EQ(files2.size(), 1);
 }
 
@@ -263,21 +264,21 @@ TEST_F(ParserJsonTest, BuildProjectCluster)
 
 TEST_F(ParserJsonTest, GetDeviceIdFromMemory)
 {
-    std::string parseFolder = GetTestDataDir() + R"(/test_rank_0)";
+    std::string parseFolder = Dic::FileUtil::SplicePath(GetTestDataDir(), "test_rank_0");
     auto deviceId = ProjectParserJson::GetDeviceIdFromMemory(parseFolder);
     EXPECT_EQ(deviceId, "0");
 }
 
 TEST_F(ParserJsonTest, GetDeviceIdFromOperator)
 {
-    std::string parseFolder = GetTestDataDir() + R"(/test_rank_0)";
+    std::string parseFolder = Dic::FileUtil::SplicePath(GetTestDataDir(), "test_rank_0");
     auto deviceId = ProjectParserJson::GetDeviceIdFromKernel(parseFolder);
     EXPECT_EQ(deviceId, "");
 }
 
 TEST_F(ParserJsonTest, GetDeviceIdFromPath)
 {
-    std::string parseFolder = GetTestDataDir() + R"(/msprof/normal/PROF_20250620)";
+    std::string parseFolder = Dic::FileUtil::SplicePath(GetTestDataDir(), "msprof", "normal", "PROF_20250620");
     auto deviceId = ProjectParserJson::GetDeviceIdFromPath(parseFolder);
     EXPECT_EQ(deviceId, "");
 }
@@ -296,7 +297,7 @@ protected:
             ::testing::UnitTest::GetInstance()->current_test_info();
         std::string uniqueName = std::string(testInfo->name()) + "_" +
                                   std::to_string(std::rand()) + ".json";
-        std::string path = tempDir + uniqueName;
+        std::string path = Dic::FileUtil::SplicePath(tempDir, uniqueName);
 
         std::ofstream file(path);
         if (file.is_open()) {

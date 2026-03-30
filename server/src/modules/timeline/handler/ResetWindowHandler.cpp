@@ -36,7 +36,6 @@ using namespace Dic::Server;
 bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ResetWindowRequest &request = dynamic_cast<ResetWindowRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ResetWindowResponse> responsePtr = std::make_unique<ResetWindowResponse>();
     ResetWindowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -50,9 +49,7 @@ bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     MemSnapshotParser::Instance().Reset();
     MemScopeParser::Instance().Reset();
     BaselineManagerService::ResetBaseline(true);
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

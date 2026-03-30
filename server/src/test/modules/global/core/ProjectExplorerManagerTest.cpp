@@ -38,7 +38,7 @@ public:
     static void TearDownTestSuite() {}
 
 protected:
-    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + R"(test_data/)";
+    inline static std::string testDataDir = TestSuit::GetTestDataFile();
     ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
                                           const std::string &importType, Dic::ProjectTypeEnum projectType,
                                           const std::vector<std::string> dbPath)
@@ -102,7 +102,7 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
     InitProjectExplorerData();
     std::vector<std::string> filePathList;
     Dic::Protocol::ProjectCheckBody body;
-    std::string filePath = TestSuit::GetSrcTestPath() + "test_data/data.bin";
+    std::string filePath = TestSuit::GetTestDataFile("data.bin");
     filePathList.push_back(filePath);
     Dic::Protocol::ProjectErrorType result = ProjectExplorerManager::Instance().CheckProjectConflict(projectName,
                                                                                                      filePathList[0]);
@@ -165,12 +165,12 @@ TEST_F(ProjectExplorerManagerTest, GetProjectTypeWithOnlyMulitDbType)
 
 TEST_F(ProjectExplorerManagerTest, DeleteFileNode)
 {
-    std::string importPath =  + R"(/test_rank_1)";
+    std::string importPath = "test_rank_1";
     ProjectExplorerInfo projectInfo;
     projectInfo.fileName = importPath;
     projectInfo.projectName = "testDeleteFile";
     projectInfo.id = 1;
-    std::string parsedFilePath = importPath + R"(ASCEND_PROFILER_OUTPUT)";
+    std::string parsedFilePath = Dic::FileUtil::SplicePath(importPath, "ASCEND_PROFILER_OUTPUT");
     Dic::Module::ProjectParserJson::BuildProjectExploreInfo(projectInfo, {parsedFilePath});
     ProjectExplorerManager::Instance().SaveProjectExplorer(projectInfo, false);
     ProjectExplorerManager::Instance().DeleteProjectAndFilePath("testDeleteFile", {parsedFilePath});

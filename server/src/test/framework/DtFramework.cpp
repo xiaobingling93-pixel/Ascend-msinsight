@@ -21,15 +21,26 @@
 #include "StringUtil.h"
 namespace Dic::DT::Framework
 {
-std::string DtFramework::GetTestDataDirPath(int version)
+
+std::string DtFramework::GetTestDataDirPath(TestPathType type)
 {
     std::string currentPath = FileUtil::GetCurrPath();
     auto pos = currentPath.find("server");
-    auto prefix = currentPath.substr(0, pos + sizeof("server"));
-    if (version == 0) {
-        return FileUtil::SplicePath(prefix, "src", "test", "test_data");
+    auto prefix = currentPath.substr(0, pos + sizeof("server") - 1);
+
+    switch (type) {
+        case TestPathType::SRC_TEST_DATA:
+            return FileUtil::SplicePath(prefix, "src", "test", "test_data");
+        case TestPathType::ROOT_TEST:
+            return FileUtil::SplicePath(FileUtil::GetParentPath(prefix), "test");
+        default:
+            return FileUtil::SplicePath(prefix, "src", "test", "test_data");
     }
-    prefix = FileUtil::GetParentPath(prefix);
-    return FileUtil::SplicePath(prefix, "test");
 }
+
+std::string DtFramework::GetTestDataDirPath(int version)
+{
+    return GetTestDataDirPath(static_cast<TestPathType>(version));
+}
+
 }

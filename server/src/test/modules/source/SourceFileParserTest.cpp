@@ -32,8 +32,8 @@ public:
 
     static void SetUpTestCase()
     {
-        dataPath = TestSuit::GetSrcTestPath() + R"(test_data/data.bin)";
-        dbPath = TestSuit::GetSrcTestPath() + R"(test_data/compute_mindstudio_insight_data.db)";
+        dataPath = TestSuit::GetTestDataFile("data.bin");
+        dbPath = TestSuit::GetTestDataFile("compute_mindstudio_insight_data.db");
         DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool(dataPath, dbPath);
     }

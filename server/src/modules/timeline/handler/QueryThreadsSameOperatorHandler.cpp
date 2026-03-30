@@ -28,7 +28,6 @@ using namespace Dic::Server;
 bool QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitThreadsOperatorsRequest &request = dynamic_cast<UnitThreadsOperatorsRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitThreadsOperatorsResponse> responsePtr = std::make_unique<UnitThreadsOperatorsResponse>();
     UnitThreadsOperatorsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -37,16 +36,14 @@ bool QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
         SetTimelineError(ErrorCode::PARAMS_ERROR);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (db == nullptr) {
         ServerLog::Error("Query threads same operator failed to get connection.");
         SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::vector<uint64_t> trackIdList;
@@ -60,9 +57,7 @@ bool QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
     if (!result) {
         SetTimelineError(ErrorCode::QUERY_THREAD_SAME_OPERATORS_DETAIL_FAILED);
     }
-    SetResponseResult(response, result);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), result);
     return result;
 }
 

@@ -63,11 +63,11 @@ TEST(TestUtil, TestSplitToRankList)
     std::vector<std::pair<std::string, std::string>> fileList;
     std::pair<std::string, std::string> pair1;
     pair1.first = "1";
-    pair1.second = TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json";
+    pair1.second = TestSuit::GetTestDataFile("test_rank_1", "ASCEND_PROFILER_OUTPUT", "trace_view.json");
     fileList.push_back(pair1);
     std::pair<std::string, std::string> pair2;
     pair1.first = "0";
-    pair1.second = TestSuit::GetSrcTestPath() + "test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json";
+    pair1.second = TestSuit::GetTestDataFile("test_rank_0", "ASCEND_PROFILER_OUTPUT", "trace_view.json");
     fileList.push_back(pair2);
     std::map<std::string, std::vector<std::string>> result = FileUtil::SplitToRankList(fileList);
     EXPECT_EQ(result.size(), 2);
@@ -76,32 +76,26 @@ TEST(TestUtil, TestSplitToRankList)
 TEST(TestUtil, TestGetRankIdFromFile)
 {
     std::string rank = FileUtil::GetRankIdFromFile(
-            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
+            TestSuit::GetTestDataFile("test_rank_1", "ASCEND_PROFILER_OUTPUT", "trace_view.json"));
     EXPECT_EQ(rank, "1");
 }
 
 TEST(TestUtil, TestGetRankIdFromPath)
 {
     std::string rank = FileUtil::GetRankIdFromPath(
-            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
+            TestSuit::GetTestDataFile("test_rank_1", "ASCEND_PROFILER_OUTPUT", "trace_view.json"));
     auto result = FileUtil::CheckPathSecurity(
-            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json", CHECK_FILE_READ);
+            TestSuit::GetTestDataFile("test_rank_1", "ASCEND_PROFILER_OUTPUT", "trace_view.json"), CHECK_FILE_READ);
     EXPECT_EQ(rank, "test_rank_1");
     EXPECT_EQ(result.isSuccess, true);
 }
 
 TEST(TestUtil, TestGetDbPath)
 {
-#ifdef _WIN32
-    std::string fileId = FileUtil::GetDbPath(
-            TestSuit::GetSrcTestPath() + "test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\trace_view.json", "1");
-    EXPECT_EQ(fileId,
-            TestSuit::GetSrcTestPath() + "test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\mindstudio_insight_data.db");
-#else
-    std::string dbPath = FileUtil::GetDbPath(
-            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json", "1");
-    EXPECT_EQ(dbPath, TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db");
-#endif
+    std::string traceViewPath = TestSuit::GetTestDataFile("test_rank_1", "ASCEND_PROFILER_OUTPUT", "trace_view.json");
+    std::string dbPath = FileUtil::GetDbPath(traceViewPath, "1");
+    std::string expectedDbPath = TestSuit::GetTestDataFile("test_rank_1", "ASCEND_PROFILER_OUTPUT", "mindstudio_insight_data.db");
+    EXPECT_EQ(dbPath, expectedDbPath);
 }
 
 TEST(TestUtil, TestIdBuilder)
@@ -259,7 +253,7 @@ TEST(TestUtil, CheckPathValidFailedWhenFileIsExistedButPathIsTooLong)
 {
 #ifdef _WIN32
     std::string filePath(MAX_PATH, 'a');
-    EXPECT_EQ(FileUtil::CheckPathComm(filePath), false);
+    EXPECT_FALSE(FileUtil::CheckPathSecurity(filePath));
 #else
     std::string filePath(PATH_MAX, 'a');
     EXPECT_FALSE(FileUtil::CheckPathSecurity(filePath));
@@ -283,7 +277,7 @@ TEST(TestUtil, CheckPathValidFailedWhenFileIsSoftlink)
     // 创建软链接
     DWORD flags = SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
     EXPECT_NE(CreateSymbolicLink(linkPath, srcPath, flags), 0);
-    EXPECT_EQ(FileUtil::CheckPathComm("te\\nst.text"), false);
+    EXPECT_FALSE(FileUtil::CheckPathSecurity("te\\nst.text"));
 #else
     // 创建软链接
     EXPECT_EQ(symlink(srcPath, linkPath), 0);
@@ -312,7 +306,7 @@ TEST(TestUtil, CheckPathValidSuccessWhenFileIsExistAndPathIsInChinese)
         std::cerr << "无法创建文件: " << GetLastError() << std::endl;
     }
     CloseHandle(hFile);
-    EXPECT_EQ(FileUtil::CheckPathComm(".\\测试001.txt", CHECK_FILE_READ), true);
+    EXPECT_TRUE(FileUtil::CheckPathSecurity(".\\测试001.txt", CHECK_FILE_READ));
     EXPECT_NE(DeleteFileW(filePath), 0);
 #else
     // 源文件路径
@@ -425,7 +419,7 @@ TEST(TestUtil, GetRootPath)
 
 TEST(TestUtil, FindIfDbTypeByRegex)
 {
-    auto testDbDir = TestSuit::GetSrcTestPath() + R"(test_data/full_db)";
+    auto testDbDir = TestSuit::GetTestDataFile("full_db");
     const std::string DB_REG =
             R"((msprof_[0-9]{1,16}|((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis)\.db$)";
     const std::string traceViewReg =
