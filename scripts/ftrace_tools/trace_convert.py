@@ -642,7 +642,7 @@ class TraceConverter:
         return self.get_lines_from_file()
 
     def get_lines_from_file(self):
-        with open(self.trace_file_path, 'r') as file:
+        with open(self.trace_file_path, 'r', encoding='utf-8', errors='replace') as file:
             for line in file:
                 yield line.rstrip("\n")
 
