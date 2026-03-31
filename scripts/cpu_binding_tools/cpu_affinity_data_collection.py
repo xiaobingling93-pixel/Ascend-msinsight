@@ -31,6 +31,7 @@ import subprocess
 import argparse
 import logging
 from cpu_binding_utils import LoggerUtils, InputValidationUtils
+from cpu_pid_mapper import ContainerPidMapper
 
 
 class CpuAffinityCollector:
@@ -62,18 +63,19 @@ class CpuAffinityCollector:
             print("NPU_ID,NUMA,PID,PROCESS,TID,THREAD,PSR,CPU_AFFINITY")
         else:
             print(
-                f"{'NPU_ID':<8} {'NUMA':<15} {'PID':<10} "
+                f"{'NPU_ID':<8} {'NUMA':<15} {'PID':<20} "
                 f"{'PROCESS':<20} {'TID':<10} "
                 f"{'THREAD':<20} {'PSR':<6} {'CPU_AFFINITY'}"
             )
             print("-" * 110)
 
-    def print_row(self, npu_id, numa, pid, proc, tid, thread, psr, aff):
+    def print_row(self, npu_id, numa, pid, container_pid, proc, tid, thread, psr, aff):
         if self.csv_mode:
-            print(f"{npu_id},{numa},{pid},{proc},{tid},{thread},{psr},{aff}")
+            print(f"{npu_id},{numa},{pid}({container_pid}),{proc},{tid},{thread},{psr},{aff}")
         else:
+            pid_col = f"{str(pid)}({str(container_pid)})"
             print(
-                f"{str(npu_id):<8} {str(numa):<15} {str(pid):<10} "
+                f"{str(npu_id):<8} {str(numa):<15} {pid_col:<20} "
                 f"{proc[:19]:<20} {str(tid):<10} "
                 f"{thread[:19]:<20} {str(psr):<6} {aff}"
             )
@@ -255,6 +257,8 @@ class CpuAffinityCollector:
             if self._npu_topology_cache is None:
                 self._npu_topology_cache = topo
 
+            mapper = ContainerPidMapper(verbose=False)
+
             in_proc = False
             for line in output.splitlines():
                 if "Process id" in line:
@@ -281,12 +285,17 @@ class CpuAffinityCollector:
                 if not pid.isdigit():
                     continue
 
+                [container_pid] = mapper.map_container_pids([pid])
+                if container_pid is None:
+                    self.logger.warning(f"{pid} 映射容器 pid 未找到")
+                    continue
+
                 logical = topo.get((phys, chip), {}).get("logical")
                 if logical is None:
                     continue
 
                 numa = self._get_npu_numa(phys)
-                task_dir = f"/proc/{pid}/task"
+                task_dir = f"/proc/{container_pid}/task"
                 if not os.path.isdir(task_dir):
                     continue
 
@@ -296,13 +305,13 @@ class CpuAffinityCollector:
                     ) or "unknown"
 
                     if (
-                        tid == pid
+                        tid == container_pid
                         or self.NPU_THREAD_FIXED_PATTERN.match(tname)
                         or any(kw in tname.lower() for kw in safe_extra_keywords)
                     ):
-                        psr, aff = self._get_cpu_info(pid, tid)
+                        psr, aff = self._get_cpu_info(container_pid, tid)
                         self.print_row(
-                            logical, numa, pid, pname, tid, tname, psr, aff
+                            logical, numa, pid, container_pid, pname, tid, tname, psr, aff
                         )
         except subprocess.TimeoutExpired:
             self.logger.error("扫描 NPU 进程/线程超时")
@@ -336,7 +345,7 @@ class CpuAffinityCollector:
                 pname = self._get_file_content(f"/proc/{pid}/comm") or "kernel"
                 psr, aff = self._get_cpu_info(pid, tid)
 
-                self.print_row(nid, numa, pid, pname, tid, tname, psr, aff)
+                self.print_row(nid, numa, pid, pid, pname, tid, tname, psr, aff)
 
             if not found:
                 self.logger.debug("未发现 dev*_sq 线程")
@@ -366,7 +375,7 @@ class CpuAffinityCollector:
                 if any(kw in comm.lower() for kw in kw_set):
                     pname = self._get_file_content(f"/proc/{pid}/comm") or "unknown"
                     psr, aff = self._get_cpu_info(pid, tid)
-                    self.print_row("-", "-", pid, pname, tid, comm, psr, aff)
+                    self.print_row("-", "-", pid, pid,  pname, tid, comm, psr, aff)
         except subprocess.TimeoutExpired:
             self.logger.error("扫描 Datawork 进程/线程超时")
         except Exception:
