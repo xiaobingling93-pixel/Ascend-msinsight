@@ -374,6 +374,7 @@ test.describe('Timeline', () => {
         const secondLayerUnit = mainContainer.getByText('Python (3430895)');
 
         await secondLayerUnit.click();
+        await page.waitForTimeout(1000);
         await unitWrapperScroller
             .locator('canvas')
             .nth(1)
@@ -396,6 +397,7 @@ test.describe('Timeline', () => {
         const { communicationFrame } = new CommunicationPage(page);
 
         await unitWrapperScroller.getByText('Communication (3513236960)').click();
+        await page.waitForTimeout(1000);
         await timelineFrame.locator('.ant-spin-container > .drawCanvas').first().click({
             button: 'right',
             position: {
@@ -474,6 +476,7 @@ test.describe('Timeline', () => {
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const clickUnit = unitList.locator('.unit-info').first();
         await clickMenu(clickUnit, timelineFrame, 'Expand all');
+        await page.waitForTimeout(1000);
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('menu-click-expand-all.png', { maxDiffPixels: 4000 });
         await clickMenu(clickUnit, timelineFrame, 'Collapse all');

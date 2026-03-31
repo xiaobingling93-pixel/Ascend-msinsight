@@ -11,7 +11,7 @@ import * as path from 'path';
  * See https://playwright.dev/docs/test-configuration.
  */
 const isCI = !!process.env.CI;
-const getProfilerServerCmd = (port: number = 9000) => {
+const getProfilerServerCmd = (port = 9000) => {
     const platform = os.platform();
     let serverBinDir = '../server/output/';
     let profilerServer = 'profiler_server';
@@ -33,7 +33,7 @@ const getProfilerServerCmd = (port: number = 9000) => {
     }
 
     return `${serverBinDir}${profilerServer} --wsPort=${port} --logPath=${logPath}`;
-}
+};
 export default defineConfig({
     testDir: './src/tests',
     /* Maximum time one test can run for. */

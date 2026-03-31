@@ -175,9 +175,11 @@ test.describe('Operator(MultiMachines)', () => {
         // text切换到db数据
         // 选择db数据0卡，此时会重新加载
         const dbRank0 = frameworkPage.getRankLocator(FilePath.MULTI_NODES_NODE_0_RANK_0);
+        const statisticPromise = waitForResponse(await ws, (res) => res?.command === 'operator/statistic');
         await dbRank0.click();
         await page.mouse.move(0, 0);
-        await allCardParsedPromise;
+        await statisticPromise;
+        await page.waitForTimeout(1000);
 
         await hostSelector.waitFor({ state: 'attached' });
         const hostText = await hostSelect.getValue();
@@ -189,10 +191,12 @@ test.describe('Operator(MultiMachines)', () => {
         });
 
         // db切换到text数据
+        const statisticPromise2 = waitForResponse(await ws, (res) => res?.command === 'operator/statistic');
         const textRank1 = frameworkPage.getRankLocator(FilePath.TEXT_RANK_2);
         await textRank1.click();
         await page.mouse.move(0, 0);
-        await allCardParsedPromise;
+        await statisticPromise2;
+        await page.waitForTimeout(1000);
 
         await hostSelector.waitFor({ state: 'detached' });
         await page.waitForTimeout(400);

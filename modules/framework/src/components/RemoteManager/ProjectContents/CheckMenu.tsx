@@ -61,7 +61,7 @@ const CheckMenu = observer(({ editStatus, isAll, toggleCheckAll, checkedKeys }: 
                 cancelText={t('No')}
                 destroyTooltipOnHide={{ keepParent: false }}
             >
-                <BtnItem className={`btn-delete small danger ${checkedKeys.length === 0 ? 'disabled' : ''}`}><DeleteIcon/></BtnItem>
+                <BtnItem className={`btn-delete small danger ${checkedKeys.length === 0 ? 'disabled' : ''}`} data-testid="btn-delete"><DeleteIcon/></BtnItem>
             </Popconfirm>
         </CheckMenuContainer>
         : <></>;

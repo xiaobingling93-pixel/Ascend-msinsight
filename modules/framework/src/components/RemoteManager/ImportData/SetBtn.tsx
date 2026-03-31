@@ -39,7 +39,7 @@ const SetBtn = observer(({ session }: {session: Session}) => {
             });
         };
     }, [session.dataSources.length]);
-    return <BtnItem className={`btn-set ${session.dataSources.length > 0 ? '' : 'disabled'}`} onClick={switchEditStatus}>
+    return <BtnItem className={`btn-set ${session.dataSources.length > 0 ? '' : 'disabled'}`} data-testid="btn-set" onClick={switchEditStatus}>
         { session.projectContentEditStatus ? t('Cancel') : <SetIcon/> }
     </BtnItem>;
 });

@@ -153,8 +153,10 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox = new CheckboxHelpers(page, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, memoryFrame);
 
         const chart = memoryFrame.locator('.ant-spin-container > div > div:nth-child(2) > div:nth-child(1) > canvas');
+        await page.waitForTimeout(1000);
         const chartInfo = await chart.boundingBox();
 
+        console.log(chart, chartInfo);
         // 等待echarts加载完成才能框选
         await page.waitForTimeout(1000);
         const { x: startX, y: startY } = chartInfo;
@@ -631,7 +633,7 @@ test.describe('Memory(Text)', () => {
         const { memoryFrame } = memoryPage;
         const { fullPage } = new TimelinePage(page);
         await memoryFrame.locator('tr:nth-child(3) > td:nth-child(15)').getByRole('button').click();
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
         await page.mouse.move(0, 0);
         await expect(fullPage).toHaveScreenshot('text_memory_redirectToTimeline.png', {
             maxDiffPixels: 500,

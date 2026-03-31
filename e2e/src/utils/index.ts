@@ -44,6 +44,7 @@ export async function importData(page: Page, filePath: string = FilePath.TEXT): 
         await input.click();
         await input.fill(filePath);
         await input.press('Enter');
+        await page.waitForTimeout(1000);
         // 点击“确认”按钮
         await confirmBtn.click();
         await mainDialog.waitFor({ state: 'hidden', timeout: 3000 });

@@ -58,8 +58,8 @@ export class FrameworkPage {
 
     constructor(page: Page) {
         this.page = page;
-        this.settingsBtn = page.locator('.btn-set');
-        this.deleteAllBtn = page.locator('.btn-delete');
+        this.settingsBtn = page.getByTestId('btn-set');
+        this.deleteAllBtn = page.getByTestId('btn-delete');
         this.importDataBtn = page.locator('.btn-import');
         this.switchThemeBtn = page.locator('.switch-theme');
         this.switchLanguageBtn = page.getByTestId('switch-lng');

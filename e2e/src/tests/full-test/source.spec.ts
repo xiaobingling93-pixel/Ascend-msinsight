@@ -67,8 +67,9 @@ test.describe('Source', () => {
 
     // 源码数据导入成功
     // 预期：界面正确
-    test('test_source_loadDataSuccess', async ({ sourcePage }) => {
+    test('test_source_loadDataSuccess', async ({ page, sourcePage }) => {
         const { mainContent } = sourcePage;
+        await page.mouse.move(0,0);
         await expect(mainContent).toHaveScreenshot(imgMap.loadDataSuccess);
     });
 
