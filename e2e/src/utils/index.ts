@@ -69,11 +69,6 @@ export async function clearAllData(page: Page, ws?: Promise<WebSocket>): Promise
     }
     await settingsBtn.click();
 
-    const isDeleteBtnDisabled = await deleteAllBtn.evaluate((el) => el.classList.contains('disabled'));
-
-    if (isDeleteBtnDisabled) {
-        return;
-    }
     await deleteAllBtn.click();
     await expect(deleteAllDialog).toBeVisible();
     await deleteAllConfirmBtn.click();
