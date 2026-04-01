@@ -33,7 +33,7 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s]:%(
 CPU_SCHED_PID = "CPU Scheduling"
 PROCESS_SCHED_PID = 'Process Scheduling'
 KERNEL_PROCESS = ['migration', 'swapper', 'kworker']
-
+_seen_log_warning = set()
 
 def tran(ts):
     if not isinstance(ts, (int, float)):
@@ -391,6 +391,15 @@ class InterruptFtraceParse(FtraceParse):
         task = entry['task']
         timestamp = entry['timestamp']
         kwargs = self.parse_softirq_param(entry['args'])
+
+        if kwargs is None:
+            # 非debug模式下，同类解析失败事件仅打印一次日志告警，避免刷屏
+            key = "Failed to parse softirq event"
+            if key not in _seen_log_warning:
+                logging.warning(f"{key}, args: {entry['args']}")
+                _seen_log_warning.add(key)
+            return
+        
         kwargs['task'] = task + ":" + pid
         if entry['action'] == 'softirq_entry':
             if cpu not in self.interrupt_events:
@@ -471,6 +480,15 @@ class SchedFtraceParse(FtraceParse):
         cpu = entry['cpu']
         timestamp = entry['timestamp']
         kwargs = self.parse_switch_sched_param(entry['args']) if self.file_type == 'dat' else self.parse_base_param(entry['args'])
+        
+        if kwargs is None:
+            # 非debug模式下，同类解析失败事件仅打印一次日志告警，避免刷屏
+            key = "Failed to parse sched_switch event"
+            if key not in _seen_log_warning:
+                logging.warning(f"{key}, args: {entry['args']}")
+                _seen_log_warning.add(key)
+            return
+        
         if not is_kernel_process(kwargs['prev_comm']) and not is_kernel_process(kwargs['next_comm']):
             self.add_trace_event(get_trace_event("sched_switch", CPU_SCHED_PID, "CPU " + cpu, timestamp, 0, args=kwargs))
         prev_comm = kwargs['prev_comm'] + ':' + kwargs['prev_pid']
@@ -493,6 +511,15 @@ class SchedFtraceParse(FtraceParse):
     def parse_sched_wakeup(self, entry):
         timestamp = entry['timestamp']
         args_dict = self.parse_weakup_sched_param(entry['args']) if self.file_type == 'dat' else self.parse_base_param(entry['args'])
+        
+        if args_dict is None:
+            # 非debug模式下，同类解析失败事件仅打印一次日志告警，避免刷屏
+            key = "Failed to parse sched_wakeup event"
+            if key not in _seen_log_warning:
+                logging.warning(f"{key}, args: {entry['args']}")
+                _seen_log_warning.add(key)
+            return
+        
         comm = args_dict['comm'] + ':' + args_dict['pid']
         if comm in self.process_state.keys():
             self.process_state[comm].wakeup(timestamp)
