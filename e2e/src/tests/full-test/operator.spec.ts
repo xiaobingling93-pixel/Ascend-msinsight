@@ -179,7 +179,7 @@ test.describe('Operator(MultiMachines)', () => {
         await dbRank0.click();
         await page.mouse.move(0, 0);
         await statisticPromise;
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
 
         await hostSelector.waitFor({ state: 'attached' });
         const hostText = await hostSelect.getValue();

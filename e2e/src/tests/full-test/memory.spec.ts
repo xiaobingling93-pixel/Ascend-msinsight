@@ -345,6 +345,7 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
 
     // 多机多卡db类型数据比对场景
     test('test_pageDisplay_compare_rank_db', async ({ page, memoryPage }) => {
+        test.setTimeout(120000);
         const { minSizeInputor, maxSizeInputor, memoryFrame, queryBtn, resetBtn } = memoryPage;
         await setCompare(page, memoryFrame, { baseline: FilePath.MULTI_NODES_NODE_0_RANK_0, comparison: FilePath.MULTI_NODES_NODE_1_RANK_0 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
@@ -357,7 +358,8 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
         await maxSizeInput.expectValueToBe('243840');
         await minSizeInput.setValue('0');
         await queryBtn.click();
-        await page.waitForTimeout(2000);
+        await memoryFrame.locator('.ant-spin-spinning').first().waitFor({ state: 'hidden' });
+        await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('memory-compare-rank-db-with-condition.png', {
             maxDiffPixels: 500,
         });

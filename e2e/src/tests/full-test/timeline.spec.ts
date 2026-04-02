@@ -489,6 +489,7 @@ test.describe('Timeline', () => {
         const { timelineFrame, clickMenu, bottomPanel } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const clickUnit = unitList.locator('.unit-info').nth(1);
+        await page.waitForTimeout(1000);
         await clickMenu(clickUnit, timelineFrame, 'Show in Events View');
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'attached' });
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'detached' });
