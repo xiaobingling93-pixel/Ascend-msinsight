@@ -52,7 +52,6 @@
 - MindStudio Insight 支持算子性能分析
 - MindStudio Insight 支持内存分析
 - MindStudio Insight 支持服务化分析
-- MindStudio Insight 支持 JupyterLab 插件安装
 
 #### 下载地址
 
