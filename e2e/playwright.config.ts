@@ -66,6 +66,13 @@ export default defineConfig({
         trace: 'on-first-retry',
         /* Only on CI systems run the tests headless */
         headless: true,
+        launchOptions: {
+            args: [
+                '--use-gl=swiftshader', 
+                '--disable-gpu-compositing',
+                '--disable-webgl',
+            ],
+        },
     },
 
     /* Configure projects for major browsers */

@@ -43,13 +43,14 @@ export const FilePath = {
     DETAILS_ROOFLINE: `${DATA_PATH}\\operator\\msprof-op\\roofline\\visualize_data.bin`,
     DETAILS_CORE: `${DATA_PATH}\\operator\\msprof-op\\core_inter_load\\visualize_data.bin`,
     REINFORCEMENT_LEARNING: `${DATA_PATH}\\training\\reinforcement-learning\\verl`,
+    LEAKS_DUMP: `${DATA_PATH}\\memscope\\leaks_dump_20250806.db`,
+    SNAPSHOT_PKL: `${DATA_PATH}\\memscope\\snapshot_expandable.pkl`,
 
     TEXT_330: 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data', // 给 Memory 模块使用
     TEXT_330_RANK_0: 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data\\ubuntu2204_3929556_20250411014455476_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     MIND_SPORE: 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\profile',
     // 专家负载均衡数据
     MOE_PROFILING: 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\MoE_balancing\\profiling',
-    LEAKS_DUMP: 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\leaks_dump_20250603145530.db',
     MS_RANK_0: 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\profile\\test123_3028773_20250617091627998_ascend_ms',
     //联合冒烟数据
     JOINT_DATA: '/home/profiler_performance/task',

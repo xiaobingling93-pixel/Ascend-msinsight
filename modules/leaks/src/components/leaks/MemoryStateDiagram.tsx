@@ -476,7 +476,7 @@ const StateDiagramCanvas = observer(({ session }: { session: Session }): JSX.Ele
         };
     }, []);
 
-    return <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+    return <div data-testid="stateDiagram" ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
         <canvas
             ref={ref}
             style={{ position: 'absolute', top: 0, imageRendering: 'pixelated', touchAction: 'none' }}
