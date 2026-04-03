@@ -287,8 +287,6 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                     let cardLinkLines: CategoryEvents['flowDetailList'] = [];
                     if (cardId?.endsWith('Host')) {
                         cardLinkLines = await queryLinkLinesForHostCards(unit, viewedCardIdSet, session, config);
-                    } else if (session.isFullDb && (category === 'fwdbwd' || category === 'async_task_queue')) {
-                    // 全量db情况下，只允许 host 下的卡查询 'fwdbwd'、'async_task_queue' 连线，作为 device 的卡不做任何查询操作
                     } else {
                         cardLinkLines = await fetchLinkLineForCard(viewedCardIdSet, session, { ...config, cardId, dbPath });
                     }
